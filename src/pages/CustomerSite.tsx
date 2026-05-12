@@ -301,10 +301,13 @@ export default function CustomerSite() {
         cart.length === 0 &&
         !isCheckout
       ) {
-        const bestSellers = products.filter(
-          (p) => p.isTopSeller || p.category?.includes("الأكثر"),
+        const affordableBestSellers = products.filter(
+          (p) => (p.isTopSeller || p.category?.includes("الأكثر")) && (p.price || p.basePrice || 0) < 15 && !p.isOutOfStock,
         );
-        const listToUse = bestSellers.length > 0 ? bestSellers : products;
+        const affordableProducts = products.filter(
+          (p) => (p.price || p.basePrice || 0) < 15 && !p.isOutOfStock,
+        );
+        const listToUse = affordableBestSellers.length > 0 ? affordableBestSellers : affordableProducts;
         if (listToUse.length > 0) {
           const suggestion =
             listToUse[
