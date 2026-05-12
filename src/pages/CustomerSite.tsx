@@ -2068,7 +2068,6 @@ export default function CustomerSite() {
               <motion.div
                 initial={{ scale: 0.8, y: 50 }}
                 animate={{ scale: 1, y: 0 }}
-                onClick={(e) => e.stopPropagation()}
                 className="text-center w-full max-w-sm"
               >
                 <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl relative border-4 border-white overflow-hidden">
