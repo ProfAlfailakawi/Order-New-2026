@@ -482,7 +482,7 @@ export default function AdminDashboard() {
                                   order.status === "جديد" || order.status === "بانتظار الدفع" ? "bg-amber-50 text-amber-600 border-amber-100" :
                                   order.status === "قيد تجميع القطية" ? "bg-purple-50 text-purple-600 border-purple-100" :
                                   order.status?.startsWith("تم الدفع") ? "bg-green-50 text-green-600 border-green-100" :
-                                  order.status === "فشل في عملية الدفع" || order.status === "ملغي" ? "bg-red-50 text-red-500 border-red-100" :
+                                  order.status === "فشل في عملية الدفع" || order.status?.includes("ملغي") ? "bg-red-50 text-red-500 border-red-100" :
                                   "bg-stone-50 text-stone-600 border-stone-200"
                                 }`}>
                                 {order.status}
@@ -579,7 +579,7 @@ export default function AdminDashboard() {
                          order.status === "جديد" || order.status === "بانتظار الدفع" ? "bg-amber-50 text-amber-600 border-amber-100" :
                          order.status === "قيد تجميع القطية" ? "bg-purple-50 text-purple-600 border-purple-100" :
                          order.status?.startsWith("تم الدفع") ? "bg-green-50 text-green-600 border-green-100" :
-                         order.status === "فشل في عملية الدفع" || order.status === "ملغي" ? "bg-red-50 text-red-500 border-red-100" :
+                         order.status === "فشل في عملية الدفع" || order.status?.includes("ملغي") ? "bg-red-50 text-red-500 border-red-100" :
                          "bg-stone-50 text-stone-600 border-stone-200"
                        }`}>
                           {order.status}
@@ -1302,7 +1302,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
               order.status === "جديد" || order.status === "بانتظار الدفع" ? "bg-amber-50 text-amber-600 border-amber-100" :
               order.status === "قيد تجميع القطية" ? "bg-purple-50 text-purple-600 border-purple-100" :
               order.status?.startsWith("تم الدفع") ? "bg-green-50 text-green-600 border-green-100" :
-              order.status === "فشل في عملية الدفع" || order.status === "ملغي" ? "bg-red-50 text-red-500 border-red-100" :
+              order.status === "فشل في عملية الدفع" || order.status?.includes("ملغي") ? "bg-red-50 text-red-500 border-red-100" :
               "bg-stone-50 text-stone-600 border-stone-200"
             }`}>{order.status}</span>
           </div>
@@ -1360,6 +1360,55 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
               </div>
             </div>
           </section>
+
+          {(order as any).splitPayments && (order as any).splitType === "traditional" && (
+            <section className="mt-8">
+              <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] block mb-4 px-2 text-right">المشاركين بالقطية</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(order as any).splitPayments.map((p: any, idx: number) => (
+                  <div key={idx} className="bg-stone-50 p-4 rounded-2xl border border-stone-100 flex justify-between items-center">
+                    <div className="flex flex-col items-start gap-1">
+                       <span className="text-xl font-black text-brand italic">{Number(p.amount).toFixed(3)} د.ك</span>
+                       <span className={`text-[10px] font-bold px-2 py-1 rounded-lg uppercase ${p.status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>{p.status === 'paid' ? 'تم الدفع' : 'بانتظار الدفع'}</span>
+                    </div>
+                    <div className="flex flex-col gap-1 text-right">
+                       <span className="font-bold text-brand">{p.name || p.phone}</span>
+                       <span className="text-xs text-stone-500">{p.phone}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {(order as any).splitParticipants && (order as any).splitType === "roulette" && (
+             <section className="mt-8">
+               <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] block mb-4 px-2 text-right">روليت الحظ</label>
+               <div className="bg-fuchsia-50 p-6 rounded-[32px] border border-fuchsia-100 text-center flex flex-col items-center justify-center">
+                  {(order as any).rouletteLoser ? (
+                     <>
+                        <p className="text-fuchsia-800 font-bold mb-4">الخاسر اللي طاحت براسه القطية:</p>
+                        <div className="text-4xl font-black text-fuchsia-600 mb-2">{(order as any).rouletteLoser}</div>
+                        <p className="text-sm font-bold text-fuchsia-500 mt-2">القيمة: {getDisplayTotal(order).toFixed(3)} د.ك</p>
+                     </>
+                  ) : (
+                     <div className="text-xl font-bold text-fuchsia-400">بانتظار اللعب والدفع...</div>
+                  )}
+                  
+                  <div className="mt-6 w-full text-right">
+                     <p className="text-xs font-bold text-fuchsia-800/60 mb-2">المشاركون في الروليت:</p>
+                     <div className="flex flex-wrap gap-2 justify-end">
+                        {(order as any).splitParticipants.map((p: any, idx: number) => (
+                           <span key={idx} className="bg-fuchsia-100 text-fuchsia-700 px-3 py-1 rounded-lg text-xs font-bold border border-fuchsia-200">
+                              {p.name} {p.phone && `(${p.phone})`}
+                           </span>
+                        ))}
+                     </div>
+                  </div>
+               </div>
+             </section>
+          )}
+
           <section>
             <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] block mb-8 px-2 text-right">مكونات الطلب</label>
             <div className="grid grid-cols-1 gap-5">

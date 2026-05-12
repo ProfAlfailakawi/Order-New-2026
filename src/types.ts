@@ -47,6 +47,10 @@ export interface Order {
   total: number;
   status: "جديد" | "بانتظار الدفع" | "قيد تجميع القطية" | "تم الدفع وجاري التوصيل" | "ملغي" | "فشل في عملية الدفع";
   createdAt: string;
+  discountAmount?: number;
+  promoCode?: string;
+  splitType?: string;
+  rouletteLoser?: string;
   date?: string;
   source: string;
   generalNotes?: string;

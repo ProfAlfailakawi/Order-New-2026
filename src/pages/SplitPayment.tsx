@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Copy,
   Check,
+  ArrowRight,
   Users,
   Share2,
   Sparkles,
@@ -30,6 +31,7 @@ const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 export default function SplitPayment() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const paymentStatus = searchParams.get("payment");
 
@@ -354,7 +356,13 @@ export default function SplitPayment() {
       dir="rtl"
     >
       {/* Header */}
-      <header className="bg-white border-b border-stone-100 p-6 sticky top-0 z-20 shadow-sm flex flex-col items-center justify-center gap-2">
+      <header className="bg-white border-b border-stone-100 p-6 sticky top-0 z-20 shadow-sm flex flex-col items-center justify-center gap-2 relative">
+        <button 
+          onClick={() => navigate(`/track?order_id=${id}`)}
+          className="absolute left-4 top-4 p-2 text-stone-400 hover:text-brand"
+        >
+          <ArrowRight className="w-6 h-6" />
+        </button>
         <PieChart className="w-8 h-8 text-brand" />
         <h1 className="font-black text-xl tracking-tight text-center">
           قطيّة الربع 🤝
@@ -484,12 +492,15 @@ export default function SplitPayment() {
                   </label>
                   <input
                     type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={contributorPhone}
                     onChange={(e) =>
-                      setContributorPhone(normalizePhone(e.target.value))
+                      setContributorPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 8))
                     }
                     placeholder="90000000"
                     className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
+                    dir="ltr"
                   />
                 </div>
                 <div>

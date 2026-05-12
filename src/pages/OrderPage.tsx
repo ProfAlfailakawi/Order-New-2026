@@ -408,6 +408,12 @@ export default function OrderPage() {
       };
 
     // Fallbacks
+    if (s.includes("انتهى وقت القطية") || (rawStatus && rawStatus.includes("انتهى وقت القطية")))
+      return {
+        text: "ملغي - انتهى وقت القطية",
+        color: "text-red-600 bg-red-50",
+        icon: <X className="w-4 h-4" />,
+      };
     if (s.includes("cancel") || s.includes("ملغي"))
       return {
         text: "ملغي",
@@ -1178,14 +1184,58 @@ export default function OrderPage() {
                         />
                       ))}
 
+                    {/* Ash/Spark effect for cancelled */}
+                    {getStatusDisplay(selectedOrder).text.includes("ملغي") &&
+                      [...Array(12)].map((_, i) => (
+                        <motion.div
+                          key={`ash-${i}`}
+                          initial={{
+                            opacity: 1,
+                            y: 0,
+                            scale: Math.random() * 1.5 + 0.5,
+                            x: 0,
+                          }}
+                          animate={{
+                            opacity: [1, 0.8, 0],
+                            y: 80 + Math.random() * 50,
+                            scale: 0,
+                            x: (Math.random() - 0.5) * 80,
+                            rotate: Math.random() * 360
+                          }}
+                          transition={{
+                            duration: 2 + Math.random(),
+                            delay: i * 0.15,
+                            repeat: Infinity,
+                            ease: "easeIn",
+                          }}
+                          className="absolute top-[40%] left-1/2 w-2 h-2 bg-red-500 rounded-sm blur-[1px]"
+                        />
+                      ))}
+
                     {/* Glassmorphism Ring */}
                     <div
-                      className={`absolute inset-0 rounded-full border border-white/20 backdrop-blur-sm shadow-[0_0_30px_rgba(255,255,255,0.05)] flex items-center justify-center transition-colors duration-1000 ${getStatusDisplay(selectedOrder).text.includes("تجهيز") || (getStatusDisplay(selectedOrder).text.includes("دفع") && !getStatusDisplay(selectedOrder).text.includes("بانتظار") && !getStatusDisplay(selectedOrder).text.includes("فشل")) ? "bg-orange-500/10 shadow-[0_0_50px_rgba(249,115,22,0.3)]" : "bg-white/5"}`}
+                      className={`absolute inset-0 rounded-full border border-white/20 backdrop-blur-sm shadow-[0_0_30px_rgba(255,255,255,0.05)] flex items-center justify-center transition-colors duration-1000 ${
+                        getStatusDisplay(selectedOrder).text.includes("ملغي") ? "bg-red-900/20 shadow-[0_0_50px_rgba(220,38,38,0.3)] border-red-500/20" : getStatusDisplay(selectedOrder).text.includes("تجهيز") || (getStatusDisplay(selectedOrder).text.includes("دفع") && !getStatusDisplay(selectedOrder).text.includes("بانتظار") && !getStatusDisplay(selectedOrder).text.includes("فشل")) ? "bg-orange-500/10 shadow-[0_0_50px_rgba(249,115,22,0.3)]" : "bg-white/5"
+                      }`}
                     >
-                      <div className="w-[85%] h-[85%] rounded-full border-[2px] border-dashed border-white/20 animate-[spin_60s_linear_infinite]" />
+                      <div className={`w-[85%] h-[85%] rounded-full border-[2px] border-dashed border-white/20 ${getStatusDisplay(selectedOrder).text.includes("ملغي") ? "animate-pulse border-red-500/30" : "animate-[spin_60s_linear_infinite]"}`} />
                       <div className="absolute w-[60%] h-[60%] rounded-full border border-white/10 flex items-center justify-center bg-black/20 backdrop-blur-md">
                         {/* Box closing animation for preparing */}
                         {getStatusDisplay(selectedOrder).text.includes(
+                          "ملغي",
+                        ) ? (
+                          <motion.div
+                            animate={{ scale: [1, 0.9, 1], opacity: [1, 0.6, 1] }}
+                            transition={{
+                              duration: 2,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                            }}
+                            className="text-red-400"
+                          >
+                            <X className="w-8 h-8" />
+                          </motion.div>
+                        ) : getStatusDisplay(selectedOrder).text.includes(
                           "تجهيز",
                         ) ||
                         (getStatusDisplay(selectedOrder).text.includes("دفع") &&
@@ -1217,7 +1267,9 @@ export default function OrderPage() {
                       className="absolute inset-0 pointer-events-none"
                       initial={{ rotate: -90 }}
                       animate={{
-                        rotate: getStatusDisplay(selectedOrder).text.includes(
+                        rotate: getStatusDisplay(selectedOrder).text.includes("ملغي")
+                          ? 180
+                          : getStatusDisplay(selectedOrder).text.includes(
                           "توصيل",
                         )
                           ? 45
@@ -1238,6 +1290,7 @@ export default function OrderPage() {
                       }}
                       transition={{
                         type:
+                          getStatusDisplay(selectedOrder).text.includes("ملغي") ||
                           getStatusDisplay(selectedOrder).text.includes(
                             "توصيل",
                           ) ||
@@ -1377,44 +1430,66 @@ export default function OrderPage() {
 
                 <div className="px-4 sm:px-0">
                   {/* Split Bill UI */}
-                  {(getStatusDisplay(selectedOrder).text ===
-                    "قيد تجميع القطية" ||
-                    new URLSearchParams(window.location.search).get("dev") ===
-                      "true" ||
-                    new URLSearchParams(window.location.search).get("2dev") ===
-                      "true") && (
+                  {["traditional", "roulette"].includes((selectedOrder as any).splitType) && (
                     <div className="space-y-4 mb-4">
-                      <Link
-                        to={`/split/${selectedOrder.id}`}
-                        className="w-full bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-200 p-4 rounded-2xl flex items-center justify-between text-sm font-bold transition-all shadow-sm outline-none"
-                      >
-                        <span>ادخل صفحة تجميع القطية (تجربة)</span>
-                        <Users className="w-5 h-5" />
-                      </Link>
+                      {getStatusDisplay(selectedOrder).text === "قيد تجميع القطية" && (
+                        <div className="flex flex-col gap-3">
+                          <Link
+                            to={`/split/${selectedOrder.id}`}
+                            className="w-full bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-200 p-4 rounded-2xl flex items-center justify-between text-sm font-bold transition-all shadow-sm outline-none"
+                          >
+                            <span>ادخل صفحة القطية</span>
+                            <Users className="w-5 h-5" />
+                          </Link>
+
+                          <button
+                            onClick={() => handleRepay(selectedOrder as any)}
+                            disabled={processingPayment}
+                            className="block w-full text-center p-4 rounded-2xl bg-stone-100 text-stone-600 font-bold text-[13px] hover:bg-stone-200 transition-all outline-none disabled:opacity-50"
+                          >
+                            {processingPayment ? "جاري التجهيز..." : "غيرت رأيي - دفع الفاتورة بالكامل"}
+                          </button>
+                        </div>
+                      )}
 
                       {((selectedOrder as any).splitPayments || []).filter(
-                        (p: any) => p.status === "paid",
+                        (p: any) => p.status === "paid" || p.status === "pending"
                       ).length > 0 && (
                         <div className="bg-stone-50 p-4 rounded-2xl border border-stone-100">
                           <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                            <Users className="w-3 h-3" /> المساهمين في القطية
+                            <Users className="w-3 h-3" /> {(selectedOrder as any).splitType === 'roulette' ? 'المشاركون في الروليت' : 'المساهمين في القطية'}
                           </h4>
+                          {(selectedOrder as any).splitType === 'roulette' && (selectedOrder as any).rouletteLoser && (
+                            <div className="mb-4 bg-fuchsia-50 border border-fuchsia-100 p-3 rounded-xl flex items-center justify-between">
+                              <span className="text-fuchsia-600 font-bold text-xs flex items-center gap-2">
+                                🎯 بطل الليلة (صاحب الحظ اللي دفعها)
+                              </span>
+                              <span className="font-black text-fuchsia-700 text-sm">{(selectedOrder as any).rouletteLoser}</span>
+                            </div>
+                          )}
                           <div className="space-y-2">
                             {((selectedOrder as any).splitPayments as any[])
-                              .filter((p: any) => p.status === "paid")
+                              .filter((p: any) => p.status === "paid" || p.status === "pending")
                               .map((p, i) => (
                                 <div
                                   key={i}
                                   className="flex items-center justify-between text-xs"
                                 >
-                                  <div className="flex flex-col">
-                                    <span className="font-bold text-stone-700">
-                                      {p.name}
-                                    </span>
-                                    {p.phone && (
-                                      <span className="text-[9px] text-stone-400 font-mono">
-                                        {p.phone}
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex flex-col">
+                                      <span className="font-bold text-stone-700">
+                                        {p.name}
                                       </span>
+                                      {p.phone && (
+                                        <span className="text-[9px] text-stone-400 font-mono">
+                                          {p.phone}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {p.status === "paid" ? (
+                                      <span className="text-[8px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">مدفوع</span>
+                                    ) : (
+                                      <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">بانتظار الدفع</span>
                                     )}
                                   </div>
                                   <span className="font-black text-brand">

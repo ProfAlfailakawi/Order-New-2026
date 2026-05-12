@@ -145,6 +145,16 @@ async function startServer() {
           match =
             itemPhone === cleanQueryPhone ||
             (item.customerId && matchingCustomerIds.includes(item.customerId));
+
+          // Allow participants in split payments to see it
+          if (!match && item.splitPayments && Array.isArray(item.splitPayments)) {
+            match = item.splitPayments.some((p: any) => cleanPhone(p.phone) === cleanQueryPhone);
+          }
+
+          // Allow participants in roulette to see it
+          if (!match && item.splitParticipants && Array.isArray(item.splitParticipants)) {
+            match = item.splitParticipants.some((p: any) => cleanPhone(p.phone) === cleanQueryPhone);
+          }
         }
         if (!match && order_id) {
           const qid = String(order_id).trim().toUpperCase();
@@ -523,6 +533,17 @@ async function startServer() {
 
     products = products.map((p: any) => {
       let isNew = p.isNewProduct === true || p.isNew === true;
+      if (!isNew && (p.createdAt || p.dateAdded || p.date)) {
+        let timestamp = 0;
+        if (p.createdAt && typeof p.createdAt === 'object' && p.createdAt.seconds) timestamp = p.createdAt.seconds * 1000;
+        else if (p.createdAt) timestamp = new Date(p.createdAt).getTime();
+        else if (p.dateAdded) timestamp = new Date(p.dateAdded).getTime();
+        else if (p.date) timestamp = new Date(p.date).getTime();
+        
+        if (timestamp > thirtyDaysAgo) {
+          isNew = true;
+        }
+      }
       return { ...p, isNewProduct: isNew };
     });
 
@@ -1296,7 +1317,7 @@ async function startServer() {
   app.post("/api/orders/:id/join-roulette", async (req, res) => {
     try {
       const { id } = req.params;
-      const { name } = req.body;
+      const { name, phone } = req.body;
       if (!name) return res.status(400).json({ error: "Missing name" });
 
       const docRef = doc(db, "appData", "shared_company_data");
@@ -1309,10 +1330,11 @@ async function startServer() {
           orders[index].splitParticipants = [];
         }
         if (
-          !orders[index].splitParticipants.some((p: any) => p.name === name)
+          !orders[index].splitParticipants.some((p: any) => p.name === name || (phone && p.phone === phone))
         ) {
           orders[index].splitParticipants.push({
             name,
+            phone,
             joinedAt: new Date().toISOString(),
           });
           await updateDoc(docRef, { orders });
@@ -1526,7 +1548,8 @@ async function startServer() {
                 currentStatus === "فشل في عملية الدفع" ||
                 currentStatus === "جديد" ||
                 currentStatus === "بانتظار الدفع" ||
-                currentStatus === "قيد تجميع القطية"
+                currentStatus === "قيد تجميع القطية" ||
+                (currentStatus || "").includes("ملغي")
               ) {
                 if (status) {
                   // Success
@@ -1720,7 +1743,9 @@ async function startServer() {
             if (
               currentStatus === "فشل في عملية الدفع" ||
               currentStatus === "جديد" ||
-              currentStatus === "بانتظار الدفع"
+              currentStatus === "بانتظار الدفع" ||
+              currentStatus === "قيد تجميع القطية" ||
+              (currentStatus || "").includes("ملغي")
             ) {
               if (isExplicitFailure) {
                 orders[orderIndex].status = "فشل في عملية الدفع";
@@ -2255,7 +2280,7 @@ async function startServer() {
         const appData = d.data() || {};
         const allOrders = appData.orders || [];
         const now = Date.now();
-        const TIMEOUT = 90 * 60 * 1000;
+        const TIMEOUT = 120 * 60 * 1000;
         let needsUpdate = false;
 
         const updatedOrders = allOrders.map((o: any) => {
