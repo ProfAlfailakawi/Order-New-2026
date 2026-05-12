@@ -3673,16 +3673,27 @@ function CheckoutOverlay({
                 )}
             </div>
           ) : step === "payment" ? (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center justify-center space-y-6 pt-12 pb-8">
-              <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-2 shadow-sm">
-                <Check className="w-8 h-8 text-accent" />
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center justify-center w-full pt-8 pb-4 px-2">
+              
+              <div className="bg-stone-50 border border-stone-100 rounded-[32px] p-8 w-full relative overflow-hidden shadow-sm flex flex-col items-center justify-center mb-8">
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-accent/5 rounded-full blur-2xl"></div>
+                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-brand/5 rounded-full blur-2xl"></div>
+                
+                <p className="text-stone-500 font-bold text-sm mb-3 relative z-10 flex items-center gap-2">
+                  <Check className="w-4 h-4 text-accent" />
+                  مجموع طلبك طال عمرك
+                </p>
+                <div className="flex items-baseline gap-2 relative z-10">
+                   <span className="text-5xl font-black text-brand tracking-tight">{Number(itemsTotal + deliveryFee - discountAmount).toFixed(3)}</span>
+                   <span className="text-xl font-bold text-stone-400">د.ك</span>
+                </div>
               </div>
-              <h3 className="text-2xl font-black text-brand text-center">طريقة الدفع</h3>
-              <p className="text-stone-500 text-center text-sm px-6 leading-relaxed">
-                مجموع طلبك طال عمرك هو <span className="font-black text-brand bg-stone-100 px-2 py-0.5 rounded-lg inline-block mx-1">{Number(itemsTotal + deliveryFee - discountAmount).toFixed(3)} د.ك</span>
-                <br />
-                اختار شلون حاب تدفع الفاتورة؟
-              </p>
+
+              <div className="flex items-center gap-4 w-full mb-4">
+                <div className="h-px bg-stone-100 flex-1"></div>
+                <span className="text-stone-400 font-bold text-xs uppercase tracking-widest shrink-0 text-center">اختار شلون حاب تدفع الفاتورة؟</span>
+                <div className="h-px bg-stone-100 flex-1"></div>
+              </div>
             </div>
           ) : null}
         </div>
