@@ -1461,9 +1461,9 @@ export default function OrderPage() {
                         </div>
                       )}
 
-                      {((selectedOrder as any).splitPayments || []).filter(
+                      {(((selectedOrder as any).splitPayments || []).filter(
                         (p: any) => p.status === "paid" || p.status === "pending"
-                      ).length > 0 && (
+                      ).length > 0 || ((selectedOrder as any).splitParticipants || []).length > 0) && (
                         <div className="bg-stone-50 p-4 rounded-2xl border border-stone-100">
                           <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                             <Users className="w-3 h-3" /> {(selectedOrder as any).splitType === 'roulette' ? 'المشاركون في الروليت' : 'المساهمين في القطية'}
@@ -1477,12 +1477,11 @@ export default function OrderPage() {
                             </div>
                           )}
                           <div className="space-y-2">
-                            {((selectedOrder as any).splitPayments as any[])
-                              .filter((p: any) => p.status === "paid" || p.status === "pending")
-                              .map((p, i) => (
+                            {(selectedOrder as any).splitType === 'roulette' ? (
+                              ((selectedOrder as any).splitParticipants || []).map((p: any, i: number) => (
                                 <div
                                   key={i}
-                                  className="flex items-center justify-between text-xs"
+                                  className="flex items-center justify-between text-xs bg-white p-2 rounded-lg border border-stone-100"
                                 >
                                   <div className="flex items-center gap-2">
                                     <div className="flex flex-col">
@@ -1495,17 +1494,41 @@ export default function OrderPage() {
                                         </span>
                                       )}
                                     </div>
-                                    {p.status === "paid" ? (
-                                      <span className="text-[8px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">مدفوع</span>
-                                    ) : (
-                                      <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">بانتظار الدفع</span>
-                                    )}
                                   </div>
-                                  <span className="font-black text-brand">
-                                    {Number(p.amount).toFixed(3)} د.ك
-                                  </span>
+                                  <span className="text-[8px] bg-fuchsia-100 text-fuchsia-700 px-1.5 py-0.5 rounded-full font-bold">مشارك</span>
                                 </div>
-                              ))}
+                              ))
+                            ) : (
+                              ((selectedOrder as any).splitPayments as any[])
+                                .filter((p: any) => p.status === "paid" || p.status === "pending")
+                                .map((p, i) => (
+                                  <div
+                                    key={i}
+                                    className="flex items-center justify-between text-xs bg-white p-2 rounded-lg border border-stone-100"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex flex-col">
+                                        <span className="font-bold text-stone-700">
+                                          {p.name}
+                                        </span>
+                                        {p.phone && (
+                                          <span className="text-[9px] text-stone-400 font-mono">
+                                            {p.phone}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {p.status === "paid" ? (
+                                        <span className="text-[8px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">مدفوع</span>
+                                      ) : (
+                                        <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">بانتظار الدفع</span>
+                                      )}
+                                    </div>
+                                    <span className="font-black text-brand tracking-tight">
+                                      {Number(p.amount).toFixed(3)} د.ك
+                                    </span>
+                                  </div>
+                                ))
+                            )}
                           </div>
                         </div>
                       )}

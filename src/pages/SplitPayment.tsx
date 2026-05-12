@@ -358,7 +358,13 @@ export default function SplitPayment() {
       {/* Header */}
       <header className="bg-white border-b border-stone-100 p-6 sticky top-0 z-20 shadow-sm flex flex-col items-center justify-center gap-2 relative">
         <button 
-          onClick={() => navigate(`/track?order_id=${id}`)}
+          onClick={() => {
+            if (window.history.state && window.history.state.idx > 0) {
+              navigate(-1);
+            } else {
+              navigate("/");
+            }
+          }}
           className="absolute left-4 top-4 p-2 text-stone-400 hover:text-brand"
         >
           <ArrowRight className="w-6 h-6" />

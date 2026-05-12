@@ -166,6 +166,16 @@ export default function CustomerSite() {
     product?: any;
   } | null>(null);
 
+  // Auto-dismiss psychMessage after 6 seconds
+  useEffect(() => {
+    if (psychMessage) {
+      const timer = setTimeout(() => {
+        setPsychMessage(null);
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [psychMessage]);
+
   // Golden Hour Themes: Morning, Noon, Night ambiance with varied phrases
   const goldenHourTheme = useMemo(() => {
     const hour = new Date().getHours();
@@ -3675,17 +3685,19 @@ function CheckoutOverlay({
           ) : step === "payment" ? (
             <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center justify-center w-full pt-8 pb-4 px-2">
               
-              <div className="bg-stone-50 border border-stone-100 rounded-[32px] p-8 w-full relative overflow-hidden shadow-sm flex flex-col items-center justify-center mb-8">
+              <div className="bg-stone-50 border border-stone-100 rounded-3xl sm:rounded-[32px] p-6 sm:p-8 w-full max-w-full relative overflow-hidden shadow-sm flex flex-col items-center justify-center mb-8">
                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-accent/5 rounded-full blur-2xl"></div>
                 <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-brand/5 rounded-full blur-2xl"></div>
                 
-                <p className="text-stone-500 font-bold text-sm mb-3 relative z-10 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-accent" />
-                  مجموع طلبك طال عمرك
+                <p className="text-stone-500 font-bold text-xs sm:text-sm mb-3 relative z-10 flex items-center gap-1.5 sm:gap-2 text-center flex-wrap justify-center line-clamp-2 leading-relaxed max-w-[90%]">
+                  <Check className="w-4 h-4 text-accent shrink-0" />
+                  <span>مجموع طلبك طال عمرك</span>
                 </p>
-                <div className="flex items-baseline gap-2 relative z-10">
-                   <span className="text-5xl font-black text-brand tracking-tight">{Number(itemsTotal + deliveryFee - discountAmount).toFixed(3)}</span>
-                   <span className="text-xl font-bold text-stone-400">د.ك</span>
+                <div className="flex items-baseline gap-2 relative z-10 flex-wrap justify-center">
+                   <span className="text-4xl sm:text-5xl font-black text-brand tracking-tight break-all text-center">
+                     {Number(itemsTotal + deliveryFee - discountAmount).toFixed(3)}
+                   </span>
+                   <span className="text-lg sm:text-xl font-bold text-stone-400 shrink-0">د.ك</span>
                 </div>
               </div>
 

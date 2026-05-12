@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useNavigate } from "react-router-dom";
 import { Sparkles, Users, Crown, CreditCard, PartyPopper, ArrowRight } from "lucide-react";
 
 export function RouletteSplit({
@@ -9,6 +10,7 @@ export function RouletteSplit({
   order: any;
   handlePay: (name: string, phone: string, amount: string) => void;
 }) {
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const participants = order.splitParticipants || [];
@@ -100,6 +102,29 @@ export function RouletteSplit({
     );
   }
 
+  const winningPhrases = [
+    { title: "عوافي يا الذيب! 🥳", desc: (l: any) => <>حبيبك <span className="text-white">{l}</span> دفع الفاتورة اليوم، اشكره لا تنسى!</> },
+    { title: "فزت هالمرة! 👑", desc: (l: any) => <>طاحت براس <span className="text-white">{l}</span>، اليوم الأكل ببلاش!</> },
+    { title: "عدت على خير! 😎", desc: (l: any) => <>الصدفة أنقذتك! <span className="text-white">{l}</span> راح يدفع الفاتورة اليوم.</> },
+    { title: "صدت الفريسة! 🎯", desc: (l: any) => <>مبروك النجاة، <span className="text-white">{l}</span> اهو اللي بيتوهق بالفاتورة!</> }
+  ];
+
+  const losingPhrases = [
+    { title: "حظك غاب اليوم! 😂", desc: "الفاتورة كاملة طاحت براسك، ادفع يا وحش!" },
+    { title: "راحت عليك! 💸", desc: "أنت الليلة شمعة الجلاس والفاتورة عليك!" },
+    { title: "طحت فيها! 🎯", desc: "الروليت اختارك، دبر عمرك وادفع الفاتورة!" },
+    { title: "يومك كريم! 👑", desc: "الكرم من طبعك، ادفع وعوافي على ربعك!" }
+  ];
+
+  const getPhraseIndex = (name: string) => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash += (name.charCodeAt(i) * (i + 1));
+    return hash;
+  };
+
+  const loserContent = losingPhrases[getPhraseIndex(loser || "A") % losingPhrases.length];
+  const winnerContent = winningPhrases[getPhraseIndex(loser || "A") % winningPhrases.length];
+
   return (
     <div
       className="min-h-screen bg-stone-900 text-white font-sans selection:bg-fuchsia-500/30"
@@ -107,7 +132,13 @@ export function RouletteSplit({
     >
       <div className="max-w-md mx-auto p-6 space-y-8 pb-32 relative">
         <button 
-          onClick={() => window.location.href = `/track?order_id=${order.id}`}
+          onClick={() => {
+            if (window.history.state && window.history.state.idx > 0) {
+              navigate(-1);
+            } else {
+              navigate("/");
+            }
+          }}
           className="absolute left-6 top-6 p-2 text-stone-400 hover:text-white"
         >
           <ArrowRight className="w-6 h-6" />
@@ -185,7 +216,7 @@ export function RouletteSplit({
                   </div>
                   {participants.length >= 2 && (
                     <p className="text-xs text-fuchsia-300 font-bold mt-4">
-                      💡 تأكدوا ان الكل دش، وإذا العدد كمل أي شخص يقدر يقرّع وكلكم بتشوفونها لايف!
+                      💡 تأكدوا ان الكل دش، وإذا العدد كمل أي شخص يقدر يوهقكم وكلكم بتشوفونها لايف!
                     </p>
                   )}
                 </div>
@@ -207,7 +238,7 @@ export function RouletteSplit({
                   className="w-full bg-white/10 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 mt-4 hover:bg-white/20 transition-colors"
                 >
                   <Sparkles className="w-5 h-5 text-fuchsia-400" />
-                  انسخ رابط الدعوة ودزه للربع
+                  دز الرابط للربع وشوف حظهم ووهقهم
                 </button>
 
                 {participants.length >= 2 && (
@@ -274,9 +305,9 @@ export function RouletteSplit({
               >
                 {loser === mySpinName ? (
                   <div className="p-6 bg-red-500/20 border border-red-500/50 rounded-3xl text-red-100 space-y-4">
-                    <h2 className="text-2xl font-black">حظك غاب اليوم! 😂</h2>
+                    <h2 className="text-2xl font-black">{loserContent.title}</h2>
                     <p className="font-bold">
-                      الفاتورة كاملة طاحت براسك، ادفع يا وحش!
+                      {loserContent.desc}
                     </p>
                     <button
                       onClick={() =>
@@ -295,10 +326,9 @@ export function RouletteSplit({
                 ) : (
                   <div className="p-6 bg-green-500/20 border border-green-500/50 rounded-3xl text-green-100 space-y-4">
                     <PartyPopper className="w-10 h-10 mx-auto text-green-400" />
-                    <h2 className="text-2xl font-black">عوافي يا الذيب! 🥳</h2>
+                    <h2 className="text-2xl font-black">{winnerContent.title}</h2>
                     <p className="font-bold">
-                      حبيبك <span className="text-white">{loser}</span> دفع
-                      الفاتورة اليوم، اشكره لا تنسى!
+                      {winnerContent.desc(loser)}
                     </p>
                   </div>
                 )}
