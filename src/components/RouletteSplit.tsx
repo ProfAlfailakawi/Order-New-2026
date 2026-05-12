@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Sparkles, Users, Crown, CreditCard, PartyPopper } from "lucide-react";
+import { Sparkles, Users, Crown, CreditCard, PartyPopper, ArrowRight } from "lucide-react";
 
 export function RouletteSplit({
   order,
@@ -18,11 +18,14 @@ export function RouletteSplit({
   const [mySpinName, setMySpinName] = useState(
     () => localStorage.getItem(`roulette_${order.id}`) || "",
   );
+  const [mySpinPhone, setMySpinPhone] = useState(
+    () => localStorage.getItem(`roulette_phone_${order.id}`) || "",
+  );
   const [activeIndex, setActiveIndex] = useState(0);
 
   const join = async () => {
     if (!name.trim()) return;
-    if (phone.length < 8) return alert("رقم الهاتف يجب أن يتكون من 8 أرقام على الأقل");
+    if (phone.length !== 8) return alert("يرجى إدخال رقم هاتف صحيح مكون من 8 أرقام");
     try {
       await fetch(`/api/orders/${order.id}/join-roulette`, {
         method: "POST",
@@ -30,7 +33,9 @@ export function RouletteSplit({
         body: JSON.stringify({ name, phone }),
       });
       setMySpinName(name);
+      setMySpinPhone(phone);
       localStorage.setItem(`roulette_${order.id}`, name);
+      localStorage.setItem(`roulette_phone_${order.id}`, phone);
     } catch (e) {}
   };
 
@@ -47,14 +52,14 @@ export function RouletteSplit({
         setIsSpinning(true);
         let count = 0;
         const interval = setInterval(() => {
-          setActiveIndex((prev) => (prev + 1) % participants.length);
+          setActiveIndex((prev) => prev + 1);
           count++;
-          if (count > 30) {
+          if (count > 40) {
             clearInterval(interval);
             setIsSpinning(false);
             sessionStorage.setItem(`spun_${order.id}`, "true");
           }
-        }, 100);
+        }, 60);
       }
     }
   }, [spun, participants.length, order.id, isSpinning]);
@@ -100,14 +105,20 @@ export function RouletteSplit({
       className="min-h-screen bg-stone-900 text-white font-sans selection:bg-fuchsia-500/30"
       dir="rtl"
     >
-      <div className="max-w-md mx-auto p-6 space-y-8 pb-32">
+      <div className="max-w-md mx-auto p-6 space-y-8 pb-32 relative">
+        <button 
+          onClick={() => window.location.href = `/track?order_id=${order.id}`}
+          className="absolute left-6 top-6 p-2 text-stone-400 hover:text-white"
+        >
+          <ArrowRight className="w-6 h-6" />
+        </button>
         <header className="text-center pt-8 space-y-4">
           <div className="w-20 h-20 bg-gradient-to-tr from-violet-600 to-fuchsia-600 rounded-full flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(217,70,239,0.3)]">
             <Sparkles className="w-10 h-10 text-white" />
           </div>
           <div>
             <h1 className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-violet-400">
-              عجلة الحظ
+              انت وحظك
             </h1>
             <p className="text-stone-400 font-bold mt-2">
               عوافي! واحد فيكم بتطيح براسه الفاتورة {order.total.toFixed(3)} د.ك
@@ -124,7 +135,7 @@ export function RouletteSplit({
             {!mySpinName ? (
               <div className="space-y-4">
                 <h2 className="font-bold text-center">
-                  أضف اسمك عشان تدش السحب
+                  اسم المتورط
                 </h2>
                 <input
                   type="text"
@@ -135,9 +146,11 @@ export function RouletteSplit({
                 />
                 <input
                   type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="رقم الهاتف (مثال: 99xxxxxx)"
+                  onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 8))}
+                  placeholder="رقم الهاتف (مثال: 90000000)"
                   className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-center font-bold focus:outline-none focus:border-fuchsia-500"
                   dir="ltr"
                 />
@@ -146,7 +159,7 @@ export function RouletteSplit({
                   className="w-full bg-white text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
                 >
                   <Users className="w-5 h-5" />
-                  دش اللوبي
+                  دش جرب حظك
                 </button>
               </div>
             ) : (
@@ -202,7 +215,7 @@ export function RouletteSplit({
                     onClick={spin}
                     className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 font-black py-4 rounded-xl shadow-lg shadow-fuchsia-500/20 active:scale-95 transition-transform mt-4"
                   >
-                    قرّعهم يا وحش 🎰
+                    اضغط وخل الحظ يختار 🎰
                   </button>
                 )}
               </div>
@@ -217,18 +230,40 @@ export function RouletteSplit({
             animate={{ scale: 1, opacity: 1 }}
             className="flex flex-col items-center justify-center py-10 space-y-8"
           >
-            <div className="relative w-64 h-64 border-8 border-white/10 rounded-full flex items-center justify-center bg-black/50 overflow-hidden shadow-[0_0_100px_rgba(217,70,239,0.2)]">
-              <AnimatePresence mode="wait">
+            <div className="relative w-72 h-72 border-[12px] border-white/5 rounded-full flex flex-col items-center justify-center bg-black/60 overflow-hidden shadow-[0_0_100px_rgba(217,70,239,0.15)] ring-4 ring-fuchsia-500/20">
+              <div className="absolute inset-0 pointer-events-none border-[16px] border-fuchsia-500/10 rounded-full" />
+              <div className="absolute top-1/2 left-0 right-0 h-16 -translate-y-1/2 border-y-2 border-fuchsia-400/30 bg-fuchsia-400/5 z-0 pointer-events-none" />
+              
+              {!isSpinning && spun ? (
                 <motion.div
-                  key={displayIndex}
-                  initial={{ opacity: 0, y: 50, scale: 0.5 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -50, scale: 0.5 }}
-                  className="absolute text-3xl font-black text-fuchsia-400"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", bounce: 0.6 }}
+                  className="z-10 text-4xl font-black text-fuchsia-400 drop-shadow-[0_0_15px_rgba(217,70,239,0.8)]"
                 >
-                  {participants[displayIndex]?.name}
+                  {participants[loserIndex]?.name}
                 </motion.div>
-              </AnimatePresence>
+              ) : (
+                <div 
+                  className="flex flex-col items-center justify-start w-full z-10 absolute top-0"
+                  style={{
+                    transform: `translateY(calc(112px - ${displayIndex * 64}px))`,
+                    transition: isSpinning ? 'transform 0.08s linear' : 'none'
+                  }}
+                >
+                  {/* Duplicate participants to make it look like an endless wheel during fast spin */}
+                  {Array(30).fill(participants).flat().map((p: any, i: number) => (
+                    <div key={i} className="h-16 flex items-center justify-center w-full shrink-0">
+                       <span className={
+                         "font-black transition-all " +
+                         (isSpinning ? "text-fuchsia-300 text-3xl blur-[1px]" : "text-fuchsia-400 text-4xl")
+                       }>
+                         {p.name}
+                       </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {!isSpinning && spun && (
@@ -247,7 +282,7 @@ export function RouletteSplit({
                       onClick={() =>
                         handlePay(
                           mySpinName,
-                          order.customerPhone || "00000000",
+                          mySpinPhone || order.customerPhone || "00000000",
                           String(order.total),
                         )
                       }

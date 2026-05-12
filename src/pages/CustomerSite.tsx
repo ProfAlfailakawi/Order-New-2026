@@ -28,6 +28,8 @@ import {
   RefreshCcw,
   CheckCircle2,
   AlertTriangle,
+  CreditCard,
+  PartyPopper,
 } from "lucide-react";
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
@@ -581,77 +583,27 @@ export default function CustomerSite() {
 
     const loadData = async () => {
       try {
-        // Fetch products from local API
-        console.log("Fetching /api/products");
-        const productsData = (await fetchWithRetry("/api/products")) || [];
-        if (isMounted) setProducts(productsData);
-
-        // Fetch top products
-        console.log("Fetching /api/top-products");
-        const topProductsData =
-          (await fetchWithRetry("/api/top-products")) || [];
-        if (isMounted) setTopProducts(topProductsData);
-
-        // Fetch recent FOMO
-        const fomoData = (await fetchWithRetry("/api/recent-fomo", 1)) || [];
-        if (isMounted && Array.isArray(fomoData) && fomoData.length > 0) {
-          setFomoPurchases(fomoData);
-        }
-
-        // Fetch Regions from local API
-        const localRegionsData = (await fetchWithRetry("/api/regions")) || [];
-        // Sort regions alphabetically by name
-        const sortedRegions = [...localRegionsData].sort((a: any, b: any) =>
-          (a.name || "").localeCompare(b.name || "", "ar"),
-        );
-        if (isMounted) setRegions(sortedRegions);
-
-        // Fetch Settings
-        const settingsData = await fetchWithRetry("/api/settings");
-        if (isMounted && settingsData) setSettings(settingsData);
-
-        // Fetch Debug Info
-        const debugData = await fetchWithRetry("/api/debug", 1);
-        if (isMounted && debugData) console.log(debugData);
-
-        // Ensure splash screen shows for at least 2.5 seconds for a cinematic feel
-        const elapsedTime = Date.now() - startTime;
-        const minimumDisplayTime = 2500;
-        const remainingTime = Math.max(0, minimumDisplayTime - elapsedTime);
-
-        setTimeout(() => {
-          if (isMounted) setIsLoading(false);
-        }, remainingTime);
-      } catch (err: any) {
-        if (
-          err &&
-          err.message &&
-          (err.message.includes("Load failed") ||
-            err.message.includes("Failed to fetch"))
-        ) {
-          console.error({
-            error: "Failed to fetch top products. Network restarting?",
-            message: err.message,
-          });
-        } else {
-          console.error("Failed to fetch initial data:", err);
-          if (err instanceof Error) {
-            console.error("Error details:", err.stack);
-          } else {
-            console.error("Error details:", err);
-          }
-          console.error({
-            error: "Failed to fetch. Check network/CORS or server logs.",
-            message: err.message,
-            stack: err.stack,
-          });
-        }
-        if (isMounted) setIsLoading(false);
+        Promise.all([
+          fetchWithRetry("/api/products").then(d => { if (isMounted) setProducts(d || []); }),
+          fetchWithRetry("/api/top-products").then(d => { if (isMounted) setTopProducts(d || []); }),
+          fetchWithRetry("/api/recent-fomo", 1).then(d => { if (isMounted && Array.isArray(d) && d.length > 0) setFomoPurchases(d); }),
+          fetchWithRetry("/api/regions").then(d => { 
+            const sorted = [...(d || [])].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar"));
+            if (isMounted) setRegions(sorted);
+          }),
+          fetchWithRetry("/api/settings").then(d => { if (isMounted && d) setSettings(d); }),
+          fetchWithRetry("/api/debug", 1).then(d => { if (isMounted && d) console.log(d); })
+        ]).catch(console.error);
+      } catch (err) {
+        console.error("Error initiating fetch", err);
       }
     };
 
-    const startTime = Date.now();
     loadData();
+    // Guarantee splash screen drops after exactly 2.5 seconds
+    setTimeout(() => {
+      if (isMounted) setIsLoading(false);
+    }, 2500);
 
     // Auto-refresh every 15 seconds to keep data live (Best Sellers, New Arrivals, etc.)
     const refreshInterval = setInterval(loadData, 15000);
@@ -1116,7 +1068,7 @@ export default function CustomerSite() {
     ];
 
     const missingFields = requiredFields.filter(
-      (f) => !f.value || (f.key === "phone" && f.value.length < 8),
+      (f) => !f.value || (f.key === "phone" && f.value.length !== 8),
     );
 
     if (missingFields.length > 0) {
@@ -3226,7 +3178,7 @@ function CheckoutOverlay({
 }: any) {
   const [regionSearch, setRegionSearch] = useState("");
   const [showRegions, setShowRegions] = useState(false);
-  const [step, setStep] = useState<"cart" | "delivery">("cart");
+  const [step, setStep] = useState<"cart" | "delivery" | "payment">("cart");
 
   const filteredRegions = regions.filter(
     (r: any) =>
@@ -3254,7 +3206,8 @@ function CheckoutOverlay({
           <div className="flex items-center gap-4">
             <button
               onClick={() => {
-                if (step === "delivery") setStep("cart");
+                if (step === "payment") setStep("delivery");
+                else if (step === "delivery") setStep("cart");
                 else onClose();
               }}
               className="p-3 bg-stone-50 border border-stone-100 rounded-xl hover:bg-brand hover:text-white transition-all shadow-sm"
@@ -3263,7 +3216,7 @@ function CheckoutOverlay({
             </button>
             <div>
               <h2 className="text-xl font-black text-brand flex items-center gap-2">
-                {step === "cart" ? "قائمة طلباتك" : "بيانات التوصيل"}
+                {step === "cart" ? "قائمة طلباتك" : step === "payment" ? "اختر طريقة الدفع" : "بيانات التوصيل"}
               </h2>
             </div>
           </div>
@@ -3452,41 +3405,41 @@ function CheckoutOverlay({
                   </motion.div>
                 ))}
               </div>
-              <div className="pt-6 border-t border-stone-100 space-y-4 mt-6">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] items-center gap-1.5 font-bold text-stone-500 flex px-1">
-                    <Phone className="w-3 h-3 text-accent" /> رقم الهاتف للتواصل
+              <div className="pt-6 border-t border-stone-100 mt-6 hidden">
+                {/* Phone moved to delivery step */}
+              </div>
+            </div>
+          ) : step === "delivery" ? (
+            <div className="animate-in slide-in-from-left-4 fade-in duration-300 space-y-6 pt-2">
+                <div className="space-y-2">
+                  <label className="text-sm items-center gap-1.5 font-bold text-stone-700 flex px-1">
+                    <Phone className="w-4 h-4 text-accent" /> أدخل رقم هاتفك لإكمال الطلب
                   </label>
                   <input
                     type="tel"
                     inputMode="numeric"
-                    placeholder="9999 9999"
+                    placeholder="رقم الهاتف (8 أرقام)"
                     value={customerPhone}
                     pattern="[0-9]*"
                     onChange={(e) => {
-                      const val = normalizePhone(e.target.value);
-                      setCustomerPhone(val);
+                      const val = e.target.value.replace(/[^0-9]/g, "");
+                      if (val.length <= 8) {
+                        setCustomerPhone(val);
+                      }
                       if (isLocked) {
                         setIsLocked(false);
                         setCustomerName("");
-                        setAddress(INITIAL_ADDRESS);
+                        setAddress({ ...address, region: "", block: "", street: "", building: "" });
                         setCustomerPoints(0);
                       }
                     }}
-                    className="w-full px-5 py-4 bg-white border border-stone-200 rounded-xl focus:border-accent focus:ring-4 focus:ring-accent/10 outline-none transition-all placeholder:text-stone-300 text-brand font-black text-xl text-center tracking-[0.2em]"
+                    className="w-full px-5 py-4 bg-white border-2 border-accent/20 rounded-xl focus:border-accent focus:ring-4 focus:ring-accent/10 outline-none transition-all placeholder:text-stone-300 text-brand font-black text-2xl text-center tracking-[0.2em] shadow-sm"
                     dir="ltr"
                   />
-                  <p className="text-[10px] text-stone-400 text-center font-medium mt-1">
-                    حط رقم تليفونك، وبنجيك بطلباتك السابقة إذا موجودة.
-                  </p>
                 </div>
-              </div>
-            </div>
-          ) : (
-            <div className="animate-in slide-in-from-left-4 fade-in duration-300 space-y-6 pt-2">
-              <div className="space-y-4">
-                <div className="space-y-4">
-                  {/* Improved Region Selection with Search */}
+                {customerPhone.length >= 8 && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                    {/* Improved Region Selection with Search */}
                   <div className="space-y-1.5 relative">
                     <label className="text-[10px] items-center gap-1.5 font-bold text-stone-500 flex px-1">
                       <MapPin className="w-3 h-3" /> المنطقة
@@ -3671,7 +3624,7 @@ function CheckoutOverlay({
                       <div className="relative">
                         <input
                           type="text"
-                          placeholder="الاسم الكريم (مثال: بو محمد)"
+                          placeholder="يرجى ادخال بياناتك (الاسم)"
                           value={customerName}
                           onChange={(e) => {
                             setCustomerName(e.target.value);
@@ -3716,10 +3669,22 @@ function CheckoutOverlay({
                       className="w-full px-3 py-2.5 bg-white border border-stone-200 rounded-lg focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-medium text-sm min-h-[80px]"
                     />
                   </div>
-                </div>
-              </div>
+                  </div>
+                )}
             </div>
-          )}
+          ) : step === "payment" ? (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center justify-center space-y-6 pt-12 pb-8">
+              <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-2 shadow-sm">
+                <Check className="w-8 h-8 text-accent" />
+              </div>
+              <h3 className="text-2xl font-black text-brand text-center">طريقة الدفع</h3>
+              <p className="text-stone-500 text-center text-sm px-6 leading-relaxed">
+                مجموع طلبك طال عمرك هو <span className="font-black text-brand bg-stone-100 px-2 py-0.5 rounded-lg inline-block mx-1">{Number(itemsTotal + deliveryFee - discountAmount).toFixed(3)} د.ك</span>
+                <br />
+                اختار شلون حاب تدفع الفاتورة؟
+              </p>
+            </div>
+          ) : null}
         </div>
 
         {cart.length > 0 && (
@@ -3855,112 +3820,135 @@ function CheckoutOverlay({
               );
               return step === "cart" ? (
                 <button
-                  disabled={!isOpen || customerPhone.length < 8}
+                  disabled={!isOpen}
                   onClick={() => {
                     if (!isOpen) {
                       setFormError(message);
-                      return;
-                    }
-                    if (customerPhone.length < 8) {
-                      setFormError(
-                        "رقم التليفون لازم يكون 8 أرقام علشان نقدر نخدمك",
-                      );
                       return;
                     }
                     setStep("delivery");
                   }}
                   className={cn(
                     "w-full p-5 sm:p-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 text-lg group",
-                    isOpen && customerPhone.length >= 8
+                    isOpen
                       ? "bg-brand text-white shadow-[0_20px_40px_-10px_rgba(212,175,55,0.4)]"
                       : "bg-stone-100 border border-stone-200 text-stone-400 cursor-not-allowed",
                   )}
                 >
                   {!isOpen ? (
                     <span>{message}</span>
-                  ) : customerPhone.length < 8 ? (
-                    <span>حط رقم تليفونك علشان تكمل</span>
                   ) : (
-                    <span>كمل بياناتك يالغالي</span>
+                    <span>كمل بياناتك</span>
                   )}
                 </button>
-              ) : (
+              ) : step === "delivery" ? (
                 <div className="flex flex-col gap-3">
                   <button
-                    disabled={isSubmitting || !isOpen}
-                    onClick={
-                      customerPhone.length >= 8 && deliveryFee !== -1
-                        ? () => onSubmit(false)
-                        : () => {
-                            if (customerPhone.length < 8)
-                              setFormError(
-                                "رقم الهاتف يجب أن يتكون من 8 أرقام على الأقل",
-                              );
-                            else if (deliveryFee === -1)
-                              setFormError(
-                                "يرجى اختيار منطقة صحيحة من القائمة",
-                              );
-                            else if (!isOpen) setFormError(message);
-                          }
-                    }
+                    disabled={!isOpen}
+                    onClick={() => {
+                      if (customerPhone.length < 8) {
+                        setFormError("يرجى إدخال رقم هاتف صحيح مكون من 8 أرقام");
+                      } else if (deliveryFee === -1) {
+                        setFormError("يرجى اختيار منطقة صحيحة من القائمة");
+                      } else if (!customerName) {
+                        setFormError("يرجى ادخال بياناتك (الاسم)");
+                      } else if (!isOpen) {
+                        setFormError(message);
+                      } else {
+                        setFormError("");
+                        setStep("payment");
+                      }
+                    }}
                     className={cn(
                       "w-full p-5 sm:p-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 text-lg group",
-                      customerPhone.length >= 8 &&
-                        deliveryFee !== -1 &&
-                        !isSubmitting &&
-                        isOpen
+                      customerPhone.length === 8 && deliveryFee !== -1 && customerName && isOpen
                         ? "bg-brand text-white shadow-[0_20px_40px_-10px_rgba(212,175,55,0.4)]"
-                        : "bg-red-50 border border-red-100 text-red-500 cursor-not-allowed",
+                        : "bg-stone-100 border border-stone-200 text-stone-400 cursor-not-allowed",
+                    )}
+                  >
+                    {!isOpen ? (
+                      <span>{message}</span>
+                    ) : customerPhone.length < 8 ? (
+                      <span>يرجى إدخال رقم هاتف صحيح مكون من 8 أرقام</span>
+                    ) : deliveryFee === -1 ? (
+                      <span>اختار منطقة التوصيل يالغالي</span>
+                    ) : !customerName ? (
+                      <span>يرجى ادخال بياناتك</span>
+                    ) : (
+                      <>
+                        <Check className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        <span>ادفع الآن</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3 animate-in slide-in-from-bottom-4 fade-in duration-500">
+                  <button
+                    disabled={isSubmitting}
+                    onClick={() => onSubmit(false)}
+                    className={cn(
+                      "w-full p-4 sm:p-5 rounded-2xl font-bold flex items-center justify-between gap-3 transition-all active:scale-[0.98] text-lg group text-right",
+                      !isSubmitting
+                        ? "bg-brand text-white shadow-[0_20px_40px_-10px_rgba(212,175,55,0.4)] hover:bg-brand/90"
+                        : "bg-stone-200 text-stone-400 cursor-not-allowed",
                     )}
                   >
                     {isSubmitting ? (
                       <motion.div
                         animate={{ opacity: [1, 0.5, 1], scale: [1, 0.98, 1] }}
-                        transition={{
-                          repeat: Infinity,
-                          duration: 1.5,
-                          ease: "easeInOut",
-                        }}
-                        className="flex items-center gap-2"
+                        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                        className="flex items-center justify-center w-full gap-2"
                       >
                         <Sparkles className="w-5 h-5 opacity-80" />
                         <span>جاري تجهيز الطلب بأمان...</span>
                       </motion.div>
-                    ) : !isOpen ? (
-                      <span>{message}</span>
-                    ) : customerPhone.length >= 8 && deliveryFee !== -1 ? (
-                      <>
-                        <Check className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        <span>أكد وادفع</span>
-                      </>
-                    ) : deliveryFee === -1 ? (
-                      <span>اختار منطقة التوصيل يالغالي</span>
                     ) : (
-                      <span>كمل بيانات وتفاصيل التوصيل يالغالي</span>
+                      <>
+                        <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                             <CreditCard className="w-6 h-6 text-white" />
+                           </div>
+                           <div className="flex flex-col items-start gap-1">
+                             <span className="text-[17px]">تبي تدفعه كامل؟</span>
+                           </div>
+                        </div>
+                      </>
                     )}
                   </button>
 
-                  {customerPhone.length >= 8 &&
-                    deliveryFee !== -1 &&
-                    !isSubmitting &&
-                    isOpen && (
-                      <div className="flex flex-col gap-3">
-                        <button
-                          onClick={() => onSubmit("traditional")}
-                          className="w-full bg-stone-100 text-brand rounded-2xl p-4 shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-3 font-bold hover:bg-stone-200"
-                        >
-                          <Layers className="w-5 h-5 text-accent" />
-                          <span>شارك الفاتورة بالطريقة التقليدية (قطيّة) 🔗</span>
-                        </button>
-                        <button
-                          onClick={() => onSubmit("roulette")}
-                          className="w-full bg-fuchsia-600 text-white rounded-2xl p-4 shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-3 font-bold hover:bg-fuchsia-700"
-                        >
-                          <Sparkles className="w-5 h-5" />
-                          <span>روليت القطية (عجلة الحظ للشباب) 🎯</span>
-                        </button>
-                      </div>
-                    )}
+                  {!isSubmitting && (
+                    <>
+                      <button
+                        onClick={() => onSubmit("traditional")}
+                        className="w-full bg-stone-100 text-brand rounded-2xl p-4 sm:p-5 shadow-sm active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-stone-200 text-lg border border-stone-200 text-right"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-white border border-stone-200 rounded-xl flex items-center justify-center shrink-0">
+                            <Layers className="w-6 h-6 text-accent" />
+                          </div>
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="text-[17px]">تبيها قطية؟</span>
+                            <span className="text-[10px] font-medium text-stone-500 uppercase tracking-widest">قسم الفاتورة بمبالغ على ربعك</span>
+                          </div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => onSubmit("roulette")}
+                        className="w-full bg-fuchsia-600 text-white rounded-2xl p-4 sm:p-5 shadow-md active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-fuchsia-700 text-lg text-right"
+                      >
+                         <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                             <PartyPopper className="w-6 h-6 text-white" />
+                           </div>
+                           <div className="flex flex-col items-start gap-1">
+                             <span className="text-[17px]">وهق غيرك 🎰</span>
+                             <span className="text-[10px] font-medium opacity-80 uppercase tracking-widest">الخاسر باللعبة يدفع الفاتورة!</span>
+                           </div>
+                        </div>
+                      </button>
+                    </>
+                  )}
                 </div>
               );
             })()}
