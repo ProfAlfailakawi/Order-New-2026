@@ -176,6 +176,16 @@ export default function CustomerSite() {
     }
   }, [psychMessage]);
 
+  // Auto-dismiss Flash Sale after 4 seconds
+  useEffect(() => {
+    if (showFlashSale) {
+      const timer = setTimeout(() => {
+        setShowFlashSale(false);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [showFlashSale]);
+
   // Golden Hour Themes: Morning, Noon, Night ambiance with varied phrases
   const goldenHourTheme = useMemo(() => {
     const hour = new Date().getHours();
@@ -2043,10 +2053,14 @@ export default function CustomerSite() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              onClick={() => setShowFlashSale(false)}
               className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[200] flex flex-col items-center justify-center p-6"
             >
               <button
-                onClick={() => setShowFlashSale(false)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowFlashSale(false);
+                }}
                 className="absolute top-6 left-6 text-white/50 hover:text-white transition-colors bg-white/10 rounded-full p-2"
               >
                 <X className="w-6 h-6" />
@@ -2054,6 +2068,7 @@ export default function CustomerSite() {
               <motion.div
                 initial={{ scale: 0.8, y: 50 }}
                 animate={{ scale: 1, y: 0 }}
+                onClick={(e) => e.stopPropagation()}
                 className="text-center w-full max-w-sm"
               >
                 <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl relative border-4 border-white overflow-hidden">
@@ -2082,7 +2097,8 @@ export default function CustomerSite() {
                   ؟ الطعم الأصيل اللي راح يغير مزاجك اليوم.
                 </p>
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setShowFlashSale(false);
                     setSelectedProduct(smartPick?.item);
                   }}
