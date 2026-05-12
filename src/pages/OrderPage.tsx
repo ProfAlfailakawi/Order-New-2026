@@ -1047,7 +1047,12 @@ export default function OrderPage() {
                   {/* Story Gradient Background */}
                   <motion.div
                     animate={{
-                      background: getStatusDisplay(selectedOrder).text.includes(
+                      background: getStatusDisplay(selectedOrder).text.includes("ملغي")
+                        ? [
+                            "radial-gradient(circle at 50% 50%, #450a0a 0%, #1c1917 100%)",
+                            "radial-gradient(circle at 50% 50%, #7f1d1d 0%, #1c1917 100%)",
+                          ]
+                        : getStatusDisplay(selectedOrder).text.includes(
                         "توصيل",
                       )
                         ? [
@@ -1379,7 +1384,9 @@ export default function OrderPage() {
                       animate={{ y: 0, opacity: 1 }}
                       className="text-white text-2xl font-black drop-shadow-md"
                     >
-                      {getStatusDisplay(selectedOrder).text.includes("فشل")
+                      {getStatusDisplay(selectedOrder).text.includes("ملغي")
+                        ? "تم إلغاء الطلب"
+                        : getStatusDisplay(selectedOrder).text.includes("فشل")
                         ? "فشل الدفع"
                         : getStatusDisplay(selectedOrder).text.includes("توصيل")
                           ? "في الطريق إليك!"
@@ -1404,7 +1411,9 @@ export default function OrderPage() {
                       transition={{ delay: 0.1 }}
                       className="text-white/70 text-sm font-medium px-4 leading-relaxed max-w-sm mx-auto"
                     >
-                      {getStatusDisplay(selectedOrder).text.includes("فشل")
+                      {getStatusDisplay(selectedOrder).text.includes("ملغي")
+                        ? "نعتذر، الفاتورة ملغية أو انتهى وقت القطية وما اكتمل المبلغ. للإستفسار تواصل معانا."
+                        : getStatusDisplay(selectedOrder).text.includes("فشل")
                         ? "نعتذر، محاولة الدفع فشلت. يرجى المحاولة مرة أخرى."
                         : getStatusDisplay(selectedOrder).text.includes("توصيل")
                           ? "تبي المندوب ينتبه لشي معين بالطريج أو الموقع؟ تواصل ويانا بالواتساب وبلغنا."

@@ -175,13 +175,15 @@ async function startServer() {
 
       const finalOrders = allMatched;
 
-      // Find customer points
+      // Find customer points dynamically from invoices
       let points = 0;
-      customers.forEach((c: any) => {
-        if (c.phone && cleanPhone(c.phone) === cleanQueryPhone) {
-          points = c.loyaltyPoints || 0;
+      allInvoices.forEach((inv: any) => {
+        const invPhone = cleanPhone(inv.customerPhone || inv.phone || "");
+        if (invPhone === cleanQueryPhone) {
+          points += Number(inv.total) || 0;
         }
       });
+      points = Math.floor(points);
 
       // Sort by date descending
       finalOrders.sort((a: any, b: any) => {
@@ -499,6 +501,17 @@ async function startServer() {
       const d = await getDoc(doc(db, "appData", "shared_company_data"));
       const data = d.data() || {};
       const customers = data.customers || [];
+      const invoices = data.invoices || [];
+
+      // Calculate total points dynamically from invoices
+      let dynamicPoints = 0;
+      invoices.forEach((inv: any) => {
+        const invPhone = cleanPhone(inv.customerPhone || inv.phone || "");
+        if (invPhone === cleanQueryPhone) {
+          dynamicPoints += Number(inv.total) || 0;
+        }
+      });
+      dynamicPoints = Math.floor(dynamicPoints);
 
       let matchedCustomers: any[] = [];
       customers.forEach((customer: any) => {
@@ -506,7 +519,7 @@ async function startServer() {
         if (phoneField && cleanPhone(phoneField) === cleanQueryPhone) {
           matchedCustomers.push({
             ...customer,
-            loyaltyPoints: customer.loyaltyPoints || customer.points || 0,
+            loyaltyPoints: dynamicPoints,
           });
         }
       });

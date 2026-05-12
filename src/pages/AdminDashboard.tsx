@@ -74,8 +74,11 @@ export default function AdminDashboard() {
   const getCustomerPoints = (phone?: string) => {
     if (!phone) return 0;
     const cleanQuery = cleanPhone(phone);
-    const customer = customers.find(c => cleanPhone(c.phone) === cleanQuery || cleanPhone(c.customerPhone) === cleanQuery);
-    return Math.floor(customer?.loyaltyPoints || 0);
+    const totalPoints = invoices.filter(inv => {
+      const invPhone = cleanPhone(inv.customerPhone || inv.phone || "");
+      return invPhone === cleanQuery;
+    }).reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
+    return Math.floor(totalPoints);
   };
 
   useEffect(() => {
