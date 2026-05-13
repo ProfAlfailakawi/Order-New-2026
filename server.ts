@@ -588,16 +588,16 @@ async function startServer() {
         }
       });
 
-      // 1. Top products by quantity (Total Quantity)
+      // 1. Top products by quantity (Total Quantity) - take top 15
       const byQuantity = [...products]
         .filter((p) => (productStats[p.id]?.count || 0) > 0)
         .sort(
           (a, b) =>
             (productStats[b.id]?.count || 0) - (productStats[a.id]?.count || 0),
         )
-        .slice(0, 3);
+        .slice(0, 15);
 
-      // 2. Top products by sales amount (Total Sales)
+      // 2. Top products by sales amount (Total Sales) - take top 15
       const byRevenue = [...products]
         .filter((p) => (productStats[p.id]?.revenue || 0) > 0)
         .sort(
@@ -605,14 +605,29 @@ async function startServer() {
             (productStats[b.id]?.revenue || 0) -
             (productStats[a.id]?.revenue || 0),
         )
-        .slice(0, 3);
+        .slice(0, 15);
 
       // Mix both and remove duplicates
       const mixedMap = new Map();
       byQuantity.forEach((p) => mixedMap.set(p.id, p));
       byRevenue.forEach((p) => mixedMap.set(p.id, p));
 
-      let topProductsList = Array.from(mixedMap.values()).slice(0, 6);
+      let allTopProducts = Array.from(mixedMap.values());
+      
+      // If we don't have enough data, fallback to active products
+      if (allTopProducts.length < 6) {
+        const fallbacks = [...products].filter(p => !p.isHidden && !p.isOutOfStock).slice(0, 20);
+        fallbacks.forEach(p => {
+          if (!mixedMap.has(p.id)) {
+            allTopProducts.push(p);
+            mixedMap.set(p.id, p);
+          }
+        });
+      }
+
+      // Randomly select 6 products from the pool so it changes on every load
+      const shuffled = allTopProducts.sort(() => 0.5 - Math.random());
+      let topProductsList = shuffled.slice(0, 6);
 
       res.json(topProductsList);
     } catch (error) {

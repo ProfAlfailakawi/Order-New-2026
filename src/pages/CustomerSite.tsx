@@ -153,6 +153,27 @@ export default function CustomerSite() {
   const [fomoPurchases, setFomoPurchases] = useState<any[]>([]);
   const [fomoIndex, setFomoIndex] = useState(0);
   const [showFomo, setShowFomo] = useState(false);
+  const moodPlaceholders = useMemo(() => [
+    "شلون مزاجك اليوم؟ أو عندك عزيمة؟ اكتب ونفزع لك! 👨‍🍳",
+    "شنو بخاطرك اليوم؟ اكتب اللي بقلبك ومالك إلا يرضيك 🎯",
+    "يوعان ومحتار؟ عطني وضعك وأنا أضبطك 🚀",
+    "متوهق بضيوف فجأة؟ الفزعة عندي، بس اكتب 🏃‍♂️",
+    "مشتهي شيء معين؟ لا تدور.. اكتب وأنا أجيبه لك 🌟",
+    "مزاجك يبي شيء خفيف والا دسم؟ سولف لي 🍔"
+  ], []);
+
+  const [currentPlaceholder, setCurrentPlaceholder] = useState(moodPlaceholders[0]);
+
+  useEffect(() => {
+    const getRand = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
+    setCurrentPlaceholder(getRand(moodPlaceholders));
+    
+    const interval = setInterval(() => {
+        setCurrentPlaceholder(getRand(moodPlaceholders));
+    }, 4000);
+    
+    return () => clearInterval(interval);
+  }, [moodPlaceholders]);
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [activeStory, setActiveStory] = useState<string>("الكل");
   const [showFlashSale, setShowFlashSale] = useState(false);
@@ -610,20 +631,23 @@ export default function CustomerSite() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (fomoPurchases.length === 0 || isCheckout) return;
-    const showT = setTimeout(() => setShowFomo(true), 60000); // 60s hidden between each
+    if (fomoPurchases.length === 0 || isCheckout) {
+      if (isCheckout) setShowFomo(false);
+      return;
+    }
+    const showT = setTimeout(() => setShowFomo(true), 15000); // Wait 15s
     const hideT = setTimeout(() => {
       setShowFomo(false);
       setTimeout(() => {
         setFomoIndex((p) => (p + 1) % fomoPurchases.length);
       }, 500);
-    }, 68000); // visible for 8s (60s + 8s)
+    }, 20000); // Hide 5s later
 
     return () => {
       clearTimeout(showT);
       clearTimeout(hideT);
     };
-  }, [fomoPurchases, fomoIndex, isCheckout]);
+  }, [fomoPurchases.length, fomoIndex, isCheckout]);
 
   function getRelativeTime(timestamp: string | number) {
     if (!timestamp) return "قبل قليل";
@@ -2062,9 +2086,13 @@ export default function CustomerSite() {
             <div className="bg-white rounded-[24px] shadow-sm border border-stone-100 p-2 flex flex-col gap-2 relative z-20">
               <div className="flex items-center bg-stone-50 rounded-2xl px-4 py-3">
                 <Search className="w-5 h-5 text-accent mr-2" />
-                <input
+                <motion.input
+                  key={currentPlaceholder}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
                   type="text"
-                  placeholder="شلون مزاجك اليوم؟ أو عندك عزيمة؟ اكتب ونفزع لك!"
+                  placeholder={currentPlaceholder}
                   value={moodQuery}
                   onChange={(e) => setMoodQuery(e.target.value)}
                   className="bg-transparent w-full outline-none text-sm font-bold text-brand placeholder:text-stone-400 placeholder:font-medium"
