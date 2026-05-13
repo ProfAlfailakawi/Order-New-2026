@@ -34,6 +34,7 @@ export default function SplitPayment() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const paymentStatus = searchParams.get("payment");
+  const urlName = searchParams.get("name");
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -306,7 +307,18 @@ export default function SplitPayment() {
       }
     } catch (e: any) {
       console.error("SplitPayment handlePay error:", e);
-      alert("فشل في الاتصال بالخادم: " + (e.message || "حدث خطأ غير متوقع"));
+      if (
+        e &&
+        e.message &&
+        (e.message.includes("Load failed") ||
+          e.message.includes("Failed to fetch"))
+      ) {
+        alert(
+          "فشل الاتصال بالخادم. يبدو أن الخادم قيد إعادة التشغيل لتطبيق التحديثات. يرجى الانتظار والمحاولة مرة أخرى.",
+        );
+      } else {
+        alert("فشل في الاتصال بالخادم: " + (e.message || "حدث خطأ غير متوقع"));
+      }
       setIsSubmitting(false);
     }
   };
@@ -347,7 +359,7 @@ export default function SplitPayment() {
     order.paymentStatus === "paid";
 
   if ((order as any).splitType === "roulette") {
-    return <RouletteSplit order={order} handlePay={handlePay} />;
+    return <RouletteSplit order={order} handlePay={handlePay} paymentStatus={paymentStatus} urlName={urlName} />;
   }
 
   return (
@@ -405,7 +417,7 @@ export default function SplitPayment() {
                 <Check className="w-8 h-8 text-[#25D366]" strokeWidth={3} />
               </div>
               <div className="text-center relative z-10">
-                <h3 className="text-2xl font-black mb-1">تسلم الأيادي!</h3>
+                <h3 className="text-2xl font-black mb-1">تسلم الأيادي{urlName ? ` يا ${urlName}` : ""}!</h3>
                 <p className="text-white/90 font-medium">وصل الدفع وتم تسجيل قطيتك بنجاح</p>
               </div>
             </motion.div>
@@ -423,7 +435,7 @@ export default function SplitPayment() {
                 <AlertCircle className="w-8 h-8 text-red-500" strokeWidth={3} />
               </div>
               <div className="text-center relative z-10">
-                <h3 className="text-2xl font-black mb-1">فشلت العملية</h3>
+                <h3 className="text-2xl font-black mb-1">فشلت العملية{urlName ? ` يا ${urlName}` : ""}</h3>
                 <p className="text-white/90 font-medium">عذراً، لم نتمكن من سحب المبلغ، جرب مرة ثانية</p>
               </div>
             </motion.div>
@@ -479,6 +491,11 @@ export default function SplitPayment() {
                 <CreditCard className="w-5 h-5 text-accent" />
                 قطيتك
               </h3>
+              {!paymentStatus && (
+                <div className="bg-brand/5 border border-brand/10 p-3 rounded-xl text-brand font-bold text-sm mb-4">
+                  {urlName ? `ترا ناطرين تحويلك يا ${urlName} 💸😎` : "اذا ما دفعت قطيتك، ادفعها الحين ولا تصير البخيل باللمة! 💸😂"}
+                </div>
+              )}
               <div className="space-y-4">
                 <div>
                   <label className="text-xs font-bold text-stone-500 mb-1 block">
