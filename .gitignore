@@ -8,3 +8,8 @@ dist/
 functions/.env
 functions/node_modules/
 functions/firebase-debug.log
+_security_backup/
+*.disabled
+.env.*
+test*.js
+test*.cjs
