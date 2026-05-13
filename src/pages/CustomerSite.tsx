@@ -1421,7 +1421,9 @@ export default function CustomerSite() {
       message += `- ${item.name} (${item.quantity}): ${itemTotal} د.ك\n`;
       if (item.selectedOption) message += `  الخيار: ${item.selectedOption}\n`;
       if (item.selectedExtras && item.selectedExtras.length > 0) {
-        message += `  الإضافات: ${item.selectedExtras.map((e: any) => e.name).join(", ")}\n`;
+        message += `  الإضافات: ${item.selectedExtras
+          .map((e: any) => e.name)
+          .join(", ")}\n`;
       }
       if (item.note) message += `  ملاحظة للمنتج: ${item.note}\n`;
     });
@@ -1471,28 +1473,37 @@ export default function CustomerSite() {
     const hour = today.getHours();
     const month = today.getMonth();
 
-    let popularProducts = products.filter(
-      (p) => !p.isOutOfStock && (p.basePrice || p.price || 0) < 15,
+    // Intelligent Product Selection based on time
+    const riceProducts = products.filter(
+      (p) =>
+        !p.isOutOfStock &&
+        (p.name?.includes("مجبوس") ||
+          p.name?.includes("عيش") ||
+          p.name?.includes("برياني") ||
+          p.name?.includes("مطبق")),
     );
-    if (popularProducts.length === 0)
-      popularProducts = products.filter(
-        (p) => (p.basePrice || p.price || 0) < 15,
-      );
-    if (popularProducts.length === 0)
-      popularProducts = products.filter((p) => !p.isOutOfStock); // Final fallback if all > 15
-    if (popularProducts.length === 0) popularProducts = products;
-    let fallbackMeals = ["مجبوس", "مطبق بريميم", "عيش ولحم", "مربين", "برياني"];
-    const randomProduct =
-      popularProducts.length > 0
-        ? popularProducts[Math.floor(Math.random() * popularProducts.length)]
-            .name
-        : fallbackMeals[Math.floor(Math.random() * fallbackMeals.length)];
+    const snackProducts = products.filter(
+      (p) =>
+        !p.isOutOfStock &&
+        (p.name?.includes("ورق عنب") ||
+          p.name?.includes("محاشي") ||
+          p.name?.includes("كبة") ||
+          p.name?.includes("سمبوسة") ||
+          p.category?.includes("جانبي")),
+    );
+    const allAvailable = products.filter((p) => !p.isOutOfStock);
 
-    const getRand = (arr: string[]) =>
-      arr[Math.floor(Math.random() * arr.length)];
+    const getRand = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
+
+    const getRandomProductName = (list: any[], fallback: string) => {
+      if (list.length > 0) return getRand(list).name;
+      if (allAvailable.length > 0) return getRand(allAvailable).name;
+      return fallback;
+    };
 
     // Context 1: Friday Gathering (Friday 11 AM to 4 PM)
     if (day === 5 && hour >= 11 && hour <= 16) {
+      const product = getRandomProductName(riceProducts, "مجبوس لحم");
       return {
         type: "friday",
         colors: "bg-green-800",
@@ -1502,8 +1513,8 @@ export default function CustomerSite() {
           "يا حياكم الله بزوارة الجمعة",
         ]),
         desc: getRand([
-          `جربتوا ${randomProduct} بلمتكم اليوم؟`,
-          `اختار اللي يرضي كل الأذواق.. ${randomProduct} زاهب`,
+          `جربتوا ${product} بلمتكم اليوم؟`,
+          `اختار اللي يرضي كل الأذواق.. ${product} زاهب`,
         ]),
         image:
           "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2670&auto=format&fit=crop",
@@ -1512,8 +1523,9 @@ export default function CustomerSite() {
       };
     }
 
-    // Context 2: Winter/Cold (Let's just use months Nov to Feb as a proxy, and simulate rain)
+    // Context 2: Winter/Cold (Nov to Feb)
     if (month === 0 || month === 1 || month === 10 || month === 11) {
+      const product = getRandomProductName(allAvailable, "مطبق بريميم");
       return {
         type: "winter",
         colors: "bg-[#5b3c11]", // Warm winter dark color
@@ -1523,8 +1535,8 @@ export default function CustomerSite() {
           "الجو يبيله أكل دافي",
         ]),
         desc: getRand([
-          `أجواء الشتاء يبيلها ${randomProduct} حار يطيب خاطرك`,
-          `عليك بـ ${randomProduct} بهالجو البارد`,
+          `أجواء الشتاء يبيلها ${product} حار يطيب خاطرك`,
+          `عليك بـ ${product} بهالجو البارد`,
         ]),
         image:
           "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2670&auto=format&fit=crop",
@@ -1533,15 +1545,30 @@ export default function CustomerSite() {
       };
     }
 
-    // Context 3: Morning
+    // Context 3: Morning (5 AM - 11 AM)
     if (hour >= 5 && hour < 11) {
+      // Special logic for 10 AM (Lunch Prep)
+      if (hour === 10) {
+        const product = getRandomProductName(riceProducts, "مجبوس دجاج");
+        return {
+          type: "morning",
+          colors: "bg-[#b67332]",
+          title: "تجهز لغداك؟ 🍲",
+          desc: `الساعة ١٠ والطلب يبيله وقت.. اطلب ${product} الحين ويوصلك على الغدا`,
+          image:
+            "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2670&auto=format&fit=crop",
+          overlay: "from-[#3a250a]/95 via-[#b67332]/70 to-transparent",
+          showSteam: true,
+        };
+      }
+      const product = getRandomProductName(snackProducts, "ريوق كويتي");
       return {
         type: "morning",
         colors: "bg-[#b67332]",
         title: getRand(["صباح الخير والنوير 🌻", "يا صباح السعادة والرضا ☀️"]),
         desc: getRand([
-          `ريوقك يكمل مع ${randomProduct} 🇰🇼`,
-          `صباحك كويتي.. طلبك المفضل من ${randomProduct} زاهب`,
+          `ريوقك يكمل مع ${product} 🇰🇼`,
+          `صباحك كويتي.. طلبك المفضل من ${product} زاهب`,
         ]),
         image:
           "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2670&auto=format&fit=crop",
@@ -1552,6 +1579,12 @@ export default function CustomerSite() {
 
     // Context 4: Lunch time
     if (hour >= 11 && hour < 16) {
+      // Occasionally recommend mahashi for lunch as per user's note
+      const useSnack = Math.random() > 0.7;
+      const product = useSnack
+        ? getRandomProductName(snackProducts, "ورق عنب")
+        : getRandomProductName(riceProducts, "مجبوس لحم");
+
       return {
         type: "lunch",
         colors: "bg-brand",
@@ -1561,8 +1594,8 @@ export default function CustomerSite() {
           "حان وقت الغدا",
         ]),
         desc: getRand([
-          `وقت الغدا يبيله ${randomProduct} 😋`,
-          `شنو بخاطرك للغدا؟ جرب ${randomProduct} القوي`,
+          `وقت الغدا يبيله ${product} 😋`,
+          `شنو بخاطرك للغدا؟ جرب ${product} القوي`,
         ]),
         image:
           "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2670&auto=format&fit=crop",
@@ -1573,14 +1606,29 @@ export default function CustomerSite() {
 
     // Context 5: Late Night
     if (hour >= 22 || hour < 3) {
+      // Intelligent Night variation: sometimes rice, sometimes snacks
+      const isRiceDesired = Math.random() > 0.5;
+      const product = isRiceDesired
+        ? getRandomProductName(riceProducts, "مجبوس لحم (نعيمي)")
+        : getRandomProductName(snackProducts, "ورق عنب");
+
+      const title = getRand([
+        "يوعان بآخر الليل؟ 🌙",
+        "عشاك سنع ويعدل المزاج 🌙",
+      ]);
+
+      let desc = "";
+      if (product.includes("مجبوس") || product.includes("لحم")) {
+        desc = `سهرتك يبيلها ${product} يضبط المزاج`;
+      } else {
+        desc = `جوع آخر الليل ماله إلا ${product} الخفيف السنع`;
+      }
+
       return {
         type: "night",
         colors: "bg-[#1a1c29]",
-        title: getRand(["يوعان بآخر الليل؟ 🌙", "عشاك سنع ويعدل المزاج 🌙"]),
-        desc: getRand([
-          `سهرتك يبيلها ${randomProduct} يضبط المزاج`,
-          `جوع آخر الليل ماله إلا ${randomProduct}`,
-        ]),
+        title: title,
+        desc: desc,
         image:
           "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2670&auto=format&fit=crop",
         overlay: "from-[#1a1c29]/95 via-[#1a1c29]/80 to-transparent",
@@ -1589,18 +1637,18 @@ export default function CustomerSite() {
     }
 
     // Default
+    const product = getRandomProductName(allAvailable, "مطبق بريميم");
     return {
       type: "default",
       colors: "bg-brand",
       title: getRand(["المذاق الأصيل", "نكهات كويتية أصيلة", "طعم يوديك بعيد"]),
       desc: getRand([
         "حيث يجتمع الماضي بالحاضر",
-        `جرب ${randomProduct} واستمتع بالطعم الصح`,
-        `محتار؟ عليك بـ ${randomProduct}`,
+        `جرب ${product} واستمتع بالطعم الصح`,
+        `محتار؟ عليك بـ ${product}`,
       ]),
       image:
-        randomProduct &&
-        (randomProduct.includes("لحم") || randomProduct.includes("مجبوس"))
+        product && (product.includes("لحم") || product.includes("مجبوس"))
           ? "https://images.unsplash.com/photo-1544124499-58912cbddaad?q=80&w=2670&auto=format&fit=crop"
           : "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2670&auto=format&fit=crop",
       overlay: "from-brand/95 via-brand/50 to-transparent",
