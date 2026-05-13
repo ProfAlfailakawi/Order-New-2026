@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Tajawal", ui-sans-serif, system-ui, sans-serif;
+  --color-brand: #1a2e22; /* rich dark green */
+  --color-accent: #b45309; /* warm terracotta/amber */
+  --color-background: #fafaf9; /* stone-50 */
+}
+
+@layer base {
+  body {
+    @apply bg-background text-brand font-sans antialiased;
+    direction: rtl;
+    -webkit-tap-highlight-color: transparent;
+    /* Force English digits for standard numbers */
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  
+  button, 
+  [role="button"],
+  a,
+  input[type="submit"],
+  input[type="reset"],
+  input[type="button"] {
+    cursor: pointer;
+  }
+}
+
+/* RTL Helpers */
+[dir="rtl"] {
+  text-align: right;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.premium-shadow {
+  box-shadow: 0 10px 30px -10px rgba(26, 46, 34, 0.1);
+}
+
+.theme-evening {
+  --color-brand: #183326;
+  --color-accent: #b07d35; /* elegant warm gold/bronze for evening */
+  --color-background: #fdfaf5; /* creamy light white */
+  
+  --color-white: #ffffff;
+  --color-stone-50: #fbf9f3;
+  --color-stone-100: #f3efdf;
+  --color-stone-200: #e4decb;
+  --color-stone-300: #d1c9b4;
+  --color-stone-400: #a8a08c;
+  --color-stone-500: #8c8572;
+  --color-stone-600: #6b6452;
+  --color-stone-800: #3a362a;
+}
+
+body {
+  transition: background-color 1s ease, color 1s ease;
+}
+
+

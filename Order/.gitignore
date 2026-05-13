@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.firebase/
+.env
+*.log
+.DS_Store
+*.backup.ts
+functions/.env
+functions/node_modules/
+functions/firebase-debug.log
+
+# Security: disabled payment test files and local backups
+*.disabled
+_security_backup/
