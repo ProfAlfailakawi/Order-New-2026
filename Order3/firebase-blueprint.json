@@ -1,0 +1,22 @@
+{
+  "entities": {
+    "StoreSettings": {
+      "title": "Store Settings",
+      "description": "Configuration for store availability",
+      "type": "object",
+      "properties": {
+        "isOpen": { "type": "boolean" },
+        "manualClose": { "type": "boolean" },
+        "closeMessage": { "type": "string" },
+        "openingHours": { "type": "object" }
+      },
+      "required": ["isOpen", "manualClose"]
+    }
+  },
+  "firestore": {
+    "settings/storeStatus": {
+      "schema": "StoreSettings",
+      "description": "Store availability settings"
+    }
+  }
+}
