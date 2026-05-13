@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
+import { doc, getDocFromServer } from "firebase/firestore";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -707,7 +708,19 @@ export default function CustomerSite() {
     const loadData = async () => {
       try {
         Promise.all([
-          fetchWithRetry("/api/products").then(d => { if (isMounted) setProducts(d || []); }),
+          getDocFromServer(doc(db, "appData", "shared_company_data")).then(snapshot => {
+            if (!isMounted) return;
+            if (snapshot.exists()) {
+              const data: any = snapshot.data();
+              const allProducts = [
+                ...(Array.isArray(data.products) ? data.products : []),
+                ...(Array.isArray(data.supplierCopies) ? data.supplierCopies : [])
+              ];
+              setProducts(allProducts);
+            } else {
+              setProducts([]);
+            }
+          }),
           fetchWithRetry("/api/top-products").then(d => { if (isMounted) setTopProducts(d || []); }),
           fetchWithRetry("/api/recent-fomo", 1).then(d => { 
              if (isMounted && Array.isArray(d) && d.length > 0) {
