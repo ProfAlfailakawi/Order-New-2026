@@ -32,9 +32,10 @@ const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export default function SplitPayment() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const paymentStatus = searchParams.get("payment");
-  const urlName = searchParams.get("name");
+  const rawUrlName = searchParams.get("name");
+  const urlName = rawUrlName ? rawUrlName.split('?')[0].split('&')[0] : "";
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -434,9 +435,20 @@ export default function SplitPayment() {
               <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-inner relative z-10">
                 <AlertCircle className="w-8 h-8 text-red-500" strokeWidth={3} />
               </div>
-              <div className="text-center relative z-10">
-                <h3 className="text-2xl font-black mb-1">فشلت العملية{urlName ? ` يا ${urlName}` : ""}</h3>
-                <p className="text-white/90 font-medium">عذراً، لم نتمكن من سحب المبلغ، جرب مرة ثانية</p>
+              <div className="text-center relative z-10 w-full">
+                <h3 className="text-2xl font-black mb-1">فشلت العملية{urlName ? ` يا ${urlName}` : ""} 💔</h3>
+                <p className="text-white/90 font-medium mb-4">ما انخصم شيء من حسابك، شكلها عين! جرب تدفع مرة ثانية</p>
+                <button 
+                  onClick={() => {
+                    searchParams.delete("payment");
+                    searchParams.delete("name");
+                    searchParams.delete("payment_id");
+                    setSearchParams(searchParams);
+                  }}
+                  className="bg-white/20 hover:bg-white/30 text-white w-full py-3 rounded-xl font-bold transition-colors border border-white/30"
+                >
+                  جرب مرة ثانية 🔄
+                </button>
               </div>
             </motion.div>
           )}

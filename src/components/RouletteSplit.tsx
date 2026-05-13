@@ -342,8 +342,9 @@ export function RouletteSplit({
                 {loser === mySpinName ? (
                   <div className="p-6 bg-red-500/20 border border-red-500/50 rounded-3xl text-red-100 space-y-4">
                     {paymentStatus === "failed" && (
-                      <div className="bg-red-600 border border-red-400 p-3 rounded-lg text-white font-black animate-bounce shadow-[0_0_15px_rgba(220,38,38,0.5)]">
-                        فشلت العملية يا {urlName || mySpinName}، ماكو فكة من الدفع! جرب مرة ثانية. 😂
+                      <div className="bg-red-600 border border-red-400 p-4 rounded-xl text-white font-black animate-bounce shadow-[0_0_15px_rgba(220,38,38,0.5)] flex flex-col gap-2">
+                        <span>فشلت العملية يا {urlName || mySpinName} 💔</span>
+                        <span className="text-sm font-bold opacity-90">ما انخصم شيء من حسابك، شكلها عين! جرب تدفع مرة ثانية 😂</span>
                       </div>
                     )}
                     <h2 className="text-2xl font-black">{loserContent.title}</h2>
