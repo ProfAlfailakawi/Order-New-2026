@@ -29,6 +29,18 @@ export function RouletteSplit({
   );
   const [activeIndex, setActiveIndex] = useState(0);
 
+  const errorMsg = React.useMemo(() => {
+    const errorMsgs = [
+      "ما انخصم شيء من حسابك، شكلها عين! جرب تدفع مرة ثانية 😂",
+      "الرصيد زعلان ولا شسالفة؟ جرب مرة ثانية 💳",
+      "البنك يقول لا.. بس إحنا نقول ماكو فكة، حاول مرة ثانية! 🏦",
+      "شكلها الشبكة فصلت عليك، جرب مرة ثانية 📡",
+      "فلوسك عزيزة عليك؟ ادفع مرة ثانية وخلصنا! 💸😆",
+      "عمليتك ما مشت، لا تحاتي ما راح شيء.. طق مرة ثانية 🔄"
+    ];
+    return errorMsgs[Math.floor(Math.random() * errorMsgs.length)];
+  }, []);
+
   const join = async () => {
     if (!name.trim()) return;
     if (phone.length !== 8) return alert("يرجى إدخال رقم هاتف صحيح مكون من 8 أرقام");
@@ -344,7 +356,7 @@ export function RouletteSplit({
                     {paymentStatus === "failed" && (
                       <div className="bg-red-600 border border-red-400 p-4 rounded-xl text-white font-black animate-bounce shadow-[0_0_15px_rgba(220,38,38,0.5)] flex flex-col gap-2">
                         <span>فشلت العملية يا {urlName || mySpinName} 💔</span>
-                        <span className="text-sm font-bold opacity-90">ما انخصم شيء من حسابك، شكلها عين! جرب تدفع مرة ثانية 😂</span>
+                        <span className="text-sm font-bold opacity-90">{errorMsg}</span>
                       </div>
                     )}
                     <h2 className="text-2xl font-black">{loserContent.title}</h2>

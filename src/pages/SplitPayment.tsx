@@ -44,11 +44,23 @@ export default function SplitPayment() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const prevPaidCountRef = useRef(0);
 
-  const [contributorName, setContributorName] = useState("");
-  const [contributorPhone, setContributorPhone] = useState("");
-  const [contributorAmount, setContributorAmount] = useState<string>("");
+  const [contributorName, setContributorName] = useState(() => localStorage.getItem("split_name") || "");
+  const [contributorPhone, setContributorPhone] = useState(() => localStorage.getItem("split_phone") || "");
+  const [contributorAmount, setContributorAmount] = useState<string>(() => localStorage.getItem("split_amount") || "");
   const isDev =
     searchParams.get("dev") === "true" || searchParams.get("2dev") === "true";
+
+  const errorMsg = useMemo(() => {
+    const errorMsgs = [
+      "ما انخصم شيء من حسابك، شكلها عين! جرب تدفع مرة ثانية 😂",
+      "الرصيد زعلان ولا شسالفة؟ جرب مرة ثانية 💳",
+      "البنك يقول لا.. بس إحنا نقول ماكو فكة، حاول مرة ثانية! 🏦",
+      "شكلها الشبكة فصلت عليك، جرب مرة ثانية 📡",
+      "فلوسك عزيزة عليك؟ ادفع مرة ثانية وخلصنا! 💸😆",
+      "عمليتك ما مشت، لا تحاتي ما راح شيء.. طق مرة ثانية 🔄"
+    ];
+    return errorMsgs[Math.floor(Math.random() * errorMsgs.length)];
+  }, []);
 
   const celebrationTriggered = useRef(false);
 
@@ -263,6 +275,10 @@ export default function SplitPayment() {
       return;
     }
 
+    localStorage.setItem("split_name", finalName);
+    localStorage.setItem("split_phone", finalPhone);
+    localStorage.setItem("split_amount", amountVal);
+
     setIsSubmitting(true);
     console.log("[DEBUG] Submitting payment. Order object:", order);
     try {
@@ -437,17 +453,15 @@ export default function SplitPayment() {
               </div>
               <div className="text-center relative z-10 w-full">
                 <h3 className="text-2xl font-black mb-1">فشلت العملية{urlName ? ` يا ${urlName}` : ""} 💔</h3>
-                <p className="text-white/90 font-medium mb-4">ما انخصم شيء من حسابك، شكلها عين! جرب تدفع مرة ثانية</p>
+                <p className="text-white/90 font-medium mb-4">{errorMsg}</p>
                 <button 
                   onClick={() => {
-                    searchParams.delete("payment");
-                    searchParams.delete("name");
-                    searchParams.delete("payment_id");
-                    setSearchParams(searchParams);
+                    handlePay();
                   }}
-                  className="bg-white/20 hover:bg-white/30 text-white w-full py-3 rounded-xl font-bold transition-colors border border-white/30"
+                  disabled={isSubmitting}
+                  className="bg-white/20 hover:bg-white/30 disabled:opacity-50 text-white w-full py-3 rounded-xl font-bold transition-colors border border-white/30"
                 >
-                  جرب مرة ثانية 🔄
+                  {isSubmitting ? "جاري التحويل..." : "جرب مرة ثانية 🔄"}
                 </button>
               </div>
             </motion.div>

@@ -142,6 +142,10 @@ export default function CustomerSite() {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [moodQuery, setMoodQuery] = useState("");
+  const [moodMessage, setMoodMessage] = useState<string | null>(null);
+  const [moodFilter, setMoodFilter] = useState("الكل");
+
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
   const [promoError, setPromoError] = useState("");
@@ -355,6 +359,78 @@ export default function CustomerSite() {
       if (checkoutTimer) clearTimeout(checkoutTimer);
     };
   }, [products, cart, isCheckout, customerPoints, customerName, orderSuccess]);
+
+  const moodResponses = useMemo(() => ({
+    gathering: [
+      "لا تحاتي ياخوي، صوانينا تبيّض الوجه وبتوصلك حارة! الفزعة عندنا 🚀",
+      "ضيوف فجأة؟ خلك مرتاح، الصواني الكبيرة بتوصلك تبيض الوجه قدام ربعك 😎",
+      "زوارة أو ديوانية.. لا تشيل هم الأكل، الشيف مجهز لك صواني ترفع الرأس 👑"
+    ],
+    sick: [
+      "سلامات ما تشوف شر 🤍 هذي أطباق خفيفة وشوربات دافية ترد الروح!",
+      "أجر وعافية يا رب 🌿.. يبيلك شيء دافي وخفيف على المعدة يضبط صحتك.",
+      "طحت مريض؟ الشيف جهز لك خوش شوربة ووجبات صحية تدفيك وتقويك 🍵"
+    ],
+    sad: [
+      "روّق مزاجك! ماكو شيء يسوى، وهالحلو بيعدل يومك 🍫✨",
+      "الدنيا ما تسوى زعلك.. اطلب الحلو اللي يخفف على قلبك ويفتح النفس 🍰",
+      "المزاج مو اوكي؟ صدقني شوية سكر وكاكاو بيغيرون النكد لفرح.. دلع نفسك 🎂"
+    ],
+    late: [
+      "تسهر بروحك؟ خلك معاي أدلعك بهالطلبات اللي تنسيك تعب اليوم 🌙🍔",
+      "يوع آخر الليل ما يرحم.. اطلب لك اللي بخاطرك وكمل سهرتك فيه 🍟",
+      "شنو مقعدك لي هالحزة؟ جوع؟ الشيف بعده زاهب ويجهز لك خوش طلب! 🍕"
+    ],
+    general: [
+      "اطلب وتمنى.. الشيف تحت أمرك اليوم! 👨‍🍳",
+      "شنو بخاطرك؟ اكتب اللي مشتهيه ونطلعه لك من تحت الأرض! 😋",
+      "آمر وتدلل.. المنيو كله لعيونك! قل لي شنو يوعان؟ 🍽️"
+    ]
+  }), []);
+
+  useEffect(() => {
+    if (!moodQuery.trim()) {
+      setMoodMessage(null);
+      setMoodFilter("الكل");
+      return;
+    }
+
+    const q = moodQuery.toLowerCase();
+    
+    // We use the length of the query to deterministically pick a response
+    // so it doesn't flicker on every keystroke, but it seems randomly selected
+    const getDeterministicMsg = (arr: string[]) => arr[moodQuery.length % arr.length];
+
+    let msg = "";
+    let filter = "الكل";
+
+    if (q.includes("ضيف") || q.includes("عزيم") || q.includes("متوهق") || q.includes("ربع") || q.includes("ديواني")) {
+      msg = getDeterministicMsg(moodResponses.gathering);
+      filter = "صواني";
+    } else if (q.includes("مريض") || q.includes("تعب") || q.includes("برد") || q.includes("زكام") || q.includes("معدت")) {
+      msg = getDeterministicMsg(moodResponses.sick);
+      filter = "خفيف";
+    } else if (q.includes("زعلان") || q.includes("متضايق") || q.includes("حلو") || q.includes("كاكاو") || q.includes("ضيق")) {
+      msg = getDeterministicMsg(moodResponses.sad);
+      filter = "حلو";
+    } else if (q.includes("سهران") || q.includes("يوع") || q.includes("جوع") || q.includes("ليل")) {
+      msg = getDeterministicMsg(moodResponses.late);
+      filter = "سهران";
+    }
+
+    // Debounce feeling
+    const timer = setTimeout(() => {
+      if (msg) {
+        setMoodMessage(msg);
+        setMoodFilter(filter);
+      } else {
+        setMoodMessage(getDeterministicMsg(moodResponses.general));
+        setMoodFilter("بحث");
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [moodQuery, moodResponses]);
 
   const validatePromo = async () => {
     if (!promoCodeInput.trim()) return;
@@ -609,7 +685,18 @@ export default function CustomerSite() {
         Promise.all([
           fetchWithRetry("/api/products").then(d => { if (isMounted) setProducts(d || []); }),
           fetchWithRetry("/api/top-products").then(d => { if (isMounted) setTopProducts(d || []); }),
-          fetchWithRetry("/api/recent-fomo", 1).then(d => { if (isMounted && Array.isArray(d) && d.length > 0) setFomoPurchases(d); }),
+          fetchWithRetry("/api/recent-fomo", 1).then(d => { 
+             if (isMounted && Array.isArray(d) && d.length > 0) {
+                 const enrichedFomo = d.map(item => {
+                    const rnd = Math.random();
+                    if (rnd > 0.85) return { ...item, type: 'insight' };
+                    if (rnd > 0.6) return { ...item, type: 'trend' };
+                    if (rnd > 0.4) return { ...item, type: 'scarcity' };
+                    return { ...item, type: 'normal' };
+                 });
+                 setFomoPurchases(enrichedFomo);
+             }
+          }),
           fetchWithRetry("/api/regions").then(d => { 
             const sorted = [...(d || [])].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar"));
             if (isMounted) setRegions(sorted);
@@ -1508,13 +1595,13 @@ export default function CustomerSite() {
         type: "friday",
         colors: "bg-green-800",
         title: getRand([
-          "جمعة الأهل ما تكمل إلا بطبختنا",
-          "زوارة الجمعة يبيلها نكهة كويتية",
+          "جمعتكم ما تكمل عيلتها؟",
+          "زوارة الجمعة يبيلها الأصول",
           "يا حياكم الله بزوارة الجمعة",
         ]),
         desc: getRand([
-          `جربتوا ${product} بلمتكم اليوم؟`,
-          `اختار اللي يرضي كل الأذواق.. ${product} زاهب`,
+          `شفنا طلبك حق زوارة الجمعة كذا مرة.. نظامنا يقول إن ${product} اليوم بيضبط جمعتكم لأن الشيف ضابطه ومجهزه بمقادير راهية!`,
+          `الشيف اليوم محصل خوش مكونات طازجة.. وضبط لكم قصة ${product} تكفي وتوفي لكل العايلة!`,
         ]),
         image:
           "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2670&auto=format&fit=crop",
@@ -1530,13 +1617,13 @@ export default function CustomerSite() {
         type: "winter",
         colors: "bg-[#5b3c11]", // Warm winter dark color
         title: getRand([
-          "دفّي قلبك ومعدتك",
-          "أجواء الشتاء والبرد",
-          "الجو يبيله أكل دافي",
+          "الجو غيم وبراد؟ ☁️",
+          "أجواء الشتاء والبرد يمنا",
+          "الجو يبيله أكل دافي يطيب الخاطر",
         ]),
         desc: getRand([
-          `أجواء الشتاء يبيلها ${product} حار يطيب خاطرك`,
-          `عليك بـ ${product} بهالجو البارد`,
+          `هذا مو اقتراح عشوائي... ذكاء التطبيق حلل إنك تحب الدفا بالشتاء، واليوم الجو بارد، فالشيف ضبط لك ${product} بهاراته وحرارته زيادة خصيصاً لهاالطقس.`,
+          `ندري بخاطرك شيء يدفي.. ولأن الجو اليوم غيم، الشيف جهز لك صينية ${product} دافية تناسب هالجو من قلب!`,
         ]),
         image:
           "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2670&auto=format&fit=crop",
@@ -1553,8 +1640,8 @@ export default function CustomerSite() {
         return {
           type: "morning",
           colors: "bg-[#b67332]",
-          title: "تجهز لغداك؟ 🍲",
-          desc: `الساعة ١٠ والطلب يبيله وقت.. اطلب ${product} الحين ويوصلك على الغدا`,
+          title: "قصة الشيف اليوم 👨‍🍳",
+          desc: `الشيف اليوم واصله لحم ودياي فرش من الفير.. وقرر يسوي وجبات ${product} محدودة، اطلبها الحين تضمن غدا طازج مايوصل كثر حلاته!`,
           image:
             "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2670&auto=format&fit=crop",
           overlay: "from-[#3a250a]/95 via-[#b67332]/70 to-transparent",
@@ -1567,8 +1654,8 @@ export default function CustomerSite() {
         colors: "bg-[#b67332]",
         title: getRand(["صباح الخير والنوير 🌻", "يا صباح السعادة والرضا ☀️"]),
         desc: getRand([
-          `ريوقك يكمل مع ${product} 🇰🇼`,
-          `صباحك كويتي.. طلبك المفضل من ${product} زاهب`,
+          `أدري إنك دايم تطلب بدري.. اليوم شكلك محتاج شيء قوي للدوام، ${product} فرش من الفرن راح يبدّع بيومك.`,
+          `صباحك مبروك! نظامنا فهم إن مزاجك الصبح يبي ${product} حار وزاهب.. وهالطلب جاهز يطير لك خصيصاً!`,
         ]),
         image:
           "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2670&auto=format&fit=crop",
@@ -1591,11 +1678,11 @@ export default function CustomerSite() {
         title: getRand([
           "غداك زاهب، حياك الله 🍛",
           "هلا بوقت الغدا السنع 🍽️",
-          "حان وقت الغدا",
+          "قصة الشيف اليوم غير..",
         ]),
         desc: getRand([
-          `وقت الغدا يبيله ${product} 😋`,
-          `شنو بخاطرك للغدا؟ جرب ${product} القوي`,
+          `مو عشوائي ترا! حللنا إن طلباتك وقت الغدا فيها ذوق مميز، واليوم الشيف حضّر وجبة ${product} كميتها محدودة بس عشان تلحق عليها وتستطعم!`,
+          `الشيف اليوم محصل نعيمي فرش وقرر يسوي 20 طلب ${product} بس.. لا يطوفك هاليوم الإستثنائي!`,
         ]),
         image:
           "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2670&auto=format&fit=crop",
@@ -1614,14 +1701,14 @@ export default function CustomerSite() {
 
       const title = getRand([
         "يوعان بآخر الليل؟ 🌙",
-        "عشاك سنع ويعدل المزاج 🌙",
+        "سهرتك مو بروحك.. 🌙",
       ]);
 
       let desc = "";
       if (product.includes("مجبوس") || product.includes("لحم")) {
-        desc = `سهرتك يبيلها ${product} يضبط المزاج`;
+        desc = `تسهر بروحك؟ خلك معاي أدلعك بهالطبق (${product}) اللي ينسيك تعب اليوم كله ويفرش نومك راحة.`;
       } else {
-        desc = `جوع آخر الليل ماله إلا ${product} الخفيف السنع`;
+        desc = `ندري سهراتج يبي لها مزاج خفيف.. عشان جذي جهزنالك ${product} على المزاج وما يثقل عالنوم!`;
       }
 
       return {
@@ -1969,10 +2056,43 @@ export default function CustomerSite() {
           </div>
         )}
 
+        {/* Faza'a Mood Search */}
+        {!isCheckout && (
+          <div className="px-4 sm:px-6 mb-2">
+            <div className="bg-white rounded-[24px] shadow-sm border border-stone-100 p-2 flex flex-col gap-2 relative z-20">
+              <div className="flex items-center bg-stone-50 rounded-2xl px-4 py-3">
+                <Search className="w-5 h-5 text-accent mr-2" />
+                <input
+                  type="text"
+                  placeholder="شلون مزاجك اليوم؟ أو عندك عزيمة؟ اكتب ونفزع لك!"
+                  value={moodQuery}
+                  onChange={(e) => setMoodQuery(e.target.value)}
+                  className="bg-transparent w-full outline-none text-sm font-bold text-brand placeholder:text-stone-400 placeholder:font-medium"
+                />
+              </div>
+              
+              <AnimatePresence>
+                {moodQuery.trim() && moodMessage && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="px-2 pb-2 text-center"
+                  >
+                    <div className="bg-gradient-to-r from-brand/5 via-brand/10 to-brand/5 rounded-xl p-3 inline-block">
+                      <p className="text-sm font-black text-brand leading-relaxed">{moodMessage}</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        )}
+
         {/* Categories / Products */}
         <main className="p-4 sm:p-6 space-y-8">
           {/* Best Sellers */}
-          {topProducts.length > 0 && (
+          {topProducts.length > 0 && !moodQuery.trim() && (
             <section className="mb-2">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-black text-brand flex items-center gap-2">
@@ -1997,7 +2117,7 @@ export default function CustomerSite() {
               </div>
             )}
             {(() => {
-              const displayProducts =
+              let displayProducts =
                 activeStory === "الكل"
                   ? products
                   : products.filter((p) => {
@@ -2015,6 +2135,25 @@ export default function CustomerSite() {
                         );
                       return true;
                     });
+              
+              if (moodQuery.trim()) {
+                 if (moodFilter === "صواني") {
+                    displayProducts = displayProducts.filter(p => p.name?.includes("صيني") || p.name?.includes("صينية") || p.category?.includes("صواني") || p.name?.includes("مجبوس") || p.name?.includes("طباخ"));
+                 } else if (moodFilter === "خفيف") {
+                    displayProducts = displayProducts.filter(p => p.category?.includes("شورب") || p.name?.includes("شورب") || p.name?.includes("خفيف") || p.name?.includes("سلط") || p.name?.includes("تشريب"));
+                 } else if (moodFilter === "حلو") {
+                    displayProducts = displayProducts.filter(p => p.category?.includes("حلو") || p.name?.includes("حلو") || p.name?.includes("كاكاو"));
+                 } else if (moodFilter === "سهران") {
+                    displayProducts = displayProducts.filter(p => p.category?.includes("ساندوتش") || p.category?.includes("جانبي") || p.name?.includes("بوكس") || p.name?.includes("خفيف"));
+                 } else {
+                    // Normal search filtering if no specific mood matches, or if it matches "بحث"
+                    displayProducts = displayProducts.filter(p => p.name?.toLowerCase().includes(moodQuery.toLowerCase()) || p.category?.toLowerCase().includes(moodQuery.toLowerCase()));
+                 }
+                 // if nothing found with mood filter but products exist, fallback to all (or best sellers) to not show an empty screen
+                 if (displayProducts.length === 0) {
+                    displayProducts = products.filter(p => (p.price || 0) < 15).slice(0, 5); // Fallback to affordable stuff
+                 }
+              }
 
               return displayProducts.length === 0 ? (
                 <div className="p-8 text-center text-stone-400 font-bold border-2 border-dashed border-stone-100 rounded-2xl">
@@ -2486,20 +2625,33 @@ export default function CustomerSite() {
                     <ShoppingBag className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0 pr-1">
-                    <p className="text-xs text-stone-500 mb-0.5">
-                      <span className="font-bold text-stone-800">
-                        {fomoPurchases[fomoIndex]?.name}
-                      </span>{" "}
-                      من {fomoPurchases[fomoIndex]?.area}
+                    <p className="text-xs text-stone-500 mb-0.5 leading-snug">
+                       {fomoPurchases[fomoIndex]?.type === 'scarcity' ? (
+                          <>
+                             <span className="font-bold text-red-500">🔥 ألحق!</span> باقي {Math.floor(Math.random() * 4) + 1} حبات بس من <span className="font-bold text-stone-800">{fomoPurchases[fomoIndex]?.productName}</span> اليوم.
+                          </>
+                       ) : fomoPurchases[fomoIndex]?.type === 'trend' ? (
+                          <>
+                             الكل في <span className="font-bold text-brand">{fomoPurchases[fomoIndex]?.area}</span> يطلب <span className="font-bold text-stone-800">{fomoPurchases[fomoIndex]?.productName}</span> اليوم.. لا تصير الوحيد اللي ما جربه!
+                          </>
+                       ) : fomoPurchases[fomoIndex]?.type === 'insight' ? (
+                          <>
+                              <span className="font-bold text-accent">🤔 هل لاحظت؟</span> طلبات <span className="font-bold text-stone-800">{fomoPurchases[fomoIndex]?.area}</span> زادت 15% اليوم، شكل عندهم احتفال كبير!
+                          </>
+                       ) : (
+                          <>
+                             <span className="font-bold text-stone-800">
+                                {fomoPurchases[fomoIndex]?.name}
+                             </span>{" "}
+                             من {fomoPurchases[fomoIndex]?.area} طلب للتو {" "}
+                             <span className="font-bold text-brand whitespace-nowrap">
+                                {fomoPurchases[fomoIndex]?.productName}
+                             </span>
+                          </>
+                       )}
                     </p>
-                    <p
-                      className="text-sm font-bold text-brand truncate whitespace-nowrap"
-                      dir="rtl"
-                    >
-                      اشترى {fomoPurchases[fomoIndex]?.productName}
-                    </p>
-                    <p className="text-[10px] text-stone-400 mt-0.5">
-                      {getRelativeTime(fomoPurchases[fomoIndex]?.time)}
+                    <p className="text-[10px] text-stone-400 mt-1">
+                      {fomoPurchases[fomoIndex]?.type !== 'insight' && fomoPurchases[fomoIndex]?.type !== 'trend' ? getRelativeTime(fomoPurchases[fomoIndex]?.time) : "مؤشر الرادار الذكي 📡"}
                     </p>
                   </div>
                 </div>
