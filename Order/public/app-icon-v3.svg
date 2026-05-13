@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" rx="200" fill="#fdfcf0" />
-  <!-- Red Star (8 points) -->
-  <path d="M512 120 L 610 350 L 820 350 L 640 480 L 720 720 L 512 580 L 304 720 L 384 480 L 204 350 L 414 350 Z" fill="#dc2626" />
-  <!-- Green Diamond -->
-  <path d="M512 280 L 780 512 L 512 744 L 244 512 Z" fill="#065f46" />
-  <!-- Yellow Diamond -->
-  <path d="M512 380 L 650 512 L 512 644 L 374 512 Z" fill="#fbbf24" />
-</svg>
