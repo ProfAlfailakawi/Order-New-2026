@@ -13,3 +13,5 @@ _security_backup/
 .env.*
 test*.js
 test*.cjs
+test*.ts
+*dump*.json
