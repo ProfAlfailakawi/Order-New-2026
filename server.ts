@@ -988,8 +988,8 @@ async function startServer() {
       const finalAmount = parseFloat(amount).toFixed(3);
       const numericAmount = parseFloat(finalAmount);
 
-      const generatedReturnUrl = `${returnBaseUrl}/split/${orderId}?payment=success`;
-      const generatedCancelUrl = `${returnBaseUrl}/split/${orderId}?payment=failed`;
+      const generatedReturnUrl = `${returnBaseUrl}/split/${orderId}?payment=success&name=${encodeURIComponent(name || "")}`;
+      const generatedCancelUrl = `${returnBaseUrl}/split/${orderId}?payment=failed&name=${encodeURIComponent(name || "")}`;
       const generatedNotifyUrl = `${notifyBaseUrl}/api/payment-webhook/${orderId}?splitId=${splitId}`;
 
       console.log(`[SPLIT] Generated Notify URL: ${generatedNotifyUrl}`);

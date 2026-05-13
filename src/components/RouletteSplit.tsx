@@ -6,9 +6,13 @@ import { Sparkles, Users, Crown, CreditCard, PartyPopper, ArrowRight } from "luc
 export function RouletteSplit({
   order,
   handlePay,
+  paymentStatus,
+  urlName,
 }: {
   order: any;
   handlePay: (name: string, phone: string, amount: string) => void;
+  paymentStatus?: string | null;
+  urlName?: string | null;
 }) {
   const navigate = useNavigate();
   const [name, setName] = useState("");
@@ -38,14 +42,40 @@ export function RouletteSplit({
       setMySpinPhone(phone);
       localStorage.setItem(`roulette_${order.id}`, name);
       localStorage.setItem(`roulette_phone_${order.id}`, phone);
-    } catch (e) {}
+    } catch (e: any) {
+      if (
+        e &&
+        e.message &&
+        (e.message.includes("Load failed") ||
+          e.message.includes("Failed to fetch"))
+      ) {
+        alert(
+          "فشل الاتصال بالخادم. يبدو أن الخادم قيد إعادة التشغيل لتطبيق التحديثات. يرجى الانتظار والمحاولة مرة أخرى.",
+        );
+      } else {
+        alert("فشل الانضمام: " + (e?.message || "حدث خطأ غير متوقع"));
+      }
+    }
   };
 
   const spin = async () => {
     if (participants.length < 2) return alert("نحتاج شخصين عالأقل للقطية!");
     try {
       await fetch(`/api/orders/${order.id}/spin-roulette`, { method: "POST" });
-    } catch (e) {}
+    } catch (e: any) {
+      if (
+        e &&
+        e.message &&
+        (e.message.includes("Load failed") ||
+          e.message.includes("Failed to fetch"))
+      ) {
+        alert(
+          "فشل الاتصال بالخادم. يبدو أن الخادم قيد إعادة التشغيل لتطبيق التحديثات. يرجى الانتظار والمحاولة مرة أخرى.",
+        );
+      } else {
+        alert("فشل السحب: " + (e?.message || "حدث خطأ غير متوقع"));
+      }
+    }
   };
 
   useEffect(() => {
@@ -86,14 +116,20 @@ export function RouletteSplit({
         <div className="bg-green-500/20 border border-green-500/50 rounded-3xl p-8 max-w-md w-full space-y-4">
           <PartyPopper className="w-16 h-16 mx-auto text-green-400" />
           <h2 className="text-3xl font-black text-green-400">
-            انتهت اللعبة! 🎯
+            {paymentStatus === "success" ? `تسلم يا ${urlName || loser || "بطل"}! 🥳` : "انتهت اللعبة! 🎯"}
           </h2>
-          <p className="font-bold text-green-100">
-            تم دفع الفاتورة بالكامل عن طريق{" "}
-            <span className="text-white bg-black/30 px-2 py-1 rounded-md">
-              {loser || "صاحب الحظ"}
-            </span>
-          </p>
+          {paymentStatus === "success" ? (
+            <p className="font-bold text-green-100">
+              دفعك تم بنجاح، وبيضت الوجه! وهاردلك هالمرة.. اليايات أكثر وحظك يعوضك! 😉
+            </p>
+          ) : (
+            <p className="font-bold text-green-100">
+              تم دفع الفاتورة بالكامل عن طريق{" "}
+              <span className="text-white bg-black/30 px-2 py-1 rounded-md">
+                {loser || "صاحب الحظ"}
+              </span>
+            </p>
+          )}
           <p className="text-sm text-green-200 mt-4">
             الطلب قاعد يتجهز وبطريجه لكم 🚀
           </p>
@@ -305,6 +341,11 @@ export function RouletteSplit({
               >
                 {loser === mySpinName ? (
                   <div className="p-6 bg-red-500/20 border border-red-500/50 rounded-3xl text-red-100 space-y-4">
+                    {paymentStatus === "failed" && (
+                      <div className="bg-red-600 border border-red-400 p-3 rounded-lg text-white font-black animate-bounce shadow-[0_0_15px_rgba(220,38,38,0.5)]">
+                        فشلت العملية يا {urlName || mySpinName}، ماكو فكة من الدفع! جرب مرة ثانية. 😂
+                      </div>
+                    )}
                     <h2 className="text-2xl font-black">{loserContent.title}</h2>
                     <p className="font-bold">
                       {loserContent.desc}
@@ -317,7 +358,7 @@ export function RouletteSplit({
                           String(order.total),
                         )
                       }
-                      className="w-full bg-white text-red-600 font-black py-4 rounded-xl mt-4 active:scale-95 transition-transform flex justify-center items-center gap-2"
+                      className="w-full bg-white text-red-600 font-black py-4 rounded-xl mt-4 active:scale-95 transition-transform flex justify-center items-center gap-2 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
                     >
                       <CreditCard className="w-5 h-5" />
                       ادفع {order.total.toFixed(3)} د.ك
