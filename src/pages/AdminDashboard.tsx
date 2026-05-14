@@ -23,7 +23,8 @@ import {
   PieChart,
   AlertTriangle,
   Inbox,
-  Ghost
+  Ghost,
+  Plus
 } from "lucide-react";
 import { Order, Analytics, Region } from "../types";
 import { db } from "../lib/firebase";
@@ -33,6 +34,7 @@ import { enUS } from "date-fns/locale";
 
 import { DEFAULT_GLOBAL_LOGO } from "../constants";
 import { calculateItemsTotal, getDisplayTotal, normalizeDigits } from "../utils";
+import { NewInvoiceModal } from "../components/NewInvoiceModal";
 
 export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,6 +60,7 @@ export default function AdminDashboard() {
   const [newPromoType, setNewPromoType] = useState<"percentage" | "flat">("percentage");
   const [newPromoValue, setNewPromoValue] = useState<number>(0);
   const [isAddingPromo, setIsAddingPromo] = useState(false);
+  const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
 
 
   const cleanPhone = (phone: any) => {
@@ -382,6 +385,13 @@ export default function AdminDashboard() {
               />
             </div>
             <div className="flex items-center gap-6 px-2">
+              <button
+                onClick={() => setShowNewInvoiceModal(true)}
+                className="relative px-6 py-3.5 bg-brand text-white font-bold rounded-2xl hover:bg-brand/90 transition-all shadow-md active:scale-95 group flex items-center gap-2 text-xs"
+              >
+                <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                فاتورة جديدة
+              </button>
               <button className="relative p-3.5 bg-white/50 border border-stone-100 rounded-2xl hover:bg-white transition-all shadow-sm active:scale-95 group">
                 <Bell className="w-5 h-5 text-stone-500 group-hover:text-brand" />
                 {totalOrdersCount > 0 && <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-md animate-pulse" />}
@@ -1327,6 +1337,13 @@ export default function AdminDashboard() {
             onPay={() => handleMarkAsPaid(selectedOrder.id)}
             onFreeDelivery={() => handleFreeDelivery(selectedOrder)}
             getCustomerPoints={getCustomerPoints}
+          />
+        )}
+        {showNewInvoiceModal && (
+          <NewInvoiceModal
+            isOpen={showNewInvoiceModal}
+            onClose={() => setShowNewInvoiceModal(false)}
+            zones={zones}
           />
         )}
       </AnimatePresence>
