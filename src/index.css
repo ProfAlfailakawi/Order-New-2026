@@ -9,6 +9,16 @@
 }
 
 @layer base {
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+    /* iOS strict preventing zooming if users bypass viewport */
+    touch-action: manipulation;
+    /* Prevent swipe navigation bounces */
+    overscroll-behavior-x: none;
+  }
+  
   body {
     @apply bg-background text-brand font-sans antialiased;
     direction: rtl;
@@ -16,6 +26,7 @@
     /* Force English digits for standard numbers */
     font-variant-numeric: tabular-nums lining-nums;
   }
+
   
   button, 
   [role="button"],
@@ -63,5 +74,14 @@
 body {
   transition: background-color 1s ease, color 1s ease;
 }
+
+#root, 
+.container, 
+main,
+section {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 
 
