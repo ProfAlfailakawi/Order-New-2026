@@ -4,11 +4,5 @@ service cloud.firestore {
     match /{document=**} {
       allow read, write: if true;
     }
-    match /appData/{document=**} {
-      allow read, write: if true;
-    }
-    match /appData/shared_company_data {
-      allow read, write: if true;
-    }
   }
 }

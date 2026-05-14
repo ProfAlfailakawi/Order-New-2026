@@ -24,30 +24,6 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Fallback in-memory DB
-let localFallbackDB: any = {
-  products: [],
-  supplierCopies: [],
-  orders: [],
-  invoices: [],
-  customers: [],
-  zones: [],
-  settings: {},
-  promocodes: []
-};
-
-// Attempt to load products from file
-try {
-  if (fs.existsSync(path.join(__dirname, "shared_products.json"))) {
-    localFallbackDB.products = JSON.parse(fs.readFileSync(path.join(__dirname, "shared_products.json"), "utf8"));
-  }
-  if (fs.existsSync(path.join(__dirname, "suppliers.json"))) {
-    localFallbackDB.supplierCopies = JSON.parse(fs.readFileSync(path.join(__dirname, "suppliers.json"), "utf8")).flatMap((s:any) => s.products || []);
-  }
-} catch(e) {
-  console.log("Could not load local data files", e);
-}
-
 // Read firebase config safely for Node ESM
 const firebaseConfig = JSON.parse(
   fs.readFileSync(path.join(__dirname, "firebase-applet-config.json"), "utf8"),
@@ -61,46 +37,6 @@ const db = initializeFirestore(
   },
   firebaseConfig.firestoreDatabaseId || "(default)",
 );
-
-async function getAppData() {
-  try {
-    const d = await getDoc(doc(db, "appData", "shared_company_data"));
-    if (d.exists()) {
-      return d.data();
-    }
-  } catch (error) {
-    console.warn("Firebase restricted or failed, using local in-memory fallback");
-  }
-  return localFallbackDB;
-}
-
-async function updateAppData(data: any) {
-  try {
-    const docRef = doc(db, "appData", "shared_company_data");
-    await updateDoc(docRef, data);
-  } catch (error) {
-    console.warn("Firebase write restricted or failed, updating local in-memory fallback");
-    localFallbackDB = { ...localFallbackDB, ...data };
-    
-    // Save to disk to persist across dev server restarts
-    try {
-      if (data.products) {
-        fs.writeFileSync(path.join(__dirname, "shared_products.json"), JSON.stringify(data.products, null, 2));
-      }
-    } catch(err) {
-      console.warn("Could not save to disk:", err);
-    }
-  }
-}
-
-
-async function getAppDataRef() {
-  const data = await getAppData();
-  return {
-    exists: () => true,
-    data: () => data
-  };
-}
 
 // Helper to clean phone numbers
 function cleanPhone(phone) {
@@ -136,25 +72,7 @@ async function startServer() {
   // API Routes
 
   // 1. Track Orders
-  app.get("/api/appdata", async (req, res) => {
-  try {
-    const d = await getAppDataRef();
-    res.json(d.exists() ? d.data() : {});
-  } catch(e) {
-    res.status(500).json({});
-  }
-});
-
-app.patch("/api/appdata", async (req, res) => {
-  try {
-    await updateAppData(req.body);
-    res.json({ success: true });
-  } catch(e) {
-    res.status(500).json({});
-  }
-});
-
-app.get("/api/track-orders", async (req, res) => {
+  app.get("/api/track-orders", async (req, res) => {
     const { phone, order_id } = req.query;
     if (!phone && !order_id) {
       return res
@@ -165,7 +83,7 @@ app.get("/api/track-orders", async (req, res) => {
     try {
       const cleanQueryPhone = phone ? cleanPhone(phone) : null;
 
-      const d = await getAppDataRef();
+      const d = await getDoc(doc(db, "appData", "shared_company_data"));
       const appData = d.data() || {};
 
       const allOrdersOriginal = appData.orders || [];
@@ -190,7 +108,7 @@ app.get("/api/track-orders", async (req, res) => {
 
       if (needsUpdate) {
         console.log(`[SPLIT] Timing out expired split payments`);
-        await updateAppData({
+        await updateDoc(doc(db, "appData", "shared_company_data"), {
           orders: allOrders.map((o) => {
             const { isInvoice, ...rest } = o;
             return rest;
@@ -404,7 +322,7 @@ app.get("/api/track-orders", async (req, res) => {
   // 2. Regions
   app.get("/api/regions", async (req, res) => {
     try {
-      const d = await getAppDataRef();
+      const d = await getDoc(doc(db, "appData", "shared_company_data"));
       const data = d.data() || {};
       res.json(data.zones || []);
     } catch (error) {
@@ -418,7 +336,7 @@ app.get("/api/track-orders", async (req, res) => {
     try {
       const { name, finalPrice } = req.body;
       const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
+      const d = await getDoc(docRef);
       const appData = d.data() || {};
       const zones = appData.zones || [];
 
@@ -433,7 +351,7 @@ app.get("/api/track-orders", async (req, res) => {
       };
 
       zones.push(newZone);
-      await updateAppData({ zones });
+      await updateDoc(docRef, { zones });
       res.status(201).json(newZone);
     } catch (e) {
       console.error("Error creating zone:", e);
@@ -446,7 +364,7 @@ app.get("/api/track-orders", async (req, res) => {
       const { id } = req.params;
       const { name, finalPrice } = req.body;
       const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
+      const d = await getDoc(docRef);
       const appData = d.data() || {};
       const zones = appData.zones || [];
 
@@ -466,7 +384,7 @@ app.get("/api/track-orders", async (req, res) => {
         }),
       };
 
-      await updateAppData({ zones });
+      await updateDoc(docRef, { zones });
       res.json(zones[index]);
     } catch (e) {
       console.error("Error updating zone:", e);
@@ -478,12 +396,12 @@ app.get("/api/track-orders", async (req, res) => {
     try {
       const { id } = req.params;
       const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
+      const d = await getDoc(docRef);
       const appData = d.data() || {};
       const zones = appData.zones || [];
 
       const newZones = zones.filter((z: any) => z.id !== id);
-      await updateAppData({ zones: newZones });
+      await updateDoc(docRef, { zones: newZones });
       res.json({ success: true });
     } catch (e) {
       console.error("Error deleting zone:", e);
@@ -495,7 +413,7 @@ app.get("/api/track-orders", async (req, res) => {
   app.patch("/api/admin/settings/storeStatus", async (req, res) => {
     try {
       const docRef = doc(db, "appData", "shared_company_data");
-      await updateAppData({
+      await updateDoc(docRef, {
         "settings.storeStatus": req.body,
       });
       res.json({ success: true });
@@ -511,7 +429,7 @@ app.get("/api/track-orders", async (req, res) => {
     if (!code) return res.status(400).json({ error: "Code is required" });
 
     try {
-      const d = await getAppDataRef();
+      const d = await getDoc(doc(db, "appData", "shared_company_data"));
       if (!d.exists()) return res.status(404).json({ error: "No data found" });
 
       const data = d.data();
@@ -543,7 +461,7 @@ app.get("/api/track-orders", async (req, res) => {
   app.get("/api/settings", async (req, res) => {
     try {
       let settings: any = {};
-      const d = await getAppDataRef();
+      const d = await getDoc(doc(db, "appData", "shared_company_data"));
       if (d.exists()) {
         const data = d.data();
         settings = data.settings || {};
@@ -580,7 +498,7 @@ app.get("/api/track-orders", async (req, res) => {
     try {
       const cleanQueryPhone = cleanPhone(phone);
 
-      const d = await getAppDataRef();
+      const d = await getDoc(doc(db, "appData", "shared_company_data"));
       const data = d.data() || {};
       const customers = data.customers || [];
       const invoices = data.invoices || [];
@@ -648,11 +566,10 @@ app.get("/api/track-orders", async (req, res) => {
   // 5. Top Products
   app.get("/api/top-products", async (req, res) => {
     try {
-      const d = await getAppDataRef();
+      const d = await getDoc(doc(db, "appData", "shared_company_data"));
       const data = d.data() || {};
-      const allProducts = [...(data.products || []), ...(data.supplierCopies || [])];
 
-      let products = processProducts(allProducts);
+      let products = processProducts(data.products);
       const allInvoices = data.invoices || [];
 
       const productStats: any = {};
@@ -722,7 +639,9 @@ app.get("/api/track-orders", async (req, res) => {
   app.get("/api/recent-fomo", async (req, res) => {
     try {
       // First, get all active products from the shared database
-      const activeProductsSnap = await getAppDataRef();
+      const activeProductsSnap = await getDoc(
+        doc(db, "appData", "shared_company_data"),
+      );
       const activeProducts =
         activeProductsSnap.data()?.products?.filter((p: any) => !p.isHidden) ||
         [];
@@ -821,10 +740,9 @@ app.get("/api/track-orders", async (req, res) => {
 
   app.get("/api/products", async (req, res) => {
     try {
-      const d = await getAppDataRef();
+      const d = await getDoc(doc(db, "appData", "shared_company_data"));
       const data = d.data() || {};
-      const allProducts = [...(data.products || []), ...(data.supplierCopies || [])];
-      let products = processProducts(allProducts);
+      let products = processProducts(data.products);
 
       // Sort alphabetically
       products.sort((a: any, b: any) =>
@@ -914,7 +832,7 @@ app.get("/api/track-orders", async (req, res) => {
 
     try {
       const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
+      const d = await getDoc(docRef);
 
       if (!d.exists()) {
         console.error("[ORDER] shared_company_data document NOT FOUND");
@@ -972,7 +890,7 @@ app.get("/api/track-orders", async (req, res) => {
         });
       }
 
-      await updateAppData({
+      await updateDoc(docRef, {
         orders,
         customers,
       });
@@ -987,7 +905,7 @@ app.get("/api/track-orders", async (req, res) => {
 
   app.get("/api/create-test-split-order", async (req, res) => {
     try {
-      const d = await getAppDataRef();
+      const d = await getDoc(doc(db, "appData", "shared_company_data"));
       const data = d.data() || {};
       const orders = data.orders || [];
       const newOrder = {
@@ -998,7 +916,7 @@ app.get("/api/track-orders", async (req, res) => {
         createdAt: new Date().toISOString(),
       };
       orders.push(newOrder);
-      await updateAppData({ orders });
+      await updateDoc(doc(db, "appData", "shared_company_data"), { orders });
       res.json({ orderId: newOrder.id, message: "Order created successfully" });
     } catch (err) {
       res.status(500).json({ error: String(err) });
@@ -1019,7 +937,7 @@ app.get("/api/track-orders", async (req, res) => {
         `[SPLIT] Creating partial payment for Order ${orderId}: ${amount} KWD by ${name}`,
       );
 
-      const d = await getAppDataRef();
+      const d = await getDoc(doc(db, "appData", "shared_company_data"));
       const data = d.data() || {};
       const orders = data.orders || [];
       const invoices = data.invoices || [];
@@ -1108,12 +1026,12 @@ app.get("/api/track-orders", async (req, res) => {
       try {
         if (isInvoice) {
           invoices[index] = existingOrder;
-          await updateAppData({
+          await updateDoc(doc(db, "appData", "shared_company_data"), {
             invoices,
           });
         } else {
           orders[index] = existingOrder;
-          await updateAppData({
+          await updateDoc(doc(db, "appData", "shared_company_data"), {
             orders,
           });
         }
@@ -1217,7 +1135,7 @@ app.get("/api/track-orders", async (req, res) => {
       } = req.body;
 
       if (orderId) {
-        const d = await getAppDataRef();
+        const d = await getDoc(doc(db, "appData", "shared_company_data"));
         const data = d.data() || {};
         const orders = data.orders || [];
         const existingOrder = orders.find((o: any) => o.id === orderId);
@@ -1310,13 +1228,13 @@ app.get("/api/track-orders", async (req, res) => {
       );
 
       // Save payment ID to order before creating link
-      const d = await getAppDataRef();
+      const d = await getDoc(doc(db, "appData", "shared_company_data"));
       const data = d.data() || {};
       const orders = data.orders || [];
       const index = orders.findIndex((o: any) => o.id === orderId);
       if (index !== -1) {
         orders[index].paymentId = knetTrackId;
-        await updateAppData({ orders });
+        await updateDoc(doc(db, "appData", "shared_company_data"), { orders });
       }
 
       // Check if amount is valid for UPayments (min 0.001 KWD)
@@ -1411,13 +1329,13 @@ app.get("/api/track-orders", async (req, res) => {
       if (!paymentLink) return res.status(400).json({ error: "No link" });
 
       const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
+      const d = await getDoc(docRef);
       const appData = d.data() || {};
       let orders = appData.orders || [];
       const index = orders.findIndex((o: any) => o.id === id);
       if (index !== -1) {
         orders[index].paymentLink = paymentLink;
-        await updateAppData({ orders });
+        await updateDoc(docRef, { orders });
       }
       res.json({ success: true });
     } catch (e) {
@@ -1433,7 +1351,7 @@ app.get("/api/track-orders", async (req, res) => {
       if (!name) return res.status(400).json({ error: "Missing name" });
 
       const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
+      const d = await getDoc(docRef);
       const appData = d.data() || {};
       let orders = appData.orders || [];
       const index = orders.findIndex((o: any) => o.id === id);
@@ -1449,7 +1367,7 @@ app.get("/api/track-orders", async (req, res) => {
             phone,
             joinedAt: new Date().toISOString(),
           });
-          await updateAppData({ orders });
+          await updateDoc(docRef, { orders });
         }
       }
       res.json({ success: true });
@@ -1463,7 +1381,7 @@ app.get("/api/track-orders", async (req, res) => {
     try {
       const { id } = req.params;
       const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
+      const d = await getDoc(docRef);
       const appData = d.data() || {};
       let orders = appData.orders || [];
       const index = orders.findIndex((o: any) => o.id === id);
@@ -1483,7 +1401,7 @@ app.get("/api/track-orders", async (req, res) => {
       order.rouletteLoser = loser.name;
       order.rouletteSpunAt = new Date().toISOString();
 
-      await updateAppData({ orders });
+      await updateDoc(docRef, { orders });
       res.json({ success: true, loser: loser.name });
     } catch (e) {
       res.status(500).json({ error: "Failed to spin roulette" });
@@ -1492,7 +1410,7 @@ app.get("/api/track-orders", async (req, res) => {
 
   // Payment Webhook
   app.post(
-    ["/api/payment-webhook/:pathOrderId", "/api/payment-webhook"],
+    ["/api/payment-webhook/:pathOrderId", "/api/payment-webhook", "/api/webhook/upayments"],
     async (req, res) => {
       try {
         console.log(
@@ -1542,7 +1460,7 @@ app.get("/api/track-orders", async (req, res) => {
 
         if (orderId) {
           const docRef = doc(db, "appData", "shared_company_data");
-          const d = await getAppDataRef();
+          const d = await getDoc(docRef);
           const appData = d.data() || {};
           let orders = appData.orders || [];
           let invoices = appData.invoices || [];
@@ -1746,7 +1664,7 @@ app.get("/api/track-orders", async (req, res) => {
           }
 
           if (updated) {
-            await updateAppData({
+            await updateDoc(docRef, {
               orders,
               invoices,
               customers: appData.customers || [],
@@ -1836,7 +1754,7 @@ app.get("/api/track-orders", async (req, res) => {
         let phone = "";
         if (orderId) {
           const docRef = doc(db, "appData", "shared_company_data");
-          const d = await getAppDataRef();
+          const d = await getDoc(docRef);
           const appData = d.data() || {};
           let orders = appData.orders || [];
           let invoices = appData.invoices || [];
@@ -1929,7 +1847,7 @@ app.get("/api/track-orders", async (req, res) => {
           }
 
           if (updated) {
-            await updateAppData({ orders, invoices });
+            await updateDoc(docRef, { orders, invoices });
           }
         }
 
@@ -2083,7 +2001,7 @@ app.get("/api/track-orders", async (req, res) => {
 
     try {
       const cleanQueryPhone = cleanPhone(phone);
-      const d = await getAppDataRef();
+      const d = await getDoc(doc(db, "appData", "shared_company_data"));
       const appData = d.data() || {};
 
       const allOrders = appData.orders || [];
@@ -2110,13 +2028,13 @@ app.get("/api/track-orders", async (req, res) => {
 
   // Legacy endpoints for UI compatibility
   app.get("/api/admin/orders", async (req, res) => {
-    const d = await getAppDataRef();
+    const d = await getDoc(doc(db, "appData", "shared_company_data"));
     const data = d.data() || {};
     res.json(data.orders || []);
   });
 
   app.get("/api/admin/invoices", async (req, res) => {
-    const d = await getAppDataRef();
+    const d = await getDoc(doc(db, "appData", "shared_company_data"));
     const data = d.data() || {};
     res.json(data.invoices || []);
   });
@@ -2125,7 +2043,7 @@ app.get("/api/track-orders", async (req, res) => {
     const { id } = req.params;
     try {
       const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
+      const d = await getDoc(docRef);
       const data = d.data() || {};
       const orders = data.orders || [];
       const invoices = data.invoices || [];
@@ -2150,7 +2068,7 @@ app.get("/api/track-orders", async (req, res) => {
       // Delete from orders
       orders.splice(orderIdx, 1);
 
-      await updateAppData({ orders, invoices });
+      await updateDoc(docRef, { orders, invoices });
 
       res.json({
         message: "Order moved to invoices successfully",
@@ -2166,7 +2084,7 @@ app.get("/api/track-orders", async (req, res) => {
     const { id } = req.params;
     try {
       const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
+      const d = await getDoc(docRef);
       const appData = d.data() || {};
 
       let orders = appData.orders || [];
@@ -2213,7 +2131,7 @@ app.get("/api/track-orders", async (req, res) => {
         return res.status(404).json({ error: "Order/Invoice not found" });
       }
 
-      await updateAppData({ orders, invoices });
+      await updateDoc(docRef, { orders, invoices });
 
       res.json({ message: "Delivery fee removed successfully" });
     } catch (e) {
@@ -2225,7 +2143,7 @@ app.get("/api/track-orders", async (req, res) => {
   // Admin: Promo Codes
   app.get("/api/admin/promocodes", async (req, res) => {
     try {
-      const d = await getAppDataRef();
+      const d = await getDoc(doc(db, "appData", "shared_company_data"));
       if (!d.exists()) return res.json([]);
       res.json(d.data().promocodes || []);
     } catch (e) {
@@ -2240,7 +2158,7 @@ app.get("/api/track-orders", async (req, res) => {
 
     try {
       const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
+      const d = await getDoc(docRef);
       let promocodes = d.exists() ? d.data().promocodes || [] : [];
 
       const newPromo = {
@@ -2261,7 +2179,7 @@ app.get("/api/track-orders", async (req, res) => {
         promocodes.push(newPromo);
       }
 
-      await updateAppData({ promocodes });
+      await updateDoc(docRef, { promocodes });
       res.json({ success: true, promo: newPromo });
     } catch (e) {
       res.status(500).json({ error: "Failed to save promocode" });
@@ -2272,7 +2190,7 @@ app.get("/api/track-orders", async (req, res) => {
     const { code } = req.params;
     try {
       const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
+      const d = await getDoc(docRef);
       if (!d.exists()) return res.status(404).json({ error: "Not found" });
 
       let promocodes = d.data().promocodes || [];
@@ -2280,7 +2198,7 @@ app.get("/api/track-orders", async (req, res) => {
         (p: any) => p.code !== code.toUpperCase().trim(),
       );
 
-      await updateAppData({ promocodes });
+      await updateDoc(docRef, { promocodes });
       res.json({ success: true });
     } catch (e) {
       res.status(500).json({ error: "Failed to delete promocode" });
@@ -2289,7 +2207,7 @@ app.get("/api/track-orders", async (req, res) => {
 
   app.get("/api/debug", async (req, res) => {
     try {
-      const d = await getAppDataRef();
+      const d = await getDoc(doc(db, "appData", "shared_company_data"));
       const data = d.data() || {};
       res.json({
         databaseSource: "Firebase Firestore",
@@ -2317,7 +2235,7 @@ app.get("/api/track-orders", async (req, res) => {
     if (isBot) {
       try {
         const { id } = req.params;
-        const d = await getAppDataRef();
+        const d = await getDoc(doc(db, "appData", "shared_company_data"));
         const data = d.data() || {};
         const orders = data.orders || [];
         const order = orders.find((o: any) => o.id === id);
@@ -2388,7 +2306,7 @@ app.get("/api/track-orders", async (req, res) => {
     // Background task to timeout expired split payments automatically
     setInterval(async () => {
       try {
-        const d = await getAppDataRef();
+        const d = await getDoc(doc(db, "appData", "shared_company_data"));
         const appData = d.data() || {};
         const allOrders = appData.orders || [];
         const now = Date.now();
@@ -2408,7 +2326,7 @@ app.get("/api/track-orders", async (req, res) => {
         });
 
         if (needsUpdate) {
-          await updateAppData({
+          await updateDoc(doc(db, "appData", "shared_company_data"), {
             orders: updatedOrders,
           });
           console.log(`[SPLIT] Background updated timeout orders`);

@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
-
+import { doc, getDocFromServer } from "firebase/firestore";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -708,26 +708,27 @@ export default function CustomerSite() {
     const loadData = async () => {
       try {
         Promise.all([
-          fetchWithRetry("/api/products").then((allProducts) => {
+          getDocFromServer(doc(db, "appData", "shared_company_data")).then(snapshot => {
             if (!isMounted) return;
-            setProducts(Array.isArray(allProducts) ? allProducts : []);
+            if (snapshot.exists()) {
+              const data: any = snapshot.data();
+              const allProducts = [
+                ...(Array.isArray(data.products) ? data.products : []),
+                ...(Array.isArray(data.supplierCopies) ? data.supplierCopies : [])
+              ];
+              setProducts(allProducts);
+            } else {
+              setProducts([]);
+            }
           }),
           fetchWithRetry("/api/top-products").then(d => { if (isMounted) setTopProducts(d || []); }),
-          fetchWithRetry("/api/recent-fomo", 1).then(d => { 
-             if (isMounted && Array.isArray(d) && d.length > 0) {
-                 const enrichedFomo = d.map(item => {
-                    const rnd = Math.random();
-                    if (rnd > 0.85) return { ...item, type: 'insight' };
-                    if (rnd > 0.6) return { ...item, type: 'trend' };
-                    if (rnd > 0.4) return { ...item, type: 'scarcity' };
-                    return { ...item, type: 'normal' };
-                 });
-                 setFomoPurchases(enrichedFomo);
-             }
+          Promise.resolve().then(() => {
+            if (!isMounted) return;
+            setFomoPurchases([]);
           }),
-          fetchWithRetry("/api/regions").then(d => { 
-            const sorted = [...(d || [])].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar"));
-            if (isMounted) setRegions(sorted);
+          Promise.resolve().then(() => {
+            if (!isMounted) return;
+            // Regions are loaded from appData/shared_company_data via data.zones in the main shared data block.
           }),
           fetchWithRetry("/api/settings").then(d => { if (isMounted && d) setSettings(d); }),
           fetchWithRetry("/api/debug", 1).then(d => { if (isMounted && d) console.log(d); })

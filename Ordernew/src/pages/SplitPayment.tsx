@@ -19,8 +19,9 @@ import {
 import { Order } from "../types";
 import { normalizePhone, normalizeDigits } from "../utils";
 import confetti from "canvas-confetti";
-import { doc, onSnapshot, getFirestore } from "../lib/fakestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 import firebaseConfig from "../../firebase-applet-config.json";
 import { RouletteSplit } from "../components/RouletteSplit";
 
