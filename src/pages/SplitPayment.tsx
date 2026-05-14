@@ -19,14 +19,9 @@ import {
 import { Order } from "../types";
 import { normalizePhone, normalizeDigits } from "../utils";
 import confetti from "canvas-confetti";
-import { doc, onSnapshot, getFirestore } from "../lib/fakestore";
-import { initializeApp } from "firebase/app";
-import firebaseConfig from "../../firebase-applet-config.json";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../lib/firebase";
 import { RouletteSplit } from "../components/RouletteSplit";
-
-// Initialize Firebase for real-time listener
-const app = initializeApp(firebaseConfig);
-const db = getFirestore();
 
 export default function SplitPayment() {
   const { id } = useParams<{ id: string }>();

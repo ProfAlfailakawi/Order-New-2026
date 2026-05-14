@@ -31,14 +31,7 @@ let localFallbackDB: any = {
   orders: [],
   invoices: [],
   customers: [],
-  zones: [
-    { id: "z1", name: "محافظة العاصمة", finalPrice: 1.5, cost: 1.5 },
-    { id: "z2", name: "محافظة حولي", finalPrice: 1.5, cost: 1.5 },
-    { id: "z3", name: "محافظة الفروانية", finalPrice: 2, cost: 2 },
-    { id: "z4", name: "محافظة مبارك الكبير", finalPrice: 2.5, cost: 2.5 },
-    { id: "z5", name: "محافظة الأحمدي", finalPrice: 3, cost: 3 },
-    { id: "z6", name: "محافظة الجهراء", finalPrice: 3.5, cost: 3.5 }
-  ],
+  zones: [],
   settings: {},
   promocodes: []
 };
@@ -69,46 +62,26 @@ const firebaseConfig = JSON.parse(
 const appClient = initializeApp(firebaseConfig);
 const db = initializeFirestore(
   appClient,
-  {
-    experimentalForceLongPolling: true,
-  },
+  { experimentalForceLongPolling: true },
   firebaseConfig.firestoreDatabaseId || "(default)",
 );
 
 async function getAppData() {
-  let finalData: any = { ...localFallbackDB };
   try {
     const d = await getDoc(doc(db, "appData", "shared_company_data"));
     if (d.exists()) {
-      const fbData = d.data();
-      
-      // Merge keys by ID so new items added offline are not lost
-      const keysToMerge = ["customers", "orders", "invoices", "products", "promocodes", "zones", "supplierCopies"];
-      for (const key of keysToMerge) {
-         const localArr = localFallbackDB[key] || [];
-         const fbArr = fbData[key] || [];
-         
-         const map = new Map();
-         // Firebase items first
-         fbArr.forEach((item: any) => { if (item !== null && typeof item === 'object' && item.id) map.set(item.id, item); });
-         // Local overrides or appends
-         localArr.forEach((item: any) => { if (item !== null && typeof item === 'object' && item.id) map.set(item.id, item); });
-         
-         finalData[key] = Array.from(map.values());
-      }
-      
-      finalData.settings = { ...(fbData.settings || {}), ...(localFallbackDB.settings || {}) };
+      return d.data();
     }
   } catch (error) {
     console.warn("Firebase read restricted or failed, using local in-memory fallback");
   }
-  return finalData;
+  return localFallbackDB;
 }
 
 async function updateAppData(data: any) {
   try {
     const docRef = doc(db, "appData", "shared_company_data");
-    await updateDoc(docRef, data);
+    await setDoc(docRef, data, { merge: true });
   } catch (error) {
     console.warn("Firebase write restricted or failed, updating local in-memory fallback");
     localFallbackDB = { ...localFallbackDB, ...data };
