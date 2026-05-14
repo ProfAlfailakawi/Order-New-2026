@@ -1256,7 +1256,7 @@ export default function AdminDashboard() {
       </AnimatePresence>
       {/* Version Label */}
       <div className="text-center py-4 opacity-20 pointer-events-none select-none text-[7px] font-light text-stone-300">
-        Version 4.0.0.Release
+        Version 2.5.0.Release
       </div>
     </div>
   );

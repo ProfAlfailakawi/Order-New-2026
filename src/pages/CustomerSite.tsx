@@ -2761,7 +2761,7 @@ export default function CustomerSite() {
 
         {/* Version Label */}
         <div className="text-center py-4 opacity-20 pointer-events-none select-none text-[8px] font-light text-stone-400">
-          Version 4.0.0.Release
+          Version 2.5.0.Release
         </div>
       </motion.div>
 
