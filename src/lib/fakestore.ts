@@ -35,7 +35,10 @@ export async function updateDoc(ref: any, data: any) {
       body: JSON.stringify(data) 
     });
     if (!r.ok) throw new Error("Update failed");
-  } catch(e) {
+  } catch(e: any) {
+    if (e && e.message && (e.message.includes("Failed to fetch") || e.message.includes("Load failed"))) {
+      return;
+    }
     console.error("updateDoc error", e);
     throw e;
   }

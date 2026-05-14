@@ -199,8 +199,12 @@ export default function SplitPayment() {
           setError(null);
         }
       }
-    } catch (e) {
-      console.error("SplitPayment: Fetch Exception", e);
+    } catch (e: any) {
+      if (e && e.message && (e.message.includes("Failed to fetch") || e.message.includes("Load failed"))) {
+        // ignore silently
+      } else {
+        console.error("SplitPayment: Fetch Exception", e);
+      }
     } finally {
       if (!isSilent) setLoading(false);
     }
