@@ -619,8 +619,12 @@ export default function CustomerSite() {
             setCustomerPoints(0);
           }
         }
-      } catch (e) {
-        console.error("Error fetching customer:", e);
+      } catch (e: any) {
+        if (e && e.message && (e.message.includes("Failed to fetch") || e.message.includes("Load failed"))) {
+           // ignore silently
+        } else {
+           console.error("Error fetching customer:", e);
+        }
         setCustomerPoints(0);
       }
     };
@@ -698,7 +702,7 @@ export default function CustomerSite() {
           } else {
             console.error(`Fetch error for ${url}:`, e);
           }
-          if (i === retries - 1) throw e;
+          if (i === retries - 1) return null;
           await new Promise((resolve) => setTimeout(resolve, delay));
         }
       }
@@ -731,8 +735,12 @@ export default function CustomerSite() {
           }),
           fetchWithRetry("/api/settings").then(d => { if (isMounted && d) setSettings(d); }),
           fetchWithRetry("/api/debug", 1).then(d => { if (isMounted && d) console.log(d); })
-        ]).catch(console.error);
-      } catch (err) {
+        ]).catch((err: any) => {
+          if (err && err.message && (err.message.includes("Failed to fetch") || err.message.includes("Load failed"))) return;
+          console.error(err);
+        });
+      } catch (err: any) {
+        if (err && err.message && (err.message.includes("Failed to fetch") || err.message.includes("Load failed"))) return;
         console.error("Error initiating fetch", err);
       }
     };
@@ -980,11 +988,15 @@ export default function CustomerSite() {
               }
             }
           }
-        } catch (err) {
-          console.error(
-            "Failed to fetch past orders for alternative zero-click:",
-            err,
-          );
+        } catch (err: any) {
+          if (err && err.message && (err.message.includes("Failed to fetch") || err.message.includes("Load failed"))) {
+             // ignore
+          } else {
+            console.error(
+              "Failed to fetch past orders for alternative zero-click:",
+              err,
+            );
+          }
         }
       }
 
@@ -2899,7 +2911,7 @@ const ChefWhisperCard = ({
             </div>
           )}
           {product.isNewProduct && !product.isOutOfStock && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 animate-pulse border-2 border-white shadow-sm">
+            <span className="absolute top-0 right-0 bg-gradient-to-r from-red-500 to-rose-500 text-white text-[10px] sm:text-xs font-black px-3 py-1 z-10 rounded-tr-[20px] rounded-bl-xl shadow-[0_2px_10px_rgba(239,68,68,0.3)] border-b-2 border-l-2 border-white/20">
               جديد
             </span>
           )}
@@ -3174,12 +3186,12 @@ function ProductModal({
         </div>
 
         <div className="flex flex-col sm:flex-row gap-6 mb-8 mt-2 group relative">
-          {(product as any).isNewProduct && (
-            <span className="absolute -top-6 sm:-top-2 right-1/2 translate-x-1/2 sm:translate-x-0 sm:-right-4 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full z-10 animate-bounce border-2 border-white shadow-sm shadow-red-500/30">
-              جديد
-            </span>
-          )}
           <div className="relative shrink-0 flex justify-center">
+            {(product as any).isNewProduct && (
+              <span className="absolute top-0 right-0 sm:-right-2 -mt-2 bg-gradient-to-r from-red-500 to-rose-500 text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-full z-20 shadow-[0_4px_15px_rgba(239,68,68,0.4)] border-2 border-white transform rotate-3">
+                جديد
+              </span>
+            )}
             <div className="absolute inset-0 bg-brand blur-xl opacity-10 transform scale-90 group-hover:scale-100 transition-transform"></div>
             {(product as any).imageUrl ||
             product.image ||
