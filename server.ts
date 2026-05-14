@@ -76,15 +76,33 @@ const db = initializeFirestore(
 );
 
 async function getAppData() {
+  let finalData: any = { ...localFallbackDB };
   try {
     const d = await getDoc(doc(db, "appData", "shared_company_data"));
     if (d.exists()) {
-      return d.data();
+      const fbData = d.data();
+      
+      // Merge keys by ID so new items added offline are not lost
+      const keysToMerge = ["customers", "orders", "invoices", "products", "promocodes", "zones", "supplierCopies"];
+      for (const key of keysToMerge) {
+         const localArr = localFallbackDB[key] || [];
+         const fbArr = fbData[key] || [];
+         
+         const map = new Map();
+         // Firebase items first
+         fbArr.forEach((item: any) => { if (item !== null && typeof item === 'object' && item.id) map.set(item.id, item); });
+         // Local overrides or appends
+         localArr.forEach((item: any) => { if (item !== null && typeof item === 'object' && item.id) map.set(item.id, item); });
+         
+         finalData[key] = Array.from(map.values());
+      }
+      
+      finalData.settings = { ...(fbData.settings || {}), ...(localFallbackDB.settings || {}) };
     }
   } catch (error) {
-    console.warn("Firebase restricted or failed, using local in-memory fallback");
+    console.warn("Firebase read restricted or failed, using local in-memory fallback");
   }
-  return localFallbackDB;
+  return finalData;
 }
 
 async function updateAppData(data: any) {
