@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { Order, Analytics, Region } from "../types";
 import { db } from "../lib/firebase";
-import { collection, onSnapshot, doc, updateDoc, getDoc, query, orderBy } from "../lib/fakestore";
+import { collection, onSnapshot, doc, setDoc, getDoc, query, orderBy } from "firebase/firestore";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 
@@ -917,9 +917,9 @@ export default function AdminDashboard() {
                        const newValue = !settings.isFreeDelivery;
                        try {
                          const docRef = doc(db, "appData", "shared_company_data");
-                         await updateDoc(docRef, {
+                         await setDoc(docRef, {
                             "settings.isFreeDelivery": newValue
-                         });
+                         }, { merge: true });
                        } catch (e) {
                          console.error(e);
                        }
@@ -945,9 +945,9 @@ export default function AdminDashboard() {
                          const val = Number(normalizeDigits(e.target.value).replace(/[^0-9.]/g, ''));
                          try {
                            const docRef = doc(db, "appData", "shared_company_data");
-                           await updateDoc(docRef, {
+                           await setDoc(docRef, {
                               "settings.freeDeliveryThreshold": val
-                           });
+                           }, { merge: true });
                          } catch (err) {
                            console.error(err);
                          }
@@ -986,9 +986,9 @@ export default function AdminDashboard() {
                            const val = normalizeDigits(e.target.value).replace(/\D/g, "").slice(0, 8);
                            try {
                              const docRef = doc(db, "appData", "shared_company_data");
-                             await updateDoc(docRef, {
+                             await setDoc(docRef, {
                                 "settings.companyPhone": val
-                             });
+                             }, { merge: true });
                            } catch (err) {
                              console.error(err);
                            }

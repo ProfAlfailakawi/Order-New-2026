@@ -32,9 +32,7 @@ const firebaseConfig = JSON.parse(
 const appClient = initializeApp(firebaseConfig);
 const db = initializeFirestore(
   appClient,
-  {
-    experimentalForceLongPolling: true,
-  },
+  { experimentalForceLongPolling: true },
   firebaseConfig.firestoreDatabaseId || "(default)",
 );
 
