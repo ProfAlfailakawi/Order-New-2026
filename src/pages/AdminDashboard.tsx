@@ -21,7 +21,9 @@ import {
   Settings as SettingsIcon,
   Users,
   PieChart,
-  AlertTriangle
+  AlertTriangle,
+  Inbox,
+  Ghost
 } from "lucide-react";
 import { Order, Analytics, Region } from "../types";
 import { db } from "../lib/firebase";
@@ -288,11 +290,11 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="flex h-screen bg-[#fafaf9] text-brand" dir="rtl">
+    <div className="flex h-screen bg-[#fafaf9] text-brand selection:bg-brand selection:text-white" dir="rtl">
       {/* Sidebar */}
-      <aside className="w-72 bg-white border-l border-stone-100 flex flex-col p-8 space-y-12 shadow-sm z-50">
+      <aside className="w-80 glass-panel flex flex-col p-8 space-y-12 z-50 rounded-r-[40px] my-4 ml-4 sticky top-4 h-[calc(100vh-2rem)]">
         <div className="flex items-center gap-4 px-2 group">
-          <div className="w-12 h-12 flex items-center justify-center p-1.5 transition-transform group-hover:rotate-6 shadow-sm overflow-hidden bg-white border border-stone-100 rounded-2xl shrink-0">
+          <div className="w-14 h-14 flex items-center justify-center p-2.5 transition-transform group-hover:scale-105 shadow-md overflow-hidden bg-white border border-stone-100 rounded-2xl shrink-0">
             <img 
               referrerPolicy="no-referrer"
               src={DEFAULT_GLOBAL_LOGO} 
@@ -308,12 +310,12 @@ export default function AdminDashboard() {
             />
           </div>
           <div>
-            <h2 className="font-extrabold text-xl tracking-tight leading-none text-brand">فخامة</h2>
-            <p className="text-[10px] text-stone-400 font-bold tracking-widest uppercase mt-1">نظام الإدارة</p>
+            <h2 className="font-extrabold text-2xl tracking-tighter leading-none text-brand">فخامة</h2>
+            <p className="text-[10px] text-stone-500 font-bold tracking-widest uppercase mt-2">نظام الإدارة</p>
           </div>
         </div>
 
-        <nav className="flex-grow space-y-3">
+        <nav className="flex-grow space-y-2">
           <NavItem 
             active={activeTab === "dashboard"} 
             onClick={() => setActiveTab("dashboard")}
@@ -365,38 +367,40 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-grow overflow-y-auto flex flex-col no-scrollbar bg-[#fafaf9]">
+      <main className="flex-grow overflow-y-auto flex flex-col no-scrollbar relative items-center">
         {/* Topbar */}
-        <header className="bg-white/80 backdrop-blur-xl border-b border-stone-100 p-8 flex justify-between items-center sticky top-0 z-40 shadow-sm">
-          <div className="flex items-center gap-4 bg-stone-50 px-6 py-4 rounded-[20px] w-[400px] border border-stone-100 focus-within:border-accent/40 focus-within:bg-white transition-all group">
-            <Search className="w-4 h-4 text-stone-300 group-focus-within:text-accent" />
-            <input 
-              type="text" 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="البحث برقم الهاتف، العميل أو الفاتورة..." 
-              className="bg-transparent border-none outline-none text-sm w-full text-brand placeholder:text-stone-300 font-medium font-sans" 
-            />
-          </div>
-          <div className="flex items-center gap-8">
-            <button className="relative p-4 bg-white border border-stone-100 rounded-2xl hover:bg-stone-50 transition-all shadow-sm active:scale-95 group">
-              <Bell className="w-6 h-6 text-stone-400 group-hover:text-brand" />
-              {totalOrdersCount > 0 && <span className="absolute top-4 right-4 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-md" />}
-            </button>
-            <div className="w-px h-10 bg-stone-100" />
-            <div className="flex items-center gap-5 group cursor-pointer">
-              <div className="text-right">
-                <p className="text-sm font-extrabold text-brand">د. أحمد الفيلكاوي</p>
-                <p className="text-[10px] text-accent font-extrabold tracking-[0.2em] uppercase mt-1">مدير النظام</p>
-              </div>
-              <div className="w-14 h-14 bg-white rounded-2xl border-2 border-stone-100 p-1.5 shadow-sm group-hover:border-accent/30 transition-all">
-                <div className="w-full h-full rounded-xl gold-gradient shadow-inner" />
+        <header className="sticky top-4 z-40 w-full max-w-[1600px] px-8 pt-4">
+          <div className="glass-panel p-4 flex justify-between items-center rounded-[2rem] shadow-sm">
+            <div className="flex items-center gap-4 bg-white/60 px-6 py-3 rounded-2xl w-[400px] border border-stone-100 focus-within:border-accent/40 focus-within:bg-white transition-all group shadow-inner">
+              <Search className="w-5 h-5 text-stone-300 group-focus-within:text-accent" />
+              <input 
+                type="text" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="البحث برقم الهاتف، العميل أو الفاتورة..." 
+                className="bg-transparent border-none outline-none text-sm w-full text-brand placeholder:text-stone-400 font-medium font-sans" 
+              />
+            </div>
+            <div className="flex items-center gap-6 px-2">
+              <button className="relative p-3.5 bg-white/50 border border-stone-100 rounded-2xl hover:bg-white transition-all shadow-sm active:scale-95 group">
+                <Bell className="w-5 h-5 text-stone-500 group-hover:text-brand" />
+                {totalOrdersCount > 0 && <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-md animate-pulse" />}
+              </button>
+              <div className="w-px h-8 bg-stone-200" />
+              <div className="flex items-center gap-4 group cursor-pointer hover:bg-white/50 p-2 rounded-2xl transition-all">
+                <div className="text-right">
+                  <p className="text-sm font-bold text-brand tracking-tight">د. أحمد الفيلكاوي</p>
+                  <p className="text-[10px] text-accent font-extrabold tracking-widest uppercase mt-0.5">مدير النظام</p>
+                </div>
+                <div className="w-12 h-12 bg-white rounded-2xl border-2 border-stone-100 p-1 shadow-sm group-hover:border-accent/30 transition-all">
+                  <div className="w-full h-full rounded-xl bg-gradient-to-tr from-accent/20 to-accent/5 shadow-inner flex items-center justify-center font-bold text-accent">د</div>
+                </div>
               </div>
             </div>
           </div>
         </header>
 
-        <div className="p-12 space-y-12">
+        <div className="p-12 space-y-12 w-full max-w-[1600px]">
           {activeTab === "dashboard" && (
             <div className="space-y-12 animate-in fade-in duration-700">
               <div className="flex items-center justify-between">
@@ -459,8 +463,20 @@ export default function AdminDashboard() {
                     <tbody className="divide-y divide-stone-50">
                       {filteredOrders.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="p-20 text-center text-stone-400 font-medium italic">
-                            لم يتم العثور على أي طلبات تطابق بحثك...
+                          <td colSpan={6} className="p-32 text-center">
+                            <motion.div 
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="flex flex-col items-center space-y-6"
+                            >
+                              <div className="w-24 h-24 bg-stone-50 rounded-full flex items-center justify-center shadow-inner">
+                                <Inbox size={40} className="text-stone-300 empty-state-art" />
+                              </div>
+                              <div className="space-y-2">
+                                <h3 className="text-xl font-bold text-brand">لا توجد طلبات هنا</h3>
+                                <p className="text-stone-400 font-medium max-w-sm mx-auto">لم يتم العثور على أي طلبات تطابق بحثك الحالي. جرب تغيير كلمات البحث.</p>
+                              </div>
+                            </motion.div>
                           </td>
                         </tr>
                       ) : (
@@ -555,12 +571,18 @@ export default function AdminDashboard() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
                 {filteredNewOrders.length === 0 ? (
-                  <div className="col-span-full p-20 bg-white rounded-[48px] border border-stone-100 text-center">
-                    <div className="w-20 h-20 bg-stone-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <ShoppingCart className="w-10 h-10 text-stone-200" />
-                    </div>
-                    <h3 className="text-2xl font-extrabold text-brand mb-2">لا توجد طلبات جديدة</h3>
-                    <p className="text-stone-400 font-medium">كل شيء تحت السيطرة حالياً</p>
+                  <div className="col-span-full p-32 bg-white/70 backdrop-blur-xl rounded-[40px] border border-stone-100 shadow-sm text-center">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex flex-col items-center"
+                    >
+                      <div className="w-24 h-24 bg-gradient-to-tr from-stone-50 to-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-stone-50">
+                        <Ghost className="w-10 h-10 text-stone-300 empty-state-art" />
+                      </div>
+                      <h3 className="text-2xl font-black text-brand mb-3">الصندوق فارغ</h3>
+                      <p className="text-stone-400 font-medium max-w-sm mx-auto">لم تسجل أي طلبات جديدة بعد. ستظهر الطلبات الجديدة هنا فور وصولها.</p>
+                    </motion.div>
                   </div>
                 ) : (
                   filteredNewOrders.map(order => (
@@ -661,9 +683,26 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-50">
-                      {filteredInvoices.map(invoice => (
-                        <tr key={invoice.invoiceId} className="hover:bg-stone-50/30 transition-all duration-300">
-                          <td className="p-10 font-mono text-[10px] text-accent font-extrabold tracking-widest flex items-center gap-2">
+                      {filteredInvoices.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="p-32 text-center">
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="flex flex-col items-center"
+                            >
+                              <div className="w-24 h-24 bg-gradient-to-tr from-stone-50 to-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-stone-50">
+                                <FileText className="w-10 h-10 text-stone-300 empty-state-art" />
+                              </div>
+                              <h3 className="text-2xl font-black text-brand mb-3">لا توجد فواتير</h3>
+                              <p className="text-stone-400 font-medium max-w-sm mx-auto">لم يتم العثور على أي فواتير مطابقة لبحثك. هنا سيتم توثيق كل عملية دفع منجزة.</p>
+                            </motion.div>
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredInvoices.map(invoice => (
+                          <tr key={invoice.invoiceId} className="hover:bg-stone-50/30 transition-all duration-300">
+                            <td className="p-10 font-mono text-[10px] text-accent font-extrabold tracking-widest flex items-center gap-2">
                              {invoice.invoiceId}
                              <button
                                onClick={(e) => {
@@ -701,7 +740,7 @@ export default function AdminDashboard() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      )))}
                     </tbody>
                   </table>
                 </div>
@@ -795,9 +834,26 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-50">
-                      {customers.filter(c => !searchTerm || c.phone?.includes(searchTerm) || c.name?.includes(searchTerm)).map((customer, idx) => (
-                        <tr key={customer.id || idx} className="hover:bg-stone-50/50 transition-all">
-                          <td className="p-8">
+                      {customers.filter(c => !searchTerm || c.phone?.includes(searchTerm) || c.name?.includes(searchTerm)).length === 0 ? (
+                        <tr>
+                          <td colSpan={3} className="p-32 text-center">
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="flex flex-col items-center"
+                            >
+                              <div className="w-24 h-24 bg-gradient-to-tr from-stone-50 to-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-stone-50">
+                                <Users className="w-10 h-10 text-stone-300 empty-state-art" />
+                              </div>
+                              <h3 className="text-2xl font-black text-brand mb-3">لا يوجد عملاء حالياً</h3>
+                              <p className="text-stone-400 font-medium max-w-sm mx-auto">سيظهر العملاء هنا بمجرد إتمامهم لأول طلب وجمعهم للنقاط.</p>
+                            </motion.div>
+                          </td>
+                        </tr>
+                      ) : (
+                        customers.filter(c => !searchTerm || c.phone?.includes(searchTerm) || c.name?.includes(searchTerm)).map((customer, idx) => (
+                          <tr key={customer.id || idx} className="hover:bg-stone-50/50 transition-all">
+                            <td className="p-8">
                             <span className="font-bold text-brand bg-stone-50 px-4 py-2 rounded-xl text-sm font-mono tracking-wider">{customer.phone}</span>
                           </td>
                           <td className="p-8">
@@ -812,14 +868,7 @@ export default function AdminDashboard() {
                             </div>
                           </td>
                         </tr>
-                      ))}
-                      {customers.length === 0 && (
-                        <tr>
-                          <td colSpan={3} className="p-16 text-center text-stone-300">
-                            لا يوجد عملاء مسجلين
-                          </td>
-                        </tr>
-                      )}
+                      )))}
                     </tbody>
                   </table>
                 </div>
@@ -1011,9 +1060,26 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-50">
-                      {zones.map(zone => (
-                        <tr key={zone.id} className="hover:bg-stone-50/30 transition-all duration-300">
-                          <td className="p-10">
+                      {zones.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="p-32 text-center">
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="flex flex-col items-center"
+                            >
+                              <div className="w-24 h-24 bg-gradient-to-tr from-stone-50 to-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-stone-50">
+                                <MapPin className="w-10 h-10 text-stone-300 empty-state-art" />
+                              </div>
+                              <h3 className="text-2xl font-black text-brand mb-3">لا توجد مناطق توصيل</h3>
+                              <p className="text-stone-400 font-medium max-w-sm mx-auto">قم بإضافة مناطق التوصيل ليتمكن عملاؤك من إتمام طلباتهم.</p>
+                            </motion.div>
+                          </td>
+                        </tr>
+                      ) : (
+                        zones.map(zone => (
+                          <tr key={zone.id} className="hover:bg-stone-50/30 transition-all duration-300">
+                            <td className="p-10">
                             {editingZoneId === zone.id ? (
                               <input 
                                 type="text"
@@ -1109,7 +1175,7 @@ export default function AdminDashboard() {
                             )}
                           </td>
                         </tr>
-                      ))}
+                      )))}
                     </tbody>
                   </table>
                 </div>
@@ -1198,9 +1264,26 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-50">
-                      {promocodes.map((promo: any) => (
-                        <tr key={promo.code} className="hover:bg-stone-50/50 transition-all">
-                          <td className="p-8">
+                      {promocodes.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="p-32 text-center">
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="flex flex-col items-center"
+                            >
+                              <div className="w-24 h-24 bg-gradient-to-tr from-stone-50 to-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-stone-50">
+                                <CreditCard className="w-10 h-10 text-stone-300 empty-state-art" />
+                              </div>
+                              <h3 className="text-2xl font-black text-brand mb-3">لا توجد كوبونات ذكية</h3>
+                              <p className="text-stone-400 font-medium max-w-sm mx-auto">قم بإضافة كوبونات خصم لزيادة مبيعاتك وتفاعل العملاء.</p>
+                            </motion.div>
+                          </td>
+                        </tr>
+                      ) : (
+                        promocodes.map((promo: any) => (
+                          <tr key={promo.code} className="hover:bg-stone-50/50 transition-all">
+                            <td className="p-8">
                             <span className="font-extrabold text-brand">{promo.code}</span>
                           </td>
                           <td className="p-8">
@@ -1225,14 +1308,7 @@ export default function AdminDashboard() {
                             </button>
                           </td>
                         </tr>
-                      ))}
-                      {promocodes.length === 0 && (
-                        <tr>
-                          <td colSpan={4} className="p-10 text-center text-stone-300 italic text-sm">
-                            لا يوجد كوبونات فعالة حالياً
-                          </td>
-                        </tr>
-                      )}
+                      )))}
                     </tbody>
                   </table>
                 </div>
@@ -1264,26 +1340,26 @@ export default function AdminDashboard() {
 
 function NavItem({ active, onClick, icon, label, badge }: any) {
   return (
-    <button onClick={onClick} className={`w-full flex items-center justify-between p-5 rounded-2xl transition-all relative group overflow-hidden ${active ? "bg-brand text-white shadow-md shadow-brand/20 shadow-xl" : "text-stone-400 hover:text-brand hover:bg-stone-50"}`}>
-      <div className="flex items-center gap-5 relative z-10">
-        <span className={`${active ? "text-white" : "text-stone-300 group-hover:text-brand"}`}>{icon}</span>
-        <span className="text-xs font-extrabold uppercase tracking-[0.2em]">{label}</span>
+    <button onClick={onClick} className={`w-full flex items-center justify-between px-6 py-4 rounded-2xl transition-all duration-300 relative group overflow-hidden ${active ? "bg-brand text-white shadow-lg shadow-brand/20 font-bold" : "text-stone-500 hover:text-brand hover:bg-stone-50 hover:shadow-sm font-medium"}`}>
+      <div className="flex items-center gap-4 relative z-10">
+        <span className={`${active ? "text-white" : "text-stone-400 group-hover:text-brand"} transition-colors`}>{icon}</span>
+        <span className="text-sm tracking-tight">{label}</span>
       </div>
-      {badge && <span className="bg-red-500 text-white text-[10px] font-extrabold w-6 h-6 flex items-center justify-center rounded-lg shadow-md shadow-red-500/20 relative z-10 animate-bounce">{badge}</span>}
+      {badge && <span className="bg-accent text-white text-[10px] font-bold w-6 h-6 flex items-center justify-center rounded-lg shadow-md shadow-accent/20 relative z-10">{badge}</span>}
     </button>
   );
 }
 
 function StatCard({ title, value, trend, icon, isNew, color }: any) {
   return (
-    <div className={`p-8 rounded-[40px] border bg-white shadow-sm transition-all relative overflow-hidden group hover:shadow-xl hover:-translate-y-1 duration-500 ${isNew ? "border-red-100 ring-4 ring-red-500/5 shadow-red-500/5" : "border-stone-100"}`}>
-      <div className="absolute top-0 right-0 w-32 h-32 bg-stone-50 rounded-full translate-x-10 -translate-y-10 group-hover:bg-accent/5 transition-colors" />
-      <div className="flex justify-between items-start mb-8 relative z-10">
-        <div className={`p-5 bg-stone-50 rounded-3xl border border-stone-100 shadow-sm group-hover:rotate-6 transition-all ${isNew ? 'ring-2 ring-red-500/20 bg-red-50' : ''}`}>{icon}</div>
-        <span className={`text-[10px] font-extrabold px-4 py-2 rounded-xl uppercase tracking-widest ${color === 'accent' ? "bg-accent/10 text-accent border border-accent/20" : color === 'red' ? "bg-red-50 text-red-500 border border-red-100" : "bg-green-50 text-green-600 border border-green-100"}`}>{trend}</span>
+    <div className={`p-10 rounded-[3rem] border bg-white shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all relative overflow-hidden group hover:shadow-[0_20px_50px_rgba(26,46,34,0.08)] hover:-translate-y-2 duration-500 ${isNew ? "border-accent/10 ring-4 ring-accent/5 backdrop-blur-xl" : "border-white"}`}>
+      <div className="absolute top-0 right-0 w-40 h-40 bg-stone-50/50 rounded-full translate-x-12 -translate-y-12 group-hover:bg-accent/5 transition-colors duration-700" />
+      <div className="flex justify-between items-start mb-10 relative z-10">
+        <div className={`w-16 h-16 bg-stone-50 rounded-2xl border border-stone-100 shadow-sm flex items-center justify-center group-hover:scale-110 transition-all duration-500 ${isNew ? 'bg-accent/5 text-accent' : 'text-brand'}`}>{icon}</div>
+        <span className={`text-[10px] font-bold px-4 py-2 rounded-xl tracking-tight ${color === 'accent' ? "bg-accent/10 text-accent border border-accent/20" : color === 'red' ? "bg-red-50 text-red-500 border border-red-100" : "bg-green-50 text-green-600 border border-green-100"}`}>{trend}</span>
       </div>
-      <p className="text-stone-400 text-[10px] font-extrabold uppercase tracking-[0.3em] mb-3 relative z-10">{title}</p>
-      <h3 className="text-4xl font-extrabold text-brand italic relative z-10 tracking-tight leading-none">{value}</h3>
+      <p className="text-stone-400 text-sm font-medium mb-3 relative z-10">{title}</p>
+      <h3 className="text-5xl font-black text-brand italic relative z-10 tracking-tighter leading-none">{value}</h3>
     </div>
   );
 }
