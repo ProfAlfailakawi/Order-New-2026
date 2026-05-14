@@ -1867,7 +1867,7 @@ export default function OrderPage() {
       <footer className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white to-transparent pointer-events-none z-0">
         <div className="max-w-2xl mx-auto flex flex-col items-center opacity-10">
           <div className="w-32 h-1 bg-brand rounded-full mb-2" />
-          <p className="text-[10px] font-light">Version 4.0.0.Release</p>
+          <p className="text-[10px] font-light">Version 2.5.0.Release</p>
         </div>
       </footer>
     </div>
