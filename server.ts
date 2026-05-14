@@ -1105,6 +1105,8 @@ app.get("/api/track-orders", async (req, res) => {
       const splitId = `S-${uniqueSuffix}`;
 
       const isSandbox =
+        String(process.env.UPAYMENTS_MODE || "").toLowerCase() === "sandbox" ||
+        String(process.env.UPAYMENTS_ENV || "").toLowerCase() === "sandbox" ||
         cleanApiKey.toLowerCase().includes("sandbox") ||
         cleanApiKey.startsWith("test_");
       const upaymentsApiUrl = isSandbox
@@ -1307,6 +1309,8 @@ app.get("/api/track-orders", async (req, res) => {
 
       // Define base url depending on if it contains sandbox markers
       const isSandbox =
+        String(process.env.UPAYMENTS_MODE || "").toLowerCase() === "sandbox" ||
+        String(process.env.UPAYMENTS_ENV || "").toLowerCase() === "sandbox" ||
         cleanApiKey.toLowerCase().includes("sandbox") ||
         cleanApiKey.startsWith("test_");
 
