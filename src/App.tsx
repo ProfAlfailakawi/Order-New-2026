@@ -19,7 +19,7 @@ export default function App() {
 
   return (
     <Router>
-      <div className="min-h-screen font-sans">
+      <div className="min-h-screen font-sans w-full max-w-full overflow-x-hidden">
         <Routes>
           <Route path="/" element={<CustomerSite />} />
           <Route path="/track" element={<OrderPage />} />
