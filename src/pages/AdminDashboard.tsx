@@ -308,7 +308,7 @@ export default function AdminDashboard() {
             />
           </div>
           <div>
-            <h2 className="font-black text-xl tracking-tight leading-none text-brand">فخامة</h2>
+            <h2 className="font-extrabold text-xl tracking-tight leading-none text-brand">فخامة</h2>
             <p className="text-[10px] text-stone-400 font-bold tracking-widest uppercase mt-1">نظام الإدارة</p>
           </div>
         </div>
@@ -355,7 +355,7 @@ export default function AdminDashboard() {
 
         <div className="pt-8 border-t border-stone-50 space-y-6">
           <div className="p-5 bg-stone-50/50 border border-stone-100 rounded-[24px]">
-            <p className="text-[9px] text-stone-400 font-black uppercase tracking-[0.2em] mb-3">حالة النظام</p>
+            <p className="text-[9px] text-stone-400 font-extrabold uppercase tracking-[0.2em] mb-3">حالة النظام</p>
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
               <p className="text-xs text-brand font-bold tracking-tight">متصل وآمن</p>
@@ -381,13 +381,13 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-8">
             <button className="relative p-4 bg-white border border-stone-100 rounded-2xl hover:bg-stone-50 transition-all shadow-sm active:scale-95 group">
               <Bell className="w-6 h-6 text-stone-400 group-hover:text-brand" />
-              {totalOrdersCount > 0 && <span className="absolute top-4 right-4 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-lg" />}
+              {totalOrdersCount > 0 && <span className="absolute top-4 right-4 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-md" />}
             </button>
             <div className="w-px h-10 bg-stone-100" />
             <div className="flex items-center gap-5 group cursor-pointer">
               <div className="text-right">
-                <p className="text-sm font-black text-brand">د. أحمد الفيلكاوي</p>
-                <p className="text-[10px] text-accent font-black tracking-[0.2em] uppercase mt-1">مدير النظام</p>
+                <p className="text-sm font-extrabold text-brand">د. أحمد الفيلكاوي</p>
+                <p className="text-[10px] text-accent font-extrabold tracking-[0.2em] uppercase mt-1">مدير النظام</p>
               </div>
               <div className="w-14 h-14 bg-white rounded-2xl border-2 border-stone-100 p-1.5 shadow-sm group-hover:border-accent/30 transition-all">
                 <div className="w-full h-full rounded-xl gold-gradient shadow-inner" />
@@ -401,10 +401,10 @@ export default function AdminDashboard() {
             <div className="space-y-12 animate-in fade-in duration-700">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-5xl font-black text-brand leading-none">الإحصائيات المتقدمة</h1>
+                  <h1 className="text-5xl font-extrabold text-brand leading-none">الإحصائيات المتقدمة</h1>
                   <p className="text-stone-400 text-sm mt-4 font-medium uppercase tracking-[0.3em]">تحليل العمليات الفورية</p>
                 </div>
-                <div className="px-6 py-3 bg-white border border-stone-100 rounded-[20px] text-xs font-black text-stone-500 shadow-sm">
+                <div className="px-6 py-3 bg-white border border-stone-100 rounded-[20px] text-xs font-extrabold text-stone-500 shadow-sm">
                   {format(new Date(), "EEEE, do MMMM", { locale: enUS })}
                 </div>
               </div>
@@ -436,18 +436,18 @@ export default function AdminDashboard() {
 
               <div className="bg-white rounded-[48px] border border-stone-100 shadow-xl overflow-hidden pb-6">
                 <div className="p-10 border-b border-stone-50 flex justify-between items-center bg-stone-50/20">
-                  <h3 className="text-xl font-black flex items-center gap-5 text-brand">
+                  <h3 className="text-xl font-extrabold flex items-center gap-5 text-brand">
                     <div className="p-3 bg-accent/10 rounded-2xl">
                       <FileText className="w-6 h-6 text-accent" />
                     </div>
                     أحدث التدفقات الواردة
                   </h3>
-                  <MagneticButton onClick={() => setActiveTab("orders")} className="px-8 py-3 gold-gradient text-white rounded-2xl text-xs font-black uppercase shadow-lg shadow-accent/20 active:scale-95 transition-all">مراجعة الكل</MagneticButton>
+                  <MagneticButton onClick={() => setActiveTab("orders")} className="px-8 py-3 gold-gradient text-white rounded-2xl text-xs font-extrabold uppercase shadow-md shadow-accent/20 active:scale-95 transition-all">مراجعة الكل</MagneticButton>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="text-right text-[10px] text-stone-400 font-black uppercase tracking-[0.3em] border-b border-stone-50">
+                      <tr className="text-right text-[10px] text-stone-400 font-extrabold uppercase tracking-[0.3em] border-b border-stone-50">
                         <th className="p-10">ID</th>
                         <th className="p-10">العميل</th>
                         <th className="p-10">المنطقة</th>
@@ -468,7 +468,7 @@ export default function AdminDashboard() {
                           <tr key={order.id} className="group hover:bg-stone-50/50 transition-all duration-500">
                             <td className="p-10 font-mono text-[10px] text-stone-300 group-hover:text-brand">#{order.id.toUpperCase()}</td>
                             <td className="p-10">
-                              <p className="font-black text-brand text-lg">
+                              <p className="font-extrabold text-brand text-lg">
                                 {order.customerName}
                                 {getCustomerPoints(order.customerPhone) > 0 && (
                                   <span className="inline-block mr-3 px-2.5 py-0.5 bg-accent/10 text-accent text-xs font-bold rounded-lg border border-accent/20 align-middle shadow-sm">⭐ {getCustomerPoints(order.customerPhone)} نقطة</span>
@@ -481,12 +481,12 @@ export default function AdminDashboard() {
                             </td>
                             <td className="p-10 text-2xl font-light text-brand italic">{getDisplayTotal(order).toFixed(3)} <span className="text-xs text-accent">د.ك</span></td>
                             <td className="p-10">
-                                <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest inline-block border ${
+                                <span className={`px-4 py-1.5 rounded-xl text-[9px] font-extrabold uppercase tracking-widest inline-block border ${
                                   order.status === "جديد" || order.status === "بانتظار الدفع" ? "bg-amber-50 text-amber-600 border-amber-100" :
                                   order.status === "قيد تجميع القطية" ? "bg-purple-50 text-purple-600 border-purple-100" :
                                   order.status?.startsWith("تم الدفع") ? "bg-green-50 text-green-600 border-green-100" :
                                   order.status === "فشل في عملية الدفع" || order.status?.includes("ملغي") ? "bg-red-50 text-red-500 border-red-100" :
-                                  "bg-stone-50 text-stone-600 border-stone-200"
+                                  "bg-stone-50 text-stone-600 border-stone-100"
                                 }`}>
                                 {order.status}
                               </span>
@@ -510,13 +510,13 @@ export default function AdminDashboard() {
             <div className="animate-in slide-in-from-right-6 duration-700 space-y-12">
                <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-5xl font-black text-brand leading-none">قائمة الفواتير</h1>
+                  <h1 className="text-5xl font-extrabold text-brand leading-none">قائمة الفواتير</h1>
                   <p className="text-stone-400 text-sm mt-4 font-medium uppercase tracking-[0.3em]">إدارة الطلبات الحالية والجديدة</p>
                 </div>
                 <div className="relative">
                   <button 
                     onClick={() => setShowOrderFilters(!showOrderFilters)}
-                    className={`flex items-center gap-3 px-8 py-4 bg-white border rounded-2xl text-[10px] font-black uppercase transition-all shadow-sm ${selectedRegionFilter ? "text-accent border-accent/20" : "text-stone-400 border-stone-100 hover:text-brand"}`}
+                    className={`flex items-center gap-3 px-8 py-4 bg-white border rounded-2xl text-[10px] font-extrabold uppercase transition-all shadow-sm ${selectedRegionFilter ? "text-accent border-accent/20" : "text-stone-400 border-stone-100 hover:text-brand"}`}
                   >
                     <Filter className="w-4 h-4" /> {selectedRegionFilter || "تصفية حسب المنطقة"}
                   </button>
@@ -529,7 +529,7 @@ export default function AdminDashboard() {
                         exit={{ opacity: 0, y: 10 }}
                         className="absolute left-0 top-full mt-2 w-64 bg-white border border-stone-100 rounded-2xl shadow-xl z-[60] overflow-hidden"
                       >
-                        <div className="p-4 border-b border-stone-50 bg-stone-50/50 text-[10px] font-black text-stone-400 uppercase tracking-widest">اختر المنطقة</div>
+                        <div className="p-4 border-b border-stone-50 bg-stone-50/50 text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">اختر المنطقة</div>
                         <div className="max-h-64 overflow-y-auto no-scrollbar">
                           <button 
                             onClick={() => { setSelectedRegionFilter(""); setShowOrderFilters(false); }}
@@ -559,7 +559,7 @@ export default function AdminDashboard() {
                     <div className="w-20 h-20 bg-stone-50 rounded-full flex items-center justify-center mx-auto mb-6">
                       <ShoppingCart className="w-10 h-10 text-stone-200" />
                     </div>
-                    <h3 className="text-2xl font-black text-brand mb-2">لا توجد طلبات جديدة</h3>
+                    <h3 className="text-2xl font-extrabold text-brand mb-2">لا توجد طلبات جديدة</h3>
                     <p className="text-stone-400 font-medium">كل شيء تحت السيطرة حالياً</p>
                   </div>
                 ) : (
@@ -572,18 +572,18 @@ export default function AdminDashboard() {
                     >
                     {order.source === "customer_website" && (
                       <div className="absolute top-6 left-6 flex items-center gap-2">
-                        <span className="w-2 h-2 bg-accent rounded-full animate-pulse shadow-lg shadow-accent/50" />
-                        <span className="text-[8px] font-black uppercase text-accent tracking-widest bg-accent/5 px-2 py-1 rounded-lg">طلب من الموقع</span>
+                        <span className="w-2 h-2 bg-accent rounded-full animate-pulse shadow-md shadow-accent/50" />
+                        <span className="text-[8px] font-extrabold uppercase text-accent tracking-widest bg-accent/5 px-2 py-1 rounded-lg">طلب من الموقع</span>
                       </div>
                     )}
                     
                     <div className="absolute top-6 right-6">
-                       <span className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border shadow-sm ${
+                       <span className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-widest border shadow-sm ${
                          order.status === "جديد" || order.status === "بانتظار الدفع" ? "bg-amber-50 text-amber-600 border-amber-100" :
                          order.status === "قيد تجميع القطية" ? "bg-purple-50 text-purple-600 border-purple-100" :
                          order.status?.startsWith("تم الدفع") ? "bg-green-50 text-green-600 border-green-100" :
                          order.status === "فشل في عملية الدفع" || order.status?.includes("ملغي") ? "bg-red-50 text-red-500 border-red-100" :
-                         "bg-stone-50 text-stone-600 border-stone-200"
+                         "bg-stone-50 text-stone-600 border-stone-100"
                        }`}>
                           {order.status}
                        </span>
@@ -591,7 +591,7 @@ export default function AdminDashboard() {
                     
                     <div className="mb-10 mt-6 text-right">
                       <p className="text-[10px] text-stone-300 font-bold uppercase tracking-[0.2em] mb-3">Invoice #{order.id}</p>
-                      <h4 className="text-3xl font-black text-brand group-hover:text-accent transition-colors leading-none block">
+                      <h4 className="text-3xl font-extrabold text-brand group-hover:text-accent transition-colors leading-none block">
                         {order.customerName}
                         {getCustomerPoints(order.customerPhone) > 0 && (
                            <span className="inline-block mr-3 px-3 py-1 bg-accent/10 text-accent text-sm font-bold rounded-xl border border-accent/20 align-middle shadow-sm">⭐ {getCustomerPoints(order.customerPhone)} نقطة</span>
@@ -622,7 +622,7 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="flex justify-between items-center pt-2">
-                       <div className="text-3xl font-black text-brand italic">{getDisplayTotal(order).toFixed(3)} <span className="text-sm text-accent not-italic">د.ك</span></div>
+                       <div className="text-3xl font-extrabold text-brand italic">{getDisplayTotal(order).toFixed(3)} <span className="text-sm text-accent not-italic">د.ك</span></div>
                        <button 
                         onClick={(e) => { e.stopPropagation(); contactCustomer(order); }}
                         className="w-14 h-14 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center hover:bg-green-500 hover:text-white transition-all shadow-sm"
@@ -640,10 +640,10 @@ export default function AdminDashboard() {
             <div className="space-y-12 animate-in slide-in-from-top-6 duration-700">
                <div className="flex items-center justify-between">
                  <div>
-                  <h1 className="text-5xl font-black text-brand leading-none">أرشيف المبيعات</h1>
+                  <h1 className="text-5xl font-extrabold text-brand leading-none">أرشيف المبيعات</h1>
                   <p className="text-stone-400 text-sm mt-4 font-medium uppercase tracking-[0.3em]">السجل المالي الكامل للمتجر</p>
                 </div>
-                <MagneticButton className="flex items-center gap-4 px-10 py-5 gold-gradient text-white rounded-[24px] text-xs font-black shadow-xl shadow-accent/20 active:scale-95 uppercase tracking-widest">
+                <MagneticButton className="flex items-center gap-4 px-10 py-5 gold-gradient text-white rounded-[24px] text-xs font-extrabold shadow-xl shadow-accent/20 active:scale-95 uppercase tracking-widest">
                   <CreditCard className="w-5 h-5" /> تصدير السجل الضريبي
                 </MagneticButton>
               </div>
@@ -652,7 +652,7 @@ export default function AdminDashboard() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="text-right text-[10px] text-stone-400 font-black uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
+                      <tr className="text-right text-[10px] text-stone-400 font-extrabold uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
                         <th className="p-10">المرجع المالي</th>
                         <th className="p-10">العميل</th>
                         <th className="p-10">التاريخ</th>
@@ -663,7 +663,7 @@ export default function AdminDashboard() {
                     <tbody className="divide-y divide-stone-50">
                       {filteredInvoices.map(invoice => (
                         <tr key={invoice.invoiceId} className="hover:bg-stone-50/30 transition-all duration-300">
-                          <td className="p-10 font-mono text-[10px] text-accent font-black tracking-widest flex items-center gap-2">
+                          <td className="p-10 font-mono text-[10px] text-accent font-extrabold tracking-widest flex items-center gap-2">
                              {invoice.invoiceId}
                              <button
                                onClick={(e) => {
@@ -680,7 +680,7 @@ export default function AdminDashboard() {
                              </button>
                           </td>
                           <td className="p-10">
-                            <p className="font-black text-brand text-lg">
+                            <p className="font-extrabold text-brand text-lg">
                               {invoice.customerName}
                               {getCustomerPoints(invoice.customerPhone) > 0 && (
                                 <span className="inline-block mr-3 px-2.5 py-0.5 bg-accent/10 text-accent text-xs font-bold rounded-lg border border-accent/20 align-middle shadow-sm">⭐ {getCustomerPoints(invoice.customerPhone)} نقطة</span>
@@ -693,7 +693,7 @@ export default function AdminDashboard() {
                           </td>
                           <td className="p-10 text-2xl font-light text-brand italic">{getDisplayTotal(invoice).toFixed(3)} <span className="text-xs text-accent">د.ك</span></td>
                           <td className="p-10">
-                            <div className="flex items-center gap-3 text-green-600 font-black text-[10px] uppercase tracking-widest">
+                            <div className="flex items-center gap-3 text-green-600 font-extrabold text-[10px] uppercase tracking-widest">
                               <div className="w-4 h-4 rounded-full bg-green-50 flex items-center justify-center">
                                 <CheckCircle2 className="w-3 h-3" />
                               </div>
@@ -712,14 +712,14 @@ export default function AdminDashboard() {
           {activeTab === "settings" && (
             <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-700">
                <div>
-                  <h1 className="text-4xl font-black text-brand leading-none">إعدادات المتجر</h1>
+                  <h1 className="text-4xl font-extrabold text-brand leading-none">إعدادات المتجر</h1>
                   <p className="text-stone-400 text-sm mt-3 font-medium uppercase tracking-[0.3em]">التحكم بحالة المتجر وأوقات العمل</p>
                </div>
                
                <div className="bg-white rounded-[40px] border border-stone-100 shadow-sm p-10 space-y-8">
                   <div className="flex items-center justify-between p-6 bg-stone-50 rounded-[32px] border border-stone-100">
                     <div>
-                      <h3 className="text-lg font-black text-brand mb-1">إغلاق المتجر يدوياً</h3>
+                      <h3 className="text-lg font-extrabold text-brand mb-1">إغلاق المتجر يدوياً</h3>
                       <p className="text-stone-400 text-xs font-medium">تفعيل هذا الخيار سيغلق المتجر فوراً.</p>
                     </div>
                     <button 
@@ -738,12 +738,12 @@ export default function AdminDashboard() {
                       }}
                       className={`w-16 h-8 rounded-full relative transition-all duration-500 ${settings?.storeStatus?.manualClose ? 'bg-red-500' : 'bg-stone-200'}`}
                     >
-                      <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-500 shadow-lg ${settings?.storeStatus?.manualClose ? 'right-9' : 'right-1'}`} />
+                      <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-500 shadow-md ${settings?.storeStatus?.manualClose ? 'right-9' : 'right-1'}`} />
                     </button>
                   </div>
                   
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest px-2">رسالة الإغلاق</label>
+                    <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-2">رسالة الإغلاق</label>
                     <textarea 
                         value={settings.storeStatus?.closeMessage || "عذراً، المتجر مغلق حالياً."}
                         onBlur={async (e) => {
@@ -761,7 +761,7 @@ export default function AdminDashboard() {
                           const newStatus = {...settings.storeStatus, closeMessage: e.target.value};
                           setSettings({...settings, storeStatus: newStatus});
                         }}
-                        className="w-full p-6 bg-stone-50 border border-stone-100 rounded-2xl font-black text-brand"
+                        className="w-full p-6 bg-stone-50 border border-stone-100 rounded-2xl font-extrabold text-brand"
                     />
                   </div>
                </div>
@@ -772,23 +772,23 @@ export default function AdminDashboard() {
             <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-5xl font-black text-brand leading-none">قائمة العملاء</h1>
+                  <h1 className="text-5xl font-extrabold text-brand leading-none">قائمة العملاء</h1>
                   <p className="text-stone-400 mt-4 font-bold text-lg">إدارة وتتبع عملائك ونقاطهم</p>
                 </div>
-                <div className="bg-brand/5 text-brand px-6 py-3 rounded-2xl font-black">
+                <div className="bg-brand/5 text-brand px-6 py-3 rounded-2xl font-extrabold">
                   إجمالي العملاء: {customers.length}
                 </div>
               </div>
 
               <div className="bg-white rounded-[48px] border border-stone-100 shadow-xl overflow-hidden">
                 <div className="p-8 border-b border-stone-50 bg-stone-50/30 flex justify-between items-center">
-                  <h2 className="text-xl font-black text-brand">بيانات العملاء</h2>
+                  <h2 className="text-xl font-extrabold text-brand">بيانات العملاء</h2>
                 </div>
                 
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="text-right text-[10px] text-stone-400 font-black uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
+                      <tr className="text-right text-[10px] text-stone-400 font-extrabold uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
                         <th className="p-8">رقم الهاتف</th>
                         <th className="p-8">الاسم</th>
                         <th className="p-8 text-center">النقاط (د.ك المدفوعة)</th>
@@ -807,7 +807,7 @@ export default function AdminDashboard() {
                           </td>
                           <td className="p-8 text-center">
                             <div className="inline-flex items-center gap-2 bg-green-50 px-4 py-2 rounded-xl">
-                                <span className="font-black text-green-600 text-lg">{customer.totalSpent || 0}</span>
+                                <span className="font-extrabold text-green-600 text-lg">{customer.totalSpent || 0}</span>
                                 <span className="text-[10px] text-green-500 font-bold uppercase tracking-widest">نقطة</span>
                             </div>
                           </td>
@@ -831,12 +831,12 @@ export default function AdminDashboard() {
             <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-5xl font-black text-brand leading-none">إدارة المناطق والتوصيل</h1>
+                  <h1 className="text-5xl font-extrabold text-brand leading-none">إدارة المناطق والتوصيل</h1>
                   <p className="text-stone-400 text-sm mt-4 font-medium uppercase tracking-[0.3em]">تعديل مسميات وأسعار التوصيل والإعدادات العامة</p>
                 </div>
                 <button 
                   onClick={() => setShowAddZone(true)}
-                  className="flex items-center gap-3 px-8 py-4 gold-gradient text-white rounded-2xl text-xs font-black uppercase shadow-lg shadow-accent/20 active:scale-95 transition-all"
+                  className="flex items-center gap-3 px-8 py-4 gold-gradient text-white rounded-2xl text-xs font-extrabold uppercase shadow-md shadow-accent/20 active:scale-95 transition-all"
                 >
                   <MapPin className="w-4 h-4" /> إضافة منطقة جديدة
                 </button>
@@ -851,12 +851,12 @@ export default function AdminDashboard() {
                     className="overflow-hidden bg-white rounded-[40px] border-2 border-accent/20 shadow-xl p-10 space-y-8"
                   >
                     <div className="flex items-center justify-between">
-                       <h3 className="text-2xl font-black text-brand">إضافة منطقة توصيل جديدة</h3>
+                       <h3 className="text-2xl font-extrabold text-brand">إضافة منطقة توصيل جديدة</h3>
                        <button onClick={() => setShowAddZone(false)} className="p-2 text-stone-300 hover:text-red-500 transition-colors"><X className="w-6 h-6" /></button>
                     </div>
                     <div className="grid grid-cols-2 gap-8">
                        <div className="space-y-3">
-                          <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest px-2">اسم المنطقة</label>
+                          <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-2">اسم المنطقة</label>
                           <input 
                             type="text"
                             placeholder="مثال: حولي، جابر الأحمد..."
@@ -866,7 +866,7 @@ export default function AdminDashboard() {
                           />
                        </div>
                        <div className="space-y-3">
-                          <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest px-2">سعر التوصيل (د.ك)</label>
+                          <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-2">سعر التوصيل (د.ك)</label>
                           <input 
                             type="text"
                             inputMode="decimal"
@@ -896,7 +896,7 @@ export default function AdminDashboard() {
                             console.error(err);
                           }
                         }}
-                        className="px-12 py-4 gold-gradient text-white rounded-2xl font-black text-sm shadow-xl shadow-accent/20 active:scale-95 transition-all"
+                        className="px-12 py-4 gold-gradient text-white rounded-2xl font-extrabold text-sm shadow-xl shadow-accent/20 active:scale-95 transition-all"
                        >
                          حفظ المنطقة
                        </button>
@@ -909,7 +909,7 @@ export default function AdminDashboard() {
               <div className="bg-white rounded-[48px] border border-stone-100 shadow-xl p-10 space-y-8">
                 <div className="flex items-center justify-between p-6 bg-stone-50 rounded-[32px] border border-stone-100 shadow-sm">
                   <div>
-                    <h3 className="text-xl font-black text-brand mb-1">توصيل مجاني لجميع المناطق</h3>
+                    <h3 className="text-xl font-extrabold text-brand mb-1">توصيل مجاني لجميع المناطق</h3>
                     <p className="text-stone-400 text-xs font-medium">تفعيل هذا الخيار سيجعل رسوم التوصيل 0 لجميع الطلبات.</p>
                   </div>
                   <button 
@@ -926,20 +926,20 @@ export default function AdminDashboard() {
                     }}
                     className={`w-16 h-8 rounded-full relative transition-all duration-500 ${settings.isFreeDelivery ? 'bg-green-500' : 'bg-stone-200'}`}
                   >
-                    <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-500 shadow-lg ${settings.isFreeDelivery ? 'right-9' : 'right-1'}`} />
+                    <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-500 shadow-md ${settings.isFreeDelivery ? 'right-9' : 'right-1'}`} />
                   </button>
                 </div>
 
                 <div className="flex items-center justify-between p-6 bg-stone-50 rounded-[32px] border border-stone-100 shadow-sm">
                    <div>
-                    <h3 className="text-xl font-black text-brand mb-1">الحد الأدنى للتوصيل المجاني</h3>
+                    <h3 className="text-xl font-extrabold text-brand mb-1">الحد الأدنى للتوصيل المجاني</h3>
                     <p className="text-stone-400 text-xs font-medium">سيتم إلغاء رسوم التوصيل إذا تجاوز إجمالي الطلب هذا المبلغ.</p>
                   </div>
                   <div className="flex items-center gap-4">
                     <input 
                       type="text"
                       inputMode="decimal"
-                      className="w-24 p-3 bg-white border border-stone-100 rounded-2xl text-center font-black text-brand text-sm"
+                      className="w-24 p-3 bg-white border border-stone-100 rounded-2xl text-center font-extrabold text-brand text-sm"
                       value={settings.freeDeliveryThreshold || 0}
                       onChange={async (e) => {
                          const val = Number(normalizeDigits(e.target.value).replace(/[^0-9.]/g, ''));
@@ -953,7 +953,7 @@ export default function AdminDashboard() {
                          }
                       }}
                     />
-                    <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">د.ك</span>
+                    <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">د.ك</span>
                   </div>
                 </div>
 
@@ -963,7 +963,7 @@ export default function AdminDashboard() {
                       <MessageCircle className="w-8 h-8 text-accent" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black text-brand mb-1">رقم استقبال طلبات الواتساب</h3>
+                      <h3 className="text-2xl font-extrabold text-brand mb-1">رقم استقبال طلبات الواتساب</h3>
                       <p className="text-stone-400 text-xs font-medium">أدخل الرقم المكون من 8 أرقام (مثال: 92225308). سيقوم النظام بإضافة المفتاح الدولي تلقائياً.</p>
                       {(!settings.companyPhone && settings.restaurantNumbers?.[0]) && (
                         <p className="text-accent text-[10px] font-bold mt-2 flex items-center gap-2">
@@ -978,7 +978,7 @@ export default function AdminDashboard() {
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300 font-bold text-xs">965+</span>
                       <input 
                         type="text"
-                        className="w-56 pl-14 p-4 bg-white border-2 border-stone-100 rounded-2xl text-center font-black text-brand text-lg focus:border-accent focus:ring-4 focus:ring-accent/5 outline-none transition-all"
+                        className="w-56 pl-14 p-4 bg-white border-2 border-stone-100 rounded-2xl text-center font-extrabold text-brand text-lg focus:border-accent focus:ring-4 focus:ring-accent/5 outline-none transition-all"
                         value={settings.companyPhone || ""}
                         placeholder="XXXXXXXX"
                         maxLength={8}
@@ -1003,7 +1003,7 @@ export default function AdminDashboard() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="text-right text-[10px] text-stone-400 font-black uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
+                      <tr className="text-right text-[10px] text-stone-400 font-extrabold uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
                         <th className="p-10">المنطقة</th>
                         <th className="p-10">سعر التوصيل</th>
                         <th className="p-10">الحالة</th>
@@ -1019,10 +1019,10 @@ export default function AdminDashboard() {
                                 type="text"
                                 value={editZoneName}
                                 onChange={(e) => setEditZoneName(e.target.value)}
-                                className="p-3 bg-white border border-accent rounded-xl text-brand font-black w-full"
+                                className="p-3 bg-white border border-accent rounded-xl text-brand font-extrabold w-full"
                               />
                             ) : (
-                              <p className="font-black text-brand text-lg">{zone.name}</p>
+                              <p className="font-extrabold text-brand text-lg">{zone.name}</p>
                             )}
                           </td>
                           <td className="p-10 text-xl font-light text-brand italic">
@@ -1032,7 +1032,7 @@ export default function AdminDashboard() {
                                     inputMode="decimal"
                                     value={editZonePrice}
                                     onChange={(e) => setEditZonePrice(Number(normalizeDigits(e.target.value).replace(/[^0-9.]/g, '')))}
-                                    className="p-3 bg-white border border-accent rounded-xl text-brand font-black w-24"
+                                    className="p-3 bg-white border border-accent rounded-xl text-brand font-extrabold w-24"
                                 />
                             ) : (
                                 <>
@@ -1041,7 +1041,7 @@ export default function AdminDashboard() {
                             )}
                           </td>
                           <td className="p-10">
-                            <span className="px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest inline-block border bg-green-50 text-green-600 border-green-100">
+                            <span className="px-4 py-1.5 rounded-xl text-[9px] font-extrabold uppercase tracking-widest inline-block border bg-green-50 text-green-600 border-green-100">
                               نشط
                             </span>
                           </td>
@@ -1067,7 +1067,7 @@ export default function AdminDashboard() {
                                       console.error(err);
                                     }
                                   }}
-                                  className="p-3 bg-green-500 text-white rounded-xl shadow-lg shadow-green-500/20 active:scale-95"
+                                  className="p-3 bg-green-500 text-white rounded-xl shadow-md shadow-green-500/20 active:scale-95"
                                 >
                                   <Save className="w-5 h-5" />
                                 </button>
@@ -1118,26 +1118,26 @@ export default function AdminDashboard() {
               {/* Promo Codes Management */}
               <div className="bg-white rounded-[48px] border border-stone-100 shadow-xl overflow-hidden mt-8">
                 <div className="p-10 border-b border-stone-50 bg-stone-50/10">
-                  <h3 className="text-xl font-black text-brand">إدارة كوبونات الخصم</h3>
+                  <h3 className="text-xl font-extrabold text-brand">إدارة كوبونات الخصم</h3>
                   <p className="text-stone-400 text-xs mt-1">أضف وتحكم في رموز الخصم للعملاء</p>
                 </div>
                 
                 <div className="p-10 border-b border-stone-50 bg-white">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest px-1">كود الخصم</label>
+                      <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-1">كود الخصم</label>
                       <input 
                         type="text"
                         placeholder="SUMMER20"
-                        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl text-brand font-black"
+                        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl text-brand font-extrabold"
                         value={newPromoCode}
                         onChange={e => setNewPromoCode(normalizeDigits(e.target.value).toUpperCase())}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest px-1">النوع</label>
+                      <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-1">النوع</label>
                       <select 
-                        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl text-brand font-black appearance-none"
+                        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl text-brand font-extrabold appearance-none"
                         value={newPromoType}
                         onChange={e => setNewPromoType(e.target.value as any)}
                       >
@@ -1146,12 +1146,12 @@ export default function AdminDashboard() {
                       </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest px-1">القيمة</label>
+                      <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-1">القيمة</label>
                       <input 
                         type="text"
                         inputMode="decimal"
                         placeholder="0.000"
-                        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl text-brand font-black"
+                        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl text-brand font-extrabold"
                         value={newPromoValue}
                         onChange={e => setNewPromoValue(Number(normalizeDigits(e.target.value).replace(/[^0-9.]/g, '')))}
                       />
@@ -1180,7 +1180,7 @@ export default function AdminDashboard() {
                         }
                       }}
                       disabled={isAddingPromo || !newPromoCode || newPromoValue <= 0}
-                      className="p-4 bg-brand text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-brand/20 active:scale-95 disabled:opacity-50"
+                      className="p-4 bg-brand text-white rounded-2xl font-extrabold text-xs uppercase tracking-widest shadow-md shadow-brand/20 active:scale-95 disabled:opacity-50"
                     >
                       {isAddingPromo ? "جاري الإضافة..." : "إضافة كوبون"}
                     </button>
@@ -1190,7 +1190,7 @@ export default function AdminDashboard() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="text-right text-[10px] text-stone-400 font-black uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
+                      <tr className="text-right text-[10px] text-stone-400 font-extrabold uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
                         <th className="p-8">الكود</th>
                         <th className="p-8">النوع</th>
                         <th className="p-8">القيمة</th>
@@ -1201,7 +1201,7 @@ export default function AdminDashboard() {
                       {promocodes.map((promo: any) => (
                         <tr key={promo.code} className="hover:bg-stone-50/50 transition-all">
                           <td className="p-8">
-                            <span className="font-black text-brand">{promo.code}</span>
+                            <span className="font-extrabold text-brand">{promo.code}</span>
                           </td>
                           <td className="p-8">
                             <span className="text-xs font-bold text-stone-500">
@@ -1209,7 +1209,7 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td className="p-8">
-                            <span className="font-black text-brand">
+                            <span className="font-extrabold text-brand">
                               {promo.type === 'percentage' ? `${promo.value}%` : `${promo.value.toFixed(3)} د.ك`}
                             </span>
                           </td>
@@ -1264,12 +1264,12 @@ export default function AdminDashboard() {
 
 function NavItem({ active, onClick, icon, label, badge }: any) {
   return (
-    <button onClick={onClick} className={`w-full flex items-center justify-between p-5 rounded-2xl transition-all relative group overflow-hidden ${active ? "bg-brand text-white shadow-lg shadow-brand/20 shadow-xl" : "text-stone-400 hover:text-brand hover:bg-stone-50"}`}>
+    <button onClick={onClick} className={`w-full flex items-center justify-between p-5 rounded-2xl transition-all relative group overflow-hidden ${active ? "bg-brand text-white shadow-md shadow-brand/20 shadow-xl" : "text-stone-400 hover:text-brand hover:bg-stone-50"}`}>
       <div className="flex items-center gap-5 relative z-10">
         <span className={`${active ? "text-white" : "text-stone-300 group-hover:text-brand"}`}>{icon}</span>
-        <span className="text-xs font-black uppercase tracking-[0.2em]">{label}</span>
+        <span className="text-xs font-extrabold uppercase tracking-[0.2em]">{label}</span>
       </div>
-      {badge && <span className="bg-red-500 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-lg shadow-lg shadow-red-500/20 relative z-10 animate-bounce">{badge}</span>}
+      {badge && <span className="bg-red-500 text-white text-[10px] font-extrabold w-6 h-6 flex items-center justify-center rounded-lg shadow-md shadow-red-500/20 relative z-10 animate-bounce">{badge}</span>}
     </button>
   );
 }
@@ -1280,10 +1280,10 @@ function StatCard({ title, value, trend, icon, isNew, color }: any) {
       <div className="absolute top-0 right-0 w-32 h-32 bg-stone-50 rounded-full translate-x-10 -translate-y-10 group-hover:bg-accent/5 transition-colors" />
       <div className="flex justify-between items-start mb-8 relative z-10">
         <div className={`p-5 bg-stone-50 rounded-3xl border border-stone-100 shadow-sm group-hover:rotate-6 transition-all ${isNew ? 'ring-2 ring-red-500/20 bg-red-50' : ''}`}>{icon}</div>
-        <span className={`text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-widest ${color === 'accent' ? "bg-accent/10 text-accent border border-accent/20" : color === 'red' ? "bg-red-50 text-red-500 border border-red-100" : "bg-green-50 text-green-600 border border-green-100"}`}>{trend}</span>
+        <span className={`text-[10px] font-extrabold px-4 py-2 rounded-xl uppercase tracking-widest ${color === 'accent' ? "bg-accent/10 text-accent border border-accent/20" : color === 'red' ? "bg-red-50 text-red-500 border border-red-100" : "bg-green-50 text-green-600 border border-green-100"}`}>{trend}</span>
       </div>
-      <p className="text-stone-400 text-[10px] font-black uppercase tracking-[0.3em] mb-3 relative z-10">{title}</p>
-      <h3 className="text-4xl font-black text-brand italic relative z-10 tracking-tight leading-none">{value}</h3>
+      <p className="text-stone-400 text-[10px] font-extrabold uppercase tracking-[0.3em] mb-3 relative z-10">{title}</p>
+      <h3 className="text-4xl font-extrabold text-brand italic relative z-10 tracking-tight leading-none">{value}</h3>
     </div>
   );
 }
@@ -1291,23 +1291,23 @@ function StatCard({ title, value, trend, icon, isNew, color }: any) {
 function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, getCustomerPoints }: { order: Order, onClose: () => void, onContact: () => void, onPay: () => void, onFreeDelivery?: () => void, getCustomerPoints: (phone?: string) => number }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-brand/40 backdrop-blur-md p-8" onClick={onClose}>
-      <motion.div initial={{ scale: 0.95, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 30 }} className="bg-white w-full max-w-4xl rounded-[48px] shadow-2xl overflow-hidden flex flex-col border border-stone-100" onClick={e => e.stopPropagation()}>
+      <motion.div initial={{ scale: 0.95, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 30 }} className="bg-white w-full max-w-4xl rounded-[48px] shadow-xl overflow-hidden flex flex-col border border-stone-100" onClick={e => e.stopPropagation()}>
         <div className="p-10 border-b border-stone-50 flex items-center justify-between bg-stone-50/30">
           <div className="flex items-center gap-6">
             <button onClick={onClose} className="p-4 bg-white border border-stone-100 rounded-2xl hover:bg-brand hover:text-white transition-all shadow-sm"><ChevronLeft className="w-6 h-6" /></button>
             <div>
               <p className="text-[10px] text-stone-400 font-bold uppercase tracking-[0.3em] mb-1">Invoice Details</p>
-              <h3 className="font-black text-2xl text-brand">تفاصيل الفاتورة #{order.id.toUpperCase()}</h3>
+              <h3 className="font-extrabold text-2xl text-brand">تفاصيل الفاتورة #{order.id.toUpperCase()}</h3>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            {order.source === "customer_website" && <span className="bg-accent/10 text-accent px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-accent/20 animate-pulse">جديد من الموقع</span>}
-            <span className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${
+            {order.source === "customer_website" && <span className="bg-accent/10 text-accent px-4 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-widest border border-accent/20 animate-pulse">جديد من الموقع</span>}
+            <span className={`px-5 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-widest border ${
               order.status === "جديد" || order.status === "بانتظار الدفع" ? "bg-amber-50 text-amber-600 border-amber-100" :
               order.status === "قيد تجميع القطية" ? "bg-purple-50 text-purple-600 border-purple-100" :
               order.status?.startsWith("تم الدفع") ? "bg-green-50 text-green-600 border-green-100" :
               order.status === "فشل في عملية الدفع" || order.status?.includes("ملغي") ? "bg-red-50 text-red-500 border-red-100" :
-              "bg-stone-50 text-stone-600 border-stone-200"
+              "bg-stone-50 text-stone-600 border-stone-100"
             }`}>{order.status}</span>
           </div>
         </div>
@@ -1315,8 +1315,8 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
           <section className="grid grid-cols-1 md:grid-cols-2 gap-12">
             <div className="space-y-8 text-right">
               <div>
-                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] block mb-3">بيانات العميل</label>
-                <h4 className="text-3xl font-black text-brand flex items-center justify-end flex-wrap gap-4">
+                <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-[0.2em] block mb-3">بيانات العميل</label>
+                <h4 className="text-3xl font-extrabold text-brand flex items-center justify-end flex-wrap gap-4">
                    {getCustomerPoints(order.customerPhone) > 0 && (
                      <span className="inline-block px-3 py-1 bg-accent/10 text-accent text-sm font-bold rounded-xl border border-accent/20 align-middle shadow-sm">⭐ {getCustomerPoints(order.customerPhone)} نقطة</span>
                    )}
@@ -1325,9 +1325,9 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
                 <p className="text-accent text-xl font-light italic mt-1">{order.customerPhone}</p>
               </div>
               <div className="p-8 bg-stone-50 rounded-[32px] border border-stone-100 space-y-5">
-                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] flex items-center gap-2 justify-end">📍 عنوان التوصيل</label>
+                <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-[0.2em] flex items-center gap-2 justify-end">📍 عنوان التوصيل</label>
                 <div className="space-y-2 text-brand">
-                  <div className="text-xl font-black">{order.address.region} - قطعة {order.address.block}</div>
+                  <div className="text-xl font-extrabold">{order.address.region} - قطعة {order.address.block}</div>
                   <div className="text-stone-500 font-bold">شارع {order.address.street} {order.address.avenue && ` - جادة ${order.address.avenue}`} - منزل {order.address.building}</div>
                   {(order.address.floor || order.address.apartment) && <div className="text-stone-500 font-bold">{order.address.floor && `الدور ${order.address.floor}`} {order.address.apartment && ` - شقة ${order.address.apartment}`}</div>}
                   {order.address.deliveryNotes && <div className="mt-6 p-5 bg-white rounded-2xl text-[11px] text-stone-400 italic border-r-4 border-accent font-medium leading-relaxed">📝 {order.address.deliveryNotes}</div>}
@@ -1335,7 +1335,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
               </div>
             </div>
             <div className="space-y-8">
-              <div className="text-right"><label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] block mb-3">التوقيت</label><h4 className="text-xl font-black text-brand">{format(new Date(order.createdAt || order.date || Date.now()), "PPP p", { locale: enUS })}</h4><p className="text-stone-400 font-black uppercase text-[10px] mt-2 tracking-widest italic">المصدر: {order.source === "customer_website" ? "الموقع الإلكتروني" : "نظام الإدارة"}</p></div>
+              <div className="text-right"><label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-[0.2em] block mb-3">التوقيت</label><h4 className="text-xl font-extrabold text-brand">{format(new Date(order.createdAt || order.date || Date.now()), "PPP p", { locale: enUS })}</h4><p className="text-stone-400 font-extrabold uppercase text-[10px] mt-2 tracking-widest italic">المصدر: {order.source === "customer_website" ? "الموقع الإلكتروني" : "نظام الإدارة"}</p></div>
               
               <div className="p-8 border-2 border-stone-100 rounded-[40px] space-y-6">
                  <div className="flex justify-between items-center text-xs font-bold text-stone-400 uppercase tracking-widest">
@@ -1353,8 +1353,8 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
                     <span>مجموع المنتجات</span>
                  </div>
                  <div className="pt-4 border-t border-stone-100 flex flex-col items-center">
-                    <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest mb-3">Gross Total</p>
-                    <div className="text-6xl font-black text-brand italic tracking-tighter">{getDisplayTotal(order).toFixed(3)} <span className="text-xl text-accent not-italic">د.ك</span></div>
+                    <p className="text-[10px] text-stone-400 font-extrabold uppercase tracking-widest mb-3">Gross Total</p>
+                    <div className="text-6xl font-extrabold text-brand italic tracking-tighter">{getDisplayTotal(order).toFixed(3)} <span className="text-xl text-accent not-italic">د.ك</span></div>
                      {((order as any).discountAmount > 0 || (order as any).discount > 0) && (
                        <p className="text-xs font-bold text-red-500 mt-2">
                          الخصم {(order as any).promoCode && `(${(order as any).promoCode})`}: -{((order as any).discountAmount || (order as any).discount).toFixed(3)} د.ك
@@ -1367,12 +1367,12 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
 
           {(order as any).splitPayments && (order as any).splitType === "traditional" && (
             <section className="mt-8">
-              <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] block mb-4 px-2 text-right">المشاركين بالقطية</label>
+              <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-[0.2em] block mb-4 px-2 text-right">المشاركين بالقطية</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {(order as any).splitPayments.map((p: any, idx: number) => (
                   <div key={idx} className="bg-stone-50 p-4 rounded-2xl border border-stone-100 flex justify-between items-center">
                     <div className="flex flex-col items-start gap-1">
-                       <span className="text-xl font-black text-brand italic">{Number(p.amount).toFixed(3)} د.ك</span>
+                       <span className="text-xl font-extrabold text-brand italic">{Number(p.amount).toFixed(3)} د.ك</span>
                        <span className={`text-[10px] font-bold px-2 py-1 rounded-lg uppercase ${p.status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>{p.status === 'paid' ? 'تم الدفع' : 'بانتظار الدفع'}</span>
                     </div>
                     <div className="flex flex-col gap-1 text-right">
@@ -1387,12 +1387,12 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
 
           {(order as any).splitParticipants && (order as any).splitType === "roulette" && (
              <section className="mt-8">
-               <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] block mb-4 px-2 text-right">روليت الحظ</label>
+               <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-[0.2em] block mb-4 px-2 text-right">روليت الحظ</label>
                <div className="bg-fuchsia-50 p-6 rounded-[32px] border border-fuchsia-100 text-center flex flex-col items-center justify-center">
                   {(order as any).rouletteLoser ? (
                      <>
                         <p className="text-fuchsia-800 font-bold mb-4">الخاسر اللي طاحت براسه القطية:</p>
-                        <div className="text-4xl font-black text-fuchsia-600 mb-2">{(order as any).rouletteLoser}</div>
+                        <div className="text-4xl font-extrabold text-fuchsia-600 mb-2">{(order as any).rouletteLoser}</div>
                         <p className="text-sm font-bold text-fuchsia-500 mt-2">القيمة: {getDisplayTotal(order).toFixed(3)} د.ك</p>
                      </>
                   ) : (
@@ -1414,7 +1414,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
           )}
 
           <section>
-            <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] block mb-8 px-2 text-right">مكونات الطلب</label>
+            <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-[0.2em] block mb-8 px-2 text-right">مكونات الطلب</label>
             <div className="grid grid-cols-1 gap-5">
               {(order as any).notes || (order as any).generalNotes ? (
                  <div className="bg-orange-50/50 p-6 rounded-[32px] border border-orange-100 flex gap-4 text-orange-800 text-sm mb-4">
@@ -1431,16 +1431,16 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
                   <div className="flex-grow text-right">
                     <div className="flex items-center gap-6 justify-end">
                       <div>
-                        <h5 className="font-black text-xl text-brand flex items-center justify-end gap-2">
+                        <h5 className="font-extrabold text-xl text-brand flex items-center justify-end gap-2">
                            {item.name || item.productName}
                            {item.preparationInstructions && <AlertTriangle className="w-5 h-5 text-red-500 animate-pulse" />}
                         </h5>
                         <div className="mt-2 flex flex-wrap gap-2 justify-end">
-                          {item.selectedOption && <span className="text-[9px] font-black uppercase bg-stone-50 text-stone-400 px-3 py-1 rounded-lg border border-stone-100">{item.selectedOption}</span>}
-                          {(item.selectedExtras || []).map((e: any, eIdx: number) => (<span key={eIdx} className="text-[9px] font-black uppercase bg-accent/5 text-accent px-3 py-1 rounded-lg border border-accent/10">+{e.name}</span>))}
+                          {item.selectedOption && <span className="text-[9px] font-extrabold uppercase bg-stone-50 text-stone-400 px-3 py-1 rounded-lg border border-stone-100">{item.selectedOption}</span>}
+                          {(item.selectedExtras || []).map((e: any, eIdx: number) => (<span key={eIdx} className="text-[9px] font-extrabold uppercase bg-accent/5 text-accent px-3 py-1 rounded-lg border border-accent/10">+{e.name}</span>))}
                         </div>
                       </div>
-                      <div className="w-14 h-14 rounded-2xl bg-stone-50 flex items-center justify-center font-black text-accent text-xl border border-stone-100">{item.quantity}</div>
+                      <div className="w-14 h-14 rounded-2xl bg-stone-50 flex items-center justify-center font-extrabold text-accent text-xl border border-stone-100">{item.quantity}</div>
                     </div>
                     {item.preparationInstructions && (
                       <div className="mt-4 p-3 bg-red-50 rounded-2xl text-[11px] text-red-600 font-bold border border-red-100 flex items-center justify-end gap-2 text-right">
@@ -1448,7 +1448,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
                         <AlertTriangle className="w-4 h-4 shrink-0" />
                       </div>
                     )}
-                    {(item.itemNotes || item.note) && <div className="mt-3 p-5 bg-stone-50/50 rounded-2xl text-[11px] text-stone-400 italic border-r-2 border-stone-200 font-medium leading-relaxed">"{(item.itemNotes || item.note)}"</div>}
+                    {(item.itemNotes || item.note) && <div className="mt-3 p-5 bg-stone-50/50 rounded-2xl text-[11px] text-stone-400 italic border-r-2 border-stone-100 font-medium leading-relaxed">"{(item.itemNotes || item.note)}"</div>}
                   </div>
                   <div className="text-left text-2xl font-light text-brand italic shrink-0 mr-8">{((item.price || 0) * (item.quantity || 1)).toFixed(2)} <span className="text-xs text-stone-400">د.ك</span></div>
                 </div>
@@ -1459,11 +1459,11 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
         {(order.status === "جديد" || order.status?.startsWith("تم الدفع") || order.status === "فشل في عملية الدفع" || order.status === "قيد تجميع القطية") && (
           <div className="p-10 bg-stone-50/50 border-t border-stone-100 flex flex-col gap-6">
             <div className="grid grid-cols-2 gap-8">
-              <a href={`https://wa.me/${order.customerPhone?.replace(/\D/g, "")?.length === 8 ? "965" + order.customerPhone.replace(/\D/g, "") : order.customerPhone?.replace(/\D/g, "")}?text=${encodeURIComponent(`مرحباً ${order.customerName}، بخصوص طلبك رقم ${order.id}...${order.address ? `\n\n📍 العنوان:\nالمنطقة: ${order.address.region}\nقطعة: ${order.address.block}\nشارع: ${order.address.street}\nمنزل: ${order.address.building}` : ""}\n\nرابط مشاركة القطية: ${window.location.origin}/split/${order.id}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-4 bg-white border border-stone-100 text-green-500 p-6 rounded-[32px] font-black uppercase tracking-widest text-xs hover:bg-green-500 hover:text-white transition-all shadow-sm active:scale-95 group"><MessageCircle className="w-7 h-7 group-hover:animate-bounce" />تواصل عبر واتساب</a>
+              <a href={`https://wa.me/${order.customerPhone?.replace(/\D/g, "")?.length === 8 ? "965" + order.customerPhone.replace(/\D/g, "") : order.customerPhone?.replace(/\D/g, "")}?text=${encodeURIComponent(`مرحباً ${order.customerName}، بخصوص طلبك رقم ${order.id}...${order.address ? `\n\n📍 العنوان:\nالمنطقة: ${order.address.region}\nقطعة: ${order.address.block}\nشارع: ${order.address.street}\nمنزل: ${order.address.building}` : ""}\n\nرابط مشاركة القطية: ${window.location.origin}/split/${order.id}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-4 bg-white border border-stone-100 text-green-500 p-6 rounded-[32px] font-extrabold uppercase tracking-widest text-xs hover:bg-green-500 hover:text-white transition-all shadow-sm active:scale-95 group"><MessageCircle className="w-7 h-7 group-hover:animate-bounce" />تواصل عبر واتساب</a>
               {(order.status === "جديد" || order.status?.startsWith("تم الدفع")) ? (
-                <MagneticButton onClick={onPay} className="flex items-center justify-center gap-4 gold-gradient text-white p-6 rounded-[32px] font-black uppercase tracking-widest text-xs shadow-xl shadow-accent/20 hover:scale-[1.02] transition-all active:scale-95 group"><CheckCircle2 className="w-7 h-7" />تأكيد استلام المبلغ 💰</MagneticButton>
+                <MagneticButton onClick={onPay} className="flex items-center justify-center gap-4 gold-gradient text-white p-6 rounded-[32px] font-extrabold uppercase tracking-widest text-xs shadow-xl shadow-accent/20 hover:scale-[1.02] transition-all active:scale-95 group"><CheckCircle2 className="w-7 h-7" />تأكيد استلام المبلغ 💰</MagneticButton>
               ) : (
-                <button disabled className="flex items-center justify-center gap-4 bg-stone-200 text-stone-400 p-6 rounded-[32px] font-black uppercase tracking-widest text-xs shadow-sm cursor-not-allowed group">
+                <button disabled className="flex items-center justify-center gap-4 bg-stone-200 text-stone-400 p-6 rounded-[32px] font-extrabold uppercase tracking-widest text-xs shadow-sm cursor-not-allowed group">
                   <X className="w-7 h-7 opacity-50" /> يجب إتمام الدفع أولاً
                 </button>
               )}

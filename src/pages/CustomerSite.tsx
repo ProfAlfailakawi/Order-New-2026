@@ -531,29 +531,20 @@ export default function CustomerSite() {
                 }
                 const s = String(rawStatus).toLowerCase();
 
+                // Don't pull data from explicitly failed or cancelled orders
                 if (
+                  s.includes("cancel") ||
+                  s.includes("ملغي") ||
                   o.paymentStatus === "failed" ||
                   s.includes("فشل") ||
                   s.includes("failed")
-                )
+                ) {
                   return false;
-                if (
-                  s === "جديد" ||
-                  s.includes("بانتظار") ||
-                  s.includes("pending") ||
-                  s.includes("قيد تجميع") ||
-                  s === "split"
-                )
-                  return false;
-                if (s.includes("cancel") || s.includes("ملغي")) return false;
-
-                return (
-                  o.paymentStatus === "paid" ||
-                  s.includes("تم الدفع") ||
-                  s.includes("مكتمل") ||
-                  s.includes("توصيل") ||
-                  s.includes("paid")
-                );
+                }
+                
+                // Allow "جديد", "بانتظار" (pending), "قيد تجميع" etc. as valid enough to extract customer name/address!
+                // because new customers will only have a "pending/new" order.
+                return true;
               });
               if (successfulOrder) {
                 fetchedLastOrder = successfulOrder;
@@ -587,12 +578,39 @@ export default function CustomerSite() {
                 customerData.name || customerData.customerName || "",
               );
             }
-            if (customerData.address) {
-              setAddress((prev: Address) => ({
-                ...INITIAL_ADDRESS,
-                ...prev,
-                ...customerData.address,
-              }));
+            if (customerData.address && Object.keys(customerData.address).length > 0) {
+              if (typeof customerData.address === "string") {
+                 setAddress((prev: Address) => ({
+                   ...INITIAL_ADDRESS,
+                   ...prev,
+                   deliveryNotes: customerData.address
+                 }));
+              } else {
+                 setAddress((prev: Address) => ({
+                   ...INITIAL_ADDRESS,
+                   ...prev,
+                   ...customerData.address,
+                 }));
+              }
+            } else if (fetchedLastOrder && fetchedLastOrder.address) {
+              // Fallback to latest order's address if customer profile lacks it
+              if (typeof fetchedLastOrder.address === "string") {
+                  setAddress((prev: Address) => ({
+                    ...INITIAL_ADDRESS,
+                    ...prev,
+                    deliveryNotes: fetchedLastOrder.address,
+                  }));
+              } else {
+                  setAddress((prev: Address) => ({
+                    ...INITIAL_ADDRESS,
+                    ...prev,
+                    ...fetchedLastOrder.address,
+                  }));
+              }
+            }
+            
+            if (!customerData.name && !customerData.customerName && fetchedLastOrder && fetchedLastOrder.customerName) {
+              setCustomerName(fetchedLastOrder.customerName || "");
             }
             setCustomerPoints(customerData.loyaltyPoints || 0);
             setIsLocked(true);
@@ -607,11 +625,19 @@ export default function CustomerSite() {
               setCustomerName(fetchedLastOrder.customerName || "");
             }
             if (fetchedLastOrder.address) {
-              setAddress((prev: Address) => ({
-                ...INITIAL_ADDRESS,
-                ...prev,
-                ...(fetchedLastOrder.address || {}),
-              }));
+              if (typeof fetchedLastOrder.address === "string") {
+                  setAddress((prev: Address) => ({
+                    ...INITIAL_ADDRESS,
+                    ...prev,
+                    deliveryNotes: fetchedLastOrder.address,
+                  }));
+              } else {
+                  setAddress((prev: Address) => ({
+                    ...INITIAL_ADDRESS,
+                    ...prev,
+                    ...fetchedLastOrder.address,
+                  }));
+              }
             }
             setCustomerPoints(0);
             setIsLocked(true);
@@ -1814,7 +1840,7 @@ export default function CustomerSite() {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
-              className="bg-stone-50 border-b border-stone-100 px-4 sm:px-6 py-4 flex flex-col gap-3"
+              className="bg-stone-50/80 backdrop-blur-sm border-b border-stone-100 px-4 sm:px-6 py-4 flex flex-col gap-3"
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 shrink-0">
@@ -1850,7 +1876,7 @@ export default function CustomerSite() {
                 ) : (
                   <button
                     onClick={() => setIsCheckout(true)}
-                    className="text-[10px] font-bold bg-white border border-stone-200 px-3 py-1 rounded-full text-brand hover:bg-stone-50 transition-all active:scale-95 shadow-sm shrink-0"
+                    className="text-[10px] font-bold bg-white border border-stone-100 px-3 py-1 rounded-full text-brand hover:bg-stone-50/80 backdrop-blur-sm transition-all active:scale-95 shadow-sm shrink-0"
                   >
                     استكمال بياناتك؟
                   </button>
@@ -1954,7 +1980,7 @@ export default function CustomerSite() {
               />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-xl font-black text-brand leading-none tracking-tight flex items-center gap-2">
+              <h1 className="text-xl font-bold text-brand leading-none tracking-tight flex items-center gap-2">
                 {settings?.companyName ? (
                   settings.companyName
                 ) : (
@@ -1979,7 +2005,7 @@ export default function CustomerSite() {
                 />
                 <span
                   className={cn(
-                    "text-[10px] font-black uppercase tracking-wider",
+                    "text-[10px] font-extrabold uppercase tracking-wider",
                     tannourStatus.color,
                   )}
                 >
@@ -2017,11 +2043,11 @@ export default function CustomerSite() {
               <div className="relative">
                 <button
                   onClick={() => setIsCheckout(true)}
-                  className="p-2 sm:p-2.5 bg-white rounded-xl hover:bg-stone-50 transition-all active:scale-95 relative shadow-sm border border-stone-100"
+                  className="p-2 sm:p-2.5 bg-white rounded-xl hover:bg-stone-50/80 backdrop-blur-sm transition-all active:scale-95 relative shadow-sm border border-stone-100"
                 >
                   <ShoppingCart className="w-5 h-5 text-brand" />
                   {cart.length > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-lg font-black shadow-md">
+                    <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-lg font-extrabold shadow-md">
                       {cart.length}
                     </span>
                   )}
@@ -2037,7 +2063,7 @@ export default function CustomerSite() {
             <motion.div
               whileHover={{ scale: 1.01 }}
               className={cn(
-                `relative h-44 sm:h-52 rounded-[28px] overflow-hidden group shadow-2xl shadow-accent/20`,
+                `relative h-44 sm:h-52 rounded-[28px] overflow-hidden group shadow-xl shadow-accent/20`,
                 themeContext.colors,
               )}
             >
@@ -2079,7 +2105,7 @@ export default function CustomerSite() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
-                  className="text-2xl sm:text-3xl font-black text-white mb-1 drop-shadow-md"
+                  className="text-2xl sm:text-3xl font-extrabold text-white mb-1 drop-shadow-md"
                 >
                   {themeContext.title}
                 </motion.h2>
@@ -2099,8 +2125,8 @@ export default function CustomerSite() {
         {/* Faza'a Mood Search */}
         {!isCheckout && (
           <div className="px-4 sm:px-6 mb-2">
-            <div className="bg-white rounded-[24px] shadow-sm border border-stone-100 p-2 flex flex-col gap-2 relative z-20">
-              <div className="flex items-center bg-stone-50 rounded-2xl px-4 py-3">
+            <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-2 flex flex-col gap-2 relative z-20">
+              <div className="flex items-center bg-stone-50/80 backdrop-blur-sm rounded-2xl px-4 py-3">
                 <Search className="w-5 h-5 text-accent mr-2" />
                 <motion.input
                   key={currentPlaceholder}
@@ -2124,7 +2150,7 @@ export default function CustomerSite() {
                     className="px-2 pb-2 text-center"
                   >
                     <div className="bg-gradient-to-r from-brand/5 via-brand/10 to-brand/5 rounded-xl p-3 inline-block">
-                      <p className="text-sm font-black text-brand leading-relaxed">{moodMessage}</p>
+                      <p className="text-sm font-bold text-brand leading-relaxed">{moodMessage}</p>
                     </div>
                   </motion.div>
                 )}
@@ -2139,7 +2165,7 @@ export default function CustomerSite() {
           {topProducts.length > 0 && !moodQuery.trim() && (
             <section className="mb-2">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-black text-brand flex items-center gap-2">
+                <h3 className="text-lg font-bold text-brand flex items-center gap-2">
                   <span className="text-accent text-xl">🔥</span> الأكثر طلباً
                 </h3>
               </div>
@@ -2184,7 +2210,13 @@ export default function CustomerSite() {
                  if (moodFilter === "صواني") {
                     displayProducts = displayProducts.filter(p => p.name?.includes("صيني") || p.name?.includes("صينية") || p.category?.includes("صواني") || p.name?.includes("مجبوس") || p.name?.includes("طباخ"));
                  } else if (moodFilter === "خفيف") {
-                    displayProducts = displayProducts.filter(p => p.category?.includes("شورب") || p.name?.includes("شورب") || p.name?.includes("خفيف") || p.name?.includes("سلط") || p.name?.includes("تشريب"));
+                    displayProducts = displayProducts.filter(p => {
+                      const n = p.name?.toLowerCase() || "";
+                      const c = p.category?.toLowerCase() || "";
+                      const isHeavy = n.includes("مجبوس") || n.includes("برياني") || n.includes("مقلوب") || n.includes("برية") || n.includes("محاشي") || n.includes("صيني") || n.includes("قوزي") || n.includes("ذبيح") || n.includes("دجاج 65") || n.includes("مفطح") || n.includes("مطبق") || n.includes("مربين") || n.includes("مموش") || n.includes("بشاميل") || n.includes("ملفوف") || c.includes("ذبيح");
+                      const isLight = c.includes("شورب") || n.includes("شورب") || n.includes("خفيف") || n.includes("سلط") || n.includes("هريس") || n.includes("جريش") || n.includes("مرق") || n.includes("روب") || n.includes("عيش مشخول") || n.includes("عيش مشغول") || n.includes("نخي") || n.includes("تشريب") || n.includes("ورق عنب");
+                      return !isHeavy && isLight;
+                    });
                  } else if (moodFilter === "حلو") {
                     displayProducts = displayProducts.filter(p => p.category?.includes("حلو") || p.name?.includes("حلو") || p.name?.includes("كاكاو"));
                  } else if (moodFilter === "سهران") {
@@ -2195,7 +2227,19 @@ export default function CustomerSite() {
                  }
                  // if nothing found with mood filter but products exist, fallback to all (or best sellers) to not show an empty screen
                  if (displayProducts.length === 0) {
-                    displayProducts = products.filter(p => (p.price || 0) < 15).slice(0, 5); // Fallback to affordable stuff
+                    if (moodFilter === "خفيف") {
+                        displayProducts = products.filter(p => {
+                           const n = p.name?.toLowerCase() || "";
+                           const c = p.category?.toLowerCase() || "";
+                           const isHeavy = n.includes("مجبوس") || n.includes("برياني") || n.includes("مقلوب") || n.includes("برية") || n.includes("محاشي") || n.includes("صيني") || n.includes("قوزي") || n.includes("ذبيح") || n.includes("دجاج 65") || n.includes("مفطح") || n.includes("مطبق") || n.includes("مربين") || n.includes("مموش") || n.includes("بشاميل") || n.includes("ملفوف") || c.includes("ذبيح");
+                           return !isHeavy;
+                        }).slice(0, 5);
+                    } else if (moodFilter === "حلو") {
+                        displayProducts = products.filter(p => p.category?.includes("حلو") || p.name?.includes("حلو") || p.name?.includes("كاكاو") || p.name?.includes("كيك")).slice(0, 5);
+                        if (displayProducts.length === 0) displayProducts = products.filter(p => (p.price || 0) < 15).slice(0, 5);
+                    } else {
+                        displayProducts = products.filter(p => (p.price || 0) < 15).slice(0, 5); // Fallback to affordable stuff
+                    }
                  }
               }
 
@@ -2204,7 +2248,7 @@ export default function CustomerSite() {
                   لا توجد بيانات لهذا التصنيف
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {displayProducts.map((product) => (
                     <motion.div
                       key={product.id}
@@ -2238,47 +2282,7 @@ export default function CustomerSite() {
           )}
         </AnimatePresence>
 
-        {/* Checkout Sidebar/Overlay */}
-        <AnimatePresence>
-          {isCheckout && !orderSuccess && (
-            <CheckoutOverlay
-              cart={cart}
-              total={total}
-              deliveryFee={deliveryFee}
-              itemsTotal={itemsTotal}
-              customerName={customerName}
-              customerPhone={customerPhone}
-              customerPoints={customerPoints}
-              generalNotes={generalNotes}
-              setGeneralNotes={setGeneralNotes}
-              address={address}
-              regions={regions}
-              settings={settings}
-              onRegionChange={handleRegionChange}
-              setCustomerName={setCustomerName}
-              setCustomerPhone={setCustomerPhone}
-              setAddress={setAddress}
-              isLocked={isLocked}
-              setIsLocked={setIsLocked}
-              setCustomerPoints={setCustomerPoints}
-              onClose={() => setIsCheckout(false)}
-              onRemove={removeFromCart}
-              onSubmit={handleSubmitOrder}
-              formError={formError}
-              setFormError={setFormError}
-              isSubmitting={isSubmitting}
-              isDev={window.location.hostname.includes('ais-dev') || searchParams.get('dev') === 'true'}
-              promoCodeInput={promoCodeInput}
-              setPromoCodeInput={setPromoCodeInput}
-              appliedPromo={appliedPromo}
-              setAppliedPromo={setAppliedPromo}
-              promoError={promoError}
-              validatePromo={validatePromo}
-              isValidatingPromo={isValidatingPromo}
-              discountAmount={discountAmount}
-            />
-          )}
-        </AnimatePresence>
+
 
         {/* Flash Sale Popup */}
         <AnimatePresence>
@@ -2304,7 +2308,7 @@ export default function CustomerSite() {
                 animate={{ scale: 1, y: 0 }}
                 className="text-center w-full max-w-sm"
               >
-                <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl relative border-4 border-white overflow-hidden">
+                <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl relative border-4 border-white overflow-hidden">
                   <img
                     referrerPolicy="no-referrer"
                     src={
@@ -2319,7 +2323,7 @@ export default function CustomerSite() {
                   />
                   <div className="absolute inset-0 bg-accent/10 mix-blend-overlay"></div>
                 </div>
-                <h2 className="text-3xl font-black text-white mb-2 tracking-tight leading-tight">
+                <h2 className="text-3xl font-extrabold text-white mb-2 tracking-tight leading-tight">
                   {smartPick?.phrase || "اختيارنا لك"}
                 </h2>
                 <p className="text-stone-300 text-lg mb-8 leading-relaxed font-medium">
@@ -2335,7 +2339,7 @@ export default function CustomerSite() {
                     setShowFlashSale(false);
                     setSelectedProduct(smartPick?.item);
                   }}
-                  className="w-full bg-gradient-to-r from-accent to-brand text-white py-5 rounded-2xl font-black text-xl hover:shadow-[0_0_40px_rgba(255,140,0,0.4)] transition-all active:scale-95 flex items-center justify-center gap-3"
+                  className="w-full bg-gradient-to-r from-accent to-brand text-white py-5 rounded-2xl font-extrabold text-xl hover:shadow-[0_0_40px_rgba(255,140,0,0.4)] transition-all active:scale-95 flex items-center justify-center gap-3"
                 >
                   <ShoppingCart className="w-6 h-6" />
                   ألقِ نظرة! ({smartPick?.item?.price} د.ك)
@@ -2510,11 +2514,11 @@ export default function CustomerSite() {
                     ))}
                   </motion.div>
 
-                  <h2 className="text-4xl font-black text-white mt-2 drop-shadow-md">
+                  <h2 className="text-4xl font-extrabold text-white mt-2 drop-shadow-md">
                     تم استلام طلبك!
                   </h2>
                   <div className="h-px w-16 bg-white/30 my-1" />
-                  <p className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-yellow-500 text-3xl font-black italic tracking-wider drop-shadow-sm">
+                  <p className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-yellow-500 text-3xl font-extrabold italic tracking-wider drop-shadow-sm">
                     هني وعافية
                   </p>
                   <p className="text-white/80 text-sm font-medium mt-1 leading-relaxed">
@@ -2559,7 +2563,7 @@ export default function CustomerSite() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.9 }}
               className={cn(
-                "fixed bg-white border-2 border-accent/20 rounded-3xl shadow-2xl p-5 z-[70] transition-all",
+                "fixed border-2 border-accent/10 focus:border-accent/40 bg-stone-50/50 hover:bg-stone-50 transition-colors rounded-3xl shadow-xl p-5 z-[70] transition-all",
                 psychMessage && psychMessage.title.includes("جمعة")
                   ? "bottom-[40%] left-6 right-6 sm:left-1/2 sm:-translate-x-1/2 sm:w-96 ring-4 ring-accent/10 scale-110"
                   : isCheckout
@@ -2575,7 +2579,7 @@ export default function CustomerSite() {
               </button>
               <div className="flex items-start gap-4 mb-4">
                 {psychMessage.product && (
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-stone-100 shrink-0 border border-stone-200">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-stone-100 shrink-0 border border-stone-100">
                     <img
                       referrerPolicy="no-referrer"
                       src={
@@ -2592,7 +2596,7 @@ export default function CustomerSite() {
                   </div>
                 )}
                 <div className="pt-1">
-                  <h3 className="font-black text-brand leading-tight flex items-center gap-2">
+                  <h3 className="font-bold text-brand leading-tight flex items-center gap-2">
                     {isCheckout ? (
                       <CheckCircle2 className="w-4 h-4 text-accent" />
                     ) : (
@@ -2652,7 +2656,7 @@ export default function CustomerSite() {
                     : "bottom-6 sm:bottom-8",
                 )}
               >
-                <div className="bg-white/95 backdrop-blur-md border border-stone-200 shadow-2xl rounded-2xl p-3 flex items-center gap-3 w-72 sm:w-80 relative overflow-hidden pr-8">
+                <div className="bg-white/95 backdrop-blur-md border border-stone-100 shadow-xl rounded-2xl p-3 flex items-center gap-3 w-72 sm:w-80 relative overflow-hidden pr-8">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -2727,7 +2731,7 @@ export default function CustomerSite() {
             <motion.img
               key={plate.id}
               src={plate.img}
-              className="fixed z-[100] w-16 h-16 object-contain shadow-2xl pointer-events-none drop-shadow-xl"
+              className="fixed z-[100] w-16 h-16 object-contain shadow-xl pointer-events-none drop-shadow-xl"
               initial={{
                 x: plate.startX - 32,
                 y: plate.startY - 32,
@@ -2760,6 +2764,48 @@ export default function CustomerSite() {
           Version 4.0.0.Release
         </div>
       </motion.div>
+
+              {/* Checkout Sidebar/Overlay */}
+        <AnimatePresence>
+          {isCheckout && !orderSuccess && (
+            <CheckoutOverlay
+              cart={cart}
+              total={total}
+              deliveryFee={deliveryFee}
+              itemsTotal={itemsTotal}
+              customerName={customerName}
+              customerPhone={customerPhone}
+              customerPoints={customerPoints}
+              generalNotes={generalNotes}
+              setGeneralNotes={setGeneralNotes}
+              address={address}
+              regions={regions}
+              settings={settings}
+              onRegionChange={handleRegionChange}
+              setCustomerName={setCustomerName}
+              setCustomerPhone={setCustomerPhone}
+              setAddress={setAddress}
+              isLocked={isLocked}
+              setIsLocked={setIsLocked}
+              setCustomerPoints={setCustomerPoints}
+              onClose={() => setIsCheckout(false)}
+              onRemove={removeFromCart}
+              onSubmit={handleSubmitOrder}
+              formError={formError}
+              setFormError={setFormError}
+              isSubmitting={isSubmitting}
+              isDev={window.location.hostname.includes('ais-dev') || searchParams.get('dev') === 'true'}
+              promoCodeInput={promoCodeInput}
+              setPromoCodeInput={setPromoCodeInput}
+              appliedPromo={appliedPromo}
+              setAppliedPromo={setAppliedPromo}
+              promoError={promoError}
+              validatePromo={validatePromo}
+              isValidatingPromo={isValidatingPromo}
+              discountAmount={discountAmount}
+            />
+          )}
+        </AnimatePresence>
     </>
   );
 }
@@ -2897,7 +2943,7 @@ const ChefWhisperCard = ({
       >
         {/* Front Side */}
         <div
-          className={`relative w-full h-full bg-white rounded-[20px] shadow-sm flex ${isHorizontal ? "flex-col justify-start p-3 pb-2 gap-1.5" : "gap-4 p-4"} border ${product.isOutOfStock ? "border-stone-200 grayscale-[0.5] opacity-75" : "border-stone-100 hover:border-accent/20 hover:shadow-md"} transition-all cursor-pointer`}
+          className={`relative w-full h-full bg-white rounded-[20px] shadow-sm flex ${isHorizontal ? "flex-col justify-start p-3 pb-2 gap-1.5" : "gap-4 p-4"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-stone-100 hover:border-accent/20 hover:shadow-md"} transition-all cursor-pointer`}
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
@@ -2905,13 +2951,13 @@ const ChefWhisperCard = ({
         >
           {product.isOutOfStock && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/10 backdrop-blur-[0.5px] rounded-[20px]">
-              <span className="bg-red-600/90 text-white px-5 py-1.5 rounded-full text-sm font-black shadow-lg transform -rotate-6 border-2 border-white/50 tracking-wider">
+              <span className="bg-red-600/90 text-white px-5 py-1.5 rounded-full text-sm font-extrabold shadow-md transform -rotate-6 border-2 border-white/50 tracking-wider">
                 SOLD OUT
               </span>
             </div>
           )}
           {product.isNewProduct && !product.isOutOfStock && (
-            <span className="absolute top-0 right-0 bg-gradient-to-r from-red-500 to-rose-500 text-white text-[10px] sm:text-xs font-black px-3 py-1 z-10 rounded-tr-[20px] rounded-bl-xl shadow-[0_2px_10px_rgba(239,68,68,0.3)] border-b-2 border-l-2 border-white/20">
+            <span className="absolute top-0 right-0 bg-gradient-to-r from-red-500 to-rose-500 text-white text-[10px] sm:text-xs font-extrabold px-3 py-1 z-10 rounded-tr-[20px] rounded-bl-xl shadow-[0_2px_10px_rgba(239,68,68,0.3)] border-b-2 border-l-2 border-white/20">
               جديد
             </span>
           )}
@@ -2930,7 +2976,7 @@ const ChefWhisperCard = ({
           )}
 
           <div
-            className={`relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-stone-50 rounded-xl border border-stone-100 ${isHorizontal ? "w-16 h-16 mx-auto mb-1" : "w-14 h-14 aspect-square"}`}
+            className={`relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-stone-50/80 backdrop-blur-sm rounded-xl border border-stone-100 ${isHorizontal ? "w-16 h-16 mx-auto mb-1" : "w-14 h-14 aspect-square"}`}
           >
             {isHot && <SizzlingSteam />}
             <img
@@ -3176,7 +3222,7 @@ function ProductModal({
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 bg-stone-50 hover:bg-stone-100 rounded-full text-stone-500 transition-colors"
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 bg-stone-50/80 backdrop-blur-sm hover:bg-stone-100 rounded-full text-stone-500 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -3188,7 +3234,7 @@ function ProductModal({
         <div className="flex flex-col sm:flex-row gap-6 mb-8 mt-2 group relative">
           <div className="relative shrink-0 flex justify-center">
             {(product as any).isNewProduct && (
-              <span className="absolute top-0 right-0 sm:-right-2 -mt-2 bg-gradient-to-r from-red-500 to-rose-500 text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-full z-20 shadow-[0_4px_15px_rgba(239,68,68,0.4)] border-2 border-white transform rotate-3">
+              <span className="absolute top-0 right-0 sm:-right-2 -mt-2 bg-gradient-to-r from-red-500 to-rose-500 text-white text-[10px] sm:text-xs font-extrabold px-3 py-1 rounded-full z-20 shadow-[0_4px_15px_rgba(239,68,68,0.4)] border-2 border-white transform rotate-3">
                 جديد
               </span>
             )}
@@ -3223,10 +3269,10 @@ function ProductModal({
                     e.currentTarget.src = fallback;
                   }
                 }}
-                className="w-[63px] h-[63px] object-contain bg-white rounded-2xl shadow-lg relative border-2 border-stone-50 p-0"
+                className="w-[63px] h-[63px] object-contain bg-white rounded-2xl shadow-md relative border-2 border-stone-50 p-0"
               />
             ) : (
-              <div className="w-[48px] h-[48px] flex items-center justify-center bg-stone-50 border-2 border-stone-100 text-stone-400 rounded-2xl shadow-lg relative p-1">
+              <div className="w-[48px] h-[48px] flex items-center justify-center bg-stone-50/80 backdrop-blur-sm border-2 border-stone-100 text-stone-400 rounded-2xl shadow-md relative p-1">
                 <span className="text-[10px] font-medium p-1 text-center leading-tight">
                   صورة غير متوفرة
                 </span>
@@ -3235,7 +3281,7 @@ function ProductModal({
           </div>
           <div className="flex flex-col justify-center text-center sm:text-right">
             {/* <span className="text-xs text-stone-400 font-bold mb-1">{product.category}</span> */}
-            <h2 className="text-2xl font-black text-brand leading-tight mb-1">
+            <h2 className="text-2xl font-bold text-brand leading-tight mb-1">
               {product.name}
             </h2>
             <p className="text-xs text-stone-400 font-medium mb-3">
@@ -3261,7 +3307,7 @@ function ProductModal({
               <label className="text-xs font-bold text-stone-500 block">
                 بروتوكول التحضير
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 {product.options.map((option) => (
                   <button
                     key={option}
@@ -3270,7 +3316,7 @@ function ProductModal({
                       "py-3 rounded-xl border-2 transition-all font-bold text-sm",
                       selectedOption === option
                         ? "border-accent bg-accent/5 text-brand shadow-sm"
-                        : "border-stone-100 bg-stone-50/50 text-stone-500 hover:border-stone-200",
+                        : "border-stone-100 bg-stone-50/50 text-stone-500 hover:border-stone-100",
                     )}
                   >
                     {option}
@@ -3285,7 +3331,7 @@ function ProductModal({
               <label className="text-xs font-bold text-stone-500 block">
                 إضافات حصرية
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 {product.extras.map((extra) => {
                   const isSelected = selectedExtras.find(
                     (e) => e.name === extra.name,
@@ -3307,7 +3353,7 @@ function ProductModal({
                             "w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all",
                             isSelected
                               ? "bg-accent border-accent text-white"
-                              : "border-stone-200 bg-white",
+                              : "border-stone-100 bg-white",
                           )}
                         >
                           {isSelected && (
@@ -3341,12 +3387,12 @@ function ProductModal({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="اكتب ملاحظتك هنا..."
-              className="w-full p-4 bg-stone-50 border-2 border-stone-100 rounded-2xl focus:border-accent outline-none transition-all text-sm min-h-[100px] text-brand placeholder:text-stone-300 font-medium"
+              className="w-full p-4 bg-stone-50/80 backdrop-blur-sm border-2 border-stone-100 rounded-2xl focus:border-accent outline-none transition-all text-sm min-h-[100px] text-brand placeholder:text-stone-300 font-medium"
             />
           </div>
 
-          <div className="flex items-center gap-4 pt-6 sticky bottom-0 bg-white pb-4 border-t border-stone-50 mt-6">
-            <div className="flex items-center bg-stone-50 border-2 border-stone-100 rounded-xl p-1 shrink-0">
+          <div className="flex items-center gap-4 pt-6 sticky bottom-0 bg-white/90 backdrop-blur-xl pb-4 border-t border-stone-50 mt-6">
+            <div className="flex items-center bg-stone-50/80 backdrop-blur-sm border-2 border-stone-100 rounded-xl p-1 shrink-0">
               <button
                 onClick={() => {
                   try {
@@ -3471,10 +3517,10 @@ function CheckoutOverlay({
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 200 }}
-        className="bg-background w-full sm:max-w-md h-full shadow-2xl flex flex-col border-r border-stone-100"
+        className="bg-background w-full sm:max-w-md h-[100dvh] overflow-hidden shadow-xl flex flex-col border-r border-stone-100"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 border-b border-stone-100 flex items-center justify-between bg-white">
+        <div className="p-6 pt-[max(env(safe-area-inset-top,0px),1.5rem)] border-b border-stone-100 flex items-center justify-between bg-white shrink-0">
           <div className="flex items-center gap-4">
             <button
               onClick={() => {
@@ -3482,12 +3528,12 @@ function CheckoutOverlay({
                 else if (step === "delivery") setStep("cart");
                 else onClose();
               }}
-              className="p-3 bg-stone-50 border border-stone-100 rounded-xl hover:bg-brand hover:text-white transition-all shadow-sm"
+              className="p-3 bg-stone-50/80 backdrop-blur-sm border border-stone-100 rounded-xl hover:bg-brand hover:text-white transition-all shadow-sm"
             >
               <ArrowRight className="w-5 h-5" />
             </button>
             <div>
-              <h2 className="text-xl font-black text-brand flex items-center gap-2">
+              <h2 className="text-xl font-bold text-brand flex items-center gap-2">
                 {step === "cart" ? "قائمة طلباتك" : step === "payment" ? "اختر طريقة الدفع" : "بيانات التوصيل"}
               </h2>
             </div>
@@ -3503,7 +3549,7 @@ function CheckoutOverlay({
               <p className="font-bold text-center">سلتك فاضية يالغالي!</p>
               <button
                 onClick={onClose}
-                className="px-8 py-4 bg-stone-50 border border-stone-100 rounded-xl text-stone-500 font-bold hover:bg-brand hover:text-white transition-all shadow-sm"
+                className="px-8 py-4 bg-stone-50/80 backdrop-blur-sm border border-stone-100 rounded-xl text-stone-500 font-bold hover:bg-brand hover:text-white transition-all shadow-sm"
               >
                 شوف المنيو المميز
               </button>
@@ -3612,7 +3658,7 @@ function CheckoutOverlay({
                 {cart.map((item: any, index: number) => (
                   <motion.div
                     key={`${item.id}-${index}`}
-                    className="relative bg-red-500 rounded-[24px] overflow-hidden shadow-sm"
+                    className="relative bg-red-500 rounded-3xl overflow-hidden shadow-sm"
                   >
                     <div className="absolute inset-y-0 right-0 w-24 flex items-center justify-center pointer-events-none">
                       <span className="text-white font-bold text-xs flex items-center gap-1">
@@ -3627,7 +3673,7 @@ function CheckoutOverlay({
                       onDragEnd={(e, info) => {
                         if (info.offset.x < -40) onRemove(item.id);
                       }}
-                      className="flex gap-4 p-4 bg-white rounded-[24px] border border-stone-100 relative group shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing w-full z-10"
+                      className="flex gap-4 p-4 bg-white rounded-3xl border border-stone-100 relative group shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing w-full z-10"
                     >
                       <div className="flex-grow">
                         <div className="flex justify-between items-start mb-2">
@@ -3642,7 +3688,7 @@ function CheckoutOverlay({
                         </div>
                         <div className="flex flex-wrap gap-2 mb-4">
                           {item.selectedOption && (
-                            <span className="text-[9px] font-bold bg-stone-50 text-stone-500 px-2 py-1 rounded-md border border-stone-100">
+                            <span className="text-[9px] font-bold bg-stone-50/80 backdrop-blur-sm text-stone-500 px-2 py-1 rounded-md border border-stone-100">
                               {item.selectedOption}
                             </span>
                           )}
@@ -3705,7 +3751,7 @@ function CheckoutOverlay({
                         setCustomerPoints(0);
                       }
                     }}
-                    className="w-full px-5 py-4 bg-white border-2 border-accent/20 rounded-xl focus:border-accent focus:ring-4 focus:ring-accent/10 outline-none transition-all placeholder:text-stone-300 text-brand font-black text-2xl text-center tracking-[0.2em] shadow-sm"
+                    className="w-full px-5 py-4 border-2 border-accent/10 focus:border-accent/40 bg-stone-50/50 hover:bg-stone-50 transition-colors rounded-xl focus:border-accent focus:ring-4 focus:ring-accent/10 outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-xl text-center tracking-[0.2em] shadow-sm"
                     dir="ltr"
                   />
                 </div>
@@ -3732,7 +3778,7 @@ function CheckoutOverlay({
                             setRegionSearch(e.target.value);
                             setShowRegions(true);
                           }}
-                          className="w-full px-5 py-4 bg-white border border-stone-200 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-lg"
+                          className="w-full px-5 py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-lg"
                         />
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none">
                           <Search className="w-3.5 h-3.5" />
@@ -3743,7 +3789,7 @@ function CheckoutOverlay({
                         <motion.div
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="absolute z-[60] top-full left-0 right-0 mt-1 max-h-52 overflow-y-auto bg-white border border-stone-100 rounded-xl shadow-2xl no-scrollbar"
+                          className="absolute z-[60] top-full left-0 right-0 mt-1 max-h-52 overflow-y-auto bg-white border border-stone-100 rounded-xl shadow-xl no-scrollbar"
                         >
                           {filteredRegions.length === 0 ? (
                             <div className="p-4 text-xs text-stone-400 text-center italic">
@@ -3774,7 +3820,7 @@ function CheckoutOverlay({
                   </div>
 
                   {/* Address Grid */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[10px] items-center gap-1.5 font-bold text-stone-500 flex px-1">
                         <Landmark className="w-3 h-3" /> القطعة
@@ -3788,7 +3834,7 @@ function CheckoutOverlay({
                             block: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-200 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
+                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -3804,12 +3850,12 @@ function CheckoutOverlay({
                             street: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-200 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
+                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[10px] items-center gap-1.5 font-bold text-stone-500 flex px-1">
                         <Hash className="w-3 h-3" /> الجادة{" "}
@@ -3826,7 +3872,7 @@ function CheckoutOverlay({
                             avenue: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-200 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
+                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -3842,12 +3888,12 @@ function CheckoutOverlay({
                             building: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-200 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
+                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[10px] items-center gap-1.5 font-bold text-stone-500 flex px-1">
                         <Layers className="w-3 h-3" /> الدور{" "}
@@ -3864,7 +3910,7 @@ function CheckoutOverlay({
                             floor: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-200 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
+                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -3883,7 +3929,7 @@ function CheckoutOverlay({
                             apartment: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-200 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
+                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
                       />
                     </div>
                   </div>
@@ -3902,7 +3948,7 @@ function CheckoutOverlay({
                             setCustomerName(e.target.value);
                             if (isLocked) setIsLocked(false);
                           }}
-                          className={`w-full px-5 py-4 bg-white border ${isLocked ? "border-green-200" : "border-stone-200"} rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-lg`}
+                          className={`w-full px-5 py-4 bg-white border ${isLocked ? "border-green-200" : "border-stone-100"} rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-lg`}
                         />
                         {isLocked && customerName && (
                           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500 animate-in fade-in zoom-in duration-300">
@@ -3938,7 +3984,7 @@ function CheckoutOverlay({
                       placeholder="مثال: اتصل قبل الوصول بـ 5 دقائق"
                       value={generalNotes}
                       onChange={(e) => setGeneralNotes(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-white border border-stone-200 rounded-lg focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-medium text-sm min-h-[80px]"
+                      className="w-full px-3 py-2.5 bg-white border border-stone-100 rounded-lg focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-medium text-sm min-h-[80px]"
                     />
                   </div>
                   </div>
@@ -3947,7 +3993,7 @@ function CheckoutOverlay({
           ) : step === "payment" ? (
             <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center justify-center w-full pt-8 pb-4 px-2">
               
-              <div className="bg-stone-50 border border-stone-100 rounded-3xl sm:rounded-[32px] p-6 sm:p-8 w-full max-w-full relative overflow-hidden shadow-sm flex flex-col items-center justify-center mb-8">
+              <div className="bg-stone-50/80 backdrop-blur-sm border border-stone-100 rounded-3xl sm:rounded-[2rem] p-6 sm:p-8 w-full max-w-full relative overflow-hidden shadow-sm flex flex-col items-center justify-center mb-8">
                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-accent/5 rounded-full blur-2xl"></div>
                 <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-brand/5 rounded-full blur-2xl"></div>
                 
@@ -3956,7 +4002,7 @@ function CheckoutOverlay({
                   <span>مجموع طلبك طال عمرك</span>
                 </p>
                 <div className="flex items-baseline gap-2 relative z-10 flex-wrap justify-center">
-                   <span className="text-4xl sm:text-5xl font-black text-brand tracking-tight break-all text-center">
+                   <span className="text-4xl sm:text-5xl font-bold text-brand tracking-tight break-all text-center">
                      {Number(itemsTotal + deliveryFee - discountAmount).toFixed(3)}
                    </span>
                    <span className="text-lg sm:text-xl font-bold text-stone-400 shrink-0">د.ك</span>
@@ -4001,12 +4047,12 @@ function CheckoutOverlay({
                       onChange={(e) =>
                         setPromoCodeInput(normalizeDigits(e.target.value).toUpperCase())
                       }
-                      className="flex-1 px-4 py-2 text-sm bg-stone-50 border border-stone-100 rounded-xl focus:border-accent outline-none placeholder:text-stone-300 font-bold"
+                      className="flex-1 px-4 py-2 text-sm bg-stone-50/80 backdrop-blur-sm border border-stone-100 rounded-xl focus:border-accent outline-none placeholder:text-stone-300 font-bold"
                     />
                     <button
                       onClick={validatePromo}
                       disabled={isValidatingPromo || !promoCodeInput.trim()}
-                      className="px-4 py-2 bg-brand text-white text-[10px] font-black uppercase rounded-xl transition-all active:scale-95 disabled:opacity-50"
+                      className="px-4 py-2 bg-brand text-white text-[10px] font-extrabold uppercase rounded-xl transition-all active:scale-95 disabled:opacity-50"
                     >
                       {isValidatingPromo ? "..." : "تطبيق"}
                     </button>
@@ -4023,7 +4069,7 @@ function CheckoutOverlay({
                     <span className="text-[10px] text-green-600 font-bold uppercase tracking-wider">
                       كود الخصم مفعل
                     </span>
-                    <span className="text-xs font-black text-green-800">
+                    <span className="text-xs font-extrabold text-green-800">
                       {appliedPromo.code}
                     </span>
                   </div>
@@ -4117,7 +4163,7 @@ function CheckoutOverlay({
                     "w-full p-5 sm:p-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 text-lg group",
                     isOpen
                       ? "bg-brand text-white shadow-[0_20px_40px_-10px_rgba(212,175,55,0.4)]"
-                      : "bg-stone-100 border border-stone-200 text-stone-400 cursor-not-allowed",
+                      : "bg-stone-100 border border-stone-100 text-stone-400 cursor-not-allowed",
                   )}
                 >
                   {!isOpen ? (
@@ -4148,7 +4194,7 @@ function CheckoutOverlay({
                       "w-full p-5 sm:p-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 text-lg group",
                       customerPhone.length === 8 && deliveryFee !== -1 && customerName && isOpen
                         ? "bg-brand text-white shadow-[0_20px_40px_-10px_rgba(212,175,55,0.4)]"
-                        : "bg-stone-100 border border-stone-200 text-stone-400 cursor-not-allowed",
+                        : "bg-stone-100 border border-stone-100 text-stone-400 cursor-not-allowed",
                     )}
                   >
                     {!isOpen ? (
@@ -4206,10 +4252,10 @@ function CheckoutOverlay({
                     <>
                       <button
                         onClick={() => onSubmit("traditional")}
-                        className="w-full bg-stone-100 text-brand rounded-2xl p-4 sm:p-5 shadow-sm active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-stone-200 text-lg border border-stone-200 text-right"
+                        className="w-full bg-stone-100 text-brand rounded-2xl p-4 sm:p-5 shadow-sm active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-stone-200 text-lg border border-stone-100 text-right"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-white border border-stone-200 rounded-xl flex items-center justify-center shrink-0">
+                          <div className="w-12 h-12 bg-white border border-stone-100 rounded-xl flex items-center justify-center shrink-0">
                             <Layers className="w-6 h-6 text-accent" />
                           </div>
                           <div className="flex flex-col items-start gap-1">

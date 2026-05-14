@@ -612,10 +612,46 @@ app.get("/api/track-orders", async (req, res) => {
         if (phoneField && cleanPhone(phoneField) === cleanQueryPhone) {
           matchedCustomers.push({
             ...customer,
-            loyaltyPoints: dynamicPoints,
+            // Keep their original points, or add dynamic points, but don't just blindly overwrite 
+            // if dynamicPoints is 0!
+            loyaltyPoints: customer.loyaltyPoints !== undefined ? customer.loyaltyPoints : dynamicPoints,
           });
         }
       });
+
+      // If no customer profile found, try to synthesize one from their latest invoice
+      if (matchedCustomers.length === 0) {
+        // Reverse array to find the most recent one easily (since new ones are pushed to the end)
+        const recentInvoice = [...invoices].reverse().find((inv: any) => {
+          return cleanPhone(inv.customerPhone || inv.phone || "") === cleanQueryPhone;
+        });
+        
+        if (recentInvoice) {
+          matchedCustomers.push({
+            name: recentInvoice.customerName || recentInvoice.name || "",
+            phone: phone,
+            address: recentInvoice.address || null,
+            loyaltyPoints: dynamicPoints,
+          });
+        }
+      }
+
+      // If still nothing, try from orders
+      if (matchedCustomers.length === 0) {
+        const orders = data.orders || [];
+        const recentOrder = [...orders].reverse().find((o: any) => {
+          return cleanPhone(o.customerPhone || o.phone || "") === cleanQueryPhone;
+        });
+
+        if (recentOrder) {
+          matchedCustomers.push({
+            name: recentOrder.customerName || recentOrder.name || "",
+            phone: phone,
+            address: recentOrder.address || null,
+            loyaltyPoints: dynamicPoints,
+          });
+        }
+      }
 
       return res.json(matchedCustomers);
     } catch (error) {
