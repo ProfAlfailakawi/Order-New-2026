@@ -84,7 +84,7 @@ export const ZenSplashScreen: React.FC<ZenSplashScreenProps> = ({ logo }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 1 }}
-            className="text-white/80 text-xl md:text-2xl font-black leading-relaxed tracking-wide"
+            className="text-white/80 text-xl md:text-2xl font-extrabold leading-relaxed tracking-wide"
             dir="rtl"
           >
             {quote}

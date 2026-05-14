@@ -26,7 +26,7 @@ import { RouletteSplit } from "../components/RouletteSplit";
 
 // Initialize Firebase for real-time listener
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+const db = getFirestore();
 
 export default function SplitPayment() {
   const { id } = useParams<{ id: string }>();
@@ -111,12 +111,7 @@ export default function SplitPayment() {
           }
         }
         setLoading(false);
-      },
-      (err) => {
-        console.error("SplitPayment Firestore Error:", err);
-        // Fallback to fetch if snapshot fails
-        fetchOrder();
-      },
+      }
     );
 
     return () => unsub();
@@ -402,7 +397,7 @@ export default function SplitPayment() {
           <ArrowRight className="w-6 h-6" />
         </button>
         <PieChart className="w-8 h-8 text-brand" />
-        <h1 className="font-black text-xl tracking-tight text-center">
+        <h1 className="font-extrabold text-xl tracking-tight text-center">
           قطيّة الربع 🤝
         </h1>
         <p className="text-xs text-stone-400 font-medium tracking-wide">
@@ -437,7 +432,7 @@ export default function SplitPayment() {
                 <Check className="w-8 h-8 text-[#25D366]" strokeWidth={3} />
               </div>
               <div className="text-center relative z-10">
-                <h3 className="text-2xl font-black mb-1">تسلم الأيادي{urlName ? ` يا ${urlName}` : ""}!</h3>
+                <h3 className="text-2xl font-extrabold mb-1">تسلم الأيادي{urlName ? ` يا ${urlName}` : ""}!</h3>
                 <p className="text-white/90 font-medium">وصل الدفع وتم تسجيل قطيتك بنجاح</p>
               </div>
             </motion.div>
@@ -455,7 +450,7 @@ export default function SplitPayment() {
                 <AlertCircle className="w-8 h-8 text-red-500" strokeWidth={3} />
               </div>
               <div className="text-center relative z-10 w-full">
-                <h3 className="text-2xl font-black mb-1">فشلت العملية{urlName ? ` يا ${urlName}` : ""} 💔</h3>
+                <h3 className="text-2xl font-extrabold mb-1">فشلت العملية{urlName ? ` يا ${urlName}` : ""} 💔</h3>
                 <p className="text-white/90 font-medium mb-4">{errorMsg}</p>
                 <button 
                   onClick={() => {
@@ -475,7 +470,7 @@ export default function SplitPayment() {
           <span className="text-stone-400 font-bold text-sm mb-2 uppercase tracking-widest">
             إجمالي الفاتورة
           </span>
-          <span className="text-4xl font-black text-brand italic tracking-tight">
+          <span className="text-4xl font-extrabold text-brand italic tracking-tight">
             {order.total.toFixed(3)}{" "}
             <span className="text-base text-accent">د.ك</span>
           </span>
@@ -500,12 +495,12 @@ export default function SplitPayment() {
         </div>
 
         {isFullyPaid ? (
-          <div className="bg-green-500 text-white p-8 rounded-[24px] shadow-lg shadow-green-500/20 text-center flex flex-col items-center gap-4">
+          <div className="bg-green-500 text-white p-8 rounded-[24px] shadow-md shadow-green-500/20 text-center flex flex-col items-center gap-4">
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
               <Sparkles className="w-8 h-8" />
             </div>
             <div>
-              <h2 className="text-xl font-black mb-1">
+              <h2 className="text-xl font-extrabold mb-1">
                 كفو يا الربع! اكتملت القطة..
               </h2>
               <p className="font-medium text-green-100 text-sm mt-2">
@@ -516,7 +511,7 @@ export default function SplitPayment() {
         ) : (
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-[24px] shadow-sm border border-stone-100">
-              <h3 className="font-black text-brand mb-4 flex items-center gap-2">
+              <h3 className="font-extrabold text-brand mb-4 flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-accent" />
                 قطيتك
               </h3>
@@ -535,7 +530,7 @@ export default function SplitPayment() {
                     value={contributorName}
                     onChange={(e) => setContributorName(e.target.value)}
                     placeholder="مثال: محمد"
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
+                    className="w-full bg-stone-50 border border-stone-100 rounded-xl px-4 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
                   />
                 </div>
                 <div>
@@ -551,7 +546,7 @@ export default function SplitPayment() {
                       setContributorPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8))
                     }
                     placeholder="90000000"
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
+                    className="w-full bg-stone-50 border border-stone-100 rounded-xl px-4 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
                     dir="ltr"
                   />
                 </div>
@@ -571,12 +566,12 @@ export default function SplitPayment() {
                       setContributorAmount(val === "" ? "" : val);
                     }}
                     placeholder="مثال: 5.000"
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 font-bold text-xl text-center focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
+                    className="w-full bg-stone-50 border border-stone-100 rounded-xl px-4 py-3 font-bold text-xl text-center focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-stone-100 rounded-xl px-2 py-1 flex flex-col items-center justify-center border border-stone-200/50">
+                  <div className="bg-stone-100 rounded-xl px-2 py-1 flex flex-col items-center justify-center border border-stone-100/50">
                     <span className="text-[9px] font-bold text-stone-400 mb-0.5">
                       قسمة على كم؟
                     </span>
@@ -588,7 +583,7 @@ export default function SplitPayment() {
                             const val = (remainingAmount / n).toFixed(3);
                             setContributorAmount(val);
                           }}
-                          className="w-6 h-6 rounded bg-brand/10 text-brand text-[10px] font-black hover:bg-brand hover:text-white transition-all border border-brand/20"
+                          className="w-6 h-6 rounded bg-brand/10 text-brand text-[10px] font-extrabold hover:bg-brand hover:text-white transition-all border border-brand/20"
                         >
                           {n}
                         </button>
@@ -599,7 +594,7 @@ export default function SplitPayment() {
                     onClick={() =>
                       setContributorAmount(remainingAmount.toFixed(3))
                     }
-                    className="bg-stone-100 text-stone-600 font-bold text-[10px] py-2 rounded-xl hover:bg-stone-200 transition-colors flex flex-col items-center justify-center gap-0.5 border border-stone-200/50"
+                    className="bg-stone-100 text-stone-600 font-bold text-[10px] py-2 rounded-xl hover:bg-stone-200 transition-colors flex flex-col items-center justify-center gap-0.5 border border-stone-100/50"
                   >
                     <Zap className="w-3.5 h-3.5 text-accent" />
                     كامل علي تستاهلون
@@ -613,7 +608,7 @@ export default function SplitPayment() {
                     !contributorName.trim() ||
                     !contributorAmount
                   }
-                  className="w-full bg-brand text-white p-4 rounded-xl font-black disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-brand/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
+                  className="w-full bg-brand text-white p-4 rounded-xl font-extrabold disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-brand/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
                 >
                   {isSubmitting ? (
                     <span className="animate-pulse">جاري التحويل...</span>
@@ -656,7 +651,7 @@ export default function SplitPayment() {
           0 && (
           <div className="bg-white p-6 rounded-[24px] shadow-sm border border-stone-100 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-brand/5 rounded-full -mr-12 -mt-12 blur-2xl" />
-            <h3 className="font-black text-stone-400 text-sm mb-4 uppercase tracking-widest flex items-center gap-2 relative z-10">
+            <h3 className="font-extrabold text-stone-400 text-sm mb-4 uppercase tracking-widest flex items-center gap-2 relative z-10">
               <Users className="w-4 h-4 text-brand" />
               حائط الشرف (Live 🔥)
             </h3>
@@ -687,7 +682,7 @@ export default function SplitPayment() {
                         className="flex items-center justify-between p-3 rounded-xl bg-stone-50/80 border border-stone-100 shadow-sm"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-brand/80 flex items-center justify-center text-white font-black text-xs shadow-sm">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-brand/80 flex items-center justify-center text-white font-extrabold text-xs shadow-sm">
                             {p.name.charAt(0)}
                           </div>
                           <div className="flex flex-col">
@@ -707,7 +702,7 @@ export default function SplitPayment() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <span className="font-black text-brand block">
+                          <span className="font-extrabold text-brand block">
                             {p.amount.toFixed(3)}{" "}
                             <span className="text-[10px] text-stone-400">
                               د.ك

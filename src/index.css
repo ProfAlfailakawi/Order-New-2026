@@ -3,9 +3,20 @@
 
 @theme {
   --font-sans: "Tajawal", ui-sans-serif, system-ui, sans-serif;
-  --color-brand: #1a2e22; /* rich dark green */
-  --color-accent: #b45309; /* warm terracotta/amber */
-  --color-background: #fafaf9; /* stone-50 */
+  --color-brand: #16241a; /* slightly softer rich dark green */
+  --color-accent: #c26115; /* slightly more vibrant terracotta */
+  --color-background: #faf9f7; /* elegant warm off-white */
+  
+  --shadow-sm: 0 4px 14px 0 rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.06);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.08);
+  --shadow-2xl: 0 30px 80px rgba(26, 46, 34, 0.08);
+
+  --radius-lg: 1rem;       /* 16px */
+  --radius-xl: 1.25rem;    /* 20px */
+  --radius-2xl: 1.5rem;    /* 24px */
+  --radius-3xl: 2rem;      /* 32px */
 }
 
 @layer base {

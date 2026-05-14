@@ -582,7 +582,7 @@ export default function OrderPage() {
         >
           <ChevronLeft className="w-5 h-5 text-stone-400 rotate-180" />
         </Link>
-        <h1 className="text-xl font-black text-brand tracking-tight">
+        <h1 className="text-xl font-extrabold text-brand tracking-tight">
           تتبع الطلبات
         </h1>
         <div className="w-11" /> {/* Spacer */}
@@ -616,10 +616,10 @@ export default function OrderPage() {
                   <div className="absolute inset-0 bg-red-700 rounded-full border-[6px] border-red-900 shadow-[inset_0_10px_20px_rgba(0,0,0,0.5),0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
                     <div className="w-[85%] h-[85%] rounded-full border-[4px] border-dashed border-red-900/50 flex flex-col items-center justify-center text-red-900">
                       <CheckCircle2 className="w-10 h-10 md:w-14 md:h-14 opacity-80 mb-1" />
-                      <span className="font-black text-lg md:text-2xl drop-shadow-md">
+                      <span className="font-extrabold text-lg md:text-2xl drop-shadow-md">
                         خالص
                       </span>
-                      <span className="font-black text-sm md:text-lg drop-shadow-md">
+                      <span className="font-extrabold text-sm md:text-lg drop-shadow-md">
                         مدفوع
                       </span>
                     </div>
@@ -699,7 +699,7 @@ export default function OrderPage() {
                     y: [0, -20, 50, 100],
                   }}
                   transition={{ duration: 2.5, ease: "easeInOut", delay: 0.5 }}
-                  className="w-full bg-[#f4eeb8] rounded-lg p-8 shadow-2xl relative border border-[#d4ca8e] text-center filter sepia-[0.3]"
+                  className="w-full bg-[#f4eeb8] rounded-lg p-8 shadow-xl relative border border-[#d4ca8e] text-center filter sepia-[0.3]"
                 >
                   {/* The fire/ash overlay */}
                   <motion.div
@@ -708,7 +708,7 @@ export default function OrderPage() {
                     className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_0%,_#3f0b0b_60%,_#000_100%)] mix-blend-multiply rounded-lg pointer-events-none"
                   />
                   <X className="w-12 h-12 text-red-800 mx-auto mb-4" />
-                  <h3 className="text-2xl font-black text-red-900 mb-2">
+                  <h3 className="text-2xl font-extrabold text-red-900 mb-2">
                     فشل الدفع!
                   </h3>
                   <p className="text-red-900/70 font-medium">
@@ -750,7 +750,7 @@ export default function OrderPage() {
         {/* Search Section */}
         <section className="bg-white rounded-[40px] p-8 border border-stone-100 shadow-xl shadow-stone-200/50 space-y-6">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl font-black text-brand">وين طلبي؟</h2>
+            <h2 className="text-2xl font-extrabold text-brand">وين طلبي؟</h2>
             <p className="text-stone-400 text-sm font-medium">
               حط رقم تليفونك أو رقم الطلب علشان تتابع حالة طلباتك
             </p>
@@ -769,7 +769,7 @@ export default function OrderPage() {
                 onChange={(e) => setPhone(normalizePhone(e.target.value))}
                 dir="ltr"
                 pattern="[0-9]*"
-                className="w-full py-6 pr-16 pl-6 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-xl font-black text-brand placeholder:text-stone-300 text-center tracking-[0.2em]"
+                className="w-full py-6 pr-16 pl-6 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-xl font-extrabold text-brand placeholder:text-stone-300 text-center tracking-[0.2em]"
               />
             </div>
 
@@ -782,7 +782,7 @@ export default function OrderPage() {
                 placeholder="رقم الطلب (اختياري)"
                 value={searchOrderIdInput}
                 onChange={(e) => setSearchOrderIdInput(e.target.value)}
-                className="w-full py-6 pr-16 pl-6 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-xl font-black text-brand placeholder:text-stone-300 text-center tracking-[0.2em] uppercase"
+                className="w-full py-6 pr-16 pl-6 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-xl font-extrabold text-brand placeholder:text-stone-300 text-center tracking-[0.2em] uppercase"
               />
             </div>
 
@@ -791,7 +791,7 @@ export default function OrderPage() {
               disabled={
                 loading || (phone.length < 8 && searchOrderIdInput.length < 3)
               }
-              className="mt-4 w-full py-5 bg-brand text-white rounded-[24px] font-black shadow-xl shadow-brand/20 hover:scale-[0.98] active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-3"
+              className="mt-4 w-full py-5 bg-brand text-white rounded-[24px] font-extrabold shadow-xl shadow-brand/20 hover:scale-[0.98] active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-3"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -818,7 +818,7 @@ export default function OrderPage() {
                 <Package className="w-12 h-12" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-xl font-black text-brand">لا توجد طلبات</h3>
+                <h3 className="text-xl font-extrabold text-brand">لا توجد طلبات</h3>
                 <p className="text-stone-400 font-medium">
                   لم نجد أي طلبات مرتبطة بهذا الرقم حالياً
                 </p>
@@ -834,17 +834,17 @@ export default function OrderPage() {
             >
               <div className="bg-white rounded-3xl p-5 border border-stone-100 shadow-sm flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] text-stone-400 font-black uppercase mb-1 tracking-widest">
+                  <p className="text-[10px] text-stone-400 font-extrabold uppercase mb-1 tracking-widest">
                     معلومات العميل
                   </p>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-black text-brand text-lg">
+                    <h3 className="font-extrabold text-brand text-lg">
                       {orders[0].customerName}
                     </h3>
                     <span className="text-stone-300">•</span>
                     <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-100 shadow-sm">
                       <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span className="font-black text-xs">
+                      <span className="font-extrabold text-xs">
                         {(orders[0] as any).customerPoints || 0} نقطة
                       </span>
                     </div>
@@ -853,11 +853,11 @@ export default function OrderPage() {
               </div>
 
               <div className="flex items-center justify-between px-4 mt-6">
-                <h3 className="font-black text-brand uppercase tracking-widest text-xs flex items-center gap-2">
+                <h3 className="font-extrabold text-brand uppercase tracking-widest text-xs flex items-center gap-2">
                   <LayoutDashboard className="w-4 h-4 text-accent" /> سجل
                   الطلبات الأخيرة
                 </h3>
-                <span className="px-3 py-1 bg-brand/5 text-brand text-[10px] font-black rounded-full">
+                <span className="px-3 py-1 bg-brand/5 text-brand text-[10px] font-extrabold rounded-full">
                   {orders.length} طلب
                 </span>
               </div>
@@ -883,10 +883,10 @@ export default function OrderPage() {
                     <div className="flex items-start justify-between mb-6">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">
+                          <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">
                             رقم الطلب
                           </span>
-                          <span className="text-xs font-black text-brand bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-100">
+                          <span className="text-xs font-extrabold text-brand bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-100">
                             #{(order.id || "").toUpperCase()}
                           </span>
                           {(order.paymentStatus === "paid" ||
@@ -919,7 +919,7 @@ export default function OrderPage() {
                         </p>
                       </div>
                       <div
-                        className={`px-4 py-2 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${statusInfo.color}`}
+                        className={`px-4 py-2 rounded-2xl flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-widest ${statusInfo.color}`}
                       >
                         {statusInfo.icon}
                         {statusInfo.text}
@@ -940,10 +940,10 @@ export default function OrderPage() {
                             <Package className="w-5 h-5" />
                           </div>
                           <div>
-                            <p className="text-[10px] font-black text-stone-400 uppercase">
+                            <p className="text-[10px] font-extrabold text-stone-400 uppercase">
                               المبلغ الإجمالي
                             </p>
-                            <p className="text-lg font-black text-brand italic">
+                            <p className="text-lg font-extrabold text-brand italic">
                               {Number(getDisplayTotal(order) || 0).toFixed(3)}{" "}
                               <span className="text-[10px] text-accent font-normal italic">
                                 د.ك
@@ -988,13 +988,13 @@ export default function OrderPage() {
             />
             <motion.div
               layoutId={`order-${selectedOrder.id}`}
-              className="relative w-full max-w-lg bg-white rounded-t-[48px] sm:rounded-[48px] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+              className="relative w-full max-w-lg bg-white rounded-t-[48px] sm:rounded-[48px] shadow-xl overflow-hidden max-h-[90vh] flex flex-col"
             >
               <div className="p-8 border-b border-stone-50 flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-4">
                     <div>
-                      <h3 className="text-2xl font-black text-brand flex items-center gap-2">
+                      <h3 className="text-2xl font-extrabold text-brand flex items-center gap-2">
                         تفاصيل الطلب
                         {(selectedOrder.paymentStatus === "paid" ||
                           (selectedOrder.status || "").startsWith("تم الدفع") ||
@@ -1043,7 +1043,7 @@ export default function OrderPage() {
 
               <div className="flex-1 overflow-y-auto p-0 sm:p-4 space-y-0 sm:space-y-8 no-scrollbar bg-stone-50/50">
                 {/* Story Card & Magical Compass */}
-                <div className="relative sm:rounded-[32px] overflow-hidden min-h-[450px] bg-stone-900 flex flex-col items-center justify-center p-8 shadow-2xl">
+                <div className="relative sm:rounded-[32px] overflow-hidden min-h-[450px] bg-stone-900 flex flex-col items-center justify-center p-8 shadow-xl">
                   {/* Story Gradient Background */}
                   <motion.div
                     animate={{
@@ -1382,7 +1382,7 @@ export default function OrderPage() {
                     <motion.h4
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
-                      className="text-white text-2xl font-black drop-shadow-md"
+                      className="text-white text-2xl font-extrabold drop-shadow-md"
                     >
                       {getStatusDisplay(selectedOrder).text.includes("ملغي")
                         ? "تم إلغاء الطلب"
@@ -1465,7 +1465,7 @@ export default function OrderPage() {
                         (p: any) => p.status === "paid" || p.status === "pending"
                       ).length > 0 || ((selectedOrder as any).splitParticipants || []).length > 0) && (
                         <div className="bg-stone-50 p-4 rounded-2xl border border-stone-100">
-                          <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                          <h4 className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                             <Users className="w-3 h-3" /> {(selectedOrder as any).splitType === 'roulette' ? 'المشاركون في الروليت' : 'المساهمين في القطية'}
                           </h4>
                           {(selectedOrder as any).splitType === 'roulette' && (selectedOrder as any).rouletteLoser && (
@@ -1473,7 +1473,7 @@ export default function OrderPage() {
                               <span className="text-fuchsia-600 font-bold text-xs flex items-center gap-2">
                                 🎯 بطل الليلة (صاحب الحظ اللي دفعها)
                               </span>
-                              <span className="font-black text-fuchsia-700 text-sm">{(selectedOrder as any).rouletteLoser}</span>
+                              <span className="font-extrabold text-fuchsia-700 text-sm">{(selectedOrder as any).rouletteLoser}</span>
                             </div>
                           )}
                           <div className="space-y-2">
@@ -1523,7 +1523,7 @@ export default function OrderPage() {
                                         <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">بانتظار الدفع</span>
                                       )}
                                     </div>
-                                    <span className="font-black text-brand tracking-tight">
+                                    <span className="font-extrabold text-brand tracking-tight">
                                       {Number(p.amount).toFixed(3)} د.ك
                                     </span>
                                   </div>
@@ -1545,7 +1545,7 @@ export default function OrderPage() {
                           redirectToPayment(newPaymentLink);
                           setTimeout(() => setNewPaymentLink(""), 1000);
                         }}
-                        className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl bg-accent text-white font-black text-sm hover:bg-orange-600 transition-all shadow-lg outline-none mb-4"
+                        className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl bg-accent text-white font-extrabold text-sm hover:bg-orange-600 transition-all shadow-md outline-none mb-4"
                       >
                         اضغط هنا لاستكمال الدفع
                       </button>
@@ -1553,7 +1553,7 @@ export default function OrderPage() {
                       <button
                         onClick={() => handleRepay(selectedOrder as any)}
                         disabled={processingPayment}
-                        className="block w-full text-center p-4 rounded-2xl bg-brand text-white font-black text-sm hover:opacity-90 transition-all shadow-lg outline-none disabled:opacity-50 mb-4"
+                        className="block w-full text-center p-4 rounded-2xl bg-brand text-white font-extrabold text-sm hover:opacity-90 transition-all shadow-md outline-none disabled:opacity-50 mb-4"
                       >
                         {processingPayment ? "جاري التجهيز..." : "ادفع الآن"}
                       </button>
@@ -1629,7 +1629,7 @@ export default function OrderPage() {
                         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
                         window.open(whatsappUrl, "_blank");
                       }}
-                      className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl bg-[#25D366] text-white font-black text-sm hover:bg-[#128C7E] transition-all shadow-lg outline-none mb-6"
+                      className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl bg-[#25D366] text-white font-extrabold text-sm hover:bg-[#128C7E] transition-all shadow-md outline-none mb-6"
                     >
                       <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.878-.788-1.46-1.761-1.633-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z" />
@@ -1682,7 +1682,7 @@ export default function OrderPage() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       key={getStatusDisplay(selectedOrder).text}
-                      className="font-mono text-xs text-stone-400 border-b border-dashed border-stone-200 pb-2 flex justify-between"
+                      className="font-mono text-xs text-stone-400 border-b border-dashed border-stone-100 pb-2 flex justify-between"
                     >
                       <TypewriterText
                         text={`> UPDATE: ${getStatusDisplay(selectedOrder).text}`}
@@ -1700,7 +1700,7 @@ export default function OrderPage() {
 
                     {/* Items List */}
                     <div className="space-y-4">
-                      <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-widest px-2 font-mono border-b border-dashed border-stone-200 pb-2">
+                      <h4 className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-2 font-mono border-b border-dashed border-stone-100 pb-2">
                         الأصناف المطلوبة
                       </h4>
                       <div className="space-y-3 font-mono">
@@ -1713,7 +1713,7 @@ export default function OrderPage() {
                             className="flex items-center justify-between p-2 sm:p-4 bg-stone-50/50 border-b border-dashed border-stone-100 last:border-b-0"
                           >
                             <div className="flex items-center gap-3">
-                              <span className="text-xs font-black text-stone-400 shrink-0">
+                              <span className="text-xs font-extrabold text-stone-400 shrink-0">
                                 {item.quantity}x
                               </span>
                               <div className="flex flex-col">
@@ -1755,7 +1755,7 @@ export default function OrderPage() {
                     {(selectedOrder as any).notes ||
                     (selectedOrder as any).generalNotes ? (
                       <div className="space-y-4">
-                        <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-widest px-2">
+                        <h4 className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-2">
                           ملاحظات عامة
                         </h4>
                         <div className="bg-orange-50/50 border border-orange-100 p-4 rounded-2xl text-orange-800 text-sm flex gap-3">
@@ -1771,7 +1771,7 @@ export default function OrderPage() {
                     {/* Address Details */}
                     {selectedOrder.address && (
                       <div className="space-y-4">
-                        <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-widest px-2">
+                        <h4 className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-2">
                           معلومات العميل والتوصيل
                         </h4>
                         <div className="bg-white border border-stone-100 p-6 rounded-[32px] space-y-4 font-medium text-brand text-sm shadow-sm">
@@ -1829,7 +1829,7 @@ export default function OrderPage() {
                         <span className="text-stone-400 font-bold uppercase tracking-widest">
                           رسوم التوصيل
                         </span>
-                        <span className="font-black text-brand italic">
+                        <span className="font-extrabold text-brand italic">
                           {(selectedOrder as any).deliveryType === "free" ||
                           selectedOrder.deliveryFee === 0 ||
                           selectedOrder.isFreeDelivery ? (
@@ -1844,11 +1844,11 @@ export default function OrderPage() {
                         </span>
                       </div>
                     )}
-                    <div className="flex items-center justify-between pt-4 border-t border-stone-200/50">
-                      <span className="text-stone-400 font-black text-xs uppercase tracking-widest">
+                    <div className="flex items-center justify-between pt-4 border-t border-stone-100/50">
+                      <span className="text-stone-400 font-extrabold text-xs uppercase tracking-widest">
                         إجمالي المبلغ
                       </span>
-                      <span className="text-3xl font-black text-brand italic">
+                      <span className="text-3xl font-extrabold text-brand italic">
                         {Number(getDisplayTotal(selectedOrder) || 0).toFixed(3)}{" "}
                         <span className="text-xs text-accent font-normal not-italic">
                           د.ك
