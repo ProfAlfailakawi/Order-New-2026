@@ -31,18 +31,31 @@ let localFallbackDB: any = {
   orders: [],
   invoices: [],
   customers: [],
-  zones: [],
+  zones: [
+    { id: "z1", name: "محافظة العاصمة", finalPrice: 1.5, cost: 1.5 },
+    { id: "z2", name: "محافظة حولي", finalPrice: 1.5, cost: 1.5 },
+    { id: "z3", name: "محافظة الفروانية", finalPrice: 2, cost: 2 },
+    { id: "z4", name: "محافظة مبارك الكبير", finalPrice: 2.5, cost: 2.5 },
+    { id: "z5", name: "محافظة الأحمدي", finalPrice: 3, cost: 3 },
+    { id: "z6", name: "محافظة الجهراء", finalPrice: 3.5, cost: 3.5 }
+  ],
   settings: {},
   promocodes: []
 };
 
-// Attempt to load products from file
+// Attempt to load entire fallback from file first
 try {
-  if (fs.existsSync(path.join(__dirname, "shared_products.json"))) {
-    localFallbackDB.products = JSON.parse(fs.readFileSync(path.join(__dirname, "shared_products.json"), "utf8"));
-  }
-  if (fs.existsSync(path.join(__dirname, "suppliers.json"))) {
-    localFallbackDB.supplierCopies = JSON.parse(fs.readFileSync(path.join(__dirname, "suppliers.json"), "utf8")).flatMap((s:any) => s.products || []);
+  if (fs.existsSync(path.join(__dirname, "app_data_fallback.json"))) {
+    const fileData = JSON.parse(fs.readFileSync(path.join(__dirname, "app_data_fallback.json"), "utf8"));
+    localFallbackDB = { ...localFallbackDB, ...fileData };
+  } else {
+    // legacy migrations
+    if (fs.existsSync(path.join(__dirname, "shared_products.json"))) {
+      localFallbackDB.products = JSON.parse(fs.readFileSync(path.join(__dirname, "shared_products.json"), "utf8"));
+    }
+    if (fs.existsSync(path.join(__dirname, "suppliers.json"))) {
+      localFallbackDB.supplierCopies = JSON.parse(fs.readFileSync(path.join(__dirname, "suppliers.json"), "utf8")).flatMap((s:any) => s.products || []);
+    }
   }
 } catch(e) {
   console.log("Could not load local data files", e);
@@ -84,9 +97,7 @@ async function updateAppData(data: any) {
     
     // Save to disk to persist across dev server restarts
     try {
-      if (data.products) {
-        fs.writeFileSync(path.join(__dirname, "shared_products.json"), JSON.stringify(data.products, null, 2));
-      }
+      fs.writeFileSync(path.join(__dirname, "app_data_fallback.json"), JSON.stringify(localFallbackDB, null, 2));
     } catch(err) {
       console.warn("Could not save to disk:", err);
     }
