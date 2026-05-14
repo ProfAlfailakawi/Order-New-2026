@@ -650,17 +650,18 @@ async function startServer() {
       );
 
       // Get the most recent 150 orders to find valid recent purchases
-      const q = query(
-        collection(db, "orders"),
-        orderBy("createdAt", "desc"),
-        limit(150),
-      );
-      const snap = await getDocs(q);
+      const allOrders = activeProductsSnap.data()?.orders || [];
+      const allInvoices = activeProductsSnap.data()?.invoices || [];
+      const combinedOrders = [...allOrders, ...allInvoices].sort((a: any, b: any) => {
+        const dateA = new Date(a.createdAt || a.date || 0).getTime();
+        const dateB = new Date(b.createdAt || b.date || 0).getTime();
+        return dateB - dateA;
+      }).slice(0, 150);
+
       const recentOrders: any[] = [];
       const seenNames = new Set<string>();
 
-      snap.docs.forEach((doc) => {
-        const data = doc.data();
+      combinedOrders.forEach((data: any) => {
         if (
           data.customerName &&
           data.address &&
@@ -673,7 +674,8 @@ async function startServer() {
             (data.status === "paid" ||
               data.status === "تم الدفع" ||
               data.status === "pending" ||
-              data.status === "قيد الانتظار") &&
+              data.status === "قيد الانتظار" ||
+              data.status === "تم الدفع وجاري التوصيل") &&
             recentOrders.length < 50
           ) {
             const items = data.items || [];
