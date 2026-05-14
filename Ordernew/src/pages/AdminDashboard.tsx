@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { Order, Analytics, Region } from "../types";
 import { db } from "../lib/firebase";
-import { collection, onSnapshot, doc, updateDoc, getDoc, query, orderBy } from "../lib/fakestore";
+import { collection, onSnapshot, doc, updateDoc, getDoc, query, orderBy } from "firebase/firestore";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 
