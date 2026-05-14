@@ -2943,26 +2943,26 @@ const ChefWhisperCard = ({
       >
         {/* Front Side */}
         <div
-          className={`relative w-full h-full bg-white rounded-[20px] shadow-sm flex ${isHorizontal ? "flex-col justify-start p-3 pb-2 gap-1.5" : "gap-4 p-4"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-stone-100 hover:border-accent/20 hover:shadow-md"} transition-all cursor-pointer`}
+          className={`relative w-full h-full bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex ${isHorizontal ? "flex-col justify-start p-4 pb-3" : "gap-5 p-5"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-white hover:border-accent/20 hover:shadow-[0_20px_50px_rgba(26,46,34,0.06)] hover:-translate-y-1"} transition-all duration-500 cursor-pointer`}
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
           }}
         >
           {product.isOutOfStock && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/10 backdrop-blur-[0.5px] rounded-[20px]">
-              <span className="bg-red-600/90 text-white px-5 py-1.5 rounded-full text-sm font-extrabold shadow-md transform -rotate-6 border-2 border-white/50 tracking-wider">
-                SOLD OUT
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/20 backdrop-blur-[1px] rounded-[24px]">
+              <span className="bg-red-600/90 text-white px-5 py-1.5 rounded-full text-sm font-black shadow-lg transform -rotate-6 tracking-widest border border-white/50">
+                نفذت الكمية
               </span>
             </div>
           )}
           {product.isNewProduct && !product.isOutOfStock && (
-            <span className="absolute top-0 right-0 bg-gradient-to-r from-red-500 to-rose-500 text-white text-[10px] sm:text-xs font-extrabold px-3 py-1 z-10 rounded-tr-[20px] rounded-bl-xl shadow-[0_2px_10px_rgba(239,68,68,0.3)] border-b-2 border-l-2 border-white/20">
+            <span className="absolute top-0 right-0 bg-gradient-to-tr from-accent to-amber-500 text-white text-[10px] font-bold px-3 py-1.5 z-10 rounded-tr-[24px] rounded-bl-2xl shadow-[0_2px_10px_rgba(194,97,21,0.3)]">
               جديد
             </span>
           )}
 
-          {/* Golden Fold / Chef's Whisper trigger - Moved to top-left to avoid "جديد" badge */}
+          {/* Golden Fold / Chef's Whisper trigger */}
           {!product.isOutOfStock && (
             <div
               className="absolute top-0 left-0 w-8 h-8 cursor-pointer z-30 group"
@@ -2971,12 +2971,12 @@ const ChefWhisperCard = ({
                 setIsFlipped(true);
               }}
             >
-              <div className="absolute top-0 left-0 border-t-[32px] border-r-[32px] border-t-amber-400 group-hover:border-t-amber-500 border-r-transparent drop-shadow-md rounded-tl-[20px] transition-colors" />
+              <div className="absolute top-0 left-0 border-t-[32px] border-r-[32px] border-t-accent group-hover:border-t-amber-500 border-r-transparent drop-shadow-md rounded-tl-[24px] transition-colors" />
             </div>
           )}
 
           <div
-            className={`relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-stone-50/80 backdrop-blur-sm rounded-xl border border-stone-100 ${isHorizontal ? "w-16 h-16 mx-auto mb-1" : "w-14 h-14 aspect-square"}`}
+            className={`relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-stone-50/50 rounded-2xl border border-stone-100/50 shadow-inner ${isHorizontal ? "w-20 h-20 mx-auto mb-2" : "w-16 h-16"}`}
           >
             {isHot && <SizzlingSteam />}
             <img
@@ -2999,19 +2999,19 @@ const ChefWhisperCard = ({
             className={`flex flex-col flex-grow ${isHorizontal ? "text-center" : "justify-center"} overflow-hidden`}
           >
             <h3
-              className="font-bold text-base sm:text-lg text-brand leading-tight"
+              className="font-black text-lg sm:text-lg text-brand leading-tight tracking-tight mt-1"
               style={{ wordBreak: "break-word" }}
             >
               {product.name}
             </h3>
             {product.preparationInstructions && (
-              <p className="text-[10px] sm:text-[11px] text-accent font-medium mt-1 leading-tight">
+              <p className="text-[10px] sm:text-[11px] text-stone-500 font-medium mt-1 leading-relaxed line-clamp-2">
                 {product.preparationInstructions}
               </p>
             )}
-            <p className="text-brand text-sm sm:text-base font-medium mt-1">
+            <p className="text-brand text-lg font-black mt-2">
               {product.price}{" "}
-              <span className="text-[10px] sm:text-[11px] text-accent">
+              <span className="text-[10px] sm:text-xs text-accent font-bold">
                 د.ك
               </span>
             </p>
@@ -3019,9 +3019,9 @@ const ChefWhisperCard = ({
           {!isHorizontal && (
             <div className="flex items-center pl-2 relative z-10">
               <div
-                className={`p-2 sm:p-3 text-white rounded-xl shadow-sm transition-all ${product.isOutOfStock ? "bg-stone-300" : "bg-accent"}`}
+                className={`p-2 sm:p-3 text-white rounded-2xl shadow-lg transition-all hover:scale-110 ${product.isOutOfStock ? "bg-stone-300" : "bg-gradient-to-tr from-accent to-amber-500 shadow-accent/30"}`}
               >
-                <Plus className="w-4 h-4 sm:w-5 sm:h-5 stroke-[3]" />
+                <Plus className="w-5 h-5 stroke-[3]" />
               </div>
             </div>
           )}
@@ -3029,7 +3029,7 @@ const ChefWhisperCard = ({
 
         {/* Back Side (The Whisper) */}
         <div
-          className="absolute inset-0 w-full h-full bg-amber-50 rounded-[20px] p-5 flex flex-col items-center justify-center text-center shadow-inner border border-amber-200 cursor-pointer overflow-hidden z-40"
+          className="absolute inset-0 w-full h-full bg-brand rounded-[24px] p-5 flex flex-col items-center justify-center text-center shadow-inner border border-brand cursor-pointer overflow-hidden z-40"
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
@@ -3040,18 +3040,17 @@ const ChefWhisperCard = ({
             setIsFlipped(false);
           }}
         >
-          <div className="absolute -top-4 -right-4 w-16 h-16 bg-amber-400 rounded-full blur-2xl opacity-20" />
-          <div className="text-amber-600 mb-2 flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 shadow-sm relative z-10">
-            <span className="text-lg">👨‍🍳</span>
+          <div className="absolute -top-4 -right-4 w-20 h-20 bg-accent rounded-full blur-3xl opacity-30" />
+          <div className="text-accent mb-3 flex items-center justify-center w-10 h-10 rounded-full bg-accent/10 border border-accent/20 relative z-10">
+            <Sparkles className="w-5 h-5 text-accent" />
           </div>
 
           <p
-            className="text-amber-900 font-bold text-sm leading-relaxed relative z-10"
-            style={{ fontFamily: "Tahoma, Arial, sans-serif" }}
+            className="text-stone-100 font-medium text-sm leading-relaxed relative z-10"
           >
             "{whisperText}"
           </p>
-          <span className="text-[9px] text-amber-500 font-bold mt-auto tracking-wider pt-2 border-t border-amber-200/50 w-full uppercase">
+          <span className="text-[10px] text-accent font-bold mt-auto tracking-widest pt-3 border-t border-accent/20 w-full">
             اضغط للعودة
           </span>
         </div>
@@ -3517,10 +3516,10 @@ function CheckoutOverlay({
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 200 }}
-        className="bg-background w-full sm:max-w-md h-[100dvh] overflow-hidden shadow-xl flex flex-col border-r border-stone-100"
+        className="bg-[#fafaf9] w-full sm:max-w-md h-[100dvh] overflow-hidden shadow-2xl flex flex-col sm:rounded-l-3xl border-l border-stone-100/50"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 pt-[max(env(safe-area-inset-top,0px),1.5rem)] border-b border-stone-100 flex items-center justify-between bg-white shrink-0">
+        <div className="p-6 pt-[max(env(safe-area-inset-top,0px),1.5rem)] border-b border-stone-50 flex items-center justify-between bg-white shrink-0 shadow-[0_8px_30px_rgb(0,0,0,0.02)] z-10 rounded-b-3xl">
           <div className="flex items-center gap-4">
             <button
               onClick={() => {
@@ -3528,30 +3527,31 @@ function CheckoutOverlay({
                 else if (step === "delivery") setStep("cart");
                 else onClose();
               }}
-              className="p-3 bg-stone-50/80 backdrop-blur-sm border border-stone-100 rounded-xl hover:bg-brand hover:text-white transition-all shadow-sm"
+              className="p-3 bg-stone-50 border border-stone-100 rounded-2xl hover:bg-brand hover:text-white hover:-translate-x-1 transition-all shadow-sm"
             >
               <ArrowRight className="w-5 h-5" />
             </button>
             <div>
-              <h2 className="text-xl font-bold text-brand flex items-center gap-2">
-                {step === "cart" ? "قائمة طلباتك" : step === "payment" ? "اختر طريقة الدفع" : "بيانات التوصيل"}
+              <h2 className="text-2xl font-black text-brand flex items-center gap-2 tracking-tight mt-1">
+                {step === "cart" ? "قائمة طلباتك" : step === "payment" ? "طريقة الدفع" : "بيانات التوصيل"}
               </h2>
             </div>
           </div>
         </div>
 
-        <div className="flex-grow overflow-y-auto p-6 space-y-8 no-scrollbar">
+        <div className="flex-grow overflow-y-auto p-6 space-y-8 no-scrollbar bg-[#fafaf9]">
           {cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-stone-300 space-y-6 pt-10">
-              <div className="w-24 h-24 rounded-full border-4 border-dashed border-stone-100 flex items-center justify-center animate-pulse">
-                <ShoppingCart className="w-10 h-10" />
+            <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-6 pt-10">
+              <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-stone-50">
+                <ShoppingCart className="w-12 h-12 text-stone-300 empty-state-art" />
               </div>
-              <p className="font-bold text-center">سلتك فاضية يالغالي!</p>
+              <h3 className="text-2xl font-black text-brand mb-1">سلتك فاضية يالغالي!</h3>
+              <p className="font-medium text-center text-sm max-w-[200px] mb-4">اطلب الحين وعيش تجربة مختلفة ومميزة مع أطباقنا</p>
               <button
                 onClick={onClose}
-                className="px-8 py-4 bg-stone-50/80 backdrop-blur-sm border border-stone-100 rounded-xl text-stone-500 font-bold hover:bg-brand hover:text-white transition-all shadow-sm"
+                className="w-full py-4 mt-4 bg-brand text-white border border-brand rounded-2xl font-bold hover:bg-brand/90 transition-all shadow-md shadow-brand/20"
               >
-                شوف المنيو المميز
+                شوف المنيو
               </button>
             </div>
           ) : step === "cart" ? (

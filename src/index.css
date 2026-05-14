@@ -1,17 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Tajawal", ui-sans-serif, system-ui, sans-serif;
   --color-brand: #16241a; /* slightly softer rich dark green */
   --color-accent: #c26115; /* slightly more vibrant terracotta */
-  --color-background: #faf9f7; /* elegant warm off-white */
+  --color-background: #fafaf9; /* elegant warm off-white (stone-50) */
   
   --shadow-sm: 0 4px 14px 0 rgba(0, 0, 0, 0.02);
   --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.06);
   --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.08);
   --shadow-2xl: 0 30px 80px rgba(26, 46, 34, 0.08);
+
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.04);
 
   --radius-lg: 1rem;       /* 16px */
   --radius-xl: 1.25rem;    /* 20px */
@@ -31,14 +33,17 @@
   }
   
   body {
-    @apply bg-background text-brand font-sans antialiased;
+    @apply bg-background text-brand font-sans antialiased leading-relaxed tracking-tight;
     direction: rtl;
     -webkit-tap-highlight-color: transparent;
     /* Force English digits for standard numbers */
     font-variant-numeric: tabular-nums lining-nums;
   }
-
   
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight leading-tight;
+  }
+
   button, 
   [role="button"],
   a,
@@ -46,6 +51,7 @@
   input[type="reset"],
   input[type="button"] {
     cursor: pointer;
+    @apply transition-all duration-300;
   }
 }
 
@@ -64,6 +70,24 @@
 
 .premium-shadow {
   box-shadow: 0 10px 30px -10px rgba(26, 46, 34, 0.1);
+}
+
+.glass-panel {
+  @apply bg-white/70 backdrop-blur-2xl border border-white/50;
+  box-shadow: var(--shadow-glass), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+}
+
+.glass-pill {
+  @apply bg-white/80 backdrop-blur-xl border border-white/60 shadow-sm;
+}
+
+.hover-lift {
+  @apply transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-brand/5 active:scale-95;
+}
+
+.empty-state-art {
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.05));
+  stroke-width: 1;
 }
 
 .theme-evening {
