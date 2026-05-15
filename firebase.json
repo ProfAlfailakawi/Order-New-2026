@@ -1,8 +1,4 @@
 {
-  "firestore": {
-    "database": "ai-studio-7058254a-1b06-4783-89b7-2b95cb116681",
-    "rules": "firestore.rules"
-  },
   "hosting": {
     "site": "gen-lang-client-0200723670",
     "public": "dist",
