@@ -2996,7 +2996,7 @@ const ChefWhisperCard = ({
             />
           </div>
           <div
-            className={`flex flex-col flex-grow ${isHorizontal ? "text-center" : "justify-center"} overflow-hidden`}
+            className={`flex flex-col flex-1 ${isHorizontal ? "text-center" : "justify-center"} overflow-hidden min-w-0`}
           >
             <h3
               className="font-black text-lg sm:text-lg text-brand leading-tight tracking-tight mt-1"
