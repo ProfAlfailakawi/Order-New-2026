@@ -1115,7 +1115,8 @@ app.get("/api/track-orders", async (req, res) => {
 
       let protocol = req.headers["x-forwarded-proto"] || req.protocol;
       let host = req.headers["x-forwarded-host"] || req.get("host");
-      let devOrProdUrl = req.get("origin") || protocol + "://" + host;
+      let reqOrigin = req.get("origin");
+      let devOrProdUrl = (reqOrigin && reqOrigin !== "null" && reqOrigin !== "undefined") ? reqOrigin : protocol + "://" + host;
 
       const publicBaseUrl =
         process.env.PUBLIC_BASE_URL ||
@@ -1129,7 +1130,8 @@ app.get("/api/track-orders", async (req, res) => {
 
       const generatedReturnUrl = `${returnBaseUrl}/split/${orderId}?payment=success&name=${encodeURIComponent(name || "")}`;
       const generatedCancelUrl = `${returnBaseUrl}/split/${orderId}?payment=failed&name=${encodeURIComponent(name || "")}`;
-      const generatedNotifyUrl = `${notifyBaseUrl}/api/payment-webhook/${orderId}?splitId=${splitId}`;
+      // Upayments strictly checks notification url for validity, query vars might fail their internal matcher, so use path
+      const generatedNotifyUrl = `${notifyBaseUrl}/api/payment-webhook/${orderId}/${splitId}`;
 
       console.log(`[SPLIT] Generated Notify URL: ${generatedNotifyUrl}`);
 
@@ -1330,10 +1332,11 @@ app.get("/api/track-orders", async (req, res) => {
 
       let protocol = req.headers["x-forwarded-proto"] || req.protocol;
       let host = req.headers["x-forwarded-host"] || req.get("host");
-      let devOrProdUrl = req.get("origin") || protocol + "://" + host;
+      let reqOrigin = req.get("origin");
+      let devOrProdUrl = (reqOrigin && reqOrigin !== "null" && reqOrigin !== "undefined") ? reqOrigin : protocol + "://" + host;
 
       // Remove any forced replacement
-      if (!devOrProdUrl || devOrProdUrl.includes("undefined")) {
+      if (!devOrProdUrl || devOrProdUrl.includes("undefined") || devOrProdUrl === "null") {
         devOrProdUrl = "https://alturathkw.shop"; // fallback only
       }
 
@@ -1534,7 +1537,7 @@ app.get("/api/track-orders", async (req, res) => {
 
   // Payment Webhook
   app.post(
-    ["/api/payment-webhook/:pathOrderId", "/api/payment-webhook"],
+    ["/api/payment-webhook/:pathOrderId/:pathSplitId", "/api/payment-webhook/:pathOrderId", "/api/payment-webhook"],
     async (req, res) => {
       try {
         console.log(
@@ -1543,6 +1546,7 @@ app.get("/api/track-orders", async (req, res) => {
         );
 
         const pathOrder = req.params?.pathOrderId as string;
+        const pathSplit = req.params?.pathSplitId as string;
         const queryId =
           (req.query.order_id as string) || (req.query.TrackID as string);
         let orderId = pathOrder || queryId;
@@ -1591,7 +1595,7 @@ app.get("/api/track-orders", async (req, res) => {
           let isSplit = false;
           let originalOrderIdAsString = String(orderId);
           let baseOrderId = originalOrderIdAsString.toUpperCase();
-          let splitId = (req.query.splitId as string) || "";
+          let splitId = pathSplit || (req.query.splitId as string) || "";
 
           if (splitId || baseOrderId.includes("-S")) {
             isSplit = true;
