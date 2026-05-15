@@ -2947,6 +2947,8 @@ const ChefWhisperCard = ({
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
+            transform: "translateZ(0)",
+            WebkitTransform: "translateZ(0)",
           }}
         >
           {product.isOutOfStock && (
@@ -2996,7 +2998,7 @@ const ChefWhisperCard = ({
             />
           </div>
           <div
-            className={`flex flex-col flex-1 ${isHorizontal ? "text-center" : "justify-center"} overflow-hidden min-w-0`}
+            className={`flex flex-col flex-grow ${isHorizontal ? "text-center" : "justify-center"} overflow-hidden relative z-10`}
           >
             <h3
               className="font-black text-lg sm:text-lg text-brand leading-tight tracking-tight mt-1"
@@ -3033,7 +3035,8 @@ const ChefWhisperCard = ({
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
+            transform: "rotateY(180deg) translateZ(0)",
+            WebkitTransform: "rotateY(180deg) translateZ(0)",
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -3050,7 +3053,7 @@ const ChefWhisperCard = ({
           >
             "{whisperText}"
           </p>
-          <span className="text-[10px] text-accent font-bold mt-auto tracking-widest pt-3 border-t border-accent/20 w-full">
+          <span className="text-[10px] text-accent font-bold mt-auto tracking-widest pt-3 border-t border-accent/20 w-full relative z-10">
             اضغط للعودة
           </span>
         </div>
