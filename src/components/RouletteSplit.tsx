@@ -4,6 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles, Users, Crown, CreditCard, PartyPopper, ArrowRight } from "lucide-react";
 import { normalizeDigits } from "../utils";
 
+const normalizeArabicName = (name: string) => {
+  return (name || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[أإآا]/g, "ا")
+    .replace(/[ةه]/g, "ه")
+    .replace(/[يى]/g, "ي")
+    .replace(/[\u064B-\u065F\u0670]/g, "");
+};
+
 export function RouletteSplit({
   order,
   handlePay,
@@ -152,10 +162,10 @@ export function RouletteSplit({
   }
 
   const winningPhrases = [
-    { title: "عوافي يا الذيب! 🥳", desc: (l: string) => <>اليوم الفاتورة طاحت عنك! <span className="text-white px-1 font-black bg-black/20 rounded-md">{l}</span> اهو اللي بيدفع، اشكره لا تنسى!</> },
-    { title: "فزت هالمرة! 👑", desc: (l: string) => <>النحشة زينة، طاحت براس <span className="text-white px-1 font-black bg-black/20 rounded-md">{l}</span> والأكل لك ببلاش!</> },
-    { title: "عدت على خير! 😎", desc: (l: string) => <>الصدفة أنقذتك! <span className="text-white px-1 font-black bg-black/20 rounded-md">{l}</span> بياكلها وبيدفع الفاتورة اليوم.</> },
-    { title: "صدت الفريسة! 🎯", desc: (l: string) => <>مبروك النجاة، طاحت الفأس براس <span className="text-white px-1 font-black bg-black/20 rounded-md">{l}</span>!</> }
+    { title: "عوافي يا الذيب! 🥳", desc: "اليوم الفاتورة طاحت عنك، اشكره لا تنسى!" },
+    { title: "فزت هالمرة! 👑", desc: "النحشة زينة، الأكل لك ببلاش!" },
+    { title: "عدت على خير! 😎", desc: "الصدفة أنقذتك! غيرك بياكلها وبيدفع الفاتورة اليوم." },
+    { title: "صدت الفريسة! 🎯", desc: "مبروك النجاة، طاحت الفأس براسه والمطعم على حسابه!" }
   ];
 
   const losingPhrases = [
@@ -353,9 +363,9 @@ export function RouletteSplit({
                 className="text-center space-y-6 w-full"
               >
                 {(() => {
-                  const parsedLoser = (loser || "").trim().toLowerCase();
-                  const parsedMySpinName = (mySpinName || "").trim().toLowerCase();
-                  const parsedUrlName = (urlName || "").trim().toLowerCase();
+                  const parsedLoser = normalizeArabicName(loser);
+                  const parsedMySpinName = normalizeArabicName(mySpinName);
+                  const parsedUrlName = normalizeArabicName(urlName);
                   
                   const isLoser = parsedLoser !== "" && (parsedLoser === parsedMySpinName || parsedLoser === parsedUrlName);
                   const isGuest = parsedMySpinName === "" && parsedUrlName === "";
@@ -396,7 +406,7 @@ export function RouletteSplit({
                         <PartyPopper className="w-10 h-10 mx-auto text-blue-400" />
                         <h2 className="text-2xl font-black">انتهت اللعبة! 🎯</h2>
                         <p className="font-bold">
-                          طاحت براس <span className="text-white px-1 bg-black/20 rounded-md">{loser}</span>، اليوم الفاتورة عليه! 😂
+                          الفاتورة كاملة صارت عليه! 😂
                         </p>
                       </div>
                     );
@@ -407,7 +417,7 @@ export function RouletteSplit({
                       <PartyPopper className="w-10 h-10 mx-auto text-green-400" />
                       <h2 className="text-2xl font-black">{winnerContent.title}</h2>
                       <p className="font-bold">
-                        {winnerContent.desc(loser)}
+                        {winnerContent.desc}
                       </p>
                     </div>
                   );

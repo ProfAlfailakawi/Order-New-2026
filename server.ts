@@ -1133,9 +1133,9 @@ app.get("/api/track-orders", async (req, res) => {
       const finalAmount = parseFloat(amount).toFixed(3);
       const numericAmount = parseFloat(finalAmount);
 
-      const generatedReturnUrl = `${devOrProdUrl}/split/${orderId}?payment=success`;
-      const generatedCancelUrl = `${devOrProdUrl}/split/${orderId}?payment=failed`;
-      const generatedNotifyUrl = `${devOrProdUrl}/api/payment-webhook/${orderId}/${splitId}`;
+      const generatedReturnUrl = `https://alturathkw.shop/split/${orderId}?payment=success`;
+      const generatedCancelUrl = `https://alturathkw.shop/split/${orderId}?payment=failed`;
+      const generatedNotifyUrl = `https://alturathkw.shop/api/payment-webhook/${orderId}/${splitId}`;
 
       console.log(`[SPLIT] Generated Notify URL: ${generatedNotifyUrl}`);
 
@@ -1356,7 +1356,7 @@ app.get("/api/track-orders", async (req, res) => {
       const generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}/success${isPopup ? "?isPopup=true" : ""}`;
       const generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}/failed${isPopup ? "?isPopup=true" : ""}`;
       // Webhooks should ideally go to the environment that initiated it
-      const generatedNotifyUrl = `${devOrProdUrl}/api/payment-webhook/${orderId}`;
+      const generatedNotifyUrl = `https://alturathkw.shop/api/payment-webhook/${orderId}`;
 
       const finalReturnUrl = generatedReturnUrl;
       const finalCancelUrl = generatedCancelUrl;
