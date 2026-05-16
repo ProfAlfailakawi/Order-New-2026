@@ -1532,11 +1532,6 @@ app.get("/api/track-orders", async (req, res) => {
         return res.status(400).json({ error: "No participants" });
       }
 
-      // Prevent re-spinning if already spun!
-      if (order.rouletteLoser) {
-        return res.json({ success: true, loser: order.rouletteLoser });
-      }
-
       const loserIndex = Math.floor(
         Math.random() * order.splitParticipants.length,
       );
