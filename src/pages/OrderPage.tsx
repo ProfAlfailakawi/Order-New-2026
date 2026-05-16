@@ -303,7 +303,10 @@ export default function OrderPage() {
         });
 
         if (handoffOrderId) {
-          const hId = String(handoffOrderId).trim().toUpperCase();
+          let hId = String(handoffOrderId).trim().toUpperCase();
+          if (hId.startsWith("#")) hId = hId.substring(1);
+          if (hId.includes("-S-")) hId = hId.split("-S-")[0];
+
           const target = data.find(
             (o: any) =>
               String(o.id).toUpperCase() === hId ||

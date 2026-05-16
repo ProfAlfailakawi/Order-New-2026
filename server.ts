@@ -73,7 +73,7 @@ async function getAppData() {
       return d.data();
     }
   } catch (error) {
-    console.warn("Firebase read restricted or failed, using local in-memory fallback");
+    console.warn("Firebase read restricted or failed, using local in-memory fallback", error);
   }
   return localFallbackDB;
 }
@@ -83,7 +83,7 @@ async function updateAppData(data: any) {
     const docRef = doc(db, "appData", "shared_company_data");
     await setDoc(docRef, data, { merge: true });
   } catch (error) {
-    console.warn("Firebase write restricted or failed, updating local in-memory fallback");
+    console.warn("Firebase write restricted or failed, updating local in-memory fallback", error);
     localFallbackDB = { ...localFallbackDB, ...data };
     
     // Save to disk to persist across dev server restarts
