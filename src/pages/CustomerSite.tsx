@@ -2248,12 +2248,13 @@ export default function CustomerSite() {
                   لا توجد بيانات لهذا التصنيف
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   {displayProducts.map((product) => (
                     <motion.div
                       key={product.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
+                      className="h-full flex flex-col"
                       style={{ minHeight: "120px" }}
                     >
                       <ChefWhisperCard
@@ -2917,10 +2918,10 @@ const ChefWhisperCard = ({
 
   return (
     <div
-      className={`relative perspective-[1000px] w-full ${isHorizontal ? "h-full" : ""}`}
+      className={`relative perspective-[1000px] w-full h-full min-h-[110px]`}
     >
       <motion.div
-        className={`w-full relative ${isHorizontal ? "h-full" : ""}`}
+        className={`w-full h-full relative`}
         animate={{ rotateY: isFlipped ? 180 : 0, scale: isFlipped ? 1.05 : 1 }}
         whileTap={{
           scale: isFlipped ? 1.05 : 1.02,
@@ -2946,8 +2947,6 @@ const ChefWhisperCard = ({
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
-            transform: "translateZ(0)",
-            WebkitTransform: "translateZ(0)",
           }}
         >
           {product.isOutOfStock && (
@@ -3034,8 +3033,8 @@ const ChefWhisperCard = ({
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
-            transform: "rotateY(180deg) translateZ(0)",
-            WebkitTransform: "rotateY(180deg) translateZ(0)",
+            transform: "rotateY(180deg)",
+            WebkitTransform: "rotateY(180deg)",
           }}
           onClick={(e) => {
             e.stopPropagation();
