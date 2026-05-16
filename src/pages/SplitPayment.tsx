@@ -426,7 +426,7 @@ export default function SplitPayment() {
 
       <div className="max-w-md mx-auto p-4 sm:p-6 space-y-6">
         <AnimatePresence>
-          {paymentStatus === "success" && (
+          {paymentStatus === "success" && !isFullyPaid && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -493,30 +493,105 @@ export default function SplitPayment() {
                 الباقي: {remainingAmount.toFixed(3)} د.ك
               </span>
             </div>
-            <div className="h-4 bg-stone-100 rounded-full overflow-hidden shrink-0 w-full flex">
+            <div className="h-4 bg-stone-100 rounded-full overflow-hidden shrink-0 w-full flex relative">
               <motion.div
-                className="h-full bg-brand"
+                className="h-full bg-gradient-to-l from-[#25D366] to-[#128C7E]"
                 initial={{ width: 0 }}
                 animate={{ width: `${progressPercent}%` }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
               />
+              {progressPercent >= 100 && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                  className="absolute inset-0 bg-white/20 animate-pulse" 
+                />
+              )}
             </div>
           </div>
         </div>
 
         {isFullyPaid ? (
-          <div className="bg-green-500 text-white p-8 rounded-[24px] shadow-md shadow-green-500/20 text-center flex flex-col items-center gap-4">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-              <Sparkles className="w-8 h-8" />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 260,
+              damping: 20
+            }}
+            className="relative bg-gradient-to-br from-[#25D366] via-emerald-500 to-[#128C7E] text-white p-8 mt-6 rounded-[32px] shadow-2xl overflow-hidden text-center flex flex-col items-center gap-6"
+          >
+            {/* Animated background elements */}
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              className="absolute -top-32 -left-32 w-64 h-64 bg-white/10 rounded-full blur-3xl"
+            />
+            <motion.div
+              animate={{ rotate: -360 }}
+              transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+              className="absolute -bottom-32 -right-32 w-64 h-64 bg-black/10 rounded-full blur-3xl"
+            />
+            
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: [0, 1.2, 1], rotate: 0 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="relative z-10 w-24 h-24 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border-4 border-white/30 shadow-inner"
+            >
+              <PartyPopper className="w-12 h-12 text-white drop-shadow-lg" />
+            </motion.div>
+
+            <div className="relative z-10 space-y-3">
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-3xl font-black tracking-tight drop-shadow-md"
+              >
+                كفو يا الربع! 👑
+              </motion.h2>
+              {paymentStatus === "success" && urlName && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.35 }}
+                  className="bg-black/10 text-white/90 text-sm font-bold px-4 py-1.5 rounded-full inline-block mb-2"
+                >
+                  تسلم الأيادي يا {urlName} 🙌
+                </motion.p>
+              )}
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="text-emerald-50 text-base font-bold px-2 leading-relaxed"
+              >
+                القطة اكتملت والطلب الحين بالمطبخ وقاعد يتجهز على نار هادية 🚀🔥
+              </motion.p>
             </div>
-            <div>
-              <h2 className="text-xl font-extrabold mb-1">
-                كفو يا الربع! اكتملت القطة..
-              </h2>
-              <p className="font-medium text-green-100 text-sm mt-2">
-                الطلب الحين بالمطبخ وقاعد يتجهز 🚀
-              </p>
-            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              onClick={() => navigate(`/track?order_id=${id}`)}
+              className="relative z-10 mt-2 bg-white text-emerald-600 shadow-xl shadow-black/10 font-black text-lg py-4 px-8 rounded-2xl w-full transition-all border-b-4 border-emerald-100 hover:border-emerald-200"
+            >
+              👀 تابع طلبك من هني
+            </motion.button>
+          </motion.div>
+        ) : localSuccess ? (
+          <div className="bg-green-500 text-white p-8 rounded-[24px] shadow-md shadow-green-500/20 text-center flex flex-col items-center gap-4 mt-4">
+             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <Check className="w-8 h-8 text-white" strokeWidth={3} />
+             </div>
+             <h2 className="text-xl font-extrabold mb-1">تمت المساهمة بنجاح!</h2>
+             <p className="font-medium text-green-100 text-sm mt-2">يعطيك العافية، جاري تحويلك في ثواني...</p>
           </div>
         ) : (
           <div className="space-y-4">
