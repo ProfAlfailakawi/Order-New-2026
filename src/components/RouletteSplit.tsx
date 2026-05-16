@@ -128,7 +128,15 @@ export function RouletteSplit({
     }
   }, [spun, participants.length, order.id, isSpinning]);
 
-  const loserIndex = participants.findIndex((p: any) => p.name === loser);
+  const loserIndex = React.useMemo(() => {
+    if (!loser || participants.length === 0) return 0;
+    const normalizedLoser = normalizeArabicName(loser);
+    const idx = participants.findIndex((p: any) => 
+      normalizeArabicName(p.name) === normalizedLoser
+    );
+    return idx === -1 ? 0 : idx;
+  }, [loser, participants]);
+
   const displayIndex = isSpinning ? activeIndex : loserIndex;
 
   const totalPaid = (order.splitPayments || [])
@@ -156,10 +164,10 @@ export function RouletteSplit({
             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-inner relative z-10">
               <Check className="w-8 h-8 text-[#25D366]" strokeWidth={3} />
             </div>
-            <div className="text-center relative z-10">
-              <h3 className="text-2xl font-extrabold mb-2">تسلم يا {urlName || loser || "بطل"}! 🥳</h3>
+            <div className="text-center relative z-10 w-full">
+              <h3 className="text-2xl font-extrabold mb-2">كفو يا {urlName || loser || "بطل"}! 🥳</h3>
               <p className="text-white/90 font-medium leading-relaxed">
-                دفعك تم بنجاح، وبيضت الوجه!<br/>هاردلك هالمرة.. اليايات أكثر וחظك يعوضك! 😉
+                دفعك تم بنجاح، مبروك فوزك بلقب الكريم اليوم!<br/>استمتعوا بالعشاء الهني وبالعافية عليكم! ✨
               </p>
               <div className="mt-6 flex items-center justify-center gap-2 text-sm text-green-100/80 bg-black/10 py-2 px-4 rounded-full w-fit mx-auto">
                 <span className="animate-spin inline-block">⏳</span> جاري التحويل للطلب...
@@ -189,18 +197,11 @@ export function RouletteSplit({
     );
   }
 
-  const winningPhrases = [
-    { title: "عوافي يا الذيب! 🥳", desc: `اليوم الفاتورة طاحت عن ${loser || "غيرك"}، اشكره لا تنسى!` },
-    { title: "فزت هالمرة! 👑", desc: `النحشة زينة، ${loser || "غيرك"} بيدفع والأكل لك ببلاش!` },
-    { title: "عدت على خير! 😎", desc: `الصدفة أنقذتك! ${loser || "غيرك"} بياكلها وبيدفع الفاتورة اليوم.` },
-    { title: "صدت الفريسة! 🎯", desc: `مبروك النجاة، طاحت الفأس براس ${loser || "الضحية"} والمطعم على حسابه!` }
-  ];
-
-  const losingPhrases = [
-    { title: "حظك غاب اليوم! 😂", desc: "الفاتورة كاملة طاحت براسك، ادفع يا وحش!" },
-    { title: "راحت عليك يا شمعة الجلاس! 💸", desc: "أنت الليلة شمعة الجلاس والفاتورة كلها عليك!" },
-    { title: "طحت فيها! 🎯", desc: "الروليت اختارك، دبر عمرك وادفع الفاتورة!" },
-    { title: "يومك كريم! 👑", desc: "الكرم من طبعك، ادفع وعوافي على ربعك!" }
+  const resultPhrases = [
+    { title: "مبروك لـ {name}! 🥳", desc: "تم اختياره في روليت التراث لهذا الطلب، تهانينا!" },
+    { title: "{name} هو الفائز اليوم! 👑", desc: "وقع عليه الاختيار ليكون بطل الجلسة، استمتعوا!" },
+    { title: "تهانينا لـ {name}! 🎯", desc: "الحظ اختار {name} اليوم ليكون الفائز في روليت التراث!" },
+    { title: "كفو يا {name}! 💎", desc: "أنت الفائز بلقب الكريم لهذا اليوم، مبروك يا بطل!" }
   ];
 
   const getPhraseIndex = (name: string) => {
@@ -209,8 +210,15 @@ export function RouletteSplit({
     return hash;
   };
 
-  const loserContent = losingPhrases[getPhraseIndex(loser || "A") % losingPhrases.length];
-  const winnerContent = winningPhrases[getPhraseIndex(loser || "A") % winningPhrases.length];
+  const getResultContent = (chosenName: string) => {
+    const phrase = resultPhrases[getPhraseIndex(chosenName) % resultPhrases.length];
+    return {
+      title: phrase.title.replace("{name}", chosenName),
+      desc: phrase.desc.replace(/{name}/g, chosenName)
+    };
+  };
+
+  const resultContent = getResultContent(loser || "الفائز");
 
   return (
     <div
@@ -400,12 +408,12 @@ export function RouletteSplit({
 
                   if (isLoser) {
                     return (
-                      <div className="p-6 bg-red-500/20 border border-red-500/50 rounded-3xl text-red-100 space-y-4">
+                      <div className="p-6 bg-violet-500/20 border border-violet-500/50 rounded-3xl text-violet-100 space-y-4">
                         {paymentStatus === "failed" && (
                           <motion.div
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            className="bg-gradient-to-br from-red-500 to-rose-600 text-white p-6 justify-center items-center rounded-3xl flex flex-col gap-3 shadow-xl shadow-red-500/20 border border-white/20 relative overflow-hidden"
+                            className="bg-gradient-to-br from-red-500 to-rose-600 text-white p-6 justify-center items-center rounded-3xl flex flex-col gap-3 shadow-xl shadow-red-500/20 border border-white/20 relative overflow-hidden mb-4"
                           >
                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
                             <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-inner relative z-10 shrink-0">
@@ -417,10 +425,14 @@ export function RouletteSplit({
                             </div>
                           </motion.div>
                         )}
-                        <h2 className="text-2xl font-black">{loserContent.title}</h2>
-                        <p className="font-bold">
-                          {loserContent.desc}
+                        <h2 className="text-3xl font-black text-white">{resultContent.title}</h2>
+                        <p className="font-bold text-violet-200">
+                          {resultContent.desc}
                         </p>
+                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10 text-sm">
+                           <p className="mb-2 opacity-80">الفاتورة الإجمالية:</p>
+                           <p className="text-2xl font-black text-white">{order.total.toFixed(3)} د.ك</p>
+                        </div>
                         <button
                           onClick={() =>
                             handlePay(
@@ -429,34 +441,25 @@ export function RouletteSplit({
                               String(order.total),
                             )
                           }
-                          className="w-full bg-white text-red-600 font-black py-4 rounded-xl mt-4 active:scale-95 transition-transform flex justify-center items-center gap-2 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+                          className="w-full bg-white text-violet-600 font-black py-4 rounded-xl mt-4 active:scale-95 transition-transform flex justify-center items-center gap-2 shadow-[0_0_25px_rgba(139,92,246,0.3)]"
                         >
                           <CreditCard className="w-5 h-5" />
-                          {paymentStatus === "failed" ? "جرب مرة ثانية 🔄" : `ادفع ${order.total.toFixed(3)} د.ك`}
+                          {paymentStatus === "failed" ? "جرب مرة ثانية 🔄" : `تأكيد ودفع القطية`}
                         </button>
                       </div>
                     );
                   }
 
-                  if (isGuest) {
-                    return (
-                      <div className="p-6 bg-blue-500/20 border border-blue-500/50 rounded-3xl text-blue-100 space-y-4">
-                        <PartyPopper className="w-10 h-10 mx-auto text-blue-400" />
-                        <h2 className="text-2xl font-black">انتهت اللعبة! 🎯</h2>
-                        <p className="font-bold">
-                          الفاتورة كاملة صارت عليه! 😂
-                        </p>
-                      </div>
-                    );
-                  }
-
                   return (
-                    <div className="p-6 bg-green-500/20 border border-green-500/50 rounded-3xl text-green-100 space-y-4">
-                      <PartyPopper className="w-10 h-10 mx-auto text-green-400" />
-                      <h2 className="text-2xl font-black">{winnerContent.title}</h2>
-                      <p className="font-bold">
-                        {winnerContent.desc}
+                    <div className="p-6 bg-fuchsia-500/20 border border-fuchsia-500/50 rounded-3xl text-fuchsia-100 space-y-4">
+                      <PartyPopper className="w-12 h-12 mx-auto text-fuchsia-400" />
+                      <h2 className="text-3xl font-black text-white">{resultContent.title}</h2>
+                      <p className="font-bold text-fuchsia-200">
+                        {resultContent.desc}
                       </p>
+                      <div className="pt-4 border-t border-fuchsia-500/30">
+                        <p className="text-sm opacity-80">تم تصفية القطية لهذا الطلب بنجاح بانتظار الدفع من {loser}</p>
+                      </div>
                     </div>
                   );
                 })()}
