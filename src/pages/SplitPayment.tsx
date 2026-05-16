@@ -80,7 +80,18 @@ export default function SplitPayment() {
         if (snapshot.exists()) {
           const data = snapshot.data();
           const orders = data.orders || [];
-          const foundOrder = orders.find((o: any) => o.id === id);
+          const invoices = data.invoices || [];
+          
+          let searchId = String(id).trim().toUpperCase();
+          if (searchId.startsWith("#")) {
+            searchId = searchId.substring(1);
+          }
+          if (searchId.includes("-S-")) {
+            searchId = searchId.split("-S-")[0];
+          }
+
+          const foundOrder = orders.find((o: any) => String(o.id).trim().toUpperCase() === searchId) || 
+                           invoices.find((o: any) => String(o.id).trim().toUpperCase() === searchId);
           if (foundOrder) {
             setOrder(foundOrder);
             setError(null);
