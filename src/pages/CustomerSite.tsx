@@ -2918,10 +2918,10 @@ const ChefWhisperCard = ({
 
   return (
     <div
-      className={`relative perspective-[1000px] w-full ${isHorizontal ? "h-full" : "h-full min-h-[100px]"}`}
+      className={`relative perspective-[1000px] w-full ${isHorizontal ? "h-full" : ""}`}
     >
       <motion.div
-        className="w-full h-full relative"
+        className={`w-full relative ${isHorizontal ? "h-full" : ""}`}
         animate={{ rotateY: isFlipped ? 180 : 0, scale: isFlipped ? 1.05 : 1 }}
         whileTap={{
           scale: isFlipped ? 1.05 : 1.02,
@@ -2943,7 +2943,7 @@ const ChefWhisperCard = ({
       >
         {/* Front Side */}
         <div
-          className={`relative w-full h-full bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex ${isHorizontal ? "flex-col justify-start p-4 pb-3" : "gap-5 p-5"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-white hover:border-accent/20 hover:shadow-[0_20px_50px_rgba(26,46,34,0.06)] hover:-translate-y-1"} transition-all duration-500 cursor-pointer`}
+          className={`relative w-full bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex ${isHorizontal ? "flex-col justify-start p-4 pb-3 h-full" : "gap-5 p-5 min-h-[110px] items-center"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-white hover:border-accent/20 hover:shadow-[0_20px_50px_rgba(26,46,34,0.06)] hover:-translate-y-1"} transition-all duration-500 cursor-pointer`}
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
