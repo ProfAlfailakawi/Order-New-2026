@@ -200,28 +200,35 @@ export function RouletteSplit({
     );
   }
 
-  const resultPhrases = [
-    { title: "مبروك لـ {name}! 🥳", desc: "تم اختياره في روليت التراث لهذا الطلب، تهانينا!" },
-    { title: "{name} هو الفائز اليوم! 👑", desc: "وقع عليه الاختيار ليكون بطل الجلسة، استمتعوا!" },
-    { title: "تهانينا لـ {name}! 🎯", desc: "الحظ اختار {name} اليوم ليكون الفائز في روليت التراث!" },
-    { title: "كفو يا {name}! 💎", desc: "أنت الفائز بلقب الكريم لهذا اليوم، مبروك يا بطل!" }
+  const payPhrases = [
+    { title: "مبروك طاحت براسك يا {name}! 💸", desc: "الروليت اختارك، جهز الكي نت ولا تبخل على ربعك!" },
+    { title: "كفو يا {name}! أنت الكريم 👑", desc: "اليوم عشاهم على حسابك، ادفع وأنت تضحك!" },
+    { title: "حظك حلو يا {name}! بس مو بالفلوس 🎯", desc: "طاحت الفاتورة بحضنك، يالله ورنا كرمك!" },
+    { title: "لا تنحاش يا {name}! 🏃‍♂️", desc: "كلنا مستانسين إلا جيبك، يعطيك العافية مقدماً!" },
+    { title: "صادوه يا {name}! 🎣", desc: "الروليت ما يرحم، افتح البوك وسدد اللي عليك يا بطل!" },
+    { title: "لبستها يا {name}! 👕", desc: "مبروك، الشرف لك اليوم بدفع الفاتورة، لا تبكي!" }
   ];
 
-  const getPhraseIndex = (name: string) => {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash += (name.charCodeAt(i) * (i + 1));
-    return hash;
-  };
+  const savedPhrases = [
+    { title: "نفدت بجلدك يا {name}! 🏃‍♂️💨", desc: "الروليت رحمك اليوم، {loser} بيلبس الفاتورة كاملة!" },
+    { title: "مبروك يا {name}! عشاك ببلاش 🎉", desc: "عليك بالعافية، {loser} بيدفع دم قلبه اليوم!" },
+    { title: "يا حظك يا {name}! 🕊️", desc: "ارتاح، الفاتورة طاحت براس {loser}، خله يغرم!" },
+    { title: "{name}، نام مرتاح اليوم 😴", desc: "ماكو دفع اليوم! {loser} أكل المقلب وراح يحاسب!" },
+    { title: "زمطت منها يا {name}! 😅", desc: "كفووو! العشا بلاش، أكل واشرب على حساب {loser}!" },
+    { title: "ابتسم يا {name}! 😁", desc: "وفر فلوسك، باجي الربع دبسوها بـ {loser}!" }
+  ];
 
-  const getResultContent = (chosenName: string) => {
-    const phrase = resultPhrases[getPhraseIndex(chosenName) % resultPhrases.length];
+  const getPhraseContent = (myName: string, isPaying: boolean, loserName: string) => {
+    const list = isPaying ? payPhrases : savedPhrases;
+    let hash = 0;
+    const key = loserName || "الفائز";
+    for (let i = 0; i < key.length; i++) hash += (key.charCodeAt(i) * (i + 1));
+    const phrase = list[hash % list.length];
     return {
-      title: phrase.title.replace("{name}", chosenName),
-      desc: phrase.desc.replace(/{name}/g, chosenName)
+      title: phrase.title.replace(/{name}/g, myName),
+      desc: phrase.desc.replace(/{name}/g, myName).replace(/{loser}/g, key)
     };
   };
-
-  const resultContent = getResultContent(loser || "الفائز");
 
   return (
     <div
@@ -408,6 +415,9 @@ export function RouletteSplit({
                   
                   const isLoser = parsedLoser !== "" && (parsedLoser === parsedMySpinName || parsedLoser === parsedUrlName);
                   const isGuest = parsedMySpinName === "" && parsedUrlName === "";
+                  
+                  const myDisplayName = mySpinName || urlName || (isLoser ? loser : "ضيفنا");
+                  const resultContent = getPhraseContent(myDisplayName, isLoser, loser);
 
                   if (isLoser) {
                     return (
