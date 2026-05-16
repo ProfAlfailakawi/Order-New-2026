@@ -156,7 +156,19 @@ app.patch("/api/appdata", async (req, res) => {
   }
 });
 
-app.get("/api/track-orders", async (req, res) => {
+app.get("/api/debug/order/:id", async (req, res) => {
+    try {
+      const dbData = await getAppDataRef();
+      const data = dbData.exists() ? dbData.data() : {};
+      const order = (data.orders || []).find((o: any) => o.id === req.params.id) 
+                 || (data.invoices || []).find((i: any) => i.id === req.params.id);
+      res.json(order || { error: "not found" });
+    } catch(e) {
+      res.status(500).json({ error: String(e) });
+    }
+  });
+
+  app.get("/api/track-orders", async (req, res) => {
     const { phone, order_id } = req.query;
     if (!phone && !order_id) {
       return res
@@ -259,15 +271,9 @@ app.get("/api/track-orders", async (req, res) => {
 
       const finalOrders = allMatched;
 
-      // Find customer points dynamically from invoices
-      let points = 0;
-      allInvoices.forEach((inv: any) => {
-        const invPhone = cleanPhone(inv.customerPhone || inv.phone || "");
-        if (invPhone === cleanQueryPhone) {
-          points += Number(inv.total) || 0;
-        }
-      });
-      points = Math.floor(points);
+      // Get customer points from shared data customers list
+      const matchedCust = customers.find((c: any) => cleanPhone(c.phone) === cleanQueryPhone);
+      let points = matchedCust?.loyaltyPoints !== undefined ? matchedCust.loyaltyPoints : (matchedCust?.points || 0);
 
       // Sort by date descending
       finalOrders.sort((a: any, b: any) => {
@@ -287,7 +293,33 @@ app.get("/api/track-orders", async (req, res) => {
         `DEBUG TrackOrders: Phone=${cleanQueryPhone}, GlobalFree=${isGlobalFreeDelivery}, Threshold=${freeDeliveryThreshold}`,
       );
 
+      let needsPersistence = false;
       const populatedOrders = finalOrders.map((o: any) => {
+        // Healing Logic: If paymentStatus is paid but status is stuck in split/roulette mode, auto-fix it
+        if ((o.paymentStatus === 'paid' || o.status === 'paid' || (o.splitPayments && o.splitPayments.filter((sp:any) => sp.status === 'paid').reduce((sum:number, sp:any) => sum + (Number(sp.amount) || 0), 0) >= (Number(o.total) || 0) - 0.005)) && 
+            (o.status === "قيد تجميع القطية" || o.status === "بانتظار الدفع" || o.status === "جديد")) {
+          o.status = "تم الدفع وجاري التوصيل";
+          o.paymentStatus = "paid";
+          needsPersistence = true;
+          
+          if (!o.paidAt) {
+             o.paidAt = new Date().toISOString();
+          }
+
+          // Add points to customer if healing for the first time
+          const cPhone = cleanPhone(o.customerPhone);
+          const cIdx = customers.findIndex((c: any) => cleanPhone(c.phone) === cPhone);
+          if (cIdx !== -1) {
+             const prevPoints = Number(customers[cIdx].loyaltyPoints) || 0;
+             customers[cIdx].loyaltyPoints = prevPoints + (Number(o.total) || 0);
+             if (cPhone === cleanQueryPhone) {
+                 points = customers[cIdx].loyaltyPoints;
+             }
+          }
+
+          console.log(`[HEALING] Order ${o.id} auto-corrected to paid status during tracking`);
+        }
+        
         const oDeliveryFeeOriginal = Number(
           o.deliveryFee ?? o.deliveryInfo?.finalPrice ?? 0,
         );
@@ -396,6 +428,19 @@ app.get("/api/track-orders", async (req, res) => {
           total: finalTotal,
         };
       });
+
+      if (needsPersistence) {
+        // Find updated orders and merge into allOrders (which includes orders not being tracked)
+        const mergedOrders = (appData.orders || []).map(o => {
+          const match = populatedOrders.find(po => po.id === o.id);
+          if (match && match.paymentStatus === 'paid') {
+             return { ...o, status: match.status, paymentStatus: match.paymentStatus, paidAt: match.paidAt };
+          }
+          return o;
+        });
+        await updateAppData({ orders: mergedOrders, customers: customers });
+      }
+
       res.json(populatedOrders);
     } catch (error) {
       console.error("Error tracking orders:", error);
@@ -587,25 +632,13 @@ app.get("/api/track-orders", async (req, res) => {
       const customers = data.customers || [];
       const invoices = data.invoices || [];
 
-      // Calculate total points dynamically from invoices
-      let dynamicPoints = 0;
-      invoices.forEach((inv: any) => {
-        const invPhone = cleanPhone(inv.customerPhone || inv.phone || "");
-        if (invPhone === cleanQueryPhone) {
-          dynamicPoints += Number(inv.total) || 0;
-        }
-      });
-      dynamicPoints = Math.floor(dynamicPoints);
-
       let matchedCustomers: any[] = [];
       customers.forEach((customer: any) => {
         const phoneField = customer.phone;
         if (phoneField && cleanPhone(phoneField) === cleanQueryPhone) {
           matchedCustomers.push({
             ...customer,
-            // Keep their original points, or add dynamic points, but don't just blindly overwrite 
-            // if dynamicPoints is 0!
-            loyaltyPoints: customer.loyaltyPoints !== undefined ? customer.loyaltyPoints : dynamicPoints,
+            loyaltyPoints: customer.loyaltyPoints !== undefined ? customer.loyaltyPoints : (customer.points || 0),
           });
         }
       });
@@ -622,7 +655,7 @@ app.get("/api/track-orders", async (req, res) => {
             name: recentInvoice.customerName || recentInvoice.name || "",
             phone: phone,
             address: recentInvoice.address || null,
-            loyaltyPoints: dynamicPoints,
+            loyaltyPoints: 0,
           });
         }
       }
@@ -639,7 +672,7 @@ app.get("/api/track-orders", async (req, res) => {
             name: recentOrder.customerName || recentOrder.name || "",
             phone: phone,
             address: recentOrder.address || null,
-            loyaltyPoints: dynamicPoints,
+            loyaltyPoints: 0,
           });
         }
       }
@@ -1133,8 +1166,8 @@ app.get("/api/track-orders", async (req, res) => {
       const finalAmount = parseFloat(amount).toFixed(3);
       const numericAmount = parseFloat(finalAmount);
 
-      const generatedReturnUrl = `${devOrProdUrl}/split/${orderId}?payment=success`;
-      const generatedCancelUrl = `${devOrProdUrl}/split/${orderId}?payment=failed`;
+      const generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}/success?splitId=${splitId}`;
+      const generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}/failed?splitId=${splitId}`;
       const generatedNotifyUrl = `${devOrProdUrl}/api/payment-webhook/${orderId}/${splitId}`;
 
       console.log(`[SPLIT] Generated Notify URL: ${generatedNotifyUrl}`);
@@ -1612,14 +1645,19 @@ app.get("/api/track-orders", async (req, res) => {
           let isSplit = false;
           let originalOrderIdAsString = String(orderId);
           let baseOrderId = originalOrderIdAsString.toUpperCase();
-          let splitId = pathSplit || (req.query.splitId as string) || "";
+          let splitId = pathSplit || (req.query.splitId as string) || (req.query.SplitID as string) || "";
 
-          if (splitId || baseOrderId.includes("-S")) {
+          if (splitId || originalOrderIdAsString.toUpperCase().includes("-S-")) {
             isSplit = true;
-            if (baseOrderId.includes("-S") && originalOrderIdAsString.includes("-S")) {
-              const partsOriginal = originalOrderIdAsString.split("-S");
-              baseOrderId = partsOriginal[0].toUpperCase();
-              if (!splitId) splitId = "S" + partsOriginal[1];
+            if (originalOrderIdAsString.toUpperCase().includes("-S-")) {
+              const upperRaw = originalOrderIdAsString.toUpperCase();
+              const sIdx = upperRaw.lastIndexOf("-S-");
+              if (sIdx !== -1) {
+                baseOrderId = originalOrderIdAsString.substring(0, sIdx).toUpperCase();
+                if (!splitId) {
+                  splitId = originalOrderIdAsString.substring(sIdx + 1); // Extract "S-..."
+                }
+              }
             }
           }
 
@@ -1691,12 +1729,13 @@ app.get("/api/track-orders", async (req, res) => {
                   const totalPaidFils = Math.round(totalPaid * 1000);
                   const orderTotalFils = Math.round((Number(orders[orderIndex].total) || 0) * 1000);
 
-                  if (totalPaidFils === orderTotalFils) {
+                  // Allow 0.005 range for float precision
+                  if (totalPaidFils >= orderTotalFils - 5) {
                     orders[orderIndex].status = "تم الدفع وجاري التوصيل";
                     orders[orderIndex].paymentStatus = "paid";
                     orders[orderIndex].paidAt = new Date().toISOString();
                     console.log(
-                      `[PAYMENT] Split Group fully paid exactly - Order ${baseOrderId} becomes paid!`,
+                      `[PAYMENT] Split Group fully paid - Order ${baseOrderId} becomes paid!`,
                     );
                   }
                 } else {
@@ -1783,7 +1822,42 @@ app.get("/api/track-orders", async (req, res) => {
               }
             }
           } else if (invoiceIndex !== -1) {
-            const invoiceIndexes = invoices
+            if (isSplit) {
+              const invoiceIndexes = invoices
+                .map((inv: any, idx: number) =>
+                  String(inv.id).toUpperCase() === baseOrderId ? idx : -1,
+                )
+                .filter((idx: number) => idx !== -1);
+
+              invoiceIndexes.forEach((idx: number) => {
+                if (!invoices[idx].splitPayments) invoices[idx].splitPayments = [];
+                const splitIdx = invoices[idx].splitPayments.findIndex(
+                  (s: any) => s.id === splitId,
+                );
+                if (splitIdx !== -1) {
+                  if (status) {
+                    invoices[idx].splitPayments[splitIdx].status = "paid";
+                    invoices[idx].splitPayments[splitIdx].paymentId =
+                      req.body?.reference?.id || req.body?.TrackID || req.query?.TrackID;
+                    
+                    const totalPaid = invoices[idx].splitPayments
+                      .filter((s: any) => s.status === "paid")
+                      .reduce((sum: number, s: any) => sum + (Number(s.amount) || 0), 0);
+                    
+                    const totalPaidFils = Math.round(totalPaid * 1000);
+                    const orderTotalFils = Math.round((Number(invoices[idx].total) || 0) * 1000);
+
+                    if (totalPaidFils >= orderTotalFils - 5) {
+                      invoices[idx].status = "تم الدفع وجاري التوصيل";
+                      invoices[idx].paymentStatus = "paid";
+                      invoices[idx].paidAt = new Date().toISOString();
+                    }
+                    updated = true;
+                  }
+                }
+              });
+            } else {
+              const invoiceIndexes = invoices
               .map((inv: any, idx: number) =>
                 String(inv.id).toUpperCase() === baseOrderId ? idx : -1,
               )
@@ -1861,6 +1935,7 @@ app.get("/api/track-orders", async (req, res) => {
               }
             }
           }
+          }
 
           if (updated) {
             await updateAppData({
@@ -1891,11 +1966,21 @@ app.get("/api/track-orders", async (req, res) => {
         const queryOrder = req.query?.order_id as string;
 
         let orderId = req.params.orderId || queryOrder || bodyOrder || "";
+        const splitId = (req.query.splitId as string) || (req.query.SplitID as string) || "";
 
         // Fallback if orderId has '?'
         if (typeof orderId === "string" && orderId.includes("?")) {
           orderId = orderId.split("?")[0];
         }
+
+        let isSplit = !!splitId;
+        let originalOrderId = orderId;
+        if (orderId && orderId.toUpperCase().includes("-S-") && !isSplit) {
+           isSplit = true;
+           const sIdx = orderId.toUpperCase().lastIndexOf("-S-");
+           originalOrderId = orderId.substring(0, sIdx);
+        }
+        const baseOrderId = (originalOrderId || orderId).toUpperCase();
 
         // Gather all possible status indicators
         const searchParams = new URL(
@@ -1957,8 +2042,8 @@ app.get("/api/track-orders", async (req, res) => {
           const appData = d.data() || {};
           let orders = appData.orders || [];
           let invoices = appData.invoices || [];
-          const orderIndex = orders.findIndex((o: any) => o.id === orderId);
-          const invoiceIndex = invoices.findIndex((o: any) => o.id === orderId);
+          const orderIndex = orders.findIndex((o: any) => String(o.id).toUpperCase() === baseOrderId);
+          const invoiceIndex = invoices.findIndex((o: any) => String(o.id).toUpperCase() === baseOrderId);
 
           let updated = false;
 
@@ -1969,7 +2054,35 @@ app.get("/api/track-orders", async (req, res) => {
               "";
             const currentStatus = orders[orderIndex].status;
 
-            if (
+            if (isSplit) {
+              if (!orders[orderIndex].splitPayments) orders[orderIndex].splitPayments = [];
+              const splitIdx = orders[orderIndex].splitPayments.findIndex((s: any) => s.id === splitId || s.id === (orderId.includes("-S-") ? orderId.split("-S-")[1] : ""));
+              
+              if (splitIdx !== -1) {
+                 if (isExplicitSuccess) {
+                    orders[orderIndex].splitPayments[splitIdx].status = "paid";
+                    orders[orderIndex].splitPayments[splitIdx].datePaid = new Date().toISOString();
+                    
+                    const totalPaid = orders[orderIndex].splitPayments
+                      .filter((s: any) => s.status === "paid")
+                      .reduce((sum: number, s: any) => sum + (Number(s.amount) || 0), 0);
+                    
+                    const totalPaidFils = Math.round(totalPaid * 1000);
+                    const orderTotalFils = Math.round((Number(orders[orderIndex].total) || 0) * 1000);
+
+                    if (totalPaidFils >= orderTotalFils - 5) {
+                      orders[orderIndex].status = "تم الدفع وجاري التوصيل";
+                      orders[orderIndex].paymentStatus = "paid";
+                      orders[orderIndex].paidAt = new Date().toISOString();
+                    }
+                    updated = true;
+                    console.log(`[PAYMENT] Split ${splitId} for Order ${baseOrderId} marked paid via return URL`);
+                 } else if (isExplicitFailure) {
+                    orders[orderIndex].splitPayments[splitIdx].status = "failed";
+                    updated = true;
+                 }
+              }
+            } else if (
               currentStatus === "فشل في عملية الدفع" ||
               currentStatus === "جديد" ||
               currentStatus === "بانتظار الدفع" ||
@@ -2089,7 +2202,11 @@ app.get("/api/track-orders", async (req, res) => {
           : isExplicitSuccess
             ? "success"
             : "pending";
-        const trackUrl = `${baseUrl}/track?order_id=${orderId}&payment=${paymentParam}`;
+        
+        let trackUrl = `${baseUrl}/track?order_id=${baseOrderId}&payment=${paymentParam}`;
+        if (isSplit) {
+           trackUrl = `${baseUrl}/split/${baseOrderId}?payment=${paymentParam}`;
+        }
 
         if (req.query.isPopup !== "true") {
           console.log(
