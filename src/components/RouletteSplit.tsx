@@ -152,10 +152,10 @@ export function RouletteSplit({
   }
 
   const winningPhrases = [
-    { title: "عوافي يا الذيب! 🥳", desc: (l: any) => <>حبيبك <span className="text-white">{l}</span> دفع الفاتورة اليوم، اشكره لا تنسى!</> },
-    { title: "فزت هالمرة! 👑", desc: (l: any) => <>طاحت براس <span className="text-white">{l}</span>، اليوم الأكل ببلاش!</> },
-    { title: "عدت على خير! 😎", desc: (l: any) => <>الصدفة أنقذتك! <span className="text-white">{l}</span> راح يدفع الفاتورة اليوم.</> },
-    { title: "صدت الفريسة! 🎯", desc: (l: any) => <>مبروك النجاة، <span className="text-white">{l}</span> اهو اللي بيتوهق بالفاتورة!</> }
+    { title: "عوافي يا الذيب! 🥳", desc: (l: string) => <>اليوم الفاتورة طاحت عنك! <span className="text-white px-1 font-black bg-black/20 rounded-md">{l}</span> اهو اللي بيدفع، اشكره لا تنسى!</> },
+    { title: "فزت هالمرة! 👑", desc: (l: string) => <>النحشة زينة، طاحت براس <span className="text-white px-1 font-black bg-black/20 rounded-md">{l}</span> والأكل لك ببلاش!</> },
+    { title: "عدت على خير! 😎", desc: (l: string) => <>الصدفة أنقذتك! <span className="text-white px-1 font-black bg-black/20 rounded-md">{l}</span> بياكلها وبيدفع الفاتورة اليوم.</> },
+    { title: "صدت الفريسة! 🎯", desc: (l: string) => <>مبروك النجاة، طاحت الفأس براس <span className="text-white px-1 font-black bg-black/20 rounded-md">{l}</span>!</> }
   ];
 
   const losingPhrases = [
@@ -321,7 +321,7 @@ export function RouletteSplit({
                   transition={{ type: "spring", bounce: 0.6 }}
                   className="z-10 text-4xl font-black text-fuchsia-400 drop-shadow-[0_0_15px_rgba(217,70,239,0.8)]"
                 >
-                  {participants[loserIndex]?.name}
+                  {participants[loserIndex]?.name || loser}
                 </motion.div>
               ) : (
                 <div 
@@ -396,7 +396,7 @@ export function RouletteSplit({
                         <PartyPopper className="w-10 h-10 mx-auto text-blue-400" />
                         <h2 className="text-2xl font-black">انتهت اللعبة! 🎯</h2>
                         <p className="font-bold">
-                          طاحت براس <span className="text-white">{loser}</span>، اليوم الفاتورة عليه! 😂
+                          طاحت براس <span className="text-white px-1 bg-black/20 rounded-md">{loser}</span>، اليوم الفاتورة عليه! 😂
                         </p>
                       </div>
                     );
