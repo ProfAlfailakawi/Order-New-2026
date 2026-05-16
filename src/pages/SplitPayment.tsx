@@ -63,7 +63,7 @@ export default function SplitPayment() {
     if (paymentStatus === "success") {
       setLocalSuccess(true);
       const timer = setTimeout(() => {
-        navigate(`/order/${id}`);
+        navigate(`/track?order_id=${id}`);
       }, 4000);
       return () => clearTimeout(timer);
     }

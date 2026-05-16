@@ -45,7 +45,7 @@ export function RouletteSplit({
     if (paymentStatus === "success") {
       setLocalSuccess(true);
       const timer = setTimeout(() => {
-        navigate(`/order/${order.id}`);
+        navigate(`/track?order_id=${order.id}`);
       }, 4000);
       return () => clearTimeout(timer);
     }
@@ -189,7 +189,7 @@ export function RouletteSplit({
             </p>
             <p className="text-sm text-green-200 mt-4">الطلب قاعد يتجهز وبطريجه لكم 🚀</p>
             <button
-              onClick={() => navigate(`/order/${order.id}`)}
+              onClick={() => navigate(`/track?order_id=${order.id}`)}
               className="mt-6 bg-white text-green-600 font-black py-4 px-6 rounded-xl w-full active:scale-95 transition-transform"
             >
               متابعة الطلب
