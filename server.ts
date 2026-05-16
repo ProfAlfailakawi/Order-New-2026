@@ -1118,20 +1118,21 @@ app.get("/api/track-orders", async (req, res) => {
       let reqOrigin = req.get("origin");
       let devOrProdUrl = (reqOrigin && reqOrigin !== "null" && reqOrigin !== "undefined") ? reqOrigin : protocol + "://" + host;
 
-      const publicBaseUrl =
-        process.env.PUBLIC_BASE_URL ||
-        "https://alturathkw.shop";
+      if (!devOrProdUrl || devOrProdUrl.includes("undefined") || devOrProdUrl === "null") {
+        devOrProdUrl = "https://alturathkw.shop";
+      }
 
-      const notifyBaseUrl = publicBaseUrl.replace(/\/$/, "");
-      const returnBaseUrl = String(devOrProdUrl || publicBaseUrl).replace(/\/$/, "");
+      // If localhost, fallback to public url for Upayments to accept it
+      if (devOrProdUrl.includes("localhost")) {
+        devOrProdUrl = "https://alturathkw.shop";
+      }
 
       const finalAmount = parseFloat(amount).toFixed(3);
       const numericAmount = parseFloat(finalAmount);
 
-      const generatedReturnUrl = `${returnBaseUrl}/split/${orderId}?payment=success&name=${encodeURIComponent(name || "")}`;
-      const generatedCancelUrl = `${returnBaseUrl}/split/${orderId}?payment=failed&name=${encodeURIComponent(name || "")}`;
-      // Upayments strictly checks notification url for validity, query vars might fail their internal matcher, so use path
-      const generatedNotifyUrl = `${notifyBaseUrl}/api/payment-webhook/${orderId}/${splitId}`;
+      const generatedReturnUrl = `${devOrProdUrl}/split/${orderId}?payment=success&name=${encodeURIComponent(name || "")}`;
+      const generatedCancelUrl = `${devOrProdUrl}/split/${orderId}?payment=failed&name=${encodeURIComponent(name || "")}`;
+      const generatedNotifyUrl = `${devOrProdUrl}/api/payment-webhook/${orderId}/${splitId}`;
 
       console.log(`[SPLIT] Generated Notify URL: ${generatedNotifyUrl}`);
 
@@ -1338,6 +1339,11 @@ app.get("/api/track-orders", async (req, res) => {
       // Remove any forced replacement
       if (!devOrProdUrl || devOrProdUrl.includes("undefined") || devOrProdUrl === "null") {
         devOrProdUrl = "https://alturathkw.shop"; // fallback only
+      }
+      
+      // If localhost, fallback to public url for Upayments to accept it
+      if (devOrProdUrl.includes("localhost")) {
+        devOrProdUrl = "https://alturathkw.shop";
       }
 
       // Return browser to whichever environment initiated the payment
