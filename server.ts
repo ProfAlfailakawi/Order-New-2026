@@ -1166,8 +1166,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const finalAmount = parseFloat(amount).toFixed(3);
       const numericAmount = parseFloat(finalAmount);
 
-      const generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}/success?splitId=${splitId}`;
-      const generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}/failed?splitId=${splitId}`;
+      const generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}-S-${splitId}/success`;
+      const generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}-S-${splitId}/failed`;
       const generatedNotifyUrl = `${devOrProdUrl}/api/payment-webhook/${orderId}/${splitId}`;
 
       console.log(`[SPLIT] Generated Notify URL: ${generatedNotifyUrl}`);
@@ -1175,14 +1175,29 @@ app.get("/api/debug/order/:id", async (req, res) => {
       // Update with pending split info
       if (!existingOrder.splitPayments) existingOrder.splitPayments = [];
 
-      existingOrder.splitPayments.push({
-        id: splitId,
-        name: name || "Customer",
-        phone: customerMobile || "",
-        amount: numericAmount,
-        status: "pending",
-        date: new Date().toISOString(),
-      });
+      const duplicateIdx = existingOrder.splitPayments.findIndex(
+        (sp: any) => sp.name === name && sp.phone === (customerMobile || "") && (sp.status === "pending" || sp.status === "failed")
+      );
+
+      if (duplicateIdx !== -1) {
+         existingOrder.splitPayments[duplicateIdx] = {
+            id: splitId,
+            name: name || "Customer",
+            phone: customerMobile || "",
+            amount: numericAmount,
+            status: "pending",
+            date: new Date().toISOString(),
+         };
+      } else {
+        existingOrder.splitPayments.push({
+          id: splitId,
+          name: name || "Customer",
+          phone: customerMobile || "",
+          amount: numericAmount,
+          status: "pending",
+          date: new Date().toISOString(),
+        });
+      }
 
       try {
         if (isInvoice) {
