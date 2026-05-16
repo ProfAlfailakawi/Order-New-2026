@@ -839,7 +839,7 @@ export default function CustomerSite() {
                   }, 800);
                 } else {
                   setTimeout(() => {
-                    let itemsDesc =
+                    const itemsDesc =
                       newCart.length === 1
                         ? "نفس الطبق بالضبط جاهز بالسلة."
                         : "بنفس الأصناف اللي طلبتها سابقاً.";
@@ -1049,7 +1049,7 @@ export default function CustomerSite() {
           }, 800);
         } else {
           setTimeout(() => {
-            let itemsDesc =
+            const itemsDesc =
               finalCart.length === 1
                 ? "نفس الطلب بالضبط جاهز بالسلة."
                 : "بنفس الأصناف اللي طلبتها سابقاً.";
@@ -1061,7 +1061,7 @@ export default function CustomerSite() {
         }
       } else {
         // Creative fallback: Suggest top-sellers instead of failing
-        let creativeCart: OrderItem[] = [];
+        const creativeCart: OrderItem[] = [];
         const bestSellers = products.filter(
           (p) =>
             (p.isTopSeller || p.category?.includes("الأكثر")) &&
@@ -1597,7 +1597,7 @@ export default function CustomerSite() {
     }
 
     const encodedMessage = encodeURIComponent(message);
-    let waNumber = order.customerPhone;
+    const waNumber = order.customerPhone;
 
     if (!waNumber) {
       console.warn("Customer phone missing for WhatsApp Link");
@@ -2252,9 +2252,8 @@ export default function CustomerSite() {
                   {displayProducts.map((product) => (
                     <motion.div
                       key={product.id}
-                      viewport={{ once: true }}
                       initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
+                      animate={{ opacity: 1, y: 0 }}
                       style={{ minHeight: "120px" }}
                     >
                       <ChefWhisperCard
