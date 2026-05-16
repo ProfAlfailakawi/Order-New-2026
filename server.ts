@@ -1678,7 +1678,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
                 (s: any) => s.id === splitId,
               );
               if (splitIdx !== -1) {
-                if (status) {
+                if (status && orders[orderIndex].splitPayments[splitIdx].status !== "paid") {
                   orders[orderIndex].splitPayments[splitIdx].status = "paid";
                   orders[orderIndex].splitPayments[splitIdx].paymentId =
                     req.body?.reference?.id ||
@@ -2059,9 +2059,33 @@ app.get("/api/debug/order/:id", async (req, res) => {
               const splitIdx = orders[orderIndex].splitPayments.findIndex((s: any) => s.id === splitId || s.id === (orderId.includes("-S-") ? orderId.split("-S-")[1] : ""));
               
               if (splitIdx !== -1) {
-                 if (isExplicitSuccess) {
+                 if (isExplicitSuccess && orders[orderIndex].splitPayments[splitIdx].status !== "paid") {
                     orders[orderIndex].splitPayments[splitIdx].status = "paid";
                     orders[orderIndex].splitPayments[splitIdx].datePaid = new Date().toISOString();
+                    
+                    // Add points to customer paying this split
+                    const payer = orders[orderIndex].splitPayments[splitIdx];
+                    const cPhone = cleanPhone(payer.phone);
+                    if (cPhone) {
+                       const customers = appData.customers || [];
+                       const existingCustIdx = customers.findIndex((c: any) => cleanPhone(c.phone) === cPhone);
+                       if (existingCustIdx === -1) {
+                         customers.push({
+                           id: "CUST-" + Date.now().toString(36) + Math.random().toString(36).slice(-4),
+                           name: payer.name || "صديق عميل",
+                           phone: payer.phone,
+                           acquired_via_split: true,
+                           createdAt: new Date().toISOString(),
+                           totalSpent: Number(payer.amount) || 0,
+                           loyaltyPoints: Number(payer.amount) || 0,
+                         });
+                       } else {
+                         customers[existingCustIdx].totalSpent = (Number(customers[existingCustIdx].totalSpent) || 0) + (Number(payer.amount) || 0);
+                         customers[existingCustIdx].loyaltyPoints = (Number(customers[existingCustIdx].loyaltyPoints) || 0) + (Number(payer.amount) || 0);
+                         customers[existingCustIdx].lastUpdated = new Date().toISOString();
+                       }
+                       appData.customers = customers; // Ensure reference updates
+                    }
                     
                     const totalPaid = orders[orderIndex].splitPayments
                       .filter((s: any) => s.status === "paid")
@@ -2097,20 +2121,38 @@ app.get("/api/debug/order/:id", async (req, res) => {
                   `[PAYMENT] Order ${orderId} marked as failed via explicitly cancelled return URL`,
                 );
               } else if (isExplicitSuccess) {
-                orders[orderIndex].status = "تم الدفع وجاري التوصيل";
-                orders[orderIndex].paymentStatus = "paid";
-                orders[orderIndex].paidAt = new Date().toISOString();
-                orders[orderIndex].transactionId =
-                  req.body?.reference?.id ||
-                  req.body?.TrackID ||
-                  req.query?.TrackID ||
-                  req.body?.order_id ||
-                  req.query?.order_id ||
-                  "upayments_auth";
-                updated = true;
-                console.log(
-                  `[PAYMENT] Order ${orderId} marked as PAID via synchronous return URL (Webhook may have failed due to 403)`,
-                );
+                if (orders[orderIndex].paymentStatus !== "paid" && !orders[orderIndex].status.startsWith("تم الدفع")) {
+                  orders[orderIndex].status = "تم الدفع وجاري التوصيل";
+                  orders[orderIndex].paymentStatus = "paid";
+                  orders[orderIndex].paidAt = new Date().toISOString();
+                  orders[orderIndex].transactionId =
+                    req.body?.reference?.id ||
+                    req.body?.TrackID ||
+                    req.query?.TrackID ||
+                    req.body?.order_id ||
+                    req.query?.order_id ||
+                    "upayments_auth";
+                  updated = true;
+                  console.log(
+                    `[PAYMENT] Order ${orderId} marked as PAID via synchronous return URL (Webhook may have failed due to 403)`,
+                  );
+                  
+                  // Update customer points
+                  const cPhone = cleanPhone(orders[orderIndex].customerPhone);
+                  const custIdx = appData.customers?.findIndex(
+                    (c: any) => cleanPhone(c.phone) === cPhone,
+                  );
+                  if (custIdx !== -1) {
+                    appData.customers[custIdx].totalSpent =
+                      (Number(appData.customers[custIdx].totalSpent) || 0) +
+                      (Number(orders[orderIndex].total) || 0);
+                    appData.customers[custIdx].loyaltyPoints =
+                      (Number(appData.customers[custIdx].loyaltyPoints) || 0) +
+                      (Number(orders[orderIndex].total) || 0);
+                    appData.customers[custIdx].lastUpdated =
+                      new Date().toISOString();
+                  }
+                }
               } else {
                 console.log(
                   `[PAYMENT] Order ${orderId} unverified return status, waiting for webhook`,
