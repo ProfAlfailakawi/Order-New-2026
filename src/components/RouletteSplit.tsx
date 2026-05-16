@@ -352,49 +352,66 @@ export function RouletteSplit({
                 animate={{ y: 0, opacity: 1 }}
                 className="text-center space-y-6 w-full"
               >
-                {loser === mySpinName || loser === urlName ? (
-                  <div className="p-6 bg-red-500/20 border border-red-500/50 rounded-3xl text-red-100 space-y-4">
-                    {paymentStatus === "failed" && (
-                      <div className="bg-red-600 border border-red-400 p-4 rounded-xl text-white font-black animate-bounce shadow-[0_0_15px_rgba(220,38,38,0.5)] flex flex-col gap-2">
-                        <span>فشلت العملية يا {urlName || mySpinName} 💔</span>
-                        <span className="text-sm font-bold opacity-90">{errorMsg}</span>
+                {(() => {
+                  const parsedLoser = (loser || "").trim().toLowerCase();
+                  const parsedMySpinName = (mySpinName || "").trim().toLowerCase();
+                  const parsedUrlName = (urlName || "").trim().toLowerCase();
+                  
+                  const isLoser = parsedLoser !== "" && (parsedLoser === parsedMySpinName || parsedLoser === parsedUrlName);
+                  const isGuest = parsedMySpinName === "" && parsedUrlName === "";
+
+                  if (isLoser) {
+                    return (
+                      <div className="p-6 bg-red-500/20 border border-red-500/50 rounded-3xl text-red-100 space-y-4">
+                        {paymentStatus === "failed" && (
+                          <div className="bg-red-600 border border-red-400 p-4 rounded-xl text-white font-black animate-bounce shadow-[0_0_15px_rgba(220,38,38,0.5)] flex flex-col gap-2">
+                            <span>فشلت العملية يا {urlName || mySpinName} 💔</span>
+                            <span className="text-sm font-bold opacity-90">{errorMsg}</span>
+                          </div>
+                        )}
+                        <h2 className="text-2xl font-black">{loserContent.title}</h2>
+                        <p className="font-bold">
+                          {loserContent.desc}
+                        </p>
+                        <button
+                          onClick={() =>
+                            handlePay(
+                              urlName || mySpinName || loser,
+                              mySpinPhone || order.customerPhone || "00000000",
+                              String(order.total),
+                            )
+                          }
+                          className="w-full bg-white text-red-600 font-black py-4 rounded-xl mt-4 active:scale-95 transition-transform flex justify-center items-center gap-2 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+                        >
+                          <CreditCard className="w-5 h-5" />
+                          ادفع {order.total.toFixed(3)} د.ك
+                        </button>
                       </div>
-                    )}
-                    <h2 className="text-2xl font-black">{loserContent.title}</h2>
-                    <p className="font-bold">
-                      {loserContent.desc}
-                    </p>
-                    <button
-                      onClick={() =>
-                        handlePay(
-                          urlName || mySpinName || loser,
-                          mySpinPhone || order.customerPhone || "00000000",
-                          String(order.total),
-                        )
-                      }
-                      className="w-full bg-white text-red-600 font-black py-4 rounded-xl mt-4 active:scale-95 transition-transform flex justify-center items-center gap-2 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
-                    >
-                      <CreditCard className="w-5 h-5" />
-                      ادفع {order.total.toFixed(3)} د.ك
-                    </button>
-                  </div>
-                ) : !mySpinName && !urlName ? (
-                  <div className="p-6 bg-blue-500/20 border border-blue-500/50 rounded-3xl text-blue-100 space-y-4">
-                    <PartyPopper className="w-10 h-10 mx-auto text-blue-400" />
-                    <h2 className="text-2xl font-black">انتهت اللعبة! 🎯</h2>
-                    <p className="font-bold">
-                      طاحت براس <span className="text-white">{loser}</span>، اليوم الفاتورة عليه! 😂
-                    </p>
-                  </div>
-                ) : (
-                  <div className="p-6 bg-green-500/20 border border-green-500/50 rounded-3xl text-green-100 space-y-4">
-                    <PartyPopper className="w-10 h-10 mx-auto text-green-400" />
-                    <h2 className="text-2xl font-black">{winnerContent.title}</h2>
-                    <p className="font-bold">
-                      {winnerContent.desc(loser)}
-                    </p>
-                  </div>
-                )}
+                    );
+                  }
+
+                  if (isGuest) {
+                    return (
+                      <div className="p-6 bg-blue-500/20 border border-blue-500/50 rounded-3xl text-blue-100 space-y-4">
+                        <PartyPopper className="w-10 h-10 mx-auto text-blue-400" />
+                        <h2 className="text-2xl font-black">انتهت اللعبة! 🎯</h2>
+                        <p className="font-bold">
+                          طاحت براس <span className="text-white">{loser}</span>، اليوم الفاتورة عليه! 😂
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="p-6 bg-green-500/20 border border-green-500/50 rounded-3xl text-green-100 space-y-4">
+                      <PartyPopper className="w-10 h-10 mx-auto text-green-400" />
+                      <h2 className="text-2xl font-black">{winnerContent.title}</h2>
+                      <p className="font-bold">
+                        {winnerContent.desc(loser)}
+                      </p>
+                    </div>
+                  );
+                })()}
               </motion.div>
             )}
           </motion.div>

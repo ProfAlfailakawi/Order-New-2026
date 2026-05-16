@@ -1133,8 +1133,8 @@ app.get("/api/track-orders", async (req, res) => {
       const finalAmount = parseFloat(amount).toFixed(3);
       const numericAmount = parseFloat(finalAmount);
 
-      const generatedReturnUrl = `${devOrProdUrl}/split/${orderId}?payment=success&name=${encodeURIComponent(name || "")}`;
-      const generatedCancelUrl = `${devOrProdUrl}/split/${orderId}?payment=failed&name=${encodeURIComponent(name || "")}`;
+      const generatedReturnUrl = `${devOrProdUrl}/split/${orderId}?payment=success`;
+      const generatedCancelUrl = `${devOrProdUrl}/split/${orderId}?payment=failed`;
       const generatedNotifyUrl = `${devOrProdUrl}/api/payment-webhook/${orderId}/${splitId}`;
 
       console.log(`[SPLIT] Generated Notify URL: ${generatedNotifyUrl}`);
