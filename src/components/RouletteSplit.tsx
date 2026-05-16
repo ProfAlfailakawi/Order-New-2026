@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Users, Crown, CreditCard, PartyPopper, ArrowRight } from "lucide-react";
+import { Sparkles, Users, Crown, CreditCard, PartyPopper, ArrowRight, AlertCircle, Check } from "lucide-react";
 import { normalizeDigits } from "../utils";
 
 const normalizeArabicName = (name: string) => {
@@ -39,6 +39,15 @@ export function RouletteSplit({
     () => localStorage.getItem(`roulette_phone_${order.id}`) || "",
   );
   const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (paymentStatus === "success") {
+      const timer = setTimeout(() => {
+        navigate(`/order/${order.id}`);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [paymentStatus, order.id, navigate]);
 
   const errorMsg = React.useMemo(() => {
     const errorMsgs = [
@@ -136,27 +145,46 @@ export function RouletteSplit({
         className="min-h-screen bg-stone-900 text-white font-sans flex items-center justify-center p-6 text-center"
         dir="rtl"
       >
-        <div className="bg-green-500/20 border border-green-500/50 rounded-3xl p-8 max-w-md w-full space-y-4">
-          <PartyPopper className="w-16 h-16 mx-auto text-green-400" />
-          <h2 className="text-3xl font-black text-green-400">
-            {paymentStatus === "success" ? `تسلم يا ${urlName || loser || "بطل"}! 🥳` : "انتهت اللعبة! 🎯"}
-          </h2>
-          {paymentStatus === "success" ? (
-            <p className="font-bold text-green-100">
-              دفعك تم بنجاح، وبيضت الوجه! وهاردلك هالمرة.. اليايات أكثر وحظك يعوضك! 😉
-            </p>
-          ) : (
+        {paymentStatus === "success" ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white p-8 justify-center items-center rounded-[32px] flex flex-col gap-4 shadow-xl shadow-[#25D366]/20 border border-white/20 relative overflow-hidden max-w-md w-full"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full blur-xl -ml-12 -mb-12" />
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-inner relative z-10">
+              <Check className="w-8 h-8 text-[#25D366]" strokeWidth={3} />
+            </div>
+            <div className="text-center relative z-10">
+              <h3 className="text-2xl font-extrabold mb-2">تسلم يا {urlName || loser || "بطل"}! 🥳</h3>
+              <p className="text-white/90 font-medium leading-relaxed">
+                دفعك تم بنجاح، وبيضت الوجه!<br/>هاردلك هالمرة.. اليايات أكثر וחظك يعوضك! 😉
+              </p>
+              <div className="mt-6 flex items-center justify-center gap-2 text-sm text-green-100/80 bg-black/10 py-2 px-4 rounded-full w-fit mx-auto">
+                <span className="animate-spin inline-block">⏳</span> جاري التحويل للطلب...
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          <div className="bg-green-500/20 border border-green-500/50 rounded-3xl p-8 max-w-md w-full space-y-4">
+            <PartyPopper className="w-16 h-16 mx-auto text-green-400" />
+            <h2 className="text-3xl font-black text-green-400">انتهت اللعبة! 🎯</h2>
             <p className="font-bold text-green-100">
               تم دفع الفاتورة بالكامل عن طريق{" "}
               <span className="text-white bg-black/30 px-2 py-1 rounded-md">
                 {loser || "صاحب الحظ"}
               </span>
             </p>
-          )}
-          <p className="text-sm text-green-200 mt-4">
-            الطلب قاعد يتجهز وبطريجه لكم 🚀
-          </p>
-        </div>
+            <p className="text-sm text-green-200 mt-4">الطلب قاعد يتجهز وبطريجه لكم 🚀</p>
+            <button
+              onClick={() => navigate(`/order/${order.id}`)}
+              className="mt-6 bg-white text-green-600 font-black py-4 px-6 rounded-xl w-full active:scale-95 transition-transform"
+            >
+              متابعة الطلب
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -374,10 +402,20 @@ export function RouletteSplit({
                     return (
                       <div className="p-6 bg-red-500/20 border border-red-500/50 rounded-3xl text-red-100 space-y-4">
                         {paymentStatus === "failed" && (
-                          <div className="bg-red-600 border border-red-400 p-4 rounded-xl text-white font-black animate-bounce shadow-[0_0_15px_rgba(220,38,38,0.5)] flex flex-col gap-2">
-                            <span>فشلت العملية يا {urlName || mySpinName} 💔</span>
-                            <span className="text-sm font-bold opacity-90">{errorMsg}</span>
-                          </div>
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            className="bg-gradient-to-br from-red-500 to-rose-600 text-white p-6 justify-center items-center rounded-3xl flex flex-col gap-3 shadow-xl shadow-red-500/20 border border-white/20 relative overflow-hidden"
+                          >
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
+                            <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-inner relative z-10 shrink-0">
+                              <AlertCircle className="w-7 h-7 text-red-500" strokeWidth={3} />
+                            </div>
+                            <div className="text-center relative z-10 w-full">
+                              <h3 className="text-xl font-extrabold mb-1">فشلت العملية يا {urlName || mySpinName || loser} 💔</h3>
+                              <p className="text-white/90 font-medium text-sm leading-relaxed">{errorMsg}</p>
+                            </div>
+                          </motion.div>
                         )}
                         <h2 className="text-2xl font-black">{loserContent.title}</h2>
                         <p className="font-bold">
@@ -394,7 +432,7 @@ export function RouletteSplit({
                           className="w-full bg-white text-red-600 font-black py-4 rounded-xl mt-4 active:scale-95 transition-transform flex justify-center items-center gap-2 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
                         >
                           <CreditCard className="w-5 h-5" />
-                          ادفع {order.total.toFixed(3)} د.ك
+                          {paymentStatus === "failed" ? "جرب مرة ثانية 🔄" : `ادفع ${order.total.toFixed(3)} د.ك`}
                         </button>
                       </div>
                     );

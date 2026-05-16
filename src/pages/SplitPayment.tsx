@@ -59,6 +59,15 @@ export default function SplitPayment() {
   const celebrationTriggered = useRef(false);
 
   useEffect(() => {
+    if (paymentStatus === "success") {
+      const timer = setTimeout(() => {
+        navigate(`/order/${id}`);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [paymentStatus, id, navigate]);
+
+  useEffect(() => {
     console.log("SplitPayment mounted with ID:", id);
     if (!id) return;
 
@@ -426,9 +435,12 @@ export default function SplitPayment() {
               <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-inner relative z-10">
                 <Check className="w-8 h-8 text-[#25D366]" strokeWidth={3} />
               </div>
-              <div className="text-center relative z-10">
+              <div className="text-center relative z-10 w-full">
                 <h3 className="text-2xl font-extrabold mb-1">تسلم الأيادي{urlName ? ` يا ${urlName}` : ""}!</h3>
                 <p className="text-white/90 font-medium">وصل الدفع وتم تسجيل قطيتك بنجاح</p>
+                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-green-100/90 bg-black/10 py-1.5 px-3 rounded-full w-fit mx-auto font-bold">
+                  <span className="animate-spin inline-block">⏳</span> جاري التحويل للطلب...
+                </div>
               </div>
             </motion.div>
           )}
