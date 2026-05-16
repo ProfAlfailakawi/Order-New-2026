@@ -1126,6 +1126,9 @@ app.get("/api/track-orders", async (req, res) => {
       if (devOrProdUrl.includes("localhost")) {
         devOrProdUrl = "https://alturathkw.shop";
       }
+      
+      // Ensure no trailing slash
+      devOrProdUrl = devOrProdUrl.replace(/\/$/, "");
 
       const finalAmount = parseFloat(amount).toFixed(3);
       const numericAmount = parseFloat(finalAmount);
@@ -1345,6 +1348,9 @@ app.get("/api/track-orders", async (req, res) => {
       if (devOrProdUrl.includes("localhost")) {
         devOrProdUrl = "https://alturathkw.shop";
       }
+      
+      // Ensure no trailing slash
+      devOrProdUrl = devOrProdUrl.replace(/\/$/, "");
 
       // Return browser to whichever environment initiated the payment
       const generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}/success${isPopup ? "?isPopup=true" : ""}`;
