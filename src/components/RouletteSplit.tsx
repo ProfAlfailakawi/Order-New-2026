@@ -32,6 +32,7 @@ export function RouletteSplit({
   const spun = !!order.rouletteLoser;
   const loser = order.rouletteLoser;
   const [isSpinning, setIsSpinning] = useState(false);
+  const [localSuccess, setLocalSuccess] = useState(false);
   const [mySpinName, setMySpinName] = useState(
     () => localStorage.getItem(`roulette_${order.id}`) || "",
   );
@@ -42,6 +43,7 @@ export function RouletteSplit({
 
   useEffect(() => {
     if (paymentStatus === "success") {
+      setLocalSuccess(true);
       const timer = setTimeout(() => {
         navigate(`/order/${order.id}`);
       }, 4000);
@@ -143,6 +145,7 @@ export function RouletteSplit({
     .filter((p: any) => p.status === "paid")
     .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
   const isFullyPaid =
+    localSuccess ||
     order.total - totalPaid <= 0.005 ||
     order.paymentStatus === "paid" ||
     order.status?.startsWith("تم الدفع");

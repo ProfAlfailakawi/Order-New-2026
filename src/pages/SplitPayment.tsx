@@ -36,6 +36,7 @@ export default function SplitPayment() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [localSuccess, setLocalSuccess] = useState(false);
   const prevPaidCountRef = useRef(0);
 
   const [contributorName, setContributorName] = useState(() => localStorage.getItem("split_name") || "");
@@ -60,6 +61,7 @@ export default function SplitPayment() {
 
   useEffect(() => {
     if (paymentStatus === "success") {
+      setLocalSuccess(true);
       const timer = setTimeout(() => {
         navigate(`/order/${id}`);
       }, 4000);
@@ -371,6 +373,7 @@ export default function SplitPayment() {
   if (isNaN(progressPercent)) progressPercent = 0;
 
   const isFullyPaid =
+    localSuccess ||
     remainingAmount <= 0.001 ||
     (order.status &&
       (order.status.startsWith("تم الدفع") ||
