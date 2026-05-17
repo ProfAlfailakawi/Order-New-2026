@@ -1425,7 +1425,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
       }
 
       // Check if amount is valid for UPayments (min 0.001 KWD)
-      const finalAmount = parseFloat(amount);
+      const rawFinalAmount = parseFloat(amount).toFixed(3);
+      const finalAmount = parseFloat(rawFinalAmount);
       if (finalAmount < 0.001) {
         console.log(
           `[PAYMENT] Skipping UPayments for 0 or small amount: ${finalAmount}`,
@@ -1615,6 +1616,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const queryId =
           (req.query.order_id as string) || (req.query.TrackID as string);
         let orderId = pathOrder || queryId;
+        let splitId = pathSplit || "";
 
         if (!orderId && req.body?.reference?.id) {
           orderId = req.body.reference.id;
@@ -1684,7 +1686,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
               if (!orders[orderIndex].splitPayments)
                 orders[orderIndex].splitPayments = [];
               const splitIdx = orders[orderIndex].splitPayments.findIndex(
-                (s: any) => s.id === splitId,
+                (s: any) => s.id === splitId || s.id === `S-${splitId}` || splitId.includes(s.id),
               );
               if (splitIdx !== -1) {
                 if (status && orders[orderIndex].splitPayments[splitIdx].status !== "paid") {
@@ -2069,7 +2071,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
             if (isSplit) {
               if (!orders[orderIndex].splitPayments) orders[orderIndex].splitPayments = [];
-              const splitIdx = orders[orderIndex].splitPayments.findIndex((s: any) => s.id === splitId || s.id === (orderId.includes("-S-") ? orderId.split("-S-")[1] : ""));
+              const splitIdx = orders[orderIndex].splitPayments.findIndex((s: any) => s.id === splitId || s.id === `S-${splitId}` || splitId.includes(s.id));
               
               if (splitIdx !== -1) {
                  if (isExplicitSuccess && orders[orderIndex].splitPayments[splitIdx].status !== "paid") {
@@ -2240,7 +2242,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           }
 
           if (updated) {
-            await updateAppData({ orders, invoices });
+            await updateAppData({ orders, invoices, customers: appData.customers || [] });
           }
         }
 
@@ -2307,8 +2309,11 @@ app.get("/api/debug/order/:id", async (req, res) => {
                 </div>
                 <script>
                     try {
-                        localStorage.setItem("track_order_id", "${orderId}");
+                        localStorage.setItem("track_order_id", "${baseOrderId}");
                         localStorage.setItem("track_status", "${paymentParam}");
+                        if ("${paymentParam}" === "success" || "${paymentParam}" === "paid") {
+                            localStorage.setItem("post_payment_open_order_id", "${baseOrderId}");
+                        }
                     } catch(e) {}
 
                     function closePopupAndRedirect(e) {
@@ -2328,36 +2333,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
                         }
                     }
 
-                    // Auto-trigger completion after brief delay
-                    setTimeout(() => {
-                        document.getElementById("loading").style.display = "none";
-                        document.getElementById("content").style.display = "block";
-                    }, 700);
-
-                    // Only successful payments should continue to the real tracking page automatically.
-                    // Failed/cancelled payments must stay on the result screen so the customer can retry.
-                    const paymentStatus = "${paymentParam}";
-                    const isSuccess = paymentStatus === "success" || paymentStatus === "paid";
-                    const isFailed = paymentStatus === "failed" || paymentStatus === "cancelled" || paymentStatus === "error";
-
-                    if (isSuccess) {
-                        try {
-                            localStorage.setItem("post_payment_open_order_id", "${baseOrderId}");
-                            localStorage.setItem("track_order_id", "${baseOrderId}");
-                            localStorage.setItem("track_status", "success");
-                        } catch (e) {}
-
-                        setTimeout(() => {
-                            closePopupAndRedirect();
-                        }, 3500);
-                    } else if (isFailed) {
-                        try {
-                            localStorage.setItem("track_order_id", "${baseOrderId}");
-                            localStorage.setItem("track_status", "failed");
-                        } catch (e) {}
-                    }
-
-
+                    // Auto-trigger completion immediately to avoid duplicate screens
+                    closePopupAndRedirect();
                 </script>
             </body>
             </html>
