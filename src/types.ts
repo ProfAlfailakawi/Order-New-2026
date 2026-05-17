@@ -5,6 +5,9 @@ export interface ProductAddon {
   cost: number;
   calculationType: 'per_item' | 'per_x_items' | 'fixed';
   xItemsThreshold?: number;
+  minQuantity?: number;
+  maxQuantity?: number;
+  freeQuantity?: number;
   isHiddenPrice: boolean;
 }
 
@@ -28,6 +31,8 @@ export interface OrderItemAddon {
   cost: number;
   isHiddenPrice: boolean;
   quantity?: number; // Calculated quantity
+  payableQuantity?: number;
+  freeQuantity?: number;
 }
 
 export interface OrderItem {
@@ -40,6 +45,7 @@ export interface OrderItem {
   selectedOption?: string;
   selectedExtras: { name: string; price: number }[];
   selectedAddonsIds?: string[];
+  addonQuantities?: Record<string, number>;
   addons?: OrderItemAddon[];
   note?: string;
   itemNotes?: string; // Add fallback

@@ -126,7 +126,7 @@ function cleanPhone(phone) {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000;
 
   console.log(`[STARTUP] Using PORT: ${PORT}`);
   console.log(`[STARTUP] NODE_ENV: ${process.env.NODE_ENV}`);
@@ -2284,6 +2284,27 @@ app.get("/api/debug/order/:id", async (req, res) => {
           : isExplicitSuccess
             ? "success"
             : "pending";
+
+        // Double check against real database status since webhooks often arrive faster or browsers can misreport
+        if (orderId && typeof orders !== "undefined") {
+           const oIdx = orders.findIndex((o: any) => String(o.id).toUpperCase() === baseOrderId);
+           if (oIdx !== -1) {
+              if (isSplit && orders[oIdx].splitPayments) {
+                 const splitIdx = orders[oIdx].splitPayments.findIndex((s: any) => s.id === splitId || s.id === `S-${splitId}` || splitId.includes(s.id));
+                 if (splitIdx !== -1 && orders[oIdx].splitPayments[splitIdx].status === "paid") {
+                    paymentParam = "success";
+                    isExplicitFailure = false;
+                    isExplicitSuccess = true;
+                 }
+              } else {
+                 if (orders[oIdx].paymentStatus === "paid" || (orders[oIdx].status || "").startsWith("تم الدفع")) {
+                    paymentParam = "success";
+                    isExplicitFailure = false;
+                    isExplicitSuccess = true;
+                 }
+              }
+           }
+        }
         
         let trackUrl = `${baseUrl}/track?order_id=${baseOrderId}&payment=${paymentParam}`;
         if (isSplit) {

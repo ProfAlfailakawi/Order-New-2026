@@ -31,10 +31,11 @@ export const isValidPhone = (value: string): boolean => {
   return normalizePhone(value).length === 8;
 };
 
+import { calculateItemTotalWithAddons } from "./utils/priceCalculation";
+
 export const calculateItemsTotal = (items: any[]) => {
     return (items || []).reduce((sum: number, i: any) => {
-      const extrasTotal = (i.selectedExtras || i.extras || []).reduce((eSum: number, e: any) => eSum + (Number(e.price) || 0), 0);
-      return sum + (Number(i.price) || 0) * (Number(i.quantity) || 1) + extrasTotal;
+      return sum + calculateItemTotalWithAddons(i);
     }, 0);
 };
 
