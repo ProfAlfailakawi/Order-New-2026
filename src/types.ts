@@ -39,6 +39,7 @@ export interface OrderItem {
   price: number;
   selectedOption?: string;
   selectedExtras: { name: string; price: number }[];
+  selectedAddonsIds?: string[];
   addons?: OrderItemAddon[];
   note?: string;
   itemNotes?: string; // Add fallback
