@@ -2761,7 +2761,7 @@ export default function CustomerSite() {
 
         {/* Version Label */}
         <div className="text-center py-4 opacity-20 pointer-events-none select-none text-[8px] font-light text-stone-400">
-          Version 2.5.0.Release
+          
         </div>
       </motion.div>
 
@@ -4287,7 +4287,7 @@ function CheckoutOverlay({
           </div>
         )}
         <div className="fixed bottom-2 left-0 right-0 text-center text-stone-400 text-[10px] font-mono pointer-events-none">
-          v4.0.0
+          
         </div>
       </motion.div>
     </motion.div>
