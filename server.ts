@@ -1166,8 +1166,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const finalAmount = parseFloat(amount).toFixed(3);
       const numericAmount = parseFloat(finalAmount);
 
-      const generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}-SPLIT-${splitId}/success`;
-      const generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}-SPLIT-${splitId}/failed`;
+      let generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}-S-${splitId}/success`;
+      let generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}-S-${splitId}/failed`;
       const generatedNotifyUrl = `${devOrProdUrl}/api/payment-webhook/${orderId}/${splitId}`;
 
       console.log(`[SPLIT] Generated Notify URL: ${generatedNotifyUrl}`);
@@ -1230,7 +1230,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           currency: "KWD",
           amount: numericAmount,
         },
-        reference: { id: `${orderId}-SPLIT-${splitId}` },
+        reference: { id: `${orderId}-S-${splitId}` },
         customer: {
           uniqueId: customerMobile
             ? `cid_${customerMobile}`
@@ -1661,10 +1661,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
           let originalOrderIdAsString = String(orderId);
           let baseOrderId = originalOrderIdAsString.toUpperCase();
 
-          if (splitId || baseOrderId.includes("-SPLIT-")) {
+          if (splitId || baseOrderId.includes("-S-")) {
             isSplit = true;
-            if (baseOrderId.includes("-SPLIT-") && originalOrderIdAsString.includes("-SPLIT-")) {
-              const partsOriginal = originalOrderIdAsString.split("-SPLIT-");
+            if (baseOrderId.includes("-S-") && originalOrderIdAsString.includes("-S-")) {
+              const partsOriginal = originalOrderIdAsString.split("-S-");
               baseOrderId = partsOriginal[0].toUpperCase();
               if (!splitId) splitId = partsOriginal[1];
             }
@@ -1986,10 +1986,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
         let originalOrderId = orderId;
         let baseOrderId = (originalOrderId || orderId).toUpperCase();
         
-        if (splitId || baseOrderId.includes("-SPLIT-")) {
+        if (splitId || baseOrderId.includes("-S-")) {
            isSplit = true;
-           if (baseOrderId.includes("-SPLIT-") && originalOrderId.includes("-SPLIT-")) {
-             const partsOriginal = originalOrderId.split("-SPLIT-");
+           if (baseOrderId.includes("-S-") && originalOrderId.includes("-S-")) {
+             const partsOriginal = originalOrderId.split("-S-");
              baseOrderId = partsOriginal[0].toUpperCase();
              if (!splitId) splitId = partsOriginal[1];
            }
@@ -2069,7 +2069,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
             if (isSplit) {
               if (!orders[orderIndex].splitPayments) orders[orderIndex].splitPayments = [];
-              const splitIdx = orders[orderIndex].splitPayments.findIndex((s: any) => s.id === splitId || s.id === (orderId.includes("-SPLIT-") ? orderId.split("-SPLIT-")[1] : ""));
+              const splitIdx = orders[orderIndex].splitPayments.findIndex((s: any) => s.id === splitId || s.id === (orderId.includes("-S-") ? orderId.split("-S-")[1] : ""));
               
               if (splitIdx !== -1) {
                  if (isExplicitSuccess && orders[orderIndex].splitPayments[splitIdx].status !== "paid") {
@@ -2263,19 +2263,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
            trackUrl = `${baseUrl}/split/${baseOrderId}?payment=${paymentParam}`;
         }
 
-        if (req.query.isPopup !== "true") {
-          console.log(
-            `[PAYMENT] Main window return detected for order ${orderId}. Redirecting immediately to track page.`,
-          );
-          return res.type("html")
-            .send(`<html><head><title>Redirecting...</title></head><body><script>
-                  try {
-                      localStorage.setItem("track_order_id", "${orderId}");
-                      localStorage.setItem("track_status", "${paymentParam}");
-                  } catch(e) {}
-                  window.location.href="${trackUrl}";
-              </script></body></html>`);
-        }
+        // We removed the immediate redirect so the beautiful HTML screen always appears.
 
         console.log(
           `[PAYMENT] Showing return page for order ${orderId} (Failure detected: ${isExplicitFailure}, status: ${paymentParam})`,
