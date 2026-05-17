@@ -124,8 +124,10 @@ export default function SplitPayment() {
               triggerConfetti();
             }
           } else {
-            setError("الطلب غير موجود");
+            fetchOrder();
           }
+        } else {
+            fetchOrder();
         }
         setLoading(false);
       }
@@ -209,13 +211,18 @@ export default function SplitPayment() {
         if (data && data.length > 0) {
           setOrder(data[0]);
           setError(null);
+        } else {
+          if (!order) setError("الطلب غير موجود");
         }
+      } else {
+         if (!order) setError("الطلب غير موجود");
       }
     } catch (e: any) {
       if (e && e.message && (e.message.includes("Failed to fetch") || e.message.includes("Load failed"))) {
         // ignore silently
       } else {
         console.error("SplitPayment: Fetch Exception", e);
+        if (!order) setError("تعذر تحميل الطلب");
       }
     } finally {
       if (!isSilent) setLoading(false);

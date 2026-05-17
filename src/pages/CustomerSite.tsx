@@ -3760,8 +3760,8 @@ function CheckoutOverlay({
                   <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
                     {/* Improved Region Selection with Search */}
                   <div className="space-y-1.5 relative">
-                    <label className="text-[10px] items-center gap-1.5 font-bold text-stone-500 flex px-1">
-                      <MapPin className="w-3 h-3" /> المنطقة
+                    <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
+                      <MapPin className="w-4 h-4" /> المنطقة
                     </label>
                     <div className="relative">
                       <div className="relative">
@@ -3823,11 +3823,11 @@ function CheckoutOverlay({
                   {/* Address Grid */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] items-center gap-1.5 font-bold text-stone-500 flex px-1">
-                        <Landmark className="w-3 h-3" /> القطعة
+                      <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
+                        <Landmark className="w-4 h-4" /> القطعة
                       </label>
                       <input
-                        placeholder="رقم القطعة"
+                        placeholder="القطعة"
                         value={address.block}
                         onChange={(e) =>
                           setAddress({
@@ -3835,15 +3835,15 @@ function CheckoutOverlay({
                             block: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
+                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] items-center gap-1.5 font-bold text-stone-500 flex px-1">
-                        <MapPin className="w-3 h-3" /> الشارع
+                      <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
+                        <MapPin className="w-4 h-4" /> الشارع
                       </label>
                       <input
-                        placeholder="اسم/رقم الشارع"
+                        placeholder="الشارع"
                         value={address.street}
                         onChange={(e) =>
                           setAddress({
@@ -3851,16 +3851,16 @@ function CheckoutOverlay({
                             street: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
+                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] items-center gap-1.5 font-bold text-stone-500 flex px-1">
-                        <Hash className="w-3 h-3" /> الجادة{" "}
-                        <span className="text-stone-300 font-normal">
+                      <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
+                        <Hash className="w-4 h-4" /> الجادة{" "}
+                        <span className="text-stone-300 font-normal text-[10px] sm:text-xs">
                           (اختياري)
                         </span>
                       </label>
@@ -3873,15 +3873,15 @@ function CheckoutOverlay({
                             avenue: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
+                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] items-center gap-1.5 font-bold text-stone-500 flex px-1">
-                        <Home className="w-3 h-3" /> المنزل
+                      <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
+                        <Home className="w-4 h-4" /> المنزل
                       </label>
                       <input
-                        placeholder="رقم المنزل/المبنى"
+                        placeholder="المنزل"
                         value={address.building}
                         onChange={(e) =>
                           setAddress({
@@ -3889,16 +3889,16 @@ function CheckoutOverlay({
                             building: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
+                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] items-center gap-1.5 font-bold text-stone-500 flex px-1">
-                        <Layers className="w-3 h-3" /> الدور{" "}
-                        <span className="text-stone-300 font-normal">
+                      <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
+                        <Layers className="w-4 h-4" /> الدور{" "}
+                        <span className="text-stone-300 font-normal text-[10px] sm:text-xs">
                           (اختياري)
                         </span>
                       </label>
@@ -3911,18 +3911,18 @@ function CheckoutOverlay({
                             floor: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
+                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] items-center gap-1.5 font-bold text-stone-500 flex px-1">
-                        <Hash className="w-3 h-3" /> الشقة{" "}
-                        <span className="text-stone-300 font-normal">
+                      <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
+                        <Hash className="w-4 h-4" /> الشقة{" "}
+                        <span className="text-stone-300 font-normal text-[10px] sm:text-xs">
                           (اختياري)
                         </span>
                       </label>
                       <input
-                        placeholder="رقم الشقة"
+                        placeholder="الشقة"
                         value={address.apartment}
                         onChange={(e) =>
                           setAddress({
@@ -3930,15 +3930,15 @@ function CheckoutOverlay({
                             apartment: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-4 py-3 sm:px-5 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-base"
+                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 pt-4 border-t border-stone-100">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] items-center gap-1.5 font-bold text-stone-500 flex px-1">
-                        <User className="w-3 h-3" /> الاسم بالكامل
+                      <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
+                        <User className="w-4 h-4" /> الاسم بالكامل
                       </label>
                       <div className="relative">
                         <input
@@ -3978,7 +3978,7 @@ function CheckoutOverlay({
                   )}
 
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-stone-500 px-1">
+                    <label className="text-xs sm:text-sm font-bold text-stone-500 px-1 mb-1 block">
                       ملاحظات عامة (اختياري)
                     </label>
                     <textarea
