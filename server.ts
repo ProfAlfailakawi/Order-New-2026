@@ -126,7 +126,7 @@ function cleanPhone(phone) {
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT || process.env.DEFAULT_APP_PORT || 3000);
+  const PORT = 3000;
 
   console.log(`[STARTUP] Using PORT: ${PORT}`);
   console.log(`[STARTUP] NODE_ENV: ${process.env.NODE_ENV}`);
@@ -1120,6 +1120,29 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
       const existingOrder = isInvoice ? invoices[index] : orders[index];
 
+      const splitPayments = existingOrder.splitPayments || [];
+      const orderTotal = Number(existingOrder.total) || 0;
+      const totalPaid = splitPayments
+        .filter((sp: any) => sp.status === "paid")
+        .reduce((sum: number, sp: any) => sum + (Number(sp.amount) || 0), 0);
+
+      if (orderTotal > 0 && totalPaid >= orderTotal - 0.005) {
+         return res.status(400).json({ error: "تم إكتمال دفع الفاتورة مسبقاً" });
+      }
+
+      const numericAmount = parseFloat(parseFloat(amount).toFixed(3));
+      if (orderTotal > 0 && totalPaid + numericAmount > orderTotal + 0.005) {
+         return res.status(400).json({ error: "المبلغ يتجاوز المتبقي من الفاتورة" });
+      }
+
+      const sanitizePhone = (p: string) => (p || "").replace(/\D/g, "").slice(-8);
+      const reqPhone = sanitizePhone(customerMobile);
+
+      const hasPaid = splitPayments.some((sp: any) => sanitizePhone(sp.phone) === reqPhone && sp.status === "paid");
+      if (hasPaid) {
+         return res.status(400).json({ error: "هذا الرقم قام بالدفع مسبقاً" });
+      }
+
       const rawApiKey = process.env.UPAYMENTS_API_KEY;
       if (!rawApiKey) {
         console.error("[SPLIT] UPAYMENTS_API_KEY is missing");
@@ -1164,7 +1187,6 @@ app.get("/api/debug/order/:id", async (req, res) => {
       devOrProdUrl = devOrProdUrl.replace(/\/$/, "");
 
       const finalAmount = parseFloat(amount).toFixed(3);
-      const numericAmount = parseFloat(finalAmount);
 
       let generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}-S-${splitId}/success`;
       let generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}-S-${splitId}/failed`;
@@ -1176,7 +1198,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       if (!existingOrder.splitPayments) existingOrder.splitPayments = [];
 
       const duplicateIdx = existingOrder.splitPayments.findIndex(
-        (sp: any) => sp.name === name && sp.phone === (customerMobile || "") && (sp.status === "pending" || sp.status === "failed")
+        (sp: any) => sanitizePhone(sp.phone) === reqPhone && (sp.status === "pending" || sp.status === "failed")
       );
 
       if (duplicateIdx !== -1) {
@@ -1635,6 +1657,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
         let statusStr = String(
           req.body?.status ||
+            req.body?.result ||
             req.body?.Result ||
             req.query?.status ||
             req.query?.result ||
@@ -2116,9 +2139,11 @@ app.get("/api/debug/order/:id", async (req, res) => {
                     }
                     updated = true;
                     console.log(`[PAYMENT] Split ${splitId} for Order ${baseOrderId} marked paid via return URL`);
-                 } else if (isExplicitFailure) {
-                    orders[orderIndex].splitPayments[splitIdx].status = "failed";
-                    updated = true;
+                  } else if (isExplicitFailure) {
+                    if (orders[orderIndex].splitPayments[splitIdx].status !== "paid") {
+                      orders[orderIndex].splitPayments[splitIdx].status = "failed";
+                      updated = true;
+                    }
                  }
               }
             } else if (
