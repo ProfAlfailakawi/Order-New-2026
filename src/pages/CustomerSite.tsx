@@ -44,7 +44,12 @@ import {
   isValidPhone,
   checkStoreStatus,
 } from "../utils";
-import { redirectToPayment } from "../utils/redirect";
+import {
+  calculateItemAddons,
+  calculateItemTotalWithAddons,
+  calculateItemBasePriceWithHiddenAddons,
+  getVisibleAddons,
+} from "../utils/priceCalculation";
 import { ZenSplashScreen } from "../components/ZenSplashScreen";
 import { DynamicEnvironment } from "../components/DynamicEnvironment";
 
@@ -873,7 +878,7 @@ export default function CustomerSite() {
   }, [searchParams, products, setSearchParams]);
 
   const itemsTotal = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + calculateItemTotalWithAddons(item),
     0,
   );
 
@@ -1285,7 +1290,10 @@ export default function CustomerSite() {
       customerName,
       customerPhone,
       address,
-      items: cart,
+      items: cart.map(item => ({
+        ...item,
+        addons: calculateItemAddons(item)
+      })),
       deliveryFee,
       isFreeDelivery: deliveryFee === 0 || settings?.isFreeDelivery === true,
       deliveryType: deliveryFee === 0 ? "free" : "standard",
@@ -1570,7 +1578,7 @@ export default function CustomerSite() {
 
     message += `\n*الطلبات:*\n`;
     (order.items || []).forEach((item: any) => {
-      const itemTotal = (item.price || 0) * (item.quantity || 0);
+      const itemTotal = calculateItemTotalWithAddons(item);
       message += `- ${item.name} (${item.quantity}): ${itemTotal} د.ك\n`;
       if (item.selectedOption) message += `  الخيار: ${item.selectedOption}\n`;
       if (item.selectedExtras && item.selectedExtras.length > 0) {
@@ -1578,6 +1586,14 @@ export default function CustomerSite() {
           .map((e: any) => e.name)
           .join(", ")}\n`;
       }
+      
+      const visibleAddons = getVisibleAddons(item);
+      if (visibleAddons.length > 0) {
+        message += `  إضافات ملحقة: ${visibleAddons
+          .map((e: any) => e.name)
+          .join(", ")}\n`;
+      }
+
       if (item.note) message += `  ملاحظة للمنتج: ${item.note}\n`;
     });
 
@@ -3010,8 +3026,16 @@ const ChefWhisperCard = ({
               </p>
             )}
             <p className="text-brand text-lg font-black mt-2">
-              {product.price}{" "}
-              <span className="text-[10px] sm:text-xs text-accent font-bold">
+              {calculateItemBasePriceWithHiddenAddons({
+                id: "",
+                productId: product.id,
+                name: product.name,
+                quantity: 1,
+                price: product.price,
+                selectedExtras: [],
+                product,
+              })}{" "}
+              <span className="text-[10px] sm:text-[11px] text-accent font-bold">
                 د.ك
               </span>
             </p>
@@ -3288,7 +3312,16 @@ function ProductModal({
               {product.nameEn}
             </p>
             <p className="text-2xl font-medium text-brand">
-              {product.price} <span className="text-sm text-accent">د.ك</span>
+              {calculateItemBasePriceWithHiddenAddons({
+                id: "",
+                productId: product.id,
+                name: product.name,
+                quantity: quantity || 1,
+                price: product.price,
+                selectedExtras: [],
+                product,
+              })}{" "}
+              <span className="text-sm text-accent">د.ك</span>
             </p>
             {product.preparationInstructions && (
               <div className="mt-3 text-[11px] text-accent font-bold flex items-center justify-center sm:justify-start gap-1 p-2 bg-accent/10 rounded-xl">
@@ -3441,6 +3474,7 @@ function ProductModal({
                     selectedExtras,
                     note,
                     preparationInstructions: product.preparationInstructions,
+                    product: product,
                   },
                   e,
                 )
@@ -3449,7 +3483,17 @@ function ProductModal({
             >
               <span>حطه بالسلة</span>
               <span className="w-px h-6 bg-white/30"></span>
-              <span className="font-bold">{itemPrice * quantity} د.ك</span>
+              <span className="font-bold">
+                {calculateItemTotalWithAddons({
+                    id: "",
+                    productId: product.id,
+                    name: product.name,
+                    quantity,
+                    price: itemPrice,
+                    selectedExtras,
+                    product,
+                })} د.ك
+              </span>
             </motion.button>
           </div>
         </div>
@@ -3703,13 +3747,23 @@ function CheckoutOverlay({
                               </span>
                             ),
                           )}
+                          {getVisibleAddons(item).map(
+                            (addon: any, idx: number) => (
+                              <span
+                                key={`addon-${addon.addonId}-${idx}`}
+                                className="text-[9px] font-bold bg-accent/5 text-accent px-2 py-1 rounded-md border border-accent/10"
+                              >
+                                +{addon.quantity} {addon.name}
+                              </span>
+                            ),
+                          )}
                         </div>
                         <div className="flex items-center justify-between pt-3 border-t border-stone-50">
                           <span className="text-[10px] font-bold text-stone-400">
                             المجموع الفرعي
                           </span>
                           <span className="text-lg font-medium text-brand">
-                            {item.price * item.quantity}{" "}
+                            {calculateItemTotalWithAddons(item)}{" "}
                             <span className="text-xs text-accent">د.ك</span>
                           </span>
                         </div>

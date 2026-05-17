@@ -1,3 +1,13 @@
+export interface ProductAddon {
+  id: string;
+  name: string;
+  price: number;
+  cost: number;
+  calculationType: 'per_item' | 'per_x_items' | 'fixed';
+  xItemsThreshold?: number;
+  isHiddenPrice: boolean;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -7,7 +17,17 @@ export interface Product {
   category: string;
   options: string[];
   extras: { name: string; price: number }[];
+  addons?: ProductAddon[];
   preparationInstructions?: string;
+}
+
+export interface OrderItemAddon {
+  addonId: string;
+  name: string;
+  price: number;
+  cost: number;
+  isHiddenPrice: boolean;
+  quantity?: number; // Calculated quantity
 }
 
 export interface OrderItem {
@@ -19,6 +39,7 @@ export interface OrderItem {
   price: number;
   selectedOption?: string;
   selectedExtras: { name: string; price: number }[];
+  addons?: OrderItemAddon[];
   note?: string;
   itemNotes?: string; // Add fallback
   preparationInstructions?: string;

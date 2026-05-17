@@ -1977,7 +1977,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const queryOrder = req.query?.order_id as string;
 
         let orderId = req.params.orderId || queryOrder || bodyOrder || "";
-        const splitId = (req.query.splitId as string) || (req.query.SplitID as string) || "";
+        let splitId = (req.query.splitId as string) || (req.query.SplitID as string) || "";
 
         // Fallback if orderId has '?'
         if (typeof orderId === "string" && orderId.includes("?")) {
