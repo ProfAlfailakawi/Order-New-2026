@@ -1666,9 +1666,9 @@ app.get("/api/debug/order/:id", async (req, res) => {
           if (splitId || baseOrderId.includes("-S-")) {
             isSplit = true;
             if (baseOrderId.includes("-S-") && originalOrderIdAsString.includes("-S-")) {
-              const partsOriginal = originalOrderIdAsString.split("-S-");
-              baseOrderId = partsOriginal[0].toUpperCase();
-              if (!splitId) splitId = partsOriginal[1];
+              const firstDashS = originalOrderIdAsString.indexOf("-S-");
+              baseOrderId = originalOrderIdAsString.substring(0, firstDashS).toUpperCase();
+              if (!splitId) splitId = originalOrderIdAsString.substring(firstDashS + 3);
             }
           }
 
@@ -1991,9 +1991,9 @@ app.get("/api/debug/order/:id", async (req, res) => {
         if (splitId || baseOrderId.includes("-S-")) {
            isSplit = true;
            if (baseOrderId.includes("-S-") && originalOrderId.includes("-S-")) {
-             const partsOriginal = originalOrderId.split("-S-");
-             baseOrderId = partsOriginal[0].toUpperCase();
-             if (!splitId) splitId = partsOriginal[1];
+             const firstDashS = originalOrderId.indexOf("-S-");
+             baseOrderId = originalOrderId.substring(0, firstDashS).toUpperCase();
+             if (!splitId) splitId = originalOrderId.substring(firstDashS + 3);
            }
         }
 
