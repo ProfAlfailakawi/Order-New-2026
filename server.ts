@@ -1166,8 +1166,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const finalAmount = parseFloat(amount).toFixed(3);
       const numericAmount = parseFloat(finalAmount);
 
-      const generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}-S-${splitId}/success`;
-      const generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}-S-${splitId}/failed`;
+      const generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}-SPLIT-${splitId}/success`;
+      const generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}-SPLIT-${splitId}/failed`;
       const generatedNotifyUrl = `${devOrProdUrl}/api/payment-webhook/${orderId}/${splitId}`;
 
       console.log(`[SPLIT] Generated Notify URL: ${generatedNotifyUrl}`);
@@ -1230,7 +1230,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           currency: "KWD",
           amount: numericAmount,
         },
-        reference: { id: `${orderId}-${splitId}` },
+        reference: { id: `${orderId}-SPLIT-${splitId}` },
         customer: {
           uniqueId: customerMobile
             ? `cid_${customerMobile}`
@@ -1657,22 +1657,16 @@ app.get("/api/debug/order/:id", async (req, res) => {
           const appData = d.data() || {};
           let orders = appData.orders || [];
           let invoices = appData.invoices || [];
-          let isSplit = false;
+          let isSplit = !!splitId;
           let originalOrderIdAsString = String(orderId);
           let baseOrderId = originalOrderIdAsString.toUpperCase();
-          let splitId = pathSplit || (req.query.splitId as string) || (req.query.SplitID as string) || "";
 
-          if (splitId || originalOrderIdAsString.toUpperCase().includes("-S-")) {
+          if (splitId || baseOrderId.includes("-SPLIT-")) {
             isSplit = true;
-            if (originalOrderIdAsString.toUpperCase().includes("-S-")) {
-              const upperRaw = originalOrderIdAsString.toUpperCase();
-              const sIdx = upperRaw.lastIndexOf("-S-");
-              if (sIdx !== -1) {
-                baseOrderId = originalOrderIdAsString.substring(0, sIdx).toUpperCase();
-                if (!splitId) {
-                  splitId = originalOrderIdAsString.substring(sIdx + 1); // Extract "S-..."
-                }
-              }
+            if (baseOrderId.includes("-SPLIT-") && originalOrderIdAsString.includes("-SPLIT-")) {
+              const partsOriginal = originalOrderIdAsString.split("-SPLIT-");
+              baseOrderId = partsOriginal[0].toUpperCase();
+              if (!splitId) splitId = partsOriginal[1];
             }
           }
 
@@ -1990,12 +1984,16 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
         let isSplit = !!splitId;
         let originalOrderId = orderId;
-        if (orderId && orderId.toUpperCase().includes("-S-") && !isSplit) {
+        let baseOrderId = (originalOrderId || orderId).toUpperCase();
+        
+        if (splitId || baseOrderId.includes("-SPLIT-")) {
            isSplit = true;
-           const sIdx = orderId.toUpperCase().lastIndexOf("-S-");
-           originalOrderId = orderId.substring(0, sIdx);
+           if (baseOrderId.includes("-SPLIT-") && originalOrderId.includes("-SPLIT-")) {
+             const partsOriginal = originalOrderId.split("-SPLIT-");
+             baseOrderId = partsOriginal[0].toUpperCase();
+             if (!splitId) splitId = partsOriginal[1];
+           }
         }
-        const baseOrderId = (originalOrderId || orderId).toUpperCase();
 
         // Gather all possible status indicators
         const searchParams = new URL(
@@ -2071,7 +2069,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
             if (isSplit) {
               if (!orders[orderIndex].splitPayments) orders[orderIndex].splitPayments = [];
-              const splitIdx = orders[orderIndex].splitPayments.findIndex((s: any) => s.id === splitId || s.id === (orderId.includes("-S-") ? orderId.split("-S-")[1] : ""));
+              const splitIdx = orders[orderIndex].splitPayments.findIndex((s: any) => s.id === splitId || s.id === (orderId.includes("-SPLIT-") ? orderId.split("-SPLIT-")[1] : ""));
               
               if (splitIdx !== -1) {
                  if (isExplicitSuccess && orders[orderIndex].splitPayments[splitIdx].status !== "paid") {
