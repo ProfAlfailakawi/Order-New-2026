@@ -52,6 +52,7 @@ import {
 } from "../utils/priceCalculation";
 import { ZenSplashScreen } from "../components/ZenSplashScreen";
 import { DynamicEnvironment } from "../components/DynamicEnvironment";
+import { redirectToPayment } from "../utils/redirect";
 
 const INITIAL_ADDRESS: Address = {
   region: "",
