@@ -3022,9 +3022,12 @@ const ChefWhisperCard = ({
               {product.name}
             </h3>
             {product.preparationInstructions && (
-              <p className="text-[10px] sm:text-[11px] text-stone-500 font-medium mt-1 leading-relaxed line-clamp-2">
-                {product.preparationInstructions}
-              </p>
+              <div className="mt-2 flex items-start gap-1.5 p-1.5 sm:p-2 bg-red-50 border border-red-100/50 rounded-lg shadow-sm">
+                <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+                <p className="text-[10px] sm:text-[11px] text-red-600 font-extrabold leading-snug line-clamp-2">
+                  {product.preparationInstructions}
+                </p>
+              </div>
             )}
             <p className="text-brand text-lg font-black mt-2">
               {calculateItemBasePriceWithHiddenAddons({
@@ -3216,11 +3219,34 @@ function ProductModal({
   const [selectedExtras, setSelectedExtras] = useState<
     { name: string; price: number }[]
   >([]);
-  const [selectedAddonsIds, setSelectedAddonsIds] = useState<string[]>([]);
+  const [selectedAddonsIds, setSelectedAddonsIds] = useState<string[]>(() => {
+    return (product.addons || []).filter(a => (a.minQuantity || 0) > 0 || (a.freeQuantity || 0) > 0).map(a => a.id);
+  });
+  const [addonQuantities, setAddonQuantities] = useState<Record<string, number>>(() => {
+    const qs: Record<string, number> = {};
+    (product.addons || []).forEach(a => {
+      if ((a.minQuantity || 0) > 0 || (a.freeQuantity || 0) > 0) {
+        qs[a.id] = Math.max(a.minQuantity || 1, 1);
+      }
+    });
+    return qs;
+  });
   const [note, setNote] = useState("");
 
-  const extrasTotal = selectedExtras.reduce((sum, e) => sum + e.price, 0);
-  const itemPrice = product.price + extrasTotal;
+  const mockItem = {
+    id: "",
+    productId: product.id,
+    name: product.name,
+    quantity,
+    price: product.price,
+    selectedOption,
+    selectedExtras,
+    selectedAddonsIds,
+    addonQuantities,
+    product: product
+  } as any;
+  const modalTotalPrice = calculateItemTotalWithAddons(mockItem);
+  const itemPrice = modalTotalPrice / quantity;
 
   const toggleExtra = (extra: { name: string; price: number }) => {
     if (selectedExtras.find((e) => e.name === extra.name)) {
@@ -3231,11 +3257,32 @@ function ProductModal({
   };
 
   const toggleAddon = (addonId: string) => {
+    const addon = product.addons?.find((a) => a.id === addonId);
     if (selectedAddonsIds.includes(addonId)) {
+      if (addon && ((addon.minQuantity || 0) > 0 || (addon.freeQuantity || 0) > 0)) {
+         // Mandatory addon, cannot uncheck
+         return;
+      }
       setSelectedAddonsIds(selectedAddonsIds.filter((id) => id !== addonId));
+      const newQs = { ...addonQuantities };
+      delete newQs[addonId];
+      setAddonQuantities(newQs);
     } else {
       setSelectedAddonsIds([...selectedAddonsIds, addonId]);
+      setAddonQuantities({ ...addonQuantities, [addonId]: Math.max(addon?.minQuantity || 1, 1) });
     }
+  };
+
+  const updateAddonQty = (addonId: string, delta: number) => {
+    const addon = product.addons?.find((a) => a.id === addonId);
+    if (!addon) return;
+    const current = addonQuantities[addonId] || 1;
+    let next = current + delta;
+    if (addon.minQuantity) next = Math.max(addon.minQuantity, next);
+    else if ((addon.freeQuantity || 0) > 0) next = Math.max(1, next);
+    else next = Math.max(1, next);
+    if (addon.maxQuantity) next = Math.min(addon.maxQuantity, next);
+    setAddonQuantities({ ...addonQuantities, [addonId]: next });
   };
 
   return (
@@ -3335,9 +3382,9 @@ function ProductModal({
               <span className="text-sm text-accent">د.ك</span>
             </p>
             {product.preparationInstructions && (
-              <div className="mt-3 text-[11px] text-accent font-bold flex items-center justify-center sm:justify-start gap-1 p-2 bg-accent/10 rounded-xl">
-                <AlertTriangle className="w-4 h-4 shrink-0" />{" "}
-                <span className="leading-tight">
+              <div className="mt-3 text-[11px] text-red-600 font-extrabold flex items-center justify-center sm:justify-start gap-1.5 p-2 bg-red-50 border border-red-100/50 rounded-xl shadow-sm">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />{" "}
+                <span className="leading-relaxed">
                   {product.preparationInstructions}
                 </span>
               </div>
@@ -3481,14 +3528,15 @@ function ProductModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {product.addons.map((addon) => {
                   const isSelected = selectedAddonsIds.includes(addon.id);
+                  const isMandatory = (addon.minQuantity || 0) > 0 || (addon.freeQuantity || 0) > 0;
                   return (
-                    <button
+                    <div
                       key={addon.id}
                       onClick={() => toggleAddon(addon.id)}
                       className={cn(
-                        "flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 transition-all",
+                        "flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer",
                         isSelected
-                          ? "border-accent bg-accent/5"
+                          ? isMandatory ? "border-accent bg-accent/10 cursor-default opacity-90" : "border-accent bg-accent/5"
                           : "border-stone-50 bg-stone-50/30 hover:border-stone-100",
                       )}
                     >
@@ -3514,12 +3562,31 @@ function ProductModal({
                           {addon.name}
                         </span>
                       </div>
-                      {addon.price > 0 && !addon.isHiddenPrice && (
-                        <span className="text-xs font-bold text-accent">
-                          +{addon.price} د.ك
-                        </span>
-                      )}
-                    </button>
+                      
+                      <div className="flex items-center gap-2">
+                        {isSelected && addon.freeQuantity && addon.freeQuantity > 0 && (!addon.maxQuantity || addon.maxQuantity > 1) && (
+                           <div className="flex items-center gap-2 bg-white rounded-md border border-stone-200" onClick={e => e.stopPropagation()}>
+                              <button className="px-2 text-stone-400 hover:text-accent font-bold" onClick={() => updateAddonQty(addon.id, -1)}>-</button>
+                              <span className="text-xs font-bold w-4 text-center text-brand">{addonQuantities[addon.id] || 1}</span>
+                              <button className="px-2 text-stone-400 hover:text-accent font-bold" onClick={() => updateAddonQty(addon.id, 1)}>+</button>
+                           </div>
+                        )}
+                        {addon.price > 0 && !addon.isHiddenPrice && (
+                          <span className="text-xs font-bold text-accent">
+                            {addon.freeQuantity && addon.freeQuantity > 0 ? (
+                              <span className="text-[10px] text-green-600 block sm:inline mb-1 sm:mb-0 sm:ml-1">(أول {addon.freeQuantity} مجاناً) </span>
+                            ) : null}
+                            +{addon.price} د.ك
+                          </span>
+                        )}
+                        {(addon.price === 0 || addon.isHiddenPrice) && addon.freeQuantity && addon.freeQuantity > 0 && (
+                            <span className="text-[10px] font-bold text-green-600">أول {addon.freeQuantity} مجاناً</span>
+                        )}
+                        {(addon.minQuantity || 0) > 0 && (
+                            <span className="text-[9px] font-bold text-red-500 mr-2 border border-red-200 bg-red-50 px-1 rounded block sm:inline whitespace-nowrap">إلزامي</span>
+                        )}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -3588,6 +3655,7 @@ function ProductModal({
                     selectedOption,
                     selectedExtras,
                     selectedAddonsIds: selectedAddonsIds,
+                    addonQuantities,
                     note,
                     preparationInstructions: product.preparationInstructions,
                     product: product,
@@ -3608,6 +3676,7 @@ function ProductModal({
                     price: product.price,
                     selectedExtras,
                     selectedAddonsIds: selectedAddonsIds,
+                    addonQuantities,
                     product,
                 })} د.ك
               </span>
@@ -3870,7 +3939,7 @@ function CheckoutOverlay({
                                 key={`addon-${addon.addonId}-${idx}`}
                                 className="text-[9px] font-bold bg-accent/5 text-accent px-2 py-1 rounded-md border border-accent/10"
                               >
-                                +{addon.quantity} {addon.name} {addon.price > 0 && !addon.isHiddenPrice ? `(${addon.price} د.ك)` : ''}
+                                +{addon.quantity} {addon.name} {(addon.payableQuantity === 0 || addon.price === 0) && !addon.isHiddenPrice ? '(مجاني)' : addon.price > 0 && !addon.isHiddenPrice ? `(${addon.price} د.ك)` : ''}
                               </span>
                             ),
                           )}

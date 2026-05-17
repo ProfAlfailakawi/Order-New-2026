@@ -27,7 +27,6 @@ export default function SplitPayment() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const paymentStatus = searchParams.get("payment");
   const rawUrlName = searchParams.get("name");
   const urlName = rawUrlName ? rawUrlName.split('?')[0].split('&')[0] : "";
 
@@ -44,6 +43,32 @@ export default function SplitPayment() {
   const [contributorAmount, setContributorAmount] = useState<string>(() => localStorage.getItem("split_amount") || "");
   const isDev =
     searchParams.get("dev") === "true" || searchParams.get("2dev") === "true";
+
+  // Calculate generic paid amount
+  const calculatePaid = () => {
+    if (!order || !order.splitPayments) return 0;
+    return order.splitPayments
+      .filter((p) => p.status === "paid")
+      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  };
+
+  // Dynamically determine payment status to resist buggy Upayments Apple Pay redirection cancel URLs
+  const rawPaymentStatus = searchParams.get("payment");
+  const mySplitPhone = contributorPhone.replace(/\\D/g, "").slice(-8);
+  const mySplitRecord = order?.splitPayments?.find(
+     (s: any) => s.phone && String(s.phone).replace(/\\D/g, "").slice(-8) === mySplitPhone
+  );
+  
+  const isFullyPaid =
+    localSuccess ||
+    (order && order.total && calculatePaid() >= order.total - 0.005) ||
+    (order && order.status && (order.status.startsWith("تم الدفع") || order.status.includes("بانتظار التحضير"))) ||
+    (order && order.paymentStatus === "paid");
+    
+  const isMySplitPaid = mySplitRecord?.status === "paid" || localSuccess;
+  
+  // Real override for the payment status
+  const paymentStatus = isMySplitPaid || isFullyPaid ? "success" : rawPaymentStatus;
 
   const errorMsg = useMemo(() => {
     const errorMsgs = [
@@ -251,13 +276,6 @@ export default function SplitPayment() {
     }
   };
 
-  const calculatePaid = () => {
-    if (!order || !order.splitPayments) return 0;
-    return order.splitPayments
-      .filter((p) => p.status === "paid")
-      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-  };
-
   const handlePay = async (
     overrideName?: string | React.MouseEvent,
     overridePhone?: string,
@@ -389,14 +407,6 @@ export default function SplitPayment() {
     progressPercent = Math.min(100, (paidAmount / order.total) * 100);
   }
   if (isNaN(progressPercent)) progressPercent = 0;
-
-  const isFullyPaid =
-    localSuccess ||
-    remainingAmount <= 0.001 ||
-    (order.status &&
-      (order.status.startsWith("تم الدفع") ||
-        order.status.includes("بانتظار التحضير"))) ||
-    order.paymentStatus === "paid";
 
   if ((order as any).splitType === "roulette") {
     return <RouletteSplit order={order} handlePay={handlePay} paymentStatus={paymentStatus} urlName={urlName} />;

@@ -1528,7 +1528,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
                         <div className="mt-2 flex flex-wrap gap-2 justify-end">
                           {item.selectedOption && <span className="text-[9px] font-extrabold uppercase bg-stone-50 text-stone-400 px-3 py-1 rounded-lg border border-stone-100">{item.selectedOption}</span>}
                           {(item.selectedExtras || []).map((e: any, eIdx: number) => (<span key={eIdx} className="text-[9px] font-extrabold uppercase bg-accent/5 text-accent px-3 py-1 rounded-lg border border-accent/10">+{e.name}</span>))}
-                          {(item.addons || []).map((a: any, aIdx: number) => (<span key={`addon-${aIdx}`} className="text-[9px] font-extrabold uppercase bg-accent/5 text-accent px-3 py-1 rounded-lg border border-accent/10">+{a.quantity} {a.name}</span>))}
+                          {(item.addons || []).map((a: any, aIdx: number) => (<span key={`addon-${aIdx}`} className="text-[9px] font-extrabold uppercase bg-accent/5 text-accent px-3 py-1 rounded-lg border border-accent/10">+{a.quantity} {a.name} {(a.payableQuantity === 0 || a.price === 0) && !a.isHiddenPrice ? '(مجاني)' : ''}</span>))}
                         </div>
                       </div>
                       <div className="w-14 h-14 rounded-2xl bg-stone-50 flex items-center justify-center font-extrabold text-accent text-xl border border-stone-100">{item.quantity}</div>
