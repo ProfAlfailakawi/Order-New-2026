@@ -1246,6 +1246,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         cancelUrl: generatedCancelUrl,
         notificationUrl: generatedNotifyUrl,
         language: "ar",
+        paymentGateway: { src: "knet" },
         order: {
           id: splitId,
           currency: "KWD",
@@ -1465,6 +1466,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         cancelUrl: finalCancelUrl,
         notificationUrl: finalNotificationUrl,
         language: "ar",
+        paymentGateway: { src: "knet" },
         order: {
           id: knetTrackId,
           currency: "KWD",
