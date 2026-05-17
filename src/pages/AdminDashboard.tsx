@@ -1476,7 +1476,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
 
           {(order as any).splitParticipants && (order as any).splitType === "roulette" && (
              <section className="mt-8">
-               <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-[0.2em] block mb-4 px-2 text-right">روليت الحظ</label>
+               <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-[0.2em] block mb-4 px-2 text-right">لعبة وهق غيرك</label>
                <div className="bg-fuchsia-50 p-6 rounded-[32px] border border-fuchsia-100 text-center flex flex-col items-center justify-center">
                   {(order as any).rouletteLoser ? (
                      <>
@@ -1489,7 +1489,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
                   )}
                   
                   <div className="mt-6 w-full text-right">
-                     <p className="text-xs font-bold text-fuchsia-800/60 mb-2">المشاركون في الروليت:</p>
+                     <p className="text-xs font-bold text-fuchsia-800/60 mb-2">المشاركون في وهق غيرك:</p>
                      <div className="flex flex-wrap gap-2 justify-end">
                         {(order as any).splitParticipants.map((p: any, idx: number) => (
                            <span key={idx} className="bg-fuchsia-100 text-fuchsia-700 px-3 py-1 rounded-lg text-xs font-bold border border-fuchsia-200">
