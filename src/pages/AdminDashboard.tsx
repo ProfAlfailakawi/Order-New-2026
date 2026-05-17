@@ -34,6 +34,7 @@ import { enUS } from "date-fns/locale";
 
 import { DEFAULT_GLOBAL_LOGO } from "../constants";
 import { calculateItemsTotal, getDisplayTotal, normalizeDigits } from "../utils";
+import { calculateItemTotalWithAddons } from "../utils/priceCalculation";
 import { NewInvoiceModal } from "../components/NewInvoiceModal";
 
 export default function AdminDashboard() {
@@ -1527,6 +1528,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
                         <div className="mt-2 flex flex-wrap gap-2 justify-end">
                           {item.selectedOption && <span className="text-[9px] font-extrabold uppercase bg-stone-50 text-stone-400 px-3 py-1 rounded-lg border border-stone-100">{item.selectedOption}</span>}
                           {(item.selectedExtras || []).map((e: any, eIdx: number) => (<span key={eIdx} className="text-[9px] font-extrabold uppercase bg-accent/5 text-accent px-3 py-1 rounded-lg border border-accent/10">+{e.name}</span>))}
+                          {(item.addons || []).map((a: any, aIdx: number) => (<span key={`addon-${aIdx}`} className="text-[9px] font-extrabold uppercase bg-accent/5 text-accent px-3 py-1 rounded-lg border border-accent/10">+{a.quantity} {a.name}</span>))}
                         </div>
                       </div>
                       <div className="w-14 h-14 rounded-2xl bg-stone-50 flex items-center justify-center font-extrabold text-accent text-xl border border-stone-100">{item.quantity}</div>
@@ -1539,7 +1541,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
                     )}
                     {(item.itemNotes || item.note) && <div className="mt-3 p-5 bg-stone-50/50 rounded-2xl text-[11px] text-stone-400 italic border-r-2 border-stone-100 font-medium leading-relaxed">"{(item.itemNotes || item.note)}"</div>}
                   </div>
-                  <div className="text-left text-2xl font-light text-brand italic shrink-0 mr-8">{((item.price || 0) * (item.quantity || 1)).toFixed(2)} <span className="text-xs text-stone-400">د.ك</span></div>
+                  <div className="text-left text-2xl font-light text-brand italic shrink-0 mr-8">{calculateItemTotalWithAddons(item).toFixed(2)} <span className="text-xs text-stone-400">د.ك</span></div>
                 </div>
               ))}
             </div>

@@ -1584,7 +1584,7 @@ export default function CustomerSite() {
       if (item.selectedOption) message += `  الخيار: ${item.selectedOption}\n`;
       if (item.selectedExtras && item.selectedExtras.length > 0) {
         message += `  الإضافات: ${item.selectedExtras
-          .map((e: any) => e.name)
+          .map((e: any) => `${e.name}${e.price ? ` (${e.price} د.ك)` : ''}`)
           .join(", ")}\n`;
       }
       
@@ -3216,6 +3216,7 @@ function ProductModal({
   const [selectedExtras, setSelectedExtras] = useState<
     { name: string; price: number }[]
   >([]);
+  const [selectedAddonsIds, setSelectedAddonsIds] = useState<string[]>([]);
   const [note, setNote] = useState("");
 
   const extrasTotal = selectedExtras.reduce((sum, e) => sum + e.price, 0);
@@ -3226,6 +3227,14 @@ function ProductModal({
       setSelectedExtras(selectedExtras.filter((e) => e.name !== extra.name));
     } else {
       setSelectedExtras([...selectedExtras, extra]);
+    }
+  };
+
+  const toggleAddon = (addonId: string) => {
+    if (selectedAddonsIds.includes(addonId)) {
+      setSelectedAddonsIds(selectedAddonsIds.filter((id) => id !== addonId));
+    } else {
+      setSelectedAddonsIds([...selectedAddonsIds, addonId]);
     }
   };
 
@@ -3319,7 +3328,8 @@ function ProductModal({
                 name: product.name,
                 quantity: quantity || 1,
                 price: product.price,
-                selectedExtras: [],
+                selectedExtras: selectedExtras,
+                selectedAddonsIds: selectedAddonsIds,
                 product,
               })}{" "}
               <span className="text-sm text-accent">د.ك</span>
@@ -3403,9 +3413,64 @@ function ProductModal({
                           {extra.name}
                         </span>
                       </div>
-                      <span className="text-xs font-bold text-accent">
-                        +{extra.price} د.ك
-                      </span>
+                      {extra.price > 0 && (
+                        <span className="text-xs font-bold text-accent">
+                          +{extra.price} د.ك
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {product.addons && product.addons.length > 0 && (
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-stone-500 block">
+                إضافات للمنتج
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                {product.addons.map((addon) => {
+                  const isSelected = selectedAddonsIds.includes(addon.id);
+                  return (
+                    <button
+                      key={addon.id}
+                      onClick={() => toggleAddon(addon.id)}
+                      className={cn(
+                        "flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 transition-all",
+                        isSelected
+                          ? "border-accent bg-accent/5"
+                          : "border-stone-50 bg-stone-50/30 hover:border-stone-100",
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={cn(
+                            "w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all",
+                            isSelected
+                              ? "bg-accent border-accent text-white"
+                              : "border-stone-100 bg-white",
+                          )}
+                        >
+                          {isSelected && (
+                            <Check className="w-3 h-3 stroke-[3]" />
+                          )}
+                        </div>
+                        <span
+                          className={cn(
+                            "text-xs sm:text-sm transition-colors font-bold",
+                            isSelected ? "text-brand" : "text-stone-500",
+                          )}
+                        >
+                          {addon.name}
+                        </span>
+                      </div>
+                      {addon.price > 0 && !addon.isHiddenPrice && (
+                        <span className="text-xs font-bold text-accent">
+                          +{addon.price} د.ك
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -3470,9 +3535,10 @@ function ProductModal({
                       settings?.logo ||
                       DEFAULT_GLOBAL_LOGO,
                     quantity,
-                    price: itemPrice,
+                    price: product.price,
                     selectedOption,
                     selectedExtras,
+                    selectedAddonsIds: selectedAddonsIds,
                     note,
                     preparationInstructions: product.preparationInstructions,
                     product: product,
@@ -3490,8 +3556,9 @@ function ProductModal({
                     productId: product.id,
                     name: product.name,
                     quantity,
-                    price: itemPrice,
+                    price: product.price,
                     selectedExtras,
+                    selectedAddonsIds: selectedAddonsIds,
                     product,
                 })} د.ك
               </span>
@@ -3744,7 +3811,7 @@ function CheckoutOverlay({
                                 key={`${e.name}-${idx}`}
                                 className="text-[9px] font-bold bg-accent/5 text-accent px-2 py-1 rounded-md border border-accent/10"
                               >
-                                +{e.name}
+                                +{e.name} {e.price ? `(${e.price} د.ك)` : ''}
                               </span>
                             ),
                           )}
@@ -3754,7 +3821,7 @@ function CheckoutOverlay({
                                 key={`addon-${addon.addonId}-${idx}`}
                                 className="text-[9px] font-bold bg-accent/5 text-accent px-2 py-1 rounded-md border border-accent/10"
                               >
-                                +{addon.quantity} {addon.name}
+                                +{addon.quantity} {addon.name} {addon.price > 0 && !addon.isHiddenPrice ? `(${addon.price} د.ك)` : ''}
                               </span>
                             ),
                           )}
