@@ -3426,10 +3426,58 @@ function ProductModal({
           )}
 
           {product.addons && product.addons.length > 0 && (
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-stone-500 block">
-                إضافات للمنتج
-              </label>
+            <div className="space-y-4">
+              {product.addons.filter(a => !selectedAddonsIds.includes(a.id)).slice(0, 1).map(recommendedAddon => {
+                const creativeMessages = [
+                  // عبارات تشويقية
+                  `أضف لمسة سحرية لطلبك مع "${recommendedAddon.name}" ✨`,
+                  `السر في التفاصيل! جرب إضافة "${recommendedAddon.name}" لتجربة لا تُنسى 😋`,
+                  `تخيل الطعم مع "${recommendedAddon.name}"... مزيج لا يقاوم! 🔥`,
+                  `اختيار الذواقة الأول: إضافة "${recommendedAddon.name}" مع هذا الطبق 🌟`,
+                  `لا تفوت التجربة المتكاملة مع "${recommendedAddon.name}" 🤌`,
+                  `مزيج مذهل! الكثير يفضلون إضافة "${recommendedAddon.name}" لتعزيز النكهة 😋`,
+                  // عبارات فيها تفاعل
+                  `ناقصك شيء واحد عشان يكمل الطلب.. "${recommendedAddon.name}"! 😉`,
+                  `وش رأيك تكملها وتضيف "${recommendedAddon.name}"؟ ماراح تندم 😍`,
+                  `الأغلبية يطلبون "${recommendedAddon.name}" مع هذا الطلب.. جربه! 👍`,
+                  // عبارات وصفية ومغرية
+                  `غوص في بحر النكهات المتناغمة مع "${recommendedAddon.name}" 🌊`,
+                  `خلي طلبك غير مع إضافة "${recommendedAddon.name}" المذهلة 💯`,
+                  `الطعم الأصلي يحلى أكثر مع "${recommendedAddon.name}" 👑`,
+                  `إضافة صغيرة تصنع فرق كبير: "${recommendedAddon.name}" ✨`,
+                  // عبارات سريعة ومرحة
+                  `تدلع نفسك؟ ضيف "${recommendedAddon.name}" وما عليك 😎`,
+                  `ليش تاكله عادي في حين ممكن تخليه أسطوري مع "${recommendedAddon.name}"؟ 🚀`,
+                  `خلي الطعم يتكلم! أضف "${recommendedAddon.name}" واستمتع 🤤`,
+                  `السعادة تكتمل بهالإضافة: "${recommendedAddon.name}" ❤️`
+                ];
+                const charSum = (recommendedAddon.id + product.id).split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+                const message = creativeMessages[charSum % creativeMessages.length];
+                
+                return (
+                <div 
+                  key={`ai-rec-${recommendedAddon.id}`}
+                  onClick={() => toggleAddon(recommendedAddon.id)}
+                  className="bg-indigo-50/50 border border-indigo-100 p-3 sm:p-4 rounded-xl flex gap-3 items-start cursor-pointer transition-all hover:bg-indigo-50"
+                >
+                  <div className="text-xl">💡</div>
+                  <div>
+                    <h4 className="text-xs font-bold text-indigo-900 flex items-center gap-2 mb-1.5">
+                      ترشيح ذكي 
+                      <span className="text-[9px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">موصى به لك</span>
+                    </h4>
+                    <p className="text-[11px] text-indigo-800/80 leading-relaxed font-medium">
+                      {message}
+                    </p>
+                  </div>
+                </div>
+                );
+              })}
+
+              <div className="space-y-3">
+                <label className="text-xs font-bold text-stone-500 block">
+                  إضافات للمنتج
+                </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {product.addons.map((addon) => {
                   const isSelected = selectedAddonsIds.includes(addon.id);
@@ -3474,6 +3522,7 @@ function ProductModal({
                     </button>
                   );
                 })}
+              </div>
               </div>
             </div>
           )}
