@@ -1230,7 +1230,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           currency: "KWD",
           amount: numericAmount,
         },
-        reference: { id: `${orderId}-S-${splitId}` },
+        reference: { id: splitId },
         customer: {
           uniqueId: customerMobile
             ? `cid_${customerMobile}`
@@ -1401,8 +1401,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
       devOrProdUrl = devOrProdUrl.replace(/\/$/, "");
 
       // Return browser to whichever environment initiated the payment
-      const generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}/success${isPopup ? "?isPopup=true" : ""}`;
-      const generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}/failed${isPopup ? "?isPopup=true" : ""}`;
+      const generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}/success`;
+      const generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}/failed`;
       // Webhooks should ideally go to the environment that initiated it
       const generatedNotifyUrl = `${devOrProdUrl}/api/payment-webhook/${orderId}`;
 
@@ -2317,8 +2317,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
                         
                         try {
                             if (window.opener && !window.opener.closed) {
-                                window.opener.postMessage(JSON.stringify({ type: 'payment_return', orderId: '${orderId}', payment: '${paymentParam}' }), '*');
-                                window.opener.postMessage({ type: 'PAYMENT_COMPLETE', url: targetUrl, orderId: '${orderId}', payment: '${paymentParam}' }, '*');
+                                window.opener.postMessage(JSON.stringify({ type: 'payment_return', orderId: '${baseOrderId}', payment: '${paymentParam}' }), '*');
+                                window.opener.postMessage({ type: 'PAYMENT_COMPLETE', url: targetUrl, orderId: '${baseOrderId}', payment: '${paymentParam}' }, '*');
                                 setTimeout(() => window.close(), 100);
                             } else {
                                 window.location.href = targetUrl;
@@ -2342,8 +2342,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
                     if (isSuccess) {
                         try {
-                            localStorage.setItem("post_payment_open_order_id", "${orderId}");
-                            localStorage.setItem("track_order_id", "${orderId}");
+                            localStorage.setItem("post_payment_open_order_id", "${baseOrderId}");
+                            localStorage.setItem("track_order_id", "${baseOrderId}");
                             localStorage.setItem("track_status", "success");
                         } catch (e) {}
 
@@ -2352,16 +2352,12 @@ app.get("/api/debug/order/:id", async (req, res) => {
                         }, 3500);
                     } else if (isFailed) {
                         try {
-                            localStorage.setItem("track_order_id", "${orderId}");
+                            localStorage.setItem("track_order_id", "${baseOrderId}");
                             localStorage.setItem("track_status", "failed");
                         } catch (e) {}
                     }
 
-                    setTimeout(() => {
-                        document.getElementById('loading').style.display = 'none';
-                        document.getElementById('content').style.display = 'block';
-                        closePopupAndRedirect(null);
-                    }, 1500);
+
                 </script>
             </body>
             </html>
