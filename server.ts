@@ -1441,13 +1441,12 @@ app.get("/api/debug/order/:id", async (req, res) => {
       let devOrProdUrl = (reqOrigin && reqOrigin !== "null" && reqOrigin !== "undefined") ? reqOrigin : protocol + "://" + host;
 
       if (!devOrProdUrl || devOrProdUrl.includes("undefined") || devOrProdUrl === "null") {
-        devOrProdUrl = "https://alturathkw.shop";
+        // Fallback to current domain if possible, otherwise use a safe default
+        devOrProdUrl = protocol + "://" + host;
       }
 
-      // If localhost, fallback to public url for Upayments to accept it
-      if (devOrProdUrl.includes("localhost")) {
-        devOrProdUrl = "https://alturathkw.shop";
-      }
+      // If localhost, we might need a public proxy but for webhooks to hit this server 
+      // the domain must be publicly accessible.
       
       // Ensure no trailing slash
       devOrProdUrl = devOrProdUrl.replace(/\/$/, "");
@@ -1456,8 +1455,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
       let generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}-S-${splitId}/success`;
       let generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}-S-${splitId}/failed`;
-      // Always use prod domain for webhooks to bypass AI Studio preview sandbox restrictions!
-      const generatedNotifyUrl = `https://alturathkw.shop/api/payment-webhook/${orderId}/${splitId}`;
+      // FIX: Use devOrProdUrl instead of hardcoded domain to ensure webhooks reach the correct environment!
+      const generatedNotifyUrl = `${devOrProdUrl}/api/payment-webhook/${orderId}/${splitId}`;
 
       console.log(`[SPLIT] Generated Notify URL: ${generatedNotifyUrl}`);
 
@@ -1679,7 +1678,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}/success`;
       const generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}/failed`;
       // Webhooks MUST go to production to bypass sandbox blocking!
-      const generatedNotifyUrl = `https://alturathkw.shop/api/payment-webhook/${orderId}`;
+      // Use devOrProdUrl instead of hardcoded domain
+      const generatedNotifyUrl = `${devOrProdUrl}/api/payment-webhook/${orderId}`;
 
       const finalReturnUrl = generatedReturnUrl;
       const finalCancelUrl = generatedCancelUrl;
@@ -1924,13 +1924,15 @@ app.get("/api/debug/order/:id", async (req, res) => {
           .trim();
         if (statusStr.includes("?")) statusStr = statusStr.split("?")[0];
         const status =
-          ["SUCCESS", "CAPTURED", "PAID", "APPROVED", "SUCCESSFUL"].includes(
+          ["SUCCESS", "CAPTURED", "PAID", "APPROVED", "SUCCESSFUL", "TRUE", "AUTHORIZED", "HOSTED_SUCCESS", "1"].includes(
             statusStr,
           ) ||
           req.body?.status === true ||
-          req.body?.status === "success" ||
-          req.body?.result === "success" ||
-          req.body?.Result === "success";
+          req.body?.status === 1 ||
+          String(req.body?.status).toUpperCase() === "SUCCESS" ||
+          String(req.body?.result).toUpperCase() === "SUCCESS" ||
+          String(req.body?.Result).toUpperCase() === "SUCCESS" ||
+          String(req.body?.Status).toUpperCase() === "SUCCESS";
 
         if (orderId) {
           const docRef = doc(db, "appData", "shared_company_data");
@@ -1942,13 +1944,19 @@ app.get("/api/debug/order/:id", async (req, res) => {
           let originalOrderIdAsString = String(orderId);
           let baseOrderId = originalOrderIdAsString.toUpperCase();
 
-          if (splitId || baseOrderId.includes("-S-")) {
-            isSplit = true;
-            if (baseOrderId.includes("-S-")) {
-              const firstDashS = baseOrderId.indexOf("-S-");
-              if (!splitId) splitId = originalOrderIdAsString.substring(firstDashS + 3);
-              baseOrderId = baseOrderId.substring(0, firstDashS);
-            }
+          // Radical Fix: Ensure baseOrderId is correctly stripped of split suffixes even with complex IDs
+          if (baseOrderId.includes("-S-")) {
+             isSplit = true;
+             const parts = originalOrderIdAsString.split("-S-");
+             if (parts.length > 2) {
+                // Format was ORDER_ID-S-S-UNIQUE
+                baseOrderId = parts[0].toUpperCase();
+                if (!splitId) splitId = "S-" + parts[2];
+             } else if (parts.length === 2) {
+                // Format might be ORDER_ID-S-UNIQUE
+                baseOrderId = parts[0].toUpperCase();
+                if (!splitId) splitId = parts[1];
+             }
           }
 
           const orderIndex = orders.findIndex(
@@ -2298,12 +2306,18 @@ app.get("/api/debug/order/:id", async (req, res) => {
         let originalOrderId = String(orderId);
         let baseOrderId = originalOrderId.toUpperCase();
         
-        if (splitId || baseOrderId.includes("-S-")) {
+        // Radical Fix: Ensure baseOrderId is correctly stripped of split suffixes even with complex IDs
+        if (baseOrderId.includes("-S-")) {
            isSplit = true;
-           if (baseOrderId.includes("-S-")) {
-             const firstDashS = baseOrderId.indexOf("-S-");
-             if (!splitId) splitId = originalOrderId.substring(firstDashS + 3);
-             baseOrderId = baseOrderId.substring(0, firstDashS);
+           const parts = originalOrderId.split("-S-");
+           if (parts.length > 2) {
+              // Format was ORDER_ID-S-S-UNIQUE
+              baseOrderId = parts[0].toUpperCase();
+              if (!splitId) splitId = "S-" + parts[2];
+           } else if (parts.length === 2) {
+              // Format might be ORDER_ID-S-UNIQUE
+              baseOrderId = parts[0].toUpperCase();
+              if (!splitId) splitId = parts[1];
            }
         }
 
@@ -2350,9 +2364,9 @@ app.get("/api/debug/order/:id", async (req, res) => {
           let s = String(x).toUpperCase().trim();
           if (s.includes("?")) s = s.split("?")[0];
           return (
-            ["SUCCESS", "CAPTURED", "PAID", "APPROVED", "SUCCESSFUL", "AUTHORIZED"].includes(
+            ["SUCCESS", "CAPTURED", "PAID", "APPROVED", "SUCCESSFUL", "AUTHORIZED", "TRUE", "HOSTED_SUCCESS", "1"].includes(
               s,
-            ) || s === "TRUE"
+            ) || s === "TRUE" || s === "SUCCESS" || s === "SUCCESSFUL" || s === "1"
           );
         });
 
