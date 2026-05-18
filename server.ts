@@ -1433,36 +1433,23 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
       let generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}-S-${splitId}/success`;
       let generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}-S-${splitId}/failed`;
-      const generatedNotifyUrl = `${devOrProdUrl}/api/payment-webhook/${orderId}/${splitId}`;
+      // Always use prod domain for webhooks to bypass AI Studio preview sandbox restrictions!
+      const generatedNotifyUrl = `https://alturathkw.shop/api/payment-webhook/${orderId}/${splitId}`;
 
       console.log(`[SPLIT] Generated Notify URL: ${generatedNotifyUrl}`);
 
       // Update with pending split info
       if (!existingOrder.splitPayments) existingOrder.splitPayments = [];
 
-      const duplicateIdx = existingOrder.splitPayments.findIndex(
-        (sp: any) => sanitizePhone(sp.phone) === reqPhone && (sp.status === "pending" || sp.status === "failed")
-      );
-
-      if (duplicateIdx !== -1) {
-         existingOrder.splitPayments[duplicateIdx] = {
-            id: splitId,
-            name: name || "Customer",
-            phone: customerMobile || "",
-            amount: numericAmount,
-            status: "pending",
-            date: new Date().toISOString(),
-         };
-      } else {
-        existingOrder.splitPayments.push({
-          id: splitId,
-          name: name || "Customer",
-          phone: customerMobile || "",
-          amount: numericAmount,
-          status: "pending",
-          date: new Date().toISOString(),
-        });
-      }
+      // Always append pending splits instead of overwriting, to avoid invalidating old links.
+      existingOrder.splitPayments.push({
+        id: splitId,
+        name: name || "Customer",
+        phone: customerMobile || "",
+        amount: numericAmount,
+        status: "pending",
+        date: new Date().toISOString(),
+      });
 
       try {
         if (isInvoice) {
@@ -1668,8 +1655,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
       // Return browser to whichever environment initiated the payment
       const generatedReturnUrl = `${devOrProdUrl}/api/payment-return/${orderId}/success`;
       const generatedCancelUrl = `${devOrProdUrl}/api/payment-return/${orderId}/failed`;
-      // Webhooks should ideally go to the environment that initiated it
-      const generatedNotifyUrl = `${devOrProdUrl}/api/payment-webhook/${orderId}`;
+      // Webhooks MUST go to production to bypass sandbox blocking!
+      const generatedNotifyUrl = `https://alturathkw.shop/api/payment-webhook/${orderId}`;
 
       const finalReturnUrl = generatedReturnUrl;
       const finalCancelUrl = generatedCancelUrl;

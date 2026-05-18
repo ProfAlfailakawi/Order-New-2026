@@ -499,12 +499,24 @@ export default function OrderPage() {
     try {
       setProcessingPayment(true);
       setNewPaymentLink("");
-      const orderTotal =
+      let orderTotal =
         order.deliveryFee === 0 ||
         (order as any).isFreeDelivery ||
         (order as any).deliveryType === "free"
           ? calculateItemsTotal(order.items || [])
           : order.total || 0;
+
+      const totalPaid = ((order as any).splitPayments || [])
+        .filter((sp: any) => sp.status === "paid")
+        .reduce((sum: number, sp: any) => sum + (Number(sp.amount) || 0), 0);
+
+      orderTotal = orderTotal - totalPaid;
+
+      if (orderTotal < 0.001) {
+        alert("اكتمل الدفع بالفعل!");
+        setProcessingPayment(false);
+        return;
+      }
 
       const payRes = await fetch("/api/create-payment", {
         method: "POST",
