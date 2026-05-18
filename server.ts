@@ -137,7 +137,7 @@ function cleanPhone(phone) {
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   console.log(`[STARTUP] Using PORT: ${PORT}`);
   console.log(`[STARTUP] NODE_ENV: ${process.env.NODE_ENV}`);
@@ -650,14 +650,21 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
       const cleanQPhone = phone ? cleanPhone(phone as string) : null;
       let joinedSquadId = squadId ? String(squadId) : null;
+      let userSquads: any[] = [];
 
       if (cleanQPhone) {
-         // See if phone is in any squad's membersList (DB is phone numbers)
-         const custSquad = enrichedSquads.find((sq: any) => 
+         // Find all squads the user is a member of
+         userSquads = enrichedSquads.filter((sq: any) => 
             (sq.membersList || []).some((m: any) => cleanPhone(m.phone) === cleanQPhone)
          );
-         if (custSquad) {
-             joinedSquadId = String(custSquad.id);
+         
+         // If a squadId was requested, check if it's valid
+         if (joinedSquadId) {
+             const isMemberOfRequested = userSquads.some((sq: any) => String(sq.id) === joinedSquadId);
+             // If not a member of requested, but is a member of others, maybe keep the requested one so they can view/join it.
+         } else if (userSquads.length > 0) {
+             // Auto-select the first one if no squadId requested
+             joinedSquadId = String(userSquads[0].id);
          }
       }
 
@@ -682,7 +689,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
          topSquads,
          mySquad,
          myRank,
-         myMemberData
+         myMemberData,
+         userSquads
       });
     } catch(e) {
       res.status(500).json({ error: String(e) });
@@ -2525,24 +2533,29 @@ app.get("/api/debug/order/:id", async (req, res) => {
             : "pending";
 
         // Double check against real database status since webhooks often arrive faster or browsers can misreport
-        if (orderId && typeof orders !== "undefined") {
-           const oIdx = orders.findIndex((o: any) => String(o.id).toUpperCase() === baseOrderId);
-           if (oIdx !== -1) {
-              if (isSplit && orders[oIdx].splitPayments) {
-                 const splitIdx = orders[oIdx].splitPayments.findIndex((s: any) => s.id === splitId || s.id === `S-${splitId}` || splitId.includes(s.id));
-                 if (splitIdx !== -1 && orders[oIdx].splitPayments[splitIdx].status === "paid") {
-                    paymentParam = "success";
-                    isExplicitFailure = false;
-                    isExplicitSuccess = true;
-                 }
-              } else {
-                 if (orders[oIdx].paymentStatus === "paid" || (orders[oIdx].status || "").startsWith("تم الدفع")) {
-                    paymentParam = "success";
-                    isExplicitFailure = false;
-                    isExplicitSuccess = true;
+        if (orderId) {
+           try {
+              const d = await getAppDataRef();
+              const reqData = d.data() || {};
+              const dbOrders = reqData.orders || [];
+              const oIdx = dbOrders.findIndex((o: any) => String(o.id).toUpperCase() === baseOrderId);
+              if (oIdx !== -1) {
+                 if (isSplit && dbOrders[oIdx].splitPayments) {
+                    const splitIdx = dbOrders[oIdx].splitPayments.findIndex((s: any) => s.id === splitId || s.id === `S-${splitId}` || splitId.includes(s.id));
+                    if (splitIdx !== -1 && dbOrders[oIdx].splitPayments[splitIdx].status === "paid") {
+                       paymentParam = "success";
+                       isExplicitFailure = false;
+                       isExplicitSuccess = true;
+                    }
+                 } else {
+                    if (dbOrders[oIdx].paymentStatus === "paid" || (dbOrders[oIdx].status || "").startsWith("تم الدفع")) {
+                       paymentParam = "success";
+                       isExplicitFailure = false;
+                       isExplicitSuccess = true;
+                    }
                  }
               }
-           }
+           } catch(e) {}
         }
         
         let trackUrl = `${baseUrl}/track?order_id=${baseOrderId}&payment=${paymentParam}`;

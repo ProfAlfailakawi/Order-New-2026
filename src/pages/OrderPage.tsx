@@ -1756,31 +1756,6 @@ export default function OrderPage() {
                     {/* Items List */}
                     <div className="space-y-4">
                       
-                      {/* Squad Bragging Rights */}
-                      {((selectedOrder as any).squadName || (squadInfo && squadInfo.name)) && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 1 }}
-                          className="mb-4 bg-brand rounded-2xl p-4 shadow-sm border border-brand text-white flex items-center justify-between gap-3"
-                        >
-                           <div className="flex flex-col">
-                              <span className="text-[10px] uppercase font-bold text-brand-50 tracking-wider mb-0.5 opacity-80">عضو فعال في</span>
-                              <span className="text-lg font-black tracking-tight flex items-center gap-1.5 leading-none">
-                                {(selectedOrder as any).squadName || squadInfo.name}
-                              </span>
-                           </div>
-                           <div className="flex flex-col items-end">
-                              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center mb-1 shadow-sm">
-                                <Crown className="w-4 h-4 text-white drop-shadow-sm" />
-                              </div>
-                              <span className="text-[11px] font-bold text-white bg-black/20 px-2 py-0.5 rounded-md backdrop-blur-sm">
-                                 تصنيف الديوانية: {((selectedOrder as any).squadTier || squadInfo?.tier || "غير محدد")}
-                              </span>
-                           </div>
-                        </motion.div>
-                      )}
-
                       <h4 className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-2 font-mono border-b border-dashed border-stone-100 pb-2">
                         الأصناف المطلوبة
                       </h4>
@@ -1830,6 +1805,24 @@ export default function OrderPage() {
                           </motion.div>
                         ))}
                       </div>
+                      
+                      {/* Squad Bragging Rights */}
+                      {((selectedOrder as any).squadName || (squadInfo && squadInfo.name)) && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 1 }}
+                          className="mt-6 bg-[#FFFBEB] rounded-2xl p-4 border border-[#FDE68A] flex flex-col items-center justify-center gap-2 text-center"
+                        >
+                           <Crown className="w-7 h-7 text-[#F59E0B]" strokeWidth={2} />
+                           <p className="text-sm font-bold text-[#92400E]">
+                             عضو في "{(selectedOrder as any).squadName || squadInfo?.name}"
+                           </p>
+                           <p className="text-[#D97706] text-xs font-bold leading-tight">
+                             {squadInfo?.rank ? `المركز ${squadInfo.rank === 1 ? "الأول" : squadInfo.rank === 2 ? "الثاني" : squadInfo.rank === 3 ? "الثالث" : squadInfo.rank} ${squadInfo.rank === 1 ? '🥇' : squadInfo.rank === 2 ? '🥈' : squadInfo.rank === 3 ? '🥉' : ''}` : `تصنيف: ${((selectedOrder as any).squadTier || squadInfo?.tier || "غير محدد")}`}
+                           </p>
+                        </motion.div>
+                      )}
                     </div>
 
                     {/* Notes Section */}
