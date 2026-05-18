@@ -131,6 +131,7 @@ export default function CustomerSite() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [settings, setSettings] = useState<any>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [topProducts, setTopProducts] = useState<Product[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [cart, setCart] = useState<OrderItem[]>([]);
@@ -182,28 +183,39 @@ export default function CustomerSite() {
   
   // Gamification & Squads
   const [squadInfo, setSquadInfo] = useState<any>(null);
+  const [userSquads, setUserSquads] = useState<any[]>([]);
   const [topSquads, setTopSquads] = useState<any[]>([]);
   const [showSquadModal, setShowSquadModal] = useState(false);
   const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
   
   // Track magic link
   useEffect(() => {
-    const sId = searchParams.get("squadId");
+    // Basic fast check to ensure reliability across all browsers
+    const searchStr = window.location.search;
+    const urlParams = new URLSearchParams(searchStr);
+    
+    const sId = urlParams.get("squadId");
     if (sId) {
       localStorage.setItem("squadId", sId);
       setActiveSquadId(sId);
       setShowSquadModal(true);
-      // Clean up URL
-      searchParams.delete("squadId");
-      setSearchParams(searchParams);
+      urlParams.delete("squadId");
+      setSearchParams(urlParams, { replace: true });
     }
-    const showSquads = searchParams.get("showSquads");
+    
+    const showSquads = urlParams.get("showSquads");
     if (showSquads === "true") {
       setShowSquadModal(true);
-      searchParams.delete("showSquads");
-      setSearchParams(searchParams);
+      urlParams.delete("showSquads");
+      setSearchParams(urlParams, { replace: true });
     }
-  }, [searchParams]);
+  }, []); // Run only once on mount
+
+  useEffect(() => {
+    if (activeSquadId) {
+       localStorage.setItem("squadId", activeSquadId);
+    }
+  }, [activeSquadId]);
 
   // Fetch gamification info
   useEffect(() => {
@@ -214,6 +226,7 @@ export default function CustomerSite() {
            if (!res.ok) return;
            const data = await res.json();
            setTopSquads(data.topSquads || []);
+           setUserSquads(data.userSquads || []);
            if (data.mySquad || activeSquadId) {
              if (data.myMemberData?.name && data.myMemberData.name !== "عميل") {
                 setCustomerName(prev => prev || data.myMemberData.name);
@@ -816,6 +829,7 @@ export default function CustomerSite() {
           fetchWithRetry("/api/products").then((allProducts) => {
             if (!isMounted) return;
             setProducts(Array.isArray(allProducts) ? allProducts : []);
+            setIsLoadingProducts(false);
           }),
           fetchWithRetry("/api/top-products").then(d => { if (isMounted) setTopProducts(d || []); }),
           fetchWithRetry("/api/recent-fomo", 1).then(d => { 
@@ -839,6 +853,8 @@ export default function CustomerSite() {
         ]).catch((err: any) => {
           if (err && err.message && (err.message.includes("Failed to fetch") || err.message.includes("Load failed"))) return;
           console.error(err);
+        }).finally(() => {
+          if (isMounted) setIsLoadingProducts(false);
         });
       } catch (err: any) {
         if (err && err.message && (err.message.includes("Failed to fetch") || err.message.includes("Load failed"))) return;
@@ -2390,6 +2406,22 @@ export default function CustomerSite() {
                  }
               }
 
+              if (isLoadingProducts) {
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    {[1, 2, 3, 4].map((n) => (
+                      <div key={n} className="bg-white border border-stone-100 rounded-2xl p-4 h-32 animate-pulse flex flex-col justify-between">
+                         <div className="w-1/2 h-6 bg-stone-200 rounded-lg"></div>
+                         <div className="w-full flex justify-between items-end mt-4">
+                            <div className="w-1/4 h-5 bg-stone-200 rounded-lg"></div>
+                            <div className="w-10 h-10 bg-brand rounded-xl"></div>
+                         </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              }
+
               return displayProducts.length === 0 ? (
                 <div className="p-8 text-center text-stone-400 font-bold border-2 border-dashed border-stone-100 rounded-2xl">
                   لا توجد بيانات لهذا التصنيف
@@ -2929,6 +2961,8 @@ export default function CustomerSite() {
               regions={regions}
               settings={settings}
               squadInfo={squadInfo}
+              userSquads={userSquads}
+              setShowSquadModal={setShowSquadModal}
               onRegionChange={handleRegionChange}
               setCustomerName={setCustomerName}
               setCustomerPhone={setCustomerPhone}
@@ -2982,6 +3016,17 @@ export default function CustomerSite() {
                          <p className="text-stone-500 text-xs font-bold mt-1">
                            {squadInfo ? "ديوانيتك الحالية" : "وين ديوانيتكم بالصدارة؟"}
                          </p>
+                         {userSquads && userSquads.length > 1 && (
+                            <select 
+                               className="mt-2 text-xs font-bold bg-white border border-stone-200 rounded-lg p-1 text-brand outline-none"
+                               value={squadInfo?.id || ""}
+                               onChange={(e) => setActiveSquadId(e.target.value)}
+                            >
+                               {userSquads.map((sq: any) => (
+                                  <option key={sq.id} value={sq.id}>{sq.name}</option>
+                               ))}
+                            </select>
+                         )}
                       </div>
                       <button
                         onClick={() => setShowSquadModal(false)}
@@ -3113,15 +3158,29 @@ export default function CustomerSite() {
                                           if (val.length <= 8) {
                                              setLoginPhone(val);
                                           }
-                                          if (val.length === 8) {
-                                             setCustomerPhone(val);
-                                             localStorage.setItem("customer_phone_track", val);
-                                          }
                                        }}
                                     />
-                                    <div className="bg-orange-100 text-orange-500 p-2 rounded-lg">
+                                    <button 
+                                      className="bg-orange-100 text-orange-600 hover:bg-orange-200 p-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                                      disabled={loginPhone.length !== 8}
+                                      onClick={async () => {
+                                         if (loginPhone.length !== 8) return;
+                                         try {
+                                             const endpoint = `/api/squad-gamification?phone=${encodeURIComponent(loginPhone)}&squadId=`;
+                                             const res = await fetch(endpoint);
+                                             const data = await res.json();
+                                             
+                                             if (data.userSquads && data.userSquads.length > 0) {
+                                                setCustomerPhone(loginPhone);
+                                                localStorage.setItem("customer_phone_track", loginPhone);
+                                             } else {
+                                                alert("رقمك مو محفوظ ويانا في أي ديوانية!");
+                                             }
+                                         } catch(e) {}
+                                      }}
+                                    >
                                        <LogIn className="w-4 h-4" />
-                                    </div>
+                                    </button>
                                  </div>
                               </div>
 
@@ -4208,6 +4267,8 @@ function CheckoutOverlay({
   isValidatingPromo,
   discountAmount,
   squadInfo,
+  userSquads,
+  setShowSquadModal,
 }: any) {
   const [regionSearch, setRegionSearch] = useState("");
   const [showRegions, setShowRegions] = useState(false);
@@ -4285,6 +4346,11 @@ function CheckoutOverlay({
                            <span className="text-base font-black text-brand leading-tight">
                               {squadInfo.name} - تصنيف: {squadInfo.tier}
                            </span>
+                           {userSquads && userSquads.length > 1 && (
+                              <button onClick={() => setShowSquadModal(true)} className="text-[10px] text-accent underline text-right mt-0.5">
+                                 تغيير الديوانية
+                              </button>
+                           )}
                         </div>
                      </div>
                   </div>
