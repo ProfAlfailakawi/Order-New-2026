@@ -2,5 +2,5 @@
   "name": "شركة مطبخ التراث الكويتي - برنامج الطلبات",
   "description": "A high-end customer ordering website with an integrated admin dashboard for order management, analytics, and WhatsApp automation.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

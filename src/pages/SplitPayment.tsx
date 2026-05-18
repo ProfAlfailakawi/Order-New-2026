@@ -54,9 +54,9 @@ export default function SplitPayment() {
 
   // Dynamically determine payment status to resist buggy Upayments Apple Pay redirection cancel URLs
   const rawPaymentStatus = searchParams.get("payment");
-  const mySplitPhone = contributorPhone.replace(/\\D/g, "").slice(-8);
+  const mySplitPhone = contributorPhone.replace(/\D/g, "").slice(-8);
   const mySplitRecord = order?.splitPayments?.find(
-     (s: any) => s.phone && String(s.phone).replace(/\\D/g, "").slice(-8) === mySplitPhone
+     (s: any) => s.phone && String(s.phone).replace(/\D/g, "").slice(-8) === mySplitPhone
   );
   
   const isFullyPaid =
