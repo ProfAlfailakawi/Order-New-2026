@@ -24,7 +24,12 @@ import {
   AlertTriangle,
   Inbox,
   Ghost,
-  Plus
+  Plus,
+  Trophy,
+  Zap,
+  Crown,
+  Shield,
+  Users2
 } from "lucide-react";
 import { Order, Analytics, Region } from "../types";
 import { db } from "../lib/firebase";
@@ -33,13 +38,28 @@ import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 
 import { DEFAULT_GLOBAL_LOGO } from "../constants";
-import { calculateItemsTotal, getDisplayTotal, normalizeDigits } from "../utils";
+import { cn, calculateItemsTotal, getDisplayTotal, normalizeDigits } from "../utils";
 import { calculateItemTotalWithAddons } from "../utils/priceCalculation";
 import { NewInvoiceModal } from "../components/NewInvoiceModal";
 
+const DEFAULT_LOYALTY_TIERS = [
+  { id: 'bronze', name: 'برونزي', minPoints: 0, maxPoints: 99, icon: '🥉', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-100', badge: 'bg-amber-100 text-amber-700' },
+  { id: 'silver', name: 'فضي', minPoints: 100, maxPoints: 499, icon: '🥈', color: 'text-slate-500', bg: 'bg-slate-50', border: 'border-slate-100', badge: 'bg-slate-100 text-slate-500' },
+  { id: 'gold', name: 'ذهبي', minPoints: 500, maxPoints: 1499, icon: '🥇', color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-100', badge: 'bg-yellow-100 text-yellow-600' },
+  { id: 'diamond', name: 'ماسي', minPoints: 1500, maxPoints: 999999, icon: '💎', color: 'text-sky-600', bg: 'bg-sky-50', border: 'border-sky-100', badge: 'bg-sky-100 text-sky-600' }
+];
+
+const DEFAULT_SQUAD_TIERS = [
+  { id: "bronze", name: "محب", minPoints: 0, maxPoints: 99, color: "text-amber-700", bg: "bg-amber-50", icon: "🤝", benefit: "ابنوا ديوانيتكم! جمعوا نقاط أكثر لفتح المزايا." },
+  { id: "silver", name: "عزوة", minPoints: 100, maxPoints: 499, color: "text-slate-600", bg: "bg-slate-100", icon: "🛡️", benefit: "خصم ثابت ٥٪ على كافة الطلبات لأعضاء الديوانية." },
+  { id: "gold", name: "كبيرهم", minPoints: 500, maxPoints: 1499, color: "text-yellow-600", bg: "bg-yellow-50", icon: "👑", benefit: "خصم ثابت ١٠٪ على كافة الطلبات! أنتم فخرنا." },
+  { id: "diamond", name: "الشيخ", minPoints: 1500, maxPoints: 999999, color: "text-sky-600", bg: "bg-sky-50", icon: "🦅", benefit: "خصم ١٥٪ وتوصيل مجاني مدى الحياة! أسياد المكان." }
+];
+
+
 export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<"dashboard" | "orders" | "invoices" | "customers" | "zones" | "settings">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "orders" | "invoices" | "customers" | "zones" | "settings" | "loyalty">("dashboard");
   const [orders, setOrders] = useState<Order[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [zones, setZones] = useState<Region[]>([]);
@@ -53,6 +73,9 @@ export default function AdminDashboard() {
   const [newZonePrice, setNewZonePrice] = useState<number>(0);
   const [customers, setCustomers] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>({});
+  const [loyaltyTiers, setLoyaltyTiers] = useState<any[]>([]);
+  const [squadTiers, setSquadTiers] = useState<any[]>([]);
+  const [loyaltySettings, setLoyaltySettings] = useState<any>({});
   const [selectedRegionFilter, setSelectedRegionFilter] = useState<string>("");
   const [showOrderFilters, setShowOrderFilters] = useState(false);
   
@@ -64,6 +87,13 @@ export default function AdminDashboard() {
   const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
 
 
+  const LOYALTY_TIERS = loyaltyTiers.length > 0 ? loyaltyTiers : DEFAULT_LOYALTY_TIERS;
+  const SQUAD_TIERS = squadTiers.length > 0 ? squadTiers : DEFAULT_SQUAD_TIERS;
+
+  const getLoyaltyTier = (points: number) => {
+    return LOYALTY_TIERS.find((t: any) => points >= t.minPoints && points <= t.maxPoints) || LOYALTY_TIERS[0];
+  };
+  
   const cleanPhone = (phone: any) => {
     if (!phone) return "";
     let cleaned = String(phone).replace(/\D/g, "");
@@ -143,6 +173,9 @@ export default function AdminDashboard() {
            
            // Customers
            setCustomers(data.customers || []);
+           setLoyaltyTiers(data.loyaltyTiers || []);
+           setSquadTiers(data.squadTiers || []);
+           setLoyaltySettings(data.loyaltySettings || {});
            
            // Invoices
            const rawInvoices = data.invoices || [];
@@ -346,6 +379,12 @@ export default function AdminDashboard() {
             label="العملاء"
           />
           <NavItem 
+            active={activeTab === "loyalty"} 
+            onClick={() => setActiveTab("loyalty")}
+            icon={<Trophy className="w-5 h-5" />}
+            label="الولاء والتحديات"
+          />
+          <NavItem 
             active={activeTab === "zones"} 
             onClick={() => setActiveTab("zones")}
             icon={<MapPin className="w-5 h-5" />}
@@ -447,6 +486,29 @@ export default function AdminDashboard() {
                   icon={<CheckCircle2 className="w-8 h-8 text-green-500" />}
                   color="green"
                 />
+              </div>
+
+              {/* Loyalty Distribution Summary */}
+              <div className="grid grid-cols-4 gap-6">
+                {LOYALTY_TIERS.map(tier => {
+                  const count = customers.filter(c => getLoyaltyTier(getCustomerPoints(c.phone)).id === tier.id).length;
+                  return (
+                    <div key={tier.id} className={`p-6 rounded-[32px] border ${tier.border} ${tier.bg} shadow-sm group hover:scale-[1.02] transition-all`}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-2xl border border-white">
+                          {tier.icon}
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${tier.badge}`}>
+                          مستوى {tier.name}
+                        </span>
+                      </div>
+                      <div>
+                        <p className={`text-3xl font-black ${tier.color}`}>{count}</p>
+                        <p className="text-stone-400 text-[10px] font-bold mt-1 uppercase tracking-widest">إجمالي العملاء</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="bg-white rounded-[48px] border border-stone-100 shadow-xl overflow-hidden pb-6">
@@ -818,6 +880,184 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {activeTab === "loyalty" && (
+            <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700">
+               <div className="flex items-center justify-between">
+                  <div>
+                    <h1 className="text-5xl font-extrabold text-brand leading-none">الولاء والتحديات</h1>
+                    <p className="text-stone-400 mt-4 font-extrabold text-lg tracking-tight">إدارة مستويات العملاء ومكافآت الديوانية</p>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+                  {/* Loyalty Tiers */}
+                  <div className="bg-white rounded-[48px] border border-stone-100 shadow-xl overflow-hidden">
+                     <div className="p-8 border-b border-stone-50 bg-stone-50/30 flex items-center gap-4">
+                        <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand border border-stone-100">
+                           <Trophy className="w-6 h-6" />
+                        </div>
+                        <div>
+                           <h2 className="text-xl font-black text-brand">مستويات الولاء (أفراد)</h2>
+                           <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-0.5">تعتمد على إجمالي مشتريات العميل</p>
+                        </div>
+                     </div>
+
+                     <div className="p-8 space-y-6">
+                        {LOYALTY_TIERS.map((tier: any, idx: number) => (
+                           <div key={idx} className={`p-6 rounded-[32px] border-2 transition-all ${tier.bg} ${tier.border} flex items-center justify-between gap-6`}>
+                              <div className="flex items-center gap-4">
+                                 <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center text-2xl border border-stone-50">
+                                    <input 
+                                       value={tier.icon} 
+                                       onChange={(e) => {
+                                          const newTiers = [...LOYALTY_TIERS];
+                                          newTiers[idx].icon = e.target.value;
+                                          setLoyaltyTiers(newTiers);
+                                       }}
+                                       className="w-full text-center bg-transparent border-none outline-none"
+                                    />
+                                 </div>
+                                 <div className="space-y-1">
+                                    <input 
+                                       value={tier.name}
+                                       onChange={(e) => {
+                                          const newTiers = [...LOYALTY_TIERS];
+                                          newTiers[idx].name = e.target.value;
+                                          setLoyaltyTiers(newTiers);
+                                       }}
+                                       className="bg-transparent border-none font-black text-brand outline-none focus:ring-0 text-lg w-32"
+                                    />
+                                    <p className="text-[10px] font-bold text-stone-400 tracking-tighter">يبدأ من: {tier.minPoints} د.ك</p>
+                                 </div>
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                 <div className="flex items-center gap-2">
+                                    <input 
+                                       type="number"
+                                       value={tier.minPoints}
+                                       onChange={(e) => {
+                                          const newTiers = [...LOYALTY_TIERS];
+                                          newTiers[idx].minPoints = Number(e.target.value);
+                                          setLoyaltyTiers(newTiers);
+                                       }}
+                                       className="w-20 p-2 bg-white/60 border border-black/5 rounded-xl text-xs font-black text-center outline-none"
+                                    />
+                                    <span className="text-[10px] font-black opacity-40">د.ك</span>
+                                 </div>
+                              </div>
+                           </div>
+                        ))}
+                        
+                        <button 
+                           onClick={async () => {
+                              try {
+                                 await fetch("/api/admin/settings/loyaltyTiers", {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ tiers: LOYALTY_TIERS })
+                                 });
+                                 alert("تم حفظ مستويات الولاء بنجاح!");
+                              } catch (e) {
+                                 console.error(e);
+                              }
+                           }}
+                           className="w-full py-5 bg-brand text-white rounded-[24px] font-black shadow-xl hover:shadow-brand/20 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                        >
+                           <Save className="w-5 h-5" /> حفظ مستويات الولاء
+                        </button>
+                     </div>
+                  </div>
+
+                  {/* Squad Challenges */}
+                  <div className="bg-white rounded-[48px] border border-stone-100 shadow-xl overflow-hidden">
+                     <div className="p-8 border-b border-stone-50 bg-stone-50/30 flex items-center gap-4">
+                        <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-accent border border-stone-100">
+                           <Zap className="w-6 h-6" />
+                        </div>
+                        <div>
+                           <h2 className="text-xl font-black text-brand">تحديات الديوانية</h2>
+                           <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-0.5">مستويات القطية والمنافسة الجماعية</p>
+                        </div>
+                     </div>
+
+                     <div className="p-8 space-y-6">
+                        {SQUAD_TIERS.map((tier: any, idx: number) => (
+                           <div key={idx} className={`p-6 rounded-[32px] border-2 transition-all ${tier.bg} border-stone-100 flex flex-col gap-4`}>
+                              <div className="flex items-center justify-between gap-6">
+                                 <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center text-2xl border border-stone-50">
+                                       <input 
+                                          value={tier.icon} 
+                                          onChange={(e) => {
+                                             const newTiers = [...SQUAD_TIERS];
+                                             newTiers[idx].icon = e.target.value;
+                                             setSquadTiers(newTiers);
+                                          }}
+                                          className="w-full text-center bg-transparent border-none outline-none"
+                                       />
+                                    </div>
+                                    <div className="space-y-1">
+                                       <input 
+                                          value={tier.name}
+                                          onChange={(e) => {
+                                             const newTiers = [...SQUAD_TIERS];
+                                             newTiers[idx].name = e.target.value;
+                                             setSquadTiers(newTiers);
+                                          }}
+                                          className="bg-transparent border-none font-black text-brand outline-none focus:ring-0 text-lg w-32"
+                                       />
+                                       <div className="flex items-center gap-2">
+                                          <input 
+                                             type="number"
+                                             value={tier.minPoints}
+                                             onChange={(e) => {
+                                                const newTiers = [...SQUAD_TIERS];
+                                                newTiers[idx].minPoints = Number(e.target.value);
+                                                setSquadTiers(newTiers);
+                                             }}
+                                             className="w-16 p-1 bg-white/60 border border-black/5 rounded-lg text-[10px] font-black text-center outline-none"
+                                          />
+                                          <span className="text-[10px] font-black opacity-40">طلب+</span>
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+                              <textarea 
+                                 value={tier.benefit}
+                                 onChange={(e) => {
+                                    const newTiers = [...SQUAD_TIERS];
+                                    newTiers[idx].benefit = e.target.value;
+                                    setSquadTiers(newTiers);
+                                 }}
+                                 className="w-full p-4 bg-white/40 border border-black/5 rounded-2xl text-[11px] font-bold text-stone-600 outline-none focus:bg-white transition-all h-20"
+                                 placeholder="اكتب ميزة هذا المستوى هنا..."
+                              />
+                           </div>
+                        ))}
+                        
+                        <button 
+                           onClick={async () => {
+                              try {
+                                 await fetch("/api/admin/settings/squadTiers", {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ tiers: SQUAD_TIERS })
+                                 });
+                                 alert("تم حفظ إعدادات التحديات بنجاح!");
+                              } catch (e) {
+                                 console.error(e);
+                              }
+                           }}
+                           className="w-full py-5 bg-accent text-white rounded-[24px] font-black shadow-xl hover:shadow-accent/20 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                        >
+                           <Save className="w-5 h-5" /> حفظ إعدادات التحديات
+                        </button>
+                     </div>
+                  </div>
+               </div>
+            </div>
+          )}
+
           {activeTab === "customers" && (
             <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700">
               <div className="flex items-center justify-between">
@@ -837,50 +1077,64 @@ export default function AdminDashboard() {
                 
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead>
-                      <tr className="text-right text-[10px] text-stone-400 font-extrabold uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
-                        <th className="p-8">رقم الهاتف</th>
-                        <th className="p-8">الاسم</th>
-                        <th className="p-8 text-center">النقاط (د.ك المدفوعة)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-stone-50">
-                      {customers.filter(c => !searchTerm || c.phone?.includes(searchTerm) || c.name?.includes(searchTerm)).length === 0 ? (
-                        <tr>
-                          <td colSpan={3} className="p-32 text-center">
-                            <motion.div 
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="flex flex-col items-center"
-                            >
-                              <div className="w-24 h-24 bg-gradient-to-tr from-stone-50 to-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-stone-50">
-                                <Users className="w-10 h-10 text-stone-300 empty-state-art" />
-                              </div>
-                              <h3 className="text-2xl font-black text-brand mb-3">لا يوجد عملاء حالياً</h3>
-                              <p className="text-stone-400 font-medium max-w-sm mx-auto">سيظهر العملاء هنا بمجرد إتمامهم لأول طلب وجمعهم للنقاط.</p>
-                            </motion.div>
-                          </td>
-                        </tr>
-                      ) : (
-                        customers.filter(c => !searchTerm || c.phone?.includes(searchTerm) || c.name?.includes(searchTerm)).map((customer, idx) => (
-                          <tr key={customer.id || idx} className="hover:bg-stone-50/50 transition-all">
-                            <td className="p-8">
-                            <span className="font-bold text-brand bg-stone-50 px-4 py-2 rounded-xl text-sm font-mono tracking-wider">{customer.phone}</span>
-                          </td>
-                          <td className="p-8">
-                            <span className="font-bold text-stone-600">
-                                {customer.name || customer.customerName || "غير محدد"}
-                            </span>
-                          </td>
-                          <td className="p-8 text-center">
-                            <div className="inline-flex items-center gap-2 bg-green-50 px-4 py-2 rounded-xl">
-                                <span className="font-extrabold text-green-600 text-lg">{customer.totalSpent || 0}</span>
-                                <span className="text-[10px] text-green-500 font-bold uppercase tracking-widest">نقطة</span>
-                            </div>
-                          </td>
-                        </tr>
-                      )))}
-                    </tbody>
+                        <thead>
+                          <tr className="text-right text-[10px] text-stone-400 font-extrabold uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
+                            <th className="p-8">المستوى</th>
+                            <th className="p-8">رقم الهاتف</th>
+                            <th className="p-8">الاسم</th>
+                            <th className="p-8 text-center">النقاط المدفوعة</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-stone-50">
+                          {customers.filter(c => !searchTerm || c.phone?.includes(searchTerm) || c.name?.includes(searchTerm)).length === 0 ? (
+                            <tr>
+                              <td colSpan={4} className="p-32 text-center">
+                                <motion.div 
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  className="flex flex-col items-center"
+                                >
+                                  <div className="w-24 h-24 bg-gradient-to-tr from-stone-50 to-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-stone-50">
+                                    <Users className="w-10 h-10 text-stone-300 empty-state-art" />
+                                  </div>
+                                  <h3 className="text-2xl font-black text-brand mb-3">لا يوجد عملاء حالياً</h3>
+                                  <p className="text-stone-400 font-medium max-w-sm mx-auto">سيظهر العملاء هنا بمجرد إتمامهم لأول طلب وجمعهم للنقاط.</p>
+                                </motion.div>
+                              </td>
+                            </tr>
+                          ) : (
+                            customers
+                            .filter(c => !searchTerm || c.phone?.includes(searchTerm) || c.name?.includes(searchTerm))
+                            .sort((a, b) => (b.totalSpent || 0) - (a.totalSpent || 0))
+                            .map((customer, idx) => {
+                              const points = customer.totalSpent || 0;
+                              const tier = getLoyaltyTier(points);
+                              return (
+                                <tr key={customer.id || idx} className="hover:bg-stone-50/50 transition-all group">
+                                  <td className="p-8">
+                                    <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full border w-fit font-black text-[10px]", tier.bg, tier.border, tier.color)}>
+                                      <span>{tier.icon}</span>
+                                      <span>{tier.name}</span>
+                                    </div>
+                                  </td>
+                                  <td className="p-8">
+                                    <span className="font-bold text-brand bg-stone-50 px-4 py-2 rounded-xl text-sm font-mono tracking-wider group-hover:bg-white transition-colors">{customer.phone}</span>
+                                  </td>
+                                  <td className="p-8">
+                                    <span className="font-bold text-stone-600">
+                                        {customer.name || customer.customerName || "غير محدد"}
+                                    </span>
+                                  </td>
+                                  <td className="p-8 text-center">
+                                    <div className="inline-flex items-center gap-2 bg-green-50 px-4 py-2 rounded-xl group-hover:bg-green-100/50 transition-colors">
+                                        <span className="font-extrabold text-green-600 text-lg">{points}</span>
+                                        <span className="text-[10px] text-green-500 font-bold uppercase tracking-widest">نقطة</span>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            }))}
+                        </tbody>
                   </table>
                 </div>
               </div>

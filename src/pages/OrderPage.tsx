@@ -186,6 +186,31 @@ export default function OrderPage() {
   const [searched, setSearched] = useState(false);
   const autoOpenedTargetRef = useRef<string | null>(null);
   const [squadInfo, setSquadInfo] = useState<any>(null);
+  const [sessionSuccessOrders, setSessionSuccessOrders] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Initialize success orders from local storage to handle refreshes better
+    try {
+      const storedSuccesses = localStorage.getItem("temp_success_orders");
+      if (storedSuccesses) {
+        setSessionSuccessOrders(JSON.parse(storedSuccesses));
+      }
+    } catch(e) {}
+  }, []);
+
+  useEffect(() => {
+    if (urlPayment === "success" && urlOrderId) {
+      const oId = String(urlOrderId).toUpperCase();
+      setSessionSuccessOrders(prev => {
+        if (prev.includes(oId)) return prev;
+        const newState = [...prev, oId];
+        try {
+          localStorage.setItem("temp_success_orders", JSON.stringify(newState));
+        } catch(e) {}
+        return newState;
+      });
+    }
+  }, [urlPayment, urlOrderId]);
 
   useEffect(() => {
      if (phone && phone.length >= 8) {
@@ -393,6 +418,18 @@ export default function OrderPage() {
 
   const getStatusDisplay = (order: any) => {
     let rawStatus = order?.status;
+    const oId = String(order?.id || order?.invoiceId || "").toUpperCase();
+
+    // If we just successfully paid this order in this session, force display as paid
+    // to prevent flickering before the backend update propagates.
+    if (sessionSuccessOrders.includes(oId)) {
+      return {
+        text: "تم الدفع وجاري التوصيل",
+        color: "text-green-600 bg-green-50",
+        icon: <Truck className="w-4 h-4" />,
+      };
+    }
+
     if (order?.paymentStatus === "split" && (!rawStatus || rawStatus === "جديد" || rawStatus === "بانتظار الدفع")) {
       rawStatus = "قيد تجميع القطية";
     }

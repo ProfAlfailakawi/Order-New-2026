@@ -300,7 +300,7 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
 }
 
 
-async function getAppDataRef() {
+export async function getAppDataRef() {
   const data = await getAppData();
   return {
     exists: () => true,
@@ -800,6 +800,9 @@ app.get("/api/debug/order/:id", async (req, res) => {
       if (d.exists()) {
         const data = d.data();
         settings = data.settings || {};
+        settings.loyaltyTiers = data.loyaltyTiers || [];
+        settings.squadTiers = data.squadTiers || [];
+        settings.loyaltySettings = data.loyaltySettings || {};
 
         // Include company info from root if it exists
         if (data.info) {
@@ -821,6 +824,39 @@ app.get("/api/debug/order/:id", async (req, res) => {
     } catch (error) {
       console.error("Error fetching settings:", error);
       res.status(500).json({ error: "Failed to fetch settings" });
+    }
+  });
+
+  app.patch("/api/admin/settings/loyaltyTiers", async (req, res) => {
+    try {
+      const { tiers } = req.body;
+      const docRef = doc(db, "appData", "shared_company_data");
+      await setDoc(docRef, { loyaltyTiers: tiers }, { merge: true });
+      res.json({ success: true });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.patch("/api/admin/settings/squadTiers", async (req, res) => {
+    try {
+      const { tiers } = req.body;
+      const docRef = doc(db, "appData", "shared_company_data");
+      await setDoc(docRef, { squadTiers: tiers }, { merge: true });
+      res.json({ success: true });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.patch("/api/admin/settings/loyaltySettings", async (req, res) => {
+    try {
+      const { settings } = req.body;
+      const docRef = doc(db, "appData", "shared_company_data");
+      await setDoc(docRef, { loyaltySettings: settings }, { merge: true });
+      res.json({ success: true });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
     }
   });
 
@@ -2802,6 +2838,80 @@ app.get("/api/debug/order/:id", async (req, res) => {
     }
   });
 
+  app.get("/api/debug-collections", async (req, res) => {
+    try {
+      const q = await getDocs(collection(db, "appData"));
+      const docs = q.docs.map(d => ({ id: d.id, data: d.data() }));
+      res.json(docs);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get("/api/debug-docs", async (req, res) => {
+    try {
+      const data = await getAppData();
+      res.json(data);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get("/api/debug-search", async (req, res) => {
+    try {
+      const d = await getAppDataRef();
+      const data = d.data() || {};
+      const results = [];
+      const searchObj = (obj, path) => {
+        if (!obj) return;
+        
+        // Search keys
+        if (typeof obj === "object" && !Array.isArray(obj)) {
+          for (const key in obj) {
+            if (key.toLowerCase().includes("tier") || key.toLowerCase().includes("level")) {
+               results.push({ path: path + "." + key, type: "key", value: obj[key] });
+            }
+          }
+        }
+
+        if (typeof obj === "object") {
+          for (const key in obj) {
+            searchObj(obj[key], path ? `${path}.${key}` : key);
+          }
+        }
+      };
+      searchObj(data, "");
+      res.json(results);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get("/api/debug-squads", async (req, res) => {
+    try {
+      const d = await getAppDataRef();
+      const data = d.data() || {};
+      const sqs = (data.squads || []).map(s => ({
+        id: s.id,
+        name: s.name,
+        tier: s.tier,
+      }));
+      res.json(sqs);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get("/api/debug-loyalty", async (req, res) => {
+    try {
+      const d = await getAppDataRef();
+      const data = d.data() || {};
+      res.json(data.loyaltySettings || { message: "No loyalty settings" });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   app.get("/api/debug", async (req, res) => {
     try {
       const d = await getAppDataRef();
@@ -2814,6 +2924,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
         zonesCount: (data.zones || []).length,
         ordersCount: (data.orders || []).length,
         invoicesCount: (data.invoices || []).length,
+        settings: data.settings || {},
+        allKeys: Object.keys(data),
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch debug data" });
