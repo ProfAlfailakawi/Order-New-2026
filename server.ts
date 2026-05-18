@@ -19,6 +19,7 @@ import {
   where,
   orderBy,
   limit,
+  runTransaction,
 } from "firebase/firestore";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -68,7 +69,7 @@ const db = initializeFirestore(
 
 let _appDataCache: any = null;
 let _appDataCacheTime = 0;
-const CACHE_TTL = 30000; // 30 seconds
+const CACHE_TTL = 0; // Disable cache to prevent concurrency issues and data loss during split payments
 
 async function getAppData() {
   if (_appDataCache && Date.now() - _appDataCacheTime < CACHE_TTL) {
@@ -87,10 +88,28 @@ async function getAppData() {
   return localFallbackDB;
 }
 
+
+const removeUndefinedDeep = (value: any): any => {
+  if (Array.isArray(value)) {
+    return value.map(removeUndefinedDeep);
+  }
+
+  if (value && typeof value === "object") {
+    const cleaned: any = {};
+    for (const [key, val] of Object.entries(value)) {
+      if (val === undefined) continue;
+      cleaned[key] = removeUndefinedDeep(val);
+    }
+    return cleaned;
+  }
+
+  return value;
+};
+
 async function updateAppData(data: any) {
   try {
     const docRef = doc(db, "appData", "shared_company_data");
-    await setDoc(docRef, data, { merge: true });
+    await setDoc(docRef, removeUndefinedDeep(data), { merge: true });
     _appDataCache = null;
     _appDataCacheTime = 0;
   } catch (error) {
@@ -103,6 +122,180 @@ async function updateAppData(data: any) {
     } catch(err) {
       console.warn("Could not save to disk:", err);
     }
+  }
+}
+
+/**
+ * Transaction-safe update helper.
+ * Use this for any update that involves arrays (orders, invoices, customers)
+ * to prevent race conditions.
+ */
+async function updateAppDataAtomically(updater: (currentData: any) => any) {
+  const docRef = doc(db, "appData", "shared_company_data");
+  try {
+    await runTransaction(db, async (transaction) => {
+      const sDoc = await transaction.get(docRef);
+      if (!sDoc.exists()) throw new Error("shared_company_data not found");
+      
+      const currentData = sDoc.data();
+      const updates = updater(currentData);
+      
+      if (updates) {
+        transaction.update(docRef, updates);
+      }
+    });
+    _appDataCache = null;
+    _appDataCacheTime = 0;
+    return true;
+  } catch (err) {
+    console.error("[ATOMIC_UPDATE_ERROR]", err);
+    return false;
+  }
+}
+
+async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: boolean, providerData: any) {
+  console.log(`[PAYMENT_UPDATE] Processing Order:${orderId} Split:${splitId} Success:${isSuccess}`);
+  const docRef = doc(db, "appData", "shared_company_data");
+  
+  try {
+    await runTransaction(db, async (transaction) => {
+      const sDoc = await transaction.get(docRef);
+      if (!sDoc.exists()) throw new Error("shared_company_data not found");
+      
+      const appData = sDoc.data();
+      let orders = [...(appData.orders || [])];
+      let invoices = [...(appData.invoices || [])];
+      let customers = [...(appData.customers || [])];
+      
+      let baseId = String(orderId).toUpperCase();
+      let sId = splitId;
+      let isSplit = !!sId;
+      
+      if (baseId.includes("-S-")) {
+        isSplit = true;
+        const parts = baseId.split("-S-");
+        baseId = parts[0];
+        if (!sId) sId = parts[1];
+      }
+
+      let updated = false;
+
+      // Handle Orders
+      const oIdx = orders.findIndex(o => String(o.id).toUpperCase() === baseId);
+      if (oIdx !== -1) {
+        if (isSplit) {
+          if (!orders[oIdx].splitPayments) orders[oIdx].splitPayments = [];
+          const sIdx = orders[oIdx].splitPayments.findIndex((s: any) => {
+            const sid = String(s.id).toUpperCase();
+            const target = String(sId).toUpperCase();
+            return sid === target || sid === `S-${target}` || target.includes(sid);
+          });
+          
+          if (sIdx !== -1) {
+            const currentStatus = String(orders[oIdx].splitPayments[sIdx].status || "").toLowerCase();
+            if (isSuccess && currentStatus !== "paid") {
+              orders[oIdx].splitPayments[sIdx].status = "paid";
+              orders[oIdx].splitPayments[sIdx].paymentId = providerData?.reference?.id || providerData?.TrackID || "upayments_auth";
+              orders[oIdx].splitPayments[sIdx].datePaid = new Date().toISOString();
+              
+              // Update customer totalSpent
+              const cPhone = cleanPhone(orders[oIdx].splitPayments[sIdx].phone);
+              if (cPhone) {
+                const custIdx = customers.findIndex((c: any) => cleanPhone(c.phone) === cPhone);
+                if (custIdx !== -1) {
+                  customers[custIdx].totalSpent = (Number(customers[custIdx].totalSpent) || 0) + (Number(orders[oIdx].splitPayments[sIdx].amount) || 0);
+                  customers[custIdx].lastUpdated = new Date().toISOString();
+                } else {
+                  customers.push({
+                    id: "CUST-" + Date.now().toString(36),
+                    name: orders[oIdx].splitPayments[sIdx].name || "صديق عميل",
+                    phone: orders[oIdx].splitPayments[sIdx].phone,
+                    createdAt: new Date().toISOString(),
+                    totalSpent: Number(orders[oIdx].splitPayments[sIdx].amount) || 0,
+                    loyaltyPoints: 0,
+                  });
+                }
+              }
+              
+              // Check if order fully paid
+              const totalPaid = orders[oIdx].splitPayments
+                .filter((s: any) => s.status === "paid")
+                .reduce((sum: number, s: any) => sum + (Number(s.amount) || 0), 0);
+              
+              if (Math.round(totalPaid * 1000) >= Math.round((Number(orders[oIdx].total) || 0) * 1000) - 5) {
+                orders[oIdx].status = "تم الدفع وجاري التوصيل";
+                orders[oIdx].paymentStatus = "paid";
+                orders[oIdx].paidAt = new Date().toISOString();
+                
+                // Distribute points ONLY when fully paid
+                orders[oIdx].splitPayments.filter((s: any) => s.status === "paid").forEach((p: any) => {
+                  const cp = cleanPhone(p.phone);
+                  const eIdx = customers.findIndex(c => cleanPhone(c.phone) === cp);
+                  if (eIdx !== -1) {
+                    customers[eIdx].loyaltyPoints = (Number(customers[eIdx].loyaltyPoints) || 0) + (Number(p.amount) || 0);
+                  }
+                });
+              }
+              updated = true;
+            } else if (!isSuccess && currentStatus !== "paid") {
+              orders[oIdx].splitPayments[sIdx].status = "failed";
+              updated = true;
+            }
+          }
+        } else {
+          // Regular Order
+          const currentStatus = orders[oIdx].status;
+          if (isSuccess) {
+            if (orders[oIdx].paymentStatus !== "paid") {
+              orders[oIdx].status = "تم الدفع وجاري التوصيل";
+              orders[oIdx].paymentStatus = "paid";
+              orders[oIdx].paidAt = new Date().toISOString();
+              orders[oIdx].transactionId = providerData?.reference?.id || providerData?.TrackID || "upayments_auth";
+              
+              // Loyalty points
+              const cPhone = cleanPhone(orders[oIdx].customerPhone);
+              if (cPhone) {
+                const custIdx = customers.findIndex(c => cleanPhone(c.phone) === cPhone);
+                if (custIdx !== -1) {
+                   const amount = Number(orders[oIdx].total) || 0;
+                   customers[custIdx].totalSpent = (Number(customers[custIdx].totalSpent) || 0) + amount;
+                   customers[custIdx].loyaltyPoints = (Number(customers[custIdx].loyaltyPoints) || 0) + amount;
+                   customers[custIdx].lastUpdated = new Date().toISOString();
+                }
+              }
+              updated = true;
+            }
+          } else if (currentStatus === "جديد" || currentStatus === "بانتظار الدفع") {
+             orders[oIdx].status = "فشل في عملية الدفع";
+             orders[oIdx].paymentStatus = "failed";
+             updated = true;
+          }
+        }
+      }
+
+      // Handle Invoices
+      invoices.forEach((inv: any) => {
+        if (String(inv.id).toUpperCase() === baseId) {
+          if (isSuccess && inv.paymentStatus !== "paid") {
+            inv.status = "تم الدفع وجاري التوصيل";
+            inv.paymentStatus = "paid";
+            inv.paidAt = new Date().toISOString();
+            updated = true;
+          } else if (!isSuccess && (inv.status === "جديد" || inv.status === "بانتظار الدفع")) {
+            inv.status = "فشل في عملية الدفع";
+            inv.paymentStatus = "failed";
+            updated = true;
+          }
+        }
+      });
+
+      if (updated) {
+        transaction.update(docRef, { orders, invoices, customers });
+      }
+    });
+    console.log(`[PAYMENT_UPDATE] Successfully processed Order:${orderId}`);
+  } catch (err) {
+    console.error(`[PAYMENT_UPDATE] Concurrency error or logical failure for Order:${orderId}:`, err);
   }
 }
 
@@ -196,30 +389,27 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const allOrdersOriginal = appData.orders || [];
       const now = Date.now();
       const TIMEOUT = 90 * 60 * 1000;
-      let needsUpdate = false;
+      let expiredIds: string[] = [];
 
-      const allOrders = allOrdersOriginal.map((o: any) => {
+      allOrdersOriginal.forEach((o: any) => {
         if (o.status === "قيد تجميع القطية" && o.createdAt) {
           const created = new Date(o.createdAt).getTime();
           if (now - created > TIMEOUT) {
-            needsUpdate = true;
-            return {
-              ...o,
-              status: "ملغي - انتهى وقت القطية",
-              isInvoice: false,
-            };
+            expiredIds.push(o.id);
           }
         }
-        return { ...o, isInvoice: false };
       });
 
-      if (needsUpdate) {
-        console.log(`[SPLIT] Timing out expired split payments`);
-        await updateAppData({
-          orders: allOrders.map((o) => {
-            const { isInvoice, ...rest } = o;
-            return rest;
-          }),
+      if (expiredIds.length > 0) {
+        console.log(`[SPLIT] Timing out expired split payments: ${expiredIds.join(", ")}`);
+        await updateAppDataAtomically((current) => {
+          const updatedOrders = (current.orders || []).map((o: any) => {
+            if (expiredIds.includes(o.id) && o.status === "قيد تجميع القطية") {
+               return { ...o, status: "ملغي - انتهى وقت القطية" };
+            }
+            return o;
+          });
+          return { orders: updatedOrders };
         });
       }
 
@@ -229,7 +419,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       }));
 
       console.log(
-        `DEBUG: Tracking orders for ${cleanQueryPhone} or order_id ${order_id}. Total shared orders: ${allOrders.length}, invoices: ${allInvoices.length}`,
+        `DEBUG: Tracking orders for ${cleanQueryPhone} or order_id ${order_id}. Total shared orders: ${allOrdersOriginal.length}, invoices: ${allInvoices.length}`,
       );
 
       const customers = appData.customers || [];
@@ -264,16 +454,21 @@ app.get("/api/debug/order/:id", async (req, res) => {
           }
         }
         if (!match && order_id) {
-          const qid = String(order_id).trim().toUpperCase();
+          let qid = String(order_id).trim().toUpperCase();
           match =
             String(item.id).toUpperCase() === qid ||
             String(item.linkedInvoiceId).toUpperCase() === qid ||
             String(item.invoiceId).toUpperCase() === qid;
+
+          if (!match && qid.includes("-S-")) {
+            const base = qid.split("-S-")[0];
+            match = String(item.id).toUpperCase() === base;
+          }
         }
         return match;
       };
 
-      const matchedOrders = allOrders.filter(filterFn);
+      const matchedOrders = allOrdersOriginal.filter(filterFn);
       const matchedInvoices = allInvoices.filter(filterFn);
       const allMatched = [...matchedOrders, ...matchedInvoices];
       console.log(
@@ -1229,77 +1424,65 @@ app.get("/api/debug/order/:id", async (req, res) => {
         }
       }
 
-      orders.push(newOrder);
+      await updateAppDataAtomically((current) => {
+        const orders = [...(current.orders || [])];
+        const customers = [...(current.customers || [])];
+        const squads = [...(current.squads || [])];
+        
+        orders.push(newOrder);
 
-      // Update customer record basic info but NOT points/loyalty
-      const cleanPhoneQuery = cleanPhone(customerPhone);
-      let existingIndex = -1;
+        const cleanPhoneQuery = cleanPhone(customerPhone);
+        let existingIndex = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanPhoneQuery);
 
-      customers.forEach((c: any, idx: number) => {
-        if (cleanPhone(c.phone) === cleanPhoneQuery) {
-          existingIndex = idx;
+        if (existingIndex >= 0) {
+          customers[existingIndex] = {
+            ...customers[existingIndex],
+            name: newOrder.customerName,
+            address: newOrder.address,
+            lastOrderDate: newOrder.createdAt,
+          };
+        } else {
+          customers.push({
+            id: "CUST-" + Date.now().toString(36),
+            name: newOrder.customerName,
+            phone: newOrder.customerPhone,
+            address: newOrder.address,
+            lastOrderDate: newOrder.createdAt,
+            loyaltyPoints: 0,
+            points: 0,
+          });
         }
-      });
 
-      if (existingIndex >= 0) {
-        customers[existingIndex] = {
-          ...customers[existingIndex],
-          name: newOrder.customerName,
-          address: newOrder.address,
-          lastOrderDate: newOrder.createdAt,
-        };
-      } else {
-        customers.push({
-          id: "CUST-" + Date.now().toString(36),
-          name: newOrder.customerName,
-          phone: newOrder.customerPhone,
-          address: newOrder.address,
-          lastOrderDate: newOrder.createdAt,
-          loyaltyPoints: 0,
-          points: 0,
-        });
-      }
+        let attributedSquad = squadId;
+        if (!attributedSquad && customerPhone) {
+            const custSquad = squads.find((sq: any) => 
+                 (sq.membersList || []).some((m: any) => cleanPhone(m.phone) === cleanPhoneQuery)
+            );
+            if (custSquad) attributedSquad = String(custSquad.id);
+        }
 
-      const squads = appData.squads || [];
-      const orderPoints = Math.floor(total || 0);
-      const pointsToAdd = orderPoints > 0 ? orderPoints : 1;
-      
-      let attributedSquad = squadId;
-      if (!attributedSquad && customerPhone) {
-          const custSquad = squads.find((sq: any) => 
-               (sq.membersList || []).some((m: any) => cleanPhone(m.phone) === cleanPhoneQuery)
-          );
-          if (custSquad) attributedSquad = String(custSquad.id);
-      }
-
-      if (attributedSquad) {
-         const sqIndex = squads.findIndex((s:any) => String(s.id) === String(attributedSquad));
-         if (sqIndex > -1) {
-             // Do not add points to the squad until the order is paid
-             
-             if (customerPhone) {
-                 if (!squads[sqIndex].membersList) squads[sqIndex].membersList = [];
-                 let mIndex = squads[sqIndex].membersList.findIndex((m:any) => cleanPhone(m.phone) === cleanPhoneQuery);
-                 if (mIndex > -1) {
-                     if (customerName && (!squads[sqIndex].membersList[mIndex].name || squads[sqIndex].membersList[mIndex].name === "عميل")) {
-                         squads[sqIndex].membersList[mIndex].name = customerName;
-                     }
-                 } else {
-                     squads[sqIndex].membersList.push({
-                         phone: customerPhone,
-                         name: customerName || "عميل",
-                         points: 0 // Initialize at 0, points are handled via payment webhook
-                     });
-                     squads[sqIndex].members = squads[sqIndex].membersList.length;
-                 }
-             }
-         }
-      }
-
-      await updateAppData({
-        orders,
-        customers,
-        squads
+        if (attributedSquad) {
+           const sqIndex = squads.findIndex((s:any) => String(s.id) === String(attributedSquad));
+           if (sqIndex > -1) {
+               if (customerPhone) {
+                   if (!squads[sqIndex].membersList) squads[sqIndex].membersList = [];
+                   let mIndex = squads[sqIndex].membersList.findIndex((m:any) => cleanPhone(m.phone) === cleanPhoneQuery);
+                   if (mIndex > -1) {
+                       if (customerName && (!squads[sqIndex].membersList[mIndex].name || squads[sqIndex].membersList[mIndex].name === "عميل")) {
+                           squads[sqIndex].membersList[mIndex].name = customerName;
+                       }
+                   } else {
+                       squads[sqIndex].membersList.push({
+                           phone: customerPhone,
+                           name: customerName || "عميل",
+                           points: 0
+                       });
+                       squads[sqIndex].members = squads[sqIndex].membersList.length;
+                   }
+               }
+           }
+        }
+        return { orders, customers, squads };
       });
 
       console.log(`[ORDER] Order ${newOrder.id} saved successfully`);
@@ -1461,30 +1644,35 @@ app.get("/api/debug/order/:id", async (req, res) => {
       console.log(`[SPLIT] Generated Notify URL: ${generatedNotifyUrl}`);
 
       // Update with pending split info
-      if (!existingOrder.splitPayments) existingOrder.splitPayments = [];
-
-      // Always append pending splits instead of overwriting, to avoid invalidating old links.
-      existingOrder.splitPayments.push({
+      const newSplitEntry = {
         id: splitId,
         name: name || "Customer",
         phone: customerMobile || "",
         amount: numericAmount,
         status: "pending",
         date: new Date().toISOString(),
-      });
+      };
 
       try {
-        if (isInvoice) {
-          invoices[index] = existingOrder;
-          await updateAppData({
-            invoices,
-          });
-        } else {
-          orders[index] = existingOrder;
-          await updateAppData({
-            orders,
-          });
-        }
+        await updateAppDataAtomically((current) => {
+           let orders = [...(current.orders || [])];
+           let invoices = [...(current.invoices || [])];
+           
+           let idx = orders.findIndex((o: any) => String(o.id).trim().toUpperCase() === String(orderId).trim().toUpperCase());
+           if (idx !== -1) {
+              if (!orders[idx].splitPayments) orders[idx].splitPayments = [];
+              orders[idx].splitPayments.push(newSplitEntry);
+              return { orders };
+           } else {
+              idx = invoices.findIndex((o: any) => String(o.id).trim().toUpperCase() === String(orderId).trim().toUpperCase());
+              if (idx !== -1) {
+                 if (!invoices[idx].splitPayments) invoices[idx].splitPayments = [];
+                 invoices[idx].splitPayments.push(newSplitEntry);
+                 return { invoices };
+              }
+           }
+           return null;
+        });
       } catch (dbErr: any) {
         console.error("[SPLIT] Firestore Update Error:", dbErr);
         return res.status(500).json({
@@ -1794,15 +1982,15 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const { paymentLink } = req.body;
       if (!paymentLink) return res.status(400).json({ error: "No link" });
 
-      const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
-      const appData = d.data() || {};
-      let orders = appData.orders || [];
-      const index = orders.findIndex((o: any) => o.id === id);
-      if (index !== -1) {
-        orders[index].paymentLink = paymentLink;
-        await updateAppData({ orders });
-      }
+      await updateAppDataAtomically((current) => {
+        let orders = [...(current.orders || [])];
+        const index = orders.findIndex((o: any) => o.id === id);
+        if (index !== -1) {
+          orders[index].paymentLink = paymentLink;
+          return { orders };
+        }
+        return null;
+      });
       res.json({ success: true });
     } catch (e) {
       res.status(500).json({ error: "Failed to save link" });
@@ -1816,26 +2004,26 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const { name, phone } = req.body;
       if (!name) return res.status(400).json({ error: "Missing name" });
 
-      const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
-      const appData = d.data() || {};
-      let orders = appData.orders || [];
-      const index = orders.findIndex((o: any) => o.id === id);
-      if (index !== -1) {
-        if (!orders[index].splitParticipants) {
-          orders[index].splitParticipants = [];
+      await updateAppDataAtomically((current) => {
+        let orders = [...(current.orders || [])];
+        const index = orders.findIndex((o: any) => o.id === id);
+        if (index !== -1) {
+          if (!orders[index].splitParticipants) {
+            orders[index].splitParticipants = [];
+          }
+          if (
+            !orders[index].splitParticipants.some((p: any) => p.name === name || (phone && p.phone === phone))
+          ) {
+            orders[index].splitParticipants.push({
+              name,
+              phone,
+              joinedAt: new Date().toISOString(),
+            });
+            return { orders };
+          }
         }
-        if (
-          !orders[index].splitParticipants.some((p: any) => p.name === name || (phone && p.phone === phone))
-        ) {
-          orders[index].splitParticipants.push({
-            name,
-            phone,
-            joinedAt: new Date().toISOString(),
-          });
-          await updateAppData({ orders });
-        }
-      }
+        return null;
+      });
       res.json({ success: true });
     } catch (e) {
       res.status(500).json({ error: "Failed to join roulette" });
@@ -1854,26 +2042,30 @@ app.get("/api/debug/order/:id", async (req, res) => {
       if (index === -1)
         return res.status(400).json({ error: "Order not found" });
 
-      const order = orders[index];
-      if (!order.splitParticipants || order.splitParticipants.length === 0) {
-        return res.status(400).json({ error: "No participants" });
-      }
+      let loserName = "";
+      await updateAppDataAtomically((current) => {
+        let orders = [...(current.orders || [])];
+        const index = orders.findIndex((o: any) => o.id === id);
+        if (index === -1) return null;
 
-      // Prevent re-spinning if already spun!
-      if (order.rouletteLoser) {
-        return res.json({ success: true, loser: order.rouletteLoser });
-      }
+        const order = orders[index];
+        if (!order.splitParticipants || order.splitParticipants.length === 0) return null;
 
-      const loserIndex = Math.floor(
-        Math.random() * order.splitParticipants.length,
-      );
-      const loser = order.splitParticipants[loserIndex];
+        if (order.rouletteLoser) {
+          loserName = order.rouletteLoser;
+          return null;
+        }
 
-      order.rouletteLoser = loser.name;
-      order.rouletteSpunAt = new Date().toISOString();
+        const loserIndex = Math.floor(Math.random() * order.splitParticipants.length);
+        const loser = order.splitParticipants[loserIndex];
 
-      await updateAppData({ orders });
-      res.json({ success: true, loser: loser.name });
+        orders[index].rouletteLoser = loser.name;
+        orders[index].rouletteSpunAt = new Date().toISOString();
+        loserName = loser.name;
+        return { orders };
+      });
+
+      res.json({ success: true, loser: loserName });
     } catch (e) {
       res.status(500).json({ error: "Failed to spin roulette" });
     }
@@ -1881,7 +2073,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
   // Payment Webhook
   app.post(
-    ["/api/payment-webhook/:pathOrderId/:pathSplitId", "/api/payment-webhook/:pathOrderId", "/api/payment-webhook"],
+    ["/api/payment-webhook/:pathOrderId/:pathSplitId", "/api/payment-webhook/:pathOrderId", "/api/payment-webhook", "/api/webhook/upayments"],
     async (req, res) => {
       try {
         console.log(
@@ -1935,344 +2127,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           String(req.body?.Status).toUpperCase() === "SUCCESS";
 
         if (orderId) {
-          const docRef = doc(db, "appData", "shared_company_data");
-          const d = await getAppDataRef();
-          const appData = d.data() || {};
-          let orders = appData.orders || [];
-          let invoices = appData.invoices || [];
-          let isSplit = !!splitId;
-          let originalOrderIdAsString = String(orderId);
-          let baseOrderId = originalOrderIdAsString.toUpperCase();
-
-          // Radical Fix: Ensure baseOrderId is correctly stripped of split suffixes even with complex IDs
-          if (baseOrderId.includes("-S-")) {
-             isSplit = true;
-             const parts = originalOrderIdAsString.split("-S-");
-             if (parts.length > 2) {
-                // Format was ORDER_ID-S-S-UNIQUE
-                baseOrderId = parts[0].toUpperCase();
-                if (!splitId) splitId = "S-" + parts[2];
-             } else if (parts.length === 2) {
-                // Format might be ORDER_ID-S-UNIQUE
-                baseOrderId = parts[0].toUpperCase();
-                if (!splitId) splitId = parts[1];
-             }
-          }
-
-          const orderIndex = orders.findIndex(
-            (o: any) => String(o.id).toUpperCase() === baseOrderId,
-          );
-          const invoiceIndex = invoices.findIndex(
-            (o: any) => String(o.id).toUpperCase() === baseOrderId,
-          );
-
-          let updated = false;
-
-          if (orderIndex !== -1) {
-            if (isSplit) {
-              if (!orders[orderIndex].splitPayments)
-                orders[orderIndex].splitPayments = [];
-              const splitIdx = orders[orderIndex].splitPayments.findIndex(
-                (s: any) => String(s.id).toUpperCase() === String(splitId).toUpperCase() || String(s.id).toUpperCase() === `S-${String(splitId).toUpperCase()}` || String(splitId).toUpperCase().includes(String(s.id).toUpperCase()),
-              );
-              if (splitIdx !== -1) {
-                if (status && orders[orderIndex].splitPayments[splitIdx].status !== "paid") {
-                  orders[orderIndex].splitPayments[splitIdx].status = "paid";
-                  orders[orderIndex].splitPayments[splitIdx].paymentId =
-                    req.body?.reference?.id ||
-                    req.body?.TrackID ||
-                    req.query?.TrackID;
-                  updated = true;
-                  console.log(
-                    `[PAYMENT] Split ${splitId} for Order ${baseOrderId} updated to paid`,
-                  );
-
-                  // Update totalSpent immediately, but DO NOT add loyalty points yet
-                  const payer = orders[orderIndex].splitPayments[splitIdx];
-                  const cPhone = cleanPhone(payer.phone);
-                  if (cPhone) {
-                    const customers = appData.customers || [];
-                    const existingCustIdx = customers.findIndex(
-                      (c: any) => cleanPhone(c.phone) === cPhone,
-                    );
-                    if (existingCustIdx === -1) {
-                      customers.push({
-                        id:
-                          "CUST-" +
-                          Date.now().toString(36) +
-                          Math.random().toString(36).slice(-4),
-                        name: payer.name || "صديق عميل",
-                        phone: payer.phone,
-                        acquired_via_split: true,
-                        createdAt: new Date().toISOString(),
-                        totalSpent: Number(payer.amount) || 0,
-                        loyaltyPoints: 0,
-                      });
-                    } else {
-                      customers[existingCustIdx].totalSpent =
-                        (Number(customers[existingCustIdx].totalSpent) || 0) +
-                        (Number(payer.amount) || 0);
-                      customers[existingCustIdx].lastUpdated =
-                        new Date().toISOString();
-                    }
-                    appData.customers = customers;
-                  }
-
-                  // Check if total is fulfilled
-                  const totalPaid = orders[orderIndex].splitPayments
-                    .filter((s: any) => s.status === "paid")
-                    .reduce((sum: number, s: any) => sum + (Number(s.amount) || 0), 0);
-
-                  const totalPaidFils = Math.round(totalPaid * 1000);
-                  const orderTotalFils = Math.round((Number(orders[orderIndex].total) || 0) * 1000);
-
-                  // Allow 0.005 range for float precision
-                  if (totalPaidFils >= orderTotalFils - 5) {
-                    orders[orderIndex].status = "تم الدفع وجاري التوصيل";
-                    orders[orderIndex].paymentStatus = "paid";
-                    orders[orderIndex].paidAt = new Date().toISOString();
-                    
-                    // Distribute Gamification Points ONLY IF completely paid
-                    orders[orderIndex].splitPayments.filter((s: any) => s.status === "paid").forEach((p: any) => {
-                        const cleanP = cleanPhone(p.phone);
-                        if (cleanP && appData.customers) {
-                            const eIdx = appData.customers.findIndex((c: any) => cleanPhone(c.phone) === cleanP);
-                            if (eIdx !== -1) {
-                                appData.customers[eIdx].loyaltyPoints = (Number(appData.customers[eIdx].loyaltyPoints) || 0) + (Number(p.amount) || 0);
-                            }
-                        }
-                    });
-                    
-                    console.log(
-                      `[PAYMENT] Split Group fully paid - Order ${baseOrderId} becomes paid!`,
-                    );
-                  }
-                } else {
-                  const isExplicitFailure = [
-                    "FAILED",
-                    "CANCEL",
-                    "CANCELED",
-                    "CANCELLED",
-                    "NOT CAPTURED",
-                    "FAILURE",
-                    "ERROR",
-                    "DECLINED",
-                  ].includes(statusStr);
-                  if (isExplicitFailure) {
-                    orders[orderIndex].splitPayments[splitIdx].status =
-                      "failed";
-                    updated = true;
-                  }
-                }
-              }
-            } else {
-              const currentStatus = orders[orderIndex].status;
-              if (
-                currentStatus === "فشل في عملية الدفع" ||
-                currentStatus === "جديد" ||
-                currentStatus === "بانتظار الدفع" ||
-                currentStatus === "قيد تجميع القطية" ||
-                (currentStatus || "").includes("ملغي")
-              ) {
-                if (status) {
-                  // Success
-                  orders[orderIndex].status = "تم الدفع وجاري التوصيل";
-                  orders[orderIndex].paymentStatus = "paid";
-                  orders[orderIndex].paidAt = new Date().toISOString();
-                  orders[orderIndex].transactionId =
-                    req.body?.reference?.id ||
-                    req.body?.TrackID ||
-                    req.query?.TrackID ||
-                    req.body?.order_id ||
-                    "upayments_auth";
-                  updated = true;
-                  console.log(
-                    `[PAYMENT] Order ${baseOrderId} status updated to تم الدفع وجاري التوصيل via webhook`,
-                  );
-
-                  // Auto-fill splitPayments so the UI sees it as fully paid
-                  if (orders[orderIndex].splitPayments) {
-                    const localTotalPaid = orders[orderIndex].splitPayments
-                      .filter((s: any) => s.status === "paid")
-                      .reduce((sum: number, s: any) => sum + (Number(s.amount) || 0), 0);
-                    const remainder = Number(orders[orderIndex].total) - localTotalPaid;
-                    if (remainder >= 0.005) {
-                      orders[orderIndex].splitPayments.push({
-                        id: "S-" + Date.now().toString(36),
-                        name: "مكمل الفاتورة",
-                        phone: orders[orderIndex].customerPhone || "00000000",
-                        amount: remainder,
-                        status: "paid",
-                        date: new Date().toISOString(),
-                        paymentId: orders[orderIndex].transactionId
-                      });
-                    }
-                  }
-
-                  // Update customer points
-                  const cPhone = cleanPhone(orders[orderIndex].customerPhone);
-                  const custIdx = appData.customers?.findIndex(
-                    (c: any) => cleanPhone(c.phone) === cPhone,
-                  );
-                  if (custIdx !== -1) {
-                    const amountPaid = orders[orderIndex].lastPaymentAmount !== undefined ? Number(orders[orderIndex].lastPaymentAmount) : Number(orders[orderIndex].total) || 0;
-                    appData.customers[custIdx].totalSpent =
-                      (Number(appData.customers[custIdx].totalSpent) || 0) +
-                      amountPaid;
-                    appData.customers[custIdx].loyaltyPoints =
-                      (Number(appData.customers[custIdx].loyaltyPoints) || 0) +
-                      amountPaid;
-                    appData.customers[custIdx].lastUpdated =
-                      new Date().toISOString();
-                  }
-                } else {
-                  const isExplicitFailure = [
-                    "FAILED",
-                    "CANCEL",
-                    "CANCELED",
-                    "CANCELLED",
-                    "NOT CAPTURED",
-                    "FAILURE",
-                    "ERROR",
-                    "DECLINED",
-                  ].includes(statusStr);
-                  if (
-                    isExplicitFailure &&
-                    currentStatus !== "قيد تجميع القطية"
-                  ) {
-                    orders[orderIndex].status = "فشل في عملية الدفع";
-                    orders[orderIndex].paymentStatus = "failed";
-                    updated = true;
-                    console.log(
-                      `[PAYMENT] Order ${baseOrderId} status updated to failed via webhook`,
-                    );
-                  }
-                }
-              }
-            }
-          } else if (invoiceIndex !== -1) {
-            if (isSplit) {
-              const invoiceIndexes = invoices
-                .map((inv: any, idx: number) =>
-                  String(inv.id).toUpperCase() === baseOrderId ? idx : -1,
-                )
-                .filter((idx: number) => idx !== -1);
-
-              invoiceIndexes.forEach((idx: number) => {
-                if (!invoices[idx].splitPayments) invoices[idx].splitPayments = [];
-                const splitIdx = invoices[idx].splitPayments.findIndex(
-                  (s: any) => String(s.id).toUpperCase() === String(splitId).toUpperCase() || String(s.id).toUpperCase() === `S-${String(splitId).toUpperCase()}` || String(splitId).toUpperCase().includes(String(s.id).toUpperCase()),
-                );
-                if (splitIdx !== -1) {
-                  if (status) {
-                    invoices[idx].splitPayments[splitIdx].status = "paid";
-                    invoices[idx].splitPayments[splitIdx].paymentId =
-                      req.body?.reference?.id || req.body?.TrackID || req.query?.TrackID;
-                    
-                    const totalPaid = invoices[idx].splitPayments
-                      .filter((s: any) => s.status === "paid")
-                      .reduce((sum: number, s: any) => sum + (Number(s.amount) || 0), 0);
-                    
-                    const totalPaidFils = Math.round(totalPaid * 1000);
-                    const orderTotalFils = Math.round((Number(invoices[idx].total) || 0) * 1000);
-
-                    if (totalPaidFils >= orderTotalFils - 5) {
-                      invoices[idx].status = "تم الدفع وجاري التوصيل";
-                      invoices[idx].paymentStatus = "paid";
-                      invoices[idx].paidAt = new Date().toISOString();
-                    }
-                    updated = true;
-                  }
-                }
-              });
-            } else {
-              const invoiceIndexes = invoices
-              .map((inv: any, idx: number) =>
-                String(inv.id).toUpperCase() === baseOrderId ? idx : -1,
-              )
-              .filter((idx: number) => idx !== -1);
-
-            const currentStatus = invoices[invoiceIndex].status;
-            const isExplicitFailure =
-              req.body?.status === false ||
-              req.body?.status === "false" ||
-              req.body?.result === false ||
-              req.body?.result === "false" ||
-              req.body?.Result === false ||
-              req.body?.Result === "false" ||
-              [
-                "FAILED",
-                "FAIL",
-                "FAILURE",
-                "CANCEL",
-                "CANCELED",
-                "CANCELLED",
-                "NOT CAPTURED",
-                "DECLINED",
-                "ERROR",
-                "EXPIRED",
-              ].includes(statusStr);
-
-            if (
-              currentStatus === "فشل في عملية الدفع" ||
-              currentStatus === "جديد" ||
-              currentStatus === "بانتظار الدفع" ||
-              currentStatus === "تم الدفع وجاري التوصيل"
-            ) {
-              const transactionId =
-                req.body?.reference?.id ||
-                req.body?.TrackID ||
-                req.query?.TrackID ||
-                req.body?.order_id ||
-                (status ? "upayments_auth" : "upayments_auth_failed");
-
-              if (status) {
-                // Success: update all duplicate invoice records, then keep one copy.
-                invoiceIndexes.forEach((idx: number) => {
-                  invoices[idx].status = "تم الدفع وجاري التوصيل";
-                  invoices[idx].paymentStatus = "paid";
-                  invoices[idx].paidAt = new Date().toISOString();
-                  invoices[idx].transactionId = transactionId;
-                });
-                updated = true;
-                console.log(
-                  `[PAYMENT] Invoice ${orderId} status updated to PAID via webhook`,
-                );
-              } else if (isExplicitFailure) {
-                // Failure: update all duplicate invoice records, then keep one copy.
-                invoiceIndexes.forEach((idx: number) => {
-                  invoices[idx].status = "فشل في عملية الدفع";
-                  invoices[idx].paymentStatus = "failed";
-                  invoices[idx].failedAt = new Date().toISOString();
-                  invoices[idx].transactionId = transactionId;
-                });
-                updated = true;
-                console.log(
-                  `[PAYMENT] Invoice ${orderId} status updated to FAILED via webhook`,
-                );
-              }
-
-              if (updated && invoiceIndexes.length > 1) {
-                const keepIdx = invoiceIndexes[0];
-                invoices = invoices.filter((inv: any, idx: number) => {
-                  if (String(inv.id).toUpperCase() !== baseOrderId) return true;
-                  return idx === keepIdx;
-                });
-                console.log(
-                  `[PAYMENT] Invoice ${orderId} duplicates merged via webhook: kept 1 of ${invoiceIndexes.length}`,
-                );
-              }
-            }
-          }
-          }
-
-          if (updated) {
-            await updateAppData({
-              orders,
-              invoices,
-              customers: appData.customers || [],
-            });
-          }
+          await handlePaymentUpdate(orderId, splitId, status, req.body);
         }
         res.json({ success: true });
       } catch (e) {
@@ -2380,6 +2235,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
         let phone = "";
         if (orderId) {
+          await handlePaymentUpdate(orderId, splitId, isExplicitSuccess, { ...req.body, ...req.query });
+        }
+        
+        if (false) {
           const docRef = doc(db, "appData", "shared_company_data");
           const d = await getAppDataRef();
           const appData = d.data() || {};
@@ -2399,7 +2258,11 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
             if (isSplit) {
               if (!orders[orderIndex].splitPayments) orders[orderIndex].splitPayments = [];
-              const splitIdx = orders[orderIndex].splitPayments.findIndex((s: any) => String(s.id).toUpperCase() === String(splitId).toUpperCase() || String(s.id).toUpperCase() === `S-${String(splitId).toUpperCase()}` || String(splitId).toUpperCase().includes(String(s.id).toUpperCase()));
+              const splitIdx = orders[orderIndex].splitPayments.findIndex((s: any) => {
+                const sid = String(s.id).toUpperCase();
+                const target = String(splitId).toUpperCase();
+                return sid === target || sid === `S-${target}` || target === `S-${sid}` || (sid.length > 5 && target.includes(sid));
+              });
               
               if (splitIdx !== -1) {
                  if (isExplicitSuccess && orders[orderIndex].splitPayments[splitIdx].status !== "paid") {
@@ -2493,10 +2356,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
                   );
                   
                   // Auto-fill splitPayments so the UI sees it as fully paid
-                  if (orders[orderIndex].splitPayments) {
-                    const localTotalPaid = orders[orderIndex].splitPayments
-                      .filter((s: any) => s.status === "paid")
-                      .reduce((sum: number, s: any) => sum + (Number(s.amount) || 0), 0);
+                  if (!orders[orderIndex].splitPayments) orders[orderIndex].splitPayments = [];
+                  const localTotalPaid = orders[orderIndex].splitPayments
+                    .filter((s: any) => String(s.status).toLowerCase() === "paid")
+                    .reduce((sum: number, s: any) => sum + (Number(s.amount) || 0), 0);
                     const remainder = Number(orders[orderIndex].total) - localTotalPaid;
                     if (remainder >= 0.005) {
                       orders[orderIndex].splitPayments.push({
@@ -2524,79 +2387,36 @@ app.get("/api/debug/order/:id", async (req, res) => {
                     appData.customers[custIdx].loyaltyPoints =
                       (Number(appData.customers[custIdx].loyaltyPoints) || 0) +
                       amountPaid;
-                    appData.customers[custIdx].lastUpdated =
-                      new Date().toISOString();
+                    appData.customers[custIdx].lastUpdated = new Date().toISOString();
                   }
                 }
               } else {
-                console.log(
-                  `[PAYMENT] Order ${orderId} unverified return status, waiting for webhook`,
-                );
+                console.log(`[PAYMENT] Order ${orderId} unverified return status`);
               }
             }
-          }
 
           if (invoiceIndex !== -1) {
-            if (!phone)
-              phone =
-                invoices[invoiceIndex].customerPhone ||
-                invoices[invoiceIndex].phone ||
-                "";
+            if (!phone) phone = invoices[invoiceIndex].customerPhone || invoices[invoiceIndex].phone || "";
             const currentStatus = invoices[invoiceIndex].status;
             const normalizedInvoiceId = String(orderId).toUpperCase();
-            const invoiceIndexes = invoices
-              .map((inv: any, idx: number) =>
-                String(inv.id).toUpperCase() === normalizedInvoiceId ? idx : -1,
-              )
-              .filter((idx: number) => idx !== -1);
+            const invoiceIndexes = invoices.map((inv: any, idx: number) => String(inv.id).toUpperCase() === normalizedInvoiceId ? idx : -1).filter((idx: number) => idx !== -1);
 
-            if (
-              currentStatus === "فشل في عملية الدفع" ||
-              currentStatus === "جديد" ||
-              currentStatus === "بانتظار الدفع" ||
-              currentStatus === "تم الدفع وجاري التوصيل"
-            ) {
-              const transactionId =
-                req.body?.reference?.id ||
-                req.body?.TrackID ||
-                req.query?.TrackID ||
-                req.body?.order_id ||
-                req.query?.order_id ||
-                (isExplicitSuccess ? "upayments_auth" : "upayments_auth_failed");
-
+            if (currentStatus === "جديد" || currentStatus === "بانتظار الدفع" || currentStatus === "تم الدفع وجاري التوصيل") {
+              const transactionId = req.body?.reference?.id || req.body?.TrackID || req.query?.TrackID || "upayments_auth";
               if (isExplicitFailure) {
                 invoiceIndexes.forEach((idx: number) => {
                   invoices[idx].status = "فشل في عملية الدفع";
                   invoices[idx].paymentStatus = "failed";
-                  invoices[idx].failedAt = new Date().toISOString();
                   invoices[idx].transactionId = transactionId;
                 });
                 updated = true;
-                console.log(
-                  `[PAYMENT] Invoice ${orderId} marked as FAILED via explicitly cancelled return URL`,
-                );
               } else if (isExplicitSuccess) {
                 invoiceIndexes.forEach((idx: number) => {
                   invoices[idx].status = "تم الدفع وجاري التوصيل";
                   invoices[idx].paymentStatus = "paid";
-                  invoices[idx].paidAt = new Date().toISOString();
                   invoices[idx].transactionId = transactionId;
                 });
                 updated = true;
-                console.log(
-                  `[PAYMENT] Invoice ${orderId} marked as PAID via synchronous return URL`,
-                );
-              }
-
-              if (updated && invoiceIndexes.length > 1) {
-                const keepIdx = invoiceIndexes[0];
-                invoices = invoices.filter((inv: any, idx: number) => {
-                  if (String(inv.id).toUpperCase() !== normalizedInvoiceId) return true;
-                  return idx === keepIdx;
-                });
-                console.log(
-                  `[PAYMENT] Invoice ${orderId} duplicates merged via return URL: kept 1 of ${invoiceIndexes.length}`,
-                );
               }
             }
           }
@@ -2606,7 +2426,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           }
         }
 
-        // Target Base URL for the return button (current environment)
+        // Target Base URL
         let rProtocol = req.headers["x-forwarded-proto"] || req.protocol;
         let rHost = req.headers["x-forwarded-host"] || req.get("host");
         let baseUrl = req.get("origin") || rProtocol + "://" + rHost;
@@ -2814,42 +2634,42 @@ app.get("/api/debug/order/:id", async (req, res) => {
   app.patch("/api/admin/orders/:id/pay", async (req, res) => {
     const { id } = req.params;
     try {
-      const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
-      const data = d.data() || {};
-      const orders = data.orders || [];
-      const invoices = data.invoices || [];
+      let resultData = null;
+      await updateAppDataAtomically((current) => {
+        const orders = [...(current.orders || [])];
+        const invoices = [...(current.invoices || [])];
 
-      const orderIdx = orders.findIndex((o: any) => o.id === id);
-      if (orderIdx === -1) {
+        const orderIdx = orders.findIndex((o: any) => o.id === id);
+        if (orderIdx === -1) return null;
+
+        const orderData = orders[orderIdx];
+        const invoiceData = {
+          ...orderData,
+          id: orderData.id,
+          invoiceId: orderData.id,
+          paymentStatus: "paid",
+          status: "تم الدفع وجاري التوصيل",
+          completedAt: new Date().toISOString(),
+        };
+
+        const existingInvoiceIdx = invoices.findIndex((inv: any) => String(inv.id).toUpperCase() === String(invoiceData.id).toUpperCase());
+        if (existingInvoiceIdx !== -1) {
+          invoices[existingInvoiceIdx] = { ...invoices[existingInvoiceIdx], ...invoiceData };
+        } else {
+          invoices.push(invoiceData);
+        }
+        orders.splice(orderIdx, 1);
+        resultData = invoiceData;
+        return { orders, invoices };
+      });
+
+      if (!resultData) {
         return res.status(404).json({ error: "Order not found" });
       }
 
-      const orderData = orders[orderIdx];
-
-      const invoiceData = {
-        ...orderData,
-        id: orderData.id,
-        invoiceId: orderData.id,
-        paymentStatus: "paid",
-        status: "تم الدفع وجاري التوصيل",
-        completedAt: new Date().toISOString(),
-      };
-
-      const existingInvoiceIdx = invoices.findIndex((inv: any) => String(inv.id).toUpperCase() === String(invoiceData.id).toUpperCase());
-      if (existingInvoiceIdx !== -1) {
-        invoices[existingInvoiceIdx] = { ...invoices[existingInvoiceIdx], ...invoiceData };
-      } else {
-        invoices.push(invoiceData);
-      }
-      // Delete from orders
-      orders.splice(orderIdx, 1);
-
-      await updateAppData({ orders, invoices });
-
       res.json({
         message: "Order moved to invoices successfully",
-        invoiceData,
+        invoiceData: resultData,
       });
     } catch (e) {
       res.status(500).json({ error: "Failed to mark as paid" });
@@ -3088,25 +2908,28 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const allOrders = appData.orders || [];
         const now = Date.now();
         const TIMEOUT = 120 * 60 * 1000;
-        let needsUpdate = false;
+        let expiredIds: string[] = [];
 
-        const updatedOrders = allOrders.map((o: any) => {
+        allOrders.forEach((o: any) => {
           if (o.status === "قيد تجميع القطية" && o.createdAt) {
             const created = new Date(o.createdAt).getTime();
             if (now - created > TIMEOUT) {
-              needsUpdate = true;
-              console.log(`[SPLIT] Auto-cancelling expired order ${o.id}`);
-              return { ...o, status: "ملغي - انتهى وقت القطية" };
+              expiredIds.push(o.id);
             }
           }
-          return o;
         });
 
-        if (needsUpdate) {
-          await updateAppData({
-            orders: updatedOrders,
+        if (expiredIds.length > 0) {
+          console.log(`[SPLIT_BG] Expired: ${expiredIds.join(", ")}`);
+          await updateAppDataAtomically((current) => {
+            const updatedOrders = (current.orders || []).map((o: any) => {
+              if (expiredIds.includes(o.id) && o.status === "قيد تجميع القطية") {
+                 return { ...o, status: "ملغي - انتهى وقت القطية" };
+              }
+              return o;
+            });
+            return { orders: updatedOrders };
           });
-          console.log(`[SPLIT] Background updated timeout orders`);
         }
       } catch (err) {
         console.error("[SPLIT] Background task error:", err);
