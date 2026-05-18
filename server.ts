@@ -637,14 +637,26 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const data = d.data() || {};
       const squads = data.squads || [];
       
-      const enrichedSquads = squads.map((sq: any) => ({
-         ...sq,
-         totalOrders: sq.points || 0,
-         // The db uses "عزوة" and potentially other terms. We should ensure the UI handles these or map them.
-         // Let's pass what's in the DB directly, the UI can display it
-         tier: sq.tier || "برونزية",
-         membersList: (sq.membersList || []).map((m: any) => ({ ...m, orderCount: m.points || 0 })).sort((a: any, b: any) => (b.points || 0) - (a.points || 0))
-      }));
+      const customers = data.customers || [];
+      
+      const enrichedSquads = squads.map((sq: any) => {
+         let teamPoints = 0;
+         const mappedMembers = (sq.membersList || []).map((m: any) => {
+             const cust = customers.find((c: any) => cleanPhone(c.phone) === cleanPhone(m.phone));
+             const realPoints = cust ? (cust.loyaltyPoints !== undefined ? cust.loyaltyPoints : (cust.points || 0)) : (m.points || 0);
+             teamPoints += realPoints;
+             return { ...m, orderCount: realPoints, points: realPoints };
+         }).sort((a: any, b: any) => (b.points || 0) - (a.points || 0));
+         
+         return {
+            ...sq,
+            totalOrders: teamPoints,
+            // The db uses "عزوة" and potentially other terms. We should ensure the UI handles these or map them.
+            // Let's pass what's in the DB directly, the UI can display it
+            tier: sq.tier || "برونزية",
+            membersList: mappedMembers
+         };
+      });
 
       const topSquads = [...enrichedSquads].sort((a,b) => b.totalOrders - a.totalOrders).slice(0, 5);
 
@@ -1263,13 +1275,12 @@ app.get("/api/debug/order/:id", async (req, res) => {
       if (attributedSquad) {
          const sqIndex = squads.findIndex((s:any) => String(s.id) === String(attributedSquad));
          if (sqIndex > -1) {
-             squads[sqIndex].points = (Number(squads[sqIndex].points) || 0) + pointsToAdd;
+             // Do not add points to the squad until the order is paid
              
              if (customerPhone) {
                  if (!squads[sqIndex].membersList) squads[sqIndex].membersList = [];
                  let mIndex = squads[sqIndex].membersList.findIndex((m:any) => cleanPhone(m.phone) === cleanPhoneQuery);
                  if (mIndex > -1) {
-                     squads[sqIndex].membersList[mIndex].points = (Number(squads[sqIndex].membersList[mIndex].points) || 0) + pointsToAdd;
                      if (customerName && (!squads[sqIndex].membersList[mIndex].name || squads[sqIndex].membersList[mIndex].name === "عميل")) {
                          squads[sqIndex].membersList[mIndex].name = customerName;
                      }
@@ -1277,7 +1288,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
                      squads[sqIndex].membersList.push({
                          phone: customerPhone,
                          name: customerName || "عميل",
-                         points: pointsToAdd
+                         points: 0 // Initialize at 0, points are handled via payment webhook
                      });
                      squads[sqIndex].members = squads[sqIndex].membersList.length;
                  }
