@@ -518,17 +518,31 @@ export default function OrderPage() {
         return;
       }
 
-      const payRes = await fetch("/api/create-payment", {
+      const isSplitRepayment = totalPaid > 0 || ((order as any).splitType && (order as any).splitType !== "none");
+      
+      const payEndpoint = isSplitRepayment ? "/api/create-split-payment" : "/api/create-payment";
+      const payBody = isSplitRepayment 
+        ? {
+            amount: Math.max(0.001, orderTotal),
+            name: "باقي الفاتورة",
+            customerMobile: (order as any).customerPhone || phone || "00000000",
+            orderId: order.id,
+            baseUrl: window.location.origin
+          }
+        : {
+            amount: orderTotal,
+            customerName: order.customerName,
+            customerMobile: (order as any).customerPhone || phone,
+            orderId: order.id,
+            isPopup: window !== window.top,
+            description: `دفع للطلب رقم #${order.id}`,
+            baseUrl: window.location.origin
+          };
+
+      const payRes = await fetch(payEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: orderTotal,
-          customerName: order.customerName,
-          customerMobile: (order as any).customerPhone || phone,
-          orderId: order.id,
-          isPopup: window !== window.top,
-          description: `دفع للطلب رقم #${order.id}`,
-        }),
+        body: JSON.stringify(payBody),
       });
 
       let payData: any = {};
@@ -1493,7 +1507,13 @@ export default function OrderPage() {
                             disabled={processingPayment}
                             className="block w-full text-center p-4 rounded-2xl bg-stone-100 text-stone-600 font-bold text-[13px] hover:bg-stone-200 transition-all outline-none disabled:opacity-50"
                           >
-                            {processingPayment ? "جاري التجهيز..." : "غيرت رأيي - دفع الفاتورة بالكامل"}
+                              {processingPayment
+                                ? "جاري التجهيز..."
+                                : ((selectedOrder as any).splitPayments || [])
+                                    .filter((p: any) => p.status === "paid" || p.status === "SUCCESS")
+                                    .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0) > 0
+                                ? `دفع المبلغ المتبقي (${Math.max(0, (selectedOrder.total || 0) - ((selectedOrder as any).splitPayments || []).filter((p: any) => p.status === "paid" || p.status === "SUCCESS").reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0)).toFixed(3)} د.ك)`
+                                : "غيرت رأيي - دفع الفاتورة بالكامل"}
                           </button>
                         </div>
                       )}

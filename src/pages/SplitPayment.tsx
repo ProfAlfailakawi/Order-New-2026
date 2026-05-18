@@ -333,6 +333,7 @@ export default function SplitPayment() {
           name: finalName,
           amount: amountNum,
           customerMobile: String(finalPhone || order.customerPhone || ""),
+          baseUrl: window.location.origin
         }),
       });
       console.log("[DEBUG] Fetch response status:", res.status);
