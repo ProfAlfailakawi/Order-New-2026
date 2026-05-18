@@ -14,6 +14,7 @@ import {
   Star,
   RefreshCcw,
   Users,
+  Crown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
@@ -67,6 +68,13 @@ const TypewriterText = ({
 };
 
 import { calculateItemTotalWithAddons } from "../utils/priceCalculation";
+
+const formatOrderWords = (count: number) => {
+  if (count === 1) return "طلب واحد";
+  if (count === 2) return "طلبين";
+  if (count >= 3 && count <= 10) return `${count} طلبات`;
+  return `${count} طلب`;
+};
 
 export default function OrderPage() {
   const navigate = useNavigate();
@@ -177,6 +185,24 @@ export default function OrderPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const autoOpenedTargetRef = useRef<string | null>(null);
+  const [squadInfo, setSquadInfo] = useState<any>(null);
+
+  useEffect(() => {
+     if (phone && phone.length >= 8) {
+        fetch(`/api/squad-gamification?phone=${encodeURIComponent(phone)}`)
+          .then(res => res.json())
+          .then(data => {
+             if (data.mySquad) {
+                setSquadInfo({
+                   ...data.mySquad,
+                   rank: data.myRank,
+                   memberData: data.myMemberData
+                });
+             }
+          })
+          .catch(() => {});
+     }
+  }, [phone]);
 
   // Clear the payment alert after some time
   useEffect(() => {
@@ -857,7 +883,7 @@ export default function OrderPage() {
                   الطلبات الأخيرة
                 </h3>
                 <span className="px-3 py-1 bg-brand/5 text-brand text-[10px] font-extrabold rounded-full">
-                  {orders.length} طلب
+                  {formatOrderWords(orders.length)}
                 </span>
               </div>
 
@@ -1729,6 +1755,32 @@ export default function OrderPage() {
 
                     {/* Items List */}
                     <div className="space-y-4">
+                      
+                      {/* Squad Bragging Rights */}
+                      {((selectedOrder as any).squadName || (squadInfo && squadInfo.name)) && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 1 }}
+                          className="mb-4 bg-brand rounded-2xl p-4 shadow-sm border border-brand text-white flex items-center justify-between gap-3"
+                        >
+                           <div className="flex flex-col">
+                              <span className="text-[10px] uppercase font-bold text-brand-50 tracking-wider mb-0.5 opacity-80">عضو فعال في</span>
+                              <span className="text-lg font-black tracking-tight flex items-center gap-1.5 leading-none">
+                                {(selectedOrder as any).squadName || squadInfo.name}
+                              </span>
+                           </div>
+                           <div className="flex flex-col items-end">
+                              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center mb-1 shadow-sm">
+                                <Crown className="w-4 h-4 text-white drop-shadow-sm" />
+                              </div>
+                              <span className="text-[11px] font-bold text-white bg-black/20 px-2 py-0.5 rounded-md backdrop-blur-sm">
+                                 تصنيف الديوانية: {((selectedOrder as any).squadTier || squadInfo?.tier || "غير محدد")}
+                              </span>
+                           </div>
+                        </motion.div>
+                      )}
+
                       <h4 className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-2 font-mono border-b border-dashed border-stone-100 pb-2">
                         الأصناف المطلوبة
                       </h4>

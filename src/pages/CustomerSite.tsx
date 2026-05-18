@@ -30,6 +30,9 @@ import {
   AlertTriangle,
   CreditCard,
   PartyPopper,
+  Crown,
+  Users,
+  LogIn,
 } from "lucide-react";
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
@@ -116,6 +119,13 @@ const triggerHapticAndSound = (type?: "success" | "click") => {
   } catch (e) {}
 };
 
+const formatPoints = (count: number) => {
+  if (count === 1) return "نقطة واحدة";
+  if (count === 2) return "نقطتين";
+  if (count >= 3 && count <= 10) return `${count} نقاط`;
+  return `${count} نقطة`;
+};
+
 export default function CustomerSite() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -126,6 +136,13 @@ export default function CustomerSite() {
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isCheckout, setIsCheckout] = useState(false);
+  const [isCreatingSquad, setIsCreatingSquad] = useState(false);
+  const [newSquadName, setNewSquadName] = useState("");
+  const [isSubmittingSquad, setIsSubmittingSquad] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [loginPhone, setLoginPhone] = useState("");
+  const [isJoiningSquad, setIsJoiningSquad] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderSuccessId, setOrderSuccessId] = useState("");
   const [whatsappLink, setWhatsappLink] = useState("");
@@ -141,7 +158,9 @@ export default function CustomerSite() {
 
   const [customerName, setCustomerName] = useState("");
   const [generalNotes, setGeneralNotes] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerPhone, setCustomerPhone] = useState(() => {
+    try { return localStorage.getItem("customer_phone_track") || ""; } catch(e) { return ""; }
+  });
   const [customerPoints, setCustomerPoints] = useState(0);
   const [address, setAddress] = useState<Address>(INITIAL_ADDRESS);
   const [deliveryFee, setDeliveryFee] = useState(0);
@@ -160,6 +179,56 @@ export default function CustomerSite() {
   const [fomoPurchases, setFomoPurchases] = useState<any[]>([]);
   const [fomoIndex, setFomoIndex] = useState(0);
   const [showFomo, setShowFomo] = useState(false);
+  
+  // Gamification & Squads
+  const [squadInfo, setSquadInfo] = useState<any>(null);
+  const [topSquads, setTopSquads] = useState<any[]>([]);
+  const [showSquadModal, setShowSquadModal] = useState(false);
+  const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
+  
+  // Track magic link
+  useEffect(() => {
+    const sId = searchParams.get("squadId");
+    if (sId) {
+      localStorage.setItem("squadId", sId);
+      setActiveSquadId(sId);
+      setShowSquadModal(true);
+      // Clean up URL
+      searchParams.delete("squadId");
+      setSearchParams(searchParams);
+    }
+    const showSquads = searchParams.get("showSquads");
+    if (showSquads === "true") {
+      setShowSquadModal(true);
+      searchParams.delete("showSquads");
+      setSearchParams(searchParams);
+    }
+  }, [searchParams]);
+
+  // Fetch gamification info
+  useEffect(() => {
+     const fetchSquadGamification = async () => {
+        try {
+           const endpoint = `/api/squad-gamification?phone=${encodeURIComponent(customerPhone)}&squadId=${encodeURIComponent(activeSquadId)}`;
+           const res = await fetch(endpoint);
+           if (!res.ok) return;
+           const data = await res.json();
+           setTopSquads(data.topSquads || []);
+           if (data.mySquad || activeSquadId) {
+             if (data.myMemberData?.name && data.myMemberData.name !== "عميل") {
+                setCustomerName(prev => prev || data.myMemberData.name);
+             }
+             setSquadInfo(data.mySquad ? {
+                ...data.mySquad,
+                rank: data.myRank,
+                memberData: data.myMemberData
+             } : null);
+           }
+        } catch(e) {}
+     };
+     fetchSquadGamification();
+  }, [customerPhone, activeSquadId]);
+
   const moodPlaceholders = useMemo(() => [
     "شلون مزاجك اليوم؟ أو عندك عزيمة؟ اكتب ونفزع لك! 👨‍🍳",
     "شنو بخاطرك اليوم؟ اكتب اللي بقلبك ومالك إلا يرضيك 🎯",
@@ -890,6 +959,10 @@ export default function CustomerSite() {
     } else {
       discountAmount = appliedPromo.value;
     }
+  } else if (squadInfo?.tier === "gold") {
+     discountAmount = itemsTotal * 0.10; // 10% discount for gold
+  } else if (squadInfo?.tier === "silver") {
+     discountAmount = itemsTotal * 0.05; // 5% discount for silver
   }
 
   const total = Math.max(0, itemsTotal + deliveryFee - discountAmount);
@@ -1308,6 +1381,9 @@ export default function CustomerSite() {
       source: "customer_website",
       paymentStatus: splitMode ? "split" : "pending",
       generalNotes,
+      squadId: squadInfo?.id || localStorage.getItem("squadId"),
+      squadName: squadInfo?.name,
+      squadTier: squadInfo?.tier,
     };
 
     if (splitMode) {
@@ -1436,8 +1512,6 @@ export default function CustomerSite() {
       // Reset state and immediately redirect
       setCart([]);
       setIsCheckout(false);
-      setCustomerName("");
-      setCustomerPhone("");
       setAddress(INITIAL_ADDRESS);
 
       const p = customerPhone || (orderData as any).customerPhone;
@@ -1705,7 +1779,7 @@ export default function CustomerSite() {
           "الجو يبيله أكل دافي يطيب الخاطر",
         ]),
         desc: getRand([
-          `هذا مو اقتراح عشوائي... ذكاء التطبيق حلل إنك تحب الدفا بالشتاء، واليوم الجو بارد، فالشيف ضبط لك ${product} بهاراته وحرارته زيادة خصيصاً لهاالطقس.`,
+          `لأننا نعرف ذوقك اللي يفضل الدفا وقت الشتاء، واليوم الجو بارد، فالشيف ضبط لك ${product} بهاراته وحرارته زيادة خصيصاً لهاالطقس.`,
           `ندري بخاطرك شيء يدفي.. ولأن الجو اليوم غيم، الشيف جهز لك صينية ${product} دافية تناسب هالجو من قلب!`,
         ]),
         image:
@@ -1764,7 +1838,7 @@ export default function CustomerSite() {
           "قصة الشيف اليوم غير..",
         ]),
         desc: getRand([
-          `مو عشوائي ترا! حللنا إن طلباتك وقت الغدا فيها ذوق مميز، واليوم الشيف حضّر وجبة ${product} كميتها محدودة بس عشان تلحق عليها وتستطعم!`,
+          `ذوقك وقت الغدا مميز عندنا، واليوم الشيف حضّر وجبة ${product} بكمية محدودة عشان لا يطوفك هالطعم!`,
           `الشيف اليوم محصل نعيمي فرش وقرر يسوي 20 طلب ${product} بس.. لا يطوفك هاليوم الإستثنائي!`,
         ]),
         image:
@@ -1901,6 +1975,62 @@ export default function CustomerSite() {
               </div>
             </motion.div>
           </AnimatePresence>
+        )}
+
+        {/* Squad Gamification Banner */}
+        {!isCheckout && (
+          <div className="px-4 sm:px-6 pt-4 pb-2 bg-stone-50/80 backdrop-blur-sm border-b border-stone-100">
+            {squadInfo ? (
+              <div 
+                onClick={() => setShowSquadModal(true)}
+                className="bg-gradient-to-l from-accent/10 to-transparent border border-accent/20 rounded-xl p-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-accent/15 transition-all shadow-sm"
+              >
+                 <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-full bg-white shadow-sm border border-accent/20 flex items-center justify-center text-accent shrink-0 relative">
+                       <Crown className="w-5 h-5" />
+                    </div>
+                    <div className="flex flex-col">
+                       <p className="text-[10px] text-stone-500 font-bold leading-tight">ديوانيتك</p>
+                       <p className="text-sm font-black text-brand leading-tight flex items-center gap-1.5">
+                         {squadInfo.name}
+                       </p>
+                    </div>
+                 </div>
+                 
+                 <div className="flex items-center gap-2 shrink-0">
+                    <div className="text-[10px] font-bold text-accent bg-white px-2 py-1 rounded-full shadow-sm border border-accent/10 flex items-center gap-1">
+                       <Layers className="w-3 h-3" />
+                       <span>مرتبتك: {squadInfo.rank}</span>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-stone-400 rotate-180" />
+                 </div>
+              </div>
+            ) : (
+              <div 
+                onClick={() => setShowSquadModal(true)}
+                className="bg-gradient-to-l from-orange-50 to-transparent border border-orange-100 rounded-xl p-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-orange-100/50 transition-all shadow-sm"
+              >
+                 <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-full bg-white shadow-sm border border-orange-200 flex items-center justify-center text-orange-500 shrink-0 relative">
+                       <Crown className="w-5 h-5" />
+                    </div>
+                    <div className="flex flex-col">
+                       <p className="text-[10px] text-stone-500 font-bold leading-tight">تحدي الدواوين 👑</p>
+                       <p className="text-sm font-black text-brand leading-tight flex items-center gap-1.5">
+                         {topSquads.length > 0 ? `${topSquads[0].name} بالصدارة!` : "أسس أو ادخل ديوانيتك!"} 
+                       </p>
+                    </div>
+                 </div>
+                 
+                 <div className="flex items-center gap-2 shrink-0">
+                    <div className="text-[10px] font-bold text-orange-600 bg-white px-2 py-1 rounded-full shadow-sm border border-orange-100 flex items-center gap-1">
+                       <span>سجل دخول / أسس</span>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-stone-400 rotate-180" />
+                 </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Interactive Stories Filter */}
@@ -2798,6 +2928,7 @@ export default function CustomerSite() {
               address={address}
               regions={regions}
               settings={settings}
+              squadInfo={squadInfo}
               onRegionChange={handleRegionChange}
               setCustomerName={setCustomerName}
               setCustomerPhone={setCustomerPhone}
@@ -2822,6 +2953,359 @@ export default function CustomerSite() {
               discountAmount={discountAmount}
             />
           )}
+        </AnimatePresence>
+
+        {/* Squad Gamification Modal */}
+        <AnimatePresence>
+           {showSquadModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[100] flex items-end justify-center bg-brand/40 backdrop-blur-sm"
+                onClick={() => setShowSquadModal(false)}
+              >
+                <motion.div
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  className="bg-stone-50 w-full max-w-md rounded-t-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                   <div className="p-5 bg-white border-b border-stone-100 flex items-center justify-between shrink-0">
+                      <div className="flex flex-col">
+                         <h3 className="font-black text-xl text-brand flex items-center gap-2">
+                            <Crown className="w-5 h-5 text-accent" />
+                            {squadInfo ? squadInfo.name : "تحدي الدواوين 🏆"}
+                         </h3>
+                         <p className="text-stone-500 text-xs font-bold mt-1">
+                           {squadInfo ? "ديوانيتك الحالية" : "وين ديوانيتكم بالصدارة؟"}
+                         </p>
+                      </div>
+                      <button
+                        onClick={() => setShowSquadModal(false)}
+                        className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 hover:text-brand hover:bg-stone-200 transition-colors"
+                      >
+                        <X className="w-4 h-4 text-stone-500 hover:text-brand transition-colors" />
+                      </button>
+                   </div>
+                   
+                   <div className="flex-1 overflow-y-auto p-5 pb-8 custom-scrollbar">
+                      <div className="flex flex-col gap-6">
+                         
+                         {/* Tier & Progress */}
+                         {squadInfo ? (
+                           <div className="bg-white rounded-2xl p-5 border border-stone-100 shadow-sm flex flex-col items-center justify-center text-center">
+                              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-accent mb-3 relative">
+                                 <Crown className="w-8 h-8" />
+                                 <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full border-2 border-white bg-yellow-400"></div>
+                              </div>
+                              <h4 className="font-black text-lg text-brand mb-1">
+                                 تصنيف: {squadInfo.tier}
+                              </h4>
+                              <p className="text-sm font-bold text-stone-500 mb-4">
+                                 كل ١ دينار = ١ نقطة لجميع أعضاء الديوانية بناءً على أرقام هواتفهم.
+                              </p>
+                              
+                              <div className="w-full">
+                                 <p className="text-xs font-bold text-stone-500">
+                                       مجموع النقاط: {squadInfo.totalOrders} نقطة
+                                 </p>
+                              </div>
+                              
+                              {customerPhone ? (
+                                 <button 
+                                    onClick={() => {
+                                       const link = `https://${window.location.host}/?squadId=${squadInfo.id}`;
+                                       if (navigator.clipboard && window.isSecureContext) {
+                                          navigator.clipboard.writeText(link).then(() => {
+                                             alert("تم نسخ رابط الدعوة بنجاح! شاركه مع ربعك.");
+                                          }).catch(() => {
+                                             prompt("رابط الدعوة (لا يمكن النسخ التلقائي، انسخه يدوياً):", link);
+                                          });
+                                       } else {
+                                          prompt("رابط الدعوة (انسخه يدوياً أو شاركه):", link);
+                                       }
+                                    }}
+                                    className="w-full mt-4 bg-stone-100 hover:bg-stone-200 text-brand font-black text-sm py-3 rounded-xl transition-colors"
+                                 >
+                                    نسخ رابط الدعوة 🔗
+                                 </button>
+                              ) : (
+                                 <div className="w-full mt-4 bg-orange-50 border border-orange-100 p-4 rounded-xl flex flex-col gap-3">
+                                    <h4 className="font-bold text-sm text-brand">أنت مو مسجل ويانا! 🧐</h4>
+                                    <p className="text-xs font-bold text-stone-500">سجل بياناتك عشان تنضم لديوانية {squadInfo.name} وتحسب طلباتك وياهم.</p>
+                                    <input 
+                                       type="text"
+                                       value={guestName}
+                                       onChange={(e) => setGuestName(e.target.value)}
+                                       placeholder="الاسم الكريم"
+                                       className="w-full text-sm bg-white border border-stone-200 rounded-lg px-3 py-2.5 outline-none font-bold placeholder:font-normal"
+                                    />
+                                    <input 
+                                       type="tel"
+                                       value={guestPhone}
+                                       onChange={(e) => {
+                                          const val = normalizeDigits(e.target.value).replace(/[^0-9]/g, "");
+                                          if (val.length <= 8) setGuestPhone(val);
+                                       }}
+                                       placeholder="رقم الهاتف (8 أرقام)"
+                                       className="w-full text-sm bg-white border border-stone-200 rounded-lg px-3 py-2.5 outline-none font-bold placeholder:font-normal text-right"
+                                       dir="ltr"
+                                    />
+                                    <button 
+                                       disabled={isJoiningSquad || guestName.trim().length === 0 || guestPhone.replace(/[^0-9]/g, "").length < 8}
+                                       onClick={async () => {
+                                          setIsJoiningSquad(true);
+                                          const cleanP = guestPhone.replace(/[^0-9]/g, "");
+                                          try {
+                                             const res = await fetch("/api/squad-join", {
+                                                method: "POST",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({ name: guestName, phone: cleanP, squadId: squadInfo.id }),
+                                             });
+                                             const data = await res.json();
+                                             if (data.success) {
+                                                setCustomerName(guestName);
+                                                setCustomerPhone(cleanP);
+                                                localStorage.setItem("customer_phone_track", cleanP);
+                                                alert("تم الانضمام للديوانية بنجاح! 🎉");
+                                             } else {
+                                                alert("حدث خطأ أثناء الانضمام");
+                                             }
+                                          } catch (e) {
+                                             alert("حدث خطأ");
+                                          }
+                                          setIsJoiningSquad(false);
+                                       }}
+                                       className="w-full bg-brand text-white font-black text-sm py-2.5 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                                    >
+                                       {isJoiningSquad ? "..." : "تأكيد الانضمام 🚀"}
+                                    </button>
+                                 </div>
+                              )}
+                           </div>
+                         ) : (
+                           <div className="bg-orange-50 rounded-2xl p-5 border border-orange-100 shadow-sm flex flex-col items-center justify-center text-center">
+                              <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 mb-3">
+                                 <Users className="w-8 h-8" />
+                              </div>
+                              <h4 className="font-black text-lg text-brand mb-1">
+                                 مو مسجل بأي ديوانية! 🧐
+                              </h4>
+                              <p className="text-sm font-bold text-stone-600 mb-4 px-2">
+                                 ادخل من رابط دعوة الديوانية الخاص بربعك عشان تبدون تيمعون طلبات وتاخذون خصم يوصل لـ ١٠٪ وأطباق مجانية!
+                              </p>
+
+                              {/* New: Quick identification for existing members */}
+                              <div className="w-full bg-white/50 border border-orange-100 p-3 rounded-xl mb-4 text-right">
+                                 <h5 className="text-[10px] font-black text-orange-400 mb-2 uppercase tracking-wider">عندك ديوانية مسبقة؟ سجل دخولك بالرقم:</h5>
+                                 <div className="flex gap-2">
+                                    <input 
+                                       type="tel"
+                                       value={loginPhone}
+                                       placeholder="رقم هاتفك الـ ٨ أرقام"
+                                       className="flex-1 text-sm bg-white border border-stone-100 rounded-lg px-3 py-2 outline-none font-bold placeholder:font-normal text-right"
+                                       dir="ltr"
+                                       onChange={(e) => {
+                                          const val = normalizeDigits(e.target.value).replace(/[^0-9]/g, "");
+                                          if (val.length <= 8) {
+                                             setLoginPhone(val);
+                                          }
+                                          if (val.length === 8) {
+                                             setCustomerPhone(val);
+                                             localStorage.setItem("customer_phone_track", val);
+                                          }
+                                       }}
+                                    />
+                                    <div className="bg-orange-100 text-orange-500 p-2 rounded-lg">
+                                       <LogIn className="w-4 h-4" />
+                                    </div>
+                                 </div>
+                              </div>
+
+                              <div className="w-full h-px bg-orange-200/50 my-2"></div>
+                              <h4 className="font-bold text-sm text-brand mb-3">أو تقدر تأسس ديوانيتك الخاصة؟</h4>
+
+                              {isCreatingSquad ? (
+                                 <div className="w-full flex flex-col gap-2 mt-1 text-right">
+                                   {!customerPhone && (
+                                     <>
+                                        <input 
+                                           type="text"
+                                           value={guestName}
+                                           onChange={(e) => setGuestName(e.target.value)}
+                                           placeholder="الاسم الكريم (مؤسس الديوانية)"
+                                           className="w-full text-sm bg-white border border-orange-200 rounded-xl px-3 py-2 outline-none font-bold placeholder:font-normal"
+                                        />
+                                        <input 
+                                           type="tel"
+                                           value={guestPhone}
+                                           onChange={(e) => {
+                                              const val = normalizeDigits(e.target.value).replace(/[^0-9]/g, "");
+                                              if (val.length <= 8) setGuestPhone(val);
+                                           }}
+                                           placeholder="رقم الهاتف (8 أرقام)"
+                                           className="w-full text-sm bg-white border border-orange-200 rounded-xl px-3 py-2 outline-none font-bold placeholder:font-normal text-right"
+                                           dir="ltr"
+                                        />
+                                     </>
+                                   )}
+                                   <div className="w-full flex gap-2">
+                                     <input 
+                                        type="text" 
+                                        value={newSquadName}
+                                        onChange={(e) => setNewSquadName(e.target.value)}
+                                        placeholder="اسم الديوانية (مثال: ديوانية الفيلكاوي)"
+                                        className="flex-1 text-sm bg-white border border-orange-200 rounded-xl px-3 py-2 outline-none font-bold placeholder:font-normal"
+                                     />
+                                     <button 
+                                        onClick={async () => {
+                                           let finalPhone = customerPhone;
+                                           let finalName = customerName;
+                                           if (!customerPhone) {
+                                              const cleanP = guestPhone.replace(/[^0-9]/g, "");
+                                              if (guestName.trim().length === 0 || cleanP.length < 8) {
+                                                 alert("يرجى إدخال اسمك ورقم هاتفك بشكل صحيح لتأسيس الديوانية!");
+                                                 return;
+                                              }
+                                              finalPhone = cleanP;
+                                              finalName = guestName.trim();
+                                              setCustomerPhone(finalPhone);
+                                              setCustomerName(finalName);
+                                              localStorage.setItem("customer_phone_track", finalPhone);
+                                           }
+
+                                           if (!newSquadName.trim()) {
+                                              alert("يرجى إدخال اسم الديوانية");
+                                              return;
+                                           }
+                                           setIsSubmittingSquad(true);
+                                           try {
+                                              const res = await fetch("/api/squad-create", {
+                                                 method: "POST",
+                                                 headers: { "Content-Type": "application/json" },
+                                                 body: JSON.stringify({ name: newSquadName, phone: finalPhone, customerName: finalName }),
+                                              });
+                                              const data = await res.json();
+                                              if (data.success) {
+                                                 localStorage.setItem("squadId", data.squad.id);
+                                                 setActiveSquadId(data.squad.id);
+                                                 setIsCreatingSquad(false);
+                                                 
+                                                 const inviteLink = `https://${window.location.host}/?squadId=${data.squad.id}`;
+                                                 navigator.clipboard.writeText(inviteLink).then(() => {
+                                                    alert(`مبروك! تم تأسيس الديوانية بنجاح 👑\n\nتم نسخ رابط الدعوة (${inviteLink}) شاركه مع ربعك!`);
+                                                 }).catch(() => {
+                                                    alert(`مبروك! تم تأسيس الديوانية بنجاح 👑\n\nهذا رابط الدعوة مالك: ${inviteLink}`);
+                                                 });
+                                              } else {
+                                                 alert("حدث خطأ أثناء الإنشاء");
+                                              }
+                                           } catch (e) {
+                                              alert("حدث خطأ");
+                                           }
+                                           setIsSubmittingSquad(false);
+                                        }}
+                                        disabled={isSubmittingSquad || newSquadName.trim().length === 0 || (!customerPhone && (guestName.trim().length === 0 || guestPhone.length < 8))}
+                                        className="bg-brand text-white font-black px-4 rounded-xl text-xs hover:bg-brand/90 transition-colors disabled:opacity-50 shrink-0"
+                                     >
+                                        {isSubmittingSquad ? "..." : "تأكيد"}
+                                     </button>
+                                   </div>
+                                 </div>
+                              ) : (
+                                 <button 
+                                    onClick={() => setIsCreatingSquad(true)}
+                                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black text-sm py-3 rounded-xl transition-colors shadow-sm"
+                                 >
+                                    تأسيس ديوانية جديدة ✨
+                                 </button>
+                              )}
+                           </div>
+                         )}
+
+                         {/* Internal Leaderboard */}
+                         {squadInfo && (
+                           <div>
+                              <h4 className="font-black text-brand text-lg mb-3 flex items-center gap-2">
+                                 <User className="w-5 h-5 text-accent" />
+                                 ترتيب الأعضاء (ملك الديوانية)
+                              </h4>
+                              <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden flex flex-col">
+                                 {squadInfo.membersList?.map((mem: any, idx: number) => (
+                                    <div key={idx} className={cn("flex items-center justify-between p-4 border-b border-stone-50", mem.phone === squadInfo.memberData?.phone ? "bg-accent/5 font-bold" : "")}>
+                                       <div className="flex items-center gap-3">
+                                          <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center font-black text-stone-400 text-sm shrink-0">
+                                             {idx + 1}
+                                          </div>
+                                          <div className="flex flex-col">
+                                             <span className={cn("text-sm", mem.phone === squadInfo.memberData?.phone ? "text-brand font-black" : "text-stone-700 font-bold")}>
+                                                {mem.name || "عضو"} {mem.phone === squadInfo.memberData?.phone && "(أنت)"}
+                                             </span>
+                                          </div>
+                                       </div>
+                                       <div className="bg-stone-50 px-3 py-1 rounded-full text-xs font-bold text-stone-600 border border-stone-100">
+                                          {formatPoints(mem.orderCount)}
+                                       </div>
+                                    </div>
+                                 ))}
+                                 {(!squadInfo.membersList || squadInfo.membersList.length === 0) && (
+                                    <div className="p-6 text-center text-stone-400 font-bold text-sm">لا يوجد أعضاء بعد</div>
+                                 )}
+                              </div>
+                           </div>
+                         )}
+
+                         {/* Global Leaderboard */}
+                         {topSquads && topSquads.length > 0 && (
+                            <div>
+                               <h4 className="font-black text-brand text-lg mb-3 flex items-center gap-2">
+                                  <Landmark className="w-5 h-5 text-accent" />
+                                  لوحة صدارة الدواوين في الكويت
+                               </h4>
+                               <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden flex flex-col">
+                                  {topSquads.map((sq: any, idx: number) => (
+                                     <div key={idx} className={cn("flex items-center justify-between p-4 flex-wrap gap-2 border-b border-stone-50", sq.id === squadInfo?.id ? "bg-accent/5" : "")}>
+                                        <div className="flex items-center gap-3">
+                                           <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shrink-0", 
+                                              idx === 0 ? "bg-yellow-100 text-yellow-700" :
+                                              idx === 1 ? "bg-stone-200 text-stone-600" :
+                                              idx === 2 ? "bg-orange-100 text-orange-700" :
+                                              "bg-stone-50 text-stone-400"
+                                           )}>
+                                              {idx + 1}
+                                           </div>
+                                           <div className="flex flex-col">
+                                              <span className={cn("text-sm transition-colors", sq.id === squadInfo?.id ? "text-brand font-black" : "text-stone-700 font-bold")}>
+                                                 {sq.name}
+                                              </span>
+                                           </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                           <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-bold",
+                                              sq.tier === "gold" ? "bg-yellow-100 text-yellow-700" :
+                                              sq.tier === "silver" ? "bg-stone-200 text-stone-700" :
+                                              "bg-orange-100 text-orange-800"
+                                           )}>
+                                             {sq.tier === "gold" ? "ذهبية" : sq.tier === "silver" ? "فضية" : "برونزية"}
+                                           </span>
+                                           <div className="bg-white shadow-sm px-2 py-1 rounded-md text-xs font-bold text-accent border border-stone-100">
+                                              {formatPoints(sq.totalOrders)}
+                                           </div>
+                                        </div>
+                                     </div>
+                                  ))}
+                               </div>
+                            </div>
+                         )}
+
+                      </div>
+                   </div>
+                </motion.div>
+              </motion.div>
+           )}
         </AnimatePresence>
     </>
   );
@@ -3723,6 +4207,7 @@ function CheckoutOverlay({
   validatePromo,
   isValidatingPromo,
   discountAmount,
+  squadInfo,
 }: any) {
   const [regionSearch, setRegionSearch] = useState("");
   const [showRegions, setShowRegions] = useState(false);
@@ -3788,6 +4273,22 @@ function CheckoutOverlay({
           ) : step === "cart" ? (
             <div className="animate-in slide-in-from-right-4 fade-in duration-300">
               <div className="space-y-4">
+                {squadInfo && (
+                  <div className="bg-gradient-to-r from-accent/10 to-transparent border border-accent/20 rounded-2xl p-4 shadow-sm flex flex-col gap-3 relative overflow-hidden">
+                     <div className="absolute top-0 right-0 w-32 h-32 bg-accent opacity-5 blur-3xl rounded-full translate-x-10 -translate-y-10"></div>
+                     <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-accent/20 flex items-center justify-center text-accent shrink-0 relative z-10">
+                           <Crown className="w-6 h-6" />
+                        </div>
+                        <div className="flex flex-col relative z-10">
+                           <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">ديوانيتك الحالية</span>
+                           <span className="text-base font-black text-brand leading-tight">
+                              {squadInfo.name} - تصنيف: {squadInfo.tier}
+                           </span>
+                        </div>
+                     </div>
+                  </div>
+                )}
                 {(() => {
                   const totalQty = cart.reduce(
                     (s: number, i: any) => s + i.quantity,
