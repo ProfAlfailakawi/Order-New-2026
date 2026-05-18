@@ -1,5 +1,5 @@
 import { DEFAULT_GLOBAL_LOGO } from "../constants";
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -56,6 +56,7 @@ import {
 import { ZenSplashScreen } from "../components/ZenSplashScreen";
 import { DynamicEnvironment } from "../components/DynamicEnvironment";
 import { redirectToPayment } from "../utils/redirect";
+import { SquadModalContent } from "../components/SquadModalContent";
 
 const INITIAL_ADDRESS: Address = {
   region: "",
@@ -126,10 +127,157 @@ const formatPoints = (count: number) => {
   return `${count} نقطة`;
 };
 
+const INITIAL_SQUAD_TIERS = [
+  { id: "bronze", name: "شلة ديوانية", minPoints: 0, maxPoints: 99, color: "text-amber-700", bg: "bg-amber-50", icon: "🤝", benefit: "ابنوا ديوانيتكم! جمعوا نقاط أكثر لفتح المزايا." },
+  { id: "silver", name: "عزوة", minPoints: 100, maxPoints: 499, color: "text-slate-600", bg: "bg-slate-100", icon: "🛡️", benefit: "خصم ثابت ٥٪ على كافة الطلبات لأعضاء الديوانية." },
+  { id: "gold", name: "نواخذة", minPoints: 500, maxPoints: 1499, color: "text-yellow-600", bg: "bg-yellow-50", icon: "👑", benefit: "خصم ثابت ١٠٪ على كافة الطلبات! أنتم فخرنا." },
+  { id: "diamond", name: "شيوخ", minPoints: 1500, maxPoints: 999999, color: "text-sky-600", bg: "bg-sky-50", icon: "🦅", benefit: "خصم ١٥٪ وتوصيل مجاني مدى الحياة! أسياد المكان." }
+];
+
+const INITIAL_LOYALTY_TIERS = [
+  { id: "bronze", name: "شلة ديوانية", minPoints: 0, maxPoints: 99, color: "text-amber-700", bg: "bg-amber-50", icon: "🤝", benefit: "بداية أسطورة! طلعاتك الياية فيها مفاجآت." },
+  { id: "silver", name: "عزوة", minPoints: 100, maxPoints: 499, color: "text-slate-600", bg: "bg-slate-100", icon: "🛡️", benefit: "خصم ٥٪ تلقائي على جميع طلباتك!" },
+  { id: "gold", name: "نواخذة", minPoints: 500, maxPoints: 1499, color: "text-yellow-600", bg: "bg-yellow-50", icon: "👑", benefit: "خصم ١٠٪ وعروض حصرية لك بس." },
+  { id: "diamond", name: "شيوخ", minPoints: 1500, maxPoints: 999999, color: "text-sky-600", bg: "bg-sky-50", icon: "🦅", benefit: "خصم ١٥٪ + توصيل مجاني مدى الحياة!" }
+];
+
 export default function CustomerSite() {
+  const [settings, setSettings] = useState<any>({});
+  
+  const LOYALTY_TIERS = useMemo(() => {
+    return (settings.loyaltyTiers && settings.loyaltyTiers.length > 0) 
+      ? settings.loyaltyTiers 
+      : INITIAL_LOYALTY_TIERS;
+  }, [settings.loyaltyTiers]);
+
+  const SQUAD_TIERS = useMemo(() => {
+    return (settings.squadTiers && settings.squadTiers.length > 0) 
+      ? settings.squadTiers 
+      : INITIAL_SQUAD_TIERS;
+  }, [settings.squadTiers]);
+
+  const getLoyaltyTier = useCallback((points: number) => {
+    return LOYALTY_TIERS.find((t: any) => points >= t.minPoints && points <= t.maxPoints) || LOYALTY_TIERS[0];
+  }, [LOYALTY_TIERS]);
+
+  const getSquadTier = useCallback((points: number) => {
+    return SQUAD_TIERS.find((t: any) => points >= t.minPoints && points <= t.maxPoints) || SQUAD_TIERS[SQUAD_TIERS.length - 1];
+  }, [SQUAD_TIERS]);
+
+  const LoyaltyTierCard = ({ customerPoints, customerName }: { customerPoints: number, customerName: string }) => {
+    const currentTier = useMemo(() => getLoyaltyTier(customerPoints), [customerPoints]);
+    const nextTierIndex = useMemo(() => LOYALTY_TIERS.indexOf(currentTier) + 1, [currentTier, LOYALTY_TIERS]);
+    const nextTier = useMemo(() => nextTierIndex < LOYALTY_TIERS.length ? LOYALTY_TIERS[nextTierIndex] : null, [nextTierIndex, LOYALTY_TIERS]);
+    
+    const progressPercent = useMemo(() => {
+      if (!nextTier) return 100;
+      const range = nextTier.minPoints - currentTier.minPoints;
+      const currentProgress = customerPoints - currentTier.minPoints;
+      return Math.min(100, Math.max(0, (currentProgress / (range || 1)) * 100));
+    }, [customerPoints, currentTier, nextTier]);
+
+    return (
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={cn(
+          "rounded-[32px] p-6 border-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden transition-all duration-500", 
+          currentTier.bg, 
+          currentTier.id === 'diamond' ? 'border-sky-200' : currentTier.id === 'gold' ? 'border-yellow-200' : 'border-stone-100'
+        )}
+      >
+        {/* Glow Effects */}
+        {(currentTier.id === 'gold' || currentTier.id === 'diamond') && (
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <motion.div 
+                    animate={{ 
+                      rotate: 360,
+                      scale: [1, 1.2, 1]
+                    }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                    className={cn(
+                      "absolute -top-24 -right-24 w-64 h-64 blur-3xl opacity-30",
+                      currentTier.id === 'gold' ? 'bg-yellow-400' : 'bg-sky-400'
+                    )}
+                />
+            </div>
+        )}
+        
+        <div className="flex items-center justify-between mb-5 relative z-10">
+          <div className="flex items-center gap-4">
+            <motion.div 
+              whileHover={{ scale: 1.1, rotate: 10 }}
+              className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center text-3xl shrink-0"
+            >
+              {currentTier.icon}
+            </motion.div>
+            <div className="text-right">
+              <h3 className="text-xl font-black text-brand flex items-center gap-2">
+                مستوى {currentTier.name}
+                {currentTier.id === 'diamond' && <Crown className="w-5 h-5 text-sky-500 fill-current" />}
+              </h3>
+              <p className="text-xs font-bold text-stone-500">
+                 حياك الله يا {customerName || "بطل"}! رصيدك {customerPoints} {formatPoints(customerPoints)}
+              </p>
+            </div>
+          </div>
+          <div className="hidden sm:block">
+             <div className="px-3 py-1 bg-white/60 rounded-full border border-white/40">
+                <span className="text-[10px] font-black uppercase tracking-tighter opacity-40 text-brand">رادار الولاء</span>
+             </div>
+          </div>
+        </div>
+
+        <div className="relative z-10">
+           {nextTier ? (
+             <>
+               <div className="flex justify-between items-end mb-2.5 px-0.5">
+                 <p className="text-xs font-bold text-brand">
+                    <span className="opacity-60">باقي لك</span> <span className="text-accent underline font-black mx-0.5">{nextTier.minPoints - customerPoints}</span> <span className="opacity-60">وتصير</span> <span className="font-black text-stone-800">{nextTier.name}!</span> 🚀
+                 </p>
+                 <span className="text-[10px] font-black text-stone-400">
+                   {Math.round(progressPercent)}%
+                 </span>
+               </div>
+               <div className="h-3 bg-white/80 rounded-full overflow-hidden border border-stone-100/50 p-0.5 shadow-inner">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progressPercent}%` }}
+                    transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                    className={cn(
+                      "h-full rounded-full relative overflow-hidden", 
+                      currentTier.id === 'diamond' ? 'bg-sky-500' : currentTier.id === 'gold' ? 'bg-yellow-500' : 'bg-brand'
+                    )}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                  </motion.div>
+               </div>
+             </>
+           ) : (
+             <div className="p-4 bg-sky-500/10 rounded-2xl border border-sky-200/50 flex items-center gap-3">
+                <div className="bg-sky-500 p-2 rounded-lg text-white">
+                  <Crown className="w-5 h-5" />
+                </div>
+                <div className="text-right">
+                  <h4 className="font-black text-sm text-sky-700">لقد وصلت لقمة الهرم!</h4>
+                  <p className="text-[10px] font-bold text-sky-600/80">أنت الحين أسطورة ماسيّة، كل الدلع لك.</p>
+                </div>
+             </div>
+           )}
+
+           <div className="mt-6 p-4 bg-white/40 backdrop-blur-sm rounded-2xl border border-white/20 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">🎁</div>
+              <div>
+                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-0.5">مكتسباتك</p>
+                <p className="text-[11px] font-black text-brand leading-tight">{currentTier.benefit}</p>
+              </div>
+           </div>
+        </div>
+      </motion.div>
+    );
+  };
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [settings, setSettings] = useState<any>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [topProducts, setTopProducts] = useState<Product[]>([]);
@@ -186,7 +334,84 @@ export default function CustomerSite() {
   const [userSquads, setUserSquads] = useState<any[]>([]);
   const [topSquads, setTopSquads] = useState<any[]>([]);
   const [showSquadModal, setShowSquadModal] = useState(false);
+  const [activeSquadTab, setActiveSquadTab] = useState<"overview"|"leaderboard"|"tiers">("overview");
   const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
+
+  const fetchSquadGamification = useCallback(async () => {
+    try {
+       const endpoint = `/api/squad-gamification?phone=${encodeURIComponent(customerPhone)}&squadId=${encodeURIComponent(activeSquadId)}`;
+       const res = await fetch(endpoint);
+       if (!res.ok) return;
+       const data = await res.json();
+       setTopSquads(data.topSquads || []);
+       setUserSquads(data.userSquads || []);
+       if (data.mySquad || activeSquadId) {
+         if (data.myMemberData?.name && data.myMemberData.name !== "عميل") {
+            setCustomerName(prev => prev || data.myMemberData.name);
+         }
+         setSquadInfo(data.mySquad ? {
+            ...data.mySquad,
+            rank: data.myRank,
+            memberData: data.myMemberData
+         } : null);
+       }
+    } catch(e) {}
+  }, [customerPhone, activeSquadId]);
+
+  const handleCreateSquad = async () => {
+    if (!newSquadName.trim() || !guestPhone.trim()) {
+       alert("يرجى إدخال اسم الديوانية ورقم هاتفك");
+       return;
+    }
+    setIsSubmittingSquad(true);
+    try {
+       const res = await fetch("/api/squad-create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+             name: newSquadName,
+             phone: guestPhone,
+             customerName: guestName || "عميل"
+          })
+       });
+       if (res.ok) {
+          const data = await res.json();
+          setCustomerPhone(guestPhone);
+          localStorage.setItem("customer_phone_track", guestPhone);
+          setActiveSquadId(data.squad.id.toString());
+          setIsCreatingSquad(false);
+          await fetchSquadGamification();
+       }
+    } catch(e) {}
+    setIsSubmittingSquad(false);
+  };
+
+  const handleJoinSquad = async (squadId: string) => {
+    if (!guestPhone.trim()) {
+       alert("يرجى إدخال رقم هاتفك للمتابعة");
+       return;
+    }
+    setIsSubmittingSquad(true);
+    try {
+       const res = await fetch("/api/squad-join", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+             phone: guestPhone,
+             squadId: squadId,
+             name: guestName || "عميل"
+          })
+       });
+       if (res.ok) {
+          setCustomerPhone(guestPhone);
+          localStorage.setItem("customer_phone_track", guestPhone);
+          setActiveSquadId(squadId);
+          setIsJoiningSquad(false);
+          await fetchSquadGamification();
+       }
+    } catch(e) {}
+    setIsSubmittingSquad(false);
+  };
   
   // Track magic link
   useEffect(() => {
@@ -219,28 +444,8 @@ export default function CustomerSite() {
 
   // Fetch gamification info
   useEffect(() => {
-     const fetchSquadGamification = async () => {
-        try {
-           const endpoint = `/api/squad-gamification?phone=${encodeURIComponent(customerPhone)}&squadId=${encodeURIComponent(activeSquadId)}`;
-           const res = await fetch(endpoint);
-           if (!res.ok) return;
-           const data = await res.json();
-           setTopSquads(data.topSquads || []);
-           setUserSquads(data.userSquads || []);
-           if (data.mySquad || activeSquadId) {
-             if (data.myMemberData?.name && data.myMemberData.name !== "عميل") {
-                setCustomerName(prev => prev || data.myMemberData.name);
-             }
-             setSquadInfo(data.mySquad ? {
-                ...data.mySquad,
-                rank: data.myRank,
-                memberData: data.myMemberData
-             } : null);
-           }
-        } catch(e) {}
-     };
      fetchSquadGamification();
-  }, [customerPhone, activeSquadId]);
+  }, [fetchSquadGamification]);
 
   const moodPlaceholders = useMemo(() => [
     "شلون مزاجك اليوم؟ أو عندك عزيمة؟ اكتب ونفزع لك! 👨‍🍳",
@@ -975,10 +1180,15 @@ export default function CustomerSite() {
     } else {
       discountAmount = appliedPromo.value;
     }
-  } else if (squadInfo?.tier === "gold") {
-     discountAmount = itemsTotal * 0.10; // 10% discount for gold
-  } else if (squadInfo?.tier === "silver") {
-     discountAmount = itemsTotal * 0.05; // 5% discount for silver
+  } else if (squadInfo) {
+    const dynamicTierId = getSquadTier(squadInfo.totalOrders || 0).id;
+    if (dynamicTierId === "diamond") {
+      discountAmount = itemsTotal * 0.15; // 15% discount for diamond
+    } else if (dynamicTierId === "gold") {
+      discountAmount = itemsTotal * 0.10; // 10% discount for gold
+    } else if (dynamicTierId === "silver") {
+      discountAmount = itemsTotal * 0.05; // 5% discount for silver
+    }
   }
 
   const total = Math.max(0, itemsTotal + deliveryFee - discountAmount);
@@ -2014,10 +2224,6 @@ export default function CustomerSite() {
                  </div>
                  
                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="text-[10px] font-bold text-accent bg-white px-2 py-1 rounded-full shadow-sm border border-accent/10 flex items-center gap-1">
-                       <Layers className="w-3 h-3" />
-                       <span>مرتبتك: {squadInfo.rank}</span>
-                    </div>
                     <ArrowRight className="w-4 h-4 text-stone-400 rotate-180" />
                  </div>
               </div>
@@ -2324,6 +2530,8 @@ export default function CustomerSite() {
 
         {/* Categories / Products */}
         <main className="p-4 sm:p-6 space-y-8">
+
+
           {/* Best Sellers */}
           {topProducts.length > 0 && !moodQuery.trim() && (
             <section className="mb-2">
@@ -2904,91 +3112,6 @@ export default function CustomerSite() {
           </motion.button>
         )}
 
-        {/* Flying Plates Effect */}
-        <AnimatePresence>
-          {flyingPlates.map((plate) => (
-            <motion.img
-              key={plate.id}
-              src={plate.img}
-              className="fixed z-[100] w-16 h-16 object-contain shadow-xl pointer-events-none drop-shadow-xl"
-              initial={{
-                x: plate.startX - 32,
-                y: plate.startY - 32,
-                scale: 1,
-                opacity: 1,
-                rotate: 0,
-              }}
-              animate={{
-                x: [
-                  plate.startX - 32,
-                  (plate.startX + window.innerWidth / 2) / 2 + 50,
-                  window.innerWidth / 2 - 32,
-                ],
-                y: [
-                  plate.startY - 32,
-                  plate.startY - 100,
-                  window.innerHeight - 60,
-                ],
-                scale: [1, 1.2, 0.2],
-                opacity: [1, 1, 0],
-                rotate: [0, 180, 360],
-              }}
-              transition={{ duration: 0.7, ease: "easeInOut" }}
-            />
-          ))}
-        </AnimatePresence>
-
-        {/* Version Label */}
-        <div className="text-center py-4 opacity-20 pointer-events-none select-none text-[8px] font-light text-stone-400">
-          
-        </div>
-      </motion.div>
-
-              {/* Checkout Sidebar/Overlay */}
-        <AnimatePresence>
-          {isCheckout && !orderSuccess && (
-            <CheckoutOverlay
-              cart={cart}
-              total={total}
-              deliveryFee={deliveryFee}
-              itemsTotal={itemsTotal}
-              customerName={customerName}
-              customerPhone={customerPhone}
-              customerPoints={customerPoints}
-              generalNotes={generalNotes}
-              setGeneralNotes={setGeneralNotes}
-              address={address}
-              regions={regions}
-              settings={settings}
-              squadInfo={squadInfo}
-              userSquads={userSquads}
-              setShowSquadModal={setShowSquadModal}
-              onRegionChange={handleRegionChange}
-              setCustomerName={setCustomerName}
-              setCustomerPhone={setCustomerPhone}
-              setAddress={setAddress}
-              isLocked={isLocked}
-              setIsLocked={setIsLocked}
-              setCustomerPoints={setCustomerPoints}
-              onClose={() => setIsCheckout(false)}
-              onRemove={removeFromCart}
-              onSubmit={handleSubmitOrder}
-              formError={formError}
-              setFormError={setFormError}
-              isSubmitting={isSubmitting}
-              isDev={window.location.hostname.includes('ais-dev') || searchParams.get('dev') === 'true'}
-              promoCodeInput={promoCodeInput}
-              setPromoCodeInput={setPromoCodeInput}
-              appliedPromo={appliedPromo}
-              setAppliedPromo={setAppliedPromo}
-              promoError={promoError}
-              validatePromo={validatePromo}
-              isValidatingPromo={isValidatingPromo}
-              discountAmount={discountAmount}
-            />
-          )}
-        </AnimatePresence>
-
         {/* Squad Gamification Modal */}
         <AnimatePresence>
            {showSquadModal && (
@@ -3008,367 +3131,178 @@ export default function CustomerSite() {
                   onClick={(e) => e.stopPropagation()}
                 >
                    <div className="p-5 bg-white border-b border-stone-100 flex items-center justify-between shrink-0">
-                      <div className="flex flex-col">
+                      <div className="flex flex-col text-right">
                          <h3 className="font-black text-xl text-brand flex items-center gap-2">
                             <Crown className="w-5 h-5 text-accent" />
                             {squadInfo ? squadInfo.name : "تحدي الدواوين 🏆"}
                          </h3>
                          <p className="text-stone-500 text-xs font-bold mt-1">
-                           {squadInfo ? "ديوانيتك الحالية" : "وين ديوانيتكم بالصدارة؟"}
+                           {squadInfo ? "ديوانيتك الحالية" : "سجل الحين وطور ديوانيتك!"}
                          </p>
-                         {userSquads && userSquads.length > 1 && (
-                            <select 
-                               className="mt-2 text-xs font-bold bg-white border border-stone-200 rounded-lg p-1 text-brand outline-none"
-                               value={squadInfo?.id || ""}
-                               onChange={(e) => setActiveSquadId(e.target.value)}
-                            >
-                               {userSquads.map((sq: any) => (
-                                  <option key={sq.id} value={sq.id}>{sq.name}</option>
-                               ))}
-                            </select>
-                         )}
                       </div>
                       <button
                         onClick={() => setShowSquadModal(false)}
                         className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 hover:text-brand hover:bg-stone-200 transition-colors"
                       >
-                        <X className="w-4 h-4 text-stone-500 hover:text-brand transition-colors" />
+                        <X className="w-4 h-4" />
                       </button>
                    </div>
-                   
-                   <div className="flex-1 overflow-y-auto p-5 pb-8 custom-scrollbar">
-                      <div className="flex flex-col gap-6">
-                         
-                         {/* Tier & Progress */}
-                         {squadInfo ? (
-                           <div className="bg-white rounded-2xl p-5 border border-stone-100 shadow-sm flex flex-col items-center justify-center text-center">
-                              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-accent mb-3 relative">
-                                 <Crown className="w-8 h-8" />
-                                 <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full border-2 border-white bg-yellow-400"></div>
-                              </div>
-                              <h4 className="font-black text-lg text-brand mb-1">
-                                 تصنيف: {squadInfo.tier}
-                              </h4>
-                              <p className="text-sm font-bold text-stone-500 mb-4">
-                                 كل ١ دينار = ١ نقطة لجميع أعضاء الديوانية بناءً على أرقام هواتفهم.
-                              </p>
-                              
-                              <div className="w-full">
-                                 <p className="text-xs font-bold text-stone-500">
-                                       مجموع النقاط: {squadInfo.totalOrders} نقطة
-                                 </p>
-                              </div>
-                              
-                              {customerPhone ? (
-                                 <button 
-                                    onClick={() => {
-                                       const link = `https://${window.location.host}/?squadId=${squadInfo.id}`;
-                                       if (navigator.clipboard && window.isSecureContext) {
-                                          navigator.clipboard.writeText(link).then(() => {
-                                             alert("تم نسخ رابط الدعوة بنجاح! شاركه مع ربعك.");
-                                          }).catch(() => {
-                                             prompt("رابط الدعوة (لا يمكن النسخ التلقائي، انسخه يدوياً):", link);
-                                          });
-                                       } else {
-                                          prompt("رابط الدعوة (انسخه يدوياً أو شاركه):", link);
-                                       }
-                                    }}
-                                    className="w-full mt-4 bg-stone-100 hover:bg-stone-200 text-brand font-black text-sm py-3 rounded-xl transition-colors"
-                                 >
-                                    نسخ رابط الدعوة 🔗
-                                 </button>
-                              ) : (
-                                 <div className="w-full mt-4 bg-orange-50 border border-orange-100 p-4 rounded-xl flex flex-col gap-3">
-                                    <h4 className="font-bold text-sm text-brand">أنت مو مسجل ويانا! 🧐</h4>
-                                    <p className="text-xs font-bold text-stone-500">سجل بياناتك عشان تنضم لديوانية {squadInfo.name} وتحسب طلباتك وياهم.</p>
-                                    <input 
-                                       type="text"
-                                       value={guestName}
-                                       onChange={(e) => setGuestName(e.target.value)}
-                                       placeholder="الاسم الكريم"
-                                       className="w-full text-sm bg-white border border-stone-200 rounded-lg px-3 py-2.5 outline-none font-bold placeholder:font-normal"
-                                    />
-                                    <input 
-                                       type="tel"
-                                       value={guestPhone}
-                                       onChange={(e) => {
-                                          const val = normalizeDigits(e.target.value).replace(/[^0-9]/g, "");
-                                          if (val.length <= 8) setGuestPhone(val);
-                                       }}
-                                       placeholder="رقم الهاتف (8 أرقام)"
-                                       className="w-full text-sm bg-white border border-stone-200 rounded-lg px-3 py-2.5 outline-none font-bold placeholder:font-normal text-right"
-                                       dir="ltr"
-                                    />
-                                    <button 
-                                       disabled={isJoiningSquad || guestName.trim().length === 0 || guestPhone.replace(/[^0-9]/g, "").length < 8}
-                                       onClick={async () => {
-                                          setIsJoiningSquad(true);
-                                          const cleanP = guestPhone.replace(/[^0-9]/g, "");
-                                          try {
-                                             const res = await fetch("/api/squad-join", {
-                                                method: "POST",
-                                                headers: { "Content-Type": "application/json" },
-                                                body: JSON.stringify({ name: guestName, phone: cleanP, squadId: squadInfo.id }),
-                                             });
-                                             const data = await res.json();
-                                             if (data.success) {
-                                                setCustomerName(guestName);
-                                                setCustomerPhone(cleanP);
-                                                localStorage.setItem("customer_phone_track", cleanP);
-                                                alert("تم الانضمام للديوانية بنجاح! 🎉");
-                                             } else {
-                                                alert("حدث خطأ أثناء الانضمام");
-                                             }
-                                          } catch (e) {
-                                             alert("حدث خطأ");
-                                          }
-                                          setIsJoiningSquad(false);
-                                       }}
-                                       className="w-full bg-brand text-white font-black text-sm py-2.5 rounded-lg transition-colors shadow-sm disabled:opacity-50"
-                                    >
-                                       {isJoiningSquad ? "..." : "تأكيد الانضمام 🚀"}
-                                    </button>
-                                 </div>
-                              )}
-                           </div>
-                         ) : (
-                           <div className="bg-orange-50 rounded-2xl p-5 border border-orange-100 shadow-sm flex flex-col items-center justify-center text-center">
-                              <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 mb-3">
-                                 <Users className="w-8 h-8" />
-                              </div>
-                              <h4 className="font-black text-lg text-brand mb-1">
-                                 مو مسجل بأي ديوانية! 🧐
-                              </h4>
-                              <p className="text-sm font-bold text-stone-600 mb-4 px-2">
-                                 ادخل من رابط دعوة الديوانية الخاص بربعك عشان تبدون تيمعون طلبات وتاخذون خصم يوصل لـ ١٠٪ وأطباق مجانية!
-                              </p>
 
-                              {/* New: Quick identification for existing members */}
-                              <div className="w-full bg-white/50 border border-orange-100 p-3 rounded-xl mb-4 text-right">
-                                 <h5 className="text-[10px] font-black text-orange-400 mb-2 uppercase tracking-wider">عندك ديوانية مسبقة؟ سجل دخولك بالرقم:</h5>
-                                 <div className="flex gap-2">
-                                    <input 
-                                       type="tel"
-                                       value={loginPhone}
-                                       placeholder="رقم هاتفك الـ ٨ أرقام"
-                                       className="flex-1 text-sm bg-white border border-stone-100 rounded-lg px-3 py-2 outline-none font-bold placeholder:font-normal text-right"
-                                       dir="ltr"
-                                       onChange={(e) => {
-                                          const val = normalizeDigits(e.target.value).replace(/[^0-9]/g, "");
-                                          if (val.length <= 8) {
-                                             setLoginPhone(val);
-                                          }
-                                       }}
-                                    />
-                                    <button 
-                                      className="bg-orange-100 text-orange-600 hover:bg-orange-200 p-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
-                                      disabled={loginPhone.length !== 8}
-                                      onClick={async () => {
-                                         if (loginPhone.length !== 8) return;
-                                         try {
-                                             const endpoint = `/api/squad-gamification?phone=${encodeURIComponent(loginPhone)}&squadId=`;
-                                             const res = await fetch(endpoint);
-                                             const data = await res.json();
-                                             
-                                             if (data.userSquads && data.userSquads.length > 0) {
-                                                setCustomerPhone(loginPhone);
-                                                localStorage.setItem("customer_phone_track", loginPhone);
-                                             } else {
-                                                alert("رقمك مو محفوظ ويانا في أي ديوانية!");
-                                             }
-                                         } catch(e) {}
-                                      }}
-                                    >
-                                       <LogIn className="w-4 h-4" />
-                                    </button>
-                                 </div>
-                              </div>
+                   <div className="flex px-5 pt-3 mb-2 gap-2 overflow-x-auto pb-2 -mx-5 bg-stone-50 shrink-0 sticky top-0 z-20 shadow-sm border-b border-stone-100">
+                      <div className="w-5 shrink-0" />
+                      <button 
+                         onClick={() => setActiveSquadTab("overview")}
+                         className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0", activeSquadTab === "overview" ? "bg-accent text-white shadow-md scale-105" : "bg-white text-stone-400 border border-stone-200 hover:bg-stone-50")}
+                      >
+                         ديوانيتي 🏠
+                      </button>
+                      <button 
+                         onClick={() => setActiveSquadTab("leaderboard")}
+                         className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0", activeSquadTab === "leaderboard" ? "bg-accent text-white shadow-md scale-105" : "bg-white text-stone-400 border border-stone-200 hover:bg-stone-50")}
+                      >
+                         شرف الدواوين 🏆
+                      </button>
+                      <button 
+                         onClick={() => setActiveSquadTab("tiers")}
+                         className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0", activeSquadTab === "tiers" ? "bg-accent text-white shadow-md scale-105" : "bg-white text-stone-400 border border-stone-200 hover:bg-stone-50")}
+                      >
+                         المستويات 🏅
+                      </button>
+                      <div className="w-5 shrink-0" />
+                   </div>
 
-                              <div className="w-full h-px bg-orange-200/50 my-2"></div>
-                              <h4 className="font-bold text-sm text-brand mb-3">أو تقدر تأسس ديوانيتك الخاصة؟</h4>
-
-                              {isCreatingSquad ? (
-                                 <div className="w-full flex flex-col gap-2 mt-1 text-right">
-                                   {!customerPhone && (
-                                     <>
-                                        <input 
-                                           type="text"
-                                           value={guestName}
-                                           onChange={(e) => setGuestName(e.target.value)}
-                                           placeholder="الاسم الكريم (مؤسس الديوانية)"
-                                           className="w-full text-sm bg-white border border-orange-200 rounded-xl px-3 py-2 outline-none font-bold placeholder:font-normal"
-                                        />
-                                        <input 
-                                           type="tel"
-                                           value={guestPhone}
-                                           onChange={(e) => {
-                                              const val = normalizeDigits(e.target.value).replace(/[^0-9]/g, "");
-                                              if (val.length <= 8) setGuestPhone(val);
-                                           }}
-                                           placeholder="رقم الهاتف (8 أرقام)"
-                                           className="w-full text-sm bg-white border border-orange-200 rounded-xl px-3 py-2 outline-none font-bold placeholder:font-normal text-right"
-                                           dir="ltr"
-                                        />
-                                     </>
-                                   )}
-                                   <div className="w-full flex gap-2">
-                                     <input 
-                                        type="text" 
-                                        value={newSquadName}
-                                        onChange={(e) => setNewSquadName(e.target.value)}
-                                        placeholder="اسم الديوانية (مثال: ديوانية الفيلكاوي)"
-                                        className="flex-1 text-sm bg-white border border-orange-200 rounded-xl px-3 py-2 outline-none font-bold placeholder:font-normal"
-                                     />
-                                     <button 
-                                        onClick={async () => {
-                                           let finalPhone = customerPhone;
-                                           let finalName = customerName;
-                                           if (!customerPhone) {
-                                              const cleanP = guestPhone.replace(/[^0-9]/g, "");
-                                              if (guestName.trim().length === 0 || cleanP.length < 8) {
-                                                 alert("يرجى إدخال اسمك ورقم هاتفك بشكل صحيح لتأسيس الديوانية!");
-                                                 return;
-                                              }
-                                              finalPhone = cleanP;
-                                              finalName = guestName.trim();
-                                              setCustomerPhone(finalPhone);
-                                              setCustomerName(finalName);
-                                              localStorage.setItem("customer_phone_track", finalPhone);
-                                           }
-
-                                           if (!newSquadName.trim()) {
-                                              alert("يرجى إدخال اسم الديوانية");
-                                              return;
-                                           }
-                                           setIsSubmittingSquad(true);
-                                           try {
-                                              const res = await fetch("/api/squad-create", {
-                                                 method: "POST",
-                                                 headers: { "Content-Type": "application/json" },
-                                                 body: JSON.stringify({ name: newSquadName, phone: finalPhone, customerName: finalName }),
-                                              });
-                                              const data = await res.json();
-                                              if (data.success) {
-                                                 localStorage.setItem("squadId", data.squad.id);
-                                                 setActiveSquadId(data.squad.id);
-                                                 setIsCreatingSquad(false);
-                                                 
-                                                 const inviteLink = `https://${window.location.host}/?squadId=${data.squad.id}`;
-                                                 navigator.clipboard.writeText(inviteLink).then(() => {
-                                                    alert(`مبروك! تم تأسيس الديوانية بنجاح 👑\n\nتم نسخ رابط الدعوة (${inviteLink}) شاركه مع ربعك!`);
-                                                 }).catch(() => {
-                                                    alert(`مبروك! تم تأسيس الديوانية بنجاح 👑\n\nهذا رابط الدعوة مالك: ${inviteLink}`);
-                                                 });
-                                              } else {
-                                                 alert("حدث خطأ أثناء الإنشاء");
-                                              }
-                                           } catch (e) {
-                                              alert("حدث خطأ");
-                                           }
-                                           setIsSubmittingSquad(false);
-                                        }}
-                                        disabled={isSubmittingSquad || newSquadName.trim().length === 0 || (!customerPhone && (guestName.trim().length === 0 || guestPhone.length < 8))}
-                                        className="bg-brand text-white font-black px-4 rounded-xl text-xs hover:bg-brand/90 transition-colors disabled:opacity-50 shrink-0"
-                                     >
-                                        {isSubmittingSquad ? "..." : "تأكيد"}
-                                     </button>
-                                   </div>
-                                 </div>
-                              ) : (
-                                 <button 
-                                    onClick={() => setIsCreatingSquad(true)}
-                                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black text-sm py-3 rounded-xl transition-colors shadow-sm"
-                                 >
-                                    تأسيس ديوانية جديدة ✨
-                                 </button>
-                              )}
-                           </div>
-                         )}
-
-                         {/* Internal Leaderboard */}
-                         {squadInfo && (
-                           <div>
-                              <h4 className="font-black text-brand text-lg mb-3 flex items-center gap-2">
-                                 <User className="w-5 h-5 text-accent" />
-                                 ترتيب الأعضاء (ملك الديوانية)
-                              </h4>
-                              <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden flex flex-col">
-                                 {squadInfo.membersList?.map((mem: any, idx: number) => (
-                                    <div key={idx} className={cn("flex items-center justify-between p-4 border-b border-stone-50", mem.phone === squadInfo.memberData?.phone ? "bg-accent/5 font-bold" : "")}>
-                                       <div className="flex items-center gap-3">
-                                          <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center font-black text-stone-400 text-sm shrink-0">
-                                             {idx + 1}
-                                          </div>
-                                          <div className="flex flex-col">
-                                             <span className={cn("text-sm", mem.phone === squadInfo.memberData?.phone ? "text-brand font-black" : "text-stone-700 font-bold")}>
-                                                {mem.name || "عضو"} {mem.phone === squadInfo.memberData?.phone && "(أنت)"}
-                                             </span>
-                                          </div>
-                                       </div>
-                                       <div className="bg-stone-50 px-3 py-1 rounded-full text-xs font-bold text-stone-600 border border-stone-100">
-                                          {formatPoints(mem.orderCount)}
-                                       </div>
-                                    </div>
-                                 ))}
-                                 {(!squadInfo.membersList || squadInfo.membersList.length === 0) && (
-                                    <div className="p-6 text-center text-stone-400 font-bold text-sm">لا يوجد أعضاء بعد</div>
-                                 )}
-                              </div>
-                           </div>
-                         )}
-
-                         {/* Global Leaderboard */}
-                         {topSquads && topSquads.length > 0 && (
-                            <div>
-                               <h4 className="font-black text-brand text-lg mb-3 flex items-center gap-2">
-                                  <Landmark className="w-5 h-5 text-accent" />
-                                  لوحة صدارة الدواوين في الكويت
-                               </h4>
-                               <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden flex flex-col">
-                                  {topSquads.map((sq: any, idx: number) => (
-                                     <div key={idx} className={cn("flex items-center justify-between p-4 flex-wrap gap-2 border-b border-stone-50", sq.id === squadInfo?.id ? "bg-accent/5" : "")}>
-                                        <div className="flex items-center gap-3">
-                                           <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shrink-0", 
-                                              idx === 0 ? "bg-yellow-100 text-yellow-700" :
-                                              idx === 1 ? "bg-stone-200 text-stone-600" :
-                                              idx === 2 ? "bg-orange-100 text-orange-700" :
-                                              "bg-stone-50 text-stone-400"
-                                           )}>
-                                              {idx + 1}
-                                           </div>
-                                           <div className="flex flex-col">
-                                              <span className={cn("text-sm transition-colors", sq.id === squadInfo?.id ? "text-brand font-black" : "text-stone-700 font-bold")}>
-                                                 {sq.name}
-                                              </span>
-                                           </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                           <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-bold",
-                                              sq.tier === "gold" ? "bg-yellow-100 text-yellow-700" :
-                                              sq.tier === "silver" ? "bg-stone-200 text-stone-700" :
-                                              "bg-orange-100 text-orange-800"
-                                           )}>
-                                             {sq.tier === "gold" ? "ذهبية" : sq.tier === "silver" ? "فضية" : "برونزية"}
-                                           </span>
-                                           <div className="bg-white shadow-sm px-2 py-1 rounded-md text-xs font-bold text-accent border border-stone-100">
-                                              {formatPoints(sq.totalOrders)}
-                                           </div>
-                                        </div>
-                                     </div>
-                                  ))}
-                               </div>
-                            </div>
-                         )}
-
-                      </div>
+                   <div className="flex-1 overflow-y-auto p-5 pb-8 custom-scrollbar relative z-0">
+                      <SquadModalContent 
+                        activeSquadTab={activeSquadTab}
+                        squadInfo={squadInfo}
+                        SQUAD_TIERS={SQUAD_TIERS}
+                        getSquadTier={getSquadTier}
+                        topSquads={topSquads}
+                        customerPhone={customerPhone}
+                        customerName={customerName}
+                         customerPoints={customerPoints}
+                         LOYALTY_TIERS={LOYALTY_TIERS}
+                         getLoyaltyTier={getLoyaltyTier}
+                        guestName={guestName}
+                        setGuestName={setGuestName}
+                        guestPhone={guestPhone}
+                        setGuestPhone={setGuestPhone}
+                        loginPhone={loginPhone}
+                        setLoginPhone={setLoginPhone}
+                        isJoiningSquad={isJoiningSquad}
+                        setIsJoiningSquad={setIsJoiningSquad}
+                        isCreatingSquad={isCreatingSquad}
+                        setIsCreatingSquad={setIsCreatingSquad}
+                        isSubmittingSquad={isSubmittingSquad}
+                        setIsSubmittingSquad={setIsSubmittingSquad}
+                        newSquadName={newSquadName}
+                        setNewSquadName={setNewSquadName}
+                        setActiveSquadId={setActiveSquadId}
+                        setCustomerPhone={setCustomerPhone}
+                        setCustomerName={setCustomerName}
+                        normalizeDigits={normalizeDigits}
+                        formatPoints={formatPoints}
+                        handleCreateSquad={handleCreateSquad}
+                        handleJoinSquad={handleJoinSquad}
+                      />
                    </div>
                 </motion.div>
               </motion.div>
            )}
         </AnimatePresence>
+
+        {/* Checkout Sidebar/Overlay */}
+        <AnimatePresence>
+          {isCheckout && !orderSuccess && (
+            <CheckoutOverlay
+              cart={cart}
+              setCart={setCart}
+              onClose={() => setIsCheckout(false)}
+              onRemove={removeFromCart}
+              total={total}
+              deliveryFee={deliveryFee}
+              itemsTotal={itemsTotal}
+              address={address}
+              setAddress={setAddress}
+              regions={regions}
+              onRegionChange={handleRegionChange}
+              settings={settings}
+              normalizeDigits={normalizeDigits}
+              onSubmit={handleSubmitOrder}
+              isSubmitting={isSubmitting}
+              customerPhone={customerPhone}
+              setCustomerPhone={setCustomerPhone}
+              customerName={customerName}
+              setCustomerName={setCustomerName}
+              customerPoints={customerPoints}
+              setCustomerPoints={setCustomerPoints}
+              isLocked={isLocked}
+              setIsLocked={setIsLocked}
+              generalNotes={generalNotes}
+              setGeneralNotes={setGeneralNotes}
+              formError={formError}
+              setFormError={setFormError}
+              promoCodeInput={promoCodeInput}
+              setPromoCodeInput={setPromoCodeInput}
+              appliedPromo={appliedPromo}
+              setAppliedPromo={setAppliedPromo}
+              promoError={promoError}
+              setPromoError={setPromoError}
+              isValidatingPromo={isValidatingPromo}
+              validatePromo={validatePromo}
+              discountAmount={discountAmount}
+              squadInfo={squadInfo}
+              userSquads={userSquads}
+              setShowSquadModal={setShowSquadModal}
+              getLoyaltyTier={getLoyaltyTier}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Floating elements like flying plates */}
+        {flyingPlates.map((plate) => (
+          <FlyingPlate
+            key={plate.id}
+            img={plate.img}
+            startX={plate.startX}
+            startY={plate.startY}
+            onComplete={() => {
+              setFlyingPlates((prev) => prev.filter((p) => p.id !== plate.id));
+              setCartBouncing(true);
+              setTimeout(() => setCartBouncing(false), 600);
+            }}
+          />
+        ))}
+      </motion.div>
     </>
   );
 }
+
+const FlyingPlate = ({ img, startX, startY, onComplete }: any) => {
+  return (
+    <motion.div
+      initial={{ 
+        x: startX - 24, 
+        y: startY - 24, 
+        scale: 1, 
+        opacity: 1,
+        rotate: 0 
+      }}
+      animate={{ 
+        x: 40, // Target position for the left-bottom cart button (approx)
+        y: window.innerHeight - 80, 
+        scale: 0.2, 
+        opacity: 0,
+        rotate: 360 
+      }}
+      transition={{ duration: 0.8, ease: "easeInOut" }}
+      onAnimationComplete={onComplete}
+      className="fixed z-[9999] pointer-events-none"
+    >
+      <img src={img} className="w-12 h-12 rounded-full shadow-lg object-contain bg-white p-1 border border-stone-100" />
+    </motion.div>
+  );
+};
 
 const SizzlingSteam = () => (
   <div className="absolute inset-x-0 -top-6 bottom-0 z-10 pointer-events-none flex justify-center opacity-70 mix-blend-screen overflow-hidden">
@@ -4269,6 +4203,7 @@ function CheckoutOverlay({
   squadInfo,
   userSquads,
   setShowSquadModal,
+  getLoyaltyTier,
 }: any) {
   const [regionSearch, setRegionSearch] = useState("");
   const [showRegions, setShowRegions] = useState(false);
@@ -4926,12 +4861,26 @@ function CheckoutOverlay({
               </div>
               {customerPoints > 0 && (
                 <div className="flex justify-between items-center text-xs font-bold text-amber-600 pb-3 border-b border-stone-50">
-                  <span>نقاط الولاء المكتسبة</span>
+                  <div className="flex flex-col gap-0.5">
+                    <span>رصيد نقاطك</span>
+                    {getLoyaltyTier(customerPoints).minPoints > 0 && (
+                       <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full w-fit">
+                          مستوى {getLoyaltyTier(customerPoints).name}
+                       </span>
+                    )}
+                  </div>
                   <span className="flex items-center gap-1">
                     ⭐ {customerPoints} نقطة
                   </span>
                 </div>
               )}
+              {/* Expected Points */}
+              <div className="flex justify-between items-center text-xs font-bold text-brand/40 pb-3 border-b border-stone-50">
+                <span>النقاط المتوقعة من هذا الطلب</span>
+                <span className="flex items-center gap-1">
+                  + {Math.floor(itemsTotal)} ⚡
+                </span>
+              </div>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-sm font-bold text-brand">
                   حسابك طال عمرك
