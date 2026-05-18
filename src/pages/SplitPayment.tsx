@@ -47,8 +47,8 @@ export default function SplitPayment() {
   // Calculate generic paid amount
   const calculatePaid = () => {
     if (!order || !order.splitPayments) return 0;
-    return order.splitPayments
-      .filter((p) => p.status === "paid")
+    return (order.splitPayments as any[])
+      .filter((p: any) => String(p.status || "").toLowerCase() === "paid")
       .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
   };
 
@@ -62,10 +62,10 @@ export default function SplitPayment() {
   const isFullyPaid =
     localSuccess ||
     (order && order.total && calculatePaid() >= order.total - 0.005) ||
-    (order && order.status && (order.status.startsWith("تم الدفع") || order.status.includes("بانتظار التحضير"))) ||
-    (order && order.paymentStatus === "paid");
+    (order && order.status && (order.status.startsWith("تم الدفع") || order.status.includes("بانتظار التحضير") || order.status.includes("جاري التوصيل"))) ||
+    (order && String(order.paymentStatus || "").toLowerCase() === "paid");
     
-  const isMySplitPaid = mySplitRecord?.status === "paid" || localSuccess;
+  const isMySplitPaid = String(mySplitRecord?.status || "").toLowerCase() === "paid" || localSuccess;
   
   // Real override for the payment status
   const paymentStatus = isMySplitPaid || isFullyPaid ? "success" : rawPaymentStatus;
@@ -761,7 +761,7 @@ export default function SplitPayment() {
           </div>
         )}
 
-        {(order.splitPayments || []).filter((p) => p.status === "paid").length >
+        {(order.splitPayments || []).filter((p) => String(p.status || "").toLowerCase() === "paid").length >
           0 && (
           <div className="bg-white p-6 rounded-[24px] shadow-sm border border-stone-100 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-brand/5 rounded-full -mr-12 -mt-12 blur-2xl" />
@@ -772,7 +772,7 @@ export default function SplitPayment() {
             <div className="space-y-3 relative z-10">
               <AnimatePresence initial={false}>
                 {order
-                  .splitPayments!.filter((p) => p.status === "paid")
+                  .splitPayments!.filter((p) => String(p.status || "").toLowerCase() === "paid")
                   .reverse()
                   .map((p, i) => {
                     // Dynamic gamification text
