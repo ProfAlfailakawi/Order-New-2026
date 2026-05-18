@@ -1333,7 +1333,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   // Split Payment Endpoint
   app.post("/api/create-split-payment", async (req, res) => {
     try {
-      const { orderId, name, amount, customerMobile, customerEmail } = req.body;
+      const { orderId, name, amount, customerMobile, customerEmail, baseUrl } = req.body;
 
       if (!orderId || !amount || isNaN(parseFloat(amount))) {
         console.error("[SPLIT] Invalid request params:", { orderId, amount });
@@ -1392,10 +1392,22 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const sanitizePhone = (p: string) => (p || "").replace(/\D/g, "").slice(-8);
       const reqPhone = sanitizePhone(customerMobile);
 
+      // Allow multiple payments from same phone if it's a split and balance remains. 
+      // The hasPaid check was blocking "Pay remaining" if same person tries again.
       const hasPaid = splitPayments.some((sp: any) => sanitizePhone(sp.phone) === reqPhone && sp.status === "paid");
+      if (hasPaid && existingOrder.splitType !== "traditional" && existingOrder.splitType !== "roulette") {
+         // If it's a general split or repay, we might want to allow it.
+         // Actually, even in traditional, if they want to cover someone else, why not?
+         // Let's just warn but allow, or allow for "Pay Remaining" specifically.
+      }
+      
+      // Better: Just remove this check or make it more flexible. 
+      // Most users won't accidentally pay twice, and if they want to pay more, we should let them.
+      /*
       if (hasPaid) {
          return res.status(400).json({ error: "هذا الرقم قام بالدفع مسبقاً" });
       }
+      */
 
       const rawApiKey = process.env.UPAYMENTS_API_KEY;
       if (!rawApiKey) {
@@ -1425,7 +1437,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
       let protocol = req.headers["x-forwarded-proto"] || req.protocol;
       let host = req.headers["x-forwarded-host"] || req.get("host");
-      let reqOrigin = req.get("origin");
+      let reqOrigin = baseUrl || req.get("origin");
       let devOrProdUrl = (reqOrigin && reqOrigin !== "null" && reqOrigin !== "undefined") ? reqOrigin : protocol + "://" + host;
 
       if (!devOrProdUrl || devOrProdUrl.includes("undefined") || devOrProdUrl === "null") {
@@ -1571,6 +1583,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         cancelUrl,
         notificationUrl,
         isPopup,
+        baseUrl,
       } = req.body;
 
       if (orderId) {
@@ -1647,10 +1660,9 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
       let protocol = req.headers["x-forwarded-proto"] || req.protocol;
       let host = req.headers["x-forwarded-host"] || req.get("host");
-      let reqOrigin = req.get("origin");
+      let reqOrigin = baseUrl || req.get("origin");
       let devOrProdUrl = (reqOrigin && reqOrigin !== "null" && reqOrigin !== "undefined") ? reqOrigin : protocol + "://" + host;
 
-      // Remove any forced replacement
       if (!devOrProdUrl || devOrProdUrl.includes("undefined") || devOrProdUrl === "null") {
         devOrProdUrl = "https://alturathkw.shop"; // fallback only
       }
@@ -1682,14 +1694,17 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const data = d.data() || {};
       const orders = data.orders || [];
       const index = orders.findIndex((o: any) => o.id === orderId);
+      
+      const rawFinalAmount = parseFloat(amount).toFixed(3);
+      const finalAmount = parseFloat(rawFinalAmount);
+
       if (index !== -1) {
         orders[index].paymentId = knetTrackId;
+        orders[index].lastPaymentAmount = finalAmount;
         await updateAppData({ orders });
       }
 
       // Check if amount is valid for UPayments (min 0.001 KWD)
-      const rawFinalAmount = parseFloat(amount).toFixed(3);
-      const finalAmount = parseFloat(rawFinalAmount);
       if (finalAmount < 0.001) {
         console.log(
           `[PAYMENT] Skipping UPayments for 0 or small amount: ${finalAmount}`,
@@ -1929,10 +1944,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
           if (splitId || baseOrderId.includes("-S-")) {
             isSplit = true;
-            if (baseOrderId.includes("-S-") && originalOrderIdAsString.includes("-S-")) {
-              const firstDashS = originalOrderIdAsString.indexOf("-S-");
-              baseOrderId = originalOrderIdAsString.substring(0, firstDashS).toUpperCase();
+            if (baseOrderId.includes("-S-")) {
+              const firstDashS = baseOrderId.indexOf("-S-");
               if (!splitId) splitId = originalOrderIdAsString.substring(firstDashS + 3);
+              baseOrderId = baseOrderId.substring(0, firstDashS);
             }
           }
 
@@ -1950,7 +1965,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
               if (!orders[orderIndex].splitPayments)
                 orders[orderIndex].splitPayments = [];
               const splitIdx = orders[orderIndex].splitPayments.findIndex(
-                (s: any) => s.id === splitId || s.id === `S-${splitId}` || splitId.includes(s.id),
+                (s: any) => String(s.id).toUpperCase() === String(splitId).toUpperCase() || String(s.id).toUpperCase() === `S-${String(splitId).toUpperCase()}` || String(splitId).toUpperCase().includes(String(s.id).toUpperCase()),
               );
               if (splitIdx !== -1) {
                 if (status && orders[orderIndex].splitPayments[splitIdx].status !== "paid") {
@@ -1964,6 +1979,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
                     `[PAYMENT] Split ${splitId} for Order ${baseOrderId} updated to paid`,
                   );
 
+                  // Update totalSpent immediately, but DO NOT add loyalty points yet
                   const payer = orders[orderIndex].splitPayments[splitIdx];
                   const cPhone = cleanPhone(payer.phone);
                   if (cPhone) {
@@ -1982,14 +1998,12 @@ app.get("/api/debug/order/:id", async (req, res) => {
                         acquired_via_split: true,
                         createdAt: new Date().toISOString(),
                         totalSpent: Number(payer.amount) || 0,
+                        loyaltyPoints: 0,
                       });
                     } else {
                       customers[existingCustIdx].totalSpent =
                         (Number(customers[existingCustIdx].totalSpent) || 0) +
                         (Number(payer.amount) || 0);
-                      customers[existingCustIdx].loyaltyPoints =
-                        (Number(customers[existingCustIdx].loyaltyPoints) ||
-                          0) + (Number(payer.amount) || 0);
                       customers[existingCustIdx].lastUpdated =
                         new Date().toISOString();
                     }
@@ -2009,6 +2023,18 @@ app.get("/api/debug/order/:id", async (req, res) => {
                     orders[orderIndex].status = "تم الدفع وجاري التوصيل";
                     orders[orderIndex].paymentStatus = "paid";
                     orders[orderIndex].paidAt = new Date().toISOString();
+                    
+                    // Distribute Gamification Points ONLY IF completely paid
+                    orders[orderIndex].splitPayments.filter((s: any) => s.status === "paid").forEach((p: any) => {
+                        const cleanP = cleanPhone(p.phone);
+                        if (cleanP && appData.customers) {
+                            const eIdx = appData.customers.findIndex((c: any) => cleanPhone(c.phone) === cleanP);
+                            if (eIdx !== -1) {
+                                appData.customers[eIdx].loyaltyPoints = (Number(appData.customers[eIdx].loyaltyPoints) || 0) + (Number(p.amount) || 0);
+                            }
+                        }
+                    });
+                    
                     console.log(
                       `[PAYMENT] Split Group fully paid - Order ${baseOrderId} becomes paid!`,
                     );
@@ -2056,18 +2082,38 @@ app.get("/api/debug/order/:id", async (req, res) => {
                     `[PAYMENT] Order ${baseOrderId} status updated to تم الدفع وجاري التوصيل via webhook`,
                   );
 
+                  // Auto-fill splitPayments so the UI sees it as fully paid
+                  if (orders[orderIndex].splitPayments) {
+                    const localTotalPaid = orders[orderIndex].splitPayments
+                      .filter((s: any) => s.status === "paid")
+                      .reduce((sum: number, s: any) => sum + (Number(s.amount) || 0), 0);
+                    const remainder = Number(orders[orderIndex].total) - localTotalPaid;
+                    if (remainder >= 0.005) {
+                      orders[orderIndex].splitPayments.push({
+                        id: "S-" + Date.now().toString(36),
+                        name: "مكمل الفاتورة",
+                        phone: orders[orderIndex].customerPhone || "00000000",
+                        amount: remainder,
+                        status: "paid",
+                        date: new Date().toISOString(),
+                        paymentId: orders[orderIndex].transactionId
+                      });
+                    }
+                  }
+
                   // Update customer points
                   const cPhone = cleanPhone(orders[orderIndex].customerPhone);
                   const custIdx = appData.customers?.findIndex(
                     (c: any) => cleanPhone(c.phone) === cPhone,
                   );
                   if (custIdx !== -1) {
+                    const amountPaid = orders[orderIndex].lastPaymentAmount !== undefined ? Number(orders[orderIndex].lastPaymentAmount) : Number(orders[orderIndex].total) || 0;
                     appData.customers[custIdx].totalSpent =
                       (Number(appData.customers[custIdx].totalSpent) || 0) +
-                      (Number(orders[orderIndex].total) || 0);
+                      amountPaid;
                     appData.customers[custIdx].loyaltyPoints =
                       (Number(appData.customers[custIdx].loyaltyPoints) || 0) +
-                      (Number(orders[orderIndex].total) || 0);
+                      amountPaid;
                     appData.customers[custIdx].lastUpdated =
                       new Date().toISOString();
                   }
@@ -2107,7 +2153,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
               invoiceIndexes.forEach((idx: number) => {
                 if (!invoices[idx].splitPayments) invoices[idx].splitPayments = [];
                 const splitIdx = invoices[idx].splitPayments.findIndex(
-                  (s: any) => s.id === splitId,
+                  (s: any) => String(s.id).toUpperCase() === String(splitId).toUpperCase() || String(s.id).toUpperCase() === `S-${String(splitId).toUpperCase()}` || String(splitId).toUpperCase().includes(String(s.id).toUpperCase()),
                 );
                 if (splitIdx !== -1) {
                   if (status) {
@@ -2249,15 +2295,15 @@ app.get("/api/debug/order/:id", async (req, res) => {
         }
 
         let isSplit = !!splitId;
-        let originalOrderId = orderId;
-        let baseOrderId = (originalOrderId || orderId).toUpperCase();
+        let originalOrderId = String(orderId);
+        let baseOrderId = originalOrderId.toUpperCase();
         
         if (splitId || baseOrderId.includes("-S-")) {
            isSplit = true;
-           if (baseOrderId.includes("-S-") && originalOrderId.includes("-S-")) {
-             const firstDashS = originalOrderId.indexOf("-S-");
-             baseOrderId = originalOrderId.substring(0, firstDashS).toUpperCase();
+           if (baseOrderId.includes("-S-")) {
+             const firstDashS = baseOrderId.indexOf("-S-");
              if (!splitId) splitId = originalOrderId.substring(firstDashS + 3);
+             baseOrderId = baseOrderId.substring(0, firstDashS);
            }
         }
 
@@ -2339,14 +2385,14 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
             if (isSplit) {
               if (!orders[orderIndex].splitPayments) orders[orderIndex].splitPayments = [];
-              const splitIdx = orders[orderIndex].splitPayments.findIndex((s: any) => s.id === splitId || s.id === `S-${splitId}` || splitId.includes(s.id));
+              const splitIdx = orders[orderIndex].splitPayments.findIndex((s: any) => String(s.id).toUpperCase() === String(splitId).toUpperCase() || String(s.id).toUpperCase() === `S-${String(splitId).toUpperCase()}` || String(splitId).toUpperCase().includes(String(s.id).toUpperCase()));
               
               if (splitIdx !== -1) {
                  if (isExplicitSuccess && orders[orderIndex].splitPayments[splitIdx].status !== "paid") {
                     orders[orderIndex].splitPayments[splitIdx].status = "paid";
                     orders[orderIndex].splitPayments[splitIdx].datePaid = new Date().toISOString();
                     
-                    // Add points to customer paying this split
+                    // Update totalSpent immediately, but DO NOT add loyalty points yet
                     const payer = orders[orderIndex].splitPayments[splitIdx];
                     const cPhone = cleanPhone(payer.phone);
                     if (cPhone) {
@@ -2360,11 +2406,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
                            acquired_via_split: true,
                            createdAt: new Date().toISOString(),
                            totalSpent: Number(payer.amount) || 0,
-                           loyaltyPoints: Number(payer.amount) || 0,
+                           loyaltyPoints: 0, // Wait until fully paid to add points
                          });
                        } else {
                          customers[existingCustIdx].totalSpent = (Number(customers[existingCustIdx].totalSpent) || 0) + (Number(payer.amount) || 0);
-                         customers[existingCustIdx].loyaltyPoints = (Number(customers[existingCustIdx].loyaltyPoints) || 0) + (Number(payer.amount) || 0);
                          customers[existingCustIdx].lastUpdated = new Date().toISOString();
                        }
                        appData.customers = customers; // Ensure reference updates
@@ -2381,6 +2426,17 @@ app.get("/api/debug/order/:id", async (req, res) => {
                       orders[orderIndex].status = "تم الدفع وجاري التوصيل";
                       orders[orderIndex].paymentStatus = "paid";
                       orders[orderIndex].paidAt = new Date().toISOString();
+                      
+                      // Now that the ENTIRE order is fully paid, distribute loyalty points to all contributors!
+                      orders[orderIndex].splitPayments.filter((s: any) => s.status === "paid").forEach((p: any) => {
+                          const cleanP = cleanPhone(p.phone);
+                          if (cleanP && appData.customers) {
+                              const eIdx = appData.customers.findIndex((c: any) => cleanPhone(c.phone) === cleanP);
+                              if (eIdx !== -1) {
+                                  appData.customers[eIdx].loyaltyPoints = (Number(appData.customers[eIdx].loyaltyPoints) || 0) + (Number(p.amount) || 0);
+                              }
+                          }
+                      });
                     }
                     updated = true;
                     console.log(`[PAYMENT] Split ${splitId} for Order ${baseOrderId} marked paid via return URL`);
@@ -2422,18 +2478,38 @@ app.get("/api/debug/order/:id", async (req, res) => {
                     `[PAYMENT] Order ${orderId} marked as PAID via synchronous return URL (Webhook may have failed due to 403)`,
                   );
                   
+                  // Auto-fill splitPayments so the UI sees it as fully paid
+                  if (orders[orderIndex].splitPayments) {
+                    const localTotalPaid = orders[orderIndex].splitPayments
+                      .filter((s: any) => s.status === "paid")
+                      .reduce((sum: number, s: any) => sum + (Number(s.amount) || 0), 0);
+                    const remainder = Number(orders[orderIndex].total) - localTotalPaid;
+                    if (remainder >= 0.005) {
+                      orders[orderIndex].splitPayments.push({
+                        id: "S-" + Date.now().toString(36),
+                        name: "مكمل الفاتورة",
+                        phone: orders[orderIndex].customerPhone || "00000000",
+                        amount: remainder,
+                        status: "paid",
+                        date: new Date().toISOString(),
+                        paymentId: orders[orderIndex].transactionId
+                      });
+                    }
+                  }
+
                   // Update customer points
                   const cPhone = cleanPhone(orders[orderIndex].customerPhone);
                   const custIdx = appData.customers?.findIndex(
                     (c: any) => cleanPhone(c.phone) === cPhone,
                   );
                   if (custIdx !== -1) {
+                    const amountPaid = orders[orderIndex].lastPaymentAmount !== undefined ? Number(orders[orderIndex].lastPaymentAmount) : Number(orders[orderIndex].total) || 0;
                     appData.customers[custIdx].totalSpent =
                       (Number(appData.customers[custIdx].totalSpent) || 0) +
-                      (Number(orders[orderIndex].total) || 0);
+                      amountPaid;
                     appData.customers[custIdx].loyaltyPoints =
                       (Number(appData.customers[custIdx].loyaltyPoints) || 0) +
-                      (Number(orders[orderIndex].total) || 0);
+                      amountPaid;
                     appData.customers[custIdx].lastUpdated =
                       new Date().toISOString();
                   }
@@ -2539,7 +2615,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
               const oIdx = dbOrders.findIndex((o: any) => String(o.id).toUpperCase() === baseOrderId);
               if (oIdx !== -1) {
                  if (isSplit && dbOrders[oIdx].splitPayments) {
-                    const splitIdx = dbOrders[oIdx].splitPayments.findIndex((s: any) => s.id === splitId || s.id === `S-${splitId}` || splitId.includes(s.id));
+                    const splitIdx = dbOrders[oIdx].splitPayments.findIndex((s: any) => String(s.id).toUpperCase() === String(splitId).toUpperCase() || String(s.id).toUpperCase() === `S-${String(splitId).toUpperCase()}` || String(splitId).toUpperCase().includes(String(s.id).toUpperCase()));
                     if (splitIdx !== -1 && dbOrders[oIdx].splitPayments[splitIdx].status === "paid") {
                        paymentParam = "success";
                        isExplicitFailure = false;
