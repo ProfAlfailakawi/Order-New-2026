@@ -66,11 +66,20 @@ const db = initializeFirestore(
   firebaseConfig.firestoreDatabaseId || "(default)",
 );
 
+let _appDataCache: any = null;
+let _appDataCacheTime = 0;
+const CACHE_TTL = 30000; // 30 seconds
+
 async function getAppData() {
+  if (_appDataCache && Date.now() - _appDataCacheTime < CACHE_TTL) {
+    return _appDataCache;
+  }
   try {
     const d = await getDoc(doc(db, "appData", "shared_company_data"));
     if (d.exists()) {
-      return d.data();
+      _appDataCache = d.data();
+      _appDataCacheTime = Date.now();
+      return _appDataCache;
     }
   } catch (error) {
     console.warn("Firebase read restricted or failed, using local in-memory fallback", error);
@@ -82,6 +91,8 @@ async function updateAppData(data: any) {
   try {
     const docRef = doc(db, "appData", "shared_company_data");
     await setDoc(docRef, data, { merge: true });
+    _appDataCache = null;
+    _appDataCacheTime = 0;
   } catch (error) {
     console.warn("Firebase write restricted or failed, updating local in-memory fallback", error);
     localFallbackDB = { ...localFallbackDB, ...data };
@@ -619,6 +630,186 @@ app.get("/api/debug/order/:id", async (req, res) => {
   });
 
   // 4. Customers
+  app.get("/api/squad-gamification", async (req, res) => {
+    let { phone, squadId } = req.query;
+    try {
+      const d = await getAppDataRef();
+      const data = d.data() || {};
+      const squads = data.squads || [];
+      
+      const enrichedSquads = squads.map((sq: any) => ({
+         ...sq,
+         totalOrders: sq.points || 0,
+         // The db uses "عزوة" and potentially other terms. We should ensure the UI handles these or map them.
+         // Let's pass what's in the DB directly, the UI can display it
+         tier: sq.tier || "برونزية",
+         membersList: (sq.membersList || []).map((m: any) => ({ ...m, orderCount: m.points || 0 })).sort((a: any, b: any) => (b.points || 0) - (a.points || 0))
+      }));
+
+      const topSquads = [...enrichedSquads].sort((a,b) => b.totalOrders - a.totalOrders).slice(0, 5);
+
+      const cleanQPhone = phone ? cleanPhone(phone as string) : null;
+      let joinedSquadId = squadId ? String(squadId) : null;
+
+      if (cleanQPhone) {
+         // See if phone is in any squad's membersList (DB is phone numbers)
+         const custSquad = enrichedSquads.find((sq: any) => 
+            (sq.membersList || []).some((m: any) => cleanPhone(m.phone) === cleanQPhone)
+         );
+         if (custSquad) {
+             joinedSquadId = String(custSquad.id);
+         }
+      }
+
+      let mySquad = joinedSquadId ? enrichedSquads.find((sq: any) => String(sq.id) === String(joinedSquadId)) : null;
+
+      let myRank = null;
+      let myMemberData = null;
+
+      if (mySquad && cleanQPhone) {
+         const memberIndex = mySquad.membersList.findIndex((mem: any) => cleanPhone(mem.phone) === cleanQPhone);
+         if (memberIndex !== -1) {
+            myMemberData = mySquad.membersList[memberIndex];
+            myRank = memberIndex + 1;
+         } else {
+             // Just visiting a squad page via invite link perhaps, but they haven't joined formally yet.
+             myMemberData = { phone: cleanQPhone, name: "أنت", orderCount: 0 };
+             myRank = mySquad.membersList.length + 1;
+         }
+      }
+
+      res.json({
+         topSquads,
+         mySquad,
+         myRank,
+         myMemberData
+      });
+    } catch(e) {
+      res.status(500).json({ error: String(e) });
+    }
+  });
+
+  app.post("/api/squad-create", async (req, res) => {
+    const { name, phone, customerName } = req.body;
+    if (!name) return res.status(400).json({ error: "Missing squad name" });
+    try {
+      const d = await getAppDataRef();
+      const data = d.data() || {};
+      const squads = data.squads || [];
+      const customers = data.customers || [];
+      
+      const newSquadId = squads.length > 0 ? Math.max(...squads.map((s:any)=>Number(s.id) || 0)) + 1 : 1;
+      
+      const newSquad = {
+         id: newSquadId,
+         name: name,
+         tier: "برونزية",
+         points: 0,
+         kingOrders: 0,
+         members: 1,
+         king: customerName || "عميل",
+         phone: phone,
+         membersList: [
+            {
+               name: customerName || "عميل",
+               phone: phone,
+               points: 0
+            }
+         ],
+         createdAt: new Date().toISOString()
+      };
+      
+      squads.push(newSquad);
+
+      if (phone) {
+         const cleanQPhone = cleanPhone(phone);
+         const cidx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanQPhone);
+         if (cidx > -1) {
+            customers[cidx].squadId = newSquadId;
+            if (customerName) customers[cidx].name = customerName;
+         } else {
+            customers.push({
+               id: "CUST-" + Date.now().toString(36),
+               name: customerName || "",
+               phone: phone,
+               address: "",
+               lastOrderDate: new Date().toISOString(),
+               squadId: newSquadId,
+               loyaltyPoints: 0,
+               points: 0
+            });
+         }
+      }
+      
+      await updateAppData({ squads, customers });
+      res.json({ success: true, squad: newSquad });
+    } catch(e) {
+      res.status(500).json({ error: String(e) });
+    }
+  });
+
+  app.post("/api/squad-join", async (req, res) => {
+   const { phone, squadId, name } = req.body;
+   if (!phone || !squadId) return res.status(400).json({ error: "Missing phone or squadId" });
+   try {
+     const d = await getAppDataRef();
+     const data = d.data() || {};
+     const squads = data.squads || [];
+     const customers = data.customers || [];
+     const cleanQPhone = cleanPhone(phone);
+     
+     const squadIndex = squads.findIndex((s:any) => String(s.id) === String(squadId));
+     if (squadIndex === -1 && squadId) {
+         // Create a generic squad if they scan an invite code that is missing or doesn't exist.
+         // This is a failsafe. We'll generate it similar to the standard DB records.
+         squads.push({
+             id: squadId,
+             name: `ديوانية ${squadId}`,
+             tier: "برونزية",
+             points: 0,
+             membersList: [],
+             createdAt: new Date().toISOString()
+         });
+     }
+     
+     const finalSquadIndex = squads.findIndex((s:any) => String(s.id) === String(squadId));
+     if (finalSquadIndex > -1) {
+         const squad = squads[finalSquadIndex];
+         if (!squad.membersList) squad.membersList = [];
+         
+         const existingMember = squad.membersList.find((m:any) => cleanPhone(m.phone) === cleanQPhone);
+         if (!existingMember) {
+             squad.membersList.push({
+                 phone: phone,
+                 name: name || "عميل",
+                 points: 0
+             });
+             squad.members = squad.membersList.length;
+         }
+     }
+     
+     const cidx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanQPhone);
+     if (cidx > -1) {
+         if (name) customers[cidx].name = name;
+     } else {
+         customers.push({
+             id: "CUST-" + Date.now().toString(36),
+             name: name || "",
+             phone: phone,
+             address: "",
+             lastOrderDate: new Date().toISOString(),
+             loyaltyPoints: 0,
+             points: 0
+         });
+     }
+     
+     await updateAppData({ customers, squads });
+     res.json({ success: true });
+   } catch(e) {
+     res.status(500).json({ error: String(e) });
+   }
+  });
+
   app.get("/api/customers", async (req, res) => {
     let { phone } = req.query;
     if (!phone) {
@@ -938,6 +1129,9 @@ app.get("/api/debug/order/:id", async (req, res) => {
       status,
       paymentStatus,
       splitType,
+      squadId,
+      squadName,
+      squadTier,
     } = req.body;
 
     console.log(
@@ -977,6 +1171,9 @@ app.get("/api/debug/order/:id", async (req, res) => {
       createdAt: new Date().toISOString(),
       source: "customer_website",
       generalNotes: generalNotes || "",
+      squadId: squadId || null,
+      squadName: squadName || null,
+      squadTier: squadTier || null,
     };
 
     if (splitType) {
@@ -1043,9 +1240,47 @@ app.get("/api/debug/order/:id", async (req, res) => {
         });
       }
 
+      const squads = appData.squads || [];
+      const orderPoints = Math.floor(total || 0);
+      const pointsToAdd = orderPoints > 0 ? orderPoints : 1;
+      
+      let attributedSquad = squadId;
+      if (!attributedSquad && customerPhone) {
+          const custSquad = squads.find((sq: any) => 
+               (sq.membersList || []).some((m: any) => cleanPhone(m.phone) === cleanPhoneQuery)
+          );
+          if (custSquad) attributedSquad = String(custSquad.id);
+      }
+
+      if (attributedSquad) {
+         const sqIndex = squads.findIndex((s:any) => String(s.id) === String(attributedSquad));
+         if (sqIndex > -1) {
+             squads[sqIndex].points = (Number(squads[sqIndex].points) || 0) + pointsToAdd;
+             
+             if (customerPhone) {
+                 if (!squads[sqIndex].membersList) squads[sqIndex].membersList = [];
+                 let mIndex = squads[sqIndex].membersList.findIndex((m:any) => cleanPhone(m.phone) === cleanPhoneQuery);
+                 if (mIndex > -1) {
+                     squads[sqIndex].membersList[mIndex].points = (Number(squads[sqIndex].membersList[mIndex].points) || 0) + pointsToAdd;
+                     if (customerName && (!squads[sqIndex].membersList[mIndex].name || squads[sqIndex].membersList[mIndex].name === "عميل")) {
+                         squads[sqIndex].membersList[mIndex].name = customerName;
+                     }
+                 } else {
+                     squads[sqIndex].membersList.push({
+                         phone: customerPhone,
+                         name: customerName || "عميل",
+                         points: pointsToAdd
+                     });
+                     squads[sqIndex].members = squads[sqIndex].membersList.length;
+                 }
+             }
+         }
+      }
+
       await updateAppData({
         orders,
         customers,
+        squads
       });
 
       console.log(`[ORDER] Order ${newOrder.id} saved successfully`);
