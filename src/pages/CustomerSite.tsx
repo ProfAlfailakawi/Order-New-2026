@@ -2703,11 +2703,6 @@ ${paymentLink}`;
                         className="bg-transparent outline-none w-full text-sm font-bold text-brand placeholder:text-stone-400"
                       />
                     </div>
-                    {!quickProductSearch.trim() && (
-                      <p className="text-[11px] text-stone-400 mt-3 text-center font-bold">
-                        اختار التصنيف، وراح يفتح وحده ويقفل الباقي.
-                      </p>
-                    )}
                   </div>
 
                   {quickProductSearch.trim() ? (
