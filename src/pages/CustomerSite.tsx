@@ -37,6 +37,35 @@ import {
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
 
+const DEFAULT_PRODUCT_CATEGORIES = ["الولائم", "اللحوم", "الدجاج", "البحري", "المشويات", "المقبلات", "المشروبات"];
+
+const normalizeCategoryName = (value?: string) => String(value || "عام").trim() || "عام";
+
+const normalizeProductSearchText = (value?: string) =>
+  String(value || "")
+    .toLowerCase()
+    .replace(/[إأآا]/g, "ا")
+    .replace(/[ة]/g, "ه")
+    .replace(/[ى]/g, "ي")
+    .replace(/[ؤ]/g, "و")
+    .replace(/[ئ]/g, "ي")
+    .replace(/[ًٌٍَُِّْـ]/g, "")
+    .trim();
+
+const getSharedProductCategories = (source: any, productList: any[] = []) => {
+  const configured =
+    source?.productCategories ||
+    source?.menuCategories ||
+    source?.settings?.productCategories ||
+    source?.settings?.menuCategories ||
+    [];
+  const configuredNames = Array.isArray(configured)
+    ? configured.map((cat: any) => normalizeCategoryName(typeof cat === "string" ? cat : cat?.name || cat?.title)).filter(Boolean)
+    : [];
+  const productNames = productList.map((p: any) => normalizeCategoryName(p?.category)).filter(Boolean);
+  return Array.from(new Set([...configuredNames, ...DEFAULT_PRODUCT_CATEGORIES, ...productNames]));
+};
+
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -53,6 +82,8 @@ import {
   calculateItemBasePriceWithHiddenAddons,
   getVisibleAddons,
   normalizeAddons,
+  isAddonRequired,
+  getQuantityRuleLimits,
 } from "../utils/priceCalculation";
 import { ZenSplashScreen } from "../components/ZenSplashScreen";
 import { DynamicEnvironment } from "../components/DynamicEnvironment";
@@ -501,6 +532,8 @@ export default function CustomerSite() {
   }, [moodPlaceholders]);
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [activeStory, setActiveStory] = useState<string>("الكل");
+  const [activeProductCategory, setActiveProductCategory] = useState<string | null>(null);
+  const [quickProductSearch, setQuickProductSearch] = useState("");
   const [showFlashSale, setShowFlashSale] = useState(false);
   const [smartPick, setSmartPick] = useState<any>(null); // Re-adding smartPick
   const [flyingPlates, setFlyingPlates] = useState<
@@ -723,9 +756,9 @@ export default function CustomerSite() {
       "المزاج مو اوكي؟ صدقني شوية سكر وكاكاو بيغيرون النكد لفرح.. دلع نفسك 🎂"
     ],
     late: [
-      "تسهر بروحك؟ خلك معاي أدلعك بهالطلبات اللي تنسيك تعب اليوم 🌙🍔",
-      "يوع آخر الليل ما يرحم.. اطلب لك اللي بخاطرك وكمل سهرتك فيه 🍟",
-      "شنو مقعدك لي هالحزة؟ جوع؟ الشيف بعده زاهب ويجهز لك خوش طلب! 🍕"
+      "تسهر بروحك؟ خلك معاي أدلعك بهالطلبات اللي تنسيك تعب اليوم 🌙🍛",
+      "يوع آخر الليل ما يرحم.. اطلب لك اللي بخاطرك وكمل سهرتك فيه 🍲",
+      "شنو مقعدك لي هالحزة؟ جوع؟ الشيف بعده زاهب ويجهز لك خوش طلب! 🥘"
     ],
     general: [
       "اطلب وتمنى.. الشيف تحت أمرك اليوم! 👨‍🍳",
@@ -2610,6 +2643,21 @@ ${paymentLink}`;
                  }
               }
 
+              const allCategories = getSharedProductCategories(settings, displayProducts);
+              const query = quickProductSearch.trim();
+              const searchedProducts = query
+                ? displayProducts.filter((product: any) => {
+                    const haystack = `${product?.name || ""} ${product?.nameEn || ""} ${product?.category || ""}`;
+                    return normalizeProductSearchText(haystack).includes(normalizeProductSearchText(query));
+                  })
+                : displayProducts;
+              const groupedProducts = allCategories
+                .map((category) => ({
+                  category,
+                  items: searchedProducts.filter((product: any) => normalizeCategoryName(product?.category) === category),
+                }))
+                .filter((group) => group.items.length > 0);
+
               if (isLoadingProducts) {
                 return (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -2626,27 +2674,109 @@ ${paymentLink}`;
                 );
               }
 
-              return displayProducts.length === 0 ? (
-                <div className="p-8 text-center text-stone-400 font-bold border-2 border-dashed border-stone-100 rounded-2xl">
-                  لا توجد بيانات لهذا التصنيف
+              return searchedProducts.length === 0 ? (
+                <div className="space-y-4">
+                  <div className="bg-white/90 border border-stone-100 rounded-3xl p-4 shadow-sm">
+                    <div className="flex items-center gap-3 bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3">
+                      <Search className="w-4 h-4 text-stone-400" />
+                      <input
+                        value={quickProductSearch}
+                        onChange={(e) => setQuickProductSearch(e.target.value)}
+                        placeholder="بحث سريع عن منتج..."
+                        className="bg-transparent outline-none w-full text-sm font-bold text-brand placeholder:text-stone-400"
+                      />
+                    </div>
+                  </div>
+                  <div className="p-8 text-center text-stone-400 font-bold border-2 border-dashed border-stone-100 rounded-2xl">
+                    لا توجد بيانات لهذا التصنيف
+                  </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  {displayProducts.map((product) => (
-                    <motion.div
-                      key={product.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="h-full flex flex-col"
-                      style={{ minHeight: "120px" }}
-                    >
-                      <ChefWhisperCard
-                        product={product}
-                        settings={settings}
-                        onSelect={setSelectedProduct}
+                <div className="space-y-4">
+                  <div className="bg-white/90 border border-stone-100 rounded-3xl p-4 shadow-sm">
+                    <div className="flex items-center gap-3 bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3">
+                      <Search className="w-4 h-4 text-stone-400" />
+                      <input
+                        value={quickProductSearch}
+                        onChange={(e) => setQuickProductSearch(e.target.value)}
+                        placeholder="بحث سريع عن منتج..."
+                        className="bg-transparent outline-none w-full text-sm font-bold text-brand placeholder:text-stone-400"
                       />
-                    </motion.div>
-                  ))}
+                    </div>
+                    {!quickProductSearch.trim() && (
+                      <p className="text-[11px] text-stone-400 mt-3 text-center font-bold">
+                        اختار التصنيف، وراح يفتح وحده ويقفل الباقي.
+                      </p>
+                    )}
+                  </div>
+
+                  {quickProductSearch.trim() ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                      {searchedProducts.map((product) => (
+                        <motion.div
+                          key={product.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="h-full flex flex-col"
+                          style={{ minHeight: "120px" }}
+                        >
+                          <ChefWhisperCard product={product} settings={settings} onSelect={setSelectedProduct} />
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {groupedProducts.map((group) => {
+                        const isOpen = activeProductCategory === group.category;
+                        return (
+                          <div key={group.category} className="bg-white border border-stone-100 rounded-[28px] shadow-sm overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() => setActiveProductCategory(isOpen ? null : group.category)}
+                              className="w-full flex items-center justify-between gap-4 p-5 text-right"
+                            >
+                              <div className="flex flex-col items-start">
+                                <span className="text-lg font-extrabold text-brand">{group.category}</span>
+                                <span className="text-[11px] font-bold text-stone-400">{group.items.length} منتج</span>
+                              </div>
+                              <div className={cn(
+                                "w-10 h-10 rounded-2xl flex items-center justify-center transition-all",
+                                isOpen ? "bg-brand text-white rotate-180" : "bg-stone-50 text-brand"
+                              )}>
+                                <ArrowRight className="w-4 h-4 rotate-90" />
+                              </div>
+                            </button>
+
+                            <AnimatePresence initial={false}>
+                              {isOpen && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.22 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 p-4 pt-0">
+                                    {group.items.map((product) => (
+                                      <motion.div
+                                        key={product.id}
+                                        initial={{ opacity: 0, y: 12 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="h-full flex flex-col"
+                                        style={{ minHeight: "120px" }}
+                                      >
+                                        <ChefWhisperCard product={product} settings={settings} onSelect={setSelectedProduct} />
+                                      </motion.div>
+                                    ))}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })()}
@@ -3695,18 +3825,49 @@ function ProductModal({
   const productAddons = useMemo(() => normalizeAddons((product as any).addons), [product]);
   const normalizedProduct = useMemo(() => ({ ...(product as any), addons: productAddons }), [product, productAddons]);
   const [selectedAddonsIds, setSelectedAddonsIds] = useState<string[]>(() => {
-    return productAddons.filter((a: any) => (a.minQuantity || 0) > 0 || (a.freeQuantity || 0) > 0 || a.isRequired || a.quantityRule?.mode === 'required').map((a: any) => a.id);
+    return productAddons.filter((a: any) => isAddonRequired(a) || a.quantityRule?.mode === 'auto').map((a: any) => a.id);
   });
   const [addonQuantities, setAddonQuantities] = useState<Record<string, number>>(() => {
     const qs: Record<string, number> = {};
     productAddons.forEach((a: any) => {
-      if ((a.minQuantity || 0) > 0 || (a.freeQuantity || 0) > 0) {
-        qs[a.id] = Math.max(a.minQuantity || 1, 1);
+      if (isAddonRequired(a) || a.quantityRule?.mode === 'auto') {
+        const limits = getQuantityRuleLimits(a, 1);
+        qs[a.id] = Math.max(limits.min, a.quantityRule?.mode === 'auto' ? limits.suggested : 1);
       }
     });
     return qs;
   });
   const [note, setNote] = useState("");
+
+  useEffect(() => {
+    setSelectedAddonsIds((prev) => {
+      const forced = productAddons
+        .filter((a: any) => {
+          const limits = getQuantityRuleLimits(a, quantity);
+          return limits.available && (isAddonRequired(a) || a.quantityRule?.mode === 'auto' || a.quantityRule?.mode === 'required');
+        })
+        .map((a: any) => a.id);
+      return Array.from(new Set([...prev, ...forced]));
+    });
+    setAddonQuantities((prev) => {
+      const next = { ...prev };
+      productAddons.forEach((a: any) => {
+        const limits = getQuantityRuleLimits(a, quantity);
+        if (!limits.available) {
+          delete next[a.id];
+          return;
+        }
+        const mustStay = isAddonRequired(a) || a.quantityRule?.mode === 'auto' || a.quantityRule?.mode === 'required';
+        if (mustStay) {
+          const desired = a.quantityRule?.mode === 'auto' ? limits.suggested : Math.max(limits.min, next[a.id] ?? 1);
+          next[a.id] = Math.max(limits.min, Math.min(limits.max, desired));
+        } else if (next[a.id] !== undefined) {
+          next[a.id] = Math.max(limits.min, Math.min(limits.max, next[a.id]));
+        }
+      });
+      return next;
+    });
+  }, [quantity, productAddons]);
 
   const mockItem = {
     id: "",
@@ -3733,9 +3894,13 @@ function ProductModal({
 
   const toggleAddon = (addonId: string) => {
     const addon = productAddons.find((a: any) => a.id === addonId);
+    if (!addon) return;
+    const limits = getQuantityRuleLimits(addon, quantity);
+    if (!limits.available) return;
+
     if (selectedAddonsIds.includes(addonId)) {
-      if (addon && ((addon.minQuantity || 0) > 0 || (addon.freeQuantity || 0) > 0)) {
-         // Mandatory addon, cannot uncheck
+      if (isAddonRequired(addon) || addon.quantityRule?.mode === 'auto') {
+         // Mandatory/automatic addons cannot be unchecked, but their quantity can be changed below.
          return;
       }
       setSelectedAddonsIds(selectedAddonsIds.filter((id) => id !== addonId));
@@ -3744,19 +3909,17 @@ function ProductModal({
       setAddonQuantities(newQs);
     } else {
       setSelectedAddonsIds([...selectedAddonsIds, addonId]);
-      setAddonQuantities({ ...addonQuantities, [addonId]: Math.max(addon?.minQuantity || 1, 1) });
+      setAddonQuantities({ ...addonQuantities, [addonId]: Math.max(limits.min, 1) });
     }
   };
 
   const updateAddonQty = (addonId: string, delta: number) => {
     const addon = productAddons.find((a: any) => a.id === addonId);
     if (!addon) return;
-    const current = addonQuantities[addonId] || 1;
-    let next = current + delta;
-    if (addon.minQuantity) next = Math.max(addon.minQuantity, next);
-    else if ((addon.freeQuantity || 0) > 0) next = Math.max(1, next);
-    else next = Math.max(1, next);
-    if (addon.maxQuantity) next = Math.min(addon.maxQuantity, next);
+    const limits = getQuantityRuleLimits(addon, quantity);
+    if (!limits.available) return;
+    const current = addonQuantities[addonId] ?? Math.max(limits.min, 1);
+    const next = Math.max(limits.min, Math.min(limits.max, current + delta));
     setAddonQuantities({ ...addonQuantities, [addonId]: next });
   };
 
@@ -3917,19 +4080,19 @@ function ProductModal({
                         <div
                           className={cn(
                             "w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all",
-                            isSelected
+                            effectiveSelected
                               ? "bg-accent border-accent text-white"
                               : "border-stone-100 bg-white",
                           )}
                         >
-                          {isSelected && (
+                          {effectiveSelected && (
                             <Check className="w-3 h-3 stroke-[3]" />
                           )}
                         </div>
                         <span
                           className={cn(
                             "text-xs sm:text-sm transition-colors font-bold",
-                            isSelected ? "text-brand" : "text-stone-500",
+                            effectiveSelected ? "text-brand" : "text-stone-500",
                           )}
                         >
                           {extra.name}
@@ -4003,14 +4166,17 @@ function ProductModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {productAddons.map((addon: any) => {
                   const isSelected = selectedAddonsIds.includes(addon.id);
-                  const isMandatory = (addon.minQuantity || 0) > 0 || (addon.freeQuantity || 0) > 0;
+                  const limits = getQuantityRuleLimits(addon, quantity);
+                  const isMandatory = isAddonRequired(addon) || addon.quantityRule?.mode === 'auto';
+                  const effectiveSelected = limits.available && (isSelected || isMandatory);
+                  const currentAddonQty = addonQuantities[addon.id] ?? Math.max(limits.min, 1);
                   return (
                     <div
                       key={addon.id}
                       onClick={() => toggleAddon(addon.id)}
                       className={cn(
                         "flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer",
-                        isSelected
+                        effectiveSelected
                           ? isMandatory ? "border-accent bg-accent/10 cursor-default opacity-90" : "border-accent bg-accent/5"
                           : "border-stone-50 bg-stone-50/30 hover:border-stone-100",
                       )}
@@ -4019,19 +4185,19 @@ function ProductModal({
                         <div
                           className={cn(
                             "w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all",
-                            isSelected
+                            effectiveSelected
                               ? "bg-accent border-accent text-white"
                               : "border-stone-100 bg-white",
                           )}
                         >
-                          {isSelected && (
+                          {effectiveSelected && (
                             <Check className="w-3 h-3 stroke-[3]" />
                           )}
                         </div>
                         <span
                           className={cn(
                             "text-xs sm:text-sm transition-colors font-bold",
-                            isSelected ? "text-brand" : "text-stone-500",
+                            effectiveSelected ? "text-brand" : "text-stone-500",
                           )}
                         >
                           {addon.name}
@@ -4039,11 +4205,11 @@ function ProductModal({
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        {isSelected && addon.freeQuantity && addon.freeQuantity > 0 && (!addon.maxQuantity || addon.maxQuantity > 1) && (
+                        {effectiveSelected && (
                            <div className="flex items-center gap-2 bg-white rounded-md border border-stone-200" onClick={e => e.stopPropagation()}>
-                              <button className="px-2 text-stone-400 hover:text-accent font-bold" onClick={() => updateAddonQty(addon.id, -1)}>-</button>
-                              <span className="text-xs font-bold w-4 text-center text-brand">{addonQuantities[addon.id] || 1}</span>
-                              <button className="px-2 text-stone-400 hover:text-accent font-bold" onClick={() => updateAddonQty(addon.id, 1)}>+</button>
+                              <button disabled={currentAddonQty <= limits.min} className="px-2 text-stone-400 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addon.id, -1)}>-</button>
+                              <span className="text-xs font-bold w-4 text-center text-brand">{currentAddonQty}</span>
+                              <button disabled={currentAddonQty >= limits.max} className="px-2 text-stone-400 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addon.id, 1)}>+</button>
                            </div>
                         )}
                         {addon.price > 0 && !addon.isHiddenPrice && (
@@ -4057,8 +4223,11 @@ function ProductModal({
                         {(addon.price === 0 || addon.isHiddenPrice) && addon.freeQuantity && addon.freeQuantity > 0 && (
                             <span className="text-[10px] font-bold text-green-600">أول {addon.freeQuantity} مجاناً</span>
                         )}
-                        {(addon.minQuantity || 0) > 0 && (
+                        {isMandatory && (
                             <span className="text-[9px] font-bold text-red-500 mr-2 border border-red-200 bg-red-50 px-1 rounded block sm:inline whitespace-nowrap">إلزامي</span>
+                        )}
+                        {addon.calculationType === 'per_x_items' && (
+                            <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1 rounded block sm:inline whitespace-nowrap">كل {addon.xItemsThreshold || 1} أطباق تحسب مرة</span>
                         )}
                       </div>
                     </div>

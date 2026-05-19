@@ -824,6 +824,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
         settings.loyaltyTiers = data.loyaltyTiers || [];
         settings.squadTiers = data.squadTiers || [];
         settings.loyaltySettings = data.loyaltySettings || {};
+        settings.productCategories = data.productCategories || settings.productCategories || [];
+        settings.menuCategories = data.menuCategories || settings.menuCategories || [];
 
         // Include company info from root if it exists
         if (data.info) {
