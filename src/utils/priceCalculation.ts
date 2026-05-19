@@ -39,7 +39,9 @@ export function getQuantityRuleLimits(addon: any, productQty: number) {
     return { available: false, min: 0, max: 0, suggested: 0, message: `متاحة عند طلب ${minProductQty} أو أكثر` };
   }
 
-  const suggested = Math.max(1, Math.ceil(Number(productQty || 0) / perAddon));
+  // For per-addon rules, only count complete groups when suggesting a quantity.
+  // Using Math.floor avoids overestimating for partial quantities. Always return at least 1.
+  const suggested = Math.max(1, Math.floor(Number(productQty || 0) / perAddon));
   const min = rule.mode === 'required' ? Math.max(baseMin, suggested) : baseMin;
   const max = Math.max(min, Math.min(baseMax, suggested));
 
@@ -79,7 +81,13 @@ export function calculateItemAddons(item: OrderItem): OrderItemAddon[] {
         quantity = 1;
       } else if (addon.calculationType === 'per_x_items') {
         const threshold = addon.xItemsThreshold || 1;
-        quantity = Math.ceil(item.quantity / threshold);
+        /*
+         * When calculating addon quantity for per_x_items, only count full
+         * groups of the threshold. Using Math.floor prevents extra charges
+         * for partial groups. For example, with threshold=3 and quantity=5
+         * the addon applies only once.
+         */
+        quantity = Math.floor(item.quantity / threshold);
       } else {
         quantity = item.quantity;
       }
@@ -121,4 +129,23 @@ export function calculateItemBasePriceWithHiddenAddons(item: OrderItem): number 
 // Gives you the total price for an item, but as a formatted piece
 export function getVisibleAddons(item: OrderItem): OrderItemAddon[] {
     return calculateItemAddons(item);
+}
+
+// Compatibility helper used by product/addon UI components.
+// Required addons are selected automatically and cannot be fully removed.
+export function isAddonRequired(addon: any): boolean {
+  if (!addon) return false;
+  return Boolean(addon.isRequired || Number(addon.minQuantity || 0) > 0 || addon?.quantityRule?.mode === 'required');
+}
+
+export function getAddonMinimumQuantity(addon: any): number {
+  if (!addon) return 0;
+  return isAddonRequired(addon) ? Math.max(1, Number(addon.minQuantity || 1)) : Math.max(0, Number(addon.minQuantity || 0));
+}
+
+export function getAddonMaximumQuantity(addon: any): number {
+  if (!addon) return 999;
+  const min = getAddonMinimumQuantity(addon);
+  const max = addon.maxQuantity !== undefined && addon.maxQuantity !== null && addon.maxQuantity !== '' ? Number(addon.maxQuantity) : 999;
+  return Math.max(min, Number.isFinite(max) ? max : 999);
 }

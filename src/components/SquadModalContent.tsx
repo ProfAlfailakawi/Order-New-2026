@@ -139,31 +139,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
    const currentTier = [...sortedTiers].reverse().find(t => currentPoints >= Number(t.minPoints || 0)) || sortedTiers[0] || getSquadTier(currentPoints);
 
-   const rawChallenges = Array.isArray(squadInfo?.challenges) ? squadInfo.challenges : Array.isArray((squadInfo as any)?.missions) ? (squadInfo as any).missions : [];
-   const challengeItems = rawChallenges.length > 0
-      ? rawChallenges.map((challenge: any, index: number) => {
-         const points = toNumber(challenge?.points ?? challenge?.targetPoints ?? challenge?.requiredPoints ?? 0);
-         return {
-            id: String(challenge?.id ?? index),
-            icon: challenge?.icon || "🎯",
-            title: challenge?.title || challenge?.name || `تحدي ${index + 1}`,
-            text: challenge?.text || challenge?.description || challenge?.reward || "",
-            points,
-            reached: challenge?.reached ?? challenge?.completed ?? (points > 0 ? currentPoints >= points : false),
-            bg: challenge?.bg || "bg-amber-100",
-            color: challenge?.color || "text-amber-700"
-         };
-      })
-      : sortedTiers.slice(1).map((tier, index) => ({
-         id: `tier-challenge-${tier.id}`,
-         icon: tier.icon || "🎯",
-         title: `تحدي ${tier.name}`,
-         text: tier.benefit || tier.description || "اجمعوا نقاط أكثر للوصول للمستوى التالي.",
-         points: Number(tier.minPoints || 0),
-         reached: currentPoints >= Number(tier.minPoints || 0),
-         bg: tier.bg || "bg-stone-100",
-         color: tier.color || "text-brand"
-      }));
+   const safePoints = (value: any) => {
+      const n = toNumber(value);
+      return Number.isFinite(n) ? n : 0;
+   };
+
+   const cleanSquadName = (name: any) => {
+      const raw = String(name || '').trim();
+      return raw.replace(/^(ديوانيتي\s*)?(ديوانية\s*)+/i, '').trim() || raw || 'ربعكم';
+   };
 
    return (
       <div className="flex flex-col gap-6" id="squad-content-container">
@@ -249,25 +233,26 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                )}
 
                {squadInfo ? (() => {
-                  const currentSquadTier = getSquadTier(toNumber(squadInfo.points ?? squadInfo.totalPoints ?? squadInfo.score ?? squadInfo.totalOrders ?? 0));
-                  const nextSquadTierIndex = SQUAD_TIERS.findIndex(t => t.id === currentSquadTier.id) + 1;
-                  const nextSquadTier = nextSquadTierIndex < SQUAD_TIERS.length ? SQUAD_TIERS[nextSquadTierIndex] : null;
+                  const squadPoints = safePoints(squadInfo.points ?? squadInfo.totalPoints ?? squadInfo.teamPoints ?? squadInfo.score ?? squadInfo.balance ?? 0);
+                  const currentSquadTier = [...sortedTiers].reverse().find(t => squadPoints >= safePoints(t.minPoints)) || sortedTiers[0] || getSquadTier(squadPoints);
+                  const nextSquadTier = sortedTiers.find(t => safePoints(t.minPoints) > squadPoints) || null;
+                  const nextRequiredPoints = nextSquadTier ? safePoints(nextSquadTier.minPoints) : safePoints(currentSquadTier?.minPoints);
+                  const currentRequiredPoints = safePoints(currentSquadTier?.minPoints);
 
                   let progressPercent = 100;
                   if (nextSquadTier) {
-                     const range = nextSquadTier.minPoints - currentSquadTier.minPoints;
-                     const currentProgress = toNumber(squadInfo.points ?? squadInfo.totalPoints ?? squadInfo.score ?? squadInfo.totalOrders ?? 0) - currentSquadTier.minPoints;
+                     const range = Math.max(1, nextRequiredPoints - currentRequiredPoints);
+                     const currentProgress = Math.max(0, squadPoints - currentRequiredPoints);
                      progressPercent = Math.min(100, Math.max(0, (currentProgress / range) * 100));
                   }
 
                   return (
                      <div key="overview-content" className="flex flex-col gap-6">
                         <div className={cn("rounded-[32px] p-6 border-2 shadow-sm relative overflow-hidden transition-all duration-500", currentSquadTier.bg, currentSquadTier.id === 'diamond' ? 'border-sky-200' : currentSquadTier.id === 'gold' ? 'border-yellow-200' : currentSquadTier.id === 'silver' ? 'border-stone-200' : 'border-amber-100')}>
-                           <div className="flex items-center gap-4 mb-6 relative z-10">
-                              <div className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center text-3xl shrink-0">{currentSquadTier.icon}</div>
+                           <div className="flex items-center justify-end gap-4 mb-6 relative z-10">
                               <div className="flex flex-col text-right">
                                  <h4 className="font-black text-xl text-brand mb-1 flex items-center gap-2">
-                                    ديوانية {squadInfo.name}
+                                    ديوانية {cleanSquadName(squadInfo.name)}
                                     {currentSquadTier.id === 'diamond' && <Crown className="w-5 h-5 text-sky-500 fill-current" />}
                                  </h4>
                                  <p className={cn("text-xs font-black uppercase tracking-widest", currentSquadTier.color)}>مستوى {currentSquadTier.name}</p>
@@ -279,11 +264,11 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                     <div className="flex justify-between items-end px-0.5">
                                        <div className="text-right text-[10px] font-black text-brand flex flex-col gap-0.5">
                                           <span className="opacity-60 font-bold">رصيد ديوانيتكم:</span>
-                                          <span>{squadInfo.totalOrders || 0} نقطة</span>
+                                          <span>{squadPoints} نقطة</span>
                                        </div>
                                        <div className="text-left text-[10px] font-black text-brand flex flex-col items-start gap-0.5">
                                           <span className="opacity-60 font-bold">باقي لكم:</span>
-                                          <span className="text-accent underline font-black">{nextSquadTier.minPoints - (squadInfo.totalOrders || 0)} نقطة</span>
+                                          <span className="text-accent underline font-black">{Math.max(0, nextRequiredPoints - squadPoints)} نقطة</span>
                                        </div>
                                     </div>
                                     <div className="h-4 bg-white/80 rounded-full overflow-hidden border border-stone-100/50 p-0.5 shadow-inner">
@@ -299,7 +284,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                     <div className="bg-sky-500 p-2 rounded-lg text-white"><Crown className="w-5 h-5" /></div>
                                     <div className="text-right">
                                        <h4 className="font-black text-sm text-sky-700">لقادة الديوانية!</h4>
-                                       <p className="text-[10px] font-bold text-sky-600/80">أنتم أسياد المكان، رصيدكم {squadInfo.totalOrders || 0} نقطة!</p>
+                                       <p className="text-[10px] font-bold text-sky-600/80">أنتم أسياد المكان، رصيدكم {squadPoints} نقطة!</p>
                                     </div>
                                  </div>
                               )}
@@ -374,7 +359,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   <div className="flex items-center justify-between mb-4">
                      <div>
                         <h4 className="font-black text-brand text-lg">طريق الديوانية</h4>
-                        <p className="text-[11px] font-bold text-stone-400">المستويات والتحديات نفس إعدادات الأدمن مباشرة</p>
+                        <p className="text-[11px] font-bold text-stone-400">طريق واضح يبين مستواكم وكم باقي للمستوى القادم</p>
                      </div>
                      <span className="px-3 py-1 rounded-full bg-accent/10 text-accent text-[10px] font-black">{currentPoints} نقطة</span>
                   </div>
@@ -423,24 +408,6 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         </div>
                      );
                   })}
-               </div>
-
-               <div className="rounded-[28px] border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
-                  <h4 className="font-black text-brand text-lg mb-3">التحديات</h4>
-                  <div className="space-y-3">
-                     {challengeItems.map((challenge) => (
-                        <div key={challenge.id} className="flex items-start gap-3 rounded-2xl bg-white/80 border border-white p-4">
-                           <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", challenge.bg)}>{challenge.icon}</div>
-                           <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-3">
-                                 <h5 className={cn("font-black text-sm", challenge.color)}>{challenge.title}</h5>
-                                 <span className={cn("text-[9px] font-black px-2 py-1 rounded-full shrink-0", challenge.reached ? "bg-green-100 text-green-700" : "bg-stone-100 text-stone-500")}>{challenge.reached ? "منجز" : `${challenge.points}+ نقطة`}</span>
-                              </div>
-                              <p className="text-[11px] font-bold text-stone-500 leading-relaxed mt-1">{challenge.text}</p>
-                           </div>
-                        </div>
-                     ))}
-                  </div>
                </div>
             </div>
          )}
