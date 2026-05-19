@@ -7,10 +7,16 @@ interface SquadTier {
    id: string;
    name: string;
    minPoints: number;
+   maxPoints?: number;
    benefit: string;
+   description?: string;
+   title?: string;
    icon: string;
    bg: string;
    color: string;
+   image?: string;
+   imageUrl?: string;
+   badgeColor?: string;
 }
 
 interface SquadModalContentProps {
@@ -80,6 +86,85 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
    handleCreateSquad,
    handleJoinSquad
 }) => {
+   const toNumber = (value: any): number => {
+      if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+      if (typeof value === "string") {
+         const normalized = value.replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[^0-9.-]/g, "");
+         const n = Number(normalized);
+         return Number.isFinite(n) ? n : 0;
+      }
+      return 0;
+   };
+
+   const resolveTierImage = (tier: any): string => {
+      return tier?.imageUrl || tier?.image || tier?.imageURL || tier?.iconUrl || tier?.iconURL || tier?.photoUrl || tier?.photo || tier?.badgeImage || tier?.badgeUrl || tier?.badge || tier?.logo || tier?.levelImage || tier?.tierImage || "";
+   };
+
+   const normalizeSquadTier = (tier: any, index: number): SquadTier => {
+      const fallbackColors = ["text-orange-700", "text-slate-600", "text-yellow-700", "text-purple-700"];
+      const fallbackBg = ["bg-orange-50", "bg-slate-50", "bg-amber-50", "bg-purple-50"];
+      const iconByType: Record<string, string> = { Medal: "🥉", Star: "⭐", Crown: "👑", Trophy: "🏆" };
+      const min = toNumber(tier?.minPoints ?? tier?.pointsRequired ?? tier?.requiredPoints ?? tier?.threshold ?? tier?.points ?? 0);
+      const max = tier?.maxPoints !== undefined ? toNumber(tier.maxPoints) : undefined;
+      return {
+         id: String(tier?.id ?? tier?.name ?? index),
+         name: tier?.name || tier?.title || `مستوى ${index + 1}`,
+         minPoints: min,
+         maxPoints: max,
+         benefit: tier?.benefit || tier?.label || tier?.description || tier?.reward || "",
+         description: tier?.description || tier?.label || tier?.benefit || "",
+         title: tier?.title || tier?.name || "",
+         icon: tier?.icon || iconByType[tier?.iconType] || "🏅",
+         bg: tier?.bg || tier?.bgClass || fallbackBg[index % fallbackBg.length],
+         color: tier?.textColor || tier?.textClass || tier?.colorClass || (String(tier?.color || "").startsWith("text-") ? tier.color : fallbackColors[index % fallbackColors.length]),
+         image: resolveTierImage(tier),
+         imageUrl: resolveTierImage(tier),
+         badgeColor: tier?.badgeColor || tier?.color || ""
+      };
+   };
+
+   const sortedTiers = (SQUAD_TIERS || [])
+      .map(normalizeSquadTier)
+      .sort((a, b) => Number(a.minPoints || 0) - Number(b.minPoints || 0));
+
+   const currentPoints = toNumber(
+      squadInfo?.points ??
+      squadInfo?.totalPoints ??
+      squadInfo?.teamPoints ??
+      squadInfo?.score ??
+      squadInfo?.balance ??
+      squadInfo?.totalOrders ??
+      0
+   );
+
+   const currentTier = [...sortedTiers].reverse().find(t => currentPoints >= Number(t.minPoints || 0)) || sortedTiers[0] || getSquadTier(currentPoints);
+
+   const rawChallenges = Array.isArray(squadInfo?.challenges) ? squadInfo.challenges : Array.isArray((squadInfo as any)?.missions) ? (squadInfo as any).missions : [];
+   const challengeItems = rawChallenges.length > 0
+      ? rawChallenges.map((challenge: any, index: number) => {
+         const points = toNumber(challenge?.points ?? challenge?.targetPoints ?? challenge?.requiredPoints ?? 0);
+         return {
+            id: String(challenge?.id ?? index),
+            icon: challenge?.icon || "🎯",
+            title: challenge?.title || challenge?.name || `تحدي ${index + 1}`,
+            text: challenge?.text || challenge?.description || challenge?.reward || "",
+            points,
+            reached: challenge?.reached ?? challenge?.completed ?? (points > 0 ? currentPoints >= points : false),
+            bg: challenge?.bg || "bg-amber-100",
+            color: challenge?.color || "text-amber-700"
+         };
+      })
+      : sortedTiers.slice(1).map((tier, index) => ({
+         id: `tier-challenge-${tier.id}`,
+         icon: tier.icon || "🎯",
+         title: `تحدي ${tier.name}`,
+         text: tier.benefit || tier.description || "اجمعوا نقاط أكثر للوصول للمستوى التالي.",
+         points: Number(tier.minPoints || 0),
+         reached: currentPoints >= Number(tier.minPoints || 0),
+         bg: tier.bg || "bg-stone-100",
+         color: tier.color || "text-brand"
+      }));
+
    return (
       <div className="flex flex-col gap-6" id="squad-content-container">
          {activeSquadTab === "overview" && (
@@ -164,14 +249,14 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                )}
 
                {squadInfo ? (() => {
-                  const currentSquadTier = getSquadTier(squadInfo.totalOrders || 0);
+                  const currentSquadTier = getSquadTier(toNumber(squadInfo.points ?? squadInfo.totalPoints ?? squadInfo.score ?? squadInfo.totalOrders ?? 0));
                   const nextSquadTierIndex = SQUAD_TIERS.findIndex(t => t.id === currentSquadTier.id) + 1;
                   const nextSquadTier = nextSquadTierIndex < SQUAD_TIERS.length ? SQUAD_TIERS[nextSquadTierIndex] : null;
 
                   let progressPercent = 100;
                   if (nextSquadTier) {
                      const range = nextSquadTier.minPoints - currentSquadTier.minPoints;
-                     const currentProgress = (squadInfo.totalOrders || 0) - currentSquadTier.minPoints;
+                     const currentProgress = toNumber(squadInfo.points ?? squadInfo.totalPoints ?? squadInfo.score ?? squadInfo.totalOrders ?? 0) - currentSquadTier.minPoints;
                      progressPercent = Math.min(100, Math.max(0, (currentProgress / range) * 100));
                   }
 
@@ -265,7 +350,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                <h4 className="font-black text-brand text-lg flex items-center gap-2 text-right"><Landmark className="w-5 h-5 text-accent" /> لوحة صدارة الدواوين</h4>
                <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden flex flex-col">
                   {topSquads?.map((sq: any, idx: number) => {
-                     const sqTier = getSquadTier(sq.totalOrders || 0);
+                     const sqTier = getSquadTier(toNumber(sq.points ?? sq.totalPoints ?? sq.score ?? sq.totalOrders ?? 0));
                      return (
                         <div key={idx} className={cn("flex items-center justify-between p-4 border-b border-stone-50 last:border-0", sq.id === squadInfo?.id ? "bg-accent/5 font-bold" : "")}>
                            <div className="flex items-center gap-3">
@@ -275,7 +360,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                  <span className="text-[10px] text-stone-400 font-bold">{sqTier.name}</span>
                               </div>
                            </div>
-                           <div className="text-sm font-black text-accent font-mono">{sq.totalOrders || 0}</div>
+                           <div className="text-sm font-black text-accent font-mono">{toNumber(sq.points ?? sq.totalPoints ?? sq.score ?? sq.totalOrders ?? 0)}</div>
                         </div>
                      );
                   })}
@@ -284,18 +369,79 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
          )}
 
          {activeSquadTab === "tiers" && (
-            <div className="flex flex-col gap-4 animate-in fade-in duration-500 text-right">
-               {SQUAD_TIERS.map((tier) => (
-                  <div key={tier.id} className={cn("p-5 rounded-2xl border-2 transition-all relative overflow-hidden", tier.bg, squadInfo && getSquadTier(squadInfo.totalOrders || 0).id === tier.id ? "border-brand" : "border-stone-100")}>
-                     <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-2xl shrink-0">{tier.icon}</div>
-                        <div className="flex flex-col flex-1">
-                           <div className="flex items-center justify-between"><h5 className={cn("font-black text-lg", tier.color)}>{tier.name}</h5><span className="text-[10px] font-bold opacity-60 tracking-tighter">{tier.minPoints}+ نقطة</span></div>
-                           <p className="text-[11px] font-black text-stone-600 mt-1">{tier.benefit}</p>
-                        </div>
+            <div className="space-y-5 animate-in fade-in duration-500 text-right">
+               <div className="rounded-[28px] border border-stone-100 bg-white p-5 shadow-sm overflow-hidden">
+                  <div className="flex items-center justify-between mb-4">
+                     <div>
+                        <h4 className="font-black text-brand text-lg">طريق الديوانية</h4>
+                        <p className="text-[11px] font-bold text-stone-400">المستويات والتحديات نفس إعدادات الأدمن مباشرة</p>
+                     </div>
+                     <span className="px-3 py-1 rounded-full bg-accent/10 text-accent text-[10px] font-black">{currentPoints} نقطة</span>
+                  </div>
+
+                  <div className="relative pt-2 pb-1">
+                     <div className="absolute top-8 right-6 left-6 h-2 rounded-full bg-stone-100" />
+                     <div className="relative grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.max(sortedTiers.length, 1)}, minmax(0, 1fr))` }}>
+                        {sortedTiers.map((tier) => {
+                           const reached = currentPoints >= Number(tier.minPoints || 0);
+                           const isCurrent = currentTier?.id === tier.id;
+                           return (
+                              <div key={tier.id} className="relative flex flex-col items-center text-center gap-2 min-w-0">
+                                 <div className={cn(
+                                    "w-12 h-12 rounded-2xl border-2 flex items-center justify-center text-xl shadow-sm bg-white z-10 transition-all overflow-hidden",
+                                    reached ? "border-accent scale-105" : "border-stone-100 opacity-70",
+                                    isCurrent && "ring-4 ring-accent/15"
+                                 )}>
+                                    {(tier.imageUrl || tier.image) ? <img src={tier.imageUrl || tier.image} className="w-full h-full object-cover" /> : <span>{tier.icon}</span>}
+                                 </div>
+                                 <span className={cn("text-[10px] font-black leading-tight truncate max-w-full", reached ? tier.color || "text-brand" : "text-stone-400")}>{tier.name}</span>
+                                 <span className="text-[9px] font-bold text-stone-400">{tier.minPoints}+ نقطة</span>
+                              </div>
+                           );
+                        })}
                      </div>
                   </div>
-               ))}
+               </div>
+
+               <div className="grid grid-cols-1 gap-4">
+                  {sortedTiers.map((tier) => {
+                     const reached = currentPoints >= Number(tier.minPoints || 0);
+                     const isCurrent = currentTier?.id === tier.id;
+                     return (
+                        <div key={tier.id} className={cn("p-5 rounded-2xl border-2 transition-all relative overflow-hidden", tier.bg, isCurrent ? "border-brand shadow-md" : "border-stone-100")}>
+                           <div className="flex items-center gap-4 relative z-10">
+                              <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-2xl shrink-0 overflow-hidden">{(tier.imageUrl || tier.image) ? <img src={tier.imageUrl || tier.image} className="w-full h-full object-cover" /> : tier.icon}</div>
+                              <div className="flex flex-col flex-1 min-w-0">
+                                 <div className="flex items-center justify-between gap-3">
+                                    <h5 className={cn("font-black text-lg truncate", tier.color)}>{tier.name}</h5>
+                                    <span className="text-[10px] font-bold opacity-60 tracking-tighter shrink-0">{tier.minPoints}+ نقطة</span>
+                                 </div>
+                                 <p className="text-[11px] font-black text-stone-600 mt-1 leading-relaxed">{tier.benefit}</p>
+                                 {isCurrent && <span className="text-[10px] font-black text-accent mt-2">هذا مستواكم الحالي ✨</span>}
+                              </div>
+                           </div>
+                        </div>
+                     );
+                  })}
+               </div>
+
+               <div className="rounded-[28px] border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
+                  <h4 className="font-black text-brand text-lg mb-3">التحديات</h4>
+                  <div className="space-y-3">
+                     {challengeItems.map((challenge) => (
+                        <div key={challenge.id} className="flex items-start gap-3 rounded-2xl bg-white/80 border border-white p-4">
+                           <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", challenge.bg)}>{challenge.icon}</div>
+                           <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-3">
+                                 <h5 className={cn("font-black text-sm", challenge.color)}>{challenge.title}</h5>
+                                 <span className={cn("text-[9px] font-black px-2 py-1 rounded-full shrink-0", challenge.reached ? "bg-green-100 text-green-700" : "bg-stone-100 text-stone-500")}>{challenge.reached ? "منجز" : `${challenge.points}+ نقطة`}</span>
+                              </div>
+                              <p className="text-[11px] font-bold text-stone-500 leading-relaxed mt-1">{challenge.text}</p>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               </div>
             </div>
          )}
       </div>

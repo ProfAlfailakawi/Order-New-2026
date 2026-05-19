@@ -9,7 +9,15 @@ export interface ProductAddon {
   maxQuantity?: number;
   freeQuantity?: number;
   isHiddenPrice: boolean;
+  isRequired?: boolean;
+  quantityRule?: {
+    enabled?: boolean;
+    minProductQty?: number;
+    maxProductQtyPerAddon?: number;
+    mode?: 'manual' | 'auto' | 'required';
+  };
 }
+
 
 export interface Product {
   id: string;

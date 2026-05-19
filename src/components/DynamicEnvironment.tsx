@@ -30,7 +30,7 @@ export function DynamicEnvironment() {
           }
         }
       } catch (e) {
-        console.error("Open-Meteo failed", e);
+        // Fallback to no rain if the API is blocked or offline.
       }
     };
     checkWeather();
