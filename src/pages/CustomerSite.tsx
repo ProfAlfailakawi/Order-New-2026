@@ -2097,8 +2097,8 @@ export default function CustomerSite() {
       return {
         type: "night",
         colors: "bg-[#1a1c29]",
-        title: title,
-        desc: desc,
+        title: "سمتك نروي روحك.. 🌙",
+        desc: "ندريس ه يك جيب ل ١٥ مزاج هيف.. عشان ج ذي ج نزالك ورق عن ب لي مون (حجم هني) ع لى ل م زاج وم اثقل ع لىن وم!",
         image:
           "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2670&auto=format&fit=crop",
         overlay: "from-[#1a1c29]/95 via-[#1a1c29]/80 to-transparent",
@@ -2186,7 +2186,7 @@ export default function CustomerSite() {
                     ) : (
                       <>
                         <ShoppingBag className="w-3.5 h-3.5 text-accent" />
-                        <span>اطلب المعتاد</span>
+                        <span>سجل دخول / أسس</span>
                       </>
                     )}
                   </button>
@@ -2354,8 +2354,8 @@ export default function CustomerSite() {
                   settings.companyName
                 ) : (
                   <>
-                    شركة مطبخ التراث{" "}
-                    <span className="text-accent">الكويتي</span>
+                    شركة مطبخات{" "}
+                    <span className="text-accent">لكويتي</span>
                   </>
                 )}
               </h1>
@@ -2402,12 +2402,9 @@ export default function CustomerSite() {
                     } catch (e) {}
                   }
                 }}
-                className="p-2.5 bg-brand text-accent rounded-xl hover:bg-brand/90 transition-all flex items-center gap-2 shadow-sm active:scale-95"
+                className="p-2.5 bg-stone-900 text-white rounded-full hover:bg-stone-800 transition-all flex items-center justify-center shadow-md active:scale-95"
               >
-                <Search className="w-4 h-4 text-white" />
-                <span className="text-[10px] items-center font-bold hidden sm:flex text-white">
-                  تتبع طلبك
-                </span>
+                <Search className="w-4 h-4" />
               </Link>
               <div className="relative">
                 <button

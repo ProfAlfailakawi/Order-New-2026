@@ -89,6 +89,24 @@ async function getAppData() {
 }
 
 
+
+const calculateSplitPaymentSummary = (order: any) => {
+  const splitPayments = Array.isArray(order?.splitPayments) ? order.splitPayments : [];
+  const total = Number(order?.total || order?.totalAmount || 0);
+
+  const paidAmount = splitPayments.reduce((sum: number, split: any) => {
+    const status = String(split?.status || "").toLowerCase();
+    const isPaid = status === "paid" || status === "captured" || status === "success" || status === "successful";
+    return isPaid ? sum + Number(split?.amount || 0) : sum;
+  }, 0);
+
+  const remainingAmount = Math.max(0, total - paidAmount);
+  const isFullyPaid = total > 0 && paidAmount + 0.001 >= total;
+
+  return { total, paidAmount, remainingAmount, isFullyPaid };
+};
+
+
 const removeUndefinedDeep = (value: any): any => {
   if (Array.isArray(value)) {
     return value.map(removeUndefinedDeep);
@@ -218,11 +236,11 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
               }
               
               // Check if order fully paid
-              const totalPaid = orders[oIdx].splitPayments
-                .filter((s: any) => s.status === "paid")
-                .reduce((sum: number, s: any) => sum + (Number(s.amount) || 0), 0);
-              
-              if (Math.round(totalPaid * 1000) >= Math.round((Number(orders[oIdx].total) || 0) * 1000) - 5) {
+              const splitSummary = calculateSplitPaymentSummary(orders[oIdx]);
+              orders[oIdx].paidAmount = splitSummary.paidAmount;
+              orders[oIdx].remainingAmount = splitSummary.remainingAmount;
+
+              if (splitSummary.isFullyPaid) {
                 orders[oIdx].status = "تم الدفع وجاري التوصيل";
                 orders[oIdx].paymentStatus = "paid";
                 orders[oIdx].paidAt = new Date().toISOString();
@@ -235,6 +253,9 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
                     customers[eIdx].loyaltyPoints = (Number(customers[eIdx].loyaltyPoints) || 0) + (Number(p.amount) || 0);
                   }
                 });
+              } else {
+                orders[oIdx].status = "بانتظار اكتمال القطية";
+                orders[oIdx].paymentStatus = "partial";
               }
               updated = true;
             } else if (!isSuccess && currentStatus !== "paid") {

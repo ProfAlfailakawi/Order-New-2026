@@ -85,7 +85,7 @@ export default function SplitPayment() {
   const celebrationTriggered = useRef(false);
 
   useEffect(() => {
-    if (paymentStatus === "success") {
+    if (paymentStatus === "success" && isFullyPaid) {
       setLocalSuccess(true);
       const timer = setTimeout(() => {
         navigate(`/track?order_id=${id}`);
@@ -402,7 +402,11 @@ export default function SplitPayment() {
   }
 
   const paidAmount = calculatePaid();
-  const remainingAmount = Math.max(0, order.total - paidAmount);
+  const remainingAmount = Math.max(0, Number(order.total || 0) - paidAmount);
+  const isQatyaStillOpen =
+    String(order.paymentStatus || "").toLowerCase() === "partial" ||
+    order.status === "بانتظار اكتمال القطية" ||
+    remainingAmount > 0.001;
   let progressPercent = 0;
   if (order.total > 0) {
     progressPercent = Math.min(100, (paidAmount / order.total) * 100);
@@ -455,7 +459,7 @@ export default function SplitPayment() {
 
       <div className="max-w-md mx-auto p-4 sm:p-6 space-y-6">
         <AnimatePresence>
-          {paymentStatus === "success" && !isFullyPaid && (
+          {paymentStatus === "success" && isQatyaStillOpen && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -469,9 +473,9 @@ export default function SplitPayment() {
               </div>
               <div className="text-center relative z-10 w-full">
                 <h3 className="text-2xl font-extrabold mb-1">تسلم الأيادي{urlName ? ` يا ${urlName}` : ""}!</h3>
-                <p className="text-white/90 font-medium">وصل الدفع وتم تسجيل قطيتك بنجاح</p>
+                <p className="text-white/90 font-medium">وصل الدفع وتم تسجيل الدفعة بنجاح</p>
                 <div className="mt-4 flex items-center justify-center gap-2 text-xs text-green-100/90 bg-black/10 py-1.5 px-3 rounded-full w-fit mx-auto font-bold">
-                  <span className="animate-spin inline-block">⏳</span> جاري التحويل للطلب...
+                  <span className="animate-spin inline-block">⏳</span> جاري تحديث الطلب...
                 </div>
               </div>
             </motion.div>
@@ -582,14 +586,14 @@ export default function SplitPayment() {
               >
                 كفو يا الربع! 👑
               </motion.h2>
-              {paymentStatus === "success" && urlName && (
+              {paymentStatus === "success" && !isQatyaStillOpen && urlName && (
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.35 }}
                   className="bg-black/10 text-white/90 text-sm font-bold px-4 py-1.5 rounded-full inline-block mb-2"
                 >
-                  تسلم الأيادي يا {urlName} 🙌
+                  تم تسجيل دفعة {urlName} 🙌
                 </motion.p>
               )}
               <motion.p
