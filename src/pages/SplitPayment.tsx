@@ -87,12 +87,16 @@ export default function SplitPayment() {
   useEffect(() => {
     if (paymentStatus === "success" && isFullyPaid) {
       setLocalSuccess(true);
-      const timer = setTimeout(() => {
-        navigate(`/track?order_id=${id}`);
-      }, 4000);
-      return () => clearTimeout(timer);
+
+      // لا ننقل المستخدم من صفحة القطيّة إلى /track تلقائياً.
+      // صفحة القطيّة نفسها تستمع لتحديثات Firestore وتعرض النجاح/الفشل/الانتظار بدون لمس منطق الدفع أو التراك.
+      if (searchParams.get("payment")) {
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.delete("payment");
+        setSearchParams(nextParams, { replace: true });
+      }
     }
-  }, [paymentStatus, id, navigate]);
+  }, [paymentStatus, isFullyPaid, searchParams, setSearchParams]);
 
   useEffect(() => {
     console.log("SplitPayment mounted with ID:", id);

@@ -1,36 +1,90 @@
 import { OrderItem, OrderItemAddon } from "../types";
 
+export function normalizeAddons(raw: any): any[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  if (typeof raw === "string") {
+    try {
+      return normalizeAddons(JSON.parse(raw));
+    } catch {
+      return [];
+    }
+  }
+  if (typeof raw === "object") {
+    const candidate = raw.addons ?? raw.addOns ?? raw.items ?? raw.list ?? raw.options ?? raw.values;
+    if (candidate && candidate !== raw) return normalizeAddons(candidate);
+    return Object.entries(raw)
+      .map(([key, value]: any) => {
+        if (!value || typeof value !== "object") return null;
+        return { id: value.id ?? key, ...value };
+      })
+      .filter(Boolean);
+  }
+  return [];
+}
+
+export function getQuantityRuleLimits(addon: any, productQty: number) {
+  const rule = addon?.quantityRule || {};
+  const baseMin = addon?.isRequired ? Math.max(1, Number(addon?.minQuantity || 1)) : Number(addon?.minQuantity || 0);
+  const baseMax = addon?.maxQuantity !== undefined && addon?.maxQuantity !== null && addon?.maxQuantity !== '' ? Number(addon.maxQuantity) : 999;
+
+  if (!rule?.enabled) {
+    return { available: true, min: baseMin, max: Math.max(baseMin, baseMax), suggested: baseMin, message: '' };
+  }
+
+  const minProductQty = Math.max(1, Number(rule.minProductQty || 1));
+  const perAddon = Math.max(1, Number(rule.maxProductQtyPerAddon || 1));
+
+  if (Number(productQty || 0) < minProductQty) {
+    return { available: false, min: 0, max: 0, suggested: 0, message: `متاحة عند طلب ${minProductQty} أو أكثر` };
+  }
+
+  const suggested = Math.max(1, Math.ceil(Number(productQty || 0) / perAddon));
+  const min = rule.mode === 'required' ? Math.max(baseMin, suggested) : baseMin;
+  const max = Math.max(min, Math.min(baseMax, suggested));
+
+  return { available: true, min, max, suggested, message: `كل إضافة تغطي حتى ${perAddon}` };
+}
+
 export function calculateItemAddons(item: OrderItem): OrderItemAddon[] {
   // If static addons are already captured locally (like in a historic order), prioritize them
-  if (item.addons && item.addons.length > 0) return item.addons;
+  const capturedAddons = normalizeAddons((item as any).addons);
+  if (capturedAddons.length > 0) return capturedAddons as OrderItemAddon[];
 
-  if (!item.product?.addons || !item.product.addons.length) return [];
+  const productAddons = normalizeAddons((item.product as any)?.addons);
+  if (!productAddons.length) return [];
   
-  return item.product.addons
-    .filter(addon => 
-      (addon.minQuantity !== undefined && addon.minQuantity > 0) || 
-      (item.selectedAddonsIds && item.selectedAddonsIds.includes(addon.id))
-    )
-    .map((addon) => {
+  return productAddons
+    .filter((addon: any) => {
+      const limits = getQuantityRuleLimits(addon, item.quantity || 1);
+      if (!limits.available) return false;
+      return (
+        (addon.minQuantity !== undefined && Number(addon.minQuantity) > 0) ||
+        addon.isRequired ||
+        addon.quantityRule?.mode === 'auto' ||
+        addon.quantityRule?.mode === 'required' ||
+        (item.selectedAddonsIds && item.selectedAddonsIds.includes(addon.id))
+      );
+    })
+    .map((addon: any) => {
+      const limits = getQuantityRuleLimits(addon, item.quantity || 1);
       let quantity = 0;
-      let effectivePrice = addon.price;
-      
-      const customQty = item.addonQuantities && item.addonQuantities[addon.id] !== undefined ? item.addonQuantities[addon.id] : null;
+      const customQty = item.addonQuantities && item.addonQuantities[addon.id] !== undefined ? Number(item.addonQuantities[addon.id]) : null;
 
-      if (addon.calculationType === 'fixed') {
-        quantity = customQty !== null ? customQty : 1; // 1 per order line
+      if (customQty !== null) {
+        quantity = customQty;
+      } else if (addon.quantityRule?.mode === 'auto' || addon.quantityRule?.mode === 'required') {
+        quantity = limits.suggested;
+      } else if (addon.calculationType === 'fixed') {
+        quantity = 1;
       } else if (addon.calculationType === 'per_x_items') {
         const threshold = addon.xItemsThreshold || 1;
-        quantity = Math.ceil(item.quantity / threshold) * (customQty !== null ? customQty : 1);
+        quantity = Math.ceil(item.quantity / threshold);
       } else {
-        // per_item or undefined
-        quantity = item.quantity * (customQty !== null ? customQty : 1);
+        quantity = item.quantity;
       }
 
-      if (customQty === null) {
-        if (addon.minQuantity !== undefined && addon.minQuantity !== null) quantity = Math.max(addon.minQuantity, quantity);
-        if (addon.maxQuantity !== undefined && addon.maxQuantity !== null) quantity = Math.min(addon.maxQuantity, quantity);
-      }
+      quantity = Math.max(limits.min, Math.min(limits.max, quantity));
 
       let payableQuantity = quantity;
       if (addon.freeQuantity !== undefined && addon.freeQuantity > 0) {
@@ -40,7 +94,7 @@ export function calculateItemAddons(item: OrderItem): OrderItemAddon[] {
       return {
         addonId: addon.id,
         name: addon.name,
-        price: addon.price, // Keep original price, calculate total based on payableQuantity
+        price: addon.price,
         cost: addon.cost,
         isHiddenPrice: addon.isHiddenPrice,
         quantity,

@@ -52,11 +52,13 @@ import {
   calculateItemTotalWithAddons,
   calculateItemBasePriceWithHiddenAddons,
   getVisibleAddons,
+  normalizeAddons,
 } from "../utils/priceCalculation";
 import { ZenSplashScreen } from "../components/ZenSplashScreen";
 import { DynamicEnvironment } from "../components/DynamicEnvironment";
 import { redirectToPayment } from "../utils/redirect";
 import { SquadModalContent } from "../components/SquadModalContent";
+import { buildWhatsAppInvoiceText } from "../utils/invoiceShare";
 
 const INITIAL_ADDRESS: Address = {
   region: "",
@@ -141,27 +143,56 @@ const INITIAL_LOYALTY_TIERS = [
   { id: "diamond", name: "شيوخ", minPoints: 1500, maxPoints: 999999, color: "text-sky-600", bg: "bg-sky-50", icon: "🦅", benefit: "خصم ١٥٪ + توصيل مجاني مدى الحياة!" }
 ];
 
+
+const normalizeAdminArray = (raw: any): any[] => {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  if (typeof raw === "string") {
+    try { return normalizeAdminArray(JSON.parse(raw)); } catch { return []; }
+  }
+  if (typeof raw === "object") {
+    const candidate = raw.tiers ?? raw.levels ?? raw.items ?? raw.list ?? raw.values;
+    if (candidate && candidate !== raw) return normalizeAdminArray(candidate);
+    return Object.entries(raw).map(([key, value]: any) => (
+      value && typeof value === "object" ? { id: value.id ?? key, ...value } : null
+    )).filter(Boolean);
+  }
+  return [];
+};
+
+const getAnyPoints = (source: any): number => {
+  const value = source?.points ?? source?.totalPoints ?? source?.teamPoints ?? source?.score ?? source?.balance ?? source?.totalOrders ?? 0;
+  const n = Number(String(value).replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(n) ? n : 0;
+};
+
+const normalizeProductForAddons = (product: any) => {
+  if (!product) return null;
+  return {
+    ...product,
+    addons: normalizeAddons(product.addons)
+  };
+};
+
 export default function CustomerSite() {
   const [settings, setSettings] = useState<any>({});
   
   const LOYALTY_TIERS = useMemo(() => {
-    return (settings.loyaltyTiers && settings.loyaltyTiers.length > 0) 
-      ? settings.loyaltyTiers 
-      : INITIAL_LOYALTY_TIERS;
-  }, [settings.loyaltyTiers]);
+    const tiers = normalizeAdminArray(settings.loyaltyTiers ?? settings.loyaltyLevels ?? settings.loyaltySettings?.tiers);
+    return tiers.length > 0 ? tiers : INITIAL_LOYALTY_TIERS;
+  }, [settings.loyaltyTiers, settings.loyaltyLevels, settings.loyaltySettings]);
 
   const SQUAD_TIERS = useMemo(() => {
-    return (settings.squadTiers && settings.squadTiers.length > 0) 
-      ? settings.squadTiers 
-      : INITIAL_SQUAD_TIERS;
-  }, [settings.squadTiers]);
+    const tiers = normalizeAdminArray(settings.squadTiers ?? settings.squadLevels ?? settings.diwaniyaTiers ?? settings.diwaniyaLevels ?? settings.squadSettings?.tiers);
+    return tiers.length > 0 ? tiers : INITIAL_SQUAD_TIERS;
+  }, [settings.squadTiers, settings.squadLevels, settings.diwaniyaTiers, settings.diwaniyaLevels, settings.squadSettings]);
 
   const getLoyaltyTier = useCallback((points: number) => {
     return LOYALTY_TIERS.find((t: any) => points >= t.minPoints && points <= t.maxPoints) || LOYALTY_TIERS[0];
   }, [LOYALTY_TIERS]);
 
   const getSquadTier = useCallback((points: number) => {
-    return SQUAD_TIERS.find((t: any) => points >= t.minPoints && points <= t.maxPoints) || SQUAD_TIERS[SQUAD_TIERS.length - 1];
+    return SQUAD_TIERS.find((t: any) => { const min = Number(t.minPoints ?? t.points ?? t.requiredPoints ?? 0); const max = Number(t.maxPoints ?? 999999999); return points >= min && points <= max; }) || [...SQUAD_TIERS].reverse().find((t: any) => points >= Number(t.minPoints ?? t.points ?? t.requiredPoints ?? 0)) || SQUAD_TIERS[0];
   }, [SQUAD_TIERS]);
 
   const LoyaltyTierCard = ({ customerPoints, customerName }: { customerPoints: number, customerName: string }) => {
@@ -1117,7 +1148,7 @@ export default function CustomerSite() {
                     ...item,
                     id: Math.random().toString(36).substring(2, 9),
                     price: product.price, // Update to current price
-                    product: product,
+                    product: normalizeProductForAddons(product),
                   });
                 } else {
                   someItemsMissing = true;
@@ -1181,7 +1212,7 @@ export default function CustomerSite() {
       discountAmount = appliedPromo.value;
     }
   } else if (squadInfo) {
-    const dynamicTierId = getSquadTier(squadInfo.totalOrders || 0).id;
+    const dynamicTierId = getSquadTier(getAnyPoints(squadInfo)).id;
     if (dynamicTierId === "diamond") {
       discountAmount = itemsTotal * 0.15; // 15% discount for diamond
     } else if (dynamicTierId === "gold") {
@@ -1237,7 +1268,7 @@ export default function CustomerSite() {
               ...item,
               id: Math.random().toString(36).substring(2, 9),
               price: product.price,
-              product: product,
+              product: normalizeProductForAddons(product),
               name: product.name,
             });
           } else {
@@ -1596,7 +1627,7 @@ export default function CustomerSite() {
       })),
       deliveryFee,
       isFreeDelivery: deliveryFee === 0 || settings?.isFreeDelivery === true,
-      deliveryType: deliveryFee === 0 ? "free" : "standard",
+      deliveryType: "company",
       itemsTotal,
       discountAmount,
       promoCode: appliedPromo?.code,
@@ -1867,50 +1898,19 @@ export default function CustomerSite() {
   };
 
   const generateWhatsAppLink = (order: Order, paymentLink?: string) => {
-    let message = `*طلب جديد من الموقع*\n`;
-    message += `*رقم الطلب:* ${order.id}\n\n`;
+    let message = buildWhatsAppInvoiceText(order);
 
-    message += `*تفاصيل العميل:*\n`;
-    message += `الاسم: ${order.customerName}\n`;
-    message += `رقم التتبع الخاص بك هو رقم الطلب أعلاه.\n\n`;
+    if (order.generalNotes) {
+      message += `
 
-    if (order.generalNotes)
-      message += `*ملاحظات عامة:* ${order.generalNotes}\n`;
-
-    message += `\n*الطلبات:*\n`;
-    (order.items || []).forEach((item: any) => {
-      const itemTotal = calculateItemTotalWithAddons(item);
-      message += `- ${item.name} (${item.quantity}): ${itemTotal} د.ك\n`;
-      if (item.selectedOption) message += `  الخيار: ${item.selectedOption}\n`;
-      if (item.selectedExtras && item.selectedExtras.length > 0) {
-        message += `  الإضافات: ${item.selectedExtras
-          .map((e: any) => `${e.name}${e.price ? ` (${e.price} د.ك)` : ''}`)
-          .join(", ")}\n`;
-      }
-      
-      const visibleAddons = getVisibleAddons(item);
-      if (visibleAddons.length > 0) {
-        message += `  إضافات ملحقة: ${visibleAddons
-          .map((e: any) => e.name)
-          .join(", ")}\n`;
-      }
-
-      if (item.note) message += `  ملاحظة للمنتج: ${item.note}\n`;
-    });
-
-    message += `\n*الحساب:*\n`;
-    if ((order as any).discountAmount > 0) {
-      message += `الخصم (${(order as any).promoCode}): -${(order as any).discountAmount.toFixed(3)} د.ك\n`;
+📝 *ملاحظات عامة:* ${order.generalNotes}`;
     }
-    if (order.deliveryFee > 0) {
-      message += `قيمة التوصيل: ${order.deliveryFee.toFixed(3)} د.ك\n`;
-    } else {
-      message += `التوصيل: مجاني\n`;
-    }
-    message += `*إجمالي الفاتورة: ${order.total.toFixed(3)} د.ك*\n`;
 
     if (paymentLink) {
-      message += `\n*رابط الدفع الإلكتروني:*\n${paymentLink}\n`;
+      message += `
+
+💳 *رابط الدفع الإلكتروني:*
+${paymentLink}`;
     }
 
     const encodedMessage = encodeURIComponent(message);
@@ -1921,7 +1921,6 @@ export default function CustomerSite() {
       return "";
     }
 
-    // Ensure Kuwait country code is present for 8-digit numbers
     let cleaned = waNumber.replace(/\D/g, "");
     if (cleaned.length === 8) {
       cleaned = "965" + cleaned;
@@ -2097,8 +2096,8 @@ export default function CustomerSite() {
       return {
         type: "night",
         colors: "bg-[#1a1c29]",
-        title: "سمتك نروي روحك.. 🌙",
-        desc: "ندريس ه يك جيب ل ١٥ مزاج هيف.. عشان ج ذي ج نزالك ورق عن ب لي مون (حجم هني) ع لى ل م زاج وم اثقل ع لىن وم!",
+        title: title,
+        desc: desc,
         image:
           "https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2670&auto=format&fit=crop",
         overlay: "from-[#1a1c29]/95 via-[#1a1c29]/80 to-transparent",
@@ -3511,7 +3510,7 @@ const ChefWhisperCard = ({
                 quantity: 1,
                 price: product.price,
                 selectedExtras: [],
-                product,
+                product: normalizeProductForAddons(product),
               })}{" "}
               <span className="text-[10px] sm:text-[11px] text-accent font-bold">
                 د.ك
@@ -3693,12 +3692,14 @@ function ProductModal({
   const [selectedExtras, setSelectedExtras] = useState<
     { name: string; price: number }[]
   >([]);
+  const productAddons = useMemo(() => normalizeAddons((product as any).addons), [product]);
+  const normalizedProduct = useMemo(() => ({ ...(product as any), addons: productAddons }), [product, productAddons]);
   const [selectedAddonsIds, setSelectedAddonsIds] = useState<string[]>(() => {
-    return (product.addons || []).filter(a => (a.minQuantity || 0) > 0 || (a.freeQuantity || 0) > 0).map(a => a.id);
+    return productAddons.filter((a: any) => (a.minQuantity || 0) > 0 || (a.freeQuantity || 0) > 0 || a.isRequired || a.quantityRule?.mode === 'required').map((a: any) => a.id);
   });
   const [addonQuantities, setAddonQuantities] = useState<Record<string, number>>(() => {
     const qs: Record<string, number> = {};
-    (product.addons || []).forEach(a => {
+    productAddons.forEach((a: any) => {
       if ((a.minQuantity || 0) > 0 || (a.freeQuantity || 0) > 0) {
         qs[a.id] = Math.max(a.minQuantity || 1, 1);
       }
@@ -3717,7 +3718,7 @@ function ProductModal({
     selectedExtras,
     selectedAddonsIds,
     addonQuantities,
-    product: product
+    product: normalizedProduct
   } as any;
   const modalTotalPrice = calculateItemTotalWithAddons(mockItem);
   const itemPrice = modalTotalPrice / quantity;
@@ -3731,7 +3732,7 @@ function ProductModal({
   };
 
   const toggleAddon = (addonId: string) => {
-    const addon = product.addons?.find((a) => a.id === addonId);
+    const addon = productAddons.find((a: any) => a.id === addonId);
     if (selectedAddonsIds.includes(addonId)) {
       if (addon && ((addon.minQuantity || 0) > 0 || (addon.freeQuantity || 0) > 0)) {
          // Mandatory addon, cannot uncheck
@@ -3748,7 +3749,7 @@ function ProductModal({
   };
 
   const updateAddonQty = (addonId: string, delta: number) => {
-    const addon = product.addons?.find((a) => a.id === addonId);
+    const addon = productAddons.find((a: any) => a.id === addonId);
     if (!addon) return;
     const current = addonQuantities[addonId] || 1;
     let next = current + delta;
@@ -3851,7 +3852,7 @@ function ProductModal({
                 price: product.price,
                 selectedExtras: selectedExtras,
                 selectedAddonsIds: selectedAddonsIds,
-                product,
+                product: normalizeProductForAddons(product),
               })}{" "}
               <span className="text-sm text-accent">د.ك</span>
             </p>
@@ -3867,7 +3868,7 @@ function ProductModal({
         </div>
 
         <div className="space-y-8">
-          {product.options && product.options.length > 0 && (
+          {Array.isArray(product.options) && product.options.length > 0 && (
             <div className="space-y-3">
               <label className="text-xs font-bold text-stone-500 block">
                 بروتوكول التحضير
@@ -3891,7 +3892,7 @@ function ProductModal({
             </div>
           )}
 
-          {product.extras && product.extras.length > 0 && (
+          {Array.isArray(product.extras) && product.extras.length > 0 && (
             <div className="space-y-3">
               <label className="text-xs font-bold text-stone-500 block">
                 إضافات حصرية
@@ -3946,9 +3947,9 @@ function ProductModal({
             </div>
           )}
 
-          {product.addons && product.addons.length > 0 && (
+          {productAddons.length > 0 && (
             <div className="space-y-4">
-              {product.addons.filter(a => !selectedAddonsIds.includes(a.id)).slice(0, 1).map(recommendedAddon => {
+              {productAddons.filter((a: any) => !selectedAddonsIds.includes(a.id)).slice(0, 1).map((recommendedAddon: any) => {
                 const creativeMessages = [
                   // عبارات تشويقية
                   `أضف لمسة سحرية لطلبك مع "${recommendedAddon.name}" ✨`,
@@ -4000,7 +4001,7 @@ function ProductModal({
                   إضافات للمنتج
                 </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {product.addons.map((addon) => {
+                {productAddons.map((addon: any) => {
                   const isSelected = selectedAddonsIds.includes(addon.id);
                   const isMandatory = (addon.minQuantity || 0) > 0 || (addon.freeQuantity || 0) > 0;
                   return (
@@ -4132,7 +4133,7 @@ function ProductModal({
                     addonQuantities,
                     note,
                     preparationInstructions: product.preparationInstructions,
-                    product: product,
+                    product: normalizeProductForAddons(product),
                   },
                   e,
                 )
@@ -4151,7 +4152,7 @@ function ProductModal({
                     selectedExtras,
                     selectedAddonsIds: selectedAddonsIds,
                     addonQuantities,
-                    product,
+                    product: normalizeProductForAddons(product),
                 })} د.ك
               </span>
             </motion.button>

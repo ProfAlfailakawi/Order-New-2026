@@ -68,6 +68,7 @@ const TypewriterText = ({
 };
 
 import { calculateItemTotalWithAddons } from "../utils/priceCalculation";
+import { openPrintableInvoice, openWhatsAppInvoiceText, shareOrPrintInvoice } from "../utils/invoiceShare";
 
 const formatOrderWords = (count: number) => {
   if (count === 1) return "طلب واحد";
@@ -1687,72 +1688,9 @@ export default function OrderPage() {
                   {getStatusDisplay(selectedOrder).text.startsWith(
                     "تم الدفع",
                   ) && (
+                    <>
                     <button
-                      onClick={() => {
-                        const customerName =
-                          selectedOrder.customerName ||
-                          (selectedOrder as any).name ||
-                          "العميل";
-                        const invId = selectedOrder.invoiceId
-                          ? `${selectedOrder.invoiceId}`
-                          : selectedOrder.id || "";
-
-                        const itemsText = (selectedOrder.items || [])
-                          .map((item: any) => {
-                            let text = `${item.productName || item.name} (${item.quantity} × ${Number(item.price || 0).toFixed(3)})`;
-                            const extrasTotal = (
-                              item.selectedExtras ||
-                              item.extras ||
-                              []
-                            ).reduce(
-                              (eSum: number, e: any) =>
-                                eSum + (Number(e.price) || 0),
-                              0,
-                            );
-                            if (extrasTotal > 0) {
-                              text += `\n  إضافات: ${Number(extrasTotal).toFixed(3)}`;
-                            }
-                            return text;
-                          })
-                          .join("\n");
-
-                        const itemsTotal = calculateItemsTotal(
-                          selectedOrder.items,
-                        );
-                        const deliveryFee = Number(
-                          selectedOrder.deliveryFee || 0,
-                        );
-                        const discount = Number(
-                          (selectedOrder as any).discountAmount ||
-                            (selectedOrder as any).discount ||
-                            0,
-                        );
-                        const promoCode = (selectedOrder as any).promoCode;
-                        const isFree =
-                          selectedOrder.deliveryFee === 0 ||
-                          (selectedOrder as any).isFreeDelivery ||
-                          (selectedOrder as any).deliveryType === "free";
-                        const actualDeliveryFee = isFree ? 0 : deliveryFee;
-                        const finalTotal =
-                          itemsTotal + actualDeliveryFee - discount;
-
-                        let message = `*طلب مدفوع من الموقع*\n\n`;
-                        message += `*رقم الفاتورة/الطلب:* ${invId}\n`;
-                        message += `*العميل:* ${customerName}\n`;
-                        message += `*الهاتف:* ${selectedOrder.customerPhone || selectedOrder.phone || ""}\n`;
-                        message += `*المنطقة/العنوان:* ${(typeof selectedOrder.address === "object" ? selectedOrder.address?.region : selectedOrder.address) || "غير محدد"}\n\n`;
-                        message += `الطلب:\n${itemsText}\n\n`;
-                        message += `المجموع: ${itemsTotal.toFixed(3)} د.ك\n`;
-                        if (actualDeliveryFee > 0)
-                          message += `رسوم التوصيل: ${actualDeliveryFee.toFixed(3)} د.ك\n`;
-                        if (discount > 0)
-                          message += `الخصم ${promoCode ? `(${promoCode})` : ""}: -${discount.toFixed(3)} د.ك\n`;
-                        message += `إجمالي الفاتورة: ${finalTotal.toFixed(3)} د.ك\n\n`;
-                        message += `*رابط التتبع:* https://alturathkw.shop/track?phone=${selectedOrder.customerPhone || selectedOrder.phone}`;
-
-                        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-                        window.open(whatsappUrl, "_blank");
-                      }}
+                      onClick={() => openWhatsAppInvoiceText(selectedOrder as any)}
                       className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl bg-[#25D366] text-white font-extrabold text-sm hover:bg-[#128C7E] transition-all shadow-md outline-none mb-6"
                     >
                       <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -1760,6 +1698,21 @@ export default function OrderPage() {
                       </svg>
                       حفظ كـ رسالة في واتس آب
                     </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                      <button
+                        onClick={() => openPrintableInvoice(selectedOrder as any)}
+                        className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl bg-white border border-emerald-100 text-brand font-extrabold text-sm hover:bg-emerald-50 transition-all shadow-sm outline-none"
+                      >
+                        🧾 إنشاء / طباعة PDF
+                      </button>
+                      <button
+                        onClick={() => shareOrPrintInvoice(selectedOrder as any)}
+                        className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl bg-white border border-amber-100 text-amber-700 font-extrabold text-sm hover:bg-amber-50 transition-all shadow-sm outline-none"
+                      >
+                        📤 مشاركة الفاتورة
+                      </button>
+                    </div>
+                    </>
                   )}
                 </div>
 

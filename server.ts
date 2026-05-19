@@ -890,6 +890,13 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const squads = data.squads || [];
       
       const customers = data.customers || [];
+      const squadTiersForPublic = Array.isArray(data.squadTiers) ? data.squadTiers : [];
+      const getTierForPoints = (points: number) => {
+        return [...squadTiersForPublic]
+          .sort((a: any, b: any) => Number(a.minPoints ?? a.points ?? a.requiredPoints ?? 0) - Number(b.minPoints ?? b.points ?? b.requiredPoints ?? 0))
+          .reverse()
+          .find((tier: any) => points >= Number(tier.minPoints ?? tier.points ?? tier.requiredPoints ?? 0));
+      };
       
       const enrichedSquads = squads.map((sq: any) => {
          let teamPoints = 0;
@@ -900,12 +907,15 @@ app.get("/api/debug/order/:id", async (req, res) => {
              return { ...m, orderCount: realPoints, points: realPoints };
          }).sort((a: any, b: any) => (b.points || 0) - (a.points || 0));
          
+         const computedTier = getTierForPoints(teamPoints);
          return {
             ...sq,
+            points: teamPoints,
+            totalPoints: teamPoints,
+            teamPoints,
             totalOrders: teamPoints,
-            // The db uses "عزوة" and potentially other terms. We should ensure the UI handles these or map them.
-            // Let's pass what's in the DB directly, the UI can display it
-            tier: sq.tier || "برونزية",
+            tier: sq.tier || computedTier?.name || "",
+            tierData: computedTier || null,
             membersList: mappedMembers
          };
       });
