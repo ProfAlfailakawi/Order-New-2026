@@ -430,7 +430,7 @@ export default function OrderPage() {
       };
     }
 
-    if (order?.paymentStatus === "split" && (!rawStatus || rawStatus === "جديد" || rawStatus === "بانتظار الدفع")) {
+    if ((order?.paymentStatus === "split" || order?.paymentStatus === "partial") && (!rawStatus || rawStatus === "جديد" || rawStatus === "بانتظار الدفع" || rawStatus === "بانتظار اكتمال القطية")) {
       rawStatus = "قيد تجميع القطية";
     }
     
@@ -444,7 +444,7 @@ export default function OrderPage() {
     const s = rawStatus.toLowerCase();
 
     // Explicit exact matches first
-    if (s === "قيد تجميع القطية" || s === "split")
+    if (s === "قيد تجميع القطية" || s === "بانتظار اكتمال القطية" || s === "split" || s === "partial")
       return {
         text: "قيد تجميع القطية",
         color: "text-purple-600 bg-purple-50",
@@ -1529,7 +1529,7 @@ export default function OrderPage() {
                   {/* Split Bill UI */}
                   {["traditional", "roulette"].includes((selectedOrder as any).splitType) && (
                     <div className="space-y-4 mb-4">
-                      {getStatusDisplay(selectedOrder).text === "قيد تجميع القطية" && (
+                      {(getStatusDisplay(selectedOrder).text === "قيد تجميع القطية" || getStatusDisplay(selectedOrder).text === "بانتظار اكتمال القطية" || selectedOrder.paymentStatus === "partial") && (
                         <div className="flex flex-col gap-3">
                           <Link
                             to={`/split/${selectedOrder.id}`}
