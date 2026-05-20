@@ -146,3 +146,182 @@ section {
 
 
 
+
+/* V10 Luxury UI pass: mobile-first polish with safe desktop constraints */
+:root {
+  --lux-brand: #16241a;
+  --lux-accent: #c26115;
+  --lux-cream: #fffaf2;
+  --lux-line: rgba(22, 36, 26, 0.08);
+}
+
+.customer-luxury,
+.track-luxury,
+.split-luxury,
+.roulette-luxury {
+  isolation: isolate;
+}
+
+.customer-luxury {
+  background:
+    radial-gradient(circle at 85% 8%, rgba(194,97,21,0.10), transparent 30%),
+    radial-gradient(circle at 10% 0%, rgba(22,36,26,0.08), transparent 28%),
+    linear-gradient(180deg, #fffdf8 0%, #faf7ef 45%, #fffaf5 100%);
+}
+
+.customer-luxury > header,
+.track-luxury > header {
+  box-shadow: 0 18px 45px rgba(22, 36, 26, 0.05);
+}
+
+.customer-luxury main > section,
+.customer-luxury .lux-category-card,
+.track-luxury main > div,
+.split-luxury main > div,
+.split-luxury .rounded-3xl,
+.squad-luxury > div,
+.squad-luxury .rounded-3xl {
+  backdrop-filter: blur(18px);
+}
+
+.lux-category-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,250,242,0.92));
+  border-color: rgba(22,36,26,0.08) !important;
+  box-shadow: 0 18px 60px rgba(22,36,26,0.055);
+}
+
+.lux-category-card > button {
+  min-height: 82px;
+}
+
+.lux-product-card {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,253,248,0.94)) !important;
+  border: 1px solid rgba(22,36,26,0.075) !important;
+  box-shadow: 0 18px 55px rgba(22,36,26,0.055) !important;
+}
+
+.lux-product-card:hover {
+  box-shadow: 0 26px 70px rgba(22,36,26,0.09) !important;
+}
+
+.lux-product-image {
+  background: radial-gradient(circle at center, #ffffff 0%, #fff9ef 62%, #f5ead9 100%) !important;
+  border-color: rgba(194,97,21,0.12) !important;
+}
+
+.customer-luxury input,
+.customer-luxury textarea,
+.track-luxury input,
+.split-luxury input,
+.roulette-luxury input,
+.squad-luxury input {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 10px 30px rgba(22,36,26,0.035);
+}
+
+.track-luxury {
+  background:
+    radial-gradient(circle at 90% 4%, rgba(194,97,21,0.12), transparent 26%),
+    radial-gradient(circle at 0% 12%, rgba(22,36,26,0.08), transparent 32%),
+    #fdfcfb;
+}
+
+.track-luxury main > div[class*="rounded"],
+.track-luxury [class*="rounded-[32px]"] {
+  border-color: rgba(22,36,26,0.08) !important;
+  box-shadow: 0 18px 60px rgba(22,36,26,0.06);
+}
+
+.split-luxury {
+  background:
+    radial-gradient(circle at 75% 0%, rgba(194,97,21,0.14), transparent 30%),
+    radial-gradient(circle at 18% 10%, rgba(22,36,26,0.10), transparent 28%),
+    linear-gradient(180deg, #fffdf8, #fbf6ed 55%, #fffaf4);
+}
+
+.roulette-luxury {
+  background:
+    radial-gradient(circle at 50% -5%, rgba(168,85,247,0.38), transparent 30%),
+    radial-gradient(circle at 0% 30%, rgba(194,97,21,0.18), transparent 28%),
+    radial-gradient(circle at 100% 48%, rgba(217,70,239,0.18), transparent 28%),
+    linear-gradient(180deg, #070b08 0%, #101713 48%, #070b08 100%) !important;
+}
+
+.roulette-luxury input {
+  background: rgba(255,255,255,0.96) !important;
+  color: #16241a !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+}
+
+.roulette-luxury input::placeholder {
+  color: rgba(22,36,26,0.45) !important;
+}
+
+.roulette-luxury header,
+.roulette-luxury [class*="rounded-"] {
+  text-shadow: none;
+}
+
+.squad-luxury {
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,250,242,0.86));
+  border-radius: 28px;
+}
+
+/* desktop: make it feel designed for desktop without stretching mobile cards */
+@media (min-width: 1024px) {
+  .customer-luxury {
+    border-left: 1px solid rgba(22,36,26,0.06);
+    border-right: 1px solid rgba(22,36,26,0.06);
+  }
+
+  .customer-luxury .lux-category-card {
+    min-height: 96px;
+  }
+
+  .customer-luxury .lux-product-card {
+    min-height: 136px !important;
+  }
+
+  .customer-luxury .lux-product-image {
+    width: 76px !important;
+    height: 76px !important;
+  }
+
+  .customer-luxury .lux-lazysusan {
+    max-width: 780px;
+    margin-inline: auto;
+  }
+
+  .track-luxury main,
+  .split-luxury > div,
+  .roulette-luxury > div {
+    width: min(100%, 980px);
+  }
+}
+
+/* mobile: keep action clarity first */
+@media (max-width: 640px) {
+  .customer-luxury main {
+    padding-bottom: 7.5rem;
+  }
+
+  .lux-category-card > button {
+    min-height: 76px;
+    padding: 1rem !important;
+  }
+
+  .lux-product-card {
+    border-radius: 22px !important;
+  }
+
+  .lux-product-image {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .track-luxury main,
+  .split-luxury > div,
+  .roulette-luxury > div {
+    padding-inline: 1rem !important;
+  }
+}
