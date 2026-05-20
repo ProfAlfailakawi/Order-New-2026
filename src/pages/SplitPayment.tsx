@@ -385,6 +385,19 @@ export default function SplitPayment() {
     }
   };
 
+  const splitIntro = order ? (
+    <div className="split-hero-social p-5 md:p-7 mb-5 text-right" dir="rtl">
+      {splitIntro}
+      <p className="text-[11px] font-black tracking-[0.18em] text-amber-700 uppercase mb-2">Social Split Payment</p>
+      <h1 className="text-2xl md:text-3xl font-black text-stone-950 mb-2">اجمع الطلب مع الربع، وكل واحد يدفع حصته.</h1>
+      <div className="grid grid-cols-3 gap-2 mt-4 text-center text-[11px] font-black text-stone-700">
+        <span className="bg-white/70 border border-amber-100 rounded-2xl p-3">١. شارك الرابط</span>
+        <span className="bg-white/70 border border-amber-100 rounded-2xl p-3">٢. الربع يدفعون</span>
+        <span className="bg-white/70 border border-amber-100 rounded-2xl p-3">٣. تابع من دفع</span>
+      </div>
+    </div>
+  ) : null;
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50 gap-4">
@@ -519,6 +532,15 @@ export default function SplitPayment() {
               <span className="qatya-v14-live-dot">مباشر</span>
               <span>قطيّة الربع</span>
               <span>{(order.splitPayments || []).filter((p) => String(p.status || "").toLowerCase() === "paid").length} مساهم</span>
+            </div>
+
+            <div className="qatya-council-mini" dir="rtl">
+              <div><strong>مجلس القطيّة</strong><span>اللمة واضحة من أول نظرة</span></div>
+              <ol>
+                <li>شارك الرابط</li>
+                <li>الربع يدفعون</li>
+                <li>تابع من دفع</li>
+              </ol>
             </div>
 
             <div className="qatya-v14-main relative z-10">

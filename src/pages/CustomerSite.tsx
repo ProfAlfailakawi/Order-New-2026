@@ -545,6 +545,18 @@ export default function CustomerSite() {
     { id: string; img: string; startX: number; startY: number }[]
   >([]);
   const [cartBouncing, setCartBouncing] = useState(false);
+  const [cartMoment, setCartMoment] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(() => typeof navigator === "undefined" ? true : navigator.onLine);
+
+  useEffect(() => {
+    const updateOnline = () => setIsOnline(typeof navigator === "undefined" ? true : navigator.onLine);
+    window.addEventListener("online", updateOnline);
+    window.addEventListener("offline", updateOnline);
+    return () => {
+      window.removeEventListener("online", updateOnline);
+      window.removeEventListener("offline", updateOnline);
+    };
+  }, []);
 
   // Replace old hesitation state with a more robust Decision Psychology Engine state
   const [psychMessage, setPsychMessage] = useState<{
@@ -1145,10 +1157,11 @@ export default function CustomerSite() {
     };
 
     loadData();
-    // Guarantee splash screen drops after exactly 2.5 seconds
+    // Customer brand splash appears on the initial page entrance only.
+    // Internal data refreshes keep the page visible and do not show the splash again.
     setTimeout(() => {
       if (isMounted) setIsLoading(false);
-    }, 2500);
+    }, 1850);
 
     // Auto-refresh every 15 seconds to keep data live (Best Sellers, New Arrivals, etc.)
     const refreshInterval = setInterval(loadData, 15000);
@@ -1555,6 +1568,11 @@ export default function CustomerSite() {
         { ...item, id: Math.random().toString(36).substr(2, 9) },
       ]);
     }
+    const addedName = item?.name || "الطلب";
+    setCartMoment(`${addedName} انضاف للطلب`);
+    setCartBouncing(true);
+    window.setTimeout(() => setCartBouncing(false), 520);
+    window.setTimeout(() => setCartMoment(null), 2100);
     setSelectedProduct(null);
   };
 
@@ -2456,7 +2474,7 @@ ${paymentLink}`;
                   onClick={() => setIsCheckout(true)}
                   className="p-2 sm:p-2.5 bg-white rounded-xl hover:bg-stone-50/80 backdrop-blur-sm transition-all active:scale-95 relative shadow-sm border border-stone-100"
                 >
-                  <ShoppingCart className="w-5 h-5 text-brand" />
+                  <ShoppingBag className="w-5 h-5 text-brand" />
                   {cart.length > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-lg font-extrabold shadow-md">
                       {cart.length}
@@ -3311,21 +3329,60 @@ ${paymentLink}`;
             )}
         </AnimatePresence>
 
+        <AnimatePresence>
+          {!isOnline && (
+            <motion.div
+              className="customer-offline-toast"
+              dir="rtl"
+              initial={{ opacity: 0, y: -10, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.96 }}
+            >
+              <span />
+              <div>
+                <strong>انقطع الاتصال…</strong>
+                <small>بنرجع لك المنيو أول ما يرجع النت.</small>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {cartMoment && !isCheckout && (
+            <motion.div
+              className="cart-moment-toast"
+              dir="rtl"
+              initial={{ opacity: 0, y: 18, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 18, scale: 0.96 }}
+            >
+              <Check className="w-4 h-4" />
+              <strong>{cartMoment}</strong>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Floating Cart Button for Mobile */}
         {cart.length > 0 && !isCheckout && !orderSuccess && (
           <motion.button
             initial={{ y: 100 }}
             animate={{ y: 0 }}
             onClick={() => setIsCheckout(true)}
-            className={`fixed bottom-6 left-4 right-4 sm:bottom-8 sm:left-6 sm:right-6 bg-brand text-white p-4 rounded-xl shadow-xl flex items-center justify-between z-30 font-bold transition-all ring-2 ring-white ${cartBouncing ? "scale-110 shadow-emerald-500/50 bg-emerald-600" : "active:scale-95"}`}
+            className={`al-cart-bar font-bold transition-all ${cartBouncing ? "scale-[1.03] shadow-emerald-500/30" : "active:scale-[0.98]"}`}
           >
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg text-sm font-bold border border-white/30">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="bg-white/15 backdrop-blur-sm px-3 py-2 rounded-2xl text-sm font-black border border-white/20 shrink-0">
                 {cart.length}
               </div>
-              <span className="text-sm">اعتمد الطلب</span>
+              <div className="min-w-0 text-right">
+                <strong className="block leading-tight">سلتك جاهزة</strong>
+                <span className="text-[11px] text-white/65">{cart.length} منتجات · {total} د.ك</span>
+              </div>
             </div>
-            <div className="text-base font-medium">{total} د.ك</div>
+            <div className="al-cart-actions shrink-0">
+              <span>عرض السلة</span>
+              <b>إكمال الطلب</b>
+            </div>
           </motion.button>
         )}
 
@@ -4503,7 +4560,7 @@ function CheckoutOverlay({
             </button>
             <div>
               <h2 className="text-2xl font-black text-brand flex items-center gap-2 tracking-tight mt-1">
-                {step === "cart" ? "قائمة طلباتك" : step === "payment" ? "طريقة الدفع" : "بيانات التوصيل"}
+                {step === "cart" ? "ملخص الطلب" : step === "payment" ? "طريقة الدفع" : "العنوان"}
               </h2>
             </div>
           </div>
@@ -4993,6 +5050,17 @@ function CheckoutOverlay({
             </div>
           ) : step === "payment" ? (
             <div className="payment-wow-step animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center justify-center w-full pt-6 pb-3 px-2">
+              <div className="checkout-ready-card" dir="rtl">
+                <div>
+                  <span>طلبك تقريباً جاهز</span>
+                  <h3>راجع آخر شي واختار طريقة الدفع</h3>
+                </div>
+                <ul>
+                  <li><b>{cart.length}</b><small>أصناف</small></li>
+                  <li><b>{address.region || "العنوان"}</b><small>التوصيل</small></li>
+                  <li><b>{Number(total || 0).toFixed(3)}</b><small>د.ك</small></li>
+                </ul>
+              </div>
               
               <div className="bg-stone-50/80 backdrop-blur-sm border border-stone-100 rounded-3xl sm:rounded-[2rem] p-6 sm:p-8 w-full max-w-full relative overflow-hidden shadow-sm flex flex-col items-center justify-center mb-8">
                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-accent/5 rounded-full blur-2xl"></div>
@@ -5020,7 +5088,7 @@ function CheckoutOverlay({
         </div>
 
         {cart.length > 0 && (
-          <div className="checkout-wow-footer p-6 bg-white border-t border-stone-100 space-y-6 shadow-[0_-15px_40px_rgba(0,0,0,0.02)]">
+          <div className={`checkout-wow-footer checkout-footer-${step} p-6 bg-white border-t border-stone-100 space-y-6 shadow-[0_-15px_40px_rgba(0,0,0,0.02)]`}>
             <AnimatePresence>
               {formError && (
                 <motion.div
@@ -5039,7 +5107,7 @@ function CheckoutOverlay({
 
             <div className="space-y-3 px-1">
               {/* Promo Code Input */}
-              {!appliedPromo ? (
+              {step !== "cart" && (!appliedPromo ? (
                 <div className="flex flex-col gap-1.5 pb-4 border-b border-stone-50">
                   <div className="flex gap-2">
                     <input
@@ -5081,7 +5149,7 @@ function CheckoutOverlay({
                     <X className="w-3 h-3" />
                   </button>
                 </div>
-              )}
+              ))}
 
               <div className="flex justify-between items-center text-xs font-bold text-stone-500">
                 <span>مجموع طلباتك</span>
@@ -5097,6 +5165,8 @@ function CheckoutOverlay({
                 </div>
               )}
 
+              {step !== "cart" && (
+                <>
               <div className="flex justify-between items-center text-xs font-bold text-stone-500 pb-3 border-b border-stone-50">
                 <span>توصيلة المندوب</span>
                 <span className="font-bold">
@@ -5139,6 +5209,8 @@ function CheckoutOverlay({
                   + {Math.floor(itemsTotal)} ⚡
                 </span>
               </div>
+                </>
+              )}
               <div className="flex items-center justify-between pt-2">
                 <span className="text-sm font-bold text-brand">
                   حسابك طال عمرك

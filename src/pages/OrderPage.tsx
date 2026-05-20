@@ -417,6 +417,15 @@ export default function OrderPage() {
     return () => clearInterval(interval);
   }, [searched, phone, searchOrderIdInput, urlOrderId, selectedOrder]);
 
+  const getStatusStory = (order: any) => {
+    const label = getStatusDisplay(order).text;
+    if (label.includes("قيد تجميع القطية")) return { title: "قيد تجميع القطية", desc: "اللمة ماشية، وكل دفعة تقرب الطلب من الاكتمال." };
+    if (label.includes("بانتظار")) return { title: "بانتظار الدفع", desc: "كمل الدفع عشان نعتمد الطلب ونمشيه لك." };
+    if (label.includes("فشل")) return { title: "فشلت عملية الدفع", desc: "ما عليه، جرب مرة ثانية أو اختار طريقة أنسب." };
+    if (label.includes("تم الدفع") || label.includes("توصيل")) return { title: "تم الدفع وجاري التوصيل", desc: "طلبك معتمد وجاري توصيله بهدوء." };
+    return { title: "تم إنشاء الطلب", desc: "وصلنا طلبك، وبانتظار الخطوة التالية." };
+  };
+
   const getStatusDisplay = (order: any) => {
     let rawStatus = order?.status;
     const oId = String(order?.id || order?.invoiceId || "").toUpperCase();
@@ -837,7 +846,7 @@ export default function OrderPage() {
         </AnimatePresence>
 
         {/* Search Section */}
-        <section className="bg-white rounded-[40px] p-8 border border-stone-100 shadow-xl shadow-stone-200/50 space-y-6">
+        <section className="order-detail-card bg-white rounded-[40px] p-8 border border-stone-100 shadow-xl shadow-stone-200/50 space-y-6">
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-extrabold text-brand">وين طلبي؟</h2>
             <p className="text-stone-400 text-sm font-medium">
@@ -921,7 +930,7 @@ export default function OrderPage() {
               animate={{ opacity: 1 }}
               className="space-y-4 pb-20"
             >
-              <div className="bg-white rounded-3xl p-5 border border-stone-100 shadow-sm flex items-center justify-between">
+              <div className="order-detail-card bg-white rounded-3xl p-5 border border-stone-100 shadow-sm flex items-center justify-between">
                 <div>
                   <p className="text-[10px] text-stone-400 font-extrabold uppercase mb-1 tracking-widest">
                     معلومات العميل
@@ -1127,6 +1136,15 @@ export default function OrderPage() {
                   >
                     <X className="w-5 h-5" />
                   </button>
+                </div>
+              </div>
+
+              <div className="track-story-card" dir="rtl">
+                <div className="track-story-dot" />
+                <div>
+                  <span>قصة الطلب</span>
+                  <strong>{getStatusStory(selectedOrder).title}</strong>
+                  <p>{getStatusStory(selectedOrder).desc}</p>
                 </div>
               </div>
 
@@ -1479,7 +1497,7 @@ export default function OrderPage() {
                         : getStatusDisplay(selectedOrder).text.includes("فشل")
                         ? "فشل الدفع"
                         : getStatusDisplay(selectedOrder).text.includes("توصيل")
-                          ? "في الطريق إليك!"
+                          ? "تم الدفع وجاري التوصيل إليك!"
                           : getStatusDisplay(selectedOrder).text.includes(
                                 "تجهيز",
                               ) ||
@@ -1519,7 +1537,7 @@ export default function OrderPage() {
                                 !getStatusDisplay(selectedOrder).text.includes(
                                   "فشل",
                                 ))
-                            ? "دقائق ويكون في الطريق إليك."
+                            ? "دقائق ويكون تم الدفع وجاري التوصيل إليك."
                             : getStatusDisplay(selectedOrder).text.includes("قطية")
                             ? "القطيّة شغالة والربع قاعدين يدفعون، الفاتورة ما تتأكد لين يكمل المبلغ!"
                             : "استلمنا طلبك، بانتظار الدفع عشان نبلش التجهيز."}
