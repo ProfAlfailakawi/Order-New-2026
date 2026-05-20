@@ -77,15 +77,6 @@ const formatOrderWords = (count: number) => {
   return `${count} طلب`;
 };
 
-const formatDisplayInvoiceNumber = (value: unknown) => {
-  const raw = String(value || "").trim().toUpperCase();
-  const digits = raw.replace(/\D/g, "");
-  const fallback = raw.replace(/[^A-Z0-9]/g, "");
-  const suffixSource = digits || fallback;
-  const suffix = suffixSource.slice(-4).padStart(4, "0");
-  return `#ORD-${suffix}`;
-};
-
 export default function OrderPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -669,7 +660,7 @@ export default function OrderPage() {
 
   return (
     <div
-      className="track-luxury min-h-screen bg-[#FDFCFB] text-[#2D2926] font-sans selection:bg-accent/20 overflow-x-hidden"
+      className="track-signature min-h-screen bg-[#FDFCFB] text-[#2D2926] font-sans selection:bg-accent/20 overflow-x-hidden"
       dir="rtl"
     >
       {/* Header */}
@@ -686,7 +677,7 @@ export default function OrderPage() {
         <div className="w-11" /> {/* Spacer */}
       </header>
 
-      <main className="max-w-2xl lg:max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+      <main className="max-w-2xl mx-auto p-6 space-y-8">
         {/* Payment Status Alerts */}
         <AnimatePresence>
           {paymentStatusQuery === "success" && (
@@ -985,7 +976,7 @@ export default function OrderPage() {
                             رقم الطلب
                           </span>
                           <span className="text-xs font-extrabold text-brand bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-100">
-                            {formatDisplayInvoiceNumber((order as any).invoiceId || order.id)}
+                            #{(order.id || "").toUpperCase()}
                           </span>
                           {(order.paymentStatus === "paid" ||
                             (order.status || "").startsWith("تم الدفع") ||
@@ -1086,7 +1077,7 @@ export default function OrderPage() {
             />
             <motion.div
               layoutId={`order-${selectedOrder.id}`}
-              className="relative w-full max-w-lg bg-white rounded-t-[48px] sm:rounded-[48px] shadow-xl overflow-hidden max-h-[90vh] flex flex-col"
+              className="track-details-modal-wow relative w-full max-w-lg bg-white rounded-t-[48px] sm:rounded-[48px] shadow-xl overflow-hidden max-h-[90vh] flex flex-col"
             >
               <div className="p-8 border-b border-stone-50 flex flex-col">
                 <div className="flex items-center justify-between mb-4">
@@ -1126,7 +1117,7 @@ export default function OrderPage() {
                           )}
                       </h3>
                       <p className="text-stone-400 text-xs font-medium uppercase tracking-widest mt-1">
-                        {formatDisplayInvoiceNumber((selectedOrder as any).invoiceId || selectedOrder.id)}
+                        Order #{(selectedOrder.id || "").toUpperCase()}
                       </p>
                     </div>
                   </div>
@@ -1177,7 +1168,7 @@ export default function OrderPage() {
 
                   {/* Progress indicators like Instagram stories (top layer) */}
                   <div className="absolute top-4 left-4 right-4 flex gap-1 z-20">
-                    {["جديد", "تجهيز", "توصيل"].map((step, i) => {
+                    {["تم إنشاء الطلب", getStatusDisplay(selectedOrder).text.includes("فشل") ? "فشلت عملية الدفع" : "بانتظار الدفع", "تم الدفع وجاري التوصيل"].map((step, i) => {
                       const currentStep = getStatusDisplay(selectedOrder).text;
                       const isFailed = currentStep.includes("فشل");
                       let progress = 0;
@@ -1193,10 +1184,11 @@ export default function OrderPage() {
                           !currentStep.includes("بانتظار") &&
                           !isFailed)
                       ) {
-                        if (step === "جديد") progress = 100;
-                        if (step === "تجهيز") progress = 50;
+                        if (step === "تم إنشاء الطلب") progress = 100;
+                        if (step === "بانتظار الدفع") progress = 100;
                       } else {
-                        if (step === "جديد") progress = 50;
+                        if (step === "تم إنشاء الطلب") progress = 100;
+                        if (step === "بانتظار الدفع") progress = 45;
                       }
                       if (isFailed) progress = 100; // red
 
@@ -1552,7 +1544,7 @@ export default function OrderPage() {
                           <button
                             onClick={() => handleRepay(selectedOrder as any)}
                             disabled={processingPayment}
-                            className="block w-full text-center p-4 rounded-2xl bg-stone-100 text-stone-600 font-bold text-[13px] hover:bg-stone-200 transition-all outline-none disabled:opacity-50"
+                            className="track-v14-secondary-action block w-full text-center p-4 rounded-2xl bg-stone-100 text-stone-600 font-bold text-[13px] hover:bg-stone-200 transition-all outline-none disabled:opacity-50"
                           >
                               {processingPayment
                                 ? "جاري التجهيز..."
@@ -1568,7 +1560,7 @@ export default function OrderPage() {
                       {(((selectedOrder as any).splitPayments || []).filter(
                         (p: any) => p.status === "paid" || p.status === "pending"
                       ).length > 0 || ((selectedOrder as any).splitParticipants || []).length > 0) && (
-                        <div className="bg-stone-50 p-4 rounded-2xl border border-stone-100">
+                        <div className="track-v14-social-card track-wow-social-card bg-stone-50 p-4 rounded-2xl border border-stone-100">
                           <h4 className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                             <Users className="w-3 h-3" /> {(selectedOrder as any).splitType === 'roulette' ? 'المشاركون في وهق غيرك' : 'المساهمين في القطية'}
                           </h4>
@@ -1585,7 +1577,7 @@ export default function OrderPage() {
                               ((selectedOrder as any).splitParticipants || []).map((p: any, i: number) => (
                                 <div
                                   key={i}
-                                  className="flex items-center justify-between text-xs bg-white p-2 rounded-lg border border-stone-100"
+                                  className="track-v14-person-row flex items-center justify-between text-xs bg-white p-2 rounded-lg border border-stone-100"
                                 >
                                   <div className="flex items-center gap-2">
                                     <div className="flex flex-col">
@@ -1616,7 +1608,7 @@ export default function OrderPage() {
                               ).map((p: any, i: number) => (
                                   <div
                                     key={i}
-                                    className="flex items-center justify-between text-xs bg-white p-2 rounded-lg border border-stone-100"
+                                    className="track-v14-person-row flex items-center justify-between text-xs bg-white p-2 rounded-lg border border-stone-100"
                                   >
                                     <div className="flex items-center gap-2">
                                       <div className="flex flex-col">
@@ -1649,7 +1641,7 @@ export default function OrderPage() {
                   
                     {/* Split Payment Summary */}
                     {((selectedOrder as any).splitPayments || []).length > 0 && (selectedOrder as any).splitType !== 'roulette' && (
-                       <div className="bg-brand/5 p-4 rounded-2xl border border-brand/10 mb-4 flex justify-between items-center text-sm">
+                       <div className="track-v14-split-summary bg-brand/5 p-4 rounded-2xl border border-brand/10 mb-4 flex justify-between items-center text-sm">
                           <div className="flex flex-col text-center">
                              <span className="text-[10px] text-stone-500 font-bold mb-0.5">الإجمالي</span>
                              <span className="font-extrabold text-stone-700">{Number((selectedOrder as any).total).toFixed(3)} د.ك</span>
@@ -1731,14 +1723,8 @@ export default function OrderPage() {
                   animate={{
                     height: "auto",
                     opacity: 1,
-                    y: getStatusDisplay(selectedOrder).text.includes("توصيل")
-                      ? [-10, 10, -10]
-                      : 0,
-                    rotate: getStatusDisplay(selectedOrder).text.includes(
-                      "توصيل",
-                    )
-                      ? [-1, 1, -1]
-                      : 0,
+                    y: 0,
+                    rotate: 0,
                   }}
                   transition={{
                     height: { duration: 0.8, ease: "easeOut", delay: 0.2 },
@@ -1750,7 +1736,7 @@ export default function OrderPage() {
                       ease: "easeInOut",
                     },
                   }}
-                  className="relative bg-white sm:rounded-[32px] mx-0 sm:mx-0 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-20 overflow-hidden mt-6"
+                  className="track-v15-details-card track-wow-details-card relative bg-white sm:rounded-[32px] mx-0 sm:mx-0 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-20 overflow-hidden mt-6"
                 >
                   {/* Receipt zig-zag top edge */}
                   <div
@@ -1762,8 +1748,17 @@ export default function OrderPage() {
                     }}
                   />
 
-                  {/* Status update timestamp pretending to be a printed line */}
+                  {/* Premium order details */}
                   <div className="pt-8 px-4 sm:px-8 pb-8 space-y-8">
+                    <div className="track-v15-details-head">
+                      <div className="min-w-0">
+                        <span>تفاصيل الطلب</span>
+                        <h3>ملخص واضح للفاتورة والتوصيل</h3>
+                      </div>
+                      <div className="track-v15-invoice-chip">
+                        #ORD-{String((selectedOrder as any).displayId || selectedOrder.id || "0000").slice(-4).padStart(4, "0")}
+                      </div>
+                    </div>
                     <motion.div
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -1797,7 +1792,7 @@ export default function OrderPage() {
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.8 + i * 0.15 }}
-                            className="flex items-center justify-between p-2 sm:p-4 bg-stone-50/50 border-b border-dashed border-stone-100 last:border-b-0"
+                            className="track-v15-order-item flex items-center justify-between p-2 sm:p-4 bg-stone-50/50 border-b border-dashed border-stone-100 last:border-b-0"
                           >
                             <div className="flex items-center gap-3">
                               <span className="text-xs font-extrabold text-stone-400 shrink-0">
@@ -1879,7 +1874,7 @@ export default function OrderPage() {
                         <h4 className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-2">
                           معلومات العميل والتوصيل
                         </h4>
-                        <div className="bg-white border border-stone-100 p-6 rounded-[32px] space-y-4 font-medium text-brand text-sm shadow-sm">
+                        <div className="track-v15-address-card bg-white border border-stone-100 p-6 rounded-[32px] space-y-4 font-medium text-brand text-sm shadow-sm">
                           <div className="flex items-center justify-between font-bold border-b border-stone-100 pb-4">
                             <span className="truncate pr-2">
                               {selectedOrder.customerName}
@@ -1928,7 +1923,7 @@ export default function OrderPage() {
                     )}
                   </div>
 
-                  <div className="p-8 bg-stone-50/50 border-t border-stone-100 flex flex-col gap-4">
+                  <div className="track-v15-total-panel track-wow-total-panel p-8 bg-stone-50/50 border-t border-stone-100 flex flex-col gap-4">
                     {selectedOrder.deliveryFee !== undefined && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-stone-400 font-bold uppercase tracking-widest">

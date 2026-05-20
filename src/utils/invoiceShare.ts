@@ -109,15 +109,16 @@ export const buildWhatsAppInvoiceText = (order: any, products: any[] = []) => {
   const addr = getOrderAddress(order);
   const lines: string[] = [];
 
-  lines.push(`${TOKENS.invoice} *فاتورة مطبخ التراث الكويتي*`);
+  lines.push('*فاتورة الطلب*');
+  lines.push('مطبخ التراث الكويتي');
+  lines.push('------------------------------');
+  lines.push(`*رقم الفاتورة:* ${order?.invoiceId || order?.id || '-'}`);
+  lines.push(`*العميل:* ${order?.customerName || order?.name || 'عميلنا العزيز'}`);
+  if (order?.customerPhone || order?.phone) lines.push(`*الهاتف:* ${order?.customerPhone || order?.phone}`);
+  lines.push(`*العنوان:* ${addr || '-'}`);
   lines.push('');
-  lines.push(`${TOKENS.customer} العميل: ${order?.customerName || order?.name || 'عميلنا العزيز'}`);
-  lines.push(`${TOKENS.location} العنوان: ${addr || '-'}`);
-  lines.push(`${TOKENS.number} رقم الفاتورة: ${order?.invoiceId || order?.id || '-'}`);
-  lines.push('');
-  lines.push('━━━━━━━━━━━━━━');
-  lines.push(`${TOKENS.cart} *الطلب*`);
-  lines.push('');
+  lines.push('*الطلبات*');
+  lines.push('------------------------------');
 
   let productsTotal = 0;
   let addonsTotal = 0;
@@ -132,18 +133,17 @@ export const buildWhatsAppInvoiceText = (order: any, products: any[] = []) => {
 
     lines.push(`${idx + 1}) ${name}`);
     lines.push(`   الكمية: ${qty}`);
-    lines.push(`   السعر الفردي: ${formatKwd(unit)}`);
-    lines.push(`   إجمالي المنتج: ${formatKwd(row)}`);
+    lines.push(`   السعر: ${formatKwd(unit)}`);
+    lines.push(`   المجموع: ${formatKwd(row)}`);
 
     const addons = normalizeOrderAddons(it);
     if (addons.length) {
-      lines.push('');
       lines.push('   الإضافات:');
       addons.forEach((a: any) => {
         const aq = getAddonQty(a, qty);
         const price = getAddonTotal(a, qty);
         addonsTotal += price;
-        lines.push(`   • ${a.name || 'إضافة'}${aq > 1 ? ` × ${aq}` : ''} = ${formatKwd(price)}`);
+        lines.push(`   - ${a.name || 'إضافة'}${aq > 1 ? ` × ${aq}` : ''}: ${formatKwd(price)}`);
       });
     }
     lines.push('');
@@ -153,30 +153,41 @@ export const buildWhatsAppInvoiceText = (order: any, products: any[] = []) => {
   const discount = Number(order?.discountAmount || order?.discount || 0);
   const total = getOrderTotal(order, productsTotal + addonsTotal + delivery - discount);
 
-  lines.push('━━━━━━━━━━━━━━');
-  lines.push(`${TOKENS.money} *الملخص*`);
+  lines.push('*ملخص الفاتورة*');
+  lines.push('------------------------------');
   lines.push(`المنتجات: ${formatKwd(productsTotal)}`);
-  lines.push(`الإضافات: ${formatKwd(addonsTotal)}`);
+  if (addonsTotal > 0) lines.push(`الإضافات: ${formatKwd(addonsTotal)}`);
   lines.push(`التوصيل: ${formatKwd(delivery)}`);
   if (discount > 0) lines.push(`الخصم: ${formatKwd(discount)}`);
-  lines.push(`الإجمالي: ${formatKwd(total)}`);
-  lines.push('');
-  lines.push(`${TOKENS.leaf} شكراً لتعاملكم معنا`);
+  lines.push(`*الإجمالي: ${formatKwd(total)}*`);
+  lines.push('------------------------------');
+  lines.push('شكراً لاختياركم مطبخ التراث الكويتي');
   return lines.join('\n');
 };
 
-const buildDisplayWhatsAppText = (order: any, products: any[] = []) => buildWhatsAppInvoiceText(order, products)
-  .replaceAll(TOKENS.invoice, DISPLAY_ICONS.invoice)
-  .replaceAll(TOKENS.customer, DISPLAY_ICONS.customer)
-  .replaceAll(TOKENS.location, DISPLAY_ICONS.location)
-  .replaceAll(TOKENS.number, DISPLAY_ICONS.number)
-  .replaceAll(TOKENS.cart, DISPLAY_ICONS.cart)
-  .replaceAll(TOKENS.money, DISPLAY_ICONS.money)
-  .replaceAll(TOKENS.leaf, DISPLAY_ICONS.leaf);
+const buildDisplayWhatsAppText = (order: any, products: any[] = []) => buildWhatsAppInvoiceText(order, products);
+
+export const buildWhatsAppPaymentLinkText = (order: any, paymentUrl: string) => {
+  const total = getOrderTotal(order, order?.total || 0);
+  return [
+    '*رابط الدفع*',
+    'مطبخ التراث الكويتي',
+    '------------------------------',
+    `*رقم الفاتورة:* ${order?.invoiceId || order?.id || '-'}`,
+    `*العميل:* ${order?.customerName || order?.name || 'عميلنا العزيز'}`,
+    `*المبلغ:* ${formatKwd(total)}`,
+    '',
+    '*اضغط الرابط لإتمام الدفع:*',
+    paymentUrl,
+    '',
+    'بعد الدفع راح تتحدث حالة الطلب تلقائياً.',
+    'شكراً لاختياركم مطبخ التراث الكويتي',
+  ].join('\n');
+};
 
 export const openWhatsAppInvoiceText = (order: any, products: any[] = []) => {
   const phone = order?.customerPhone || order?.phone || '';
-  const text = encodeWhatsAppTextWithIcons(buildWhatsAppInvoiceText(order, products));
+  const text = encodeURIComponent(buildWhatsAppInvoiceText(order, products));
   let digits = String(phone || '').replace(/\D/g, '');
   if (digits.length === 8) digits = `965${digits}`;
   window.open(`https://wa.me/${digits}?text=${text}`, '_blank');

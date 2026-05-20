@@ -423,11 +423,11 @@ export default function SplitPayment() {
 
   return (
     <div
-      className="min-h-screen bg-stone-50 pb-24 font-sans text-stone-800 selection:bg-brand/20"
+      className="min-h-screen qatya-ultra-shell qatya-wow-shell pb-24 font-sans text-stone-800 selection:bg-brand/20"
       dir="rtl"
     >
       {/* Header */}
-      <header className="bg-white border-b border-stone-100 p-6 sticky top-0 z-20 shadow-sm flex flex-col items-center justify-center gap-2 relative">
+      <header className="qatya-ultra-header qatya-wow-header bg-white border-b border-stone-100 p-5 sm:p-6 sticky top-0 z-20 shadow-sm flex flex-col items-center justify-center gap-2 relative">
         <button 
           onClick={() => {
             if (window.history.state && window.history.state.idx > 0) {
@@ -442,7 +442,7 @@ export default function SplitPayment() {
         </button>
         <PieChart className="w-8 h-8 text-brand" />
         <h1 className="font-extrabold text-xl tracking-tight text-center">
-          قطيّة الربع 🤝
+          قطيّة الربع
         </h1>
         <p className="text-xs text-stone-400 font-medium tracking-wide">
           طلب من {order.customerName}
@@ -461,7 +461,7 @@ export default function SplitPayment() {
         )}
       </header>
 
-      <div className="max-w-md mx-auto p-4 sm:p-6 space-y-6">
+      <div className="max-w-md lg:max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
         <AnimatePresence>
           {paymentStatus === "success" && isQatyaStillOpen && (
             <motion.div
@@ -513,38 +513,79 @@ export default function SplitPayment() {
           )}
         </AnimatePresence>
 
-        <div className="bg-white p-6 rounded-[24px] shadow-sm border border-stone-100 flex flex-col items-center">
-          <span className="text-stone-400 font-bold text-sm mb-2 uppercase tracking-widest">
-            إجمالي الفاتورة
-          </span>
-          <span className="text-4xl font-extrabold text-brand italic tracking-tight">
-            {order.total.toFixed(3)}{" "}
-            <span className="text-base text-accent">د.ك</span>
-          </span>
-          <div className="w-full mt-8">
-            <div className="flex justify-between text-xs font-bold mb-2">
-              <span className="text-brand">
-                المندفع: {paidAmount.toFixed(3)} د.ك
-              </span>
-              <span className="text-stone-400">
-                الباقي: {remainingAmount.toFixed(3)} د.ك
-              </span>
+        <div className="qatya-signature-stage qatya-v14-stage">
+          <div className="qatya-hero-card qatya-v14-hero bg-white p-5 sm:p-6 rounded-[28px] shadow-sm border border-stone-100">
+            <div className="qatya-v14-topline relative z-10">
+              <span className="qatya-v14-live-dot">مباشر</span>
+              <span>قطيّة الربع</span>
+              <span>{(order.splitPayments || []).filter((p) => String(p.status || "").toLowerCase() === "paid").length} مساهم</span>
             </div>
-            <div className="h-4 bg-stone-100 rounded-full overflow-hidden shrink-0 w-full flex relative">
-              <motion.div
-                className="h-full bg-gradient-to-l from-[#25D366] to-[#128C7E]"
-                initial={{ width: 0 }}
-                animate={{ width: `${progressPercent}%` }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              />
-              {progressPercent >= 100 && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.8 }}
-                  className="absolute inset-0 bg-white/20 animate-pulse" 
+
+            <div className="qatya-v14-main relative z-10">
+              <div className="min-w-0">
+                <span className="text-stone-400 font-black text-[11px] mb-2 uppercase tracking-[0.2em] block">
+                  حالة القطيّة
+                </span>
+                <h2 className="text-2xl sm:text-4xl font-black text-stone-950 tracking-tight leading-tight">
+                  باقي دفعة وتكتمل اللمة
+                </h2>
+                <p className="text-xs sm:text-sm text-stone-500 font-bold mt-2 leading-relaxed max-w-xl">
+                  الصفحة تعرض المساهمات أول بأول، والباقي واضح. ادفع قطيتك أو انسخ الرابط للربع.
+                </p>
+                <div className="qatya-v14-quick mt-4">
+                  <span>الإجمالي {order.total.toFixed(3)} د.ك</span>
+                  <span>المندفع {paidAmount.toFixed(3)} د.ك</span>
+                </div>
+              </div>
+
+              <div className="qatya-v14-orb" style={{ background: `conic-gradient(#0f5130 ${Math.min(progressPercent, 100)}%, rgba(15,81,48,.10) 0)` }}>
+                <div className="qatya-v14-orb-inner">
+                  <span>الباقي</span>
+                  <strong>{remainingAmount.toFixed(3)}</strong>
+                  <small>د.ك</small>
+                </div>
+              </div>
+            </div>
+
+            <div className="qatya-ledger-grid qatya-v14-ledger qatya-wow-ledger mt-6">
+              <div className="qatya-ledger-tile is-total">
+                <span>إجمالي الفاتورة</span>
+                <strong>{order.total.toFixed(3)}</strong>
+                <small>د.ك</small>
+              </div>
+              <div className="qatya-ledger-tile">
+                <span>المندفع</span>
+                <strong>{paidAmount.toFixed(3)}</strong>
+                <small>د.ك</small>
+              </div>
+              <div className="qatya-ledger-tile is-remaining">
+                <span>الباقي</span>
+                <strong>{remainingAmount.toFixed(3)}</strong>
+                <small>د.ك</small>
+              </div>
+            </div>
+
+            <div className="w-full mt-6 relative z-10">
+              <div className="flex justify-between text-xs font-black mb-2">
+                <span className="text-brand">اكتمل {Math.min(progressPercent, 100).toFixed(0)}%</span>
+                <span className="text-stone-400">يتحدث تلقائيًا</span>
+              </div>
+              <div className="qatya-progress-track qatya-v14-progress h-4 bg-stone-100 rounded-full overflow-hidden shrink-0 w-full flex relative">
+                <motion.div
+                  className="qatya-progress-fill h-full bg-gradient-to-l from-[#25D366] to-[#128C7E]"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progressPercent}%` }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
                 />
-              )}
+                {progressPercent >= 100 && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.8 }}
+                    className="absolute inset-0 bg-white/20 animate-pulse" 
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -631,12 +672,15 @@ export default function SplitPayment() {
              <p className="font-medium text-green-100 text-sm mt-2">يعطيك العافية، جاري تحويلك في ثواني...</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="bg-white p-6 rounded-[24px] shadow-sm border border-stone-100">
-              <h3 className="font-extrabold text-brand mb-4 flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-accent" />
-                قطيتك
-              </h3>
+          <div className="qatya-action-grid qatya-v14-action-grid qatya-wow-action-grid space-y-4">
+            <div className="qatya-pay-card qatya-v14-pay-card bg-white p-5 sm:p-6 rounded-[24px] shadow-sm border border-stone-100">
+              <div className="qatya-form-heading mb-5">
+                <div className="qatya-form-icon"><CreditCard className="w-5 h-5" /></div>
+                <div>
+                  <h3 className="font-black text-brand leading-tight">قطيتك</h3>
+                  <p className="text-[11px] text-stone-400 font-bold mt-1">بيانات بسيطة وتحويل مباشر</p>
+                </div>
+              </div>
               {!paymentStatus && (
                 <div className="bg-brand/5 border border-brand/10 p-3 rounded-xl text-brand font-bold text-sm mb-4">
                   {urlName ? `ترا ناطرين تحويلك يا ${urlName} 💸😎` : "اذا ما دفعت قطيتك، ادفعها الحين ولا تصير البخيل باللمة! 💸😂"}
@@ -730,7 +774,7 @@ export default function SplitPayment() {
                     !contributorName.trim() ||
                     !contributorAmount
                   }
-                  className="w-full bg-brand text-white p-4 rounded-xl font-extrabold disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-brand/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
+                  className="w-full bg-brand text-white p-4 rounded-2xl font-extrabold disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-brand/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 qatya-pay-button"
                 >
                   {isSubmitting ? (
                     <span className="animate-pulse">جاري التحويل...</span>
@@ -757,7 +801,7 @@ export default function SplitPayment() {
 
             <button
               onClick={handleCopyLink}
-              className="w-full bg-white border-2 border-stone-100 text-stone-600 p-4 rounded-[24px] font-bold shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2 hover:bg-stone-50"
+              className="qatya-v14-share-button w-full bg-white border-2 border-stone-100 text-stone-600 p-4 rounded-[24px] font-bold shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2 hover:bg-stone-50"
             >
               {copied ? (
                 <Check className="w-5 h-5 text-green-500" />
@@ -771,11 +815,11 @@ export default function SplitPayment() {
 
         {(order.splitPayments || []).filter((p) => String(p.status || "").toLowerCase() === "paid").length >
           0 && (
-          <div className="bg-white p-6 rounded-[24px] shadow-sm border border-stone-100 relative overflow-hidden">
+          <div className="qatya-honor-card qatya-v14-honor qatya-wow-honor bg-white p-5 sm:p-6 rounded-[24px] shadow-sm border border-stone-100 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-brand/5 rounded-full -mr-12 -mt-12 blur-2xl" />
             <h3 className="font-extrabold text-stone-400 text-sm mb-4 uppercase tracking-widest flex items-center gap-2 relative z-10">
               <Users className="w-4 h-4 text-brand" />
-              حائط الشرف (Live 🔥)
+              حائط الشرف
             </h3>
             <div className="space-y-3 relative z-10">
               <AnimatePresence initial={false}>
