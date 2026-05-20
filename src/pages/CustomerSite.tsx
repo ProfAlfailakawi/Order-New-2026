@@ -2190,7 +2190,7 @@ ${paymentLink}`;
         animate={{ opacity: isLoading ? 0 : 1 }}
         transition={{ duration: 1 }}
         className={cn(
-          "customer-luxury pb-24 w-full max-w-2xl lg:max-w-7xl mx-auto min-h-screen lg:shadow-[0_30px_120px_rgba(22,36,26,0.08)] text-brand overflow-x-hidden transition-colors duration-1000",
+          "pb-24 max-w-2xl lg:max-w-6xl mx-auto min-h-screen shadow-sm text-brand overflow-x-hidden transition-colors duration-1000 customer-signature-shell",
           goldenHourTheme.bg,
           goldenHourTheme.extraShadow || "",
         )}
@@ -2571,13 +2571,13 @@ ${paymentLink}`;
         )}
 
         {/* Categories / Products */}
-        <main className="p-4 sm:p-6 lg:p-8 space-y-8 lg:space-y-10">
+        <main className="p-4 sm:p-6 lg:p-8 space-y-8 customer-products-zone customer-wow-menu">
 
 
           {/* Best Sellers */}
           {topProducts.length > 0 && !moodQuery.trim() && (
             <section className="mb-2">
-              <div className="flex items-center justify-between mb-4">
+              <div className="best-seller-wow-head flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-brand flex items-center gap-2">
                   <span className="text-accent text-xl">🔥</span> الأكثر طلباً
                 </h3>
@@ -2773,7 +2773,7 @@ ${paymentLink}`;
 
               return searchedProducts.length === 0 ? (
                 <div className="space-y-4">
-                  <div className="bg-white/90 border border-stone-100 rounded-3xl p-4 shadow-sm">
+                  <div className="product-search-signature bg-white/90 border border-stone-100 rounded-3xl p-4 shadow-sm">
                     <div className="flex items-center gap-3 bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3">
                       <Search className="w-4 h-4 text-stone-400" />
                       <input
@@ -2790,7 +2790,7 @@ ${paymentLink}`;
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="bg-white/90 border border-stone-100 rounded-3xl p-4 shadow-sm">
+                  <div className="product-search-signature bg-white/90 border border-stone-100 rounded-3xl p-4 shadow-sm">
                     <div className="flex items-center gap-3 bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3">
                       <Search className="w-4 h-4 text-stone-400" />
                       <input
@@ -2814,7 +2814,7 @@ ${paymentLink}`;
                           key={product.id}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="h-full flex flex-col lux-product-wrap"
+                          className="h-full flex flex-col"
                           style={{ minHeight: "120px" }}
                         >
                           <ChefWhisperCard product={product} settings={settings} onSelect={setSelectedProduct} />
@@ -2822,11 +2822,11 @@ ${paymentLink}`;
                       ))}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="space-y-3">
                       {groupedProducts.map((group) => {
                         const isOpen = activeProductCategory === group.category;
                         return (
-                          <div key={group.category} className="lux-category-card bg-white border border-stone-100 rounded-[28px] shadow-sm overflow-hidden">
+                          <div key={group.category} className="category-signature-card bg-white border border-stone-100 rounded-[28px] shadow-sm overflow-hidden">
                             <button
                               type="button"
                               onClick={() => setActiveProductCategory(isOpen ? null : group.category)}
@@ -2853,13 +2853,13 @@ ${paymentLink}`;
                                   transition={{ duration: 0.22 }}
                                   className="overflow-hidden"
                                 >
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 p-4 pt-0">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 p-4 pt-0">
                                     {group.items.map((product) => (
                                       <motion.div
                                         key={product.id}
                                         initial={{ opacity: 0, y: 12 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="h-full flex flex-col lux-product-wrap"
+                                        className="h-full flex flex-col"
                                         style={{ minHeight: "120px" }}
                                       >
                                         <ChefWhisperCard product={product} settings={settings} onSelect={setSelectedProduct} />
@@ -3635,7 +3635,7 @@ const ChefWhisperCard = ({
 
   return (
     <div
-      className={`relative perspective-[1000px] w-full h-full min-h-[110px]`}
+      className={`menu-product-shell relative perspective-[1000px] w-full h-full min-h-[110px]`}
     >
       <motion.div
         className={`w-full h-full relative`}
@@ -3660,7 +3660,7 @@ const ChefWhisperCard = ({
       >
         {/* Front Side */}
         <div
-          className={`lux-product-card relative w-full bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex ${isHorizontal ? "flex-col justify-start p-4 pb-3 h-full" : "gap-5 p-5 min-h-[110px] items-center"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-white hover:border-accent/20 hover:shadow-[0_20px_50px_rgba(26,46,34,0.06)] hover:-translate-y-1"} transition-all duration-500 cursor-pointer`}
+          className={`menu-product-card relative w-full bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex ${isHorizontal ? "menu-product-card-horizontal flex-col justify-start p-4 pb-3 h-full" : "gap-5 p-5 min-h-[110px] items-center"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-white hover:border-accent/20 hover:shadow-[0_20px_50px_rgba(26,46,34,0.06)] hover:-translate-y-1"} transition-all duration-500 cursor-pointer`}
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
@@ -3693,7 +3693,7 @@ const ChefWhisperCard = ({
           )}
 
           <div
-            className={`lux-product-image relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-stone-50/50 rounded-2xl border border-stone-100/50 shadow-inner ${isHorizontal ? "w-20 h-20 mx-auto mb-2" : "w-16 h-16"}`}
+            className={`menu-product-image relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-stone-50/50 rounded-2xl border border-stone-100/50 shadow-inner ${isHorizontal ? "w-20 h-20 mx-auto mb-2" : "w-16 h-16"}`}
           >
             {isHot && <SizzlingSteam />}
             <img
@@ -3747,7 +3747,7 @@ const ChefWhisperCard = ({
           {!isHorizontal && (
             <div className="flex items-center pl-2 relative z-10">
               <div
-                className={`p-2 sm:p-3 text-white rounded-2xl shadow-lg transition-all hover:scale-110 ${product.isOutOfStock ? "bg-stone-300" : "bg-gradient-to-tr from-accent to-amber-500 shadow-accent/30"}`}
+                className={`menu-product-add p-2 sm:p-3 text-white rounded-2xl shadow-lg transition-all hover:scale-110 ${product.isOutOfStock ? "bg-stone-300" : "bg-gradient-to-tr from-accent to-amber-500 shadow-accent/30"}`}
               >
                 <Plus className="w-5 h-5 stroke-[3]" />
               </div>
@@ -3807,7 +3807,7 @@ const RoyalLazySusan = ({
   if (!products || products.length === 0) return null;
 
   return (
-    <div className="lux-lazysusan relative w-full h-[200px] lg:h-[230px] flex items-center justify-center overflow-x-hidden perspective-[1200px] select-none touch-pan-y">
+    <div className="best-seller-wow-carousel relative w-full h-[200px] flex items-center justify-center overflow-x-hidden perspective-[1200px] select-none touch-pan-y">
       <AnimatePresence initial={false}>
         {products.map((product, i) => {
           const rawOffset = i - currentIndex;
@@ -3836,7 +3836,7 @@ const RoyalLazySusan = ({
           return (
             <motion.div
               key={product.id}
-              className="absolute w-[180px] h-[200px] cursor-grab active:cursor-grabbing"
+              className="best-seller-wow-card absolute w-[180px] h-[200px] cursor-grab active:cursor-grabbing"
               initial={false}
               animate={{
                 x: xOffset,
@@ -4479,28 +4479,6 @@ function CheckoutOverlay({
       (r.name || "").includes(regionSearch),
   );
 
-  const checkoutTitle =
-    step === "cart"
-      ? "مراجعة الطلب"
-      : step === "payment"
-        ? "طريقة الدفع"
-        : "بياناتك";
-  const checkoutSubtitle =
-    step === "cart"
-      ? "تأكد من السلة وبعدها نرتب بياناتك"
-      : step === "payment"
-        ? "اختار شلون حاب تدفع الفاتورة؟"
-        : "رقمك أولاً، وإذا بياناتك محفوظة نطلعها لك تلقائيًا";
-  const addressSummary = [
-    address.region,
-    address.block ? `قطعة ${address.block}` : "",
-    address.street ? `شارع ${address.street}` : "",
-    address.avenue ? `جادة ${address.avenue}` : "",
-    address.building ? `منزل ${address.building}` : "",
-    address.floor ? `دور ${address.floor}` : "",
-    address.apartment ? `شقة ${address.apartment}` : "",
-  ].filter(Boolean).join("، ");
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -4514,10 +4492,10 @@ function CheckoutOverlay({
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 200 }}
-        className="bg-[#fafaf9] w-full sm:max-w-xl lg:max-w-2xl h-[100dvh] overflow-hidden shadow-2xl flex flex-col sm:rounded-l-3xl border-l border-stone-100/50"
+        className="checkout-wow-panel bg-[#fafaf9] w-full sm:max-w-[680px] lg:max-w-[820px] h-[100dvh] overflow-hidden shadow-2xl flex flex-col sm:rounded-l-3xl border-l border-stone-100/50"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 pt-[max(env(safe-area-inset-top,0px),1.5rem)] border-b border-stone-50 flex items-center justify-between bg-white shrink-0 shadow-[0_8px_30px_rgb(0,0,0,0.02)] z-10 rounded-b-3xl">
+        <div className="checkout-wow-header p-6 pt-[max(env(safe-area-inset-top,0px),1.5rem)] border-b border-stone-50 flex items-center justify-between bg-white shrink-0 shadow-[0_8px_30px_rgb(0,0,0,0.02)] z-10 rounded-b-3xl">
           <div className="flex items-center gap-4">
             <button
               onClick={() => {
@@ -4531,16 +4509,13 @@ function CheckoutOverlay({
             </button>
             <div>
               <h2 className="text-2xl font-black text-brand flex items-center gap-2 tracking-tight mt-1">
-                {checkoutTitle}
+                {step === "cart" ? "قائمة طلباتك" : step === "payment" ? "طريقة الدفع" : "بيانات التوصيل"}
               </h2>
-              <p className="text-[11px] font-bold text-stone-400 mt-1 leading-relaxed">
-                {checkoutSubtitle}
-              </p>
             </div>
           </div>
         </div>
 
-        <div className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-6 no-scrollbar bg-[#fafaf9]">
+        <div className="checkout-wow-body flex-grow overflow-y-auto p-6 space-y-8 no-scrollbar bg-[#fafaf9]">
           {cart.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-6 pt-10">
               <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-stone-50">
@@ -4760,19 +4735,10 @@ function CheckoutOverlay({
               </div>
             </div>
           ) : step === "delivery" ? (
-            <div className="animate-in slide-in-from-left-4 fade-in duration-300 space-y-6 pt-2">
-                <div className="bg-white border border-stone-100 rounded-[2rem] p-5 shadow-sm space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-brand text-white flex items-center justify-center shrink-0 shadow-sm">
-                      <Phone className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-black text-brand leading-tight">رقم الهاتف</h3>
-                      <p className="text-xs font-bold text-stone-400 mt-1 leading-relaxed"></p>
-                    </div>
-                  </div>
+            <div className="address-wow-step animate-in slide-in-from-left-4 fade-in duration-300 space-y-6 pt-2">
+                <div className="space-y-2">
                   <label className="text-sm items-center gap-1.5 font-bold text-stone-700 flex px-1">
-                    <Phone className="w-4 h-4 text-accent" /> رقم الهاتف
+                    <Phone className="w-4 h-4 text-accent" /> أدخل رقم هاتفك لإكمال الطلب
                   </label>
                   <input
                     type="tel"
@@ -4792,24 +4758,10 @@ function CheckoutOverlay({
                         setCustomerPoints(0);
                       }
                     }}
-                    className="w-full px-5 py-4 border-2 border-accent/10 focus:border-accent/40 bg-stone-50/50 hover:bg-stone-50 transition-colors rounded-2xl focus:border-accent focus:ring-4 focus:ring-accent/10 outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-xl text-center tracking-[0.2em] shadow-sm"
+                    className="w-full px-5 py-4 border-2 border-accent/10 focus:border-accent/40 bg-stone-50/50 hover:bg-stone-50 transition-colors rounded-xl focus:border-accent focus:ring-4 focus:ring-accent/10 outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-xl text-center tracking-[0.2em] shadow-sm"
                     dir="ltr"
                   />
-                  {customerPhone.length > 0 && customerPhone.length < 8 && (
-                    <p className="text-[11px] font-bold text-amber-600 px-1">كمّل الرقم 8 أرقام علشان نطلع بياناتك.</p>
-                  )}
                 </div>
-                {customerPhone.length >= 8 && isLocked && customerName && (
-                  <div className="bg-green-50 border border-green-100 rounded-[1.75rem] p-4 flex items-start gap-3 text-green-800 shadow-sm animate-in fade-in slide-in-from-top-2">
-                    <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shrink-0 border border-green-100">
-                      <Check className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-black">هلا {customerName}</p>
-                      <p className="text-xs font-bold text-green-700/80 mt-1 leading-relaxed">{addressSummary || "بياناتك محفوظة، راجع العنوان تحت."}</p>
-                    </div>
-                  </div>
-                )}
                 {customerPhone.length >= 8 && (
                   <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
                     {/* Improved Region Selection with Search */}
@@ -5046,133 +4998,35 @@ function CheckoutOverlay({
                 )}
             </div>
           ) : step === "payment" ? (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-4 pb-2">
-              <div className="relative overflow-hidden rounded-[2rem] bg-brand text-white p-4 sm:p-5 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.45)]">
-                <div className="absolute -top-20 -left-16 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
-                <div className="absolute -bottom-24 -right-12 h-52 w-52 rounded-full bg-accent/25 blur-3xl" />
-                <div className="relative z-10 flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-black text-white/55 tracking-[0.28em] uppercase mb-2">PAYMENT</p>
-                    <h3 className="text-2xl font-black leading-tight">اختار شلون حاب تدفع الفاتورة؟</h3>
-                  </div>
-                  <div className="w-14 h-14 rounded-3xl bg-white/12 border border-white/10 flex items-center justify-center backdrop-blur-xl">
-                    <CreditCard className="w-6 h-6" />
-                  </div>
-                </div>
-                <div className="relative z-10 mt-4 rounded-[1.5rem] bg-white/10 border border-white/10 p-4 backdrop-blur-xl">
-                  <div className="flex items-end justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-bold text-white/55 mb-1">حسابك طال عمرك</p>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-4xl font-black tracking-tight">{Number(total || 0).toFixed(3)}</span>
-                        <span className="text-sm font-black text-accent">د.ك</span>
-                      </div>
-                    </div>
-                  </div>
+            <div className="payment-wow-step animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center justify-center w-full pt-6 pb-3 px-2">
+              
+              <div className="bg-stone-50/80 backdrop-blur-sm border border-stone-100 rounded-3xl sm:rounded-[2rem] p-6 sm:p-8 w-full max-w-full relative overflow-hidden shadow-sm flex flex-col items-center justify-center mb-8">
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-accent/5 rounded-full blur-2xl"></div>
+                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-brand/5 rounded-full blur-2xl"></div>
+                
+                <p className="text-stone-500 font-bold text-xs sm:text-sm mb-3 relative z-10 flex items-center gap-1.5 sm:gap-2 text-center flex-wrap justify-center line-clamp-2 leading-relaxed max-w-[90%]">
+                  <Check className="w-4 h-4 text-accent shrink-0" />
+                  <span>مجموع طلبك طال عمرك</span>
+                </p>
+                <div className="flex items-baseline gap-2 relative z-10 flex-wrap justify-center">
+                   <span className="text-4xl sm:text-5xl font-bold text-brand tracking-tight break-all text-center">
+                     {Number(itemsTotal + deliveryFee - discountAmount).toFixed(3)}
+                   </span>
+                   <span className="text-lg sm:text-xl font-bold text-stone-400 shrink-0">د.ك</span>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <p className="px-1 text-[11px] font-black text-stone-400 tracking-[0.18em] uppercase">اختار شلون حاب تدفع الفاتورة؟</p>
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                <button
-                  disabled={isSubmitting}
-                  onClick={() => onSubmit(false)}
-                  className={cn(
-                    "group w-full relative overflow-hidden rounded-[2rem] p-4 text-right transition-all active:scale-[0.985] border shadow-sm sm:min-h-[160px]",
-                    !isSubmitting
-                      ? "bg-white border-stone-100 hover:border-brand/20 hover:shadow-xl hover:shadow-brand/5"
-                      : "bg-stone-100 border-stone-100 text-stone-400 cursor-not-allowed",
-                  )}
-                >
-                  <div className="absolute inset-y-0 right-0 w-1.5 bg-brand" />
-                  <div className="flex items-center justify-between gap-4 pr-2 sm:h-full sm:flex-col sm:items-start">
-                    <div className="flex items-center gap-4 sm:flex-col sm:items-start">
-                      <div className="w-14 h-14 rounded-3xl bg-brand text-white flex items-center justify-center shadow-lg shadow-brand/15">
-                        <CreditCard className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-black text-stone-400">١</span>
-                          <h4 className="text-lg font-black text-brand">تبي تدفعه كامل؟</h4>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="w-9 h-9 rounded-full bg-stone-50 flex items-center justify-center text-brand group-hover:bg-brand group-hover:text-white transition-all">
-                      <ArrowRight className="w-4 h-4 rotate-180" />
-                    </div>
-                  </div>
-                </button>
-
-                <button
-                  disabled={isSubmitting}
-                  onClick={() => onSubmit("traditional")}
-                  className="group w-full relative overflow-hidden rounded-[2rem] bg-white p-4 text-right transition-all active:scale-[0.985] border border-stone-100 shadow-sm hover:border-accent/30 hover:shadow-xl hover:shadow-accent/5 sm:min-h-[160px]"
-                >
-                  <div className="absolute inset-y-0 right-0 w-1.5 bg-accent" />
-                  <div className="flex items-center justify-between gap-4 pr-2 sm:h-full sm:flex-col sm:items-start">
-                    <div className="flex items-center gap-4 sm:flex-col sm:items-start">
-                      <div className="w-14 h-14 rounded-3xl bg-accent/12 text-accent flex items-center justify-center border border-accent/15">
-                        <Layers className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-black text-stone-400">٢</span>
-                          <h4 className="text-lg font-black text-brand">تبيها قطية؟</h4>
-                        </div>
-                        <p className="text-xs font-bold text-stone-400 mt-1">قسم الفاتورة بمبالغ على ربعك</p>
-                      </div>
-                    </div>
-                    <div className="w-9 h-9 rounded-full bg-stone-50 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-all">
-                      <ArrowRight className="w-4 h-4 rotate-180" />
-                    </div>
-                  </div>
-                </button>
-
-                <button
-                  disabled={isSubmitting}
-                  onClick={() => onSubmit("roulette")}
-                  className="group w-full relative overflow-hidden rounded-[2rem] bg-white p-4 text-right transition-all active:scale-[0.985] border border-stone-100 shadow-sm hover:border-fuchsia-200 hover:shadow-xl hover:shadow-fuchsia-100/70 sm:min-h-[160px]"
-                >
-                  <div className="absolute inset-y-0 right-0 w-1.5 bg-fuchsia-500" />
-                  <div className="flex items-center justify-between gap-4 pr-2 sm:h-full sm:flex-col sm:items-start">
-                    <div className="flex items-center gap-4 sm:flex-col sm:items-start">
-                      <div className="w-14 h-14 rounded-3xl bg-fuchsia-50 text-fuchsia-600 flex items-center justify-center border border-fuchsia-100">
-                        <PartyPopper className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-black text-stone-400">٣</span>
-                          <h4 className="text-lg font-black text-brand">وهق غيرك 🎰</h4>
-                        </div>
-                        <p className="text-xs font-bold text-stone-400 mt-1">الخاسر باللعبة يدفع الفاتورة!</p>
-                      </div>
-                    </div>
-                    <div className="w-9 h-9 rounded-full bg-stone-50 flex items-center justify-center text-fuchsia-600 group-hover:bg-fuchsia-600 group-hover:text-white transition-all">
-                      <ArrowRight className="w-4 h-4 rotate-180" />
-                    </div>
-                  </div>
-                </button>
-                </div>
-              </div>
-
-              <div className="rounded-[1.75rem] bg-white border border-stone-100 p-4 flex items-center justify-between gap-3 shadow-sm">
-                <div>
-                  <p className="text-[11px] font-black text-stone-400">بياناتك جاهزة</p>
-                  <p className="text-sm font-black text-brand mt-1 truncate max-w-[260px]">
-                    {addressSummary || "العنوان محفوظ من رقم الهاتف"}
-                  </p>
-                </div>
-                <button onClick={() => setStep("delivery")} className="px-4 py-2 rounded-2xl bg-stone-50 text-brand text-xs font-black border border-stone-100">
-                  تعديل
-                </button>
+              <div className="flex items-center gap-4 w-full mb-4">
+                <div className="h-px bg-stone-100 flex-1"></div>
+                <span className="text-stone-400 font-bold text-xs uppercase tracking-widest shrink-0 text-center">اختار شلون حاب تدفع الفاتورة؟</span>
+                <div className="h-px bg-stone-100 flex-1"></div>
               </div>
             </div>
           ) : null}
         </div>
 
-        {cart.length > 0 && step !== "payment" && (
-          <div className="p-6 bg-white border-t border-stone-100 space-y-6 shadow-[0_-15px_40px_rgba(0,0,0,0.02)]">
+        {cart.length > 0 && (
+          <div className="checkout-wow-footer p-6 bg-white border-t border-stone-100 space-y-6 shadow-[0_-15px_40px_rgba(0,0,0,0.02)]">
             <AnimatePresence>
               {formError && (
                 <motion.div
@@ -5375,13 +5229,79 @@ function CheckoutOverlay({
                     ) : (
                       <>
                         <Check className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        <span>اختار طريقة الدفع</span>
+                        <span>ادفع الآن</span>
                       </>
                     )}
                   </button>
                 </div>
               ) : (
-                <div className="hidden" />
+                <div className="payment-method-wow-grid flex flex-col gap-3 animate-in slide-in-from-bottom-4 fade-in duration-500">
+                  <button
+                    disabled={isSubmitting}
+                    onClick={() => onSubmit(false)}
+                    className={cn(
+                      "payment-method-card payment-method-card-full w-full p-4 sm:p-5 rounded-2xl font-bold flex items-center justify-between gap-3 transition-all active:scale-[0.98] text-lg group text-right",
+                      !isSubmitting
+                        ? "bg-brand text-white shadow-[0_20px_40px_-10px_rgba(212,175,55,0.4)] hover:bg-brand/90"
+                        : "bg-stone-200 text-stone-400 cursor-not-allowed",
+                    )}
+                  >
+                    {isSubmitting ? (
+                      <motion.div
+                        animate={{ opacity: [1, 0.5, 1], scale: [1, 0.98, 1] }}
+                        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                        className="flex items-center justify-center w-full gap-2"
+                      >
+                        <Sparkles className="w-5 h-5 opacity-80" />
+                        <span>جاري تجهيز الطلب بأمان...</span>
+                      </motion.div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                             <CreditCard className="w-6 h-6 text-white" />
+                           </div>
+                           <div className="flex flex-col items-start gap-1">
+                             <span className="text-[17px]">تبي تدفعه كامل؟</span>
+                           </div>
+                        </div>
+                      </>
+                    )}
+                  </button>
+
+                  {!isSubmitting && (
+                    <>
+                      <button
+                        onClick={() => onSubmit("traditional")}
+                        className="payment-method-card payment-method-card-qatya w-full bg-stone-100 text-brand rounded-2xl p-4 sm:p-5 shadow-sm active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-stone-200 text-lg border border-stone-100 text-right"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-white border border-stone-100 rounded-xl flex items-center justify-center shrink-0">
+                            <Layers className="w-6 h-6 text-accent" />
+                          </div>
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="text-[17px]">تبيها قطية؟</span>
+                            <span className="text-[10px] font-medium text-stone-500 uppercase tracking-widest">قسم الفاتورة بمبالغ على ربعك</span>
+                          </div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => onSubmit("roulette")}
+                        className="payment-method-card payment-method-card-wahag w-full bg-fuchsia-600 text-white rounded-2xl p-4 sm:p-5 shadow-md active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-fuchsia-700 text-lg text-right"
+                      >
+                         <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                             <PartyPopper className="w-6 h-6 text-white" />
+                           </div>
+                           <div className="flex flex-col items-start gap-1">
+                             <span className="text-[17px]">وهق غيرك 🎰</span>
+                             <span className="text-[10px] font-medium opacity-80 uppercase tracking-widest">الخاسر باللعبة يدفع الفاتورة!</span>
+                           </div>
+                        </div>
+                      </button>
+                    </>
+                  )}
+                </div>
               );
             })()}
           </div>

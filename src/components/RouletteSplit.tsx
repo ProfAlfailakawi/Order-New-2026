@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Users, Crown, CreditCard, PartyPopper, ArrowRight, AlertCircle, Check } from "lucide-react";
+import { Sparkles, Users, Crown, CreditCard, PartyPopper, ArrowRight, AlertCircle, Check, Trophy, ShieldCheck } from "lucide-react";
 import { normalizeDigits } from "../utils";
 
 const normalizeArabicName = (name: string) => {
@@ -240,10 +240,10 @@ export function RouletteSplit({
 
   return (
     <div
-      className="roulette-luxury min-h-screen bg-stone-950 text-white font-sans selection:bg-fuchsia-500/30"
+      className="min-h-screen roulette-ultra-shell wahag-wow-shell text-white font-sans selection:bg-fuchsia-500/30"
       dir="rtl"
     >
-      <div className="max-w-md lg:max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 pb-32 relative">
+      <div className="max-w-md lg:max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-32 relative">
         <button 
           onClick={() => {
             if (window.history.state && window.history.state.idx > 0) {
@@ -252,21 +252,32 @@ export function RouletteSplit({
               navigate("/");
             }
           }}
-          className="absolute left-6 top-6 p-2 text-stone-400 hover:text-white"
+          className="absolute left-4 top-5 p-2 text-white/60 hover:text-white rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl"
         >
           <ArrowRight className="w-6 h-6" />
         </button>
-        <header className="text-center pt-8 space-y-4">
-          <div className="w-20 h-20 bg-gradient-to-tr from-violet-600 to-fuchsia-600 rounded-full flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(217,70,239,0.3)]">
+        <header className="roulette-ultra-hero roulette-v14-hero wahag-wow-hero text-center pt-10 space-y-4">
+          <div className="roulette-v14-marquee">
+            <span>مطبخ التراث الكويتي</span>
+            <span>وهق غيرك</span>
+            <span>{participants.length} مشارك</span>
+          </div>
+          <div className="roulette-ultra-orb roulette-v14-orb w-20 h-20 bg-gradient-to-tr from-violet-600 to-fuchsia-600 rounded-full flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(217,70,239,0.3)]">
             <Sparkles className="w-10 h-10 text-white" />
           </div>
-          <div>
-            <h1 className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-violet-400">
-              انت وحظك
+          <div className="roulette-title-card">
+            <span className="roulette-kicker">تحدي الربع</span>
+            <h1 className="text-3xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-300 via-white to-violet-300">
+              وهق غيرك 🎰
             </h1>
-            <p className="text-stone-400 font-bold mt-2">
-              عوافي! واحد فيكم بتطيح براسه الفاتورة {order.total.toFixed(3)} د.ك
+            <p className="text-stone-300 font-bold mt-2 leading-relaxed max-w-xl mx-auto">
+              مشهد واحد، أسماء الربع، ولحظة اختيار تخلي الكل ماسك نفسه. الفاتورة {order.total.toFixed(3)} د.ك
             </p>
+          </div>
+          <div className="roulette-status-strip roulette-v14-status-strip">
+            <span>{participants.length} مشارك</span>
+            <span>{spun ? "تم السحب" : "بانتظار الربع"}</span>
+            <span>{order.total.toFixed(3)} د.ك</span>
           </div>
         </header>
 
@@ -274,7 +285,7 @@ export function RouletteSplit({
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6"
+            className="roulette-ultra-card roulette-v14-card wahag-wow-card bg-white/5 border border-white/10 rounded-3xl p-5 sm:p-6 space-y-5"
           >
             {!mySpinName ? (
               <div className="space-y-4">
@@ -286,7 +297,7 @@ export function RouletteSplit({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="الاسم (مثال: محمد)"
-                  className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-center font-bold focus:outline-none focus:border-fuchsia-500 mb-2"
+                  className="w-full bg-white text-slate-950 border border-white/20 rounded-2xl px-4 py-3.5 text-center font-bold focus:outline-none focus:ring-4 focus:ring-fuchsia-500/25 focus:border-fuchsia-400 mb-2"
                 />
                 <input
                   type="tel"
@@ -295,12 +306,12 @@ export function RouletteSplit({
                   value={phone}
                   onChange={(e) => setPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8))}
                   placeholder="رقم الهاتف (مثال: 90000000)"
-                  className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-center font-bold focus:outline-none focus:border-fuchsia-500"
+                  className="w-full bg-white text-slate-950 border border-white/20 rounded-2xl px-4 py-3.5 text-center font-bold focus:outline-none focus:ring-4 focus:ring-fuchsia-500/25 focus:border-fuchsia-400"
                   dir="ltr"
                 />
                 <button
                   onClick={join}
-                  className="w-full bg-white text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                  className="w-full bg-white text-slate-950 font-black py-4 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_18px_45px_rgba(255,255,255,0.12)]"
                 >
                   <Users className="w-5 h-5" />
                   دش جرب حظك
@@ -313,23 +324,29 @@ export function RouletteSplit({
                   <span className="text-fuchsia-400">{mySpinName}</span>
                 </div>
 
-                <div className="bg-black/40 rounded-xl p-4 min-h-[100px]">
-                  <h3 className="text-xs text-stone-500 font-bold mb-4">
-                    الشباب باللوبي ({participants.length}):
-                  </h3>
-                  <div className="flex flex-wrap gap-2 justify-center">
+                <div className="roulette-lobby-panel roulette-v14-lobby bg-black/40 rounded-2xl p-4 min-h-[100px]">
+                  <div className="roulette-v14-lobby-head">
+                    <h3 className="text-xs text-stone-300 font-bold">
+                      الشباب باللوبي ({participants.length})
+                    </h3>
+                    <span>{participants.length >= 2 ? "جاهزين للسحب" : "نحتاج شخصين"}</span>
+                  </div>
+                  <div className="roulette-v14-participants">
                     {participants.map((p: any, i: number) => (
-                      <span
+                      <motion.span
                         key={i}
-                        className="bg-white/10 px-3 py-1 rounded-full text-sm font-bold"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.03 }}
                       >
+                        <b>{p.name?.charAt(0) || "؟"}</b>
                         {p.name}
-                      </span>
+                      </motion.span>
                     ))}
                   </div>
                   {participants.length >= 2 && (
-                    <p className="text-xs text-fuchsia-300 font-bold mt-4">
-                      💡 تأكدوا ان الكل دش، وإذا العدد كمل أي شخص يقدر يوهقكم وكلكم بتشوفونها لايف!
+                    <p className="roulette-v14-hint">
+                      تأكدوا أن الكل دش، وإذا العدد كمل أي شخص يقدر يوهقكم وتشوفون النتيجة مباشرة.
                     </p>
                   )}
                 </div>
@@ -348,7 +365,7 @@ export function RouletteSplit({
                       alert("تم نسخ الرابط!");
                     }
                   }}
-                  className="w-full bg-white/10 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 mt-4 hover:bg-white/20 transition-colors"
+                  className="w-full bg-white/10 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 mt-4 hover:bg-white/20 transition-colors border border-white/10"
                 >
                   <Sparkles className="w-5 h-5 text-fuchsia-400" />
                   دز الرابط للربع وشوف حظهم ووهقهم
@@ -357,7 +374,7 @@ export function RouletteSplit({
                 {participants.length >= 2 && (
                   <button
                     onClick={spin}
-                    className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 font-black py-4 rounded-xl shadow-lg shadow-fuchsia-500/20 active:scale-95 transition-transform mt-4"
+                    className="roulette-spin-button w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 font-black py-4 rounded-2xl shadow-lg shadow-fuchsia-500/20 active:scale-95 transition-transform mt-4"
                   >
                     اضغط وخل الحظ يختار 🎰
                   </button>
@@ -372,9 +389,9 @@ export function RouletteSplit({
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="flex flex-col items-center justify-center py-10 space-y-8"
+            className="roulette-stage flex flex-col items-center justify-center py-8 sm:py-10 space-y-8"
           >
-            <div className="relative w-72 h-72 border-[12px] border-white/5 rounded-full flex flex-col items-center justify-center bg-black/60 overflow-hidden shadow-[0_0_100px_rgba(217,70,239,0.15)] ring-4 ring-fuchsia-500/20">
+            <div className="roulette-wheel roulette-v14-wheel wahag-wow-wheel relative w-72 h-72 sm:w-80 sm:h-80 border-[12px] border-white/5 rounded-full flex flex-col items-center justify-center bg-black/60 overflow-hidden shadow-[0_0_100px_rgba(217,70,239,0.15)] ring-4 ring-fuchsia-500/20">
               <div className="absolute inset-0 pointer-events-none border-[16px] border-fuchsia-500/10 rounded-full" />
               <div className="absolute top-1/2 left-0 right-0 h-16 -translate-y-1/2 border-y-2 border-fuchsia-400/30 bg-fuchsia-400/5 z-0 pointer-events-none" />
               
@@ -429,7 +446,7 @@ export function RouletteSplit({
 
                   if (isLoser) {
                     return (
-                      <div className="p-6 bg-violet-500/20 border border-violet-500/50 rounded-3xl text-violet-100 space-y-4">
+                      <div className="roulette-result-card roulette-v14-result wahag-wow-result is-loser p-6 bg-violet-500/20 border border-violet-500/50 rounded-3xl text-violet-100 space-y-4">
                         {paymentStatus === "failed" && (
                           <motion.div
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -446,6 +463,7 @@ export function RouletteSplit({
                             </div>
                           </motion.div>
                         )}
+                        <div className="roulette-v14-result-icon"><Trophy className="w-7 h-7" /></div>
                         <h2 className="text-3xl font-black text-white">{resultContent.title}</h2>
                         <p className="font-bold text-violet-200">
                           {resultContent.desc}
@@ -472,8 +490,8 @@ export function RouletteSplit({
                   }
 
                   return (
-                    <div className="p-6 bg-fuchsia-500/20 border border-fuchsia-500/50 rounded-3xl text-fuchsia-100 space-y-4">
-                      <PartyPopper className="w-12 h-12 mx-auto text-fuchsia-400" />
+                    <div className="roulette-result-card roulette-v14-result wahag-wow-result is-safe p-6 bg-fuchsia-500/20 border border-fuchsia-500/50 rounded-3xl text-fuchsia-100 space-y-4">
+                      <div className="roulette-v14-result-icon is-safe"><ShieldCheck className="w-7 h-7" /></div>
                       <h2 className="text-3xl font-black text-white">{resultContent.title}</h2>
                       <p className="font-bold text-fuchsia-200">
                         {resultContent.desc}
