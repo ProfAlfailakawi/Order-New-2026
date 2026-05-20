@@ -2822,7 +2822,7 @@ ${paymentLink}`;
                       ))}
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {groupedProducts.map((group) => {
                         const isOpen = activeProductCategory === group.category;
                         return (
@@ -4483,13 +4483,13 @@ function CheckoutOverlay({
     step === "cart"
       ? "مراجعة الطلب"
       : step === "payment"
-        ? "اختار طريقة الدفع"
+        ? "طريقة الدفع"
         : "بياناتك";
   const checkoutSubtitle =
     step === "cart"
       ? "تأكد من السلة وبعدها نرتب بياناتك"
       : step === "payment"
-        ? "٣ طرق واضحة — نفس نظام الدفع المعتاد"
+        ? "اختار شلون حاب تدفع الفاتورة؟"
         : "رقمك أولاً، وإذا بياناتك محفوظة نطلعها لك تلقائيًا";
   const addressSummary = [
     address.region,
@@ -4514,7 +4514,7 @@ function CheckoutOverlay({
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 200 }}
-        className="bg-[#fafaf9] w-full sm:max-w-md h-[100dvh] overflow-hidden shadow-2xl flex flex-col sm:rounded-l-3xl border-l border-stone-100/50"
+        className="bg-[#fafaf9] w-full sm:max-w-xl lg:max-w-2xl h-[100dvh] overflow-hidden shadow-2xl flex flex-col sm:rounded-l-3xl border-l border-stone-100/50"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6 pt-[max(env(safe-area-inset-top,0px),1.5rem)] border-b border-stone-50 flex items-center justify-between bg-white shrink-0 shadow-[0_8px_30px_rgb(0,0,0,0.02)] z-10 rounded-b-3xl">
@@ -4540,7 +4540,7 @@ function CheckoutOverlay({
           </div>
         </div>
 
-        <div className="flex-grow overflow-y-auto p-6 space-y-8 no-scrollbar bg-[#fafaf9]">
+        <div className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-6 no-scrollbar bg-[#fafaf9]">
           {cart.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-6 pt-10">
               <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-stone-50">
@@ -5046,60 +5046,56 @@ function CheckoutOverlay({
                 )}
             </div>
           ) : step === "payment" ? (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-5 pb-2">
-              <div className="relative overflow-hidden rounded-[2.25rem] bg-brand text-white p-5 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.45)]">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-4 pb-2">
+              <div className="relative overflow-hidden rounded-[2rem] bg-brand text-white p-4 sm:p-5 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.45)]">
                 <div className="absolute -top-20 -left-16 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
                 <div className="absolute -bottom-24 -right-12 h-52 w-52 rounded-full bg-accent/25 blur-3xl" />
                 <div className="relative z-10 flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[11px] font-black text-white/55 tracking-[0.28em] uppercase mb-2">PAYMENT</p>
-                    <h3 className="text-2xl font-black leading-tight">اختر أسلوبك</h3>
-                    <p className="text-xs font-bold text-white/60 mt-2 leading-relaxed max-w-[220px]">
-                      ثلاث طرق دفع واضحة، وكلها تعمل بنفس النظام القديم بدون تغيير.
-                    </p>
+                    <h3 className="text-2xl font-black leading-tight">اختار شلون حاب تدفع الفاتورة؟</h3>
                   </div>
                   <div className="w-14 h-14 rounded-3xl bg-white/12 border border-white/10 flex items-center justify-center backdrop-blur-xl">
                     <CreditCard className="w-6 h-6" />
                   </div>
                 </div>
-                <div className="relative z-10 mt-7 rounded-[1.75rem] bg-white/10 border border-white/10 p-4 backdrop-blur-xl">
+                <div className="relative z-10 mt-4 rounded-[1.5rem] bg-white/10 border border-white/10 p-4 backdrop-blur-xl">
                   <div className="flex items-end justify-between gap-3">
                     <div>
-                      <p className="text-[11px] font-bold text-white/55 mb-1">الإجمالي النهائي</p>
+                      <p className="text-[11px] font-bold text-white/55 mb-1">حسابك طال عمرك</p>
                       <div className="flex items-baseline gap-2">
                         <span className="text-4xl font-black tracking-tight">{Number(total || 0).toFixed(3)}</span>
                         <span className="text-sm font-black text-accent">د.ك</span>
                       </div>
                     </div>
-                    <div className="px-3 py-2 rounded-2xl bg-white text-brand text-[11px] font-black shadow-sm">آمن</div>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <p className="px-1 text-[11px] font-black text-stone-400 tracking-[0.18em] uppercase">اختر طريقة واحدة</p>
+                <p className="px-1 text-[11px] font-black text-stone-400 tracking-[0.18em] uppercase">اختار شلون حاب تدفع الفاتورة؟</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button
                   disabled={isSubmitting}
                   onClick={() => onSubmit(false)}
                   className={cn(
-                    "group w-full relative overflow-hidden rounded-[2rem] p-4 text-right transition-all active:scale-[0.985] border shadow-sm",
+                    "group w-full relative overflow-hidden rounded-[2rem] p-4 text-right transition-all active:scale-[0.985] border shadow-sm sm:min-h-[160px]",
                     !isSubmitting
                       ? "bg-white border-stone-100 hover:border-brand/20 hover:shadow-xl hover:shadow-brand/5"
                       : "bg-stone-100 border-stone-100 text-stone-400 cursor-not-allowed",
                   )}
                 >
                   <div className="absolute inset-y-0 right-0 w-1.5 bg-brand" />
-                  <div className="flex items-center justify-between gap-4 pr-2">
-                    <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-between gap-4 pr-2 sm:h-full sm:flex-col sm:items-start">
+                    <div className="flex items-center gap-4 sm:flex-col sm:items-start">
                       <div className="w-14 h-14 rounded-3xl bg-brand text-white flex items-center justify-center shadow-lg shadow-brand/15">
                         <CreditCard className="w-6 h-6" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-black text-stone-400">١</span>
-                          <h4 className="text-lg font-black text-brand">الدفع الكامل</h4>
+                          <h4 className="text-lg font-black text-brand">تبي تدفعه كامل؟</h4>
                         </div>
-                        <p className="text-xs font-bold text-stone-400 mt-1">يدفع العميل الطلب كاملًا الآن.</p>
                       </div>
                     </div>
                     <div className="w-9 h-9 rounded-full bg-stone-50 flex items-center justify-center text-brand group-hover:bg-brand group-hover:text-white transition-all">
@@ -5111,20 +5107,20 @@ function CheckoutOverlay({
                 <button
                   disabled={isSubmitting}
                   onClick={() => onSubmit("traditional")}
-                  className="group w-full relative overflow-hidden rounded-[2rem] bg-white p-4 text-right transition-all active:scale-[0.985] border border-stone-100 shadow-sm hover:border-accent/30 hover:shadow-xl hover:shadow-accent/5"
+                  className="group w-full relative overflow-hidden rounded-[2rem] bg-white p-4 text-right transition-all active:scale-[0.985] border border-stone-100 shadow-sm hover:border-accent/30 hover:shadow-xl hover:shadow-accent/5 sm:min-h-[160px]"
                 >
                   <div className="absolute inset-y-0 right-0 w-1.5 bg-accent" />
-                  <div className="flex items-center justify-between gap-4 pr-2">
-                    <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-between gap-4 pr-2 sm:h-full sm:flex-col sm:items-start">
+                    <div className="flex items-center gap-4 sm:flex-col sm:items-start">
                       <div className="w-14 h-14 rounded-3xl bg-accent/12 text-accent flex items-center justify-center border border-accent/15">
                         <Layers className="w-6 h-6" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-black text-stone-400">٢</span>
-                          <h4 className="text-lg font-black text-brand">القطية</h4>
+                          <h4 className="text-lg font-black text-brand">تبيها قطية؟</h4>
                         </div>
-                        <p className="text-xs font-bold text-stone-400 mt-1">قسّم الفاتورة مع الربع بنفس طريقتكم الحالية.</p>
+                        <p className="text-xs font-bold text-stone-400 mt-1">قسم الفاتورة بمبالغ على ربعك</p>
                       </div>
                     </div>
                     <div className="w-9 h-9 rounded-full bg-stone-50 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-all">
@@ -5136,20 +5132,20 @@ function CheckoutOverlay({
                 <button
                   disabled={isSubmitting}
                   onClick={() => onSubmit("roulette")}
-                  className="group w-full relative overflow-hidden rounded-[2rem] bg-white p-4 text-right transition-all active:scale-[0.985] border border-stone-100 shadow-sm hover:border-fuchsia-200 hover:shadow-xl hover:shadow-fuchsia-100/70"
+                  className="group w-full relative overflow-hidden rounded-[2rem] bg-white p-4 text-right transition-all active:scale-[0.985] border border-stone-100 shadow-sm hover:border-fuchsia-200 hover:shadow-xl hover:shadow-fuchsia-100/70 sm:min-h-[160px]"
                 >
                   <div className="absolute inset-y-0 right-0 w-1.5 bg-fuchsia-500" />
-                  <div className="flex items-center justify-between gap-4 pr-2">
-                    <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-between gap-4 pr-2 sm:h-full sm:flex-col sm:items-start">
+                    <div className="flex items-center gap-4 sm:flex-col sm:items-start">
                       <div className="w-14 h-14 rounded-3xl bg-fuchsia-50 text-fuchsia-600 flex items-center justify-center border border-fuchsia-100">
                         <PartyPopper className="w-6 h-6" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-black text-stone-400">٣</span>
-                          <h4 className="text-lg font-black text-brand">الروليت</h4>
+                          <h4 className="text-lg font-black text-brand">وهق غيرك 🎰</h4>
                         </div>
-                        <p className="text-xs font-bold text-stone-400 mt-1">تجربة ممتعة: اللعبة تختار من يدفع.</p>
+                        <p className="text-xs font-bold text-stone-400 mt-1">الخاسر باللعبة يدفع الفاتورة!</p>
                       </div>
                     </div>
                     <div className="w-9 h-9 rounded-full bg-stone-50 flex items-center justify-center text-fuchsia-600 group-hover:bg-fuchsia-600 group-hover:text-white transition-all">
@@ -5157,6 +5153,7 @@ function CheckoutOverlay({
                     </div>
                   </div>
                 </button>
+                </div>
               </div>
 
               <div className="rounded-[1.75rem] bg-white border border-stone-100 p-4 flex items-center justify-between gap-3 shadow-sm">
@@ -5174,7 +5171,7 @@ function CheckoutOverlay({
           ) : null}
         </div>
 
-        {cart.length > 0 && (
+        {cart.length > 0 && step !== "payment" && (
           <div className="p-6 bg-white border-t border-stone-100 space-y-6 shadow-[0_-15px_40px_rgba(0,0,0,0.02)]">
             <AnimatePresence>
               {formError && (
