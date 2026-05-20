@@ -350,6 +350,7 @@ export default function CustomerSite() {
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isCheckout, setIsCheckout] = useState(false);
+  const [checkoutInitialStep, setCheckoutInitialStep] = useState<"cart" | "delivery" | "payment">("cart");
   const [isCreatingSquad, setIsCreatingSquad] = useState(false);
   const [newSquadName, setNewSquadName] = useState("");
   const [isSubmittingSquad, setIsSubmittingSquad] = useState(false);
@@ -3362,15 +3363,23 @@ ${paymentLink}`;
           )}
         </AnimatePresence>
 
-        {/* Floating Cart Button for Mobile */}
+        {/* Smart Cart Bottom Bar */}
         {cart.length > 0 && !isCheckout && !orderSuccess && (
-          <motion.button
+          <motion.div
             initial={{ y: 100 }}
             animate={{ y: 0 }}
-            onClick={() => setIsCheckout(true)}
-            className={`al-cart-bar font-bold transition-all ${cartBouncing ? "scale-[1.03] shadow-emerald-500/30" : "active:scale-[0.98]"}`}
+            className={`al-cart-bar font-bold transition-all ${cartBouncing ? "scale-[1.03] shadow-emerald-500/30" : ""}`}
+            dir="rtl"
           >
-            <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => {
+                setCheckoutInitialStep("cart");
+                setIsCheckout(true);
+              }}
+              className="al-cart-summary"
+              aria-label="عرض السلة"
+            >
               <div className="bg-white/15 backdrop-blur-sm px-3 py-2 rounded-2xl text-sm font-black border border-white/20 shrink-0">
                 {cart.length}
               </div>
@@ -3378,12 +3387,29 @@ ${paymentLink}`;
                 <strong className="block leading-tight">سلتك جاهزة</strong>
                 <span className="text-[11px] text-white/65">{cart.length} منتجات · {total} د.ك</span>
               </div>
-            </div>
+            </button>
             <div className="al-cart-actions shrink-0">
-              <span>عرض السلة</span>
-              <b>إكمال الطلب</b>
+              <button
+                type="button"
+                onClick={() => {
+                  setCheckoutInitialStep("cart");
+                  setIsCheckout(true);
+                }}
+              >
+                عرض السلة
+              </button>
+              <button
+                type="button"
+                className="al-cart-checkout"
+                onClick={() => {
+                  setCheckoutInitialStep("delivery");
+                  setIsCheckout(true);
+                }}
+              >
+                إكمال الطلب
+              </button>
             </div>
-          </motion.button>
+          </motion.div>
         )}
 
         {/* Squad Gamification Modal */}
@@ -3489,6 +3515,7 @@ ${paymentLink}`;
         <AnimatePresence>
           {isCheckout && !orderSuccess && (
             <CheckoutOverlay
+              initialStep={checkoutInitialStep}
               cart={cart}
               setCart={setCart}
               onClose={() => setIsCheckout(false)}
@@ -4481,6 +4508,7 @@ function ProductModal({
 }
 
 function CheckoutOverlay({
+  initialStep = "cart",
   cart,
   total,
   deliveryFee,
@@ -4522,7 +4550,11 @@ function CheckoutOverlay({
 }: any) {
   const [regionSearch, setRegionSearch] = useState("");
   const [showRegions, setShowRegions] = useState(false);
-  const [step, setStep] = useState<"cart" | "delivery" | "payment">("cart");
+  const [step, setStep] = useState<"cart" | "delivery" | "payment">(initialStep);
+
+  useEffect(() => {
+    setStep(initialStep);
+  }, [initialStep]);
 
   const filteredRegions = regions.filter(
     (r: any) =>
