@@ -5300,8 +5300,8 @@ function CheckoutOverlay({
             })()}
           </div>
         )}
-        <div className="fixed bottom-2 left-0 right-0 text-center text-stone-400 text-[10px] font-mono pointer-events-none">
-          
+        <div className="fixed bottom-2 left-0 right-0 text-center text-stone-400/40 text-[9px] font-bold pointer-events-none z-0">
+          الاصدار 2.6
         </div>
       </motion.div>
     </motion.div>
