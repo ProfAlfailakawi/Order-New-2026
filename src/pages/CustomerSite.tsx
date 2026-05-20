@@ -37,6 +37,9 @@ import {
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
 
+// Define the default product categories shown to customers.
+// Removed "المشويات" و "المشروبات" per latest requirements.  If these
+// categories are needed in the future they can be added via the admin UI.
 const DEFAULT_PRODUCT_CATEGORIES = ["الولائم", "اللحوم", "الدجاج", "البحري", "المقبلات"];
 
 const normalizeCategoryName = (value?: string) => String(value || "عام").trim() || "عام";
@@ -63,7 +66,7 @@ const getSharedProductCategories = (source: any, productList: any[] = []) => {
     ? configured.map((cat: any) => normalizeCategoryName(typeof cat === "string" ? cat : cat?.name || cat?.title)).filter(Boolean)
     : [];
   const productNames = productList.map((p: any) => normalizeCategoryName(p?.category)).filter(Boolean);
-  return Array.from(new Set([...configuredNames, ...DEFAULT_PRODUCT_CATEGORIES, ...productNames])).filter((cat) => cat !== "عام");
+  return Array.from(new Set([...configuredNames, ...DEFAULT_PRODUCT_CATEGORIES, ...productNames]));
 };
 
 import { clsx, type ClassValue } from "clsx";
@@ -511,8 +514,10 @@ export default function CustomerSite() {
 
   const moodPlaceholders = useMemo(() => [
     "شلون مزاجك اليوم؟ أو عندك عزيمة؟ اكتب ونفزع لك! 👨‍🍳",
+    "بنتي مريضة وأبي شي يدفي صدرها.. 🤍",
+    "تونا رادين من السفر والبيت فاضي وميتين يوع.. ✈️",
     "شنو بخاطرك اليوم؟ اكتب اللي بقلبك ومالك إلا يرضيك 🎯",
-    "يوعان ومحتار؟ عطني وضعك وأنا أضبطك 🚀",
+    "يوعان ومحتار? عطني وضعك وأنا أضبطك 🚀",
     "متوهق بضيوف فجأة؟ الفزعة عندي، بس اكتب 🏃‍♂️",
     "مشتهي شيء معين؟ لا تدور.. اكتب وأنا أجيبه لك 🌟",
     "مزاجك يبي شيء خفيف والا دسم؟ سولف لي 🍔"
@@ -746,9 +751,14 @@ export default function CustomerSite() {
       "زوارة أو ديوانية.. لا تشيل هم الأكل، الشيف مجهز لك صواني ترفع الرأس 👑"
     ],
     sick: [
-      "سلامات ما تشوف شر 🤍 هذي أطباق خفيفة وشوربات دافية ترد الروح!",
-      "أجر وعافية يا رب 🌿.. يبيلك شيء دافي وخفيف على المعدة يضبط صحتك.",
-      "طحت مريض؟ الشيف جهز لك خوش شوربة ووجبات صحية تدفيك وتقويك 🍵"
+      "يا بعد عيني وعسى ربي يشافي بنيتج الغالية ويبعد عنها كل مكروه.. هبيتلج وسويت لج شوربة الشفاء بالخضار العطرة تراثية دافية تدفي صدرها وترد عافيتها، أجر وعافية يا رب 🤍🍲",
+      "سلامات وما تدش الشر الغالية 🌿.. أجر وعافية يا بعد قلبي.. الشيف طبخ لج شوربة لسان عصفور بالهيل دافية وخفيفة تدفي الصدر وتبرّي العظام وتتمنى لها الشفاء العاجل 🥣🤍",
+      "أجر وعافية يا بعد طوايف أهلي.. هذي شورباتنا العريقة المطبوخة على نار هادئة وممزوجة بالخضار العطرة، رصيناها لج بالقمة عشان تدفي الصدر وتنعش الروح، عساها بالشفاء التام يا بنيتي 🍵✨"
+    ],
+    travel: [
+      "الحمد لله على السلامة يا بعد قلبي وتوّ ما نورت الديرة! ✈️ البيت فاضي وميتين يوع من السفر والدرب؟ فزعتنا الحين تجيكم! جربوا صوانينا السريعة المشبعة والساخنة اللي تترس العين والبطن وتتحضر فوراً وتنسيكم التعب 🚀💛",
+      "قرت عينكم بالوصول والردة بالسلامة يا بعد قلبي! 💛 أدري البيت فاضي والتعب واصل حده.. الشيف جهّز لكم صواني الولائم السريعة الفورية والساخنة، توصلكم فوراً تسد الجوع وتدفئ نفوسكم! 🥘✨",
+      "الحمد لله على سلامة الدرب يبا! 🌍 البيت خالي ولا تحاتون تشغيل جولة.. هذي صوانينا المشبعة المشهية السريعة اللي سويناها لعيون روعتكم، توصلكم ساخنة وتنهي اليوع ومحسوبة فوراً 🍽️👑"
     ],
     sad: [
       "روّق مزاجك! ماكو شيء يسوى، وهالحلو بيعدل يومك 🍫✨",
@@ -783,12 +793,15 @@ export default function CustomerSite() {
     let msg = "";
     let filter = "الكل";
 
-    if (q.includes("ضيف") || q.includes("عزيم") || q.includes("متوهق") || q.includes("ربع") || q.includes("ديواني")) {
+    if (q.includes("مريض") || q.includes("تعب") || q.includes("برد") || q.includes("زكام") || q.includes("معدت") || q.includes("بنتي") || q.includes("ولد") || q.includes("سخون") || q.includes("كح") || q.includes("شفا") || q.includes("حرار") || q.includes("يدفي") || q.includes("صدر") || q.includes("مريضه") || q.includes("تعبان")) {
+      msg = getDeterministicMsg(moodResponses.sick);
+      filter = "مريض";
+    } else if (q.includes("سفر") || q.includes("راد") || q.includes("راجع") || q.includes("فاضي") || q.includes("طريق") || q.includes("المطار") || q.includes("الدرب") || q.includes("سافر") || (q.includes("يوع") && q.includes("بيت")) || (q.includes("جوع") && q.includes("بيت")) || q.includes("يوعانين") || q.includes("جوعانين") || q.includes("ميتين")) {
+      msg = getDeterministicMsg(moodResponses.travel);
+      filter = "سفر";
+    } else if (q.includes("ضيف") || q.includes("عزيم") || q.includes("متوهق") || q.includes("ربع") || q.includes("ديواني")) {
       msg = getDeterministicMsg(moodResponses.gathering);
       filter = "صواني";
-    } else if (q.includes("مريض") || q.includes("تعب") || q.includes("برد") || q.includes("زكام") || q.includes("معدت")) {
-      msg = getDeterministicMsg(moodResponses.sick);
-      filter = "خفيف";
     } else if (q.includes("زعلان") || q.includes("متضايق") || q.includes("حلو") || q.includes("كاكاو") || q.includes("ضيق")) {
       msg = getDeterministicMsg(moodResponses.sad);
       filter = "حلو";
@@ -2607,7 +2620,91 @@ ${paymentLink}`;
                     });
               
               if (moodQuery.trim()) {
-                 if (moodFilter === "صواني") {
+                 if (moodFilter === "مريض") {
+                    // Traditional Healing soups mixed with aromatic vegetables stacked at the top!
+                    const sickCustomSoups = [
+                      {
+                        id: "emotional_soup_1",
+                        name: "شوربة الشفاء بالخضار العطرة 🍲",
+                        nameEn: "Healing Soup with Aromatic Vegetables",
+                        price: 1.5,
+                        category: "شوربات الشفاء العريقة",
+                        description: "شوربة دافئة غنية بقطع الدجاج والخضار الطازجة مع الكرفس والبقدونس والهيل، تدفئ الصدر والبلعوم وتعيد العافية بإذن الله.",
+                        imageUrl: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80",
+                        options: [],
+                        extras: [],
+                        addons: [],
+                        isNewProduct: true,
+                        supplierId: "we27tunga",
+                        isActive: true
+                      },
+                      {
+                        id: "emotional_soup_2",
+                        name: "شوربة لسان عصفور تراثية بالهيل 🥣",
+                        nameEn: "Traditional Orzo Soup with Cardamom",
+                        price: 1.25,
+                        category: "شوربات الشفاء العريقة",
+                        description: "شوربة دافئة خفيفة من القمح المحمر، مطبوخة بمرق الدجاج الهادئ والبهارات الناعمة لتسكين التعب وزيادة المناعة.",
+                        imageUrl: "https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?auto=format&fit=crop&w=600&q=80",
+                        options: [],
+                        extras: [],
+                        addons: [],
+                        isNewProduct: true,
+                        supplierId: "we27tunga",
+                        isActive: true
+                      }
+                    ];
+                    
+                    const existingComforts = products.filter(p => {
+                      const n = p.name?.toLowerCase() || "";
+                      const c = p.category?.toLowerCase() || "";
+                      return n.includes("جريش") || n.includes("هريس") || n.includes("مرق") || n.includes("شورب") || c.includes("شورب") || n.includes("مشخول") || n.includes("عيش مشغول");
+                    });
+                    
+                    displayProducts = [...sickCustomSoups, ...existingComforts];
+                 } else if (moodFilter === "سفر") {
+                    // Fast, comforting, satisfying trays that solve starving-after-travel
+                    const travelCustomTrays = [
+                      {
+                        id: "emotional_travel_1",
+                        name: "صينية مجبوس لحم سريعة (نعيمي) 🥘",
+                        nameEn: "Express Family Naemi Machboos Tray",
+                        price: 38,
+                        category: "صواني الولائم الفورية",
+                        description: "صينية دسمة وحارة ومحفوفة تكفي من ٣ إلى ٥ أشخاص، تجهز فوراً لتنسيكم تعب السفر وتملأ البيت برائحة الهيل والزعفران الكويتي الأصيل.",
+                        imageUrl: "https://images.unsplash.com/photo-1545093149-618ce3bcf49d?auto=format&fit=crop&w=600&q=80",
+                        options: [],
+                        extras: [],
+                        addons: [],
+                        isNewProduct: true,
+                        supplierId: "we27tunga",
+                        isActive: true
+                      },
+                      {
+                        id: "emotional_travel_2",
+                        name: "صينية برياني دجاج مشبعة فورية 🍗",
+                        nameEn: "Express Chicken Biryani Tray",
+                        price: 12,
+                        category: "صواني الولائم الفورية",
+                        description: "صينية غنية بقطع الدجاج والبهارات الفاخرة، مع عيش حار ومكسرات وبصل محمر، تسد أشد الجوع في دقائق للراجعين من السفر والدرب.",
+                        imageUrl: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+                        options: [],
+                        extras: [],
+                        addons: [],
+                        isNewProduct: true,
+                        supplierId: "we27tunga",
+                        isActive: true
+                      }
+                    ];
+                    
+                    const existingTrays = products.filter(p => {
+                      const n = p.name?.toLowerCase() || "";
+                      const c = p.category?.toLowerCase() || "";
+                      return n.includes("صينية") || n.includes("صيني") || n.includes("مجبوس") || n.includes("برياني") || n.includes("قوزي") || n.includes("ذبيح") || c.includes("الولائم") || n.includes("بشاميل");
+                    });
+                    
+                    displayProducts = [...travelCustomTrays, ...existingTrays];
+                 } else if (moodFilter === "صواني") {
                     displayProducts = displayProducts.filter(p => p.name?.includes("صيني") || p.name?.includes("صينية") || p.category?.includes("صواني") || p.name?.includes("مجبوس") || p.name?.includes("طباخ"));
                  } else if (moodFilter === "خفيف") {
                     displayProducts = displayProducts.filter(p => {
@@ -2651,7 +2748,7 @@ ${paymentLink}`;
                     return normalizeProductSearchText(haystack).includes(normalizeProductSearchText(query));
                   })
                 : displayProducts;
-              const groupedProducts = [...allCategories].reverse()
+              const groupedProducts = allCategories
                 .map((category) => ({
                   category,
                   items: searchedProducts.filter((product: any) => normalizeCategoryName(product?.category) === category),
@@ -2703,6 +2800,11 @@ ${paymentLink}`;
                         className="bg-transparent outline-none w-full text-sm font-bold text-brand placeholder:text-stone-400"
                       />
                     </div>
+                    {!quickProductSearch.trim() && (
+                      <p className="text-[11px] text-stone-400 mt-3 text-center font-bold">
+                        اختار التصنيف، وراح يفتح وحده ويقفل الباقي.
+                      </p>
+                    )}
                   </div>
 
                   {quickProductSearch.trim() ? (
@@ -4180,19 +4282,19 @@ function ProductModal({
                         <div
                           className={cn(
                             "w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all",
-                            isSelected
+                            effectiveSelected
                               ? "bg-accent border-accent text-white"
                               : "border-stone-100 bg-white",
                           )}
                         >
-                          {isSelected && (
+                          {effectiveSelected && (
                             <Check className="w-3 h-3 stroke-[3]" />
                           )}
                         </div>
                         <span
                           className={cn(
                             "text-xs sm:text-sm transition-colors font-bold",
-                            isSelected ? "text-brand" : "text-stone-500",
+                            effectiveSelected ? "text-brand" : "text-stone-500",
                           )}
                         >
                           {addon.name}
@@ -4377,6 +4479,28 @@ function CheckoutOverlay({
       (r.name || "").includes(regionSearch),
   );
 
+  const checkoutTitle =
+    step === "cart"
+      ? "مراجعة الطلب"
+      : step === "payment"
+        ? "اختار طريقة الدفع"
+        : "بياناتك";
+  const checkoutSubtitle =
+    step === "cart"
+      ? "تأكد من السلة وبعدها نرتب بياناتك"
+      : step === "payment"
+        ? "٣ طرق واضحة — نفس نظام الدفع المعتاد"
+        : "رقمك أولاً، وإذا بياناتك محفوظة نطلعها لك تلقائيًا";
+  const addressSummary = [
+    address.region,
+    address.block ? `قطعة ${address.block}` : "",
+    address.street ? `شارع ${address.street}` : "",
+    address.avenue ? `جادة ${address.avenue}` : "",
+    address.building ? `منزل ${address.building}` : "",
+    address.floor ? `دور ${address.floor}` : "",
+    address.apartment ? `شقة ${address.apartment}` : "",
+  ].filter(Boolean).join("، ");
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -4407,8 +4531,11 @@ function CheckoutOverlay({
             </button>
             <div>
               <h2 className="text-2xl font-black text-brand flex items-center gap-2 tracking-tight mt-1">
-                {step === "cart" ? "قائمة طلباتك" : step === "payment" ? "طريقة الدفع" : "بيانات التوصيل"}
+                {checkoutTitle}
               </h2>
+              <p className="text-[11px] font-bold text-stone-400 mt-1 leading-relaxed">
+                {checkoutSubtitle}
+              </p>
             </div>
           </div>
         </div>
@@ -4634,9 +4761,18 @@ function CheckoutOverlay({
             </div>
           ) : step === "delivery" ? (
             <div className="animate-in slide-in-from-left-4 fade-in duration-300 space-y-6 pt-2">
-                <div className="space-y-2">
+                <div className="bg-white border border-stone-100 rounded-[2rem] p-5 shadow-sm space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-11 h-11 rounded-2xl bg-brand text-white flex items-center justify-center shrink-0 shadow-sm">
+                      <Phone className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-black text-brand leading-tight">رقمك يجيب بياناتك</h3>
+                      <p className="text-xs font-bold text-stone-400 mt-1 leading-relaxed">نستخدم الرقم لاسترجاع الاسم والعنوان من القاعدة المشتركة، وإذا ما لقيناها تكملها مرة واحدة.</p>
+                    </div>
+                  </div>
                   <label className="text-sm items-center gap-1.5 font-bold text-stone-700 flex px-1">
-                    <Phone className="w-4 h-4 text-accent" /> أدخل رقم هاتفك لإكمال الطلب
+                    <Phone className="w-4 h-4 text-accent" /> رقم الهاتف
                   </label>
                   <input
                     type="tel"
@@ -4656,10 +4792,24 @@ function CheckoutOverlay({
                         setCustomerPoints(0);
                       }
                     }}
-                    className="w-full px-5 py-4 border-2 border-accent/10 focus:border-accent/40 bg-stone-50/50 hover:bg-stone-50 transition-colors rounded-xl focus:border-accent focus:ring-4 focus:ring-accent/10 outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-xl text-center tracking-[0.2em] shadow-sm"
+                    className="w-full px-5 py-4 border-2 border-accent/10 focus:border-accent/40 bg-stone-50/50 hover:bg-stone-50 transition-colors rounded-2xl focus:border-accent focus:ring-4 focus:ring-accent/10 outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-xl text-center tracking-[0.2em] shadow-sm"
                     dir="ltr"
                   />
+                  {customerPhone.length > 0 && customerPhone.length < 8 && (
+                    <p className="text-[11px] font-bold text-amber-600 px-1">كمّل الرقم 8 أرقام علشان نطلع بياناتك.</p>
+                  )}
                 </div>
+                {customerPhone.length >= 8 && isLocked && customerName && (
+                  <div className="bg-green-50 border border-green-100 rounded-[1.75rem] p-4 flex items-start gap-3 text-green-800 shadow-sm animate-in fade-in slide-in-from-top-2">
+                    <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shrink-0 border border-green-100">
+                      <Check className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-black">هلا {customerName}</p>
+                      <p className="text-xs font-bold text-green-700/80 mt-1 leading-relaxed">{addressSummary || "بياناتك محفوظة، راجع العنوان تحت."}</p>
+                    </div>
+                  </div>
+                )}
                 {customerPhone.length >= 8 && (
                   <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
                     {/* Improved Region Selection with Search */}
@@ -4896,28 +5046,129 @@ function CheckoutOverlay({
                 )}
             </div>
           ) : step === "payment" ? (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center justify-center w-full pt-8 pb-4 px-2">
-              
-              <div className="bg-stone-50/80 backdrop-blur-sm border border-stone-100 rounded-3xl sm:rounded-[2rem] p-6 sm:p-8 w-full max-w-full relative overflow-hidden shadow-sm flex flex-col items-center justify-center mb-8">
-                <div className="absolute -top-12 -right-12 w-32 h-32 bg-accent/5 rounded-full blur-2xl"></div>
-                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-brand/5 rounded-full blur-2xl"></div>
-                
-                <p className="text-stone-500 font-bold text-xs sm:text-sm mb-3 relative z-10 flex items-center gap-1.5 sm:gap-2 text-center flex-wrap justify-center line-clamp-2 leading-relaxed max-w-[90%]">
-                  <Check className="w-4 h-4 text-accent shrink-0" />
-                  <span>مجموع طلبك طال عمرك</span>
-                </p>
-                <div className="flex items-baseline gap-2 relative z-10 flex-wrap justify-center">
-                   <span className="text-4xl sm:text-5xl font-bold text-brand tracking-tight break-all text-center">
-                     {Number(itemsTotal + deliveryFee - discountAmount).toFixed(3)}
-                   </span>
-                   <span className="text-lg sm:text-xl font-bold text-stone-400 shrink-0">د.ك</span>
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-5 pb-2">
+              <div className="relative overflow-hidden rounded-[2.25rem] bg-brand text-white p-5 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.45)]">
+                <div className="absolute -top-20 -left-16 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
+                <div className="absolute -bottom-24 -right-12 h-52 w-52 rounded-full bg-accent/25 blur-3xl" />
+                <div className="relative z-10 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-black text-white/55 tracking-[0.28em] uppercase mb-2">PAYMENT</p>
+                    <h3 className="text-2xl font-black leading-tight">اختر أسلوبك</h3>
+                    <p className="text-xs font-bold text-white/60 mt-2 leading-relaxed max-w-[220px]">
+                      ثلاث طرق دفع واضحة، وكلها تعمل بنفس النظام القديم بدون تغيير.
+                    </p>
+                  </div>
+                  <div className="w-14 h-14 rounded-3xl bg-white/12 border border-white/10 flex items-center justify-center backdrop-blur-xl">
+                    <CreditCard className="w-6 h-6" />
+                  </div>
+                </div>
+                <div className="relative z-10 mt-7 rounded-[1.75rem] bg-white/10 border border-white/10 p-4 backdrop-blur-xl">
+                  <div className="flex items-end justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-bold text-white/55 mb-1">الإجمالي النهائي</p>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-black tracking-tight">{Number(total || 0).toFixed(3)}</span>
+                        <span className="text-sm font-black text-accent">د.ك</span>
+                      </div>
+                    </div>
+                    <div className="px-3 py-2 rounded-2xl bg-white text-brand text-[11px] font-black shadow-sm">آمن</div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 w-full mb-4">
-                <div className="h-px bg-stone-100 flex-1"></div>
-                <span className="text-stone-400 font-bold text-xs uppercase tracking-widest shrink-0 text-center">اختار شلون حاب تدفع الفاتورة؟</span>
-                <div className="h-px bg-stone-100 flex-1"></div>
+              <div className="space-y-3">
+                <p className="px-1 text-[11px] font-black text-stone-400 tracking-[0.18em] uppercase">اختر طريقة واحدة</p>
+                <button
+                  disabled={isSubmitting}
+                  onClick={() => onSubmit(false)}
+                  className={cn(
+                    "group w-full relative overflow-hidden rounded-[2rem] p-4 text-right transition-all active:scale-[0.985] border shadow-sm",
+                    !isSubmitting
+                      ? "bg-white border-stone-100 hover:border-brand/20 hover:shadow-xl hover:shadow-brand/5"
+                      : "bg-stone-100 border-stone-100 text-stone-400 cursor-not-allowed",
+                  )}
+                >
+                  <div className="absolute inset-y-0 right-0 w-1.5 bg-brand" />
+                  <div className="flex items-center justify-between gap-4 pr-2">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-3xl bg-brand text-white flex items-center justify-center shadow-lg shadow-brand/15">
+                        <CreditCard className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black text-stone-400">١</span>
+                          <h4 className="text-lg font-black text-brand">الدفع الكامل</h4>
+                        </div>
+                        <p className="text-xs font-bold text-stone-400 mt-1">يدفع العميل الطلب كاملًا الآن.</p>
+                      </div>
+                    </div>
+                    <div className="w-9 h-9 rounded-full bg-stone-50 flex items-center justify-center text-brand group-hover:bg-brand group-hover:text-white transition-all">
+                      <ArrowRight className="w-4 h-4 rotate-180" />
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  disabled={isSubmitting}
+                  onClick={() => onSubmit("traditional")}
+                  className="group w-full relative overflow-hidden rounded-[2rem] bg-white p-4 text-right transition-all active:scale-[0.985] border border-stone-100 shadow-sm hover:border-accent/30 hover:shadow-xl hover:shadow-accent/5"
+                >
+                  <div className="absolute inset-y-0 right-0 w-1.5 bg-accent" />
+                  <div className="flex items-center justify-between gap-4 pr-2">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-3xl bg-accent/12 text-accent flex items-center justify-center border border-accent/15">
+                        <Layers className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black text-stone-400">٢</span>
+                          <h4 className="text-lg font-black text-brand">القطية</h4>
+                        </div>
+                        <p className="text-xs font-bold text-stone-400 mt-1">قسّم الفاتورة مع الربع بنفس طريقتكم الحالية.</p>
+                      </div>
+                    </div>
+                    <div className="w-9 h-9 rounded-full bg-stone-50 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-all">
+                      <ArrowRight className="w-4 h-4 rotate-180" />
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  disabled={isSubmitting}
+                  onClick={() => onSubmit("roulette")}
+                  className="group w-full relative overflow-hidden rounded-[2rem] bg-white p-4 text-right transition-all active:scale-[0.985] border border-stone-100 shadow-sm hover:border-fuchsia-200 hover:shadow-xl hover:shadow-fuchsia-100/70"
+                >
+                  <div className="absolute inset-y-0 right-0 w-1.5 bg-fuchsia-500" />
+                  <div className="flex items-center justify-between gap-4 pr-2">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-3xl bg-fuchsia-50 text-fuchsia-600 flex items-center justify-center border border-fuchsia-100">
+                        <PartyPopper className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black text-stone-400">٣</span>
+                          <h4 className="text-lg font-black text-brand">الروليت</h4>
+                        </div>
+                        <p className="text-xs font-bold text-stone-400 mt-1">تجربة ممتعة: اللعبة تختار من يدفع.</p>
+                      </div>
+                    </div>
+                    <div className="w-9 h-9 rounded-full bg-stone-50 flex items-center justify-center text-fuchsia-600 group-hover:bg-fuchsia-600 group-hover:text-white transition-all">
+                      <ArrowRight className="w-4 h-4 rotate-180" />
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              <div className="rounded-[1.75rem] bg-white border border-stone-100 p-4 flex items-center justify-between gap-3 shadow-sm">
+                <div>
+                  <p className="text-[11px] font-black text-stone-400">بياناتك جاهزة</p>
+                  <p className="text-sm font-black text-brand mt-1 truncate max-w-[260px]">
+                    {addressSummary || "العنوان محفوظ من رقم الهاتف"}
+                  </p>
+                </div>
+                <button onClick={() => setStep("delivery")} className="px-4 py-2 rounded-2xl bg-stone-50 text-brand text-xs font-black border border-stone-100">
+                  تعديل
+                </button>
               </div>
             </div>
           ) : null}
@@ -5127,79 +5378,13 @@ function CheckoutOverlay({
                     ) : (
                       <>
                         <Check className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        <span>ادفع الآن</span>
+                        <span>اختار طريقة الدفع</span>
                       </>
                     )}
                   </button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-3 animate-in slide-in-from-bottom-4 fade-in duration-500">
-                  <button
-                    disabled={isSubmitting}
-                    onClick={() => onSubmit(false)}
-                    className={cn(
-                      "w-full p-4 sm:p-5 rounded-2xl font-bold flex items-center justify-between gap-3 transition-all active:scale-[0.98] text-lg group text-right",
-                      !isSubmitting
-                        ? "bg-brand text-white shadow-[0_20px_40px_-10px_rgba(212,175,55,0.4)] hover:bg-brand/90"
-                        : "bg-stone-200 text-stone-400 cursor-not-allowed",
-                    )}
-                  >
-                    {isSubmitting ? (
-                      <motion.div
-                        animate={{ opacity: [1, 0.5, 1], scale: [1, 0.98, 1] }}
-                        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-                        className="flex items-center justify-center w-full gap-2"
-                      >
-                        <Sparkles className="w-5 h-5 opacity-80" />
-                        <span>جاري تجهيز الطلب بأمان...</span>
-                      </motion.div>
-                    ) : (
-                      <>
-                        <div className="flex items-center gap-4">
-                           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-                             <CreditCard className="w-6 h-6 text-white" />
-                           </div>
-                           <div className="flex flex-col items-start gap-1">
-                             <span className="text-[17px]">تبي تدفعه كامل؟</span>
-                           </div>
-                        </div>
-                      </>
-                    )}
-                  </button>
-
-                  {!isSubmitting && (
-                    <>
-                      <button
-                        onClick={() => onSubmit("traditional")}
-                        className="w-full bg-stone-100 text-brand rounded-2xl p-4 sm:p-5 shadow-sm active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-stone-200 text-lg border border-stone-100 text-right"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-white border border-stone-100 rounded-xl flex items-center justify-center shrink-0">
-                            <Layers className="w-6 h-6 text-accent" />
-                          </div>
-                          <div className="flex flex-col items-start gap-1">
-                            <span className="text-[17px]">تبيها قطية؟</span>
-                            <span className="text-[10px] font-medium text-stone-500 uppercase tracking-widest">قسم الفاتورة بمبالغ على ربعك</span>
-                          </div>
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => onSubmit("roulette")}
-                        className="w-full bg-fuchsia-600 text-white rounded-2xl p-4 sm:p-5 shadow-md active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-fuchsia-700 text-lg text-right"
-                      >
-                         <div className="flex items-center gap-4">
-                           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-                             <PartyPopper className="w-6 h-6 text-white" />
-                           </div>
-                           <div className="flex flex-col items-start gap-1">
-                             <span className="text-[17px]">وهق غيرك 🎰</span>
-                             <span className="text-[10px] font-medium opacity-80 uppercase tracking-widest">الخاسر باللعبة يدفع الفاتورة!</span>
-                           </div>
-                        </div>
-                      </button>
-                    </>
-                  )}
-                </div>
+                <div className="hidden" />
               );
             })()}
           </div>

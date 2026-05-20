@@ -110,6 +110,32 @@ body {
   transition: background-color 1s ease, color 1s ease;
 }
 
+/* --------------------------------------------------------------------------
+ * Unified icon sizing
+ *
+ * By default lucide icons come with a variety of widths and heights which can
+ * make the UI feel inconsistent. To present a more cohesive experience on
+ * both mobile and desktop, we set a consistent base size for all icons via
+ * the `.lucide` class (included automatically on every lucide-react icon). For
+ * alert-style icons we override the size to be slightly smaller so they
+ * appear more subtle. Should you need different sizes for individual icons,
+ * you can still pass a `size` prop directly in the component which will
+ * override these defaults.
+ */
+.lucide {
+  /* 1.25rem = 20px — used for primary actions and navigation icons */
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Alert icons are intentionally smaller to avoid overpowering the UI. 1rem = 16px. */
+.lucide-alert-circle,
+.lucide-alert-triangle,
+.lucide-alert-octagon {
+  width: 1rem;
+  height: 1rem;
+}
+
 #root, 
 .container, 
 main,
@@ -120,49 +146,3 @@ section {
 
 
 
-
-/* Final UX polish: phone-first comfort, safe areas, and calmer motion */
-@layer base {
-  input, select, textarea {
-    font-size: 16px;
-  }
-
-  img, video, canvas, svg {
-    max-width: 100%;
-  }
-
-  button, [role="button"], a {
-    min-height: 44px;
-    touch-action: manipulation;
-  }
-}
-
-@layer utilities {
-  .tap-target {
-    min-width: 44px;
-    min-height: 44px;
-  }
-
-  .soft-panel {
-    @apply bg-white/80 backdrop-blur-xl border border-white/60 shadow-sm;
-  }
-
-  .balanced-grid {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
-  }
-}
-
-@supports (padding: max(0px)) {
-  .safe-bottom {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-  }
-}
