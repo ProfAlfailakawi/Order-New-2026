@@ -77,6 +77,15 @@ const formatOrderWords = (count: number) => {
   return `${count} طلب`;
 };
 
+const formatDisplayInvoiceNumber = (value: unknown) => {
+  const raw = String(value || "").trim().toUpperCase();
+  const digits = raw.replace(/\D/g, "");
+  const fallback = raw.replace(/[^A-Z0-9]/g, "");
+  const suffixSource = digits || fallback;
+  const suffix = suffixSource.slice(-4).padStart(4, "0");
+  return `#ORD-${suffix}`;
+};
+
 export default function OrderPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -660,7 +669,7 @@ export default function OrderPage() {
 
   return (
     <div
-      className="min-h-screen bg-[#FDFCFB] text-[#2D2926] font-sans selection:bg-accent/20 overflow-x-hidden"
+      className="track-luxury min-h-screen bg-[#FDFCFB] text-[#2D2926] font-sans selection:bg-accent/20 overflow-x-hidden"
       dir="rtl"
     >
       {/* Header */}
@@ -677,7 +686,7 @@ export default function OrderPage() {
         <div className="w-11" /> {/* Spacer */}
       </header>
 
-      <main className="max-w-2xl mx-auto p-6 space-y-8">
+      <main className="max-w-2xl lg:max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
         {/* Payment Status Alerts */}
         <AnimatePresence>
           {paymentStatusQuery === "success" && (
@@ -976,7 +985,7 @@ export default function OrderPage() {
                             رقم الطلب
                           </span>
                           <span className="text-xs font-extrabold text-brand bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-100">
-                            #{(order.id || "").toUpperCase()}
+                            {formatDisplayInvoiceNumber((order as any).invoiceId || order.id)}
                           </span>
                           {(order.paymentStatus === "paid" ||
                             (order.status || "").startsWith("تم الدفع") ||
@@ -1117,7 +1126,7 @@ export default function OrderPage() {
                           )}
                       </h3>
                       <p className="text-stone-400 text-xs font-medium uppercase tracking-widest mt-1">
-                        Order #{(selectedOrder.id || "").toUpperCase()}
+                        {formatDisplayInvoiceNumber((selectedOrder as any).invoiceId || selectedOrder.id)}
                       </p>
                     </div>
                   </div>

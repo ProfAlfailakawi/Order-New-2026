@@ -2190,7 +2190,7 @@ ${paymentLink}`;
         animate={{ opacity: isLoading ? 0 : 1 }}
         transition={{ duration: 1 }}
         className={cn(
-          "pb-24 max-w-2xl mx-auto min-h-screen shadow-sm text-brand overflow-x-hidden transition-colors duration-1000",
+          "customer-luxury pb-24 w-full max-w-2xl lg:max-w-7xl mx-auto min-h-screen lg:shadow-[0_30px_120px_rgba(22,36,26,0.08)] text-brand overflow-x-hidden transition-colors duration-1000",
           goldenHourTheme.bg,
           goldenHourTheme.extraShadow || "",
         )}
@@ -2571,7 +2571,7 @@ ${paymentLink}`;
         )}
 
         {/* Categories / Products */}
-        <main className="p-4 sm:p-6 space-y-8">
+        <main className="p-4 sm:p-6 lg:p-8 space-y-8 lg:space-y-10">
 
 
           {/* Best Sellers */}
@@ -2757,7 +2757,7 @@ ${paymentLink}`;
 
               if (isLoadingProducts) {
                 return (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {[1, 2, 3, 4].map((n) => (
                       <div key={n} className="bg-white border border-stone-100 rounded-2xl p-4 h-32 animate-pulse flex flex-col justify-between">
                          <div className="w-1/2 h-6 bg-stone-200 rounded-lg"></div>
@@ -2808,13 +2808,13 @@ ${paymentLink}`;
                   </div>
 
                   {quickProductSearch.trim() ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                       {searchedProducts.map((product) => (
                         <motion.div
                           key={product.id}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="h-full flex flex-col"
+                          className="h-full flex flex-col lux-product-wrap"
                           style={{ minHeight: "120px" }}
                         >
                           <ChefWhisperCard product={product} settings={settings} onSelect={setSelectedProduct} />
@@ -2822,11 +2822,11 @@ ${paymentLink}`;
                       ))}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                       {groupedProducts.map((group) => {
                         const isOpen = activeProductCategory === group.category;
                         return (
-                          <div key={group.category} className="bg-white border border-stone-100 rounded-[28px] shadow-sm overflow-hidden">
+                          <div key={group.category} className="lux-category-card bg-white border border-stone-100 rounded-[28px] shadow-sm overflow-hidden">
                             <button
                               type="button"
                               onClick={() => setActiveProductCategory(isOpen ? null : group.category)}
@@ -2853,13 +2853,13 @@ ${paymentLink}`;
                                   transition={{ duration: 0.22 }}
                                   className="overflow-hidden"
                                 >
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 p-4 pt-0">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 p-4 pt-0">
                                     {group.items.map((product) => (
                                       <motion.div
                                         key={product.id}
                                         initial={{ opacity: 0, y: 12 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="h-full flex flex-col"
+                                        className="h-full flex flex-col lux-product-wrap"
                                         style={{ minHeight: "120px" }}
                                       >
                                         <ChefWhisperCard product={product} settings={settings} onSelect={setSelectedProduct} />
@@ -3660,7 +3660,7 @@ const ChefWhisperCard = ({
       >
         {/* Front Side */}
         <div
-          className={`relative w-full bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex ${isHorizontal ? "flex-col justify-start p-4 pb-3 h-full" : "gap-5 p-5 min-h-[110px] items-center"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-white hover:border-accent/20 hover:shadow-[0_20px_50px_rgba(26,46,34,0.06)] hover:-translate-y-1"} transition-all duration-500 cursor-pointer`}
+          className={`lux-product-card relative w-full bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex ${isHorizontal ? "flex-col justify-start p-4 pb-3 h-full" : "gap-5 p-5 min-h-[110px] items-center"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-white hover:border-accent/20 hover:shadow-[0_20px_50px_rgba(26,46,34,0.06)] hover:-translate-y-1"} transition-all duration-500 cursor-pointer`}
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
@@ -3693,7 +3693,7 @@ const ChefWhisperCard = ({
           )}
 
           <div
-            className={`relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-stone-50/50 rounded-2xl border border-stone-100/50 shadow-inner ${isHorizontal ? "w-20 h-20 mx-auto mb-2" : "w-16 h-16"}`}
+            className={`lux-product-image relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-stone-50/50 rounded-2xl border border-stone-100/50 shadow-inner ${isHorizontal ? "w-20 h-20 mx-auto mb-2" : "w-16 h-16"}`}
           >
             {isHot && <SizzlingSteam />}
             <img
@@ -3807,7 +3807,7 @@ const RoyalLazySusan = ({
   if (!products || products.length === 0) return null;
 
   return (
-    <div className="relative w-full h-[200px] flex items-center justify-center overflow-x-hidden perspective-[1200px] select-none touch-pan-y">
+    <div className="lux-lazysusan relative w-full h-[200px] lg:h-[230px] flex items-center justify-center overflow-x-hidden perspective-[1200px] select-none touch-pan-y">
       <AnimatePresence initial={false}>
         {products.map((product, i) => {
           const rawOffset = i - currentIndex;
@@ -4767,8 +4767,8 @@ function CheckoutOverlay({
                       <Phone className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-black text-brand leading-tight">رقمك يجيب بياناتك</h3>
-                      <p className="text-xs font-bold text-stone-400 mt-1 leading-relaxed">نستخدم الرقم لاسترجاع الاسم والعنوان من القاعدة المشتركة، وإذا ما لقيناها تكملها مرة واحدة.</p>
+                      <h3 className="text-lg font-black text-brand leading-tight">رقم الهاتف</h3>
+                      <p className="text-xs font-bold text-stone-400 mt-1 leading-relaxed"></p>
                     </div>
                   </div>
                   <label className="text-sm items-center gap-1.5 font-bold text-stone-700 flex px-1">
@@ -5074,7 +5074,7 @@ function CheckoutOverlay({
 
               <div className="space-y-3">
                 <p className="px-1 text-[11px] font-black text-stone-400 tracking-[0.18em] uppercase">اختار شلون حاب تدفع الفاتورة؟</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                 <button
                   disabled={isSubmitting}
                   onClick={() => onSubmit(false)}

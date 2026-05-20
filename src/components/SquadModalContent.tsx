@@ -150,7 +150,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
    };
 
    return (
-      <div className="flex flex-col gap-6" id="squad-content-container">
+      <div className="squad-luxury flex flex-col gap-6" id="squad-content-container">
          {activeSquadTab === "overview" && (
             <div className="flex flex-col gap-6 animate-in fade-in duration-500">
                {/* Personal Loyalty Tier - Moved from main screen */}
