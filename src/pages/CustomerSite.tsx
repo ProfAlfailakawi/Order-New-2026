@@ -37,7 +37,7 @@ import {
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
 
-const DEFAULT_PRODUCT_CATEGORIES = ["الولائم", "اللحوم", "الدجاج", "البحري", "المشويات", "المقبلات", "المشروبات"];
+const DEFAULT_PRODUCT_CATEGORIES = ["الولائم", "اللحوم", "الدجاج", "البحري", "المقبلات"];
 
 const normalizeCategoryName = (value?: string) => String(value || "عام").trim() || "عام";
 
@@ -63,7 +63,7 @@ const getSharedProductCategories = (source: any, productList: any[] = []) => {
     ? configured.map((cat: any) => normalizeCategoryName(typeof cat === "string" ? cat : cat?.name || cat?.title)).filter(Boolean)
     : [];
   const productNames = productList.map((p: any) => normalizeCategoryName(p?.category)).filter(Boolean);
-  return Array.from(new Set([...configuredNames, ...DEFAULT_PRODUCT_CATEGORIES, ...productNames]));
+  return Array.from(new Set([...configuredNames, ...DEFAULT_PRODUCT_CATEGORIES, ...productNames])).filter((cat) => cat !== "عام");
 };
 
 import { clsx, type ClassValue } from "clsx";
@@ -2651,7 +2651,7 @@ ${paymentLink}`;
                     return normalizeProductSearchText(haystack).includes(normalizeProductSearchText(query));
                   })
                 : displayProducts;
-              const groupedProducts = allCategories
+              const groupedProducts = [...allCategories].reverse()
                 .map((category) => ({
                   category,
                   items: searchedProducts.filter((product: any) => normalizeCategoryName(product?.category) === category),
@@ -4075,19 +4075,19 @@ function ProductModal({
                         <div
                           className={cn(
                             "w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all",
-                            effectiveSelected
+                            isSelected
                               ? "bg-accent border-accent text-white"
                               : "border-stone-100 bg-white",
                           )}
                         >
-                          {effectiveSelected && (
+                          {isSelected && (
                             <Check className="w-3 h-3 stroke-[3]" />
                           )}
                         </div>
                         <span
                           className={cn(
                             "text-xs sm:text-sm transition-colors font-bold",
-                            effectiveSelected ? "text-brand" : "text-stone-500",
+                            isSelected ? "text-brand" : "text-stone-500",
                           )}
                         >
                           {extra.name}
@@ -4180,19 +4180,19 @@ function ProductModal({
                         <div
                           className={cn(
                             "w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all",
-                            effectiveSelected
+                            isSelected
                               ? "bg-accent border-accent text-white"
                               : "border-stone-100 bg-white",
                           )}
                         >
-                          {effectiveSelected && (
+                          {isSelected && (
                             <Check className="w-3 h-3 stroke-[3]" />
                           )}
                         </div>
                         <span
                           className={cn(
                             "text-xs sm:text-sm transition-colors font-bold",
-                            effectiveSelected ? "text-brand" : "text-stone-500",
+                            isSelected ? "text-brand" : "text-stone-500",
                           )}
                         >
                           {addon.name}

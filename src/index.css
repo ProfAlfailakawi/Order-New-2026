@@ -120,3 +120,49 @@ section {
 
 
 
+
+/* Final UX polish: phone-first comfort, safe areas, and calmer motion */
+@layer base {
+  input, select, textarea {
+    font-size: 16px;
+  }
+
+  img, video, canvas, svg {
+    max-width: 100%;
+  }
+
+  button, [role="button"], a {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+}
+
+@layer utilities {
+  .tap-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .soft-panel {
+    @apply bg-white/80 backdrop-blur-xl border border-white/60 shadow-sm;
+  }
+
+  .balanced-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  }
+}
+
+@supports (padding: max(0px)) {
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
