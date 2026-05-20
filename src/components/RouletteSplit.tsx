@@ -32,6 +32,7 @@ export function RouletteSplit({
   const spun = !!order.rouletteLoser;
   const loser = order.rouletteLoser;
   const [isSpinning, setIsSpinning] = useState(false);
+  const [isSettling, setIsSettling] = useState(false);
   const [localSuccess, setLocalSuccess] = useState(false);
   const [mySpinName, setMySpinName] = useState(
     () => localStorage.getItem(`roulette_${order.id}`) || "",
@@ -122,8 +123,12 @@ export function RouletteSplit({
           count++;
           if (count > 40) {
             clearInterval(interval);
-            setIsSpinning(false);
-            sessionStorage.setItem(`spun_${order.id}`, "true");
+            setIsSettling(true);
+            setTimeout(() => {
+              setIsSpinning(false);
+              setIsSettling(false);
+              sessionStorage.setItem(`spun_${order.id}`, "true");
+            }, 900);
           }
         }, 60);
       }
@@ -162,9 +167,9 @@ export function RouletteSplit({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             className="bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white p-8 justify-center items-center rounded-[32px] flex flex-col gap-4 shadow-xl shadow-[#25D366]/20 border border-white/20 relative overflow-hidden max-w-md w-full"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
+            <div className="absolute top-0 right-0 w-32 h-32 wahag-participant-chip bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full blur-xl -ml-12 -mb-12" />
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-inner relative z-10">
+            <div className="w-16 h-16 wahag-result-card bg-white rounded-full flex items-center justify-center shadow-inner relative z-10">
               <Check className="w-8 h-8 text-[#25D366]" strokeWidth={3} />
             </div>
             <div className="text-center relative z-10 w-full">
@@ -365,7 +370,7 @@ export function RouletteSplit({
                       alert("تم نسخ الرابط!");
                     }
                   }}
-                  className="w-full bg-white/10 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 mt-4 hover:bg-white/20 transition-colors border border-white/10"
+                  className="w-full wahag-participant-chip bg-white/10 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 mt-4 hover:bg-white/20 transition-colors border border-white/10"
                 >
                   <Sparkles className="w-5 h-5 text-fuchsia-400" />
                   دز الرابط للربع وشوف حظهم ووهقهم
@@ -427,6 +432,17 @@ export function RouletteSplit({
               )}
             </div>
 
+            {isSettling && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="wahag-silence-card"
+              >
+                <span>الاختيار قرب...</span>
+                <strong>لحظة صمت قبل النتيجة</strong>
+              </motion.div>
+            )}
+
             {!isSpinning && spun && (
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
@@ -453,8 +469,8 @@ export function RouletteSplit({
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             className="bg-gradient-to-br from-red-500 to-rose-600 text-white p-6 justify-center items-center rounded-3xl flex flex-col gap-3 shadow-xl shadow-red-500/20 border border-white/20 relative overflow-hidden mb-4"
                           >
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
-                            <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-inner relative z-10 shrink-0">
+                            <div className="absolute top-0 right-0 w-32 h-32 wahag-participant-chip bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
+                            <div className="w-14 h-14 wahag-result-card bg-white rounded-full flex items-center justify-center shadow-inner relative z-10 shrink-0">
                               <AlertCircle className="w-7 h-7 text-red-500" strokeWidth={3} />
                             </div>
                             <div className="text-center relative z-10 w-full">
