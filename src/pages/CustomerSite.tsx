@@ -1606,7 +1606,7 @@ export default function CustomerSite() {
       ]);
     }
     const addedName = item?.name || "الطلب";
-    setCartMoment(`طلبك ينبض: ${addedName} انضاف للطلب`);
+    setCartMoment(`${addedName} انضاف للطلب`);
     setCartBouncing(true);
     window.setTimeout(() => setCartBouncing(false), 520);
     window.setTimeout(() => setCartMoment(null), 2100);
@@ -3445,8 +3445,12 @@ ${paymentLink}`;
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setCheckoutInitialStep("delivery");
-                  setTimeout(() => setIsCheckout(true), 0);
+                  // يبقى العميل في المنيو مع السلة صحيحة؛ فتح السلة يكون من منطقة السلة نفسها.
+                  setIsCheckout(false);
+                  window.requestAnimationFrame(() => {
+                    const menuAnchor = document.getElementById("menu") || document.querySelector("[data-menu-anchor]") || document.body;
+                    menuAnchor?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+                  });
                 }}
               >
                 إكمال الطلب

@@ -466,15 +466,6 @@ export default function SplitPayment() {
       </header>
 
       <div className="max-w-md lg:max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
-        <div className="split-hero-social p-5 md:p-7 mb-5 text-right" dir="rtl">
-          <p className="text-[11px] font-black tracking-[0.18em] text-amber-700 uppercase mb-2">Social Split Payment</p>
-          <h1 className="text-2xl md:text-3xl font-black text-stone-950 mb-2">اجمع الطلب مع الربع، وكل واحد يدفع حصته.</h1>
-          <div className="grid grid-cols-3 gap-2 mt-4 text-center text-[11px] font-black text-stone-700">
-            <span className="bg-white/70 border border-amber-100 rounded-2xl p-3">١. شارك الرابط</span>
-            <span className="bg-white/70 border border-amber-100 rounded-2xl p-3">٢. الربع يدفعون</span>
-            <span className="bg-white/70 border border-amber-100 rounded-2xl p-3">٣. تابع من دفع</span>
-          </div>
-        </div>
         <AnimatePresence>
           {paymentStatus === "success" && isQatyaStillOpen && (
             <motion.div
@@ -552,7 +543,7 @@ export default function SplitPayment() {
                   باقي دفعة وتكتمل اللمة
                 </h2>
                 <p className="text-xs sm:text-sm text-stone-500 font-bold mt-2 leading-relaxed max-w-xl">
-                  الصفحة تعرض المساهمات أول بأول، والباقي واضح. ادفع قطيتك أو انسخ الرابط للربع.
+                  الصفحة تعرض قطيتكم أول بأول، والباقي واضح. ادفع قطيتك أو انسخ الرابط للربع.
                 </p>
                 <div className="qatya-v14-quick mt-4">
                   <span>الإجمالي {order.total.toFixed(3)} د.ك</span>
