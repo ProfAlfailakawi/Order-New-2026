@@ -2803,8 +2803,10 @@ ${paymentLink}`;
                       />
                     </div>
                   </div>
-                  <div className="p-8 text-center text-stone-400 font-bold border-2 border-dashed border-stone-100 rounded-2xl">
-                    لا توجد بيانات لهذا التصنيف
+                  <div className="al-empty-state p-8 text-center border-2 border-dashed border-amber-100 rounded-[28px] bg-white/80">
+                    <div className="al-empty-icon">🍽️</div>
+                    <strong>هالقسم هادي حالياً</strong>
+                    <span>جرّب قسم ثاني من المنيو أو ابحث عن طبقك المفضل.</span>
                   </div>
                 </div>
               ) : (
@@ -3401,9 +3403,11 @@ ${paymentLink}`;
               <button
                 type="button"
                 className="al-cart-checkout"
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setCheckoutInitialStep("delivery");
-                  setIsCheckout(true);
+                  requestAnimationFrame(() => setIsCheckout(true));
                 }}
               >
                 إكمال الطلب
