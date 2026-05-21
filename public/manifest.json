@@ -24,5 +24,14 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "scope": "/",
+  "description": "منيو وطلبات مطبخ التراث الكويتي بتجربة اجتماعية سهلة.",
+  "dir": "rtl",
+  "lang": "ar",
+  "categories": [
+    "food",
+    "shopping",
+    "lifestyle"
   ]
 }
