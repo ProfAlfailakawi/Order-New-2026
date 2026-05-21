@@ -419,6 +419,7 @@ export default function OrderPage() {
 
   const getStatusStory = (order: any) => {
     const label = getStatusDisplay(order).text;
+    if (label.includes("ملغي") || label.includes("إلغاء") || label.includes("الغاء")) return { title: "تم إلغاء الطلب", desc: "نعتذر، الفاتورة ملغية أو انتهى وقت القطيّة وما اكتمل المبلغ. للاستفسار تواصل معانا." };
     if (label.includes("قيد تجميع القطية")) return { title: "قيد تجميع القطية", desc: "اللمة ماشية، وكل دفعة تقرب الطلب من الاكتمال." };
     if (label.includes("بانتظار")) return { title: "بانتظار الدفع", desc: "كمل الدفع عشان نعتمد الطلب ونمشيه لك." };
     if (label.includes("فشل")) return { title: "فشلت عملية الدفع", desc: "ما عليه، جرب مرة ثانية أو اختار طريقة أنسب." };
