@@ -142,6 +142,7 @@ export function RouletteSplit({
   }, [loser, participants]);
 
   const displayIndex = isSpinning ? activeIndex : loserIndex;
+  const pulseIndex = participants.length ? ((displayIndex % participants.length) + participants.length) % participants.length : 0;
 
   const totalPaid = (order.splitPayments || [])
     .filter((p: any) => p.status === "paid")
@@ -261,7 +262,7 @@ export function RouletteSplit({
         <header className="roulette-ultra-hero roulette-v14-hero wahag-wow-hero text-center pt-10 space-y-4">
           <div className="roulette-v14-marquee">
             <span>مطبخ التراث الكويتي</span>
-            <span>وهق غيرك</span>
+            <span>وهق ربعك</span>
             <span>{participants.length} مشارك</span>
           </div>
           <div className="roulette-ultra-orb roulette-v14-orb w-20 h-20 bg-gradient-to-tr from-violet-600 to-fuchsia-600 rounded-full flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(217,70,239,0.3)]">
@@ -270,10 +271,10 @@ export function RouletteSplit({
           <div className="roulette-title-card">
             <span className="roulette-kicker">تحدي الربع</span>
             <h1 className="text-3xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-300 via-white to-violet-300">
-              وهق غيرك 🎰
+              وهق ربعك
             </h1>
             <p className="text-stone-300 font-bold mt-2 leading-relaxed max-w-xl mx-auto">
-              مشهد واحد، أسماء الربع، ولحظة اختيار تخلي الكل ماسك نفسه. الفاتورة {order.total.toFixed(3)} د.ك
+              نبضة واحدة، أسماء الربع، ولحظة صمت تكشف الكريم. الفاتورة {order.total.toFixed(3)} د.ك
             </p>
           </div>
           <div className="roulette-status-strip roulette-v14-status-strip">
@@ -355,10 +356,10 @@ export function RouletteSplit({
 
                 <button
                   onClick={() => {
-                    const shareText = `دش لعبة وهق غيرك، واحد فينا راح يدفع العشا ${order?.total.toFixed(3)} د.ك! ادخل: ${window.location.href}`;
+                    const shareText = `دش وهق ربعك، نبضة وحدة وواحد فينا راح يدفع العشا ${order?.total.toFixed(3)} د.ك! ادخل: ${window.location.href}`;
                     if (navigator.share) {
                       navigator.share({
-                        title: "لعبة وهق غيرك 🎯",
+                        title: "وهق ربعك — نبضة الوهقة",
                         text: shareText,
                         url: window.location.href,
                       }).catch(() => {});
@@ -378,7 +379,7 @@ export function RouletteSplit({
                     onClick={spin}
                     className="roulette-spin-button w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 font-black py-4 rounded-2xl shadow-lg shadow-fuchsia-500/20 active:scale-95 transition-transform mt-4"
                   >
-                    اضغط وخل الحظ يختار 🎰
+                    ابدأ النبضة
                   </button>
                 )}
               </div>
@@ -393,40 +394,54 @@ export function RouletteSplit({
             animate={{ scale: 1, opacity: 1 }}
             className="roulette-stage flex flex-col items-center justify-center py-8 sm:py-10 space-y-8"
           >
-            <div className="roulette-wheel roulette-v14-wheel wahag-wow-wheel relative w-72 h-72 sm:w-80 sm:h-80 border-[12px] border-white/5 rounded-full flex flex-col items-center justify-center bg-black/60 overflow-hidden shadow-[0_0_100px_rgba(217,70,239,0.15)] ring-4 ring-fuchsia-500/20">
-              <div className="absolute inset-0 pointer-events-none border-[16px] border-fuchsia-500/10 rounded-full" />
-              <div className="absolute top-1/2 left-0 right-0 h-16 -translate-y-1/2 border-y-2 border-fuchsia-400/30 bg-fuchsia-400/5 z-0 pointer-events-none" />
-              
-              {!isSpinning && spun ? (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", bounce: 0.6 }}
-                  className="z-10 text-4xl font-black text-fuchsia-400 drop-shadow-[0_0_15px_rgba(217,70,239,0.8)]"
-                >
-                  {participants[loserIndex]?.name || loser}
-                </motion.div>
-              ) : (
-                <div 
-                  className="flex flex-col items-center justify-start w-full z-10 absolute top-0"
-                  style={{
-                    transform: `translateY(calc(112px - ${displayIndex * 64}px))`,
-                    transition: isSpinning ? 'transform 0.08s linear' : 'none'
-                  }}
-                >
-                  {/* Duplicate participants to make it look like an endless wheel during fast spin */}
-                  {Array(30).fill(participants).flat().map((p: any, i: number) => (
-                    <div key={i} className="h-16 flex items-center justify-center w-full shrink-0">
-                       <span className={
-                         "font-black transition-all " +
-                         (isSpinning ? "text-fuchsia-300 text-3xl blur-[1px]" : "text-fuchsia-400 text-4xl")
-                       }>
-                         {p.name}
-                       </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className="wahag-pulse-stage relative w-72 h-72 sm:w-80 sm:h-80 flex items-center justify-center overflow-visible">
+              <div className="wahag-pulse-aura" />
+              <div className="wahag-pulse-grid" />
+              <div className="wahag-pulse-orbit wahag-pulse-orbit-one" />
+              <div className="wahag-pulse-orbit wahag-pulse-orbit-two" />
+              <div className="wahag-pulse-orbit wahag-pulse-orbit-three" />
+
+              {participants.map((p: any, i: number) => {
+                const angle = participants.length ? (360 / participants.length) * i - 90 : 0;
+                const isActive = isSpinning && i === pulseIndex;
+                const isWinner = !isSpinning && spun && i === loserIndex;
+                return (
+                  <motion.div
+                    key={`${p.name}-${i}`}
+                    className={`wahag-pulse-node ${isActive ? "is-active" : ""} ${isWinner ? "is-winner" : ""}`}
+                    style={{
+                      "--angle": `${angle}deg`,
+                      "--delay": `${i * 0.08}s`,
+                    } as React.CSSProperties}
+                    animate={isActive ? { scale: [1, 1.18, 1], opacity: [0.76, 1, 0.86] } : { scale: isWinner ? 1.16 : 1, opacity: isWinner ? 1 : 0.72 }}
+                    transition={{ duration: isActive ? 0.28 : 0.45, repeat: isActive ? Infinity : 0 }}
+                  >
+                    <span className="wahag-pulse-dot" />
+                    <b>{p.name}</b>
+                  </motion.div>
+                );
+              })}
+
+              <div className={`wahag-pulse-core ${isSpinning ? "is-scanning" : ""} ${!isSpinning && spun ? "has-result" : ""}`}>
+                <div className="wahag-pulse-core-ring" />
+                {!isSpinning && spun ? (
+                  <motion.div
+                    initial={{ scale: 0.72, opacity: 0, filter: "blur(10px)" }}
+                    animate={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
+                    transition={{ type: "spring", bounce: 0.42, duration: 0.75 }}
+                    className="wahag-pulse-result-name"
+                  >
+                    <small>الوهقة وصلت</small>
+                    <strong>{participants[loserIndex]?.name || loser}</strong>
+                  </motion.div>
+                ) : (
+                  <div className="wahag-pulse-live-copy">
+                    <small>نبضة الوهقة</small>
+                    <strong>{participants[pulseIndex]?.name || "جاهزين"}</strong>
+                    <span>نقيس نبض الربع</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {isSettling && (
