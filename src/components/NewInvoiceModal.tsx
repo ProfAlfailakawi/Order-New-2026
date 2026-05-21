@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import { X, Phone, User, Landmark, MapPin, Hash, Home, Layers, DollarSign } from "lucide-react";
+import { X, Phone, User, Landmark, MapPin, Hash, Home, Layers, DollarSign, AlertCircle } from "lucide-react";
 import { Region } from "../types";
 import { normalizeDigits } from "../utils";
 
@@ -82,7 +82,23 @@ export function NewInvoiceModal({
         animate={{ scale: 1, opacity: 1, y: 0 }}
         className="bg-[#fafaf9] rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
       >
-        <div className="p-6 border-b border-stone-100 flex justify-between items-center bg-white shrink-0">
+        <div className="new-invoice-soft-head p-6 border-b border-stone-100 flex justify-between items-center bg-white shrink-0 relative">
+          <button
+            type="button"
+            className="new-invoice-attention-trigger"
+            onClick={() => setShowInvoiceHint((v) => !v)}
+            onMouseEnter={() => setShowInvoiceHint(true)}
+            onMouseLeave={() => setShowInvoiceHint(false)}
+            onFocus={() => setShowInvoiceHint(true)}
+            onBlur={() => setShowInvoiceHint(false)}
+            aria-label="ملاحظة الفاتورة"
+          >
+            <AlertCircle className="w-4 h-4" />
+          </button>
+          <div className={`new-invoice-touch-tip ${showInvoiceHint ? "is-visible" : ""}`} role="status">
+            <strong>فاتورة طلب خاص</strong>
+            <span>اكتب المبلغ والبيانات، ثم أنشئ الرابط للعميل.</span>
+          </div>
           <h2 className="text-2xl font-black text-brand tracking-tight">فاتورة جديدة</h2>
           <button onClick={onClose} className="p-2 hover:bg-stone-50 rounded-full transition-colors">
             <X className="w-6 h-6 text-stone-400" />

@@ -194,6 +194,34 @@ const normalizeAdminArray = (raw: any): any[] => {
   return [];
 };
 
+const parseAdminPoints = (value: any): number => {
+  const n = Number(String(value ?? 0)
+    .replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
+    .replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
+    .replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(n) ? n : 0;
+};
+
+const normalizeSquadTierForCustomer = (tier: any, index: number, all: any[]) => {
+  const sortedMins = all.map((t: any) => parseAdminPoints(t?.minPoints ?? t?.points ?? t?.requiredPoints ?? 0)).sort((a, b) => a - b);
+  const minPoints = parseAdminPoints(tier?.minPoints ?? tier?.points ?? tier?.requiredPoints ?? 0);
+  const nextMin = sortedMins.find((v) => v > minPoints);
+  const safeColors = ["text-orange-700", "text-slate-700", "text-amber-700", "text-purple-700", "text-emerald-700", "text-sky-700"];
+  const safeBgs = ["bg-orange-50", "bg-slate-100", "bg-amber-50", "bg-purple-50", "bg-emerald-50", "bg-sky-50"];
+  const iconType = String(tier?.iconType || tier?.icon || "");
+  return {
+    ...tier,
+    id: String(tier?.id ?? `${tier?.name || "tier"}-${index}`),
+    name: tier?.name || "مستوى",
+    minPoints,
+    maxPoints: parseAdminPoints(tier?.maxPoints ?? (nextMin ? nextMin - 1 : 999999999)),
+    color: String(tier?.color || "").startsWith("text-") ? tier.color : safeColors[index] || "text-brand",
+    bg: String(tier?.bg || "").startsWith("bg-") ? tier.bg : safeBgs[index] || "bg-stone-50",
+    icon: tier?.imageUrl || tier?.image ? (tier?.icon || "🏅") : (iconType === "Trophy" ? "🏆" : iconType === "Crown" ? "👑" : iconType === "Star" ? "⭐" : iconType === "Medal" ? "🏅" : tier?.icon || "🏅"),
+    benefit: tier?.benefit || tier?.label || "مزايا ديوانية خاصة",
+  };
+};
+
 const getAnyPoints = (source: any): number => {
   const value = source?.points ?? source?.totalPoints ?? source?.teamPoints ?? source?.score ?? source?.balance ?? source?.totalOrders ?? 0;
   const n = Number(String(value).replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[^0-9.-]/g, ""));
@@ -217,8 +245,11 @@ export default function CustomerSite() {
   }, [settings.loyaltyTiers, settings.loyaltyLevels, settings.loyaltySettings]);
 
   const SQUAD_TIERS = useMemo(() => {
-    const tiers = normalizeAdminArray(settings.squadTiers ?? settings.squadLevels ?? settings.diwaniyaTiers ?? settings.diwaniyaLevels ?? settings.squadSettings?.tiers);
-    return tiers.length > 0 ? tiers : INITIAL_SQUAD_TIERS;
+    const rawTiers = normalizeAdminArray(settings.squadTiers ?? settings.squadLevels ?? settings.diwaniyaTiers ?? settings.diwaniyaLevels ?? settings.squadSettings?.tiers);
+    const source = rawTiers.length > 0 ? rawTiers : INITIAL_SQUAD_TIERS;
+    return [...source]
+      .map((tier, index, all) => normalizeSquadTierForCustomer(tier, index, all))
+      .sort((a, b) => Number(a.minPoints || 0) - Number(b.minPoints || 0));
   }, [settings.squadTiers, settings.squadLevels, settings.diwaniyaTiers, settings.diwaniyaLevels, settings.squadSettings]);
 
   const getLoyaltyTier = useCallback((points: number) => {
@@ -351,6 +382,11 @@ export default function CustomerSite() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isCheckout, setIsCheckout] = useState(false);
   const [checkoutInitialStep, setCheckoutInitialStep] = useState<"cart" | "delivery" | "payment">("cart");
+  const closeCheckoutToMenu = () => {
+    setIsCheckout(false);
+    setCheckoutInitialStep("cart");
+    setTimeout(() => document.getElementById("products-section")?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
+  };
   const [isCreatingSquad, setIsCreatingSquad] = useState(false);
   const [newSquadName, setNewSquadName] = useState("");
   const [isSubmittingSquad, setIsSubmittingSquad] = useState(false);
@@ -2256,7 +2292,10 @@ ${paymentLink}`;
                   </button>
                 ) : (
                   <button
-                    onClick={() => setIsCheckout(true)}
+                    onClick={() => {
+                      setCheckoutInitialStep("delivery");
+                      setIsCheckout(true);
+                    }}
                     className="text-[10px] font-bold bg-white border border-stone-100 px-3 py-1 rounded-full text-brand hover:bg-stone-50/80 backdrop-blur-sm transition-all active:scale-95 shadow-sm shrink-0"
                   >
                     استكمال بياناتك؟
@@ -2824,7 +2863,7 @@ ${paymentLink}`;
                   </div>
                   {quickProductSearch.trim() ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                      {searchedProducts.map((product) => (
+                      {searchedProducts.slice(0, 60).map((product) => (
                         <motion.div
                           key={product.id}
                           initial={{ opacity: 0, y: 20 }}
@@ -2869,7 +2908,7 @@ ${paymentLink}`;
                                   className="overflow-hidden"
                                 >
                                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 p-4 pt-0">
-                                    {group.items.map((product) => (
+                                    {group.items.slice(0, 48).map((product) => (
                                       <motion.div
                                         key={product.id}
                                         initial={{ opacity: 0, y: 12 }}
@@ -3407,7 +3446,7 @@ ${paymentLink}`;
                   e.preventDefault();
                   e.stopPropagation();
                   setCheckoutInitialStep("delivery");
-                  requestAnimationFrame(() => setIsCheckout(true));
+                  setTimeout(() => setIsCheckout(true), 0);
                 }}
               >
                 إكمال الطلب
@@ -3522,7 +3561,7 @@ ${paymentLink}`;
               initialStep={checkoutInitialStep}
               cart={cart}
               setCart={setCart}
-              onClose={() => setIsCheckout(false)}
+              onClose={closeCheckoutToMenu}
               onRemove={removeFromCart}
               total={total}
               deliveryFee={deliveryFee}
@@ -4115,7 +4154,7 @@ function ProductModal({
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="bg-white w-full max-w-lg rounded-t-[32px] p-6 sm:p-8 max-h-[92vh] overflow-y-auto no-scrollbar shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.1)] relative"
+        className="product-detail-layer bg-white w-full max-w-lg rounded-t-[32px] p-6 sm:p-8 max-h-[92vh] overflow-y-auto no-scrollbar shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.1)] relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -4587,7 +4626,6 @@ function CheckoutOverlay({
             <button
               onClick={() => {
                 if (step === "payment") setStep("delivery");
-                else if (step === "delivery") setStep("cart");
                 else onClose();
               }}
               className="p-3 bg-stone-50 border border-stone-100 rounded-2xl hover:bg-brand hover:text-white hover:-translate-x-1 transition-all shadow-sm"
@@ -5337,6 +5375,11 @@ function CheckoutOverlay({
                   </button>
                 </div>
               ) : (
+                <>
+                <div className="payment-choice-hint" dir="rtl">
+                  <strong>اختر طريقة الدفع المناسبة</strong>
+                  <span>اسحب أو انزل شوي: الدفع الكامل، القطيّة، ووهق غيرك كلها متاحة هنا.</span>
+                </div>
                 <div className="payment-method-wow-grid flex flex-col gap-3 animate-in slide-in-from-bottom-4 fade-in duration-500">
                   <button
                     disabled={isSubmitting}
@@ -5404,6 +5447,7 @@ function CheckoutOverlay({
                     </>
                   )}
                 </div>
+                </>
               );
             })()}
           </div>
