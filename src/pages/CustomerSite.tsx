@@ -3834,7 +3834,7 @@ const ChefWhisperCard = ({
                 }
               }}
               alt={product.name}
-              className="w-full h-full object-contain p-1 transform hover:scale-105 transition-transform bg-white relative z-0"
+              className="menu-product-img w-full h-full object-contain p-1 transform hover:scale-105 transition-transform bg-white relative z-0"
             />
           </div>
           <div
@@ -4385,7 +4385,7 @@ function ProductModal({
                 <label className="text-xs font-bold text-stone-500 block">
                   إضافات للمنتج
                 </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="product-addons-luxury grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {productAddons.map((addon: any) => {
                   const isSelected = selectedAddonsIds.includes(addon.id);
                   const limits = getQuantityRuleLimits(addon, quantity);
@@ -4397,9 +4397,9 @@ function ProductModal({
                       key={addon.id}
                       onClick={() => toggleAddon(addon.id)}
                       className={cn(
-                        "flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer",
+                        "addon-lux-card flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer",
                         effectiveSelected
-                          ? isMandatory ? "border-accent bg-accent/10 cursor-default opacity-90" : "border-accent bg-accent/5"
+                          ? isMandatory ? "addon-lux-card-selected addon-lux-card-required border-accent bg-accent/10 cursor-default opacity-90" : "addon-lux-card-selected border-accent bg-accent/5"
                           : "border-stone-50 bg-stone-50/30 hover:border-stone-100",
                       )}
                     >
@@ -4428,9 +4428,9 @@ function ProductModal({
                       
                       <div className="flex items-center gap-2">
                         {effectiveSelected && (
-                           <div className="flex items-center gap-2 bg-white rounded-md border border-stone-200" onClick={e => e.stopPropagation()}>
+                           <div className="addon-lux-qty flex items-center gap-2 bg-white rounded-md border border-stone-200" onClick={e => e.stopPropagation()}>
                               <button disabled={currentAddonQty <= limits.min} className="px-2 text-stone-400 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addon.id, -1)}>-</button>
-                              <span className="text-xs font-bold w-4 text-center text-brand">{currentAddonQty}</span>
+                              <span className="addon-lux-qty-value text-xs font-bold w-4 text-center text-brand">{currentAddonQty}</span>
                               <button disabled={currentAddonQty >= limits.max} className="px-2 text-stone-400 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addon.id, 1)}>+</button>
                            </div>
                         )}
@@ -4864,7 +4864,7 @@ function CheckoutOverlay({
               </div>
             </div>
           ) : step === "delivery" ? (
-            <div className="address-wow-step animate-in slide-in-from-left-4 fade-in duration-300 space-y-6 pt-2">
+            <div className={cn("address-wow-step animate-in slide-in-from-left-4 fade-in duration-300 space-y-6 pt-2", customerPhone.length >= 8 && "address-phone-complete")}>
                 <div className="space-y-2">
                   <label className="text-sm items-center gap-1.5 font-bold text-stone-700 flex px-1">
                     <Phone className="w-4 h-4 text-accent" /> أدخل رقم هاتفك لإكمال الطلب
@@ -4879,6 +4879,13 @@ function CheckoutOverlay({
                       const val = normalizeDigits(e.target.value).replace(/[^0-9]/g, "");
                       if (val.length <= 8) {
                         setCustomerPhone(val);
+                        if (val.length === 8) {
+                          window.setTimeout(() => {
+                            const regionEl = document.querySelector('[data-region-field="true"]') as HTMLElement | null;
+                            regionEl?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+                            regionEl?.focus?.();
+                          }, 160);
+                        }
                       }
                       if (isLocked) {
                         setIsLocked(false);
@@ -4904,6 +4911,7 @@ function CheckoutOverlay({
                           type="text"
                           autoFocus
                           placeholder="ابحث عن منطقتك..."
+                          data-region-field="true"
                           value={address.region}
                           onClick={() => setShowRegions(true)}
                           onBlur={() =>
@@ -5140,22 +5148,6 @@ function CheckoutOverlay({
                 </ul>
               </div>
               
-              <div className="bg-stone-50/80 backdrop-blur-sm border border-stone-100 rounded-3xl sm:rounded-[2rem] p-6 sm:p-8 w-full max-w-full relative overflow-hidden shadow-sm flex flex-col items-center justify-center mb-8">
-                <div className="absolute -top-12 -right-12 w-32 h-32 bg-accent/5 rounded-full blur-2xl"></div>
-                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-brand/5 rounded-full blur-2xl"></div>
-                
-                <p className="text-stone-500 font-bold text-xs sm:text-sm mb-3 relative z-10 flex items-center gap-1.5 sm:gap-2 text-center flex-wrap justify-center line-clamp-2 leading-relaxed max-w-[90%]">
-                  <Check className="w-4 h-4 text-accent shrink-0" />
-                  <span>مجموع طلبك طال عمرك</span>
-                </p>
-                <div className="flex items-baseline gap-2 relative z-10 flex-wrap justify-center">
-                   <span className="text-4xl sm:text-5xl font-bold text-brand tracking-tight break-all text-center">
-                     {Number(itemsTotal + deliveryFee - discountAmount).toFixed(3)}
-                   </span>
-                   <span className="text-lg sm:text-xl font-bold text-stone-400 shrink-0">د.ك</span>
-                </div>
-              </div>
-
               <div className="flex items-center gap-4 w-full mb-4">
                 <div className="h-px bg-stone-100 flex-1"></div>
                 <span className="text-stone-400 font-bold text-xs uppercase tracking-widest shrink-0 text-center">اختار شلون حاب تدفع الفاتورة؟</span>
@@ -5183,6 +5175,7 @@ function CheckoutOverlay({
               )}
             </AnimatePresence>
 
+            {step !== "payment" && (
             <div className="space-y-3 px-1">
               {/* Promo Code Input */}
               {step !== "cart" && (!appliedPromo ? (
@@ -5246,7 +5239,7 @@ function CheckoutOverlay({
               {step !== "cart" && (
                 <>
               <div className="flex justify-between items-center text-xs font-bold text-stone-500 pb-3 border-b border-stone-50">
-                <span>توصيلة المندوب</span>
+                <span>رسوم التوصيل</span>
                 <span className="font-bold">
                   {!address.region ? (
                     <span className="text-stone-300">ناطرين العنوان</span>
@@ -5299,8 +5292,9 @@ function CheckoutOverlay({
                 </div>
               </div>
             </div>
+            )}
 
-            {cart.some((item) => item.preparationInstructions) && (
+            {step !== "payment" && cart.some((item) => item.preparationInstructions) && (
               <div className="mt-3 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-red-600 text-xs font-bold animate-pulse shadow-sm">
                 <AlertTriangle className="w-5 h-5 shrink-0" />
                 <span>
