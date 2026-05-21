@@ -41,16 +41,11 @@ export function RouletteSplit({
     () => localStorage.getItem(`roulette_phone_${order.id}`) || "",
   );
   const [activeIndex, setActiveIndex] = useState(0);
-
   useEffect(() => {
     if (paymentStatus === "success") {
       setLocalSuccess(true);
-      const timer = setTimeout(() => {
-        navigate(`/track?order_id=${order.id}`);
-      }, 4000);
-      return () => clearTimeout(timer);
     }
-  }, [paymentStatus, order.id, navigate]);
+  }, [paymentStatus]);
 
   const errorMsg = React.useMemo(() => {
     const errorMsgs = [
@@ -68,11 +63,12 @@ export function RouletteSplit({
     if (!name.trim()) return;
     if (phone.length !== 8) return alert("يرجى إدخال رقم هاتف صحيح مكون من 8 أرقام");
     try {
-      await fetch(`/api/orders/${order.id}/join-roulette`, {
+      const res = await fetch(`/api/orders/${order.id}/join-roulette`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, phone }),
       });
+      if (!res.ok) throw new Error('تعذر تسجيل الاسم في الروليت');
       setMySpinName(name);
       setMySpinPhone(phone);
       localStorage.setItem(`roulette_${order.id}`, name);
@@ -96,7 +92,8 @@ export function RouletteSplit({
   const spin = async () => {
     if (participants.length < 2) return alert("نحتاج شخصين عالأقل للقطية!");
     try {
-      await fetch(`/api/orders/${order.id}/spin-roulette`, { method: "POST" });
+      const res = await fetch(`/api/orders/${order.id}/spin-roulette`, { method: "POST" });
+      if (!res.ok) throw new Error('تعذر تشغيل الروليت');
     } catch (e: any) {
       if (
         e &&
