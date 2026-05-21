@@ -1312,3 +1312,41 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
   .payment-wow-step{padding-bottom:0!important;}
   .payment-wow-step .checkout-ready-card{margin-bottom:10px!important;}
 }
+
+/* Diwaniya tier road: keep level names readable on mobile/desktop */
+.squad-tier-road{
+  scrollbar-width: thin;
+  scrollbar-color: rgba(193, 102, 18, .28) transparent;
+  padding-bottom: 8px !important;
+}
+.squad-tier-road::-webkit-scrollbar{height:4px}
+.squad-tier-road::-webkit-scrollbar-thumb{background:rgba(193,102,18,.25);border-radius:999px}
+.squad-tier-road-grid > div{
+  min-width: 88px;
+}
+.squad-tier-road-name{
+  display:block!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  min-height: 26px;
+  text-align:center;
+  line-height:1.25!important;
+  word-break:normal;
+  overflow-wrap:anywhere;
+}
+.squad-tier-road-points{
+  min-height: 22px;
+  text-align:center;
+  white-space:normal!important;
+}
+@media (max-width: 640px){
+  .squad-tier-road{
+    margin-inline:-6px;
+    padding-inline:6px!important;
+  }
+  .squad-tier-road-track{right:38px!important;left:38px!important}
+  .squad-tier-road-grid{gap:12px!important}
+  .squad-tier-road-grid > div{min-width:82px}
+  .squad-tier-road-name{max-width:82px!important;font-size:10px!important;min-height:30px}
+  .squad-tier-road-points{font-size:9px!important}
+}

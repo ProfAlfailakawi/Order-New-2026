@@ -24,6 +24,7 @@ export function NewInvoiceModal({
   const [floor, setFloor] = useState("");
   const [apartment, setApartment] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showInvoiceHint, setShowInvoiceHint] = useState(false);
 
   if (!isOpen) return null;
 

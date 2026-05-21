@@ -56,6 +56,12 @@ const DEFAULT_SQUAD_TIERS = [
   { id: "diamond", name: "الشيخ", minPoints: 1500, maxPoints: 999999, color: "text-sky-600", bg: "bg-sky-50", icon: "🦅", benefit: "خصم ١٥٪ وتوصيل مجاني مدى الحياة! أسياد المكان." }
 ];
 
+const safeOnSnapshot = (ref: any, callback: any) => {
+  return onSnapshot(ref, callback, (error: any) => {
+    console.warn("AdminDashboard snapshot subscription status/error:", error);
+  });
+};
+
 
 export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -119,7 +125,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     // Read EVERYTHING from a single shared_company_data document per user request
-    const unsub = onSnapshot(doc(db, "appData", "shared_company_data"), (snapshot) => {
+    const unsub = safeOnSnapshot(doc(db, "appData", "shared_company_data"), (snapshot) => {
        if (snapshot.exists()) {
            const data = snapshot.data();
            
