@@ -1044,3 +1044,140 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
     letter-spacing:-.02em!important;
   }
 }
+
+/* Product list equal-size cards fix - Order22 */
+.category-signature-card .grid {
+  align-items: stretch !important;
+  grid-auto-rows: 1fr !important;
+}
+.category-signature-card .grid > div {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+.category-signature-card .menu-product-shell,
+.category-signature-card .menu-product-shell > div,
+.category-signature-card .menu-product-card {
+  height: 100% !important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) {
+  min-height: 132px !important;
+  align-items: center !important;
+}
+.category-signature-card .menu-product-card h3 {
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  overflow: hidden !important;
+  min-height: 2.55em !important;
+  max-height: 2.6em !important;
+}
+.category-signature-card .menu-product-card p {
+  width: fit-content !important;
+  max-width: 100% !important;
+  padding: .34rem .82rem !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,.72) !important;
+  border: 1px solid rgba(214,173,75,.22) !important;
+  box-shadow: 0 8px 22px rgba(15,23,42,.045) !important;
+  white-space: nowrap !important;
+}
+.category-signature-card .menu-product-image {
+  width: 4.35rem !important;
+  height: 4.35rem !important;
+}
+.category-signature-card .menu-product-add {
+  min-width: 3.15rem !important;
+  min-height: 3.15rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+@media (min-width: 640px) {
+  .category-signature-card .menu-product-card:not(.menu-product-card-horizontal) {
+    min-height: 142px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .category-signature-card .grid {
+    gap: .75rem !important;
+  }
+  .category-signature-card .menu-product-card:not(.menu-product-card-horizontal) {
+    min-height: 116px !important;
+    padding: .85rem !important;
+    gap: .75rem !important;
+  }
+  .category-signature-card .menu-product-card h3 {
+    font-size: .95rem !important;
+    min-height: 2.5em !important;
+    max-height: 2.55em !important;
+  }
+  .category-signature-card .menu-product-card p {
+    font-size: .94rem !important;
+    padding: .28rem .65rem !important;
+    margin-top: .4rem !important;
+  }
+  .category-signature-card .menu-product-image {
+    width: 3.25rem !important;
+    height: 3.25rem !important;
+  }
+  .category-signature-card .menu-product-add {
+    min-width: 2.75rem !important;
+    min-height: 2.75rem !important;
+  }
+}
+
+/* Product names visibility refinement - Order22 */
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) {
+  min-height: 150px !important;
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) > div:nth-of-type(2) {
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  overflow: visible !important;
+}
+.category-signature-card .menu-product-card h3 {
+  display: block !important;
+  -webkit-line-clamp: unset !important;
+  line-clamp: unset !important;
+  overflow: visible !important;
+  min-height: auto !important;
+  max-height: none !important;
+  white-space: normal !important;
+  text-overflow: clip !important;
+  font-size: clamp(1.08rem, 1.6vw, 1.45rem) !important;
+  line-height: 1.18 !important;
+  margin-bottom: .35rem !important;
+}
+.category-signature-card .menu-product-card p {
+  margin-top: .35rem !important;
+}
+.category-signature-card .menu-product-image {
+  width: 4.05rem !important;
+  height: 4.05rem !important;
+}
+.category-signature-card .menu-product-add {
+  min-width: 3rem !important;
+  min-height: 3rem !important;
+}
+@media (max-width: 520px) {
+  .category-signature-card .menu-product-card:not(.menu-product-card-horizontal) {
+    min-height: 138px !important;
+    gap: .65rem !important;
+  }
+  .category-signature-card .menu-product-card h3 {
+    font-size: .98rem !important;
+    line-height: 1.18 !important;
+  }
+  .category-signature-card .menu-product-image {
+    width: 3.05rem !important;
+    height: 3.05rem !important;
+  }
+  .category-signature-card .menu-product-add {
+    min-width: 2.6rem !important;
+    min-height: 2.6rem !important;
+  }
+}
