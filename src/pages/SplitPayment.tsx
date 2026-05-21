@@ -540,7 +540,7 @@ export default function SplitPayment() {
                   حالة القطيّة
                 </span>
                 <h2 className="text-2xl sm:text-4xl font-black text-stone-950 tracking-tight leading-tight">
-                  باقي دفعة وتكتمل اللمة
+                  شدو حيلكم يا الربع ولا تبخلون علينا
                 </h2>
                 <p className="text-xs sm:text-sm text-stone-500 font-bold mt-2 leading-relaxed max-w-xl">
                   الصفحة تعرض قطيتكم أول بأول، والباقي واضح. ادفع قطيتك أو انسخ الرابط للربع.

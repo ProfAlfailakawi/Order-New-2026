@@ -1619,48 +1619,59 @@ export default function CustomerSite() {
   };
 
   useEffect(() => {
-    if (address.region && regions.length > 0) {
-      const normalizedSelected = address.region.trim();
-      const selectedRegion = regions.find(
-        (r) => r.name.trim() === normalizedSelected,
-      );
+    const normalizeRegionName = (value: any) =>
+      String(value || "")
+        .trim()
+        .replace(/[إأآا]/g, "ا")
+        .replace(/[ة]/g, "ه")
+        .replace(/\s+/g, " ")
+        .toLowerCase();
 
-      const isFreeDeliveryForced = settings?.isFreeDelivery === true;
+    const typedRegion = normalizeRegionName(address.region);
 
-      if (selectedRegion) {
-        if (isFreeDeliveryForced) {
-          setDeliveryFee(0);
-          return;
-        }
-
-        const price =
-          selectedRegion.finalPrice ??
-          selectedRegion.deliveryPrice ??
-          selectedRegion.cost ??
-          selectedRegion.price ??
-          selectedRegion.deliveryFee ??
-          0;
-
-        let calculatedFee = Number(price);
-
-        // Check for threshold free delivery
-        const freeDeliveryThreshold = Number(
-          settings?.freeDeliveryThreshold || settings?.freeDeliveryLimit || 0,
-        );
-
-        if (freeDeliveryThreshold > 0 && itemsTotal >= freeDeliveryThreshold) {
-          calculatedFee = 0;
-        }
-
-        setDeliveryFee(calculatedFee);
-      } else {
-        // If region entered but not found, don't default to 0 (free)
-        // Set to a high value or negative to indicate "Invalid"
-        setDeliveryFee(-1);
-      }
-    } else {
+    if (!typedRegion) {
       setDeliveryFee(0);
+      return;
     }
+
+    const selectedRegion = regions.find(
+      (r: any) => normalizeRegionName(r.name) === typedRegion,
+    );
+
+    if (!selectedRegion) {
+      // Never treat an unknown typed region as free delivery.
+      // Keep it as invalid until the customer chooses a real region from the shared DB list.
+      setDeliveryFee(-1);
+      return;
+    }
+
+    const isFreeDeliveryForced = settings?.isFreeDelivery === true;
+
+    if (isFreeDeliveryForced) {
+      setDeliveryFee(0);
+      return;
+    }
+
+    const price =
+      selectedRegion.finalPrice ??
+      selectedRegion.deliveryPrice ??
+      selectedRegion.cost ??
+      selectedRegion.price ??
+      selectedRegion.deliveryFee ??
+      0;
+
+    let calculatedFee = Number(price);
+
+    // Check for threshold free delivery
+    const freeDeliveryThreshold = Number(
+      settings?.freeDeliveryThreshold || settings?.freeDeliveryLimit || 0,
+    );
+
+    if (freeDeliveryThreshold > 0 && itemsTotal >= freeDeliveryThreshold) {
+      calculatedFee = 0;
+    }
+
+    setDeliveryFee(calculatedFee);
   }, [address.region, regions, itemsTotal, settings]);
 
   const handleRegionChange = (regionName: string) => {
@@ -1699,13 +1710,20 @@ export default function CustomerSite() {
     }
 
     // Region Validation (redundant but safe)
-    const normalizedRegion = address.region.trim();
+    const normalizeRegionName = (value: any) =>
+      String(value || "")
+        .trim()
+        .replace(/[إأآا]/g, "ا")
+        .replace(/[ة]/g, "ه")
+        .replace(/\s+/g, " ")
+        .toLowerCase();
+    const normalizedRegion = normalizeRegionName(address.region);
     const matchedRegion = regions.find(
-      (r) => r.name.trim() === normalizedRegion,
+      (r: any) => normalizeRegionName(r.name) === normalizedRegion,
     );
     if (!matchedRegion) {
       setFormError(
-        "عذراً، هذه المنطقة غير مدعومة حالياً. يرجى اختيار منطقة من القائمة الظاهرة.",
+        "الرجاء اختيار منطقة صحيحة من القائمة حتى نحسب رسوم التوصيل بدقة.",
       );
       return;
     }
@@ -4936,8 +4954,8 @@ function CheckoutOverlay({
                           className="absolute z-[60] top-full left-0 right-0 mt-1 max-h-52 overflow-y-auto bg-white border border-stone-100 rounded-xl shadow-xl no-scrollbar"
                         >
                           {filteredRegions.length === 0 ? (
-                            <div className="p-4 text-xs text-stone-400 text-center italic">
-                              لم يتم العثور على نتائج
+                            <div className="p-4 text-xs text-red-500 text-center font-extrabold bg-red-50/70 border-b border-red-100">
+                              الرجاء اختيار منطقة صحيحة من القائمة
                             </div>
                           ) : (
                             filteredRegions.map((r: any, idx: number) => (
@@ -4959,6 +4977,12 @@ function CheckoutOverlay({
                             ))
                           )}
                         </motion.div>
+                      )}
+                      {address.region && deliveryFee === -1 && !showRegions && (
+                        <div className="mt-2 rounded-xl border border-red-100 bg-red-50/80 px-3 py-2 text-[11px] font-extrabold text-red-600 flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 shrink-0" />
+                          <span>الرجاء اختيار منطقة صحيحة من القائمة حتى لا تظهر رسوم التوصيل بشكل خاطئ.</span>
+                        </div>
                       )}
                     </div>
                   </div>
