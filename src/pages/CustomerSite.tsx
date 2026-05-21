@@ -2269,61 +2269,6 @@ ${paymentLink}`;
         )}
         dir="rtl"
       >
-        {/* Predictive Greeting & Zero Click Order */}
-        {!isCheckout && customerPhone && (
-          <AnimatePresence>
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              className="bg-stone-50/80 backdrop-blur-sm border-b border-stone-100 px-4 sm:px-6 py-4 flex flex-col gap-3"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-                    <User className="w-3.5 h-3.5 text-accent" />
-                  </div>
-                  <span className="text-sm font-bold text-brand truncate max-w-[140px] sm:max-w-[200px]">
-                    {customerName
-                      ? `أهلاً ${customerName}`
-                      : getContextualGreeting()}
-                    ، نورتونا
-                  </span>
-                </div>
-
-                {lastOrderInfo ? (
-                  <button
-                    onClick={handleZeroClickOrder}
-                    disabled={isZeroClickLoading}
-                    className="text-[11px] font-bold bg-white border border-brand/20 px-3 py-1.5 rounded-full text-brand shadow-sm hover:shadow-md hover:border-brand/40 transition-all active:scale-95 flex items-center gap-1.5 shrink-0"
-                  >
-                    {isZeroClickLoading ? (
-                      <>
-                        <RefreshCcw className="w-3.5 h-3.5 animate-spin text-accent" />
-                        <span>جاري التجهيز...</span>
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingBag className="w-3.5 h-3.5 text-accent" />
-                        <span>سجل دخول / أسس</span>
-                      </>
-                    )}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setCheckoutInitialStep("delivery");
-                      setIsCheckout(true);
-                    }}
-                    className="text-[10px] font-bold bg-white border border-stone-100 px-3 py-1 rounded-full text-brand hover:bg-stone-50/80 backdrop-blur-sm transition-all active:scale-95 shadow-sm shrink-0"
-                  >
-                    استكمال بياناتك؟
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        )}
-
         {/* Squad Gamification Banner */}
         {!isCheckout && (
           <div className="px-4 sm:px-6 pt-4 pb-2 bg-stone-50/80 backdrop-blur-sm border-b border-stone-100">
@@ -3471,7 +3416,7 @@ ${paymentLink}`;
                   });
                 }}
               >
-                إكمال الطلب
+                إضافة منتجات
               </button>
             </div>
           </motion.div>
@@ -3621,6 +3566,9 @@ ${paymentLink}`;
               userSquads={userSquads}
               setShowSquadModal={setShowSquadModal}
               getLoyaltyTier={getLoyaltyTier}
+              lastOrderInfo={lastOrderInfo}
+              isZeroClickLoading={isZeroClickLoading}
+              handleZeroClickOrder={handleZeroClickOrder}
             />
           )}
         </AnimatePresence>
@@ -4612,10 +4560,15 @@ function CheckoutOverlay({
   userSquads,
   setShowSquadModal,
   getLoyaltyTier,
+  lastOrderInfo,
+  isZeroClickLoading,
+  handleZeroClickOrder,
 }: any) {
   const [regionSearch, setRegionSearch] = useState("");
   const [showRegions, setShowRegions] = useState(false);
   const [step, setStep] = useState<"cart" | "delivery" | "payment">(initialStep);
+  const lastOrderItemsCount = Array.isArray(lastOrderInfo?.items) ? lastOrderInfo.items.length : 0;
+  const lastOrderTotal = Number(lastOrderInfo?.total || lastOrderInfo?.amount || 0);
 
   useEffect(() => {
     setStep(initialStep);
@@ -5144,6 +5097,37 @@ function CheckoutOverlay({
                     </div>
                   )}
 
+                  {lastOrderInfo && lastOrderItemsCount > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.35, ease: "easeOut" }}
+                      className="smart-return-card"
+                      dir="rtl"
+                    >
+                      <div className="smart-return-glow" />
+                      <div className="smart-return-icon">
+                        <RefreshCcw className={cn("w-5 h-5", isZeroClickLoading && "animate-spin")} />
+                      </div>
+                      <div className="smart-return-copy">
+                        <span>العودة الذكية</span>
+                        <strong>{customerName ? `نفس طلبك يا ${customerName}؟` : "نفس آخر طلب؟"}</strong>
+                        <p>
+                          عرفنا طلبك السابق وجهزنا اختصار محترم: {lastOrderItemsCount} أصناف
+                          {lastOrderTotal > 0 ? ` · ${lastOrderTotal.toFixed(3)} د.ك تقريباً` : ""}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleZeroClickOrder}
+                        disabled={isZeroClickLoading}
+                        className="smart-return-action"
+                      >
+                        {isZeroClickLoading ? "نجهزه..." : "جهز نفس الطلب"}
+                      </button>
+                    </motion.div>
+                  )}
+
                   <div className="space-y-1.5">
                     <label className="text-xs sm:text-sm font-bold text-stone-500 px-1 mb-1 block">
                       ملاحظات عامة (اختياري)
@@ -5160,21 +5144,33 @@ function CheckoutOverlay({
             </div>
           ) : step === "payment" ? (
             <div className="payment-wow-step animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center justify-center w-full pt-6 pb-3 px-2">
-              <div className="checkout-ready-card" dir="rtl">
-                <div>
-                  <span>طلبك تقريباً جاهز</span>
-                  <h3>راجع آخر شي واختار طريقة الدفع</h3>
+              <motion.div
+                initial={{ opacity: 0, y: 18, rotateX: -8 }}
+                animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                className="invoice-reveal-stage"
+                dir="rtl"
+              >
+                <div className="invoice-reveal-orbit invoice-reveal-orbit-one" />
+                <div className="invoice-reveal-orbit invoice-reveal-orbit-two" />
+                <div className="invoice-reveal-paper">
+                  <div className="invoice-reveal-topline">
+                    <span>لحظة فتح الفاتورة</span>
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <h3>الفاتورة ترتبت وجاهزة للاختيار</h3>
+                  <p>راجع الملخص، وبعدها اختار الطريقة المناسبة لك بدون تغيير على أي خطوة دفع.</p>
+                  <div className="invoice-reveal-stats">
+                    <div><b>{cart.length}</b><small>أصناف</small></div>
+                    <div><b>{address.region || "العنوان"}</b><small>التوصيل</small></div>
+                    <div><b>{Number(total || 0).toFixed(3)}</b><small>د.ك</small></div>
+                  </div>
                 </div>
-                <ul>
-                  <li><b>{cart.length}</b><small>أصناف</small></li>
-                  <li><b>{address.region || "العنوان"}</b><small>التوصيل</small></li>
-                  <li><b>{Number(total || 0).toFixed(3)}</b><small>د.ك</small></li>
-                </ul>
-              </div>
+              </motion.div>
               
-              <div className="flex items-center gap-4 w-full mb-4">
+              <div className="invoice-payment-divider">
                 <div className="h-px bg-stone-100 flex-1"></div>
-                <span className="text-stone-400 font-bold text-xs uppercase tracking-widest shrink-0 text-center">اختار شلون حاب تدفع الفاتورة؟</span>
+                <span>اختار شلون حاب تدفع الفاتورة؟</span>
                 <div className="h-px bg-stone-100 flex-1"></div>
               </div>
             </div>
