@@ -1570,7 +1570,7 @@ export default function CustomerSite() {
       ]);
     }
     const addedName = item?.name || "الطلب";
-    setCartMoment(`${addedName} انضاف للطلب`);
+    setCartMoment(`طلبك ينبض: ${addedName} انضاف للطلب`);
     setCartBouncing(true);
     window.setTimeout(() => setCartBouncing(false), 520);
     window.setTimeout(() => setCartMoment(null), 2100);
