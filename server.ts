@@ -8,6 +8,7 @@ import fs from "fs";
 import { initializeApp } from "firebase/app";
 import {
   initializeFirestore,
+  setLogLevel,
   collection,
   getDocs,
   doc,
@@ -61,6 +62,7 @@ const firebaseConfig = JSON.parse(
 );
 
 const appClient = initializeApp(firebaseConfig);
+setLogLevel("silent");
 const db = initializeFirestore(
   appClient,
   { experimentalForceLongPolling: true },

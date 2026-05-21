@@ -364,9 +364,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                      <span className="px-3 py-1 rounded-full bg-accent/10 text-accent text-[10px] font-black">{currentPoints} نقطة</span>
                   </div>
 
-                  <div className="relative pt-2 pb-1">
-                     <div className="absolute top-8 right-6 left-6 h-2 rounded-full bg-stone-100" />
-                     <div className="relative grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.max(sortedTiers.length, 1)}, minmax(0, 1fr))` }}>
+                  <div className="squad-tier-road relative pt-2 pb-1 overflow-x-auto overflow-y-visible px-1">
+                     <div className="squad-tier-road-track absolute top-8 right-10 left-10 h-2 rounded-full bg-stone-100" />
+                     <div className="squad-tier-road-grid relative grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.max(sortedTiers.length, 1)}, minmax(88px, 1fr))`, minWidth: `${Math.max(sortedTiers.length, 1) * 92}px` }}>
                         {sortedTiers.map((tier) => {
                            const reached = currentPoints >= Number(tier.minPoints || 0);
                            const isCurrent = currentTier?.id === tier.id;
@@ -379,8 +379,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                  )}>
                                     {(tier.imageUrl || tier.image) ? <img src={tier.imageUrl || tier.image} className="w-full h-full object-cover" /> : <span>{tier.icon}</span>}
                                  </div>
-                                 <span className={cn("text-[10px] font-black leading-tight truncate max-w-full", reached ? tier.color || "text-brand" : "text-stone-400")}>{tier.name}</span>
-                                 <span className="text-[9px] font-bold text-stone-400">{tier.minPoints}+ نقطة</span>
+                                 <span className={cn("squad-tier-road-name text-[10px] font-black leading-tight max-w-[92px] whitespace-normal break-words", reached ? tier.color || "text-brand" : "text-stone-400")}>{tier.name}</span>
+                                 <span className="squad-tier-road-points text-[9px] font-bold text-stone-400 leading-tight">{tier.minPoints}+ نقطة</span>
                               </div>
                            );
                         })}
