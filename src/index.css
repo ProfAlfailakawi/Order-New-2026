@@ -1352,255 +1352,173 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
 }
 
 /* ======================================================================
-   WAHAG RAB3AK — Pulse Experience
-   تصميم بصري فقط لتجربة وهق ربعك؛ لا يغير منطق السحب أو الدفع.
+   وهق ربعك — Nebdat Al-Wahga visual system
+   Pure UI layer: keeps the existing roulette endpoints and payment flow intact.
    ====================================================================== */
-.wahag-wow-shell {
-  background:
-    radial-gradient(circle at 50% -10%, rgba(236,72,153,.26), transparent 34%),
-    radial-gradient(circle at 6% 18%, rgba(124,58,237,.22), transparent 30%),
-    radial-gradient(circle at 92% 28%, rgba(214,173,75,.14), transparent 27%),
-    linear-gradient(180deg, #05020b 0%, #090617 48%, #020617 100%) !important;
+.wahag-pulse-core {
+  --pulse-size: min(86vw, 360px);
   position: relative;
-  overflow-x: hidden;
-}
-.wahag-wow-shell::after {
-  content:"";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
-  background-size: 38px 38px;
-  mask-image: radial-gradient(circle at center, #000 0%, transparent 72%);
-  opacity: .5;
-}
-.wahag-wow-hero {
-  border-radius: 36px !important;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(255,255,255,.16), transparent 32%),
-    radial-gradient(circle at 85% 15%, rgba(236,72,153,.22), transparent 30%),
-    linear-gradient(145deg, rgba(255,255,255,.11), rgba(255,255,255,.035)) !important;
-  backdrop-filter: blur(22px);
-}
-.wahag-wow-hero .roulette-kicker::before {
-  content: "نبضة الوهقة";
-  display: inline-flex;
-  margin-inline-end: .45rem;
-  color: #f0abfc;
-}
-.wahag-wow-card {
-  box-shadow: 0 28px 90px rgba(0,0,0,.36), inset 0 1px 0 rgba(255,255,255,.12) !important;
-}
-.roulette-spin-button {
-  min-height: 60px;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(255,255,255,.32), transparent 38%),
-    linear-gradient(90deg, #7c3aed, #ec4899, #d6ad4b) !important;
-  letter-spacing: -.02em;
-}
-.roulette-spin-button::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.46), transparent);
-  transform: translateX(120%);
-  animation: wahagButtonShine 2.8s ease-in-out infinite;
-}
-@keyframes wahagButtonShine {
-  45%,100% { transform: translateX(-120%); }
-}
-.wahag-pulse-stage {
+  width: var(--pulse-size);
+  height: var(--pulse-size);
+  display: grid;
+  place-items: center;
   isolation: isolate;
-  filter: drop-shadow(0 24px 80px rgba(217,70,239,.24));
-}
-.wahag-pulse-aura {
-  position: absolute;
-  inset: -18%;
   border-radius: 999px;
   background:
-    radial-gradient(circle, rgba(236,72,153,.26) 0%, rgba(124,58,237,.13) 36%, transparent 68%);
-  animation: wahagAuraBreath 2.6s ease-in-out infinite;
-  z-index: -3;
-}
-@keyframes wahagAuraBreath {
-  50% { transform: scale(1.06); opacity: .72; }
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.12), transparent 0 16%, rgba(217,70,239,.10) 17%, transparent 34%),
+    radial-gradient(circle at 50% 50%, rgba(124,58,237,.26), transparent 56%),
+    linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.025));
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow:
+    0 0 0 10px rgba(255,255,255,.025),
+    0 30px 110px rgba(0,0,0,.42),
+    0 0 120px rgba(217,70,239,.22),
+    inset 0 1px 0 rgba(255,255,255,.12),
+    inset 0 -35px 80px rgba(0,0,0,.28);
+  overflow: hidden;
 }
 .wahag-pulse-grid {
   position: absolute;
-  inset: 4%;
+  inset: 0;
+  opacity: .18;
+  background-image:
+    linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(circle, #000 0 46%, transparent 74%);
+  transform: perspective(540px) rotateX(64deg) scale(1.3) translateY(30px);
+}
+.wahag-pulse-aura {
+  position: absolute;
+  width: 52%;
+  height: 52%;
   border-radius: 999px;
   background:
-    radial-gradient(circle, transparent 0 44%, rgba(255,255,255,.06) 45% 45.5%, transparent 46%),
-    conic-gradient(from 0deg, rgba(255,255,255,.16), transparent 14%, rgba(217,70,239,.18), transparent 32%, rgba(214,173,75,.16), transparent 54%, rgba(255,255,255,.12), transparent 75%, rgba(217,70,239,.16));
-  opacity: .72;
-  animation: wahagGridRotate 16s linear infinite;
-  z-index: -2;
+    radial-gradient(circle, rgba(255,255,255,.22), rgba(217,70,239,.24) 34%, rgba(124,58,237,.12) 56%, transparent 72%);
+  filter: blur(2px);
+  animation: wahagAuraBreath 2.2s ease-in-out infinite;
 }
-@keyframes wahagGridRotate { to { transform: rotate(360deg); } }
-.wahag-pulse-orbit {
+.wahag-pulse-ring {
   position: absolute;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.12);
-  box-shadow: inset 0 0 34px rgba(217,70,239,.08), 0 0 34px rgba(217,70,239,.07);
-  pointer-events: none;
-}
-.wahag-pulse-orbit-one { inset: 3%; animation: wahagOrbit 11s linear infinite; }
-.wahag-pulse-orbit-two { inset: 17%; border-style: dashed; opacity:.72; animation: wahagOrbit 8s linear infinite reverse; }
-.wahag-pulse-orbit-three { inset: 31%; opacity:.62; animation: wahagOrbit 5.8s linear infinite; }
-@keyframes wahagOrbit { to { transform: rotate(360deg); } }
-.wahag-pulse-node {
-  --radius: 128px;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  min-width: 94px;
-  max-width: 124px;
-  height: 42px;
-  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(calc(var(--radius) * -1)) rotate(calc(var(--angle) * -1));
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: .38rem;
-  padding: .45rem .65rem;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.045));
   border: 1px solid rgba(255,255,255,.14);
-  color: rgba(255,255,255,.86);
-  font-size: .76rem;
-  font-weight: 950;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  box-shadow: 0 14px 38px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.14);
-  animation: wahagNodeFloat 2.8s ease-in-out infinite;
-  animation-delay: var(--delay);
+  box-shadow: 0 0 30px rgba(217,70,239,.16), inset 0 0 30px rgba(124,58,237,.08);
+}
+.wahag-pulse-ring.ring-one { width: 42%; height: 42%; animation: wahagPulsePing 1.65s ease-out infinite; }
+.wahag-pulse-ring.ring-two { width: 64%; height: 64%; animation: wahagPulseSpin 10s linear infinite; border-style: dashed; opacity: .74; }
+.wahag-pulse-ring.ring-three { width: 86%; height: 86%; animation: wahagPulseSpin 16s linear reverse infinite; opacity: .56; }
+.wahag-pulse-orbit-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   z-index: 2;
-}
-.wahag-pulse-node b {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.wahag-pulse-dot {
-  width: .5rem;
-  height: .5rem;
-  border-radius: 999px;
-  background: #f0abfc;
-  box-shadow: 0 0 0 0 rgba(240,171,252,.5), 0 0 18px rgba(240,171,252,.65);
-  flex: 0 0 auto;
-}
-.wahag-pulse-node.is-active,
-.wahag-pulse-node.is-winner {
-  color: #fff;
-  border-color: rgba(240,171,252,.55);
-  background:
-    radial-gradient(circle at 50% 0%, rgba(255,255,255,.34), transparent 45%),
-    linear-gradient(135deg, rgba(236,72,153,.45), rgba(124,58,237,.32));
-  box-shadow: 0 18px 50px rgba(217,70,239,.36), 0 0 34px rgba(240,171,252,.32), inset 0 1px 0 rgba(255,255,255,.22);
-}
-.wahag-pulse-node.is-winner {
-  border-color: rgba(214,173,75,.72);
-  background:
-    radial-gradient(circle at 50% 0%, rgba(255,255,255,.34), transparent 44%),
-    linear-gradient(135deg, rgba(214,173,75,.45), rgba(236,72,153,.35));
-}
-@keyframes wahagNodeFloat {
-  50% { margin-top: -5px; }
-}
-.wahag-pulse-core {
-  position: relative;
-  width: 142px;
-  height: 142px;
-  border-radius: 38px;
+  min-width: 76px;
+  max-width: 98px;
+  transform: rotate(var(--pulse-angle)) translateX(var(--pulse-radius)) rotate(calc(-1 * var(--pulse-angle))) translate(-50%, -50%);
   display: grid;
-  place-items: center;
-  text-align: center;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(255,255,255,.22), transparent 42%),
-    linear-gradient(145deg, rgba(15,23,42,.94), rgba(30,6,45,.92));
-  border: 1px solid rgba(255,255,255,.16);
-  box-shadow: 0 24px 70px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.16);
-  overflow: hidden;
-  z-index: 3;
-}
-.wahag-pulse-core::before {
-  content: "";
-  position: absolute;
-  inset: -55%;
-  background: conic-gradient(from 0deg, transparent, rgba(236,72,153,.42), transparent, rgba(214,173,75,.32), transparent);
-  animation: wahagCoreSweep 2.4s linear infinite;
-}
-.wahag-pulse-core.has-result::before { animation-duration: 1.2s; }
-@keyframes wahagCoreSweep { to { transform: rotate(360deg); } }
-.wahag-pulse-core-ring {
-  position: absolute;
-  inset: 7px;
-  border-radius: 32px;
-  background: rgba(5,7,17,.82);
+  justify-items: center;
+  gap: 4px;
+  padding: 8px 9px;
+  border-radius: 20px;
+  color: rgba(255,255,255,.88);
+  background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.045));
   border: 1px solid rgba(255,255,255,.12);
-  z-index: 0;
-}
-.wahag-pulse-live-copy,
-.wahag-pulse-result-name {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: .18rem;
-  max-width: 118px;
-}
-.wahag-pulse-live-copy small,
-.wahag-pulse-result-name small {
-  color: #f5d0fe;
-  font-size: .66rem;
-  font-weight: 950;
-  letter-spacing: .06em;
-}
-.wahag-pulse-live-copy strong,
-.wahag-pulse-result-name strong {
-  color: #fff;
-  font-size: 1.18rem;
-  line-height: 1.05;
-  font-weight: 950;
-  text-shadow: 0 0 24px rgba(217,70,239,.62);
-}
-.wahag-pulse-result-name strong { font-size: 1.55rem; color: #fde68a; }
-.wahag-pulse-live-copy span {
-  color: rgba(255,255,255,.58);
-  font-size: .66rem;
-  font-weight: 900;
-}
-.wahag-silence-card {
-  width: min(360px, 92vw);
-  border-radius: 26px;
-  padding: .9rem 1rem;
-  text-align: center;
-  background: rgba(0,0,0,.36);
-  border: 1px solid rgba(255,255,255,.12);
-  box-shadow: 0 18px 55px rgba(0,0,0,.28);
+  box-shadow: 0 14px 35px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.10);
   backdrop-filter: blur(18px);
 }
-.wahag-silence-card span {
-  display: block;
+.wahag-pulse-orbit-card span {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  font-weight: 900;
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.12);
+}
+.wahag-pulse-orbit-card strong {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font-size: .78rem;
+  font-weight: 900;
+}
+.wahag-pulse-orbit-card.is-active {
+  color: #fff;
+  background: linear-gradient(145deg, rgba(217,70,239,.40), rgba(124,58,237,.22));
+  border-color: rgba(244,114,182,.54);
+  box-shadow: 0 0 34px rgba(217,70,239,.45), 0 18px 45px rgba(0,0,0,.28);
+}
+.wahag-pulse-orbit-card.is-final {
+  background: linear-gradient(145deg, rgba(255,255,255,.26), rgba(217,70,239,.28));
+  border-color: rgba(255,255,255,.42);
+}
+.wahag-pulse-center {
+  position: relative;
+  z-index: 3;
+  width: 46%;
+  min-width: 144px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(255,255,255,.28), transparent 28%),
+    linear-gradient(160deg, rgba(15,23,42,.86), rgba(88,28,135,.54));
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow: 0 22px 65px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.18);
+}
+.wahag-pulse-name {
+  display: grid;
+  gap: 6px;
+  text-align: center;
+  padding: 18px;
+}
+.wahag-pulse-name span {
   color: rgba(255,255,255,.58);
   font-size: .74rem;
   font-weight: 900;
+  letter-spacing: .02em;
 }
-.wahag-silence-card strong {
-  display: block;
+.wahag-pulse-name strong {
   color: #fff;
-  font-size: 1rem;
-  font-weight: 950;
+  font-size: clamp(1.5rem, 6vw, 2.45rem);
+  line-height: 1.05;
+  font-weight: 900;
+  text-shadow: 0 0 28px rgba(217,70,239,.75);
 }
-@media (min-width: 640px) {
-  .wahag-pulse-node { --radius: 144px; min-width: 108px; height: 44px; font-size: .82rem; }
-  .wahag-pulse-core { width: 154px; height: 154px; }
+.wahag-pulse-line {
+  position: absolute;
+  inset: -12px;
+  border-radius: inherit;
+  border: 1px solid rgba(244,114,182,.30);
+  animation: wahagPulsePing 1.4s ease-out infinite;
 }
+.wahag-pulse-core.is-scanning .wahag-pulse-aura { animation-duration: .72s; }
+.wahag-pulse-core.is-scanning .wahag-pulse-ring.ring-two { animation-duration: 2.6s; }
+.wahag-pulse-core.is-scanning .wahag-pulse-ring.ring-three { animation-duration: 3.4s; }
+.wahag-pulse-core.is-revealed {
+  box-shadow:
+    0 0 0 10px rgba(255,255,255,.03),
+    0 30px 120px rgba(0,0,0,.45),
+    0 0 145px rgba(217,70,239,.34),
+    inset 0 1px 0 rgba(255,255,255,.14);
+}
+@keyframes wahagAuraBreath {
+  0%, 100% { transform: scale(.96); opacity: .72; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+@keyframes wahagPulsePing {
+  0% { transform: scale(.86); opacity: .72; }
+  75%, 100% { transform: scale(1.16); opacity: 0; }
+}
+@keyframes wahagPulseSpin { to { transform: rotate(360deg); } }
 @media (max-width: 420px) {
-  .wahag-pulse-node { --radius: 116px; min-width: 82px; max-width: 98px; height: 38px; font-size: .68rem; padding-inline: .5rem; }
-  .wahag-pulse-core { width: 128px; height: 128px; border-radius: 32px; }
-  .wahag-pulse-live-copy strong { font-size: 1rem; }
-  .wahag-pulse-result-name strong { font-size: 1.32rem; }
+  .wahag-pulse-core { --pulse-size: min(90vw, 326px); }
+  .wahag-pulse-orbit-card { min-width: 66px; max-width: 82px; padding: 7px; border-radius: 18px; }
+  .wahag-pulse-orbit-card span { width: 24px; height: 24px; border-radius: 10px; }
+  .wahag-pulse-orbit-card strong { font-size: .7rem; }
+  .wahag-pulse-center { min-width: 128px; }
 }
