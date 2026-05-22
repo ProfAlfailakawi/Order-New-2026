@@ -869,7 +869,22 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const docRef = doc(db, "appData", "shared_company_data");
       await setDoc(docRef, { squadTiers: tiers }, { merge: true });
       res.json({ success: true });
-    } catch (e) {
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.patch("/api/admin/settings/squadGeofenceDistance", async (req, res) => {
+    try {
+      const { distance } = req.body;
+      const docRef = doc(db, "appData", "shared_company_data");
+      await setDoc(docRef, { 
+        settings: { 
+          squadGeofenceDistance: Number(distance) 
+        } 
+      }, { merge: true });
+      res.json({ success: true });
+    } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
   });
