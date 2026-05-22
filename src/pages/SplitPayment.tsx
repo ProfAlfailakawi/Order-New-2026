@@ -275,25 +275,36 @@ export default function SplitPayment() {
     }
   };
 
-  const handleCopyLink = () => {
-    const shareText = `عشانا اليوم من مطبخ التراث! الفاتورة ${order?.total.toFixed(3)} د.ك.. ادخل ادفع قطيتك: ${window.location.href}`;
+  const handleCopyLink = async () => {
+    const shareUrl = window.location.href;
+    const shareText = `عشانا اليوم من مطبخ التراث! الفاتورة ${order?.total.toFixed(3)} د.ك.. ادخل ادفع قطيتك: ${shareUrl}`;
+    const shareData: ShareData = {
+      title: "قطية مطبخ التراث",
+      text: shareText,
+      url: shareUrl,
+    };
 
-    if (navigator.share) {
-      navigator
-        .share({
-          title: "قطية مطبخ التراث",
-          text: shareText,
-          url: window.location.href,
-        })
-        .catch(() => {
-          navigator.clipboard.writeText(window.location.href);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
+    try {
+      // افتح قائمة المشاركة الأصلية في الجوال حتى تظهر AirDrop / Copy / Share وباقي الخيارات.
+      if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+        await navigator.share(shareData);
+        return;
+      }
+
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    } catch (error: any) {
+      // إلغاء المستخدم لنافذة المشاركة ليس خطأ؛ لا نغيّر حالة الزر حتى لا يظهر أنه تم النسخ.
+      if (error?.name === "AbortError") return;
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        window.prompt("انسخ رابط القطيّة", shareUrl);
+      }
     }
   };
 

@@ -3838,7 +3838,7 @@ const ChefWhisperCard = ({
               {product.name}
             </h3>
             {product.preparationInstructions && (
-              <div className="mt-2 flex items-start gap-1.5 p-1.5 sm:p-2 bg-red-50 border border-red-100/50 rounded-lg shadow-sm">
+              <div className="orser-prep-note mt-2 flex items-start gap-1.5 p-1.5 sm:p-2 bg-red-50 border border-red-100/50 rounded-lg shadow-sm">
                 <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
                 <p className="text-[10px] sm:text-[11px] text-red-600 font-extrabold leading-snug line-clamp-2">
                   {product.preparationInstructions}
