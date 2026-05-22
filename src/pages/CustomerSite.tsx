@@ -240,7 +240,14 @@ const normalizeProductForAddons = (product: any) => {
 };
 
 export default function CustomerSite() {
-  const [settings, setSettings] = useState<any>({});
+  const [settings, setSettings] = useState<any>(() => {
+    try {
+      const cached = localStorage.getItem("cached_settings");
+      return cached ? JSON.parse(cached) : {};
+    } catch (e) {
+      return {};
+    }
+  });
   
   const LOYALTY_TIERS = useMemo(() => {
     const tiers = normalizeAdminArray(settings.loyaltyTiers ?? settings.loyaltyLevels ?? settings.loyaltySettings?.tiers);
@@ -377,10 +384,37 @@ export default function CustomerSite() {
   };
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
-  const [topProducts, setTopProducts] = useState<Product[]>([]);
-  const [regions, setRegions] = useState<Region[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const cached = localStorage.getItem("cached_products");
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [isLoadingProducts, setIsLoadingProducts] = useState(() => {
+    try {
+      return !localStorage.getItem("cached_products");
+    } catch (e) {
+      return true;
+    }
+  });
+  const [topProducts, setTopProducts] = useState<Product[]>(() => {
+    try {
+      const cached = localStorage.getItem("cached_top_products");
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [regions, setRegions] = useState<Region[]>(() => {
+    try {
+      const cached = localStorage.getItem("cached_regions");
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isCheckout, setIsCheckout] = useState(false);
@@ -1322,13 +1356,25 @@ export default function CustomerSite() {
 
     const loadData = async () => {
       try {
-        Promise.all([
+        await Promise.all([
           fetchWithRetry("/api/products").then((allProducts) => {
             if (!isMounted) return;
-            setProducts(Array.isArray(allProducts) ? allProducts : []);
+            const validProducts = Array.isArray(allProducts) ? allProducts : [];
+            setProducts(validProducts);
+            try {
+              localStorage.setItem("cached_products", JSON.stringify(validProducts));
+            } catch (e) {}
             setIsLoadingProducts(false);
           }),
-          fetchWithRetry("/api/top-products").then(d => { if (isMounted) setTopProducts(d || []); }),
+          fetchWithRetry("/api/top-products").then(d => { 
+            if (isMounted) {
+              const list = d || [];
+              setTopProducts(list);
+              try {
+                localStorage.setItem("cached_top_products", JSON.stringify(list));
+              } catch (e) {}
+            }
+          }),
           fetchWithRetry("/api/recent-fomo", 1).then(d => { 
              if (isMounted && Array.isArray(d) && d.length > 0) {
                  const enrichedFomo = d.map(item => {
@@ -1343,34 +1389,57 @@ export default function CustomerSite() {
           }),
           fetchWithRetry("/api/regions").then(d => { 
             const sorted = [...(d || [])].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar"));
-            if (isMounted) setRegions(sorted);
+            if (isMounted) {
+              setRegions(sorted);
+              try {
+                localStorage.setItem("cached_regions", JSON.stringify(sorted));
+              } catch (e) {}
+            }
           }),
-          fetchWithRetry("/api/settings").then(d => { if (isMounted && d) setSettings(d); }),
+          fetchWithRetry("/api/settings").then(d => { 
+            if (isMounted && d) {
+              setSettings(d);
+              try {
+                localStorage.setItem("cached_settings", JSON.stringify(d));
+              } catch (e) {}
+            }
+          }),
           fetchWithRetry("/api/debug", 1).then(d => { if (isMounted && d) console.log(d); })
-        ]).catch((err: any) => {
-          if (err && err.message && (err.message.includes("Failed to fetch") || err.message.includes("Load failed"))) return;
-          console.error(err);
-        }).finally(() => {
-          if (isMounted) setIsLoadingProducts(false);
-        });
+        ]);
       } catch (err: any) {
         if (err && err.message && (err.message.includes("Failed to fetch") || err.message.includes("Load failed"))) return;
         console.error("Error initiating fetch", err);
+      } finally {
+        if (isMounted) {
+          setIsLoadingProducts(false);
+          setIsLoading(false);
+        }
       }
     };
 
     loadData();
     // Customer brand splash appears on the initial page entrance only.
-    // Internal data refreshes keep the page visible and do not show the splash again.
-    setTimeout(() => {
+    // If we have cached content already, we can dismiss it very quickly (e.g. 250ms) to make it feel blazing fast!
+    // Otherwise, we wait for the database fetch to complete, with a safety timeout of 2500ms max.
+    const hasCache = (() => {
+      try {
+        return !!localStorage.getItem("cached_products");
+      } catch (e) {
+        return false;
+      }
+    })();
+    
+    const splashDelay = hasCache ? 250 : 2500;
+    const safetyTimer = setTimeout(() => {
       if (isMounted) setIsLoading(false);
-    }, 1850);
+    }, splashDelay);
 
     // Auto-refresh every 15 seconds to keep data live (Best Sellers, New Arrivals, etc.)
     const refreshInterval = setInterval(loadData, 15000);
 
     return () => {
       isMounted = false;
+      clearTimeout(safetyTimer);
       clearInterval(refreshInterval);
     };
   }, []);
