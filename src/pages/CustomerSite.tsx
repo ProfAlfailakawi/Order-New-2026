@@ -2520,13 +2520,13 @@ export default function CustomerSite() {
             <motion.div
               whileHover={{ scale: 1.01 }}
               className={cn(
-                `relative h-44 sm:h-52 rounded-[28px] overflow-hidden group shadow-xl shadow-accent/20`,
+                `orser-context-hero relative h-44 sm:h-52 rounded-[28px] overflow-hidden group shadow-xl shadow-accent/20`,
                 themeContext.colors,
               )}
             >
               {/* Parallax background (simulated without heavy scroll listeners) */}
               <motion.div
-                className={`absolute inset-0 bg-[url('${themeContext.image}')] bg-cover bg-center opacity-40 mix-blend-overlay`}
+                className={`orser-context-bg absolute inset-0 bg-[url('${themeContext.image}')] bg-cover bg-center opacity-40 mix-blend-overlay`}
                 animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
                 transition={{
                   repeat: Infinity,
@@ -3829,7 +3829,7 @@ const ChefWhisperCard = ({
             />
           </div>
           <div
-            className={`flex flex-col flex-grow ${isHorizontal ? "text-center" : "justify-center"} overflow-hidden relative z-10`}
+            className={`orser-product-content flex flex-col flex-grow ${isHorizontal ? "text-center" : "justify-center"} overflow-hidden relative z-10`}
           >
             <h3
               className="orser-product-title font-black text-lg sm:text-lg text-brand leading-tight tracking-tight mt-1"

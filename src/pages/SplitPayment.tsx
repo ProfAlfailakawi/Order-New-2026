@@ -412,12 +412,21 @@ export default function SplitPayment() {
     );
   }
 
-  if (error || !order) {
+  if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-stone-50 p-6 flex-col text-center">
         <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
         <h1 className="text-xl font-bold mb-2">عذراً</h1>
-        <p className="text-stone-500">{error || "تعذر تحميل الطلب"}</p>
+        <p className="text-stone-500">{error}</p>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50 gap-4 text-center p-6">
+        <span className="animate-spin text-4xl">⏳</span>
+        <p className="text-stone-500 font-bold">جاري تجهيز صفحة القطيّة...</p>
       </div>
     );
   }
@@ -443,6 +452,15 @@ export default function SplitPayment() {
       className="min-h-screen qatya-ultra-shell qatya-wow-shell pb-24 font-sans text-stone-800 selection:bg-brand/20"
       dir="rtl"
     >
+      <button
+        type="button"
+        onClick={() => navigate("/?checkout=payment")}
+        className="payment-back-floating qatya-back-to-payment"
+        aria-label="الرجوع إلى طريقة الدفع"
+      >
+        <ArrowRight className="w-6 h-6" />
+        <span>طريقة الدفع</span>
+      </button>
       {/* Header */}
       <header className="qatya-ultra-header qatya-wow-header qatya-duplicate-top bg-white border-b border-stone-100 p-5 sm:p-6 sticky top-0 z-20 shadow-sm flex flex-col items-center justify-center gap-2 relative">
         <button 
@@ -617,6 +635,14 @@ export default function SplitPayment() {
                 )}
               </div>
             </div>
+
+            <button
+              onClick={handleCopyLink}
+              className="qatya-overview-share w-full mt-5 bg-white border-2 border-stone-100 text-stone-700 p-4 rounded-[24px] font-black shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2 hover:bg-stone-50"
+            >
+              {copied ? <Check className="w-5 h-5 text-green-500" /> : <Share2 className="w-5 h-5 text-stone-500" />}
+              {copied ? "تم النسخ!" : "انسخ الرابط وقطه في قروبكم"}
+            </button>
           </div>
         </div>}
 
