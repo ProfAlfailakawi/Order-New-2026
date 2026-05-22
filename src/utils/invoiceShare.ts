@@ -95,82 +95,77 @@ const encodeWhatsAppTextWithIcons = (text: string) => {
 
 export const buildWhatsAppInvoiceText = (order: any, products: any[] = []) => {
   const items = order?.items || [];
-  const addr = getOrderAddress(order);
-  const lines: string[] = [];
-
-  lines.push(`${DISPLAY_ICONS.sparkles} *فاتورة الطلب*`);
-  lines.push('مطبخ التراث الكويتي');
-  lines.push('------------------------------');
-  lines.push(`*رقم الفاتورة:* ${order?.invoiceId || order?.id || '-'}`);
-  lines.push(`*العميل:* ${order?.customerName || order?.name || 'عميلنا العزيز'}`);
-  if (order?.customerPhone || order?.phone) lines.push(`*الهاتف:* ${order?.customerPhone || order?.phone}`);
-  lines.push(`*العنوان:* ${addr || '-'}`);
-  lines.push('');
-  lines.push('*الطلبات*');
-  lines.push('------------------------------');
-
-  let productsTotal = 0;
-  let addonsTotal = 0;
-
-  items.forEach((it: any, idx: number) => {
+  let calculatedTotal = 0;
+  items.forEach((it: any) => {
     const p = products.find((x: any) => x.id === it.productId) || it.product || {};
-    const name = it.productName || p.name || it.name || 'منتج';
     const qty = Number(it.quantity || it.qty || 1);
     const unit = Number(it.priceAtTime ?? it.price ?? p.price ?? 0);
-    const row = unit * qty;
-    productsTotal += row;
-
-    lines.push(`${idx + 1}) ${name}`);
-    lines.push(`   الكمية: ${qty}`);
-    lines.push(`   السعر: ${formatKwd(unit)}`);
-    lines.push(`   المجموع: ${formatKwd(row)}`);
-
-    const addons = normalizeOrderAddons(it);
-    if (addons.length) {
-      lines.push('   الإضافات:');
-      addons.forEach((a: any) => {
-        const aq = getAddonQty(a, qty);
-        const price = getAddonTotal(a, qty);
-        addonsTotal += price;
-        lines.push(`   - ${a.name || 'إضافة'}${aq > 1 ? ` × ${aq}` : ''}: ${formatKwd(price)}`);
-      });
-    }
-    lines.push('');
+    calculatedTotal += unit * qty;
+    normalizeOrderAddons(it).forEach((a: any) => {
+      calculatedTotal += getAddonTotal(a, qty);
+    });
   });
+  calculatedTotal += Number(order?.deliveryFee || 0);
+  calculatedTotal -= Number(order?.discountAmount || order?.discount || 0);
 
-  const delivery = Number(order?.deliveryFee || 0);
-  const discount = Number(order?.discountAmount || order?.discount || 0);
-  const total = getOrderTotal(order, productsTotal + addonsTotal + delivery - discount);
+  const invoiceNumber = order?.invoiceId || order?.id || '-';
+  const customerName = order?.customerName || order?.name || 'عميلنا العزيز';
+  const total = getOrderTotal(order, calculatedTotal);
+  const trackingUrl = `https://alturathkw.shop/track?tracked_order=${encodeURIComponent(String(invoiceNumber))}`;
 
-  lines.push('*ملخص الفاتورة*');
-  lines.push('------------------------------');
-  lines.push(`المنتجات: ${formatKwd(productsTotal)}`);
-  if (addonsTotal > 0) lines.push(`الإضافات: ${formatKwd(addonsTotal)}`);
-  lines.push(`التوصيل: ${formatKwd(delivery)}`);
-  if (discount > 0) lines.push(`الخصم: ${formatKwd(discount)}`);
-  lines.push(`*الإجمالي: ${formatKwd(total)}*`);
-  lines.push('------------------------------');
-  lines.push('شكراً لثقتكم');
-  return lines.join('\n');
+  return [
+    `${DISPLAY_ICONS.sparkles} فاتورة طلبكم من مطبخ التراث الكويتي`,
+    '',
+    `مرحباً ${customerName}،`,
+    `تم تجهيز فاتورتكم للطلب رقم: ${invoiceNumber}`,
+    '',
+    `الإجمالي المستحق: ${formatKwd(total)}`,
+    '',
+    'لتتبع الطلب:',
+    trackingUrl,
+    '',
+    'شكراً لثقتكم',
+    'Alturath.kw',
+  ].join('\n');
 };
 
 const buildDisplayWhatsAppText = (order: any, products: any[] = []) => buildWhatsAppInvoiceText(order, products);
 
 export const buildWhatsAppPaymentLinkText = (order: any, paymentUrl: string) => {
-  const total = getOrderTotal(order, order?.total || 0);
+  const items = order?.items || [];
+  let calculatedTotal = 0;
+  items.forEach((it: any) => {
+    const qty = Number(it.quantity || it.qty || 1);
+    const unit = Number(it.priceAtTime ?? it.price ?? 0);
+    calculatedTotal += unit * qty;
+    normalizeOrderAddons(it).forEach((a: any) => {
+      calculatedTotal += getAddonTotal(a, qty);
+    });
+  });
+  calculatedTotal += Number(order?.deliveryFee || 0);
+  calculatedTotal -= Number(order?.discountAmount || order?.discount || 0);
+
+  const invoiceNumber = order?.invoiceId || order?.id || '-';
+  const customerName = order?.customerName || order?.name || 'عميلنا العزيز';
+  const total = getOrderTotal(order, calculatedTotal);
+  const trackingUrl = `https://alturathkw.shop/track?tracked_order=${encodeURIComponent(String(invoiceNumber))}`;
+
   return [
-    `${DISPLAY_ICONS.check} *رابط الدفع*`,
-    'مطبخ التراث الكويتي',
-    '------------------------------',
-    `*رقم الفاتورة:* ${order?.invoiceId || order?.id || '-'}`,
-    `*العميل:* ${order?.customerName || order?.name || 'عميلنا العزيز'}`,
-    `*المبلغ:* ${formatKwd(total)}`,
+    `${DISPLAY_ICONS.sparkles} فاتورة طلبكم من مطبخ التراث الكويتي`,
     '',
-    '*اضغط الرابط لإتمام الدفع:*',
+    `مرحباً ${customerName}،`,
+    `تم تجهيز فاتورتكم للطلب رقم: ${invoiceNumber}`,
+    '',
+    `الإجمالي المستحق: ${formatKwd(total)}`,
+    '',
+    'لتتبع الطلب:',
+    trackingUrl,
+    '',
+    `${DISPLAY_ICONS.check} رابط الدفع:`,
     paymentUrl,
     '',
-    'بعد الدفع راح تتحدث حالة الطلب تلقائياً.',
     'شكراً لثقتكم',
+    'Alturath.kw',
   ].join('\n');
 };
 
@@ -179,7 +174,7 @@ export const openWhatsAppInvoiceText = (order: any, products: any[] = []) => {
   const text = encodeWhatsAppTextWithIcons(buildWhatsAppInvoiceText(order, products));
   let digits = String(phone || '').replace(/\D/g, '');
   if (digits.length === 8) digits = `965${digits}`;
-  window.open(`https://wa.me/${digits}?text=${text}`, '_blank');
+  window.open(`https://api.whatsapp.com/send?phone=${digits}&text=${text}`, '_blank');
 };
 
 const buildInvoiceHTML = (order: any, products: any[] = []) => {

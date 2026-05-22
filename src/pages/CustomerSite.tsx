@@ -95,7 +95,7 @@ import { ZenSplashScreen } from "../components/ZenSplashScreen";
 import { DynamicEnvironment } from "../components/DynamicEnvironment";
 import { redirectToPayment } from "../utils/redirect";
 import { SquadModalContent } from "../components/SquadModalContent";
-import { buildWhatsAppInvoiceText } from "../utils/invoiceShare";
+import { buildWhatsAppInvoiceText, buildWhatsAppPaymentLinkText } from "../utils/invoiceShare";
 
 const INITIAL_ADDRESS: Address = {
   region: "",
@@ -2020,19 +2020,12 @@ export default function CustomerSite() {
   };
 
   const generateWhatsAppLink = (order: Order, paymentLink?: string) => {
-    let message = buildWhatsAppInvoiceText(order);
+    let message = paymentLink ? buildWhatsAppPaymentLinkText(order, paymentLink) : buildWhatsAppInvoiceText(order);
 
     if (order.generalNotes) {
       message += `
 
 \u2709\uFE0F *ملاحظات عامة:* ${order.generalNotes}`;
-    }
-
-    if (paymentLink) {
-      message += `
-
-\u2705 *رابط الدفع الإلكتروني:*
-${paymentLink}`;
     }
 
     const encodedMessage = encodeURIComponent(sanitizeWhatsAppText(message));
@@ -2048,7 +2041,7 @@ ${paymentLink}`;
       cleaned = "965" + cleaned;
     }
 
-    return `https://wa.me/${cleaned}?text=${encodedMessage}`;
+    return `https://api.whatsapp.com/send?phone=${cleaned}&text=${encodedMessage}`;
   };
 
   function getContextualGreeting() {

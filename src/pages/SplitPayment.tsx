@@ -23,6 +23,15 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { RouletteSplit } from "../components/RouletteSplit";
 
+const getSafeSplitPayments = (order: any): any[] => {
+  if (!order) return [];
+  const splits = order.splitPayments;
+  if (!splits) return [];
+  if (Array.isArray(splits)) return splits;
+  if (typeof splits === "object") return Object.values(splits);
+  return [];
+};
+
 export default function SplitPayment() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -46,8 +55,7 @@ export default function SplitPayment() {
 
   // Calculate generic paid amount
   const calculatePaid = () => {
-    if (!order || !order.splitPayments) return 0;
-    return (order.splitPayments as any[])
+    return getSafeSplitPayments(order)
       .filter((p: any) => String(p.status || "").toLowerCase() === "paid")
       .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
   };
@@ -55,7 +63,7 @@ export default function SplitPayment() {
   // Dynamically determine payment status to resist buggy Upayments Apple Pay redirection cancel URLs
   const rawPaymentStatus = searchParams.get("payment");
   const mySplitPhone = contributorPhone.replace(/\D/g, "").slice(-8);
-  const mySplitRecord = order?.splitPayments?.find(
+  const mySplitRecord = getSafeSplitPayments(order).find(
      (s: any) => s.phone && String(s.phone).replace(/\D/g, "").slice(-8) === mySplitPhone
   );
   
@@ -126,7 +134,7 @@ export default function SplitPayment() {
             setError(null);
 
             // Count paid contributors
-            const paidCount = (foundOrder.splitPayments || []).filter(
+            const paidCount = getSafeSplitPayments(foundOrder).filter(
               (p: any) => p.status === "paid",
             ).length;
 
@@ -140,7 +148,7 @@ export default function SplitPayment() {
             prevPaidCountRef.current = paidCount;
 
             // Check if fully paid
-            const totalPaid = (foundOrder.splitPayments || [])
+            const totalPaid = getSafeSplitPayments(foundOrder)
               .filter((p: any) => p.status === "paid")
               .reduce(
                 (sum: number, p: any) => sum + (Number(p.amount) || 0),
@@ -522,7 +530,7 @@ export default function SplitPayment() {
             <div className="qatya-v14-topline relative z-10">
               <span className="qatya-v14-live-dot">مباشر</span>
               <span>قطيّة الربع</span>
-              <span>{(order.splitPayments || []).filter((p) => String(p.status || "").toLowerCase() === "paid").length} مساهم</span>
+              <span>{getSafeSplitPayments(order).filter((p) => String(p.status || "").toLowerCase() === "paid").length} مساهم</span>
             </div>
 
             <div className="qatya-council-mini" dir="rtl">
@@ -826,7 +834,7 @@ export default function SplitPayment() {
           </div>
         )}
 
-        {(order.splitPayments || []).filter((p) => String(p.status || "").toLowerCase() === "paid").length >
+        {getSafeSplitPayments(order).filter((p) => String(p.status || "").toLowerCase() === "paid").length >
           0 && (
           <div className="qatya-honor-card qatya-v14-honor qatya-wow-honor bg-white p-5 sm:p-6 rounded-[24px] shadow-sm border border-stone-100 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-brand/5 rounded-full -mr-12 -mt-12 blur-2xl" />
@@ -836,8 +844,7 @@ export default function SplitPayment() {
             </h3>
             <div className="space-y-3 relative z-10">
               <AnimatePresence initial={false}>
-                {order
-                  .splitPayments!.filter((p) => String(p.status || "").toLowerCase() === "paid")
+                {getSafeSplitPayments(order).filter((p) => String(p.status || "").toLowerCase() === "paid")
                   .reverse()
                   .map((p, i) => {
                     // Dynamic gamification text
