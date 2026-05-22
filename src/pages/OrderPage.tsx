@@ -1206,9 +1206,25 @@ export default function OrderPage() {
                 </div>
               </div>
 
+              <div className="order-track-tabs" dir="rtl">
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("order-status-panel")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                >
+                  حالة الطلب
+                </button>
+                <button
+                  type="button"
+                  className="is-primary"
+                  onClick={() => document.getElementById("order-invoice-panel")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                >
+                  الفاتورة والتفاصيل
+                </button>
+              </div>
+
               <div className="flex-1 overflow-y-auto p-0 sm:p-4 space-y-0 sm:space-y-8 no-scrollbar bg-stone-50/50">
                 {/* Story Card & Magical Compass */}
-                <div className="relative sm:rounded-[32px] overflow-hidden min-h-[450px] bg-stone-900 flex flex-col items-center justify-center p-8 shadow-xl">
+                <div id="order-status-panel" className="relative sm:rounded-[32px] overflow-hidden min-h-[450px] bg-stone-900 flex flex-col items-center justify-center p-8 shadow-xl">
                   {/* Story Gradient Background */}
                   <motion.div
                     animate={{
@@ -1817,7 +1833,8 @@ export default function OrderPage() {
                       ease: "easeInOut",
                     },
                   }}
-                  className="track-v15-details-card track-wow-details-card relative bg-white sm:rounded-[32px] mx-0 sm:mx-0 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-20 overflow-hidden mt-6"
+                  id="order-invoice-panel"
+                  className="track-v15-details-card track-wow-details-card relative bg-white sm:rounded-[32px] mx-0 sm:mx-0 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-20 overflow-hidden mt-6 scroll-mt-4"
                 >
                   {/* Receipt zig-zag top edge */}
                   <div

@@ -3861,7 +3861,7 @@ const ChefWhisperCard = ({
             </p>
           </div>
           {!isHorizontal && (
-            <div className="flex items-center pl-2 relative z-10">
+            <div className="orser-product-add-wrap flex items-center justify-center relative z-10">
               <div
                 className={`menu-product-add p-2 sm:p-3 text-white rounded-2xl shadow-lg transition-all hover:scale-110 ${product.isOutOfStock ? "bg-stone-300" : "bg-gradient-to-tr from-accent to-amber-500 shadow-accent/30"}`}
               >
