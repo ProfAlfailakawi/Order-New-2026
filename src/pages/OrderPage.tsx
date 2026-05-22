@@ -1603,6 +1603,11 @@ export default function OrderPage() {
                   </div>
                 </div>
 
+                <div className="order-scroll-cue" dir="rtl">
+                  <span>مرّر للأسفل لعرض تفاصيل الطلب</span>
+                  <span>⌄</span>
+                </div>
+
                 <div className="px-4 sm:px-0">
                   {/* Split Bill UI */}
                   {["traditional", "roulette"].includes((selectedOrder as any).splitType) && (

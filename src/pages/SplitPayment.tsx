@@ -45,6 +45,7 @@ export default function SplitPayment() {
   const [copied, setCopied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localSuccess, setLocalSuccess] = useState(false);
+  const [qatyaTab, setQatyaTab] = useState<"overview" | "payment" | "people">("overview");
   const prevPaidCountRef = useRef(0);
 
   const [contributorName, setContributorName] = useState(() => localStorage.getItem("split_name") || "");
@@ -161,10 +162,14 @@ export default function SplitPayment() {
               triggerConfetti();
             }
           } else {
-            fetchOrder();
+            setError(null);
+            setTimeout(() => fetchOrder(true).finally(() => setLoading(false)), 650);
+            return;
           }
         } else {
-            fetchOrder();
+            setError(null);
+            setTimeout(() => fetchOrder(true).finally(() => setLoading(false)), 650);
+            return;
         }
         setLoading(false);
       },
@@ -253,10 +258,10 @@ export default function SplitPayment() {
           setOrder(data[0]);
           setError(null);
         } else {
-          if (!order) setError("الطلب غير موجود");
+          if (!order && !isSilent) setError("الطلب غير موجود");
         }
       } else {
-         if (!order) setError("الطلب غير موجود");
+         if (!order && !isSilent) setError("الطلب غير موجود");
       }
     } catch (e: any) {
       if (e && e.message && (e.message.includes("Failed to fetch") || e.message.includes("Load failed"))) {
@@ -439,15 +444,9 @@ export default function SplitPayment() {
       dir="rtl"
     >
       {/* Header */}
-      <header className="qatya-ultra-header qatya-wow-header bg-white border-b border-stone-100 p-5 sm:p-6 sticky top-0 z-20 shadow-sm flex flex-col items-center justify-center gap-2 relative">
+      <header className="qatya-ultra-header qatya-wow-header qatya-duplicate-top bg-white border-b border-stone-100 p-5 sm:p-6 sticky top-0 z-20 shadow-sm flex flex-col items-center justify-center gap-2 relative">
         <button 
-          onClick={() => {
-            if (window.history.state && window.history.state.idx > 0) {
-              navigate(-1);
-            } else {
-              navigate("/");
-            }
-          }}
+          onClick={() => navigate("/?checkout=payment")}
           className="absolute left-4 top-4 p-2 text-stone-400 hover:text-brand"
         >
           <ArrowRight className="w-6 h-6" />
@@ -525,7 +524,17 @@ export default function SplitPayment() {
           )}
         </AnimatePresence>
 
-        <div className="qatya-signature-stage qatya-v14-stage">
+        <div className="qatya-tabs" dir="rtl">
+          {[
+            ["overview", "نظرة عامة"],
+            ["payment", "قطيّتك"],
+            ["people", "المشاركون"],
+          ].map(([id,label]) => (
+            <button key={id} type="button" onClick={() => setQatyaTab(id as any)} className={qatyaTab === id ? "active" : ""}>{label}</button>
+          ))}
+        </div>
+
+        {qatyaTab === "overview" && <div className="qatya-signature-stage qatya-v14-stage">
           <div className="qatya-hero-card qatya-v14-hero bg-white p-5 sm:p-6 rounded-[28px] shadow-sm border border-stone-100">
             <div className="qatya-v14-topline relative z-10">
               <span className="qatya-v14-live-dot">مباشر</span>
@@ -609,7 +618,19 @@ export default function SplitPayment() {
               </div>
             </div>
           </div>
-        </div>
+        </div>}
+
+        {qatyaTab === "people" && (
+          <div className="qatya-pay-card bg-white p-5 sm:p-6 rounded-[24px] shadow-sm border border-stone-100 space-y-3">
+            <h3 className="font-black text-brand text-lg">المشاركون</h3>
+            {getSafeSplitPayments(order).length ? getSafeSplitPayments(order).map((person:any, idx:number) => (
+              <div key={idx} className="flex items-center justify-between rounded-2xl bg-stone-50 border border-stone-100 p-3">
+                <span className="font-bold text-stone-700">{person.name || person.phone || `مشارك ${idx+1}`}</span>
+                <strong className={String(person.status || '').toLowerCase() === 'paid' ? 'text-emerald-700' : 'text-stone-400'}>{String(person.status || '').toLowerCase() === 'paid' ? 'دفع' : 'بانتظار'}</strong>
+              </div>
+            )) : <p className="text-sm font-bold text-stone-400">أول مشارك يظهر هنا بعد الدفع.</p>}
+          </div>
+        )}
 
         {isFullyPaid ? (
           <motion.div
@@ -692,7 +713,7 @@ export default function SplitPayment() {
              <h2 className="text-xl font-extrabold mb-1">تمت المساهمة بنجاح!</h2>
              <p className="font-medium text-green-100 text-sm mt-2">يعطيك العافية، جاري تحويلك في ثواني...</p>
           </div>
-        ) : (
+        ) : qatyaTab === "payment" ? (
           <div className="qatya-action-grid qatya-v14-action-grid qatya-wow-action-grid space-y-4">
             <div className="qatya-pay-card qatya-v14-pay-card bg-white p-5 sm:p-6 rounded-[24px] shadow-sm border border-stone-100">
               <div className="qatya-form-heading mb-5">
@@ -832,6 +853,11 @@ export default function SplitPayment() {
               {copied ? "تم النسخ!" : "انسخ الرابط وقطه في قروبكم"}
             </button>
           </div>
+        ) : (
+          <div className="qatya-pay-card bg-white p-5 sm:p-6 rounded-[24px] shadow-sm border border-stone-100 text-center">
+            <p className="font-bold text-stone-500 mb-3">اختر تبويب "قطيّتك" للدفع، أو "المشاركون" لمتابعة من دفع.</p>
+            <button type="button" onClick={() => setQatyaTab("payment")} className="bg-brand text-white rounded-2xl px-5 py-3 font-black">ادفع قطيتك</button>
+          </div>
         )}
 
         {getSafeSplitPayments(order).filter((p) => String(p.status || "").toLowerCase() === "paid").length >
@@ -908,8 +934,7 @@ export default function SplitPayment() {
                   })}
               </AnimatePresence>
             </div>
-          </div>
-        )}
+          </div>)}
       </div>
     </div>
   );

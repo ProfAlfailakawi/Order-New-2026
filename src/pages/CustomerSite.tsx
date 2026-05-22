@@ -1298,6 +1298,30 @@ export default function CustomerSite() {
     }
   }, [searchParams, products, setSearchParams]);
 
+
+  useEffect(() => {
+    const checkoutStep = searchParams.get("checkout");
+    if (checkoutStep !== "payment" || products.length === 0) return;
+    try {
+      const raw = sessionStorage.getItem("orser_checkout_draft");
+      if (raw) {
+        const draft = JSON.parse(raw);
+        if (Array.isArray(draft.cart) && draft.cart.length > 0) setCart(draft.cart);
+        if (draft.customerName) setCustomerName(draft.customerName);
+        if (draft.customerPhone) setCustomerPhone(draft.customerPhone);
+        if (draft.address) setAddress(draft.address);
+      }
+      setCheckoutInitialStep("payment");
+      setIsCheckout(true);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("checkout");
+      setSearchParams(nextParams, { replace: true });
+    } catch (e) {
+      setCheckoutInitialStep("payment");
+      setIsCheckout(true);
+    }
+  }, [searchParams, products.length, setSearchParams]);
+
   const itemsTotal = cart.reduce(
     (sum, item) => sum + calculateItemTotalWithAddons(item),
     0,
@@ -1809,6 +1833,11 @@ export default function CustomerSite() {
 
       // Handle Split Bill Flow
       if (splitMode) {
+        try {
+          sessionStorage.setItem("orser_checkout_draft", JSON.stringify({
+            cart, customerName, customerPhone, address, deliveryFee, checkoutStep: "payment"
+          }));
+        } catch (e) {}
         console.log("Navigating to:", `/split/${newOrderId}`);
         setIsSubmitting(false);
         navigate(`/split/${newOrderId}`);
@@ -2565,7 +2594,7 @@ export default function CustomerSite() {
                   placeholder={currentPlaceholder}
                   value={moodQuery}
                   onChange={(e) => setMoodQuery(e.target.value)}
-                  className="bg-transparent w-full outline-none text-sm font-bold text-brand placeholder:text-stone-400 placeholder:font-medium"
+                  dir="rtl" className="orser-search-input bg-transparent w-full outline-none text-sm font-bold text-brand placeholder:text-stone-400 placeholder:font-medium"
                 />
               </div>
               
@@ -3364,7 +3393,7 @@ export default function CustomerSite() {
         </AnimatePresence>
 
         {/* Smart Cart Bottom Bar */}
-        {cart.length > 0 && !isCheckout && !orderSuccess && (
+        {cart.length > 0 && !isCheckout && !orderSuccess && !selectedProduct && (
           <motion.div
             initial={{ y: 100 }}
             animate={{ y: 0 }}
@@ -3747,7 +3776,7 @@ const ChefWhisperCard = ({
       >
         {/* Front Side */}
         <div
-          className={`menu-product-card relative w-full bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex ${isHorizontal ? "menu-product-card-horizontal flex-col justify-start p-4 pb-3 h-full" : "gap-5 p-5 min-h-[110px] items-center"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-white hover:border-accent/20 hover:shadow-[0_20px_50px_rgba(26,46,34,0.06)] hover:-translate-y-1"} transition-all duration-500 cursor-pointer`}
+          className={`menu-product-card orser-product-card relative w-full bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex ${isHorizontal ? "menu-product-card-horizontal flex-col justify-start p-4 pb-3 h-full" : "orser-product-card-row gap-5 p-5 min-h-[110px] items-center"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-white hover:border-accent/20 hover:shadow-[0_20px_50px_rgba(26,46,34,0.06)] hover:-translate-y-1"} transition-all duration-500 cursor-pointer`}
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
@@ -3796,14 +3825,14 @@ const ChefWhisperCard = ({
                 }
               }}
               alt={product.name}
-              className="menu-product-img w-full h-full object-contain p-1 transform hover:scale-105 transition-transform bg-white relative z-0"
+              className="menu-product-img orser-product-img w-full h-full object-contain p-1 transform hover:scale-105 transition-transform bg-white relative z-0"
             />
           </div>
           <div
             className={`flex flex-col flex-grow ${isHorizontal ? "text-center" : "justify-center"} overflow-hidden relative z-10`}
           >
             <h3
-              className="font-black text-lg sm:text-lg text-brand leading-tight tracking-tight mt-1"
+              className="orser-product-title font-black text-lg sm:text-lg text-brand leading-tight tracking-tight mt-1"
               style={{ wordBreak: "break-word" }}
             >
               {product.name}
