@@ -438,6 +438,9 @@ export default function CustomerSite() {
   const [squadInfo, setSquadInfo] = useState<any>(null);
   const [userSquads, setUserSquads] = useState<any[]>([]);
   const [topSquads, setTopSquads] = useState<any[]>([]);
+  const [pendingGeofenceRequests, setPendingGeofenceRequests] = useState<any[]>([]);
+  const [activeSquads, setActiveSquads] = useState<any[]>([]);
+  const [myGeofenceRequests, setMyGeofenceRequests] = useState<any[]>([]);
   const [showSquadModal, setShowSquadModal] = useState(false);
   const [activeSquadTab, setActiveSquadTab] = useState<"overview"|"leaderboard"|"tiers">("overview");
   const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
@@ -450,6 +453,9 @@ export default function CustomerSite() {
        const data = await res.json();
        setTopSquads(data.topSquads || []);
        setUserSquads(data.userSquads || []);
+       setPendingGeofenceRequests(data.pendingGeofenceRequests || []);
+       setActiveSquads(data.activeSquads || []);
+       setMyGeofenceRequests(data.myGeofenceRequests || []);
        if (data.mySquad || activeSquadId) {
          if (data.myMemberData?.name && data.myMemberData.name !== "عميل") {
             setCustomerName(prev => prev || data.myMemberData.name);
@@ -462,6 +468,136 @@ export default function CustomerSite() {
        }
     } catch(e) {}
   }, [customerPhone, activeSquadId]);
+
+  // Geofencing background states
+  const [radarActiveSquad, setRadarActiveSquad] = useState<any>(null);
+  const [radarDistance, setRadarDistance] = useState<number | null>(null);
+  const [isSendingRadarRequest, setIsSendingRadarRequest] = useState(false);
+  const [radarRequestSent, setRadarRequestSent] = useState(false);
+  const [radarDismissedList, setRadarDismissedList] = useState<string[]>([]);
+
+  // Distance formula using Haversine
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+     const R = 6371e3; // metres
+     const φ1 = lat1 * Math.PI / 180;
+     const φ2 = lat2 * Math.PI / 180;
+     const Δφ = (lat2 - lat1) * Math.PI / 180;
+     const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+     const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+               Math.cos(φ1) * Math.cos(φ2) *
+               Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+     return R * c; // in metres
+  };
+
+  // Watch position with highest accuracy
+  useEffect(() => {
+     if (!navigator.geolocation || activeSquads.length === 0) return;
+
+     let watchId: number | null = null;
+
+     const checkPosition = (position: GeolocationPosition) => {
+       const userLat = position.coords.latitude;
+       const userLng = position.coords.longitude;
+
+       let closestSquad: any = null;
+       let minDistance = Infinity;
+
+       activeSquads.forEach((sq: any) => {
+         if (String(sq.id) === String(activeSquadId)) return;
+         if (radarDismissedList.includes(String(sq.id))) return;
+
+         if (sq.lat !== undefined && sq.lng !== undefined) {
+           const dist = calculateDistance(userLat, userLng, Number(sq.lat), Number(sq.lng));
+           if (dist < minDistance) {
+             minDistance = dist;
+             closestSquad = sq;
+           }
+         }
+       });
+
+       if (closestSquad && minDistance < 100) {
+         setRadarActiveSquad(closestSquad);
+         setRadarDistance(Math.round(minDistance));
+       } else {
+         setRadarActiveSquad(null);
+         setRadarDistance(null);
+       }
+     };
+
+     watchId = navigator.geolocation.watchPosition(
+       checkPosition,
+       (err) => {
+         console.warn("Geofence watchPosition error: ", err);
+       },
+       { enableHighAccuracy: true, timeout: 20000, maximumAge: 10000 }
+     );
+
+     return () => {
+       if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+     };
+  }, [activeSquads, activeSquadId, radarDismissedList]);
+
+  // Polling for approved geofence requests
+  useEffect(() => {
+     let pollInterval: any = null;
+     
+     const hasPending = myGeofenceRequests.some(r => r.status === "pending");
+     if (hasPending) {
+       pollInterval = setInterval(() => {
+         fetchSquadGamification();
+       }, 5000);
+     }
+
+     const approvedReq = myGeofenceRequests.find(r => r.status === "approved" && String(r.squadId) !== String(activeSquadId));
+     if (approvedReq) {
+       localStorage.setItem("squadId", approvedReq.squadId);
+       setActiveSquadId(approvedReq.squadId);
+       fetchSquadGamification();
+       alert(`تم قبولك رسميًا في ديوانية ربعك! 🎉`);
+     }
+
+     return () => {
+       if (pollInterval) clearInterval(pollInterval);
+     };
+  }, [myGeofenceRequests, activeSquadId, fetchSquadGamification]);
+
+  const handleSendRadarRequest = async () => {
+     if (!radarActiveSquad) return;
+     if (!customerPhone) {
+       alert("يرجى إدخال رقم هاتفك وتأكيده أولاً لتتمكن من الانضمام بقروب ربعك!");
+       return;
+     }
+
+     setIsSendingRadarRequest(true);
+     try {
+       const res = await fetch("/api/squad-geofence-join-request", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({
+           name: customerName || "عضو قريب",
+           phone: customerPhone,
+           squadId: radarActiveSquad.id,
+           distance: radarDistance || 0
+         })
+       });
+       if (res.ok) {
+         setRadarRequestSent(true);
+         fetchSquadGamification();
+         setTimeout(() => {
+           setRadarActiveSquad(null);
+           setRadarRequestSent(false);
+         }, 3500);
+       } else {
+         alert("خطأ أثناء إرسال الطلب.");
+       }
+     } catch (e) {
+       alert("خطأ في الاتصال بالسيرفر.");
+     }
+     setIsSendingRadarRequest(false);
+  };
 
   const handleCreateSquad = async () => {
     if (!newSquadName.trim() || !guestPhone.trim()) {
@@ -482,10 +618,14 @@ export default function CustomerSite() {
        if (res.ok) {
           const data = await res.json();
           setCustomerPhone(guestPhone);
+          if (guestName) setCustomerName(guestName);
           localStorage.setItem("customer_phone_track", guestPhone);
+          localStorage.setItem("squadId", data.squad.id.toString());
           setActiveSquadId(data.squad.id.toString());
+          setSquadInfo({ ...data.squad, memberData: { name: guestName || "عميل", phone: guestPhone, isMember: true } });
           setIsCreatingSquad(false);
-          await fetchSquadGamification();
+          setUserSquads((prev) => [data.squad, ...prev.filter((s:any) => String(s.id) !== String(data.squad.id))]);
+          window.setTimeout(fetchSquadGamification, 50);
        }
     } catch(e) {}
     setIsSubmittingSquad(false);
@@ -509,10 +649,16 @@ export default function CustomerSite() {
        });
        if (res.ok) {
           setCustomerPhone(guestPhone);
+          if (guestName) setCustomerName(guestName);
           localStorage.setItem("customer_phone_track", guestPhone);
+          localStorage.setItem("squadId", squadId);
           setActiveSquadId(squadId);
+          if (data.squad) {
+            setSquadInfo({ ...data.squad, memberData: { name: guestName || "عميل", phone: guestPhone, isMember: true } });
+            setUserSquads((prev) => [data.squad, ...prev.filter((s:any) => String(s.id) !== String(data.squad.id))]);
+          }
           setIsJoiningSquad(false);
-          await fetchSquadGamification();
+          window.setTimeout(fetchSquadGamification, 50);
        }
     } catch(e) {}
     setIsSubmittingSquad(false);
@@ -3539,6 +3685,8 @@ export default function CustomerSite() {
                         formatPoints={formatPoints}
                         handleCreateSquad={handleCreateSquad}
                         handleJoinSquad={handleJoinSquad}
+                       pendingGeofenceRequests={pendingGeofenceRequests}
+                       onRefresh={fetchSquadGamification}
                       />
                    </div>
                 </motion.div>
@@ -3612,6 +3760,93 @@ export default function CustomerSite() {
             }}
           />
         ))}
+
+        {/* رادار التراث - إشعار جيو لوكيشن ذكي للديوانيات القريبة */}
+        <AnimatePresence>
+          {radarActiveSquad && (
+            <motion.div
+              initial={{ opacity: 0, y: 150, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 150, scale: 0.9 }}
+              className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-[400px] bg-slate-900 text-white rounded-[32px] p-6 shadow-2xl z-50 border-2 border-amber-500/20 text-right font-sans"
+            >
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="relative flex h-3 w-3 mt-1.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                </div>
+                
+                <div className="flex-1">
+                  <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار التراث الجغرافي 📡</span>
+                  <h4 className="font-black text-base mt-2 flex items-center gap-1.5 justify-end text-amber-100">
+                    أنت في محيط ديوانية! 📍
+                  </h4>
+                </div>
+              </div>
+
+              <p className="text-xs font-bold text-slate-300 leading-relaxed mb-4">
+                يبدو أنك تبعد <span className="text-amber-400 font-black font-mono">{radarDistance} متر</span> فقط عن <span className="text-white font-black">"ديوانية {radarActiveSquad.name}"</span>. 
+                <br />
+                هل تود إرسال طلب انضمام لشيوخ هذه الديوانية؟
+              </p>
+
+              {radarRequestSent ? (
+                <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-4 rounded-2xl text-center text-xs font-black animate-pulse">
+                  تم إرسال الطلب بنجاح! نحن بانتظار موافقة قائد الديوانية الآن... 📡
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setRadarDismissedList(prev => [...prev, String(radarActiveSquad.id)]);
+                      setRadarActiveSquad(null);
+                    }}
+                    className="flex-1 bg-slate-800 hover:bg-slate-700/80 text-slate-400 font-bold text-xs py-3.5 rounded-2xl transition-all"
+                  >
+                    تجاهل ❌
+                  </button>
+                  
+                  <button
+                    onClick={handleSendRadarRequest}
+                    disabled={isSendingRadarRequest}
+                    className="flex-[2] bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs py-3.5 rounded-2xl active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2"
+                  >
+                    {isSendingRadarRequest ? "جاري الإرسال... 🛰️" : "طلب انضمام الآن 📡"}
+                  </button>
+                </div>
+              )}
+
+              {!customerPhone && (
+                <p className="text-[9px] font-bold text-amber-500/50 mt-2 text-center">
+                  سجل دخول برقمك عشان يوصلهم طلبك بأسمك ورقمك!
+                </p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* جاري انتظار القبول من القائد */}
+        <AnimatePresence>
+          {myGeofenceRequests.some(r => r.status === "pending") && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -50 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -50 }}
+              className="fixed top-24 left-6 right-6 md:left-auto md:right-6 md:w-[350px] bg-slate-900/95 text-slate-100 rounded-3xl p-4 shadow-xl z-50 border border-amber-500/20 text-right backdrop-blur-md"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="relative flex h-2.5 w-2.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-black">جاري انتظار قبول القائد للديوانية... 📡</p>
+                  <p className="text-[10px] opacity-75 font-semibold mt-0.5">طلبك قيد المراجعة الفورية بالرادار.</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </>
   );
