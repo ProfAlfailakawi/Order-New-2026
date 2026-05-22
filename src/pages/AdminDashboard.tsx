@@ -42,6 +42,9 @@ import { cn, calculateItemsTotal, getDisplayTotal, normalizeDigits } from "../ut
 import { calculateItemTotalWithAddons } from "../utils/priceCalculation";
 import { NewInvoiceModal } from "../components/NewInvoiceModal";
 
+const sanitizeWhatsAppText = (text: string) =>
+  String(text || "").replace(/[\u{1F000}-\u{1FAFF}]/gu, "").replace(/\uFFFD/g, "");
+
 const DEFAULT_LOYALTY_TIERS = [
   { id: 'bronze', name: 'برونزي', minPoints: 0, maxPoints: 99, icon: '🥉', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-100', badge: 'bg-amber-100 text-amber-700' },
   { id: 'silver', name: 'فضي', minPoints: 100, maxPoints: 499, icon: '🥈', color: 'text-slate-500', bg: 'bg-slate-50', border: 'border-slate-100', badge: 'bg-slate-100 text-slate-500' },
@@ -327,8 +330,8 @@ export default function AdminDashboard() {
 
     const formattedForWhatsApp = `+965${cleaned}`;
 
-    const addressDetails = order.address ? `\n\n📍 العنوان:\nالمنطقة: ${order.address.region}\nقطعة: ${order.address.block}\nشارع: ${order.address.street}\nمنزل: ${order.address.building}` : "";
-    const message = encodeURIComponent(`مرحباً ${order.customerName}، بخصوص طلبك رقم ${order.id}...${addressDetails}`);
+    const addressDetails = order.address ? `\n\n\u2709\uFE0F العنوان:\nالمنطقة: ${order.address.region}\nقطعة: ${order.address.block}\nشارع: ${order.address.street}\nمنزل: ${order.address.building}` : "";
+    const message = encodeURIComponent(sanitizeWhatsAppText(`مرحباً ${order.customerName}، بخصوص طلبك رقم ${order.id}...${addressDetails}`));
     window.open(`https://wa.me/${formattedForWhatsApp}?text=${message}`, "_blank");
   };
 
@@ -1813,7 +1816,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
         {(order.status === "جديد" || order.status?.startsWith("تم الدفع") || order.status === "فشل في عملية الدفع" || order.status === "قيد تجميع القطية") && (
           <div className="p-10 bg-stone-50/50 border-t border-stone-100 flex flex-col gap-6">
             <div className="grid grid-cols-2 gap-8">
-              <a href={`https://wa.me/${order.customerPhone?.replace(/\D/g, "")?.length === 8 ? "965" + order.customerPhone.replace(/\D/g, "") : order.customerPhone?.replace(/\D/g, "")}?text=${encodeURIComponent(`مرحباً ${order.customerName}، بخصوص طلبك رقم ${order.id}...${order.address ? `\n\n📍 العنوان:\nالمنطقة: ${order.address.region}\nقطعة: ${order.address.block}\nشارع: ${order.address.street}\nمنزل: ${order.address.building}` : ""}\n\nرابط مشاركة القطية: ${window.location.origin}/split/${order.id}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-4 bg-white border border-stone-100 text-green-500 p-6 rounded-[32px] font-extrabold uppercase tracking-widest text-xs hover:bg-green-500 hover:text-white transition-all shadow-sm active:scale-95 group"><MessageCircle className="w-7 h-7 group-hover:animate-bounce" />تواصل عبر واتساب</a>
+              <a href={`https://wa.me/${order.customerPhone?.replace(/\D/g, "")?.length === 8 ? "965" + order.customerPhone.replace(/\D/g, "") : order.customerPhone?.replace(/\D/g, "")}?text=${encodeURIComponent(sanitizeWhatsAppText(`مرحباً ${order.customerName}، بخصوص طلبك رقم ${order.id}...${order.address ? `\n\n\u2709\uFE0F العنوان:\nالمنطقة: ${order.address.region}\nقطعة: ${order.address.block}\nشارع: ${order.address.street}\nمنزل: ${order.address.building}` : ""}\n\nرابط مشاركة القطية: ${window.location.origin}/split/${order.id}`))}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-4 bg-white border border-stone-100 text-green-500 p-6 rounded-[32px] font-extrabold uppercase tracking-widest text-xs hover:bg-green-500 hover:text-white transition-all shadow-sm active:scale-95 group"><MessageCircle className="w-7 h-7 group-hover:animate-bounce" />تواصل عبر واتساب</a>
               {(order.status === "جديد" || order.status?.startsWith("تم الدفع")) ? (
                 <MagneticButton onClick={onPay} className="flex items-center justify-center gap-4 gold-gradient text-white p-6 rounded-[32px] font-extrabold uppercase tracking-widest text-xs shadow-xl shadow-accent/20 hover:scale-[1.02] transition-all active:scale-95 group"><CheckCircle2 className="w-7 h-7" />تأكيد استلام المبلغ 💰</MagneticButton>
               ) : (

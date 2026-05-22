@@ -1,36 +1,25 @@
-const icon = (high: number, low: number) => String.fromCharCode(high, low);
-
 // Keep icons as tokens until after encodeURIComponent. This prevents broken
 // environments from converting emojis into replacement characters (�) before
 // WhatsApp receives them.
 const TOKENS = {
-  invoice: '__ALTURATH_INVOICE_ICON__',
-  customer: '__ALTURATH_CUSTOMER_ICON__',
-  location: '__ALTURATH_LOCATION_ICON__',
-  number: '__ALTURATH_NUMBER_ICON__',
-  cart: '__ALTURATH_CART_ICON__',
-  money: '__ALTURATH_MONEY_ICON__',
-  leaf: '__ALTURATH_LEAF_ICON__',
+  sparkles: '__ALTURATH_SPARKLES_ICON__',
+  check: '__ALTURATH_CHECK_ICON__',
+  warning: '__ALTURATH_WARNING_ICON__',
+  mail: '__ALTURATH_MAIL_ICON__',
 };
 
 const ENCODED_ICONS: Record<string, string> = {
-  [TOKENS.invoice]: '%F0%9F%93%8B', // 📋
-  [TOKENS.customer]: '%F0%9F%91%A4', // 👤
-  [TOKENS.location]: '%F0%9F%93%8D', // 📍
-  [TOKENS.number]: '%F0%9F%94%A2', // 🔢
-  [TOKENS.cart]: '%F0%9F%93%A6', // 📦
-  [TOKENS.money]: '%F0%9F%92%B0', // 💰
-  [TOKENS.leaf]: '%F0%9F%8C%BF', // 🌿
+  [TOKENS.sparkles]: '%E2%9C%A8', // ✨
+  [TOKENS.check]: '%E2%9C%85', // ✅
+  [TOKENS.warning]: '%E2%9A%A0%EF%B8%8F', // ⚠️
+  [TOKENS.mail]: '%E2%9C%89%EF%B8%8F', // ✉️
 };
 
 const DISPLAY_ICONS = {
-  invoice: icon(0xD83D, 0xDCCB),
-  customer: icon(0xD83D, 0xDC64),
-  location: icon(0xD83D, 0xDCCD),
-  number: icon(0xD83D, 0xDD22),
-  cart: icon(0xD83D, 0xDCE6),
-  money: icon(0xD83D, 0xDCB0),
-  leaf: icon(0xD83C, 0xDF3F),
+  sparkles: '\u2728',
+  check: '\u2705',
+  warning: '\u26A0\uFE0F',
+  mail: '\u2709\uFE0F',
 };
 
 const toEnglishDigits = (value: any) => String(value ?? '')
@@ -109,7 +98,7 @@ export const buildWhatsAppInvoiceText = (order: any, products: any[] = []) => {
   const addr = getOrderAddress(order);
   const lines: string[] = [];
 
-  lines.push('*فاتورة الطلب*');
+  lines.push(`${DISPLAY_ICONS.sparkles} *فاتورة الطلب*`);
   lines.push('مطبخ التراث الكويتي');
   lines.push('------------------------------');
   lines.push(`*رقم الفاتورة:* ${order?.invoiceId || order?.id || '-'}`);
@@ -161,7 +150,7 @@ export const buildWhatsAppInvoiceText = (order: any, products: any[] = []) => {
   if (discount > 0) lines.push(`الخصم: ${formatKwd(discount)}`);
   lines.push(`*الإجمالي: ${formatKwd(total)}*`);
   lines.push('------------------------------');
-  lines.push('شكراً لاختياركم مطبخ التراث الكويتي');
+  lines.push('شكراً لثقتكم');
   return lines.join('\n');
 };
 
@@ -170,7 +159,7 @@ const buildDisplayWhatsAppText = (order: any, products: any[] = []) => buildWhat
 export const buildWhatsAppPaymentLinkText = (order: any, paymentUrl: string) => {
   const total = getOrderTotal(order, order?.total || 0);
   return [
-    '*رابط الدفع*',
+    `${DISPLAY_ICONS.check} *رابط الدفع*`,
     'مطبخ التراث الكويتي',
     '------------------------------',
     `*رقم الفاتورة:* ${order?.invoiceId || order?.id || '-'}`,
@@ -181,13 +170,13 @@ export const buildWhatsAppPaymentLinkText = (order: any, paymentUrl: string) => 
     paymentUrl,
     '',
     'بعد الدفع راح تتحدث حالة الطلب تلقائياً.',
-    'شكراً لاختياركم مطبخ التراث الكويتي',
+    'شكراً لثقتكم',
   ].join('\n');
 };
 
 export const openWhatsAppInvoiceText = (order: any, products: any[] = []) => {
   const phone = order?.customerPhone || order?.phone || '';
-  const text = encodeURIComponent(buildWhatsAppInvoiceText(order, products));
+  const text = encodeWhatsAppTextWithIcons(buildWhatsAppInvoiceText(order, products));
   let digits = String(phone || '').replace(/\D/g, '');
   if (digits.length === 8) digits = `965${digits}`;
   window.open(`https://wa.me/${digits}?text=${text}`, '_blank');
