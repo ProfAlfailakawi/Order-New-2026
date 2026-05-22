@@ -2340,3 +2340,80 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
   unicode-bidi:plaintext!important;
   letter-spacing:0!important;
 }
+
+/* Mobile customer menu card fix — keeps product image, title, preparation note, price and add button separated. */
+@media (max-width: 640px) {
+  .orser-product-card-row.menu-product-card {
+    display: grid !important;
+    grid-template-columns: 74px minmax(0, 1fr) 56px !important;
+    grid-template-areas: "image content add" !important;
+    align-items: center !important;
+    gap: 12px !important;
+    min-height: 132px !important;
+    padding: 18px 14px !important;
+    overflow: hidden !important;
+  }
+
+  .orser-product-card-row .menu-product-image {
+    grid-area: image !important;
+    width: 74px !important;
+    height: 74px !important;
+    margin: 0 !important;
+    z-index: 1 !important;
+  }
+
+  .orser-product-card-row .orser-product-content {
+    grid-area: content !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
+    text-align: right !important;
+    align-self: stretch !important;
+    justify-content: center !important;
+    gap: 6px !important;
+  }
+
+  .orser-product-card-row .orser-product-title {
+    margin: 0 !important;
+    font-size: 17px !important;
+    line-height: 1.25 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .orser-product-card-row .orser-prep-note {
+    margin-top: 0 !important;
+    max-width: 100% !important;
+    border-radius: 14px !important;
+  }
+
+  .orser-product-card-row .orser-product-content > p {
+    margin-top: 0 !important;
+    align-self: flex-start !important;
+    font-size: 18px !important;
+    line-height: 1.1 !important;
+    padding: 7px 12px !important;
+    border-radius: 999px !important;
+    background: rgba(255,255,255,.88) !important;
+    border: 1px solid rgba(200,148,47,.13) !important;
+    box-shadow: 0 8px 22px rgba(120,53,15,.06) !important;
+  }
+
+  .orser-product-card-row .orser-product-add-wrap {
+    grid-area: add !important;
+    justify-self: center !important;
+    align-self: center !important;
+    width: 56px !important;
+    z-index: 2 !important;
+  }
+
+  .orser-product-card-row .menu-product-add {
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+    min-height: 52px !important;
+    border-radius: 18px !important;
+  }
+}
