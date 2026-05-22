@@ -3809,7 +3809,7 @@ const ChefWhisperCard = ({
           )}
 
           <div
-            className={`menu-product-image relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-stone-50/50 rounded-2xl border border-stone-100/50 shadow-inner ${isHorizontal ? "w-20 h-20 mx-auto mb-2" : "w-16 h-16"}`}
+            className={`menu-product-image orser-product-photo relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-stone-50/50 rounded-2xl border border-stone-100/50 shadow-inner ${isHorizontal ? "w-20 h-20 mx-auto mb-2" : "w-16 h-16"}`}
           >
             {isHot && <SizzlingSteam />}
             <img
@@ -3838,14 +3838,14 @@ const ChefWhisperCard = ({
               {product.name}
             </h3>
             {product.preparationInstructions && (
-              <div className="mt-2 flex items-start gap-1.5 p-1.5 sm:p-2 bg-red-50 border border-red-100/50 rounded-lg shadow-sm">
+              <div className="orser-product-note mt-2 flex items-start gap-1.5 p-1.5 sm:p-2 bg-red-50 border border-red-100/50 rounded-lg shadow-sm">
                 <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
                 <p className="text-[10px] sm:text-[11px] text-red-600 font-extrabold leading-snug line-clamp-2">
                   {product.preparationInstructions}
                 </p>
               </div>
             )}
-            <p className="text-brand text-lg font-black mt-2">
+            <p className="orser-product-price text-brand text-lg font-black mt-2">
               {calculateItemBasePriceWithHiddenAddons({
                 id: "",
                 productId: product.id,

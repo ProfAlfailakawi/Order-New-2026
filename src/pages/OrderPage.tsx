@@ -1204,14 +1204,7 @@ export default function OrderPage() {
                 </div>
               </div>
 
-              <div className="track-story-card" dir="rtl">
-                <div className="track-story-dot" />
-                <div>
-                  <span>قصة الطلب</span>
-                  <strong>{getStatusStory(selectedOrder).title}</strong>
-                  <p>{getStatusStory(selectedOrder).desc}</p>
-                </div>
-              </div>
+              {/* Removed duplicated order story summary per customer request. Status remains inside حالة الطلب tab. */}
 
               <div className="order-track-tabs" dir="rtl">
                 <button
