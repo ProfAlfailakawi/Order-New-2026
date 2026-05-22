@@ -4570,8 +4570,15 @@ function CheckoutOverlay({
   const [regionSearch, setRegionSearch] = useState("");
   const [showRegions, setShowRegions] = useState(false);
   const [step, setStep] = useState<"cart" | "delivery" | "payment">(initialStep);
-  const lastOrderItemsCount = Array.isArray(lastOrderInfo?.items) ? lastOrderInfo.items.length : 0;
-  const lastOrderTotal = Number(lastOrderInfo?.total || lastOrderInfo?.amount || 0);
+  const lastOrderItems = Array.isArray(lastOrderInfo?.items)
+    ? lastOrderInfo.items
+    : Array.isArray(lastOrderInfo?.orderItems)
+      ? lastOrderInfo.orderItems
+      : Array.isArray(lastOrderInfo?.cart)
+        ? lastOrderInfo.cart
+        : [];
+  const lastOrderItemsCount = lastOrderItems.length;
+  const lastOrderTotal = Number(lastOrderInfo?.total || lastOrderInfo?.amount || lastOrderInfo?.totalAmount || 0);
 
   useEffect(() => {
     setStep(initialStep);
@@ -4874,6 +4881,36 @@ function CheckoutOverlay({
                 </div>
                 {customerPhone.length >= 8 && (
                   <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                    {lastOrderInfo && lastOrderItemsCount > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ duration: 0.35, ease: "easeOut" }}
+                        className="smart-return-card smart-return-card-visible"
+                        dir="rtl"
+                      >
+                        <div className="smart-return-glow" />
+                        <div className="smart-return-icon">
+                          <RefreshCcw className={cn("w-5 h-5", isZeroClickLoading && "animate-spin")} />
+                        </div>
+                        <div className="smart-return-copy">
+                          <span>العودة الذكية</span>
+                          <strong>{customerName ? `حيّاك ${customerName}، نجهز نفس طلبك؟` : "لقينا طلبك السابق"}</strong>
+                          <p>
+                            اختصار جاهز من آخر طلب: {lastOrderItemsCount} أصناف
+                            {lastOrderTotal > 0 ? ` · ${lastOrderTotal.toFixed(3)} د.ك تقريباً` : ""}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleZeroClickOrder}
+                          disabled={isZeroClickLoading}
+                          className="smart-return-action"
+                        >
+                          {isZeroClickLoading ? "نجهزه..." : "جهز نفس الطلب"}
+                        </button>
+                      </motion.div>
+                    )}
                     {/* Improved Region Selection with Search */}
                   <div className="space-y-1.5 relative">
                     <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
@@ -5098,37 +5135,6 @@ function CheckoutOverlay({
                         </span>
                       )}
                     </div>
-                  )}
-
-                  {lastOrderInfo && lastOrderItemsCount > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ duration: 0.35, ease: "easeOut" }}
-                      className="smart-return-card"
-                      dir="rtl"
-                    >
-                      <div className="smart-return-glow" />
-                      <div className="smart-return-icon">
-                        <RefreshCcw className={cn("w-5 h-5", isZeroClickLoading && "animate-spin")} />
-                      </div>
-                      <div className="smart-return-copy">
-                        <span>العودة الذكية</span>
-                        <strong>{customerName ? `نفس طلبك يا ${customerName}؟` : "نفس آخر طلب؟"}</strong>
-                        <p>
-                          عرفنا طلبك السابق وجهزنا اختصار محترم: {lastOrderItemsCount} أصناف
-                          {lastOrderTotal > 0 ? ` · ${lastOrderTotal.toFixed(3)} د.ك تقريباً` : ""}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleZeroClickOrder}
-                        disabled={isZeroClickLoading}
-                        className="smart-return-action"
-                      >
-                        {isZeroClickLoading ? "نجهزه..." : "جهز نفس الطلب"}
-                      </button>
-                    </motion.div>
                   )}
 
                   <div className="space-y-1.5">
