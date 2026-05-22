@@ -82,6 +82,15 @@ const getFirstName = (name?: string) => {
   return clean ? clean.split(/\s+/)[0] : "";
 };
 
+const getSafeSplitPayments = (order: any): any[] => {
+  if (!order) return [];
+  const splits = order.splitPayments;
+  if (!splits) return [];
+  if (Array.isArray(splits)) return splits;
+  if (typeof splits === "object") return Object.values(splits);
+  return [];
+};
+
 export default function OrderPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -564,7 +573,7 @@ export default function OrderPage() {
           ? calculateItemsTotal(order.items || [])
           : order.total || 0;
 
-      const totalPaid = ((order as any).splitPayments || [])
+      const totalPaid = getSafeSplitPayments(order)
         .filter((sp: any) => sp.status === "paid")
         .reduce((sum: number, sp: any) => sum + (Number(sp.amount) || 0), 0);
 
@@ -1615,16 +1624,16 @@ export default function OrderPage() {
                           >
                               {processingPayment
                                 ? "جاري التجهيز..."
-                                : ((selectedOrder as any).splitPayments || [])
+                                : getSafeSplitPayments(selectedOrder)
                                     .filter((p: any) => p.status === "paid" || p.status === "SUCCESS")
                                     .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0) > 0
-                                ? `دفع المبلغ المتبقي (${Math.max(0, (selectedOrder.total || 0) - ((selectedOrder as any).splitPayments || []).filter((p: any) => p.status === "paid" || p.status === "SUCCESS").reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0)).toFixed(3)} د.ك)`
+                                ? `دفع المبلغ المتبقي (${Math.max(0, (selectedOrder.total || 0) - getSafeSplitPayments(selectedOrder).filter((p: any) => p.status === "paid" || p.status === "SUCCESS").reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0)).toFixed(3)} د.ك)`
                                 : "غيرت رأيي - دفع الفاتورة بالكامل"}
                           </button>
                         </div>
                       )}
 
-                      {(((selectedOrder as any).splitPayments || []).filter(
+                      {(getSafeSplitPayments(selectedOrder).filter(
                         (p: any) => p.status === "paid" || p.status === "pending"
                       ).length > 0 || ((selectedOrder as any).splitParticipants || []).length > 0) && (
                         <div className="track-v14-social-card track-wow-social-card bg-stone-50 p-4 rounded-2xl border border-stone-100">
@@ -1663,7 +1672,7 @@ export default function OrderPage() {
                               ))
                             ) : (
                               Object.values(
-                                ((selectedOrder as any).splitPayments as any[])
+                                getSafeSplitPayments(selectedOrder)
                                   .filter((p: any) => p.status === "paid" || p.status === "pending")
                                   .reduce((acc: any, p: any) => {
                                     const key = `${p.name}-${p.phone}`;
@@ -1707,7 +1716,7 @@ export default function OrderPage() {
                   )}
                   
                     {/* Split Payment Summary */}
-                    {((selectedOrder as any).splitPayments || []).length > 0 && (selectedOrder as any).splitType !== 'roulette' && (
+                    {getSafeSplitPayments(selectedOrder).length > 0 && (selectedOrder as any).splitType !== 'roulette' && (
                        <div className="track-v14-split-summary bg-brand/5 p-4 rounded-2xl border border-brand/10 mb-4 flex justify-between items-center text-sm">
                           <div className="flex flex-col text-center">
                              <span className="text-[10px] text-stone-500 font-bold mb-0.5">الإجمالي</span>
@@ -1716,13 +1725,13 @@ export default function OrderPage() {
                           <div className="flex flex-col text-center">
                              <span className="text-[10px] text-green-600 font-bold mb-0.5">المدفوع</span>
                              <span className="font-extrabold text-green-700">
-                                {((selectedOrder as any).splitPayments || []).filter((p: any) => p.status === "paid").reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0).toFixed(3)} د.ك
+                                {getSafeSplitPayments(selectedOrder).filter((p: any) => p.status === "paid").reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0).toFixed(3)} د.ك
                              </span>
                           </div>
                           <div className="flex flex-col text-center">
                              <span className="text-[10px] text-amber-600 font-bold mb-0.5">المتبقي</span>
                              <span className="font-extrabold text-amber-700">
-                                {Math.max(0, Number((selectedOrder as any).total) - ((selectedOrder as any).splitPayments || []).filter((p: any) => p.status === "paid").reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0)).toFixed(3)} د.ك
+                                {Math.max(0, Number((selectedOrder as any).total) - getSafeSplitPayments(selectedOrder).filter((p: any) => p.status === "paid").reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0)).toFixed(3)} د.ك
                              </span>
                           </div>
                        </div>

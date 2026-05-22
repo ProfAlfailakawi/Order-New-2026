@@ -14,6 +14,15 @@ const normalizeArabicName = (name: string) => {
     .replace(/[\u064B-\u065F\u0670]/g, "");
 };
 
+const getSafeSplitPayments = (order: any): any[] => {
+  if (!order) return [];
+  const splits = order.splitPayments;
+  if (!splits) return [];
+  if (Array.isArray(splits)) return splits;
+  if (typeof splits === "object") return Object.values(splits);
+  return [];
+};
+
 export function RouletteSplit({
   order,
   handlePay,
@@ -145,7 +154,7 @@ export function RouletteSplit({
   const pulseParticipants = participants.length > 0 ? participants : [{ name: loser || "؟" }];
   const pulseIndex = pulseParticipants.length > 0 ? ((displayIndex % pulseParticipants.length) + pulseParticipants.length) % pulseParticipants.length : 0;
 
-  const totalPaid = (order.splitPayments || [])
+  const totalPaid = getSafeSplitPayments(order)
     .filter((p: any) => p.status === "paid")
     .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
   const isFullyPaid =
