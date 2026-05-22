@@ -197,11 +197,18 @@ export default function OrderPage() {
   const [searchOrderIdInput, setSearchOrderIdInput] = useState("");
   const [orders, setOrders] = useState<TrackedOrder[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<TrackedOrder | null>(null);
+  const [orderDetailsTab, setOrderDetailsTab] = useState<"status" | "invoice">("status");
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const autoOpenedTargetRef = useRef<string | null>(null);
   const [squadInfo, setSquadInfo] = useState<any>(null);
   const [sessionSuccessOrders, setSessionSuccessOrders] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (selectedOrder) {
+      setOrderDetailsTab("status");
+    }
+  }, [selectedOrder?.id]);
 
   useEffect(() => {
     // Initialize success orders from local storage to handle refreshes better
@@ -1209,22 +1216,55 @@ export default function OrderPage() {
               <div className="order-track-tabs" dir="rtl">
                 <button
                   type="button"
-                  onClick={() => document.getElementById("order-status-panel")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                  className={orderDetailsTab === "status" ? "is-primary" : ""}
+                  onClick={() => setOrderDetailsTab("status")}
                 >
                   حالة الطلب
                 </button>
                 <button
                   type="button"
-                  className="is-primary"
-                  onClick={() => document.getElementById("order-invoice-panel")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                  className={orderDetailsTab === "invoice" ? "is-primary" : ""}
+                  onClick={() => setOrderDetailsTab("invoice")}
                 >
                   الفاتورة والتفاصيل
                 </button>
               </div>
 
               <div className="flex-1 overflow-y-auto p-0 sm:p-4 space-y-0 sm:space-y-8 no-scrollbar bg-stone-50/50">
-                {/* Story Card & Magical Compass */}
-                <div id="order-status-panel" className="relative sm:rounded-[32px] overflow-hidden min-h-[450px] bg-stone-900 flex flex-col items-center justify-center p-8 shadow-xl">
+                {orderDetailsTab === "status" && (
+                  <div className="order-status-tab-panel">
+                    {(getStatusDisplay(selectedOrder).text === "بانتظار الدفع" ||
+                      getStatusDisplay(selectedOrder).text === "فشل في عملية الدفع") && (
+                      <div className="order-status-pay-card" dir="rtl">
+                        <div>
+                          <span>خطوة الدفع</span>
+                          <strong>{newPaymentLink ? "رابط الدفع جاهز" : getStatusDisplay(selectedOrder).text === "فشل في عملية الدفع" ? "جرّب الدفع مرة ثانية" : "كمّل الدفع لاعتماد الطلب"}</strong>
+                          <p>مكان واضح قبل التتبع حتى ما يضيع العميل بين التفاصيل.</p>
+                        </div>
+                        {newPaymentLink ? (
+                          <button
+                            onClick={() => {
+                              redirectToPayment(newPaymentLink);
+                              setTimeout(() => setNewPaymentLink(""), 1000);
+                            }}
+                            className="order-status-pay-btn"
+                          >
+                            استكمال الدفع
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleRepay(selectedOrder as any)}
+                            disabled={processingPayment}
+                            className="order-status-pay-btn disabled:opacity-50"
+                          >
+                            {processingPayment ? "جاري التجهيز..." : getStatusDisplay(selectedOrder).text === "فشل في عملية الدفع" ? "الدفع مرة أخرى" : "ادفع الآن"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Story Card & Magical Compass */}
+                    <div id="order-status-panel" className="relative sm:rounded-[32px] overflow-hidden min-h-[450px] bg-stone-900 flex flex-col items-center justify-center p-8 shadow-xl">
                   {/* Story Gradient Background */}
                   <motion.div
                     animate={{
@@ -1617,14 +1657,12 @@ export default function OrderPage() {
                             : "استلمنا طلبك، بانتظار الدفع عشان نبلش التجهيز."}
                     </motion.p>
                   </div>
-                </div>
+                    </div>
+                  </div>
+                )}
 
-                <div className="order-scroll-cue" dir="rtl">
-                  <span>مرّر للأسفل لعرض تفاصيل الطلب</span>
-                  <span>⌄</span>
-                </div>
-
-                <div className="px-4 sm:px-0">
+                {orderDetailsTab === "invoice" && (
+                <div className="px-4 sm:px-0 order-invoice-tab-panel">
                   {/* Split Bill UI */}
                   {["traditional", "roulette"].includes((selectedOrder as any).splitType) && (
                     <div className="space-y-4 mb-4">
@@ -1758,30 +1796,6 @@ export default function OrderPage() {
                        </div>
                     )}
 
-                  {/* Payment Re-send */}
-                  {(getStatusDisplay(selectedOrder).text === "بانتظار الدفع" ||
-                    getStatusDisplay(selectedOrder).text ===
-                      "فشل في عملية الدفع") &&
-                    (newPaymentLink ? (
-                      <button
-                        onClick={() => {
-                          redirectToPayment(newPaymentLink);
-                          setTimeout(() => setNewPaymentLink(""), 1000);
-                        }}
-                        className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl bg-accent text-white font-extrabold text-sm hover:bg-orange-600 transition-all shadow-md outline-none mb-4"
-                      >
-                        اضغط هنا لاستكمال الدفع
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleRepay(selectedOrder as any)}
-                        disabled={processingPayment}
-                        className="block w-full text-center p-4 rounded-2xl bg-brand text-white font-extrabold text-sm hover:opacity-90 transition-all shadow-md outline-none disabled:opacity-50 mb-4"
-                      >
-                        {processingPayment ? "جاري التجهيز..." : "ادفع الآن"}
-                      </button>
-                    ))}
-
                   {/* WhatsApp Share for Paid Orders */}
                   {getStatusDisplay(selectedOrder).text.startsWith(
                     "تم الدفع",
@@ -1812,7 +1826,6 @@ export default function OrderPage() {
                     </div>
                     </>
                   )}
-                </div>
 
                 {/* Unrolling Receipt Effect Container for Order Details */}
                 <motion.div
@@ -2055,6 +2068,8 @@ export default function OrderPage() {
                     </div>
                   </div>
                 </motion.div>
+              </div>
+                )}
               </div>
             </motion.div>
           </div>
