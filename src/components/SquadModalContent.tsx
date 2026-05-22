@@ -53,6 +53,7 @@ interface SquadModalContentProps {
   handleJoinSquad: (id: string) => void;
   pendingGeofenceRequests?: any[];
   onRefresh?: () => void;
+  userSquads?: any[];
 }
 
 export const SquadModalContent: React.FC<SquadModalContentProps> = ({
@@ -89,6 +90,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   handleJoinSquad,
   pendingGeofenceRequests = [],
   onRefresh,
+  userSquads = [],
 }) => {
   const [copied, setCopied] = React.useState(false);
   const isCurrentMember = squadInfo?.memberData?.isMember !== false && Boolean(squadInfo?.memberData?.phone || customerPhone);
@@ -97,6 +99,30 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const [isRegisteringGeo, setIsRegisteringGeo] = React.useState(false);
   const [geoStatusMsg, setGeoStatusMsg] = React.useState("");
   const [isApproving, setIsApproving] = React.useState<Record<string, boolean>>({});
+  const [manualInput, setManualInput] = React.useState("");
+  const [showManualInput, setShowManualInput] = React.useState(false);
+
+  const parseGoogleMapsInput = (input: string) => {
+    // Regex for decimal coordinates: lat, lng
+    const coordReg = /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/;
+    const match = input.match(coordReg);
+    if (match) {
+      return { lat: Number(match[1]), lng: Number(match[2]) };
+    }
+    
+    // Regex for URLs containing coords
+    const urlMatch = input.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (urlMatch) {
+      return { lat: Number(urlMatch[1]), lng: Number(urlMatch[2]) };
+    }
+
+    // Try finding search coordinates with "q=lat,lng"
+    const qMatch = input.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (qMatch) {
+      return { lat: Number(qMatch[1]), lng: Number(qMatch[2]) };
+    }
+    return null;
+  };
 
   const cleanPhoneLocal = (ph: string): string => {
     if (!ph) return "";
@@ -108,6 +134,45 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   };
 
   const isOwner = squadInfo?.phone && customerPhone && (cleanPhoneLocal(squadInfo.phone) === cleanPhoneLocal(customerPhone));
+
+  const handleManualLocationSubmit = async () => {
+    if (!manualInput.trim()) {
+      alert("الرجاء إدخال الإحداثيات أو رابط خرائط جوجل أولاً!");
+      return;
+    }
+    
+    const coords = parseGoogleMapsInput(manualInput);
+    if (!coords) {
+      alert("لم نتمكن من استخراج الإحداثيات. تأكد من إدخالها بالشكل الصحيح (مثال: 29.3759, 47.9774) أو لصق رابط خرائط جوجل صحيح.");
+      return;
+    }
+
+    setIsRegisteringGeo(true);
+    setGeoStatusMsg("جاري حفظ الموقع يدوياً... 💾");
+    try {
+      const res = await fetch("/api/squad-set-location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          squadId: squadInfo.id,
+          phone: customerPhone,
+          lat: coords.lat,
+          lng: coords.lng
+        })
+      });
+      if (res.ok) {
+        setGeoStatusMsg("تم تسجيل موقع الديوانية الجغرافي بنجاح! 🎉");
+        setManualInput("");
+        setShowManualInput(false);
+        if (onRefresh) onRefresh();
+      } else {
+        setGeoStatusMsg("فشل التسجيل يدوياً. يرجى المحاولة لاحقاً.");
+      }
+    } catch (e) {
+      setGeoStatusMsg("خطأ اتصال أثناء حفظ الموقع.");
+    }
+    setIsRegisteringGeo(false);
+  };
 
   const handleRegisterLocation = () => {
     if (!navigator.geolocation) {
@@ -144,7 +209,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       },
       (error) => {
         setIsRegisteringGeo(false);
-        setGeoStatusMsg("فشل الوصول إلى الـ GPS. تأكد من تفعيل الموقع في المتصفح وصلاحيات الـ GPS.");
+        setGeoStatusMsg("❌ فشل الوصول إلى الـ GPS. تأكد من تفعيل صلاحيات الموقع بالمتصفح. 💡 تنويه: إذا تفحص التطبيق داخل المعاينة (iFrame)، يرجى فتحه بجانب نافذة جديدة/مستقلة لتفعيل الـ GPS، أو استخدام خيار الإدخال اليدوي للإحداثيات بالأسفل.");
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
@@ -381,6 +446,97 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 );
               })()}
             </div>
+          )}
+
+          {/* My Diwaniyas Panel with Switcher and Role Indicators */}
+          {customerPhone && userSquads && userSquads.length > 0 && (
+             <div className="flex flex-col gap-3 bg-stone-100/55 p-5 rounded-[28px] border border-stone-200/50 text-right font-sans">
+                <div className="flex items-center justify-between border-b border-stone-200/50 pb-2">
+                   <span className="text-[10px] font-black bg-stone-200 text-stone-600 px-2 py-0.5 rounded-full">{userSquads.length} مسجلة</span>
+                   <h4 className="text-xs font-black text-brand uppercase tracking-widest flex items-center gap-1.5 justify-end">
+                      إدارتي للدواوين والتنقل بينها 🛖
+                   </h4>
+                </div>
+                
+                <div className="space-y-2 mt-1">
+                   {userSquads.map((sq: any) => {
+                      const isActive = String(squadInfo?.id) === String(sq.id);
+                      const isOwnerOfSq = sq.phone && (cleanPhoneLocal(sq.phone) === cleanPhoneLocal(customerPhone));
+                      
+                      return (
+                         <div 
+                            key={sq.id} 
+                            className={cn(
+                               "p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-2.5",
+                               isActive 
+                                 ? "bg-white border-accent shadow-sm" 
+                                 : "bg-white/80 hover:bg-white border-stone-100"
+                            )}
+                         >
+                            <div className="flex items-center gap-3 shrink-0">
+                               <button 
+                                  onClick={() => {
+                                     if (!isActive) {
+                                        setActiveSquadId(sq.id);
+                                        if (onRefresh) onRefresh();
+                                     }
+                                  }}
+                                  disabled={isActive}
+                                  className={cn(
+                                     "text-[10px] font-black px-3.5 py-2 rounded-xl transition-all shadow-sm shrink-0",
+                                     isActive 
+                                       ? "bg-accent/10 text-accent font-black border border-accent/20 cursor-default" 
+                                       : "bg-brand text-white hover:bg-accent hover:shadow-md active:scale-95"
+                                  )}
+                               >
+                                  {isActive ? "✨ مفعلة حالياً" : "✈️ تنظيم ودخول"}
+                               </button>
+                            </div>
+
+                            <div className="flex flex-col text-right">
+                               <div className="flex items-center gap-1.5 justify-end">
+                                  {isOwnerOfSq ? (
+                                     <span className="text-[8px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-sm">
+                                        👑 مؤسس وصاحبها
+                                     </span>
+                                  ) : (
+                                     <span className="text-[8px] font-black bg-stone-500 text-white px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-sm">
+                                        👥 عضو بالديوانية
+                                     </span>
+                                  )}
+                                  <span className="text-sm font-black text-brand leading-none">
+                                     ديوانية {sq.name}
+                                  </span>
+                               </div>
+                               <span className="text-[9px] font-bold text-stone-400 mt-1.5">
+                                  {sq.lat !== undefined ? `📍 موقع GPS: معرّف ومفعّل` : `⚠️ موقع غير مسجل بالخريطة`}
+                                </span>
+                            </div>
+                         </div>
+                      );
+                   })}
+                </div>
+
+                {/* Logout of Phone Account Button */}
+                <div className="pt-2 border-t border-stone-200/50 flex items-center justify-between mt-1 text-[10px]">
+                   <button 
+                      onClick={() => {
+                         if (confirm("هل تبي تسجل خروج بالكامل ومسح رقم هاتفك الحالي من هذا الجهاز؟ يمكنك دائماً الدخول مجدداً.")) {
+                            setCustomerPhone("");
+                            setCustomerName("");
+                            setActiveSquadId(null);
+                            if (onRefresh) onRefresh();
+                         }
+                      }}
+                      className="text-[10px] text-right font-black text-rose-500 hover:text-rose-600 transition-colors flex items-center gap-1 justify-end"
+                   >
+                      🚫 تسجيل الخروج من رقم الهاتف الحالي
+                   </button>
+                   <span className="text-[9px] font-bold text-stone-400 font-mono">
+                      {customerPhone}
+                   </span>
+                </div>
+             </div>
           )}
 
           {isCreatingSquad && (
@@ -688,6 +844,39 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       >
                         {isRegisteringGeo ? "جاري رصد إحداثيات GPS... 🛰️" : (squadInfo.lat !== undefined ? "📍 إعادة تعيين موقع الديوانية الحالي" : "📍 تعيين موقع الديوانية الجغرافي الحالي")}
                       </button>
+
+                      <div className="pt-2 border-t border-stone-50 space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowManualInput(!showManualInput)}
+                          className="w-full text-[11px] font-black text-stone-500 hover:text-accent transition-colors flex items-center justify-center gap-1"
+                        >
+                          {showManualInput ? "إخفاء الخيار اليدوي ✖️" : "أو إدخال الموقع يدويًا (إحداثيات أو خرائط جوجل) 📍"}
+                        </button>
+
+                        {showManualInput && (
+                          <div className="space-y-2 bg-stone-50 p-3.5 rounded-2xl border border-stone-100">
+                            <label className="text-[10px] font-black text-stone-600 block text-right">
+                              ألصق رابط الموقع من خرائط جوجل أو الإحداثيات مباشرة:
+                            </label>
+                            <input
+                              type="text"
+                              value={manualInput}
+                              onChange={(e) => setManualInput(e.target.value)}
+                              placeholder="مثال: 29.3759, 47.9774 أو رابط خرائط جوجل"
+                              className="w-full bg-white border border-stone-200 rounded-xl p-2.5 text-xs text-brand text-right focus:border-accent outline-none placeholder:text-stone-300 font-medium"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleManualLocationSubmit}
+                              disabled={isRegisteringGeo}
+                              className="w-full bg-accent hover:bg-accent/90 text-white font-black text-[10px] py-2 rounded-xl active:scale-95 transition-all text-center"
+                            >
+                              حفظ الإحداثيات يدويًا 💾
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
                       {geoStatusMsg && (
                         <p className="text-[10px] font-black text-center text-accent animate-pulse">

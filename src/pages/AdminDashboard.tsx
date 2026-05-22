@@ -889,8 +889,70 @@ export default function AdminDashboard() {
                     />
                   </div>
                </div>
-            </div>
-          )}
+
+               {/* Diwaniya Geofencing Radar Settings */}
+               <div id="radar-geofence-card" className="bg-white rounded-[40px] border border-stone-100 shadow-sm p-10 space-y-8 mt-8 text-right">
+                 <div>
+                   <h2 className="text-xl font-black text-brand mb-1 font-sans">تحديد مدى الرادار الجغرافي للدواوين 📍</h2>
+                    <p className="text-stone-400 text-xs font-medium font-sans">الحد الأقصى للمسافة (بالمتر) لرصد العملاء وتنبيههم وإيصال إشعارات انضمام لهم تلقائياً.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <div className="space-y-3 font-sans">
+                      <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-2">المدى بالمتر (مثال: 100)</label>
+                      <input 
+                        id="radar-geofence-distance-input"
+                        type="number"
+                        value={settings.squadGeofenceDistance !== undefined ? settings.squadGeofenceDistance : 100}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setSettings({
+                            ...settings,
+                            squadGeofenceDistance: val
+                          });
+                        }}
+                        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-black text-brand text-right text-lg"
+                        placeholder="100"
+                        min={10}
+                        max={5000}
+                      />
+                    </div>
+                    <div className="space-y-2 bg-slate-50 border border-slate-100 p-6 rounded-3xl text-right font-sans">
+                      <span className="text-[10px] font-black bg-slate-200 text-slate-700 px-2 py-0.5 rounded-md font-mono">تنويه تقني 💡</span>
+                      <p className="text-[11px] font-bold text-slate-600 leading-relaxed">
+                        مرات يغير الأدمن هذه الإعدادات حسب حجم الحدث أو التباعد بجانب بعضهم. القيمة الاعتيادية هي <strong className="text-brand">100 متر</strong>.
+                        العملاء رح يحصلون على إخطار بالرادار مباشرة عند الدخول في هذا المدى المحدد من أي ديوانية مسجلة بالـ GPS.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button 
+                    id="save-radar-geofence-btn"
+                    onClick={async () => {
+                      const dist = Number(settings.squadGeofenceDistance || 100);
+                      try {
+                        const res = await fetch("/api/admin/settings/squadGeofenceDistance", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ distance: dist })
+                        });
+                        if (res.ok) {
+                          alert("تم حفظ مدى الرادار الجغرافي بنجاح! 🎯");
+                        } else {
+                          alert("فشل الحفظ. حاول مرة أخرى.");
+                        }
+                      } catch (e) {
+                        console.error(e);
+                        alert("خطأ أثناء حفظ مدى الرادار.");
+                      }
+                    }}
+                    className="w-full py-5 bg-brand text-white rounded-[24px] font-black shadow-xl hover:shadow-brand/20 transition-all flex items-center justify-center gap-3 active:scale-[0.98] font-sans"
+                  >
+                    🚀 حفظ مدى الرادار الجغرافي
+                  </button>
+                </div>
+              </div>
+           )}
 
           {activeTab === "loyalty" && (
             <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700">

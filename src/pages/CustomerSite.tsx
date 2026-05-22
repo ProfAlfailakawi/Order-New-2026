@@ -470,11 +470,21 @@ export default function CustomerSite() {
   }, [customerPhone, activeSquadId]);
 
   // Geofencing background states
-  const [radarActiveSquad, setRadarActiveSquad] = useState<any>(null);
-  const [radarDistance, setRadarDistance] = useState<number | null>(null);
-  const [isSendingRadarRequest, setIsSendingRadarRequest] = useState(false);
-  const [radarRequestSent, setRadarRequestSent] = useState(false);
-  const [radarDismissedList, setRadarDismissedList] = useState<string[]>([]);
+  const [radarNearbySquads, setRadarNearbySquads] = useState<any[]>([]);
+  const [radarLoadingMap, setRadarLoadingMap] = useState<Record<string, boolean>>({});
+  const [radarSuccessMap, setRadarSuccessMap] = useState<Record<string, boolean>>({});
+  const [radarDismissedList, setRadarDismissedList] = useState<string[]>(() => {
+     try {
+       return JSON.parse(localStorage.getItem("radar_dismissed_squads") || "[]");
+     } catch(e) {
+       return [];
+     }
+  });
+
+  // Save dismissed array
+  useEffect(() => {
+     localStorage.setItem("radar_dismissed_squads", JSON.stringify(radarDismissedList));
+  }, [radarDismissedList]);
 
   // Distance formula using Haversine
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -502,29 +512,34 @@ export default function CustomerSite() {
        const userLat = position.coords.latitude;
        const userLng = position.coords.longitude;
 
-       let closestSquad: any = null;
-       let minDistance = Infinity;
+       const nearby: any[] = [];
 
        activeSquads.forEach((sq: any) => {
          if (String(sq.id) === String(activeSquadId)) return;
          if (radarDismissedList.includes(String(sq.id))) return;
 
+         // If already requested and wait response, skip!
+         const isAlreadyMember = userSquads.some((us: any) => String(us.id) === String(sq.id));
+         if (isAlreadyMember) return;
+
+         const hasReq = myGeofenceRequests.some((r: any) => String(r.squadId) === String(sq.id));
+         if (hasReq) return;
+
          if (sq.lat !== undefined && sq.lng !== undefined) {
            const dist = calculateDistance(userLat, userLng, Number(sq.lat), Number(sq.lng));
-           if (dist < minDistance) {
-             minDistance = dist;
-             closestSquad = sq;
+           const geofenceLimit = Number(settings?.squadGeofenceDistance || 100);
+           if (dist < geofenceLimit) {
+             nearby.push({
+               ...sq,
+               distance: Math.round(dist)
+             });
            }
          }
        });
 
-       if (closestSquad && minDistance < 100) {
-         setRadarActiveSquad(closestSquad);
-         setRadarDistance(Math.round(minDistance));
-       } else {
-         setRadarActiveSquad(null);
-         setRadarDistance(null);
-       }
+       // Sort by distance
+       nearby.sort((a, b) => a.distance - b.distance);
+       setRadarNearbySquads(nearby);
      };
 
      watchId = navigator.geolocation.watchPosition(
@@ -532,13 +547,13 @@ export default function CustomerSite() {
        (err) => {
          console.warn("Geofence watchPosition error: ", err);
        },
-       { enableHighAccuracy: true, timeout: 20000, maximumAge: 10000 }
+       { enableHighAccuracy: true, timeout: 20050, maximumAge: 10000 }
      );
 
      return () => {
        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
      };
-  }, [activeSquads, activeSquadId, radarDismissedList]);
+  }, [activeSquads, activeSquadId, radarDismissedList, myGeofenceRequests, settings, userSquads]);
 
   // Polling for approved geofence requests
   useEffect(() => {
@@ -564,14 +579,14 @@ export default function CustomerSite() {
      };
   }, [myGeofenceRequests, activeSquadId, fetchSquadGamification]);
 
-  const handleSendRadarRequest = async () => {
-     if (!radarActiveSquad) return;
+  const handleSendRadarRequest = async (targetSquad: any) => {
+     if (!targetSquad) return;
      if (!customerPhone) {
        alert("يرجى إدخال رقم هاتفك وتأكيده أولاً لتتمكن من الانضمام بقروب ربعك!");
        return;
      }
 
-     setIsSendingRadarRequest(true);
+     setRadarLoadingMap(prev => ({ ...prev, [targetSquad.id]: true }));
      try {
        const res = await fetch("/api/squad-geofence-join-request", {
          method: "POST",
@@ -579,24 +594,26 @@ export default function CustomerSite() {
          body: JSON.stringify({
            name: customerName || "عضو قريب",
            phone: customerPhone,
-           squadId: radarActiveSquad.id,
-           distance: radarDistance || 0
+           squadId: targetSquad.id,
+           distance: targetSquad.distance || 0
          })
        });
        if (res.ok) {
-         setRadarRequestSent(true);
+         setRadarSuccessMap(prev => ({ ...prev, [targetSquad.id]: true }));
          fetchSquadGamification();
+         
+         // After showing validation, dismiss from layout beautifully
          setTimeout(() => {
-           setRadarActiveSquad(null);
-           setRadarRequestSent(false);
-         }, 3500);
+           setRadarDismissedList(prev => [...prev, String(targetSquad.id)]);
+           setRadarNearbySquads(prev => prev.filter(s => String(s.id) !== String(targetSquad.id)));
+         }, 3000);
        } else {
          alert("خطأ أثناء إرسال الطلب.");
        }
      } catch (e) {
        alert("خطأ في الاتصال بالسيرفر.");
      }
-     setIsSendingRadarRequest(false);
+     setRadarLoadingMap(prev => ({ ...prev, [targetSquad.id]: false }));
   };
 
   const handleCreateSquad = async () => {
@@ -653,9 +670,9 @@ export default function CustomerSite() {
           localStorage.setItem("customer_phone_track", guestPhone);
           localStorage.setItem("squadId", squadId);
           setActiveSquadId(squadId);
-          if (data.squad) {
-            setSquadInfo({ ...data.squad, memberData: { name: guestName || "عميل", phone: guestPhone, isMember: true } });
-            setUserSquads((prev) => [data.squad, ...prev.filter((s:any) => String(s.id) !== String(data.squad.id))]);
+          if (false) {
+            setSquadInfo({} as any);
+            setUserSquads((prev) => prev);
           }
           setIsJoiningSquad(false);
           window.setTimeout(fetchSquadGamification, 50);
@@ -3656,6 +3673,7 @@ export default function CustomerSite() {
                       <SquadModalContent 
                         activeSquadTab={activeSquadTab}
                         squadInfo={squadInfo}
+                        userSquads={userSquads}
                         SQUAD_TIERS={SQUAD_TIERS}
                         getSquadTier={getSquadTier}
                         topSquads={topSquads}
@@ -3763,14 +3781,14 @@ export default function CustomerSite() {
 
         {/* رادار التراث - إشعار جيو لوكيشن ذكي للديوانيات القريبة */}
         <AnimatePresence>
-          {radarActiveSquad && (
+          {radarNearbySquads.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 150, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 150, scale: 0.9 }}
-              className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-[400px] bg-slate-900 text-white rounded-[32px] p-6 shadow-2xl z-50 border-2 border-amber-500/20 text-right font-sans"
+              className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-[400px] max-h-[400px] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-6 shadow-2xl z-50 border-2 border-amber-500/20 text-right font-sans space-y-4"
             >
-              <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-3">
                 <div className="relative flex h-3 w-3 mt-1.5 shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
@@ -3778,46 +3796,65 @@ export default function CustomerSite() {
                 
                 <div className="flex-1">
                   <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار التراث الجغرافي 📡</span>
-                  <h4 className="font-black text-base mt-2 flex items-center gap-1.5 justify-end text-amber-100">
-                    أنت في محيط ديوانية! 📍
+                  <h4 className="font-black text-sm mt-2 text-amber-100">
+                    رصد ديوانيات الربع حولك! 📍
                   </h4>
                 </div>
               </div>
 
-              <p className="text-xs font-bold text-slate-300 leading-relaxed mb-4">
-                يبدو أنك تبعد <span className="text-amber-400 font-black font-mono">{radarDistance} متر</span> فقط عن <span className="text-white font-black">"ديوانية {radarActiveSquad.name}"</span>. 
-                <br />
-                هل تود إرسال طلب انضمام لشيوخ هذه الديوانية؟
+              <p className="text-[11px] font-bold text-slate-300 leading-normal">
+                تم كشف ديوانيات قريبة جداً من موقعك الحالي. أرسل طلب انضمام فوري أو تجاهل:
               </p>
 
-              {radarRequestSent ? (
-                <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-4 rounded-2xl text-center text-xs font-black animate-pulse">
-                  تم إرسال الطلب بنجاح! نحن بانتظار موافقة قائد الديوانية الآن... 📡
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setRadarDismissedList(prev => [...prev, String(radarActiveSquad.id)]);
-                      setRadarActiveSquad(null);
-                    }}
-                    className="flex-1 bg-slate-800 hover:bg-slate-700/80 text-slate-400 font-bold text-xs py-3.5 rounded-2xl transition-all"
-                  >
-                    تجاهل ❌
-                  </button>
-                  
-                  <button
-                    onClick={handleSendRadarRequest}
-                    disabled={isSendingRadarRequest}
-                    className="flex-[2] bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs py-3.5 rounded-2xl active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2"
-                  >
-                    {isSendingRadarRequest ? "جاري الإرسال... 🛰️" : "طلب انضمام الآن 📡"}
-                  </button>
-                </div>
-              )}
+              <div className="space-y-3">
+                {radarNearbySquads.map((sq: any) => {
+                  const isLoading = radarLoadingMap[sq.id];
+                  const isSuccess = radarSuccessMap[sq.id];
+
+                  return (
+                    <div 
+                      key={sq.id} 
+                      className="p-3 bg-slate-800 rounded-2xl border border-slate-700/50 flex flex-col gap-2 transition-all hover:bg-slate-800/90"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-500/10 px-2 py-0.5 rounded-lg font-mono">
+                          تبعد {sq.distance}م 📍
+                        </span>
+                        <span className="text-xs font-black text-white">ديوانية {sq.name}</span>
+                      </div>
+
+                      {isSuccess ? (
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-1.5 px-3 rounded-xl text-[10px] font-black text-center animate-pulse">
+                          تم إرسال طلب الانضمام! بانتظار موافقة القائد 📡
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 justify-end mt-1">
+                          <button
+                            onClick={() => {
+                              setRadarDismissedList(prev => [...prev, String(sq.id)]);
+                              setRadarNearbySquads(prev => prev.filter(s => String(s.id) !== String(sq.id)));
+                            }}
+                            className="bg-slate-700 hover:bg-slate-650 text-slate-305 font-bold text-[10px] py-1.5 px-3 rounded-xl transition-all"
+                          >
+                            تجاهل ❌
+                          </button>
+                          
+                          <button
+                            onClick={() => handleSendRadarRequest(sq)}
+                            disabled={isLoading}
+                            className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
+                          >
+                            {isLoading ? "جاري الإرسال..." : "طلب انضمام 📡"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
 
               {!customerPhone && (
-                <p className="text-[9px] font-bold text-amber-500/50 mt-2 text-center">
+                <p className="text-[9px] font-bold text-amber-500/50 text-center pt-2">
                   سجل دخول برقمك عشان يوصلهم طلبك بأسمك ورقمك!
                 </p>
               )}
