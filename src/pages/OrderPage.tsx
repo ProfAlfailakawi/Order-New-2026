@@ -77,6 +77,11 @@ const formatOrderWords = (count: number) => {
   return `${count} طلب`;
 };
 
+const getFirstName = (name?: string) => {
+  const clean = String(name || "").trim();
+  return clean ? clean.split(/\s+/)[0] : "";
+};
+
 export default function OrderPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -532,6 +537,11 @@ export default function OrderPage() {
     return order.total || 0;
   };
 
+  const lastReorderableOrder = orders.find(
+    (order: any) => Array.isArray(order.items) && order.items.length > 0,
+  );
+  const trackedCustomerName = getFirstName(orders[0]?.customerName);
+
   const [processingPayment, setProcessingPayment] = useState(false);
   const [newPaymentLink, setNewPaymentLink] = useState("");
 
@@ -950,6 +960,41 @@ export default function OrderPage() {
                   </div>
                 </div>
               </div>
+
+              {lastReorderableOrder && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                  className="smart-return-card"
+                  dir="rtl"
+                >
+                  <div className="smart-return-glow" />
+                  <div className="smart-return-icon">
+                    <RefreshCcw className="w-5 h-5" />
+                  </div>
+                  <div className="smart-return-copy">
+                    <strong>
+                      {trackedCustomerName
+                        ? `حيّاك ${trackedCustomerName}، نجهز نفس طلبك اللي فات؟`
+                        : "حيّاك، نجهز نفس طلبك اللي فات؟"}
+                    </strong>
+                    <p>
+                      لقينا آخر طلب لك: {(lastReorderableOrder.items || []).length} أصناف
+                      {Number(getDisplayTotal(lastReorderableOrder) || 0) > 0
+                        ? ` · ${Number(getDisplayTotal(lastReorderableOrder) || 0).toFixed(3)} د.ك`
+                        : ""}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/?reorder=${(lastReorderableOrder as any).invoiceId || lastReorderableOrder.id}`)}
+                    className="smart-return-action"
+                  >
+                    جهز نفس الطلب
+                  </button>
+                </motion.div>
+              )}
 
               <div className="flex items-center justify-between px-4 mt-6">
                 <h3 className="font-extrabold text-brand uppercase tracking-widest text-xs flex items-center gap-2">

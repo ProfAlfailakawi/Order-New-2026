@@ -4570,15 +4570,8 @@ function CheckoutOverlay({
   const [regionSearch, setRegionSearch] = useState("");
   const [showRegions, setShowRegions] = useState(false);
   const [step, setStep] = useState<"cart" | "delivery" | "payment">(initialStep);
-  const lastOrderItems = Array.isArray(lastOrderInfo?.items)
-    ? lastOrderInfo.items
-    : Array.isArray(lastOrderInfo?.orderItems)
-      ? lastOrderInfo.orderItems
-      : Array.isArray(lastOrderInfo?.cart)
-        ? lastOrderInfo.cart
-        : [];
-  const lastOrderItemsCount = lastOrderItems.length;
-  const lastOrderTotal = Number(lastOrderInfo?.total || lastOrderInfo?.amount || lastOrderInfo?.totalAmount || 0);
+  const lastOrderItemsCount = Array.isArray(lastOrderInfo?.items) ? lastOrderInfo.items.length : 0;
+  const lastOrderTotal = Number(lastOrderInfo?.total || lastOrderInfo?.amount || 0);
 
   useEffect(() => {
     setStep(initialStep);
@@ -4894,8 +4887,7 @@ function CheckoutOverlay({
                           <RefreshCcw className={cn("w-5 h-5", isZeroClickLoading && "animate-spin")} />
                         </div>
                         <div className="smart-return-copy">
-                          <span>العودة الذكية</span>
-                          <strong>{customerName ? `حيّاك ${customerName}، نجهز نفس طلبك؟` : "لقينا طلبك السابق"}</strong>
+                          <strong>{customerName ? `حيّاك ${customerName}، نجهز نفس طلبك اللي فات؟` : "حيّاك، نجهز نفس طلبك اللي فات؟"}</strong>
                           <p>
                             اختصار جاهز من آخر طلب: {lastOrderItemsCount} أصناف
                             {lastOrderTotal > 0 ? ` · ${lastOrderTotal.toFixed(3)} د.ك تقريباً` : ""}
