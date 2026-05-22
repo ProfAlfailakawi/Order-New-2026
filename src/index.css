@@ -1996,3 +1996,196 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
   .al-cart-actions button{min-height:34px!important;min-width:62px!important;padding:0 .52rem!important;font-size:.66rem!important;border-radius:13px!important;}
   .al-cart-actions .al-cart-checkout{min-width:86px!important;}
 }
+
+/* ======================================================================
+   Mobile customer polish — product cards, cart dock, and order tabs
+   Visual/layout only. Payment, notifications, AI, and existing features untouched.
+   ====================================================================== */
+.order-status-tab-panel,
+.order-invoice-tab-panel{
+  width:100%;
+  animation:orderTabFade .18s ease-out both;
+}
+@keyframes orderTabFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.order-track-tabs{
+  gap:.7rem!important;
+  padding:.75rem .95rem!important;
+}
+.order-track-tabs button{
+  cursor:pointer!important;
+  transition:transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease!important;
+}
+.order-track-tabs button:active{transform:scale(.98)!important;}
+.order-status-pay-card{
+  margin:12px 12px 10px!important;
+  padding:14px!important;
+  border-radius:24px!important;
+  background:radial-gradient(circle at top right,rgba(245,158,11,.18),transparent 34%),linear-gradient(135deg,#fffaf2,#fff)!important;
+  border:1px solid rgba(217,119,6,.16)!important;
+  box-shadow:0 16px 42px rgba(120,53,15,.08)!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+}
+.order-status-pay-card span{
+  display:block!important;
+  font-size:10px!important;
+  font-weight:950!important;
+  color:#b7791f!important;
+  letter-spacing:.08em!important;
+  margin-bottom:3px!important;
+}
+.order-status-pay-card strong{
+  display:block!important;
+  color:#183326!important;
+  font-size:16px!important;
+  line-height:1.25!important;
+  font-weight:950!important;
+}
+.order-status-pay-card p{
+  color:#8a7a66!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  line-height:1.45!important;
+  margin-top:3px!important;
+}
+.order-status-pay-btn{
+  flex:0 0 auto!important;
+  min-width:116px!important;
+  min-height:46px!important;
+  border:0!important;
+  border-radius:18px!important;
+  color:#fff!important;
+  background:linear-gradient(135deg,#d97706,#f59e0b)!important;
+  box-shadow:0 12px 28px rgba(217,119,6,.22)!important;
+  font-size:13px!important;
+  font-weight:950!important;
+  cursor:pointer!important;
+}
+.order-status-pay-btn:active{transform:scale(.98)!important;}
+
+.orser-product-card-row{
+  grid-template-columns:58px minmax(0,1fr) 86px!important;
+  grid-template-areas:"add info img"!important;
+  align-items:center!important;
+  gap:12px!important;
+  padding:13px 14px!important;
+  min-height:124px!important;
+  border-radius:26px!important;
+  background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(255,250,242,.88))!important;
+  box-shadow:0 16px 44px rgba(120,53,15,.07)!important;
+}
+.orser-product-card-row .orser-product-content{gap:0!important;}
+.orser-product-card-row .orser-product-title{
+  text-align:right!important;
+  word-break:normal!important;
+  overflow-wrap:anywhere!important;
+}
+.orser-product-card-row .menu-product-image{
+  width:82px!important;
+  height:82px!important;
+  border-radius:22px!important;
+  background:rgba(255,255,255,.76)!important;
+  box-shadow:inset 0 0 0 1px rgba(217,119,6,.08),0 10px 24px rgba(120,53,15,.06)!important;
+}
+.orser-product-card-row .orser-product-img{padding:7px!important;}
+.orser-product-card-row .orser-product-content > p{
+  width:max-content!important;
+  max-width:100%!important;
+}
+.orser-product-card-row .orser-product-content [class*="bg-red-50"]{
+  display:flex!important;
+  min-height:38px!important;
+  background:rgba(254,242,242,.88)!important;
+  border-color:rgba(239,68,68,.16)!important;
+}
+.orser-product-card-row .orser-product-add-wrap{justify-self:center!important;align-self:center!important;}
+.orser-product-card-row .menu-product-add{
+  width:52px!important;
+  height:52px!important;
+  border-radius:19px!important;
+  box-shadow:0 14px 28px rgba(217,119,6,.20)!important;
+}
+
+.al-cart-bar{
+  background:linear-gradient(135deg,rgba(24,51,38,.96),rgba(14,34,25,.96))!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:10px!important;
+}
+.al-cart-summary{
+  max-width:none!important;
+  min-width:0!important;
+}
+.al-cart-actions{
+  display:grid!important;
+  grid-template-columns:auto auto!important;
+  gap:7px!important;
+  align-items:center!important;
+}
+.al-cart-actions button,
+.al-cart-actions button:not(.al-cart-checkout){
+  min-width:84px!important;
+  min-height:40px!important;
+  padding:0 .72rem!important;
+}
+.al-cart-actions .al-cart-checkout{
+  min-width:112px!important;
+  font-size:.78rem!important;
+}
+@media(max-width:520px){
+  .track-details-modal-wow{max-height:92vh!important;border-radius:34px 34px 0 0!important;}
+  .track-details-modal-wow > .p-8{padding:1.25rem 1.3rem!important;}
+  .order-track-tabs{padding:.62rem .7rem!important;gap:.5rem!important;}
+  .order-track-tabs button{min-height:42px!important;font-size:.78rem!important;}
+  .order-status-pay-card{
+    margin:10px 10px 8px!important;
+    padding:12px!important;
+    border-radius:21px!important;
+    align-items:stretch!important;
+  }
+  .order-status-pay-card strong{font-size:14px!important;}
+  .order-status-pay-card p{font-size:10px!important;}
+  .order-status-pay-btn{min-width:96px!important;min-height:42px!important;border-radius:16px!important;font-size:12px!important;}
+  #order-status-panel{min-height:390px!important;border-radius:24px!important;margin:0 10px 12px!important;}
+
+  .orser-product-card-row{
+    grid-template-columns:52px minmax(0,1fr) 72px!important;
+    min-height:114px!important;
+    gap:9px!important;
+    padding:11px!important;
+    border-radius:23px!important;
+  }
+  .orser-product-card-row .menu-product-image{width:70px!important;height:70px!important;border-radius:19px!important;}
+  .orser-product-card-row .orser-product-title{font-size:.94rem!important;line-height:1.28!important;-webkit-line-clamp:2!important;}
+  .orser-product-card-row .orser-product-content > p{font-size:.92rem!important;padding:.32rem .58rem!important;margin-top:.38rem!important;}
+  .orser-product-card-row .orser-product-content [class*="bg-red-50"]{padding:.34rem .45rem!important;margin-top:.38rem!important;border-radius:13px!important;}
+  .orser-product-card-row .orser-product-content [class*="bg-red-50"] p{font-size:.66rem!important;line-height:1.22!important;}
+  .orser-product-card-row .menu-product-add{width:46px!important;height:46px!important;border-radius:16px!important;}
+  .orser-product-card-row span.absolute.top-0.right-0{right:4px!important;top:4px!important;border-radius:999px!important;padding:.22rem .58rem!important;}
+
+  .al-cart-bar{
+    width:calc(100vw - 18px)!important;
+    min-height:64px!important;
+    padding:8px!important;
+    border-radius:21px!important;
+    grid-template-columns:minmax(0,.88fr) auto!important;
+    gap:7px!important;
+  }
+  .al-cart-summary{gap:6px!important;}
+  .al-cart-summary > div:first-child{padding:.32rem .48rem!important;font-size:.72rem!important;}
+  .al-cart-summary strong{font-size:.8rem!important;}
+  .al-cart-summary span{font-size:.58rem!important;}
+  .al-cart-actions{gap:5px!important;}
+  .al-cart-actions button,
+  .al-cart-actions button:not(.al-cart-checkout){min-width:58px!important;min-height:36px!important;padding:0 .42rem!important;font-size:.62rem!important;border-radius:13px!important;}
+  .al-cart-actions .al-cart-checkout{min-width:78px!important;font-size:.64rem!important;}
+}
+@media(max-width:370px){
+  .al-cart-summary > div:first-child{display:none!important;}
+  .al-cart-actions .al-cart-checkout{min-width:74px!important;}
+  .orser-product-card-row{grid-template-columns:48px minmax(0,1fr) 66px!important;}
+  .orser-product-card-row .menu-product-image{width:64px!important;height:64px!important;}
+}
