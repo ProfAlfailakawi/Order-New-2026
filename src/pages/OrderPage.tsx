@@ -82,6 +82,12 @@ const getFirstName = (name?: string) => {
   return clean ? clean.split(/\s+/)[0] : "";
 };
 
+const getOrderReference = (order: any) => {
+  const raw = String(order?.invoiceId || order?.id || order?.displayId || "").trim();
+  if (!raw) return "#0000";
+  return raw.startsWith("#") ? raw : `#${raw}`;
+};
+
 const getSafeSplitPayments = (order: any): any[] => {
   if (!order) return [];
   const splits = order.splitPayments;
@@ -1191,7 +1197,7 @@ export default function OrderPage() {
                           )}
                       </h3>
                       <p className="text-stone-400 text-xs font-medium uppercase tracking-widest mt-1">
-                        Order #{(selectedOrder.id || "").toUpperCase()}
+                        ORDER {getOrderReference(selectedOrder).toUpperCase()}
                       </p>
                     </div>
                   </div>
@@ -1204,7 +1210,6 @@ export default function OrderPage() {
                 </div>
               </div>
 
-              {/* Removed duplicated order story summary per customer request. Status remains inside حالة الطلب tab. */}
 
               <div className="order-track-tabs" dir="rtl">
                 <button
@@ -1232,7 +1237,6 @@ export default function OrderPage() {
                         <div>
                           <span>خطوة الدفع</span>
                           <strong>{newPaymentLink ? "رابط الدفع جاهز" : getStatusDisplay(selectedOrder).text === "فشل في عملية الدفع" ? "جرّب الدفع مرة ثانية" : "كمّل الدفع لاعتماد الطلب"}</strong>
-                          <p>مكان واضح قبل التتبع حتى ما يضيع العميل بين التفاصيل.</p>
                         </div>
                         {newPaymentLink ? (
                           <button
@@ -1860,7 +1864,7 @@ export default function OrderPage() {
                         <h3>ملخص واضح للفاتورة والتوصيل</h3>
                       </div>
                       <div className="track-v15-invoice-chip">
-                        #ORD-{String((selectedOrder as any).displayId || selectedOrder.id || "0000").slice(-4).padStart(4, "0")}
+                        {getOrderReference(selectedOrder)}
                       </div>
                     </div>
                     <motion.div
@@ -1903,11 +1907,12 @@ export default function OrderPage() {
                                 {item.quantity}x
                               </span>
                               <div className="flex flex-col">
-                                <TypewriterText
-                                  className="font-bold text-stone-700 text-sm max-w-[150px] sm:max-w-xs"
-                                  text={item.productName || item.name}
-                                  delay={0.8 + i * 0.15}
-                                />
+                                <span
+                                  className="track-v15-item-name font-bold text-stone-700 text-sm max-w-[150px] sm:max-w-xs"
+                                  dir="rtl"
+                                >
+                                  {item.productName || item.name}
+                                </span>
                                 {(item.itemNotes || item.note) && (
                                   <span className="text-[10px] text-stone-400 italic flex items-center gap-1 mt-1">
                                     <MessageCircle className="w-3 h-3" />
