@@ -40,6 +40,9 @@ import { db } from "../lib/firebase";
 // Define the default product categories shown to customers.
 // Removed "المشويات" و "المشروبات" per latest requirements.  If these
 // categories are needed in the future they can be added via the admin UI.
+const sanitizeWhatsAppText = (text: string) =>
+  String(text || "").replace(/[\u{1F000}-\u{1FAFF}]/gu, "").replace(/\uFFFD/g, "");
+
 const DEFAULT_PRODUCT_CATEGORIES = ["الولائم", "اللحوم", "الدجاج", "البحري", "المقبلات"];
 
 const normalizeCategoryName = (value?: string) => String(value || "عام").trim() || "عام";
@@ -2022,17 +2025,17 @@ export default function CustomerSite() {
     if (order.generalNotes) {
       message += `
 
-📝 *ملاحظات عامة:* ${order.generalNotes}`;
+\u2709\uFE0F *ملاحظات عامة:* ${order.generalNotes}`;
     }
 
     if (paymentLink) {
       message += `
 
-💳 *رابط الدفع الإلكتروني:*
+\u2705 *رابط الدفع الإلكتروني:*
 ${paymentLink}`;
     }
 
-    const encodedMessage = encodeURIComponent(message);
+    const encodedMessage = encodeURIComponent(sanitizeWhatsAppText(message));
     const waNumber = order.customerPhone;
 
     if (!waNumber) {
