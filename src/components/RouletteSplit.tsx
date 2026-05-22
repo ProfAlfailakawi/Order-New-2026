@@ -258,13 +258,7 @@ export function RouletteSplit({
     >
       <div className="max-w-md lg:max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-32 relative">
         <button 
-          onClick={() => {
-            if (window.history.state && window.history.state.idx > 0) {
-              navigate(-1);
-            } else {
-              navigate("/");
-            }
-          }}
+          onClick={() => navigate("/?checkout=payment")}
           className="absolute left-4 top-5 p-2 text-white/60 hover:text-white rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl"
         >
           <ArrowRight className="w-6 h-6" />
