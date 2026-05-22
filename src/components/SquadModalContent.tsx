@@ -51,6 +51,8 @@ interface SquadModalContentProps {
   formatPoints: (n: number) => string;
   handleCreateSquad: () => void;
   handleJoinSquad: (id: string) => void;
+  pendingGeofenceRequests?: any[];
+  onRefresh?: () => void;
 }
 
 export const SquadModalContent: React.FC<SquadModalContentProps> = ({
@@ -85,8 +87,91 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   formatPoints,
   handleCreateSquad,
   handleJoinSquad,
+  pendingGeofenceRequests = [],
+  onRefresh,
 }) => {
   const [copied, setCopied] = React.useState(false);
+  const isCurrentMember = squadInfo?.memberData?.isMember !== false && Boolean(squadInfo?.memberData?.phone || customerPhone);
+
+  // Geofencing states & actions
+  const [isRegisteringGeo, setIsRegisteringGeo] = React.useState(false);
+  const [geoStatusMsg, setGeoStatusMsg] = React.useState("");
+  const [isApproving, setIsApproving] = React.useState<Record<string, boolean>>({});
+
+  const cleanPhoneLocal = (ph: string): string => {
+    if (!ph) return "";
+    const cleaned = String(ph).replace(/[^0-9]/g, "");
+    if (cleaned.startsWith("965") && cleaned.length > 8) {
+      return cleaned.slice(3);
+    }
+    return cleaned;
+  };
+
+  const isOwner = squadInfo?.phone && customerPhone && (cleanPhoneLocal(squadInfo.phone) === cleanPhoneLocal(customerPhone));
+
+  const handleRegisterLocation = () => {
+    if (!navigator.geolocation) {
+      alert("جهازك لا يدعم نظام تحديد المواقع الجغرافي.");
+      return;
+    }
+    setIsRegisteringGeo(true);
+    setGeoStatusMsg("جاري رصد إحداثيات موقعك الحالي عبر GPS... 📡");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch("/api/squad-set-location", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              squadId: squadInfo.id,
+              phone: customerPhone,
+              lat: latitude,
+              lng: longitude
+            })
+          });
+          if (res.ok) {
+            setGeoStatusMsg("تم تسجيل موقع الديوانية الجغرافي بنجاح! 🎉");
+            if (onRefresh) onRefresh();
+          } else {
+            setGeoStatusMsg("فشل التسجيل. يرجى المحاولة لاحقاً.");
+          }
+        } catch (e) {
+          setGeoStatusMsg("خطأ اتصال أثناء حفظ الموقع.");
+        }
+        setIsRegisteringGeo(false);
+      },
+      (error) => {
+        setIsRegisteringGeo(false);
+        setGeoStatusMsg("فشل الوصول إلى الـ GPS. تأكد من تفعيل الموقع في المتصفح وصلاحيات الـ GPS.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  const handleApproveRejectRequest = async (targetPhone: string, approved: boolean) => {
+    setIsApproving(prev => ({ ...prev, [targetPhone]: true }));
+    try {
+      const res = await fetch("/api/squad-geofence-approve-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: targetPhone,
+          squadId: squadInfo.id,
+          approved
+        })
+      });
+      if (res.ok) {
+        if (onRefresh) onRefresh();
+      } else {
+        alert("فشل تحديث الطلب.");
+      }
+    } catch (e) {
+      alert("خطأ اتصال أثناء تحديث الطلب.");
+    }
+    setIsApproving(prev => ({ ...prev, [targetPhone]: false }));
+  };
 
   const handleShareSquadLink = async () => {
     const link = `https://${window.location.host}/?squadId=${squadInfo?.id}`;
@@ -555,6 +640,143 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         ))}
                     </div>
                   </div>
+
+                  {/* رادار تحديد الموقع الجغرافي للديوانية - للقائد */}
+                  {isOwner && (
+                    <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
+                      <div className="flex items-center justify-between border-b border-stone-50 pb-3">
+                        <span className="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase tracking-wider">رادار GPS 📡</span>
+                        <h4 className="font-black text-brand text-sm">إرشاد الرادار الجغرافي</h4>
+                      </div>
+                      
+                      <p className="text-xs font-bold text-stone-500 leading-relaxed">
+                        سجل موقع ديوانيتك عبر GPS ليتم رصد الربع تلقائياً عند اقترابهم بمسافة تقل عن ١٠٠ متر ودعوتهم للانضمام الفوري بنقرة واحدة!
+                      </p>
+
+                      {squadInfo.lat !== undefined && squadInfo.lng !== undefined ? (
+                        <div className="bg-sky-50 px-4 py-3 rounded-2xl border border-sky-100 space-y-2">
+                          <p className="text-xs font-black text-sky-800 flex items-center gap-1 justify-end">
+                            <span>موقع الديوانية مسجّل ومفعّل حالياً بنجاح! ✅</span>
+                          </p>
+                          <p className="text-[10px] font-mono font-bold text-sky-600 tracking-tight">
+                            إحداثيات: {Number(squadInfo.lat).toFixed(6)}, {Number(squadInfo.lng).toFixed(6)}
+                          </p>
+                          <a 
+                            href={`https://www.google.com/maps/search/?api=1&query=${squadInfo.lat},${squadInfo.lng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block text-[10px] font-black text-accent hover:underline"
+                          >
+                            عرض على خرائط جوجل 🧭
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="bg-orange-50 px-4 py-3 rounded-2xl border border-orange-100">
+                          <p className="text-xs font-black text-orange-850">
+                            ⚠️ موقع الديوانية غير مسجّل حتى الآن!
+                          </p>
+                          <p className="text-[10px] font-bold text-orange-600/80 mt-1 leading-normal">
+                            الربع القريبون لن يستقبلوا إشعارات الرادار للانضمام السريع إلا بعد تعيين موقع ديوانيتكم.
+                          </p>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={handleRegisterLocation}
+                        disabled={isRegisteringGeo}
+                        className="w-full bg-stone-50 hover:bg-stone-100 border-2 border-stone-200/80 text-brand font-black text-xs py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
+                      >
+                        {isRegisteringGeo ? "جاري رصد إحداثيات GPS... 🛰️" : (squadInfo.lat !== undefined ? "📍 إعادة تعيين موقع الديوانية الحالي" : "📍 تعيين موقع الديوانية الجغرافي الحالي")}
+                      </button>
+
+                      {geoStatusMsg && (
+                        <p className="text-[10px] font-black text-center text-accent animate-pulse">
+                          {geoStatusMsg}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* طلبات الانضمام عبر الرادار - للقائد */}
+                  {isOwner && (
+                    <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
+                      <div className="flex items-center justify-between border-b border-stone-50 pb-3">
+                        <span className="text-[11px] font-mono font-black bg-accent/10 text-accent px-2.5 py-1 rounded-full">{pendingGeofenceRequests?.length || 0} معلق</span>
+                        <h4 className="font-black text-brand text-sm flex items-center gap-1.5 justify-end">
+                          <Users className="w-4 h-4 text-accent" /> طلبات الرادار المعلقة
+                        </h4>
+                      </div>
+
+                      {pendingGeofenceRequests && pendingGeofenceRequests.length > 0 ? (
+                        <div className="space-y-3">
+                          {pendingGeofenceRequests.map((req: any, idx: number) => (
+                            <div key={idx} className="p-3.5 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col gap-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">يبعد {req.distance || "أقل من ١٠٠"}م</span>
+                                <span className="text-sm font-black text-brand">{req.name}</span>
+                              </div>
+                              <div className="flex items-center justify-between mt-1">
+                                <span className="text-[10px] font-bold text-stone-400 font-mono">{req.phone}</span>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleApproveRejectRequest(req.phone, false)}
+                                    disabled={isApproving[req.phone]}
+                                    className="bg-rose-50 hover:bg-rose-100 text-rose-600 text-[10px] font-black px-3 py-1.5 rounded-xl border border-rose-100 active:scale-95 transition-all text-center"
+                                  >
+                                    رفض ❌
+                                  </button>
+                                  <button
+                                    onClick={() => handleApproveRejectRequest(req.phone, true)}
+                                    disabled={isApproving[req.phone]}
+                                    className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black px-4.5 py-1.5 rounded-xl shadow-sm active:scale-95 transition-all text-center"
+                                  >
+                                    {isApproving[req.phone] ? "جاري..." : "قبول ✅"}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs font-bold text-stone-400 text-center py-4">
+                          لا توجد طلبات انضمام بالرادار حالياً. 
+                          <br />
+                          <span className="text-[10px] opacity-75">تظهر هنا فوراً عندما يقترب كنعور من ديوانيتك!</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {!isCurrentMember && (
+                    <div className="rounded-[28px] bg-white border-2 border-accent/20 shadow-xl p-5 space-y-4 text-right">
+                      <div>
+                        <h4 className="font-black text-brand text-lg">انضم لهذه الديوانية</h4>
+                        <p className="text-xs font-bold text-stone-500 mt-1">اكتب بياناتك مرة واحدة، وبعدها تظهر لك الديوانية ضمن دواوينك وتبقى نقاطك الشخصية محسوبة مع الجميع.</p>
+                      </div>
+                      <input
+                        type="text"
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        placeholder="اسمك"
+                        className="w-full bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
+                      />
+                      <input
+                        type="tel"
+                        value={guestPhone}
+                        onChange={(e) => setGuestPhone(normalizeDigits(e.target.value))}
+                        placeholder="رقم تلفونك ٨ أرقام"
+                        maxLength={8}
+                        className="w-full bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
+                      />
+                      <button
+                        onClick={() => handleJoinSquad(String(squadInfo.id))}
+                        disabled={isSubmittingSquad}
+                        className="w-full bg-accent text-white font-black text-sm py-4 rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-50"
+                      >
+                        {isSubmittingSquad ? "جاري الانضمام..." : "انضم للديوانية الآن"}
+                      </button>
+                    </div>
+                  )}
 
                   <button
                     onClick={handleShareSquadLink}
