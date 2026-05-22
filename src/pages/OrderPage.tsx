@@ -962,15 +962,27 @@ export default function OrderPage() {
               </div>
 
               {lastReorderableOrder && (
-                <motion.div
+                <motion.button
+                  type="button"
                   initial={{ opacity: 0, y: 10, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.985 }}
                   transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="smart-return-card"
+                  onClick={() =>
+                    navigate(
+                      `/?reorder=${
+                        (lastReorderableOrder as any).invoiceId ||
+                        lastReorderableOrder.id
+                      }`,
+                    )
+                  }
+                  className="smart-return-card w-full cursor-pointer text-right focus:outline-none focus-visible:ring-4 focus-visible:ring-accent/25"
                   dir="rtl"
+                  aria-label="جهز نفس الطلب السابق"
                 >
                   <div className="smart-return-glow" />
-                  <div className="smart-return-icon">
+                  <div className="smart-return-icon" aria-hidden="true">
                     <RefreshCcw className="w-5 h-5" />
                   </div>
                   <div className="smart-return-copy">
@@ -979,21 +991,12 @@ export default function OrderPage() {
                         ? `حيّاك ${trackedCustomerName}، نجهز نفس طلبك اللي فات؟`
                         : "حيّاك، نجهز نفس طلبك اللي فات؟"}
                     </strong>
-                    <p>
-                      لقينا آخر طلب لك: {(lastReorderableOrder.items || []).length} أصناف
-                      {Number(getDisplayTotal(lastReorderableOrder) || 0) > 0
-                        ? ` · ${Number(getDisplayTotal(lastReorderableOrder) || 0).toFixed(3)} د.ك`
-                        : ""}
-                    </p>
+                    <p>اضغط على الكرت ونجهزها لك فوراً</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/?reorder=${(lastReorderableOrder as any).invoiceId || lastReorderableOrder.id}`)}
-                    className="smart-return-action"
-                  >
-                    جهز نفس الطلب
-                  </button>
-                </motion.div>
+                  <div className="smart-return-action" aria-hidden="true">
+                    جهزها
+                  </div>
+                </motion.button>
               )}
 
               <div className="flex items-center justify-between px-4 mt-6">
