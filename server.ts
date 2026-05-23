@@ -351,6 +351,28 @@ function cleanPhone(phone) {
   return cleaned;
 }
 
+function normalizeInviteCode(value: any) {
+  return String(value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function makeSquadInviteCode(id: any, name: any) {
+  const base = normalizeInviteCode(String(name || "DIWANIYA").slice(0, 3)) || "DW";
+  return `${base}${String(id || Date.now()).slice(-5)}`.toUpperCase();
+}
+
+function isInsideKuwait(lat: number, lng: number) {
+  return lat >= 28.45 && lat <= 30.1 && lng >= 46.45 && lng <= 48.65;
+}
+
+function resolveSquadIndex(squads: any[], key: any) {
+  const requested = String(key || "");
+  const code = normalizeInviteCode(key);
+  return squads.findIndex((s: any) =>
+    String(s.id) === requested ||
+    normalizeInviteCode(s.inviteCode || s.code) === code
+  );
+}
+
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
@@ -929,6 +951,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
          const computedTier = getTierForPoints(teamPoints);
          return {
             ...sq,
+            inviteCode: sq.inviteCode || sq.code || makeSquadInviteCode(sq.id, sq.name),
             points: teamPoints,
             totalPoints: teamPoints,
             teamPoints,
@@ -943,6 +966,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
       const cleanQPhone = phone ? cleanPhone(phone as string) : null;
       let joinedSquadId = squadId ? String(squadId) : null;
+      if (joinedSquadId) {
+         const requestedSquad = enrichedSquads.find((sq: any) => String(sq.id) === String(joinedSquadId) || normalizeInviteCode(sq.inviteCode || sq.code) === normalizeInviteCode(joinedSquadId));
+         if (requestedSquad) joinedSquadId = String(requestedSquad.id);
+      }
       let userSquads: any[] = [];
 
       if (cleanQPhone) {
@@ -953,8 +980,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
          
          // If a squadId was requested, check if it's valid
          if (joinedSquadId) {
-             const isMemberOfRequested = userSquads.some((sq: any) => String(sq.id) === joinedSquadId);
-             // If not a member of requested, but is a member of others, maybe keep the requested one so they can view/join it.
+             // If not a member of requested, keep the requested one so they can view/join it.
          } else if (userSquads.length > 0) {
              // Auto-select the first one if no squadId requested
              joinedSquadId = String(userSquads[0].id);
@@ -1007,16 +1033,21 @@ app.get("/api/debug/order/:id", async (req, res) => {
   });
 
   app.post("/api/squad-set-location", async (req, res) => {
-    const { squadId, phone, lat, lng } = req.body;
+    const { squadId, phone, lat, lng, accuracy } = req.body;
     if (!squadId || lat === undefined || lng === undefined) {
       return res.status(400).json({ error: "Missing squadId, lat, or lng" });
+    }
+    const numLat = Number(lat);
+    const numLng = Number(lng);
+    if (!Number.isFinite(numLat) || !Number.isFinite(numLng) || !isInsideKuwait(numLat, numLng)) {
+      return res.status(400).json({ error: "Location must be valid and inside Kuwait" });
     }
     try {
       const ok = await updateAppDataAtomically((current: any) => {
         const squads = Array.isArray(current.squads) ? [...current.squads] : [];
-        const idx = squads.findIndex((s: any) => String(s.id) === String(squadId));
+        const idx = resolveSquadIndex(squads, squadId);
         if (idx > -1) {
-          squads[idx] = { ...squads[idx], lat: Number(lat), lng: Number(lng) };
+          squads[idx] = { ...squads[idx], lat: numLat, lng: numLng, geoAccuracy: Number(accuracy || 0), locationUpdatedAt: new Date().toISOString(), inviteCode: squads[idx].inviteCode || makeSquadInviteCode(squads[idx].id, squads[idx].name) };
         }
         return { squads };
       });
@@ -1028,7 +1059,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   });
 
   app.post("/api/squad-geofence-join-request", async (req, res) => {
-    const { name, phone, squadId, distance } = req.body;
+    const { name, phone, squadId, distance, accuracy } = req.body;
     if (!phone || !squadId) {
       return res.status(400).json({ error: "Missing phone or squadId" });
     }
@@ -1036,15 +1067,19 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const cleanQPhone = cleanPhone(phone);
       const ok = await updateAppDataAtomically((current: any) => {
         const reqs = Array.isArray(current.geofenceJoinRequests) ? [...current.geofenceJoinRequests] : [];
+        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
+        const squadIndex = resolveSquadIndex(squads, squadId);
+        const resolvedSquadId = squadIndex > -1 ? String(squads[squadIndex].id) : String(squadId);
         
         // Remove existing pending/rejected from same user for same squad to overwrite nicely
-        const filtered = reqs.filter((r: any) => !(cleanPhone(r.phone) === cleanQPhone && String(r.squadId) === String(squadId)));
+        const filtered = reqs.filter((r: any) => !(cleanPhone(r.phone) === cleanQPhone && String(r.squadId) === resolvedSquadId));
         
         filtered.push({
           phone,
           name: name || "عضو قريب",
-          squadId: String(squadId),
+          squadId: resolvedSquadId,
           distance: Number(distance || 0),
+          accuracy: Number(accuracy || 0),
           timestamp: new Date().toISOString(),
           status: "pending"
         });
@@ -1067,16 +1102,18 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const squads = Array.isArray(current.squads) ? [...current.squads] : [];
         const customers = Array.isArray(current.customers) ? [...current.customers] : [];
         const reqs = Array.isArray(current.geofenceJoinRequests) ? [...current.geofenceJoinRequests] : [];
+        const resolvedIndexForRequest = resolveSquadIndex(squads, squadId);
+        const resolvedSquadId = resolvedIndexForRequest > -1 ? String(squads[resolvedIndexForRequest].id) : String(squadId);
 
         // Find and update status
-        const rIdx = reqs.findIndex((r: any) => cleanPhone(r.phone) === cleanTargetPhone && String(r.squadId) === String(squadId));
+        const rIdx = reqs.findIndex((r: any) => cleanPhone(r.phone) === cleanTargetPhone && String(r.squadId) === resolvedSquadId);
         const requestObj = rIdx > -1 ? reqs[rIdx] : null;
         if (rIdx > -1) {
           reqs[rIdx] = { ...reqs[rIdx], status: approved ? "approved" : "rejected" };
         }
 
         if (approved) {
-          let fIndex = squads.findIndex((s: any) => String(s.id) === String(squadId));
+          let fIndex = resolveSquadIndex(squads, squadId);
           if (fIndex > -1) {
             const squad = { ...squads[fIndex] };
             squad.membersList = Array.isArray(squad.membersList) ? [...squad.membersList] : [];
@@ -1085,6 +1122,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
               squad.membersList.push({
                 phone: phone,
                 name: (requestObj ? requestObj.name : "") || "عضو قريب",
+                role: "member",
+                title: "عضو الديوانية",
                 points: 0,
                 joinedAt: new Date().toISOString()
               });
@@ -1094,7 +1133,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
             joinedSquad = squad;
 
             // Update customer membership info
-            const membership = { id: squad.id, squadId: squad.id, name: squad.name, joinedAt: new Date().toISOString() };
+            const membership = { id: squad.id, squadId: squad.id, name: squad.name, role: cleanPhone(squad.phone) === cleanTargetPhone ? "host" : "member", title: cleanPhone(squad.phone) === cleanTargetPhone ? "المعزب" : "عضو الديوانية", inviteCode: squad.inviteCode || makeSquadInviteCode(squad.id, squad.name), joinedAt: new Date().toISOString() };
             const cidx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanTargetPhone);
             if (cidx > -1) {
               const ids = new Set([...(customers[cidx].squadIds || []), customers[cidx].squadId].filter(Boolean).map(String));
@@ -1134,6 +1173,61 @@ app.get("/api/debug/order/:id", async (req, res) => {
     }
   });
 
+
+  app.post("/api/squad-leave", async (req, res) => {
+    const { phone, squadId } = req.body;
+    if (!phone || !squadId) return res.status(400).json({ error: "Missing phone or squadId" });
+    try {
+      const cleanQPhone = cleanPhone(phone);
+      let hostBlocked = false;
+      const ok = await updateAppDataAtomically((current: any) => {
+        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
+        const customers = Array.isArray(current.customers) ? [...current.customers] : [];
+        const idx = resolveSquadIndex(squads, squadId);
+        if (idx === -1) return { squads, customers };
+
+        const squad = { ...squads[idx] };
+        if (cleanPhone(squad.phone) === cleanQPhone) {
+          hostBlocked = true;
+          return { squads, customers };
+        }
+
+        squad.membersList = Array.isArray(squad.membersList)
+          ? squad.membersList.filter((m: any) => cleanPhone(m.phone) !== cleanQPhone)
+          : [];
+        squad.members = squad.membersList.length;
+        squads[idx] = squad;
+
+        const cidx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanQPhone);
+        if (cidx > -1) {
+          const remainingIds = new Set(
+            [...(customers[cidx].squadIds || []), customers[cidx].squadId]
+              .filter(Boolean)
+              .map(String)
+              .filter((id: string) => id !== String(squad.id))
+          );
+          const remainingMemberships = (customers[cidx].diwaniyaMemberships || [])
+            .filter((m: any) => String(m.squadId || m.id) !== String(squad.id));
+          const nextMembership = remainingMemberships[0];
+          customers[cidx] = {
+            ...customers[cidx],
+            squadIds: [...remainingIds],
+            diwaniyaMemberships: remainingMemberships,
+            squadId: nextMembership ? (nextMembership.squadId || nextMembership.id) : null,
+            diwaniyaName: nextMembership ? nextMembership.name : ""
+          };
+        }
+
+        return { squads, customers };
+      });
+      if (hostBlocked) return res.status(409).json({ error: "Host cannot leave this diwaniya from here" });
+      if (!ok) throw new Error("Failed to leave squad");
+      res.json({ success: true });
+    } catch(e: any) {
+      res.status(500).json({ error: String(e) });
+    }
+  });
+
   app.post("/api/squad-create", async (req, res) => {
     const { name, phone, customerName } = req.body;
     if (!name) return res.status(400).json({ error: "Missing squad name" });
@@ -1155,13 +1249,14 @@ app.get("/api/debug/order/:id", async (req, res) => {
            members: phone ? 1 : 0,
            king: customerName || "عميل",
            phone: phone,
-           membersList: phone ? [{ name: customerName || "عميل", phone: phone, points: 0, joinedAt: new Date().toISOString() }] : [],
+           inviteCode: makeSquadInviteCode(newSquadId, name),
+           membersList: phone ? [{ name: customerName || "عميل", phone: phone, role: "host", title: "المعزب", points: 0, joinedAt: new Date().toISOString() }] : [],
            createdAt: new Date().toISOString()
         };
         squads.push(createdSquad);
         if (phone) {
            const cidx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanQPhone);
-           const membership = { id: newSquadId, squadId: newSquadId, name, joinedAt: new Date().toISOString() };
+           const membership = { id: newSquadId, squadId: newSquadId, name, role: "host", title: "المعزب", inviteCode: createdSquad.inviteCode, joinedAt: new Date().toISOString() };
            if (cidx > -1) {
               const ids = new Set([...(customers[cidx].squadIds || []), customers[cidx].squadId].filter(Boolean).map(String));
               ids.add(String(newSquadId));
@@ -1188,23 +1283,23 @@ app.get("/api/debug/order/:id", async (req, res) => {
      const ok = await updateAppDataAtomically((current: any) => {
        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
        const customers = Array.isArray(current.customers) ? [...current.customers] : [];
-       let finalSquadIndex = squads.findIndex((s:any) => String(s.id) === String(squadId));
+       let finalSquadIndex = resolveSquadIndex(squads, squadId);
        if (finalSquadIndex === -1) {
-         squads.push({ id: squadId, name: `ديوانية ${squadId}`, tier: "برونزية", points: 0, totalPoints: 0, teamPoints: 0, members: 0, membersList: [], createdAt: new Date().toISOString() });
+         squads.push({ id: squadId, name: `ديوانية ${squadId}`, inviteCode: makeSquadInviteCode(squadId, `ديوانية ${squadId}`), tier: "برونزية", points: 0, totalPoints: 0, teamPoints: 0, members: 0, membersList: [], createdAt: new Date().toISOString() });
          finalSquadIndex = squads.length - 1;
        }
        const squad = { ...squads[finalSquadIndex] };
        squad.membersList = Array.isArray(squad.membersList) ? [...squad.membersList] : [];
        const existingMemberIndex = squad.membersList.findIndex((m:any) => cleanPhone(m.phone) === cleanQPhone);
        if (existingMemberIndex === -1) {
-         squad.membersList.push({ phone, name: name || "عميل", points: 0, joinedAt: new Date().toISOString() });
+         squad.membersList.push({ phone, name: name || "عميل", role: "member", title: "عضو الديوانية", points: 0, joinedAt: new Date().toISOString() });
        } else if (name) {
          squad.membersList[existingMemberIndex] = { ...squad.membersList[existingMemberIndex], name };
        }
        squad.members = squad.membersList.length;
        squads[finalSquadIndex] = squad;
        joinedSquad = squad;
-       const membership = { id: squad.id, squadId: squad.id, name: squad.name, joinedAt: new Date().toISOString() };
+       const membership = { id: squad.id, squadId: squad.id, name: squad.name, role: cleanPhone(squad.phone) === cleanQPhone ? "host" : "member", title: cleanPhone(squad.phone) === cleanQPhone ? "المعزب" : "عضو الديوانية", inviteCode: squad.inviteCode || makeSquadInviteCode(squad.id, squad.name), joinedAt: new Date().toISOString() };
        const cidx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanQPhone);
        if (cidx > -1) {
          const ids = new Set([...(customers[cidx].squadIds || []), customers[cidx].squadId].filter(Boolean).map(String));
