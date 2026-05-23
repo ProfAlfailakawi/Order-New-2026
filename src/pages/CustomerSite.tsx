@@ -3909,7 +3909,9 @@ export default function CustomerSite() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 z-[100] flex items-end justify-center bg-brand/40 backdrop-blur-sm"
-                onClick={() => setShowSquadModal(false)}
+                onMouseDown={(e) => {
+                  if (e.target === e.currentTarget) setShowSquadModal(false);
+                }}
               >
                 <motion.div
                   initial={{ y: "100%" }}
@@ -3930,8 +3932,14 @@ export default function CustomerSite() {
                          </p>
                       </div>
                       <button
-                        onClick={() => setShowSquadModal(false)}
-                        className="min-w-[92px] h-10 px-3 rounded-full bg-stone-100 flex items-center justify-center gap-1.5 text-stone-600 hover:text-brand hover:bg-stone-200 transition-colors font-black text-xs"
+                        type="button"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowSquadModal(false);
+                        }}
+                        className="min-w-[92px] h-10 px-3 rounded-full bg-stone-100 flex items-center justify-center gap-1.5 text-stone-600 hover:text-brand hover:bg-stone-200 transition-colors font-black text-xs active:scale-95"
                         aria-label="إغلاق صفحة الديوانية"
                       >
                         <X className="w-4 h-4" />
@@ -3939,27 +3947,11 @@ export default function CustomerSite() {
                       </button>
                    </div>
 
-                   <div className="flex px-5 pt-3 mb-2 gap-2 overflow-x-auto pb-2 -mx-5 bg-stone-50 shrink-0 sticky top-0 z-20 shadow-sm border-b border-stone-100">
-                      <div className="w-5 shrink-0" />
-                      <button 
-                         onClick={() => setActiveSquadTab("overview")}
-                         className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0", activeSquadTab === "overview" ? "bg-accent text-white shadow-md scale-105" : "bg-white text-stone-400 border border-stone-200 hover:bg-stone-50")}
-                      >
-                         ديوانيتي 🏠
-                      </button>
-                      <button 
-                         onClick={() => setActiveSquadTab("leaderboard")}
-                         className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0", activeSquadTab === "leaderboard" ? "bg-accent text-white shadow-md scale-105" : "bg-white text-stone-400 border border-stone-200 hover:bg-stone-50")}
-                      >
-                         شرف الدواوين 🏆
-                      </button>
-                      <button 
-                         onClick={() => setActiveSquadTab("tiers")}
-                         className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0", activeSquadTab === "tiers" ? "bg-accent text-white shadow-md scale-105" : "bg-white text-stone-400 border border-stone-200 hover:bg-stone-50")}
-                      >
-                         المستويات 🏅
-                      </button>
-                      <div className="w-5 shrink-0" />
+                   <div className="px-5 pt-3 mb-2 -mx-5 bg-stone-50 shrink-0 border-b border-stone-100">
+                      <div className="bg-white border border-stone-100 rounded-2xl px-4 py-3 text-right">
+                        <div className="text-[11px] font-black text-brand">كل شيء يخص الديوانية مرتب تحت التابات بالأسفل.</div>
+                        <div className="text-[10px] font-bold text-stone-400 mt-0.5">الرئيسية للحضور والترتيب، الموقع للرادار، والكود للدخول السريع.</div>
+                      </div>
                    </div>
 
                    <div className="flex-1 overflow-y-auto p-5 pb-8 custom-scrollbar relative z-0">
