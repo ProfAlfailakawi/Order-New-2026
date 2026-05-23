@@ -114,7 +114,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   unreadDiwaniyaNotifications = 0,
 }) => {
   const [copied, setCopied] = React.useState(false);
-  const [myDiwaniyaTab, setMyDiwaniyaTab] = React.useState<"home" | "orders" | "notifications" | "location">("home");
+  const [myDiwaniyaTab, setMyDiwaniyaTab] = React.useState<"home" | "manage" | "orders" | "notifications" | "location">("home");
 
   const cleanPhoneLocal = (ph: string): string => {
     if (!ph) return "";
@@ -690,9 +690,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
           {squadInfo && isCurrentMember && (
             <div className="bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm relative z-10">
-              <div className="grid grid-cols-4 gap-1 text-center" dir="rtl">
+              <div className="grid grid-cols-5 gap-1 text-center" dir="rtl">
                 {[
                   { id: "home", label: "الرئيسية", icon: "🏠" },
+                  { id: "manage", label: "إدارتي", icon: "🛖" },
                   { id: "orders", label: "الطلب والكود", icon: "🍽️" },
                   { id: "notifications", label: "الإشعارات", icon: "🔔", badge: unreadDiwaniyaNotifications },
                   { id: "location", label: "الموقع", icon: "📍" },
@@ -858,7 +859,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           )}
 
           {/* My Diwaniyas Panel with Switcher and Role Indicators */}
-          {myDiwaniyaTab === "home" && !isCreatingSquad && customerPhone && userSquads && userSquads.length > 0 && (
+          {myDiwaniyaTab === "manage" && !isCreatingSquad && customerPhone && userSquads && userSquads.length > 0 && (
              <div className="flex flex-col gap-3 bg-stone-100/55 p-5 rounded-[28px] border border-stone-200/50 text-right font-sans">
                 <div className="flex items-center justify-between border-b border-stone-200/50 pb-2">
                    <span className="text-[10px] font-black bg-stone-200 text-stone-600 px-2 py-0.5 rounded-full">{userSquads.length} مسجلة</span>
@@ -866,6 +867,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       إدارتي للدواوين والتنقل بينها 🛖
                    </h4>
                 </div>
+                <p className="text-[11px] font-bold text-stone-500 leading-relaxed">هنا تختار الديوانية الحالية، تنتقل بين دواوينك بسهولة، أو تؤسس ديوانية جديدة بدون ما تزاحم الصفحة الرئيسية.</p>
                 
                 <div className="space-y-2 mt-1">
                    {userSquads.map((sq: any) => {
@@ -898,19 +900,19 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                        : "bg-brand text-white hover:bg-accent hover:shadow-md active:scale-95"
                                   )}
                                >
-                                  {isActive ? "✨ مفعلة حالياً" : "✈️ تنظيم ودخول"}
+                                  {isActive ? "✨ الحالية" : "✈️ الدخول لها"}
                                </button>
                             </div>
 
                             <div className="flex flex-col text-right">
-                               <div className="flex items-center gap-1.5 justify-end">
+                               <div className="flex items-center gap-1.5 justify-end flex-wrap">
                                   {isOwnerOfSq ? (
                                      <span className="text-[8px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-sm">
-                                        👑 مؤسس وصاحبها
+                                        👑 معزبها
                                      </span>
                                   ) : (
                                      <span className="text-[8px] font-black bg-stone-500 text-white px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-sm">
-                                        👥 عضو بالديوانية
+                                        👥 عضو فيها
                                      </span>
                                   )}
                                   <span className="text-sm font-black text-brand leading-none">
@@ -1381,48 +1383,65 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                   {!isCurrentMember && (
                     <div className="rounded-[28px] bg-white border-2 border-accent/20 shadow-xl p-5 space-y-4 text-right">
-                      <div>
+                      <div className="space-y-1">
                         <h4 className="font-black text-brand text-lg">انضم لهذه الديوانية</h4>
-                        <p className="text-xs font-bold text-stone-500 mt-1">اكتب بياناتك مرة واحدة، وبعدها تظهر لك الديوانية ضمن دواوينك وتبقى نقاطك الشخصية محسوبة مع الجميع.</p>
+                        <p className="text-xs font-bold text-stone-500">تقدر تدخل بطريقتين: تسجل رقمك واسمك، أو تستخدم كود الضيف اللي يولّده المعزب.</p>
                       </div>
-                      <input
-                        type="text"
-                        value={guestName}
-                        onChange={(e) => setGuestName(e.target.value)}
-                        placeholder="اسمك"
-                        className="w-full bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
-                      />
-                      <input
-                        type="tel"
-                        value={guestPhone}
-                        onChange={(e) => setGuestPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8))}
-                        placeholder="رقم تلفونك 8 أرقام"
-                        maxLength={8}
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        className="w-full bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
-                      />
 
-                      <div className="bg-stone-50 border border-stone-100 rounded-2xl p-3 space-y-2">
-                        <div className="text-[10px] font-black text-stone-500">عندك كود دخول ساعتين؟</div>
-                        <div className="flex gap-2">
+                      <div className="rounded-[24px] border border-stone-100 bg-stone-50 p-4 space-y-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-[10px] font-black bg-white text-stone-500 px-2.5 py-1 rounded-full border border-stone-200">الخيار الأساسي</span>
+                          <h5 className="text-sm font-black text-brand">دخول برقمك</h5>
+                        </div>
+                        <input
+                          type="text"
+                          value={guestName}
+                          onChange={(e) => setGuestName(e.target.value)}
+                          placeholder="اسمك"
+                          className="w-full bg-white border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
+                        />
+                        <input
+                          type="tel"
+                          value={guestPhone}
+                          onChange={(e) => setGuestPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8))}
+                          placeholder="رقم تلفونك 8 أرقام"
+                          maxLength={8}
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          className="w-full bg-white border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
+                        />
+                        <button
+                          onClick={() => handleJoinSquad(String(squadInfo.id))}
+                          disabled={isSubmittingSquad}
+                          className="w-full bg-accent text-white font-black text-sm py-4 rounded-2xl shadow-lg active:scale-95 transition-all disabled:opacity-50"
+                        >
+                          {isSubmittingSquad ? "جاري الانضمام..." : "انضم للديوانية الآن"}
+                        </button>
+                      </div>
+
+                      <div className="rounded-[24px] border border-brand/10 bg-brand/[0.03] p-4 space-y-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-[10px] font-black bg-brand/10 text-brand px-2.5 py-1 rounded-full border border-brand/10">سريع ومباشر</span>
+                          <h5 className="text-sm font-black text-brand">عندك كود دخول ساعتين؟</h5>
+                        </div>
+                        <p className="text-[11px] font-bold text-stone-500 leading-relaxed">إذا المعزب عطاك كود مؤقت، اكتب الكود هنا وادخل مباشرة بدون انتظار.</p>
+                        <div className="flex flex-col sm:flex-row gap-2 sm:items-stretch">
                           <input
                             inputMode="numeric"
                             value={tempJoinCode}
                             onChange={(e)=>setTempJoinCode(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,4))}
                             placeholder="الكود"
-                            className="flex-1 bg-white border border-stone-100 rounded-xl px-3 py-2 text-center font-black"
+                            className="w-full flex-1 bg-white border border-stone-200 rounded-2xl px-4 py-3 text-center font-black text-brand"
                           />
-                          <button onClick={handleJoinWithTempCode} disabled={tempCodeLoading} className="bg-brand text-white rounded-xl px-4 text-xs font-black">دخول بالكود</button>
+                          <button
+                            onClick={handleJoinWithTempCode}
+                            disabled={tempCodeLoading}
+                            className="w-full sm:w-auto bg-brand text-white rounded-2xl px-5 py-3 text-xs font-black shadow-sm active:scale-95"
+                          >
+                            {tempCodeLoading ? "جاري الدخول..." : "دخول بالكود"}
+                          </button>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleJoinSquad(String(squadInfo.id))}
-                        disabled={isSubmittingSquad}
-                        className="w-full bg-accent text-white font-black text-sm py-4 rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-50"
-                      >
-                        {isSubmittingSquad ? "جاري الانضمام..." : "انضم للديوانية الآن"}
-                      </button>
                     </div>
                   )}
 

@@ -508,6 +508,7 @@ export default function CustomerSite() {
   const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
   const squadSessionTokenRef = useRef(0);
   const [isRadarBannerCollapsed, setIsRadarBannerCollapsed] = useState(false);
+  const [isNearbyRadarPanelCollapsed, setIsNearbyRadarPanelCollapsed] = useState(false);
   const hasAnimatedRadarBannerRef = useRef(false);
 
   useEffect(() => {
@@ -605,8 +606,15 @@ export default function CustomerSite() {
      setRadarDismissedList([]);
      setRadarSuccessMap({});
      setRadarNearbySquads([]);
+     setIsNearbyRadarPanelCollapsed(false);
      try { localStorage.removeItem("radar_dismissed_squads"); } catch(e) {}
   }, [customerPhone]);
+
+  useEffect(() => {
+     if (radarNearbySquads.length > 0) {
+       setIsNearbyRadarPanelCollapsed(false);
+     }
+  }, [radarNearbySquads.length]);
 
   const refreshRadarOnce = useCallback(() => {
      if (!navigator.geolocation) {
@@ -617,6 +625,7 @@ export default function CustomerSite() {
      setRadarStatus("checking");
      setRadarStatusMsg("نطلب السماح بالموقع لتشغيل رادار الديوانيات القريبة...");
      setRadarDismissedList([]);
+     setIsNearbyRadarPanelCollapsed(false);
      try { localStorage.removeItem("radar_dismissed_squads"); } catch(e) {}
 
      navigator.geolocation.getCurrentPosition(
@@ -3922,9 +3931,11 @@ export default function CustomerSite() {
                       </div>
                       <button
                         onClick={() => setShowSquadModal(false)}
-                        className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 hover:text-brand hover:bg-stone-200 transition-colors"
+                        className="min-w-[92px] h-10 px-3 rounded-full bg-stone-100 flex items-center justify-center gap-1.5 text-stone-600 hover:text-brand hover:bg-stone-200 transition-colors font-black text-xs"
+                        aria-label="إغلاق صفحة الديوانية"
                       >
                         <X className="w-4 h-4" />
+                        <span>إغلاق</span>
                       </button>
                    </div>
 
@@ -4102,92 +4113,122 @@ export default function CustomerSite() {
         {/* رادار التراث - إشعار جيو لوكيشن ذكي للديوانيات القريبة */}
         <AnimatePresence>
           {radarNearbySquads.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 150, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 150, scale: 0.9 }}
-              className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-[400px] max-h-[400px] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-6 shadow-2xl z-50 border-2 border-amber-500/20 text-right font-sans space-y-4"
-            >
-              <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-3">
-                <div className="relative flex h-3 w-3 mt-1.5 shrink-0">
+            isNearbyRadarPanelCollapsed ? (
+              <motion.button
+                key="collapsed-nearby-radar"
+                initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: 20 }}
+                onClick={() => setIsNearbyRadarPanelCollapsed(false)}
+                className="fixed bottom-6 left-6 md:left-auto md:right-6 bg-slate-900/95 text-amber-100 rounded-full px-4 py-3 shadow-2xl z-50 border border-amber-500/30 backdrop-blur-md flex items-center gap-2 text-xs font-black"
+                title="فتح رادار الديوانيات القريبة"
+              >
+                <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+                </span>
+                <span>رادار الديوانيات</span>
+              </motion.button>
+            ) : (
+              <motion.div
+                key="expanded-nearby-radar"
+                initial={{ opacity: 0, y: 150, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 150, scale: 0.9 }}
+                className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-[400px] max-h-[420px] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-6 shadow-2xl z-50 border-2 border-amber-500/20 text-right font-sans space-y-4"
+              >
+                <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-3">
+                  <button
+                    onClick={() => setIsNearbyRadarPanelCollapsed(true)}
+                    className="w-8 h-8 rounded-full bg-white/10 text-slate-300 hover:text-white hover:bg-white/15 flex items-center justify-center transition-all shrink-0"
+                    title="تصغير رادار الديوانيات"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <div className="flex-1">
+                    <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار التراث الجغرافي 📡</span>
+                    <h4 className="font-black text-sm mt-2 text-amber-100">
+                      رصد ديوانيات الربع حولك! 📍
+                    </h4>
+                  </div>
+                  <div className="relative flex h-3 w-3 mt-1.5 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                  </div>
                 </div>
-                
-                <div className="flex-1">
-                  <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار التراث الجغرافي 📡</span>
-                  <h4 className="font-black text-sm mt-2 text-amber-100">
-                    رصد ديوانيات الربع حولك! 📍
-                  </h4>
-                </div>
-              </div>
 
-              <p className="text-[11px] font-bold text-slate-300 leading-normal">
-                لقطنا ديوانية قريبة منك 👀 إذا أنت عضو فيها بدّل لها، وإذا مو عضو اطلب دخول والمعزب يقرر.
-              </p>
-
-              <div className="space-y-3">
-                {radarNearbySquads.map((sq: any) => {
-                  const isLoading = radarLoadingMap[sq.id];
-                  const isSuccess = radarSuccessMap[sq.id];
-
-                  return (
-                    <div 
-                      key={sq.id} 
-                      className="p-3 bg-slate-800 rounded-2xl border border-slate-700/50 flex flex-col gap-2 transition-all hover:bg-slate-800/90"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-500/10 px-2 py-0.5 rounded-lg font-mono">
-                          تبعد {normalizeDigits(String(sq.distance))}م
-                        </span>
-                        <span className="text-xs font-black text-white">ديوانية {sq.name}</span>
-                      </div>
-
-                      {isSuccess ? (
-                        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-1.5 px-3 rounded-xl text-[10px] font-black text-center animate-pulse">
-                          تم إرسال طلب الانضمام! بانتظار موافقة صاحب الديوانية 📡
-                        </div>
-                      ) : (
-                        <div className="flex gap-2 justify-end mt-1">
-                          <button
-                            onClick={() => {
-                              setRadarDismissedList(prev => [...prev, String(sq.id)]);
-                              setRadarNearbySquads(prev => prev.filter(s => String(s.id) !== String(sq.id)));
-                            }}
-                            className="bg-slate-700 hover:bg-slate-650 text-slate-305 font-bold text-[10px] py-1.5 px-3 rounded-xl transition-all"
-                          >
-                            تجاهل ❌
-                          </button>
-                          
-                          {sq.isAlreadyMember ? (
-                            <button
-                              onClick={() => handleSwitchToNearbySquad(sq)}
-                              className="bg-emerald-400 hover:bg-emerald-500 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
-                            >
-                              {sq.isOwnerOfNearby ? "فعّل ديوانيتك هنا 👑" : "أنا عضو هنا، خلّها الحالية ✅"}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleSendRadarRequest(sq)}
-                              disabled={isLoading}
-                              className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
-                            >
-                              {isLoading ? "جاري الإرسال..." : "طلب دخول للمعزب 📡"}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {!customerPhone && (
-                <p className="text-[9px] font-bold text-amber-500/50 text-center pt-2">
-                  سجل دخول برقمك عشان يوصلهم طلبك بأسمك ورقمك!
+                <p className="text-[11px] font-bold text-slate-300 leading-normal">
+                  لقطنا ديوانية قريبة منك 👀 إذا أنت عضو فيها بدّل لها، وإذا مو عضو اطلب دخول والمعزب يقرر.
                 </p>
-              )}
-            </motion.div>
+
+                <div className="space-y-3">
+                  {radarNearbySquads.map((sq: any) => {
+                    const isLoading = radarLoadingMap[sq.id];
+                    const isSuccess = radarSuccessMap[sq.id];
+
+                    return (
+                      <div 
+                        key={sq.id} 
+                        className="p-3 bg-slate-800 rounded-2xl border border-slate-700/50 flex flex-col gap-2 transition-all hover:bg-slate-800/90"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-500/10 px-2 py-0.5 rounded-lg font-mono">
+                            تبعد {normalizeDigits(String(sq.distance))}م
+                          </span>
+                          <span className="text-xs font-black text-white">ديوانية {sq.name}</span>
+                        </div>
+
+                        {isSuccess ? (
+                          <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-1.5 px-3 rounded-xl text-[10px] font-black text-center animate-pulse">
+                            تم إرسال طلب الانضمام! بانتظار موافقة صاحب الديوانية 📡
+                          </div>
+                        ) : (
+                          <div className="flex gap-2 justify-end mt-1 flex-wrap">
+                            <button
+                              onClick={() => {
+                                const nextNearby = radarNearbySquads.filter((s: any) => String(s.id) !== String(sq.id));
+                                setRadarDismissedList(prev => [...prev, String(sq.id)]);
+                                setRadarNearbySquads(nextNearby);
+                                if (nextNearby.length === 0) {
+                                  setIsNearbyRadarPanelCollapsed(true);
+                                }
+                              }}
+                              className="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-[10px] py-1.5 px-3 rounded-xl transition-all inline-flex items-center gap-1"
+                            >
+                              <X className="w-3 h-3" />
+                              إخفاء
+                            </button>
+                            
+                            {sq.isAlreadyMember ? (
+                              <button
+                                onClick={() => handleSwitchToNearbySquad(sq)}
+                                className="bg-emerald-400 hover:bg-emerald-500 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
+                              >
+                                {sq.isOwnerOfNearby ? "فعّل ديوانيتك هنا 👑" : "أنا عضو هنا، خلّها الحالية ✅"}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleSendRadarRequest(sq)}
+                                disabled={isLoading}
+                                className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
+                              >
+                                {isLoading ? "جاري الإرسال..." : "طلب دخول للمعزب 📡"}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {!customerPhone && (
+                  <p className="text-[9px] font-bold text-amber-500/50 text-center pt-2">
+                    سجل دخول برقمك عشان يوصلهم طلبك باسمك ورقمك!
+                  </p>
+                )}
+              </motion.div>
+            )
           )}
         </AnimatePresence>
 
