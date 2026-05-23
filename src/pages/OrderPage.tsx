@@ -1635,7 +1635,7 @@ export default function OrderPage() {
                         : getStatusDisplay(selectedOrder).text.includes("فشل")
                         ? "نعتذر، محاولة الدفع فشلت. يرجى المحاولة مرة أخرى."
                         : getStatusDisplay(selectedOrder).text.includes("توصيل")
-                          ? "تبي المندوب ينتبه لشي معين بالطريج أو الموقع؟ تواصل ويانا بالواتساب وبلغنا."
+                          ? "تبي المندوب ينتبه حق شي معين بالطريج أو الموقع؟ تواصل ويانا بالواتساب وبلغنا."
                           : getStatusDisplay(selectedOrder).text.includes(
                                 "تجهيز",
                               ) ||

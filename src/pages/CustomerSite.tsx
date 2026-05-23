@@ -585,6 +585,8 @@ export default function CustomerSite() {
   const [radarNearbySquads, setRadarNearbySquads] = useState<any[]>([]);
   const [radarLoadingMap, setRadarLoadingMap] = useState<Record<string, boolean>>({});
   const [radarSuccessMap, setRadarSuccessMap] = useState<Record<string, boolean>>({});
+  const [isOwnerJoinAlertCollapsed, setIsOwnerJoinAlertCollapsed] = useState(false);
+  const [ownerJoinDecisionLoading, setOwnerJoinDecisionLoading] = useState<Record<string, boolean>>({});
   const [radarStatus, setRadarStatus] = useState<"idle" | "checking" | "ready" | "denied" | "weak" | "unsupported" | "empty">("idle");
   const [radarStatusMsg, setRadarStatusMsg] = useState("فعّل رادار الديوانية عشان تظهر لك الدواوين القريبة مثل قبل.");
   const [radarAccuracy, setRadarAccuracy] = useState<number | null>(null);
@@ -615,6 +617,12 @@ export default function CustomerSite() {
        setIsNearbyRadarPanelCollapsed(false);
      }
   }, [radarNearbySquads.length]);
+
+  useEffect(() => {
+     if ((pendingGeofenceRequests?.length || 0) > 0) {
+       setIsOwnerJoinAlertCollapsed(false);
+     }
+  }, [pendingGeofenceRequests?.length]);
 
   const refreshRadarOnce = useCallback(() => {
      if (!navigator.geolocation) {
@@ -866,6 +874,26 @@ export default function CustomerSite() {
        alert("خطأ في الاتصال بالسيرفر.");
      }
      setRadarLoadingMap(prev => ({ ...prev, [targetSquad.id]: false }));
+  };
+
+  const handleOwnerJoinDecision = async (targetPhone: string, approved: boolean) => {
+     if (!targetPhone || !squadInfo?.id) return;
+     setOwnerJoinDecisionLoading(prev => ({ ...prev, [targetPhone]: true }));
+     try {
+       const res = await fetch("/api/squad-geofence-approve-request", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({ phone: targetPhone, squadId: squadInfo.id, approved })
+       });
+       if (res.ok) {
+         await fetchSquadGamification();
+       } else {
+         alert("فشل تحديث طلب الانضمام.");
+       }
+     } catch(e) {
+       alert("خطأ اتصال أثناء تحديث طلب الانضمام.");
+     }
+     setOwnerJoinDecisionLoading(prev => ({ ...prev, [targetPhone]: false }));
   };
 
   const handleCreateSquad = async () => {
@@ -4123,14 +4151,14 @@ export default function CustomerSite() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.85, y: 20 }}
                 onClick={() => setIsNearbyRadarPanelCollapsed(false)}
-                className="fixed bottom-6 left-6 md:left-auto md:right-6 bg-slate-900/95 text-amber-100 rounded-full px-4 py-3 shadow-2xl z-50 border border-amber-500/30 backdrop-blur-md flex items-center gap-2 text-xs font-black"
+                className="fixed bottom-6 left-6 md:left-auto md:right-6 w-12 h-12 bg-slate-900/95 text-amber-100 rounded-full shadow-2xl z-50 border border-amber-500/30 backdrop-blur-md flex items-center justify-center text-xs font-black"
                 title="فتح رادار الديوانيات القريبة"
               >
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
                 </span>
-                <span>رادار الديوانيات</span>
+                <span className="text-base">📡</span>
               </motion.button>
             ) : (
               <motion.div
@@ -4188,18 +4216,11 @@ export default function CustomerSite() {
                         ) : (
                           <div className="flex gap-2 justify-end mt-1 flex-wrap">
                             <button
-                              onClick={() => {
-                                const nextNearby = radarNearbySquads.filter((s: any) => String(s.id) !== String(sq.id));
-                                setRadarDismissedList(prev => [...prev, String(sq.id)]);
-                                setRadarNearbySquads(nextNearby);
-                                if (nextNearby.length === 0) {
-                                  setIsNearbyRadarPanelCollapsed(true);
-                                }
-                              }}
+                              onClick={() => setIsNearbyRadarPanelCollapsed(true)}
                               className="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-[10px] py-1.5 px-3 rounded-xl transition-all inline-flex items-center gap-1"
                             >
                               <X className="w-3 h-3" />
-                              إخفاء
+                              تصغير
                             </button>
                             
                             {sq.isAlreadyMember ? (
@@ -4230,6 +4251,86 @@ export default function CustomerSite() {
                     سجل دخول برقمك عشان يوصلهم طلبك باسمك ورقمك!
                   </p>
                 )}
+              </motion.div>
+            )
+          )}
+        </AnimatePresence>
+
+        {/* تنبيه عام للمعزب عند وصول طلب انضمام حتى خارج صفحة الديوانية */}
+        <AnimatePresence>
+          {customerPhone && squadInfo && cleanPhoneForSquad(squadInfo?.phone || "") === cleanPhoneForSquad(customerPhone || "") && pendingGeofenceRequests.length > 0 && (
+            isOwnerJoinAlertCollapsed ? (
+              <motion.button
+                key="owner-join-alert-collapsed"
+                initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: 20 }}
+                onClick={() => setIsOwnerJoinAlertCollapsed(false)}
+                className="fixed bottom-24 left-6 md:left-auto md:right-6 w-12 h-12 rounded-full relative bg-slate-900/95 text-amber-100 border border-amber-500/30 shadow-2xl z-50 flex items-center justify-center backdrop-blur-md"
+                title="طلبات انضمام معلقة"
+              >
+                <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+                </span>
+                <Users className="w-5 h-5" />
+              </motion.button>
+            ) : (
+              <motion.div
+                key="owner-join-alert-expanded"
+                initial={{ opacity: 0, y: 120, scale: 0.92 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 120, scale: 0.92 }}
+                className="fixed bottom-24 left-6 right-6 md:left-auto md:right-6 md:w-[390px] max-h-[410px] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-5 shadow-2xl z-50 border-2 border-amber-500/20 text-right font-sans space-y-4"
+              >
+                <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
+                  <button
+                    onClick={() => setIsOwnerJoinAlertCollapsed(true)}
+                    className="w-8 h-8 rounded-full bg-white/10 text-slate-300 hover:text-white hover:bg-white/15 flex items-center justify-center transition-all shrink-0"
+                    title="تصغير طلبات الانضمام"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <div className="flex-1">
+                    <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار التراث الجغرافي 📡</span>
+                    <h4 className="font-black text-sm mt-2 text-amber-100">وصل طلب انضمام للمعزب</h4>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1">تقدر تقبل أو ترفض الطلب من هنا حتى وأنت تتصفح المنيو.</p>
+                  </div>
+                  <div className="relative flex h-3 w-3 mt-1.5 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {pendingGeofenceRequests.slice(0, 5).map((req: any, idx: number) => (
+                    <div key={`${req.phone}-${idx}`} className="p-3 bg-slate-800 rounded-2xl border border-slate-700/50 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-500/10 px-2 py-0.5 rounded-lg">يبعد {req.distance ? normalizeDigits(String(req.distance)) : "قريب"}م</span>
+                        <div className="text-right">
+                          <div className="text-xs font-black text-white">{req.name || "عضو قريب"}</div>
+                          <div className="text-[10px] font-bold text-slate-400 font-mono">{req.phone}</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={() => handleOwnerJoinDecision(req.phone, false)}
+                          disabled={ownerJoinDecisionLoading[req.phone]}
+                          className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 text-[10px] font-black px-3 py-2 rounded-xl active:scale-95"
+                        >
+                          رفض
+                        </button>
+                        <button
+                          onClick={() => handleOwnerJoinDecision(req.phone, true)}
+                          disabled={ownerJoinDecisionLoading[req.phone]}
+                          className="bg-emerald-400 hover:bg-emerald-500 text-slate-950 text-[10px] font-black px-4 py-2 rounded-xl active:scale-95 shadow-sm"
+                        >
+                          {ownerJoinDecisionLoading[req.phone] ? "جاري..." : "قبول"}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </motion.div>
             )
           )}
