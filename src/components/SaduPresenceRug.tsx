@@ -299,40 +299,8 @@ export function SaduPresenceRug({
         }
       `}</style>
 
-      {/* Control panel and headers */}
-      <div className="flex items-center justify-between mb-3 px-3">
-        <button
-          onClick={() => {
-            setSoundEnabled(p => !p);
-            if (!soundEnabled) playSynthSound("clink");
-          }}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-tight border active:scale-95 transition-all text-stone-300 border-stone-800 bg-stone-900/40 hover:text-white"
-          )}
-        >
-          {soundEnabled ? (
-            <>
-              <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>صوت الفناجين شغال</span>
-            </>
-          ) : (
-            <>
-              <VolumeX className="w-3.5 h-3.5 text-stone-500" />
-              <span>فناجين صامتة</span>
-            </>
-          )}
-        </button>
-
-        <div className="flex flex-col text-right">
-          <span className="text-[10.5px] font-black text-amber-500 flex items-center gap-1 justify-end uppercase tracking-wider">
-            مجلس الديوانية المباشر 📡 <Sparkles className="w-3 h-3 text-amber-400 fill-amber-400" />
-          </span>
-          <p className="text-[10px] font-bold text-stone-400 mt-0.5">المعزب والحضور مرتبين بدون زحمة</p>
-        </div>
-      </div>
-
       {/* THE COVETED TRADITIONAL KUWAITI SADU RUG */}
-      <div className="relative shadow-2xl rounded-3xl border border-stone-900/60 overflow-hidden bg-[#240405] w-full py-7 px-4 min-h-[360px] flex flex-col">
+      <div className="relative shadow-2xl rounded-3xl border border-stone-900/60 overflow-hidden bg-[#240405] w-full py-6 px-4 min-h-[330px] flex flex-col">
         {/* Weave overlay for coarse fabric look */}
         <div 
           className="absolute inset-0 pointer-events-none opacity-[0.22]"
@@ -405,17 +373,17 @@ export function SaduPresenceRug({
         </div>
 
         {hostMember && (
-          <div className="relative z-20 mx-10 sm:mx-14 mb-4 rounded-[26px] border border-amber-400/20 bg-stone-950/80 backdrop-blur-md px-4 py-3 shadow-xl text-right">
-            <div className="flex items-center justify-between gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-lg">👑</div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[10px] font-black text-amber-300">المعزب</div>
-                <div className="text-sm font-black text-[#faf0d9] truncate">{hostMember.name || "المعزب"}</div>
+          <div className="relative z-20 mx-auto mb-3 w-fit max-w-[85%] rounded-full border border-amber-400/25 bg-black/35 backdrop-blur-sm px-4 py-2 shadow-lg text-center">
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-lg">👑</span>
+              <div className="min-w-0 text-right">
+                <div className="text-[9px] font-black text-amber-300 leading-none">المعزب</div>
+                <div className="text-sm font-black text-[#faf0d9] truncate max-w-[180px]">{hostMember.name || "المعزب"}</div>
               </div>
             </div>
             {isCurrentlyWobbling(hostMember.wobbleAt) && (
-              <div className="mt-2 bg-amber-400/10 text-amber-300 border border-amber-500/20 px-3 py-1.5 rounded-2xl text-[9px] font-black text-center leading-snug">
-                {hostMember.wobbleMsg || "حيالله الربع، المجلس منوّر!"}
+              <div className="mt-1 text-[8px] font-black text-amber-300 leading-snug truncate max-w-[220px]">
+                {hostMember.wobbleMsg || "حيالله الربع"}
               </div>
             )}
           </div>
@@ -496,73 +464,56 @@ export function SaduPresenceRug({
           </div>
         </div>
 
-        {/* جلسة الديوانية بدون زحمة: بطاقات صغيرة مرتبة بدل تكدس حول الدلة */}
-        <div className="relative z-20 mt-3 mb-2 px-3">
-          <div className="rounded-[28px] border border-amber-500/15 bg-stone-950/70 backdrop-blur-md shadow-2xl p-4">
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <span className="text-[9px] font-black text-amber-300 bg-amber-400/10 border border-amber-400/15 rounded-full px-2.5 py-1">
-                {displayEntities.length > 0 ? `${displayEntities.length} حول الدلة` : "المجلس هادئ"}
-              </span>
-              <div className="text-right">
-                <h4 className="text-xs font-black text-[#faf0d9]">جلسة الربع</h4>
-                <p className="text-[8px] font-bold text-[#faf0d9]/45 mt-0.5">مرتبة حتى لو صاروا ١٠ وأكثر</p>
-              </div>
-            </div>
+        {/* حضور الديوانية بشكل خفيف بدون إطارات كبيرة */}
+        <div className="relative z-20 mt-1 mb-2 px-6">
+          {displayEntities.length > 0 ? (
+            <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar" dir="rtl">
+              {displayEntities.map((entity: any, i: number) => {
+                const isMe = cleanPhoneLocal(entity.phone) === cleanPhoneLocal(currentMemberPhone);
+                const parsedPoints = entity.points || entity.score || 0;
+                const isRadarGuest = entity.type === "radar_guest";
+                const wobbling = isCurrentlyWobbling(entity.wobbleAt);
+                const displayName = entity.name || "أحد الربع";
 
-            {displayEntities.length === 0 ? (
-              <div className="text-center px-5 py-5 bg-black/25 rounded-2xl border border-white/5">
-                <HelpCircle className="w-7 h-7 text-yellow-500 mx-auto mb-2" />
-                <h4 className="text-xs font-black text-amber-500">منو بالديوانية الحين؟</h4>
-                <p className="text-[10px] text-stone-300 font-bold mt-1.5 leading-relaxed">
-                  سجّل حضورك أو خل الربع يقربون من الرادار، وتظهر الجلسة هنا بشكل مرتب وواضح. 📡
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[185px] overflow-y-auto pr-1 custom-scrollbar">
-                {displayEntities.map((entity: any, i: number) => {
-                  const isMe = cleanPhoneLocal(entity.phone) === cleanPhoneLocal(currentMemberPhone);
-                  const parsedPoints = entity.points || entity.score || 0;
-                  const isRadarGuest = entity.type === "radar_guest";
-                  const wobbling = isCurrentlyWobbling(entity.wobbleAt);
-                  const displayName = entity.name || "أحد الربع";
-
-                  return (
-                    <button
-                      key={`${entity.phone}-${entity.index}`}
-                      type="button"
-                      onClick={() => handleCupClick(entity)}
-                      className={cn(
-                        "relative min-h-[68px] rounded-2xl border px-3 py-2 text-right transition-all active:scale-95 overflow-hidden",
-                        isMe
-                          ? "bg-emerald-400 text-stone-950 border-emerald-200 shadow-lg"
-                          : isRadarGuest
-                            ? "bg-rose-950/55 text-stone-100 border-rose-500/25"
-                            : "bg-black/30 text-stone-100 border-white/5 hover:border-amber-400/20"
-                      )}
-                    >
-                      {wobbling && <div className="absolute inset-0 bg-amber-400/10 animate-pulse" />}
-                      <div className="relative flex items-center justify-between gap-2">
-                        <span className="w-8 h-8 shrink-0 rounded-full bg-white/10 flex items-center justify-center text-base border border-white/10">
-                          {isMe ? "أنت" : isRadarGuest ? "📡" : parsedPoints >= 200 ? "👑" : "☕"}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-[10px] font-black truncate">{displayName}</div>
-                          <div className={cn("text-[8px] font-bold mt-1 truncate", isMe ? "text-stone-800/70" : "text-stone-400")}>
-                            {isRadarGuest ? `قريب بالرادار${entity.distance ? ` • ${entity.distance}م` : ""}` : `${parsedPoints} نقطة`}
-                          </div>
+                return (
+                  <button
+                    key={`${entity.phone}-${entity.index}`}
+                    type="button"
+                    onClick={() => handleCupClick(entity)}
+                    className={cn(
+                      "shrink-0 min-w-[112px] rounded-2xl px-3 py-2 text-right transition-all active:scale-95 backdrop-blur-sm border",
+                      isMe
+                        ? "bg-emerald-400/95 text-stone-950 border-emerald-200 shadow-lg"
+                        : isRadarGuest
+                          ? "bg-rose-950/45 text-stone-100 border-rose-500/25"
+                          : "bg-black/25 text-stone-100 border-white/5 hover:border-amber-400/20"
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="w-7 h-7 shrink-0 rounded-full bg-white/10 flex items-center justify-center text-xs border border-white/10">
+                        {isMe ? "أنت" : isRadarGuest ? "📡" : parsedPoints >= 200 ? "👑" : "☕"}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[10px] font-black truncate">{displayName}</div>
+                        <div className={cn("text-[8px] font-bold mt-0.5 truncate", isMe ? "text-stone-800/70" : "text-stone-400")}>
+                          {isRadarGuest ? `قريب${entity.distance ? ` • ${entity.distance}م` : ""}` : `${parsedPoints} نقطة`}
                         </div>
                       </div>
-                      {wobbling && (
-                        <div className={cn("relative mt-2 text-[8px] font-black rounded-xl px-2 py-1 leading-snug", isMe ? "bg-white/35 text-stone-950" : "bg-amber-400/10 text-amber-300")}>
-                          {entity.wobbleMsg || "يا هلا بالربع!"}
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                    </div>
+                    {wobbling && (
+                      <div className={cn("mt-1 text-[8px] font-black rounded-lg px-2 py-1 leading-snug truncate", isMe ? "bg-white/35 text-stone-950" : "bg-amber-400/10 text-amber-300")}>
+                        {entity.wobbleMsg || "يا هلا بالربع!"}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mx-auto w-fit rounded-full bg-black/25 border border-white/5 px-4 py-2 text-[10px] font-bold text-[#faf0d9]/60 backdrop-blur-sm">
+              المجلس هادئ… سجّل حضورك وتبدأ الجلسة ☕
+            </div>
+          )}
         </div>
 
         {/* Footer info showing total attendees */}

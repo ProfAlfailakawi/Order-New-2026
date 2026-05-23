@@ -843,19 +843,48 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
               {myDiwaniyaTab === "code" && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[10px] font-black bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-100">صالح ساعتين</span>
-                  <div className="text-right"><h4 className="text-base font-black text-brand">كود دخول الضيف</h4><p className="text-[10px] font-bold text-stone-400 mt-0.5">للمعزب فقط: أنشئ كود سريع واعطه للضيف.</p></div>
+                  <div className="text-right">
+                    <h4 className="text-base font-black text-brand">الكود السريع</h4>
+                    <p className="text-[10px] font-bold text-stone-400 mt-0.5">أنشئ كود للضيف أو ادخل كود ديوانية ثانية.</p>
+                  </div>
                 </div>
-                {isOwner ? <div className="space-y-3">
-                  <button onClick={handleCreateTempCode} disabled={tempCodeLoading} className="w-full bg-brand hover:bg-accent text-white rounded-2xl py-4 text-sm font-black shadow-md active:scale-95 transition-all">{tempCodeLoading ? "نجهز الكود..." : "إنشاء كود دخول للضيف 🔐"}</button>
-                  {(activeTempCode?.code || tempCodes[0]?.code) ? <div className="text-center bg-stone-50 rounded-3xl p-5 border border-stone-100">
-                    <div className="text-[10px] font-black text-stone-400 mb-2">الكود الحالي</div>
-                    <div className="inline-flex bg-white border border-amber-100 rounded-2xl px-5 py-3 text-4xl font-black tracking-[0.35em] text-brand shadow-sm" dir="ltr">{activeTempCode?.code || tempCodes[0]?.code}</div>
-                    <p className="text-[10px] font-bold text-stone-400 mt-3">الضيف يفتح تبويب الكود ويدخل الرقم مباشرة.</p>
-                  </div> : <div className="bg-stone-50 border border-stone-100 rounded-2xl p-4 text-center text-[11px] font-bold text-stone-500">اضغط إنشاء كود وسيظهر هنا فوراً.</div>}
-                </div> : <div className="space-y-3">
-                  <p className="text-[11px] font-bold text-stone-500 leading-relaxed">اكتب الكود الذي أرسله لك المعزب للدخول السريع.</p>
-                  <div className="flex gap-2"><input inputMode="numeric" value={tempJoinCode} onChange={(e)=>setTempJoinCode(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,4))} placeholder="كود الضيف" className="flex-1 bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3 text-center font-black"/><button onClick={handleJoinWithTempCode} disabled={tempCodeLoading} className="bg-brand text-white rounded-2xl px-5 text-xs font-black">دخول</button></div>
-                </div>}
+
+                {isOwner && (
+                  <div className="rounded-[24px] border border-amber-100 bg-amber-50/45 p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[10px] font-black bg-white text-amber-700 px-2.5 py-1 rounded-full border border-amber-100">للمعزب</span>
+                      <h5 className="text-sm font-black text-brand">إنشاء كود دخول</h5>
+                    </div>
+                    <button onClick={handleCreateTempCode} disabled={tempCodeLoading} className="w-full bg-brand hover:bg-accent text-white rounded-2xl py-4 text-sm font-black shadow-md active:scale-95 transition-all">
+                      {tempCodeLoading ? "نجهز الكود..." : "إنشاء كود دخول للضيف 🔐"}
+                    </button>
+                    {(activeTempCode?.code || tempCodes[0]?.code) ? <div className="text-center bg-white rounded-3xl p-5 border border-amber-100">
+                      <div className="text-[10px] font-black text-stone-400 mb-2">الكود الحالي</div>
+                      <div className="inline-flex bg-stone-50 border border-amber-100 rounded-2xl px-5 py-3 text-4xl font-black tracking-[0.35em] text-brand shadow-sm" dir="ltr">{activeTempCode?.code || tempCodes[0]?.code}</div>
+                      <p className="text-[10px] font-bold text-stone-400 mt-3">أرسله للضيف، صالح لمدة ساعتين.</p>
+                    </div> : <div className="bg-white border border-amber-100 rounded-2xl p-4 text-center text-[11px] font-bold text-stone-500">اضغط إنشاء كود وسيظهر هنا فوراً.</div>}
+                  </div>
+                )}
+
+                <div className="rounded-[24px] border border-brand/10 bg-brand/[0.03] p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[10px] font-black bg-brand/10 text-brand px-2.5 py-1 rounded-full border border-brand/10">دخول سريع</span>
+                    <h5 className="text-sm font-black text-brand">عندك كود ديوانية؟</h5>
+                  </div>
+                  <p className="text-[11px] font-bold text-stone-500 leading-relaxed">حتى لو أنت معزب في ديوانيتك، تقدر تدخل ديوانية ثانية أنت عضو فيها عن طريق الكود هنا.</p>
+                  <div className="flex flex-col sm:flex-row gap-2 sm:items-stretch">
+                    <input
+                      inputMode="numeric"
+                      value={tempJoinCode}
+                      onChange={(e)=>setTempJoinCode(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,4))}
+                      placeholder="كود الديوانية"
+                      className="w-full flex-1 bg-white border border-stone-200 rounded-2xl px-4 py-3 text-center font-black text-brand"
+                    />
+                    <button onClick={handleJoinWithTempCode} disabled={tempCodeLoading} className="w-full sm:w-auto bg-brand text-white rounded-2xl px-5 py-3 text-xs font-black shadow-sm active:scale-95">
+                      {tempCodeLoading ? "جاري الدخول..." : "دخول بالكود"}
+                    </button>
+                  </div>
+                </div>
               </div>}
 
               {myDiwaniyaTab === "orders" && hasRealBeautifulLog && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-3">
@@ -950,36 +979,6 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                    <p className="text-[9px] font-bold text-stone-400 text-right leading-relaxed">
                       تقدر تكون معزب بأكثر من ديوانية أو عضو عند ربعك، وتختار الديوانية الحالية وقت الطلب.
                    </p>
-                </div>
-
-                {/* Logout of Phone Account Button */}
-                <div className="pt-2 border-t border-stone-200/50 flex items-center justify-between mt-1 text-[10px]">
-                   <button 
-                      onClick={() => {
-                         if (confirm("هل تبي تسجل خروج بالكامل ومسح رقم هاتفك الحالي من هذا الجهاز؟ يمكنك دائماً الدخول مجدداً.")) {
-                            if (onClearSquadSession) {
-                               onClearSquadSession();
-                            } else {
-                               setCustomerPhone("");
-                               setCustomerName("");
-                               setActiveSquadId(null);
-                               if (setSquadInfo) setSquadInfo(null);
-                               try {
-                                  localStorage.removeItem("customer_phone_track");
-                                  localStorage.removeItem("squadId");
-                                  localStorage.removeItem("radar_dismissed_squads");
-                               } catch(e) {}
-                               if (onRefresh) onRefresh();
-                            }
-                         }
-                      }}
-                      className="text-[10px] text-right font-black text-rose-500 hover:text-rose-600 transition-colors flex items-center gap-1 justify-end"
-                   >
-                      🚫 تسجيل الخروج من رقم الهاتف الحالي
-                   </button>
-                   <span className="text-[9px] font-bold text-stone-400 font-mono">
-                      {customerPhone}
-                   </span>
                 </div>
              </div>
           )}
@@ -1414,6 +1413,31 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 </div>
                 <p className="text-[10px] font-bold text-stone-400 leading-relaxed">
                   إذا الرقم مرتبط بدواوين، راح تظهر لك فوراً وتقدر تختار الحالية.
+                </p>
+              </div>
+
+              <div className="bg-white rounded-3xl p-4 border border-brand/10 space-y-3 text-right">
+                <label className="text-[10px] font-black text-stone-400 mr-2">
+                  عندك كود من المعزب؟
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    inputMode="numeric"
+                    value={tempJoinCode}
+                    onChange={(e)=>setTempJoinCode(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,4))}
+                    placeholder="كود الديوانية"
+                    className="flex-1 bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-black text-brand focus:border-accent focus:outline-none transition-all text-center"
+                  />
+                  <button
+                    onClick={handleJoinWithTempCode}
+                    disabled={tempCodeLoading}
+                    className="bg-brand text-white font-black text-xs px-4 rounded-2xl shadow-md active:scale-95"
+                  >
+                    دخول بالكود
+                  </button>
+                </div>
+                <p className="text-[10px] font-bold text-stone-400 leading-relaxed">
+                  اكتب رقمك فوق ثم الكود، وندخلك للديوانية مباشرة.
                 </p>
               </div>
 
