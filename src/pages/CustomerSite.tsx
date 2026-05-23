@@ -106,10 +106,17 @@ const cleanPhoneForSquad = (phone: any): string => {
 const getSquadGeofenceDistance = (settings: any): number => {
   const candidates = [
     settings?.squadGeofenceDistance,
+    settings?.settings?.squadGeofenceDistance,
     settings?.squadSettings?.geofenceDistance,
     settings?.squadSettings?.squadGeofenceDistance,
     settings?.diwaniyaGeofenceDistance,
+    settings?.settings?.diwaniyaGeofenceDistance,
+    settings?.geofenceDistance,
+    settings?.settings?.geofenceDistance,
     settings?.radarDistance,
+    settings?.settings?.radarDistance,
+    settings?.radarGeofenceDistance,
+    settings?.settings?.radarGeofenceDistance,
   ];
   for (const value of candidates) {
     const n = Number(value);
@@ -655,6 +662,17 @@ export default function CustomerSite() {
        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
      );
   }, []);
+
+  useEffect(() => {
+     // أول دخول للموقع: نطلب تفعيل اللوكيشن للرادار مرة واحدة بشكل خفيف.
+     try {
+       const asked = localStorage.getItem("radar_location_prompted_once");
+       if (!asked && navigator.geolocation) {
+         localStorage.setItem("radar_location_prompted_once", "1");
+         refreshRadarOnce();
+       }
+     } catch(e) {}
+  }, [refreshRadarOnce]);
 
   const clearSquadSessionOnThisDevice = useCallback(() => {
      squadSessionTokenRef.current += 1;

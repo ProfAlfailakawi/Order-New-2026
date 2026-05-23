@@ -920,8 +920,8 @@ export default function AdminDashboard() {
                     <div className="space-y-2 bg-slate-50 border border-slate-100 p-6 rounded-3xl text-right font-sans">
                       <span className="text-[10px] font-black bg-slate-200 text-slate-700 px-2 py-0.5 rounded-md font-mono">تنويه تقني 💡</span>
                       <p className="text-[11px] font-bold text-slate-600 leading-relaxed">
-                        مرات يغير الأدمن هذه الإعدادات حسب حجم الحدث أو التباعد بجانب بعضهم. القيمة الاعتيادية هي <strong className="text-brand">100 متر</strong>.
-                        العملاء رح يحصلون على إخطار بالرادار مباشرة عند الدخول في هذا المدى المحدد من أي ديوانية مسجلة بالـ GPS.
+                        هذا الرقم هو المصدر المعتمد للتطبيق، وأي تغيير من الأدمن ينعكس على إشعارات الرادار في صفحة العميل مباشرة.
+                        العملاء رح يحصلون على إخطار بالرادار عند الدخول ضمن المدى الحالي المحدد أعلاه لأي ديوانية مسجلة بالـ GPS.
                       </p>
                     </div>
                   </div>

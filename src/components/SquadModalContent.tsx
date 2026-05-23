@@ -170,6 +170,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       return;
     }
 
+    if (squadInfo?.lat !== undefined && squadInfo?.lng !== undefined) {
+      const diff = calculateDistanceMeters(Number(squadInfo.lat), Number(squadInfo.lng), coords.lat, coords.lng);
+      if (diff < 8) {
+        setShowResetLocation(false);
+        setGeoStatusMsg("الموقع نفسه تقريباً، ما يحتاج نغيّره ✅");
+        return;
+      }
+    }
+
     setIsRegisteringGeo(true);
     setGeoStatusMsg("جاري حفظ الموقع يدوياً... 💾");
     try {
@@ -209,6 +218,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
+        if (squadInfo?.lat !== undefined && squadInfo?.lng !== undefined) {
+          const diff = calculateDistanceMeters(Number(squadInfo.lat), Number(squadInfo.lng), latitude, longitude);
+          if (diff < 8) {
+            setIsRegisteringGeo(false);
+            setShowResetLocation(false);
+            setGeoStatusMsg("أنت بنفس موقع الديوانية تقريباً، ما يحتاج نغيّر اللوكيشن ✅");
+            return;
+          }
+        }
         try {
           const res = await fetch("/api/squad-set-location", {
             method: "POST",
@@ -422,10 +440,17 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const getSquadGeofenceDistance = () => {
     const candidates = [
       settings?.squadGeofenceDistance,
+      settings?.settings?.squadGeofenceDistance,
       settings?.squadSettings?.geofenceDistance,
       settings?.squadSettings?.squadGeofenceDistance,
       settings?.diwaniyaGeofenceDistance,
+      settings?.settings?.diwaniyaGeofenceDistance,
+      settings?.geofenceDistance,
+      settings?.settings?.geofenceDistance,
       settings?.radarDistance,
+      settings?.settings?.radarDistance,
+      settings?.radarGeofenceDistance,
+      settings?.settings?.radarGeofenceDistance,
     ];
     for (const value of candidates) {
       const n = Number(value);
@@ -433,6 +458,16 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     }
     return 100;
   };
+  const calculateDistanceMeters = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371e3;
+    const f1 = lat1 * Math.PI / 180;
+    const f2 = lat2 * Math.PI / 180;
+    const df = (lat2 - lat1) * Math.PI / 180;
+    const dl = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(df / 2) ** 2 + Math.cos(f1) * Math.cos(f2) * Math.sin(dl / 2) ** 2;
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  };
+
   const visibleNotifications = (diwaniyaNotifications || []).filter((n: any) => !n.readAt);
   const hasRealUsualOrder = Boolean(usualOrder?.items?.length && Number(usualOrder?.total || 0) > 0);
   const hasRealBeautifulLog = Boolean(squadBeautifulLog && (Number(squadBeautifulLog.ordersCount || 0) > 0 || Number(squadBeautifulLog.presentCount || 0) > 0 || squadBeautifulLog.favoriteItemName));
@@ -446,6 +481,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const [tempJoinPhone, setTempJoinPhone] = React.useState("");
   const [tempCodeNeedsProfile, setTempCodeNeedsProfile] = React.useState(false);
   const [groupOrderLoading, setGroupOrderLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isOwner && myDiwaniyaTab === "code") setMyDiwaniyaTab("home");
+  }, [isOwner, myDiwaniyaTab]);
 
   React.useEffect(() => {
     if (!squadInfo?.id || !isOwner) return;
@@ -717,7 +756,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   { id: "home", label: "الرئيسية", icon: "🏠" },
                   { id: "manage", label: "دواويني", icon: "🛖" },
                   { id: "orders", label: "الطلبات", icon: "🍽️" },
-                  { id: "code", label: "الكود", icon: "🔐" },
+                  ...(isOwner ? [{ id: "code", label: "الكود", icon: "🔐" }] : []),
                   { id: "location", label: "الموقع", icon: "📍" },
                   { id: "notifications", label: "تنبيهات", icon: "🔔", badge: unreadDiwaniyaNotifications },
                 ].map((tab: any) => (
@@ -1288,6 +1327,21 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     </div>
                   )}
 
+                  {!isOwner && myDiwaniyaTab === "location" && (
+                    <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
+                      <div className="flex items-center justify-between border-b border-stone-50 pb-3">
+                        <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full">إرشادات فقط</span>
+                        <h4 className="font-black text-brand text-sm">موقع الديوانية 📍</h4>
+                      </div>
+                      <p className="text-xs font-bold text-stone-500 leading-relaxed">
+                        التحكم بتثبيت أو تغيير موقع الرادار للمعزب فقط. أنت كعضو تقدر تشغّل سماح الموقع من المتصفح حتى يظهر لك الرادار والتنقل بين الدواوين القريبة.
+                      </p>
+                      <div className="bg-stone-50 rounded-2xl border border-stone-100 p-4 text-[11px] font-bold text-stone-500 leading-relaxed">
+                        إذا ما ظهر لك إشعار القرب: فعّل صلاحية الموقع من المتصفح، قرّب من الديوانية، ثم افتح صفحة الديوانية أو اضغط تشغيل الرادار من التنبيه.
+                      </div>
+                    </div>
+                  )}
+
                   {/* طلبات الانضمام عبر الرادار - للقائد */}
                   {isOwner && myDiwaniyaTab === "location" && (
                     <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
@@ -1303,7 +1357,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           {pendingGeofenceRequests.map((req: any, idx: number) => (
                             <div key={idx} className="p-3.5 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col gap-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">يبعد {req.distance ? formatEnglishNumber(req.distance) : "أقل من 100"}م</span>
+                                <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">يبعد {req.distance ? formatEnglishNumber(req.distance) : formatEnglishNumber(getSquadGeofenceDistance())}م</span>
                                 <span className="text-sm font-black text-brand">{req.name}</span>
                               </div>
                               <div className="flex items-center justify-between mt-1">
