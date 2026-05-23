@@ -851,6 +851,15 @@ app.get("/api/debug/order/:id", async (req, res) => {
       if (d.exists()) {
         const data = d.data();
         settings = data.settings || {};
+        const rootGeofenceDistance =
+          data.squadGeofenceDistance ??
+          data.diwaniyaGeofenceDistance ??
+          data.geofenceDistance ??
+          data.radarDistance ??
+          data.radarGeofenceDistance;
+        if (rootGeofenceDistance !== undefined && settings.squadGeofenceDistance === undefined) {
+          settings.squadGeofenceDistance = rootGeofenceDistance;
+        }
         settings.loyaltyTiers = data.loyaltyTiers || [];
         settings.squadTiers = data.squadTiers || [];
         settings.loyaltySettings = data.loyaltySettings || {};
@@ -906,9 +915,11 @@ app.get("/api/debug/order/:id", async (req, res) => {
     try {
       const { distance } = req.body;
       const docRef = doc(db, "appData", "shared_company_data");
+      const normalizedDistance = Number(distance);
       await setDoc(docRef, { 
+        squadGeofenceDistance: normalizedDistance,
         settings: { 
-          squadGeofenceDistance: Number(distance) 
+          squadGeofenceDistance: normalizedDistance 
         } 
       }, { merge: true });
       res.json({ success: true });
