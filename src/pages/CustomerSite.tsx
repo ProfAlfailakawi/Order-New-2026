@@ -676,6 +676,22 @@ export default function CustomerSite() {
 
      return R * c; // in metres
   };
+  const getSquadGeofenceDistance = React.useCallback(() => {
+    const candidates = [
+      settings?.squadGeofenceDistance,
+      settings?.settings?.squadGeofenceDistance,
+      settings?.diwaniyaGeofenceDistance,
+      settings?.geofenceDistance,
+      settings?.radarDistance,
+      settings?.radarGeofenceDistance,
+    ];
+    for (const value of candidates) {
+      const n = Number(normalizeDigits(String(value ?? "")).replace(/[^0-9.]/g, ""));
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+    return 100;
+  }, [settings]);
+
 
   // Watch position with highest accuracy
   useEffect(() => {
@@ -705,7 +721,8 @@ export default function CustomerSite() {
          return;
        }
        setRadarStatus("ready");
-       setRadarStatusMsg(`الرادار شغال حسب مسافة الأدمن (${Number(settings?.squadGeofenceDistance || 100)}م). إذا قربت من ديوانية، تظهر لك بطاقة الدخول أو التبديل.`);
+       const geofenceLimit = getSquadGeofenceDistance();
+       setRadarStatusMsg(`الرادار شغال حسب مسافة الأدمن (${geofenceLimit}م). إذا قربت من ديوانية، تظهر لك بطاقة الدخول أو التبديل.`);
 
        const nearby: any[] = [];
 
@@ -721,7 +738,6 @@ export default function CustomerSite() {
 
          if (sq.lat !== undefined && sq.lng !== undefined) {
            const dist = calculateDistance(userLat, userLng, Number(sq.lat), Number(sq.lng));
-           const geofenceLimit = Number(settings?.squadGeofenceDistance || 100);
            if (dist < geofenceLimit) {
              nearby.push({
                ...sq,
@@ -751,7 +767,7 @@ export default function CustomerSite() {
      return () => {
        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
      };
-  }, [activeSquads, activeSquadId, radarDismissedList, myGeofenceRequests, settings, userSquads]);
+  }, [activeSquads, activeSquadId, radarDismissedList, myGeofenceRequests, settings, userSquads, getSquadGeofenceDistance]);
 
   // Polling for approved geofence requests
   useEffect(() => {

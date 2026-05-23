@@ -903,7 +903,7 @@ export default function AdminDashboard() {
                       <input 
                         id="radar-geofence-distance-input"
                         type="number"
-                        value={settings.squadGeofenceDistance !== undefined ? settings.squadGeofenceDistance : 100}
+                        value={settings.squadGeofenceDistance ?? settings.settings?.squadGeofenceDistance ?? settings.diwaniyaGeofenceDistance ?? settings.geofenceDistance ?? settings.radarDistance ?? settings.radarGeofenceDistance ?? 100}
                         onChange={(e) => {
                           const val = Number(e.target.value);
                           setSettings({
@@ -929,7 +929,7 @@ export default function AdminDashboard() {
                   <button 
                     id="save-radar-geofence-btn"
                     onClick={async () => {
-                      const dist = Number(settings.squadGeofenceDistance || 100);
+                      const dist = Number(settings.squadGeofenceDistance ?? settings.settings?.squadGeofenceDistance ?? settings.diwaniyaGeofenceDistance ?? settings.geofenceDistance ?? settings.radarDistance ?? settings.radarGeofenceDistance ?? 100);
                       try {
                         const res = await fetch("/api/admin/settings/squadGeofenceDistance", {
                           method: "PATCH",

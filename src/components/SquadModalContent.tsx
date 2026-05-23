@@ -415,6 +415,22 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
   const toEnglishDigits = (value: any) => normalizeDigits(String(value ?? ""));
   const formatEnglishNumber = (value: any) => toEnglishDigits(String(value ?? ""));
+  const getSquadGeofenceDistance = () => {
+    const candidates = [
+      settings?.squadGeofenceDistance,
+      settings?.settings?.squadGeofenceDistance,
+      settings?.diwaniyaGeofenceDistance,
+      settings?.geofenceDistance,
+      settings?.radarDistance,
+      settings?.radarGeofenceDistance,
+    ];
+    for (const value of candidates) {
+      const n = Number(normalizeDigits(String(value ?? "")).replace(/[^0-9.]/g, ""));
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+    return 100;
+  };
+  const squadGeofenceDistance = getSquadGeofenceDistance();
   const visibleNotifications = (diwaniyaNotifications || []).filter((n: any) => !n.readAt);
   const hasRealUsualOrder = Boolean(usualOrder?.items?.length && Number(usualOrder?.total || 0) > 0);
   const hasRealBeautifulLog = Boolean(squadBeautifulLog && (Number(squadBeautifulLog.ordersCount || 0) > 0 || Number(squadBeautifulLog.presentCount || 0) > 0 || squadBeautifulLog.favoriteItemName));
@@ -639,7 +655,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
 
           {squadInfo && isCurrentMember && (
-            <div className="bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm sticky top-0 z-10">
+            <div className="bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm relative z-0">
               <div className="grid grid-cols-4 gap-1 text-center" dir="rtl">
                 {[
                   { id: "home", label: "الرئيسية", icon: "🏠" },
@@ -1038,6 +1054,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
               return (
                 <div key="overview-content" className="flex flex-col gap-6">
+                  {myDiwaniyaTab === "home" && (<>
                   <div
                     className={cn(
                       "rounded-[32px] p-6 border-2 shadow-sm relative overflow-hidden transition-all duration-500",
@@ -1177,6 +1194,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         ))}
                     </div>
                   </div>
+                  </>)}
 
                   {/* رادار تحديد الموقع الجغرافي للديوانية - للقائد */}
                   {isOwner && myDiwaniyaTab === "location" && (
@@ -1187,7 +1205,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       </div>
                       
                       <p className="text-xs font-bold text-stone-500 leading-relaxed">
-                        ثبت موقع ديوانيتك حتى تظهر بطاقة الدخول للربع تلقائياً عند اقترابهم ضمن مسافة الأدمن ({formatEnglishNumber(settings?.squadGeofenceDistance || 100)} متر).
+                        ثبت موقع ديوانيتك حتى تظهر بطاقة الدخول للربع تلقائياً عند اقترابهم ضمن مسافة الأدمن ({formatEnglishNumber(squadGeofenceDistance)} متر).
                       </p>
 
                       {squadInfo.lat !== undefined && squadInfo.lng !== undefined ? (
@@ -1281,7 +1299,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           {pendingGeofenceRequests.map((req: any, idx: number) => (
                             <div key={idx} className="p-3.5 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col gap-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">يبعد {req.distance ? formatEnglishNumber(req.distance) : "أقل من 100"}م</span>
+                                <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">يبعد {req.distance ? formatEnglishNumber(req.distance) : `أقل من ${formatEnglishNumber(squadGeofenceDistance)}`}م</span>
                                 <span className="text-sm font-black text-brand">{req.name}</span>
                               </div>
                               <div className="flex items-center justify-between mt-1">
@@ -1363,7 +1381,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     </div>
                   )}
 
-                  {isCurrentMember && (
+                  {isCurrentMember && myDiwaniyaTab === "home" && (
                     <button
                       onClick={handleShareSquadLink}
                       className="w-full bg-brand text-white font-black text-sm py-4 rounded-xl shadow-lg active:scale-95 transition-all text-center flex items-center justify-center gap-2"
