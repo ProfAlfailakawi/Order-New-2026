@@ -442,6 +442,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const [tempCodeLoading, setTempCodeLoading] = React.useState(false);
   const [activeTempCode, setActiveTempCode] = React.useState<any>(null);
   const [tempJoinCode, setTempJoinCode] = React.useState("");
+  const [tempJoinName, setTempJoinName] = React.useState("");
+  const [tempJoinPhone, setTempJoinPhone] = React.useState("");
+  const [tempCodeNeedsProfile, setTempCodeNeedsProfile] = React.useState(false);
   const [groupOrderLoading, setGroupOrderLoading] = React.useState(false);
 
   React.useEffect(() => {
@@ -559,22 +562,41 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   };
 
   const handleJoinWithTempCode = async () => {
-    if (!tempJoinCode.trim() || !currentMemberPhone) {
-      alert("اكتب الكود ورقمك أولاً.");
+    const cleanCode = tempJoinCode.trim();
+    const cleanTempPhone = cleanPhoneLocal(normalizeDigits(tempJoinPhone || guestPhone || loginPhone || currentMemberPhone || "")).slice(0, 8);
+    const finalName = (tempJoinName || guestName || customerName || "").trim();
+
+    if (!cleanCode) {
+      alert("اكتب كود الديوانية أولاً.");
       return;
     }
+
+    if (!cleanTempPhone || cleanTempPhone.length !== 8 || !finalName) {
+      setTempCodeNeedsProfile(true);
+      alert("الكود جاهز. ادخل اسمك ورقمك لإكمال الدخول للديوانية.");
+      return;
+    }
+
     setTempCodeLoading(true);
     try {
       const res = await fetch("/api/squad-join-temp-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: tempJoinCode.trim(), phone: currentMemberPhone, name: customerName || guestName || "عضو" })
+        body: JSON.stringify({ code: cleanCode, phone: cleanTempPhone, name: finalName })
       });
       const data = await res.json();
       if (res.ok) {
+        setCustomerPhone(cleanTempPhone);
+        setCustomerName(finalName);
+        setGuestPhone(cleanTempPhone);
+        setGuestName(finalName);
+        try { localStorage.setItem("customer_phone_track", cleanTempPhone); } catch(e) {}
         setActiveSquadId(String(data.squad.id));
+        setTempCodeNeedsProfile(false);
         if (onRefresh) onRefresh();
-      } else alert("الكود غير صحيح أو انتهت صلاحيته.");
+      } else {
+        alert(data?.error || "الكود غير صحيح أو انتهت صلاحيته.");
+      }
     } catch { alert("خطأ اتصال أثناء استخدام الكود."); }
     setTempCodeLoading(false);
   };
@@ -884,6 +906,24 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       {tempCodeLoading ? "جاري الدخول..." : "دخول بالكود"}
                     </button>
                   </div>
+                  {tempCodeNeedsProfile && (
+                    <div className="rounded-2xl bg-white border border-brand/10 p-3 space-y-2">
+                      <div className="text-[11px] font-black text-brand text-right">ادخل اسمك ورقمك لإكمال الدخول للديوانية</div>
+                      <input
+                        value={tempJoinName}
+                        onChange={(e)=>setTempJoinName(e.target.value)}
+                        placeholder="اسمك"
+                        className="w-full bg-stone-50 border border-stone-100 rounded-xl px-3 py-2 text-sm font-bold text-brand text-right"
+                      />
+                      <input
+                        inputMode="numeric"
+                        value={tempJoinPhone}
+                        onChange={(e)=>setTempJoinPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,8))}
+                        placeholder="رقم تلفونك 8 أرقام"
+                        className="w-full bg-stone-50 border border-stone-100 rounded-xl px-3 py-2 text-sm font-bold text-brand text-right"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>}
 
@@ -1358,6 +1398,24 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             {tempCodeLoading ? "جاري الدخول..." : "دخول بالكود"}
                           </button>
                         </div>
+                        {tempCodeNeedsProfile && (
+                          <div className="rounded-2xl bg-white border border-brand/10 p-3 space-y-2">
+                            <div className="text-[11px] font-black text-brand text-right">ادخل اسمك ورقمك لإكمال الدخول للديوانية</div>
+                            <input
+                              value={tempJoinName}
+                              onChange={(e)=>setTempJoinName(e.target.value)}
+                              placeholder="اسمك"
+                              className="w-full bg-stone-50 border border-stone-100 rounded-xl px-3 py-2 text-sm font-bold text-brand text-right"
+                            />
+                            <input
+                              inputMode="numeric"
+                              value={tempJoinPhone}
+                              onChange={(e)=>setTempJoinPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,8))}
+                              placeholder="رقم تلفونك 8 أرقام"
+                              className="w-full bg-stone-50 border border-stone-100 rounded-xl px-3 py-2 text-sm font-bold text-brand text-right"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1436,8 +1494,26 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     دخول بالكود
                   </button>
                 </div>
+                {tempCodeNeedsProfile && (
+                  <div className="grid grid-cols-1 gap-2">
+                    <div className="text-[11px] font-black text-brand text-right">ادخل اسمك ورقمك لإكمال الدخول للديوانية</div>
+                    <input
+                      value={tempJoinName}
+                      onChange={(e)=>setTempJoinName(e.target.value)}
+                      placeholder="اسمك"
+                      className="w-full bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand text-right"
+                    />
+                    <input
+                      inputMode="numeric"
+                      value={tempJoinPhone}
+                      onChange={(e)=>setTempJoinPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,8))}
+                      placeholder="رقم تلفونك 8 أرقام"
+                      className="w-full bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand text-right"
+                    />
+                  </div>
+                )}
                 <p className="text-[10px] font-bold text-stone-400 leading-relaxed">
-                  اكتب رقمك فوق ثم الكود، وندخلك للديوانية مباشرة.
+                  اكتب الكود، وإذا ما كنت مسجل بنطلب اسمك ورقمك لإكمال الدخول.
                 </p>
               </div>
 

@@ -373,7 +373,7 @@ export function SaduPresenceRug({
         </div>
 
         {hostMember && (
-          <div className="relative z-20 mx-auto mb-3 w-fit max-w-[85%] rounded-full border border-amber-400/25 bg-black/35 backdrop-blur-sm px-4 py-2 shadow-lg text-center">
+          <div className="relative z-20 mr-auto ml-3 mb-3 w-fit max-w-[62%] rounded-full border border-amber-400/25 bg-black/35 backdrop-blur-sm px-4 py-2 shadow-lg text-center">
             <div className="flex items-center justify-center gap-2">
               <span className="text-lg">👑</span>
               <div className="min-w-0 text-right">

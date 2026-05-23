@@ -1351,6 +1351,9 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const sIdx = squads.findIndex((s: any) => String(s.id) === String(squadId));
       if (sIdx < 0) return null;
       const squad = { ...squads[sIdx], membersList: Array.isArray(squads[sIdx].membersList) ? [...squads[sIdx].membersList] : [] };
+      if (cleanPhone(squad.phone || codes[cIdx]?.ownerPhone || "") === cleanTarget) {
+        return null;
+      }
       if (!squad.membersList.some((m: any) => cleanPhone(m.phone) === cleanTarget)) {
         squad.membersList.push({ phone: cleanTarget, name: name || "عضو", points: 0, joinedAt: new Date().toISOString(), joinedByTempCode: String(code) });
       }
@@ -1392,7 +1395,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       ]);
       return { squadTempCodes: codes, squads, customers, diwaniyaNotifications };
     });
-    if (!ok || !joinedSquad) return res.status(404).json({ error: "Invalid or expired code" });
+    if (!ok || !joinedSquad) return res.status(404).json({ error: "الكود غير صحيح أو انتهت صلاحيته، أو لا يمكن للمعزب استخدام كود ديوانيته." });
     res.json({ success: true, squad: joinedSquad });
   });
 
