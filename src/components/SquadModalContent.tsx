@@ -114,7 +114,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   unreadDiwaniyaNotifications = 0,
 }) => {
   const [copied, setCopied] = React.useState(false);
-  const [myDiwaniyaTab, setMyDiwaniyaTab] = React.useState<"home" | "manage" | "orders" | "notifications" | "location">("home");
+  const [myDiwaniyaTab, setMyDiwaniyaTab] = React.useState<"home" | "manage" | "orders" | "code" | "notifications" | "location">("home");
 
   const cleanPhoneLocal = (ph: string): string => {
     if (!ph) return "";
@@ -690,20 +690,21 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
           {squadInfo && isCurrentMember && (
             <div className="bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm relative z-10">
-              <div className="grid grid-cols-5 gap-1 text-center" dir="rtl">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center" dir="rtl">
                 {[
                   { id: "home", label: "الرئيسية", icon: "🏠" },
-                  { id: "manage", label: "إدارتي", icon: "🛖" },
-                  { id: "orders", label: "الطلب والكود", icon: "🍽️" },
-                  { id: "notifications", label: "الإشعارات", icon: "🔔", badge: unreadDiwaniyaNotifications },
+                  { id: "manage", label: "دواويني", icon: "🛖" },
+                  { id: "orders", label: "الطلبات", icon: "🍽️" },
+                  { id: "code", label: "الكود", icon: "🔐" },
                   { id: "location", label: "الموقع", icon: "📍" },
+                  { id: "notifications", label: "تنبيهات", icon: "🔔", badge: unreadDiwaniyaNotifications },
                 ].map((tab: any) => (
                   <button
                     key={tab.id}
                     type="button"
                     onClick={() => setMyDiwaniyaTab(tab.id)}
                     className={cn(
-                      "relative rounded-2xl px-2 py-2.5 text-[10px] font-black transition-all leading-tight",
+                      "relative rounded-2xl px-2 py-2.5 text-[10px] font-black transition-all leading-tight min-h-[58px]",
                       myDiwaniyaTab === tab.id
                         ? "bg-brand text-white shadow-md scale-[1.02]"
                         : "bg-stone-50 text-stone-500 border border-stone-100"
@@ -839,10 +840,11 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 {hasRealUsualOrder && <button onClick={() => alert("الطلب المعتاد جاهز كفكرة عرض داخل الديوانية، وربطه بالسلة يحتاج مسار إضافة الأصناف للسلة في صفحة الطلب.")} className="w-full bg-stone-50 text-brand border border-stone-100 rounded-2xl py-3 text-xs font-black">كرر الطلب المعتاد للديوانية ({usualOrder.items.length} أصناف)</button>}
               </div>}
 
-              {myDiwaniyaTab === "orders" && <div className="bg-stone-50 p-5 rounded-[30px] border border-stone-100 space-y-3">
-                <div className="flex items-center justify-between"><span className="text-[10px] font-black bg-white text-stone-500 px-3 py-1 rounded-full border">ساعتين</span><h4 className="text-sm font-black text-brand">كود دخول مؤقت</h4></div>
+              {myDiwaniyaTab === "code" && <div className="bg-stone-50 p-5 rounded-[30px] border border-stone-100 space-y-3">
+                <div className="flex items-center justify-between"><span className="text-[10px] font-black bg-white text-stone-500 px-3 py-1 rounded-full border">صالح ساعتين</span><h4 className="text-sm font-black text-brand">كود دخول الضيف</h4></div>
+                <p className="text-[11px] font-bold text-stone-500 leading-relaxed">راعي الديوانية يطلع كود من هنا ويعطيه للضيف، والضيف يدخل من تبويب الكود مباشرة.</p>
                 {isOwner ? <>
-                  <button onClick={handleCreateTempCode} disabled={tempCodeLoading} className="w-full bg-accent text-white rounded-2xl py-3 text-xs font-black">{tempCodeLoading ? "نجهز الكود..." : "طلع كود مؤقت للضيف"}</button>
+                  <button onClick={handleCreateTempCode} disabled={tempCodeLoading} className="w-full bg-accent text-white rounded-2xl py-3 text-xs font-black">{tempCodeLoading ? "نجهز الكود..." : "إنشاء كود دخول للضيف"}</button>
                   {(activeTempCode?.code || tempCodes[0]?.code) && <div className="text-center bg-white rounded-2xl p-4 border border-stone-100"><div className="text-[10px] font-black text-stone-400">الكود الحالي</div><div className="text-3xl font-black tracking-[0.3em] text-brand">{activeTempCode?.code || tempCodes[0]?.code}</div></div>}
                 </> : <div className="flex gap-2"><input inputMode="numeric" value={tempJoinCode} onChange={(e)=>setTempJoinCode(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,4))} placeholder="كود الضيف" className="flex-1 bg-white border border-stone-100 rounded-2xl px-4 py-3 text-center font-black"/><button onClick={handleJoinWithTempCode} disabled={tempCodeLoading} className="bg-brand text-white rounded-2xl px-4 text-xs font-black">دخول</button></div>}
               </div>}
@@ -1188,6 +1190,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     </p>
                   </div>
 
+                  {myDiwaniyaTab === "home" && (
                   <div className="flex flex-col gap-3">
                     <h4 className="font-black text-brand text-lg flex items-center gap-2 text-right">
                       <User className="w-5 h-5 text-accent" /> ترتيب الأعضاء
@@ -1232,6 +1235,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         ))}
                     </div>
                   </div>
+                  )}
 
                   {/* رادار تحديد الموقع الجغرافي للديوانية - للقائد */}
                   {isOwner && myDiwaniyaTab === "location" && (

@@ -500,136 +500,73 @@ export function SaduPresenceRug({
           </div>
         </div>
 
-        {/* ACTIVE MEMBERS AND RADAR DETECTIONS ARRANGED IN A CIRCULAR SEATING GRID (SIT AROUND THE DALLAH!) */}
-        <div className="relative w-full h-[335px] mt-10 mb-1 flex items-center justify-center">
-          {displayEntities.length === 0 ? (
-            <div className="text-center z-10 px-8 py-6 bg-stone-900/80 backdrop-blur-md rounded-2xl border border-white/5 max-w-[250px] shadow-2xl animate-pulse">
-              <HelpCircle className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-              <h4 className="text-xs font-black text-amber-500">منو بالديوانية الحين؟</h4>
-              <p className="text-[10px] text-stone-300 font-bold mt-1.5 leading-relaxed">
-                سجّل حضورك أو خل الربع يقربون من الرادار، وتبدأ جلسة الديوانية الحيّة حول الدلة مباشرة! 📡
-              </p>
+        {/* جلسة الديوانية بدون زحمة: بطاقات صغيرة مرتبة بدل تكدس حول الدلة */}
+        <div className="relative z-20 mt-8 mb-2 px-3">
+          <div className="rounded-[28px] border border-amber-500/15 bg-stone-950/70 backdrop-blur-md shadow-2xl p-4">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <span className="text-[9px] font-black text-amber-300 bg-amber-400/10 border border-amber-400/15 rounded-full px-2.5 py-1">
+                {displayEntities.length > 0 ? `${displayEntities.length} حول الدلة` : "المجلس هادئ"}
+              </span>
+              <div className="text-right">
+                <h4 className="text-xs font-black text-[#faf0d9]">جلسة الربع</h4>
+                <p className="text-[8px] font-bold text-[#faf0d9]/45 mt-0.5">مرتبة حتى لو صاروا ١٠ وأكثر</p>
+              </div>
             </div>
-          ) : (
-            <div className="relative w-full h-full flex items-center justify-center">
-              {displayEntities.map((entity: any, i: number) => {
-                const totalEntities = Math.max(1, displayEntities.length);
-                const angle = (i / totalEntities) * 2 * Math.PI - Math.PI / 2;
-                const radiusX = Math.min(145, typeof window !== "undefined" ? window.innerWidth * 0.26 : 145);
-                const radiusY = totalEntities <= 2 ? 84 : 104;
-                const x = Math.cos(angle) * radiusX;
-                const y = Math.sin(angle) * radiusY + 14;
 
-                const isMe = cleanPhoneLocal(entity.phone) === cleanPhoneLocal(currentMemberPhone);
-                const parsedPoints = entity.points || entity.score || 0;
-                const cup = getCupType(parsedPoints, false);
-                const isRadarGuest = entity.type === "radar_guest";
-                const wobbling = isCurrentlyWobbling(entity.wobbleAt) || (isRadarGuest && Math.random() > 0.72);
-                const displayName = entity.name || "أحد الربع";
+            {displayEntities.length === 0 ? (
+              <div className="text-center px-5 py-5 bg-black/25 rounded-2xl border border-white/5">
+                <HelpCircle className="w-7 h-7 text-yellow-500 mx-auto mb-2" />
+                <h4 className="text-xs font-black text-amber-500">منو بالديوانية الحين؟</h4>
+                <p className="text-[10px] text-stone-300 font-bold mt-1.5 leading-relaxed">
+                  سجّل حضورك أو خل الربع يقربون من الرادار، وتظهر الجلسة هنا بشكل مرتب وواضح. 📡
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+                {displayEntities.map((entity: any, i: number) => {
+                  const isMe = cleanPhoneLocal(entity.phone) === cleanPhoneLocal(currentMemberPhone);
+                  const parsedPoints = entity.points || entity.score || 0;
+                  const isRadarGuest = entity.type === "radar_guest";
+                  const wobbling = isCurrentlyWobbling(entity.wobbleAt);
+                  const displayName = entity.name || "أحد الربع";
 
-                return (
-                  <div
-                    key={`${entity.phone}-${entity.index}`}
-                    onClick={() => handleCupClick(entity)}
-                    style={{ transform: `translate(${x}px, ${y}px)` }}
-                    className={cn(
-                      "absolute z-20 flex flex-col items-center cursor-pointer select-none group focus:outline-none transition-all duration-500 hover:scale-110",
-                      isMe && "z-30"
-                    )}
-                  >
-                    {wobbling && (
-                      <div className="absolute -top-12 bg-stone-950 text-amber-400 border border-amber-500/35 px-2.5 py-1.5 rounded-xl text-[8.5px] font-black shadow-xl z-40 max-w-[130px] whitespace-normal text-center select-all select-text drop-shadow-[0_4px_6px_rgba(0,0,0,0.6)] animate-bounce leading-snug">
-                        {entity.wobbleMsg || (isRadarGuest ? `قريب من الديوانية، يبعد ${entity.distance || "30"}م 👀` : "يا هلا بالربع! 👋")}
-                        <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-2 h-2 bg-stone-950 border-r border-b border-amber-500/35 transform rotate-45" />
-                      </div>
-                    )}
-
-                    {wobbling && (
-                      <div className="absolute w-14 h-14 rounded-full bg-amber-400/20 pointer-events-none animate-ripple -z-10" />
-                    )}
-
-                    <div
+                  return (
+                    <button
+                      key={`${entity.phone}-${entity.index}`}
+                      type="button"
+                      onClick={() => handleCupClick(entity)}
                       className={cn(
-                        "relative w-11 h-11 flex items-center justify-center transition-transform",
-                        wobbling ? "animate-sadu-wobble-active" : "animate-sadu-float"
-                      )}
-                      style={{ animationDelay: `${i * 0.45}s` }}
-                    >
-                      {isMe && (
-                        <div className="absolute -inset-1.5 border border-dashed border-emerald-400/40 rounded-full animate-pulse" />
-                      )}
-
-                      {cup.id === "royal_finjan" ? (
-                        <svg width="34" height="34" viewBox="0 0 100 100" fill="none">
-                          <path d="M20,15 L80,15 C80,35 70,80 50,80 C30,80 20,35 20,15 Z" fill="url(#goldBase)" />
-                          <ellipse cx="50" cy="18" rx="28" ry="4.5" fill="#3b2314" />
-                          <ellipse cx="50" cy="18" rx="22" ry="3" fill="#854d0e" />
-                          <path d="M35,16 Q50,70 65,16" stroke="#ca8a04" strokeWidth="4" />
-                          <path d="M42,16 Q50,75 58,16" stroke="#10b981" strokeWidth="2.5" />
-                          <path d="M48,16 Q50,80 52,16" stroke="#ef4444" strokeWidth="2.5" />
-                        </svg>
-                      ) : cup.id === "mint_tea" ? (
-                        <svg width="34" height="34" viewBox="0 0 100 100" fill="none">
-                          <path d="M30,10 C30,10 25,45 42,65 C43,75 35,83 35,83 L65,83 C65,83 57,75 58,65 C75,45 70,10 70,10" fill="rgba(255, 255, 255, 0.18)" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" />
-                          <path d="M33,18 L67,18 C67,18 64,48 50,56 C36,48 33,18 33,18 Z" fill="url(#shaiTeaAmber)" />
-                          <path d="M46,36 C42,40 40,48 45,46 C50,44 52,38 46,36 Z" fill="#22c55e" opacity="0.82" />
-                          <path d="M36,45 Q50,50 64,45" stroke="#facc15" strokeWidth="3" />
-                          <ellipse cx="50" cy="88" rx="28" ry="4" stroke="#facc15" strokeWidth="2" fill="rgba(255,255,255,0.1)" />
-                        </svg>
-                      ) : cup.id === "gilded_tea" ? (
-                        <svg width="34" height="34" viewBox="0 0 100 100" fill="none">
-                          <path d="M30,10 C30,10 25,45 42,65 C43,75 35,83 35,83 L65,83 C65,83 57,75 58,65 C75,45 70,10 70,10" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" strokeWidth="1.2" />
-                          <path d="M33,18 L67,18 C67,18 64,48 50,56 C36,48 33,18 33,18 Z" fill="url(#shaiTeaAmber)" />
-                          <path d="M36,40 Q50,45 64,40" stroke="#facc15" strokeWidth="2" />
-                          <ellipse cx="50" cy="88" rx="28" ry="4" stroke="#eab308" strokeWidth="1.5" fill="rgba(0,0,0,0.2)" />
-                        </svg>
-                      ) : isRadarGuest ? (
-                        <svg width="32" height="32" viewBox="0 0 100 100" fill="none">
-                          <path d="M22,20 L78,20 C78,40 68,75 50,75 C32,75 22,40 22,20 Z" fill="#78716c" stroke="#d6d3d1" strokeWidth="2" />
-                          <ellipse cx="50" cy="22" rx="26" ry="4" fill="#3b2314" />
-                          <circle cx="50" cy="50" r="14" fill="none" stroke="#dc2626" strokeWidth="3" className="animate-ping" strokeDasharray="3 3" />
-                        </svg>
-                      ) : cup.id === "kahwa_finjan" ? (
-                        <svg width="34" height="34" viewBox="0 0 100 100" fill="none">
-                          <path d="M22,18 C22,18 25,70 50,78 C75,70 78,18 78,18 L22,18 Z" fill="#eab308" stroke="#a16207" strokeWidth="3" />
-                          <ellipse cx="50" cy="18" rx="28" ry="5" fill="#4b2a17" />
-                          <path d="M40,21 Q50,70 60,21" stroke="#16a34a" strokeWidth="2.5" />
-                        </svg>
-                      ) : (
-                        <svg width="32" height="32" viewBox="0 0 100 100" fill="none">
-                          <path d="M22,20 L78,20 C78,40 68,75 50,75 C32,75 22,40 22,20 Z" fill="#f5f5f4" stroke="#d6d3d1" strokeWidth="1.5" />
-                          <ellipse cx="50" cy="22" rx="26" ry="4" fill="#2d1a10" />
-                          <ellipse cx="50" cy="22" rx="18" ry="2" fill="#a16207" opacity="0.6" />
-                          <path d="M32,21 Q50,65 68,21" stroke="#dc2626" strokeWidth="3.5" />
-                          <path d="M40,21 Q50,70 60,21" stroke="#16a34a" strokeWidth="2.5" />
-                        </svg>
-                      )}
-
-                      <div className="absolute right-0 bottom-0 bg-stone-950 text-amber-500 rounded-full min-w-4 h-4 px-1 border border-white/10 flex items-center justify-center text-[7px] font-black pointer-events-none scale-110">
-                        {isMe ? "أنت" : entity.distance ? "📡" : parsedPoints >= 200 ? "👑" : "☕"}
-                      </div>
-                    </div>
-
-                    <div className="mt-1 flex flex-col items-center max-w-[95px]">
-                      <span className={cn(
-                        "px-2.5 py-0.5 rounded-full text-[8.5px] font-black border tracking-tight filter drop-shadow max-w-full truncate",
+                        "relative min-h-[68px] rounded-2xl border px-3 py-2 text-right transition-all active:scale-95 overflow-hidden",
                         isMe
-                          ? "bg-emerald-500 text-stone-950 border-emerald-300"
+                          ? "bg-emerald-400 text-stone-950 border-emerald-200 shadow-lg"
                           : isRadarGuest
-                            ? "bg-[#651010] text-stone-200 border-[#ff5353]/35 animate-pulse"
-                            : "bg-stone-900/85 text-stone-100 border-white/5"
-                      )}>
-                        {displayName}
-                      </span>
-                      <span className="text-[6.5px] font-bold text-stone-400 mt-0.5 scale-90">
-                        {isRadarGuest ? `قريب بالرادار` : `${parsedPoints} نقطة`}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                            ? "bg-rose-950/55 text-stone-100 border-rose-500/25"
+                            : "bg-black/30 text-stone-100 border-white/5 hover:border-amber-400/20"
+                      )}
+                    >
+                      {wobbling && <div className="absolute inset-0 bg-amber-400/10 animate-pulse" />}
+                      <div className="relative flex items-center justify-between gap-2">
+                        <span className="w-8 h-8 shrink-0 rounded-full bg-white/10 flex items-center justify-center text-base border border-white/10">
+                          {isMe ? "أنت" : isRadarGuest ? "📡" : parsedPoints >= 200 ? "👑" : "☕"}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[10px] font-black truncate">{displayName}</div>
+                          <div className={cn("text-[8px] font-bold mt-1 truncate", isMe ? "text-stone-800/70" : "text-stone-400")}>
+                            {isRadarGuest ? `قريب بالرادار${entity.distance ? ` • ${entity.distance}م` : ""}` : `${parsedPoints} نقطة`}
+                          </div>
+                        </div>
+                      </div>
+                      {wobbling && (
+                        <div className={cn("relative mt-2 text-[8px] font-black rounded-xl px-2 py-1 leading-snug", isMe ? "bg-white/35 text-stone-950" : "bg-amber-400/10 text-amber-300")}>
+                          {entity.wobbleMsg || "يا هلا بالربع!"}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Footer info showing total attendees */}
