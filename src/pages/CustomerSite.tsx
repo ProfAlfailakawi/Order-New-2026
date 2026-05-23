@@ -103,6 +103,21 @@ const cleanPhoneForSquad = (phone: any): string => {
   return cleaned.startsWith("965") && cleaned.length > 8 ? cleaned.slice(3) : cleaned;
 };
 
+const getSquadGeofenceDistance = (settings: any): number => {
+  const candidates = [
+    settings?.squadGeofenceDistance,
+    settings?.squadSettings?.geofenceDistance,
+    settings?.squadSettings?.squadGeofenceDistance,
+    settings?.diwaniyaGeofenceDistance,
+    settings?.radarDistance,
+  ];
+  for (const value of candidates) {
+    const n = Number(value);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return 100;
+};
+
 const INITIAL_ADDRESS: Address = {
   region: "",
   block: "",
@@ -676,22 +691,6 @@ export default function CustomerSite() {
 
      return R * c; // in metres
   };
-  const getSquadGeofenceDistance = React.useCallback(() => {
-    const candidates = [
-      settings?.squadGeofenceDistance,
-      settings?.settings?.squadGeofenceDistance,
-      settings?.diwaniyaGeofenceDistance,
-      settings?.geofenceDistance,
-      settings?.radarDistance,
-      settings?.radarGeofenceDistance,
-    ];
-    for (const value of candidates) {
-      const n = Number(normalizeDigits(String(value ?? "")).replace(/[^0-9.]/g, ""));
-      if (Number.isFinite(n) && n > 0) return n;
-    }
-    return 100;
-  }, [settings]);
-
 
   // Watch position with highest accuracy
   useEffect(() => {
@@ -721,8 +720,7 @@ export default function CustomerSite() {
          return;
        }
        setRadarStatus("ready");
-       const geofenceLimit = getSquadGeofenceDistance();
-       setRadarStatusMsg(`الرادار شغال حسب مسافة الأدمن (${geofenceLimit}م). إذا قربت من ديوانية، تظهر لك بطاقة الدخول أو التبديل.`);
+       setRadarStatusMsg(`الرادار شغال حسب مسافة الأدمن (${getSquadGeofenceDistance(settings)}م). إذا قربت من ديوانية، تظهر لك بطاقة الدخول أو التبديل.`);
 
        const nearby: any[] = [];
 
@@ -738,6 +736,7 @@ export default function CustomerSite() {
 
          if (sq.lat !== undefined && sq.lng !== undefined) {
            const dist = calculateDistance(userLat, userLng, Number(sq.lat), Number(sq.lng));
+           const geofenceLimit = getSquadGeofenceDistance(settings);
            if (dist < geofenceLimit) {
              nearby.push({
                ...sq,
@@ -767,7 +766,7 @@ export default function CustomerSite() {
      return () => {
        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
      };
-  }, [activeSquads, activeSquadId, radarDismissedList, myGeofenceRequests, settings, userSquads, getSquadGeofenceDistance]);
+  }, [activeSquads, activeSquadId, radarDismissedList, myGeofenceRequests, settings, userSquads]);
 
   // Polling for approved geofence requests
   useEffect(() => {
@@ -861,10 +860,13 @@ export default function CustomerSite() {
   };
 
   const handleCreateSquad = async () => {
-    if (!newSquadName.trim() || !guestPhone.trim()) {
-       alert("يرجى إدخال اسم الديوانية ورقم هاتفك");
+    const cleanOwnerPhone = cleanPhoneForSquad(normalizeDigits(guestPhone || "")).slice(0, 8);
+    if (!newSquadName.trim() || cleanOwnerPhone.length !== 8) {
+       alert("يرجى إدخال اسم الديوانية ورقم تلفونك 8 أرقام بالإنجليزي");
+       setGuestPhone(cleanOwnerPhone);
        return;
     }
+    setGuestPhone(cleanOwnerPhone);
     setIsSubmittingSquad(true);
     try {
        const res = await fetch("/api/squad-create", {
@@ -872,18 +874,19 @@ export default function CustomerSite() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
              name: newSquadName,
-             phone: guestPhone,
+             phone: cleanOwnerPhone,
              customerName: guestName || "عميل"
           })
        });
        if (res.ok) {
           const data = await res.json();
-          setCustomerPhone(guestPhone);
+          setCustomerPhone(cleanOwnerPhone);
           if (guestName) setCustomerName(guestName);
-          localStorage.setItem("customer_phone_track", guestPhone);
+          localStorage.setItem("customer_phone_track", cleanOwnerPhone);
           localStorage.setItem("squadId", data.squad.id.toString());
+          sessionStorage.setItem("created_squad_needs_location", data.squad.id.toString());
           setActiveSquadId(data.squad.id.toString());
-          setSquadInfo({ ...data.squad, memberData: { name: guestName || "عميل", phone: guestPhone, isMember: true } });
+          setSquadInfo({ ...data.squad, memberData: { name: guestName || "عميل", phone: cleanOwnerPhone, isMember: true } });
           setIsCreatingSquad(false);
           setUserSquads((prev) => [data.squad, ...prev.filter((s:any) => String(s.id) !== String(data.squad.id))]);
           window.setTimeout(fetchSquadGamification, 50);
