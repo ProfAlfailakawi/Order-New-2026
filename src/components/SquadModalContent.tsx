@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "motion/react";
 import { User, Landmark, Crown, Users, LogIn } from "lucide-react";
 import { cn } from "../utils";
+import { SaduPresenceRug } from "./SaduPresenceRug";
 
 interface SquadTier {
   id: string;
@@ -205,55 +206,37 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     setIsRegisteringGeo(true);
     setGeoStatusMsg("جاري تثبيت موقع الديوانية الحالي... 📡");
 
-    const savePosition = async (position: GeolocationPosition) => {
-      const { latitude, longitude } = position.coords;
-      try {
-        const res = await fetch("/api/squad-set-location", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            squadId: squadInfo.id,
-            phone: customerPhone,
-            lat: latitude,
-            lng: longitude
-          })
-        });
-        if (res.ok) {
-          setGeoStatusMsg("تم تثبيت موقع الديوانية بنجاح. الرادار جاهز للربع ✅");
-          setShowResetLocation(false);
-          if (onRefresh) onRefresh();
-        } else {
-          setGeoStatusMsg("وصلنا للموقع، لكن تعذر حفظه حالياً. حاول مرة ثانية.");
-        }
-      } catch (e) {
-        setGeoStatusMsg("وصلنا للموقع، لكن صار خطأ اتصال أثناء الحفظ.");
-      }
-      setIsRegisteringGeo(false);
-    };
-
-    const showLocationError = (error: GeolocationPositionError) => {
-      setIsRegisteringGeo(false);
-      if (error.code === 1) {
-        setGeoStatusMsg("المتصفح رافض مشاركة الموقع. افتح إعدادات الموقع لهذا الموقع واسمح له.");
-      } else if (error.code === 2) {
-        setGeoStatusMsg("الموقع مفعّل، لكن الجهاز ما قدر يحدد الإشارة الآن. جرّب قرب النافذة أو استخدم الإدخال اليدوي.");
-      } else if (error.code === 3) {
-        setGeoStatusMsg("الموقع مفعّل، لكن أخذ وقت طويل. حاول مرة ثانية أو ألصق رابط خرائط جوجل بالأسفل.");
-      } else {
-        setGeoStatusMsg("تعذر قراءة الموقع حالياً. الإدخال اليدوي موجود كحل سريع بالأسفل.");
-      }
-    };
-
     navigator.geolocation.getCurrentPosition(
-      savePosition,
-      () => {
-        navigator.geolocation.getCurrentPosition(
-          savePosition,
-          showLocationError,
-          { enableHighAccuracy: false, timeout: 16000, maximumAge: 60000 }
-        );
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch("/api/squad-set-location", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              squadId: squadInfo.id,
+              phone: customerPhone,
+              lat: latitude,
+              lng: longitude
+            })
+          });
+          if (res.ok) {
+            setGeoStatusMsg("تم تسجيل موقع الديوانية الجغرافي بنجاح! 🎉");
+            setShowResetLocation(false);
+            if (onRefresh) onRefresh();
+          } else {
+            setGeoStatusMsg("فشل التسجيل. يرجى المحاولة لاحقاً.");
+          }
+        } catch (e) {
+          setGeoStatusMsg("خطأ اتصال أثناء حفظ الموقع.");
+        }
+        setIsRegisteringGeo(false);
       },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      (error) => {
+        setIsRegisteringGeo(false);
+        setGeoStatusMsg("تعذر الوصول للموقع. فعّل السماح للموقع من المتصفح، أو استخدم الإدخال اليدوي بالأسفل.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
@@ -537,6 +520,26 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     setIsPresenceLoading(false);
   };
 
+  const handleWobbleAction = async (msg: string) => {
+    if (!squadInfo?.id || !currentMemberPhone) return;
+    try {
+      const res = await fetch("/api/squad-presence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          squadId: squadInfo.id, 
+          phone: currentMemberPhone, 
+          name: customerName || guestName || "عضو", 
+          action: "wobble",
+          message: msg
+        })
+      });
+      if (res.ok && onRefresh) onRefresh();
+    } catch (e) {
+      console.error("Wobble sync failed:", e);
+    }
+  };
+
   const handleCreateTempCode = async () => {
     if (!squadInfo?.id || !customerPhone) return;
     setTempCodeLoading(true);
@@ -771,88 +774,51 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
           {!isCreatingSquad && squadInfo && isCurrentMember && myDiwaniyaTab !== "notifications" && (
             <div className="grid gap-3 text-right font-sans">
-              {myDiwaniyaTab === "home" && <div className="bg-gradient-to-br from-brand to-stone-900 text-white p-5 rounded-[30px] shadow-xl border border-white/10 space-y-4 overflow-hidden relative">
-                <div className="absolute -left-10 -top-10 w-32 h-32 bg-accent/20 blur-3xl rounded-full" />
-                <div className="relative flex items-center justify-between gap-3">
-                  <div className="text-[10px] font-black bg-white/10 px-3 py-1 rounded-full">حضور الديوانية</div>
-                  <div>
-                    <h4 className="text-base font-black">أنا في الديوانية الآن</h4>
-                    <p className="text-[11px] text-white/70 font-bold">دخول وخروج واضح بدون تتبع مزعج.</p>
-                  </div>
-                </div>
-                <div className="relative flex gap-2">
-                  <button
-                    onClick={() => handlePresenceToggle("in")}
-                    disabled={isPresenceLoading || isPresentNow}
-                    className={cn(
-                      "flex-1 py-3 rounded-2xl text-xs font-black transition-all disabled:cursor-not-allowed",
-                      isPresentNow ? "bg-emerald-400 text-brand opacity-100" : "bg-white text-brand active:scale-95",
-                      (isPresenceLoading || isPresentNow) && "pointer-events-none"
-                    )}
-                  >
-                    {isPresentNow ? "أنت موجود الآن ✅" : "أنا وصلت"}
-                  </button>
-                  <button
-                    onClick={() => handlePresenceToggle("out")}
-                    disabled={isPresenceLoading || !isPresentNow}
-                    className={cn(
-                      "flex-1 py-3 rounded-2xl text-xs font-black border border-white/10 transition-all disabled:cursor-not-allowed",
-                      isPresentNow ? "bg-white text-brand active:scale-95" : "bg-white/10 text-white/45 opacity-50 pointer-events-none"
-                    )}
-                  >
-                    طلعت / إيقاف الحضور
-                  </button>
-                </div>
-                <div className="relative bg-white/8 rounded-2xl p-3 border border-white/10">
-                  <div className="text-[10px] font-black text-white/60 mb-2">منو موجود؟</div>
-                  {presentMembers.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5 justify-end">
-                      {presentMembers.slice(0, 8).map((m:any) => <span key={`${m.phone}-${m.checkedInAt}`} className="text-[10px] font-black bg-white/10 px-2 py-1 rounded-xl">{m.name || "عضو"}</span>)}
-                      {presentMembers.length > 8 && <span className="text-[10px] font-black bg-accent/30 px-2 py-1 rounded-xl">+{presentMembers.length - 8}</span>}
-                    </div>
-                  ) : <p className="text-[11px] text-white/55 font-bold">ما في أحد معلن حضوره حالياً.</p>}
-                </div>
-              </div>
-
-              }
-
-              {myDiwaniyaTab === "home" && isOwner && pendingGeofenceRequests.length > 0 && (
-                <div className="bg-white p-5 rounded-[30px] border border-amber-100 shadow-sm space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-[10px] font-black bg-amber-100 text-amber-700 px-3 py-1 rounded-full">{formatEnglishNumber(pendingGeofenceRequests.length)} بانتظارك</span>
-                    <div className="text-right">
-                      <h4 className="text-sm font-black text-brand">طلبات دخول تحتاج قرارك</h4>
-                      <p className="text-[10px] font-bold text-stone-400 mt-0.5">اقبل أو ارفض من هنا مباشرة، بدون ما تدور داخل الصفحات.</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    {pendingGeofenceRequests.slice(0, 3).map((req: any, idx: number) => (
-                      <div key={`${req.phone}-${idx}`} className="bg-stone-50 border border-stone-100 rounded-2xl p-3">
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2 py-0.5">
-                            يبعد {req.distance ? formatEnglishNumber(req.distance) : "قريب"}م
-                          </span>
-                          <div className="text-right">
-                            <div className="text-xs font-black text-brand">{req.name || "عضو قريب"}</div>
-                            <div className="text-[10px] font-bold text-stone-400 font-mono">{formatEnglishNumber(req.phone || "")}</div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button onClick={() => handleApproveRejectRequest(req.phone, false)} disabled={isApproving[req.phone]} className="bg-rose-50 text-rose-600 border border-rose-100 rounded-xl py-2 text-[10px] font-black active:scale-95">
-                            رفض
-                          </button>
-                          <button onClick={() => handleApproveRejectRequest(req.phone, true)} disabled={isApproving[req.phone]} className="bg-emerald-500 text-white rounded-xl py-2 text-[10px] font-black shadow-sm active:scale-95">
-                            {isApproving[req.phone] ? "جاري..." : "قبول"}
-                          </button>
-                        </div>
+              {myDiwaniyaTab === "home" && (
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-br from-brand to-stone-900 text-white p-5 rounded-[30px] shadow-xl border border-white/10 space-y-4 overflow-hidden relative">
+                    <div className="absolute -left-10 -top-10 w-32 h-32 bg-accent/20 blur-3xl rounded-full" />
+                    <div className="relative flex items-center justify-between gap-3">
+                      <div className="text-[10px] font-black bg-white/10 px-3 py-1 rounded-full">حضور الديوانية</div>
+                      <div>
+                        <h4 className="text-base font-black">أنا في الديوانية الآن</h4>
+                        <p className="text-[11px] text-white/70 font-bold">دخول وخروج واضح بدون تتبع مزعج.</p>
                       </div>
-                    ))}
+                    </div>
+                    <div className="relative flex gap-2">
+                      <button
+                        onClick={() => handlePresenceToggle("in")}
+                        disabled={isPresenceLoading || isPresentNow}
+                        className={cn(
+                          "flex-1 py-3 rounded-2xl text-xs font-black transition-all disabled:cursor-not-allowed",
+                          isPresentNow ? "bg-emerald-400 text-brand opacity-100" : "bg-white text-brand active:scale-95",
+                          (isPresenceLoading || isPresentNow) && "pointer-events-none"
+                        )}
+                      >
+                        {isPresentNow ? "أنت موجود الآن ✅" : "أنا وصلت"}
+                      </button>
+                      <button
+                        onClick={() => handlePresenceToggle("out")}
+                        disabled={isPresenceLoading || !isPresentNow}
+                        className={cn(
+                          "flex-1 py-3 rounded-2xl text-xs font-black border border-white/10 transition-all disabled:cursor-not-allowed",
+                          isPresentNow ? "bg-white text-brand active:scale-95" : "bg-white/10 text-white/45 opacity-50 pointer-events-none"
+                        )}
+                      >
+                        طلعت / إيقاف الحضور
+                      </button>
+                    </div>
                   </div>
-                  {pendingGeofenceRequests.length > 3 && (
-                    <button onClick={() => setMyDiwaniyaTab("location")} className="w-full bg-brand text-white rounded-2xl py-3 text-[11px] font-black active:scale-95">
-                      عرض كل الطلبات
-                    </button>
-                  )}
+
+                  {/* Sadu Rug - سجادة السدو الكويتية الحية */}
+                  <SaduPresenceRug
+                    presentMembers={presentMembers}
+                    pendingGeofenceRequests={pendingGeofenceRequests}
+                    currentMemberPhone={currentMemberPhone}
+                    squadInfo={squadInfo}
+                    onWobbleAction={handleWobbleAction}
+                    isOwner={isOwner}
+                  />
                 </div>
               )}
 
@@ -1512,28 +1478,6 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 <p className="text-[10px] font-bold text-stone-400 leading-relaxed">
                   إذا الرقم مرتبط بدواوين، راح تظهر لك فوراً وتقدر تختار الحالية.
                 </p>
-              </div>
-
-              <div className="bg-white rounded-3xl p-4 border border-amber-100 space-y-3 text-right">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-[10px] font-black bg-amber-50 text-amber-700 px-3 py-1 rounded-full">كود المعزب</span>
-                  <div>
-                    <h4 className="text-sm font-black text-brand">عندك كود دخول؟</h4>
-                    <p className="text-[10px] font-bold text-stone-400 mt-0.5">اكتب رقمك والكود، ونربطك بالديوانية مباشرة.</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-[1fr_auto] gap-2">
-                  <input
-                    inputMode="numeric"
-                    value={tempJoinCode}
-                    onChange={(e)=>setTempJoinCode(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,4))}
-                    placeholder="الكود"
-                    className="bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-center text-sm font-black text-brand focus:border-accent focus:outline-none"
-                  />
-                  <button onClick={handleJoinWithTempCode} disabled={tempCodeLoading} className="bg-accent text-white font-black text-xs px-4 rounded-2xl shadow-md active:scale-95 disabled:opacity-60">
-                    {tempCodeLoading ? "..." : "دخول بالكود"}
-                  </button>
-                </div>
               </div>
 
               <button
