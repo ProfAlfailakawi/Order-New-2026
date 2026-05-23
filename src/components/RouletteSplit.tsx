@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Users, Crown, CreditCard, PartyPopper, ArrowRight, AlertCircle, Check, Trophy, ShieldCheck } from "lucide-react";
 import { normalizeDigits } from "../utils";
+import { DallahPhysicalGame } from "./DallahPhysicalGame";
 
 const normalizeArabicName = (name: string) => {
   return (name || "")
@@ -395,155 +396,24 @@ export function RouletteSplit({
 
         {(isSpinning ||
           (spun && sessionStorage.getItem(`spun_${order.id}`))) && (
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="roulette-stage flex flex-col items-center justify-center py-8 sm:py-10 space-y-8"
-          >
-            <div className={"wahag-pulse-core " + (isSpinning ? "is-scanning" : "is-revealed")}>
-              <div className="wahag-pulse-grid" />
-              <div className="wahag-pulse-aura" />
-              <div className="wahag-pulse-ring ring-one" />
-              <div className="wahag-pulse-ring ring-two" />
-              <div className="wahag-pulse-ring ring-three" />
-
-              {pulseParticipants.map((p: any, i: number) => {
-                const angle = (360 / pulseParticipants.length) * i - 90;
-                const isActive = i === pulseIndex;
-                const isFinal = !isSpinning && spun && i === loserIndex;
-
-                return (
-                  <motion.div
-                    key={`${p.name || "participant"}-${i}`}
-                    className={
-                      "wahag-pulse-orbit-card " +
-                      (isActive ? "is-active " : "") +
-                      (isFinal ? "is-final" : "")
-                    }
-                    style={{
-                      ['--pulse-angle' as any]: `${angle}deg`,
-                      ['--pulse-radius' as any]: `${pulseParticipants.length <= 4 ? 94 : 116}px`,
-                    }}
-                    animate={{
-                      scale: isActive ? 1.08 : 0.92,
-                      opacity: isActive ? 1 : 0.62,
-                    }}
-                    transition={{ duration: isSpinning ? 0.12 : 0.35, ease: "easeOut" }}
-                  >
-                    <span>{p.name?.charAt(0) || "؟"}</span>
-                    <strong>{p.name || "ضيف"}</strong>
-                  </motion.div>
-                );
-              })}
-
-              <div className="wahag-pulse-center">
-                <motion.div
-                  key={isSpinning ? pulseIndex : `winner-${loser}`}
-                  initial={{ scale: 0.88, opacity: 0.6 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: isSpinning ? 0.1 : 0.45, ease: "easeOut" }}
-                  className="wahag-pulse-name"
-                >
-                  <span>{isSpinning ? "نبض الربع" : "الوهقة وصلت"}</span>
-                  <strong>
-                    {isSpinning
-                      ? pulseParticipants[pulseIndex]?.name || "..."
-                      : participants[loserIndex]?.name || loser}
-                  </strong>
-                </motion.div>
-                <div className="wahag-pulse-line" />
-              </div>
-            </div>
-
-            {isSettling && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="wahag-silence-card"
-              >
-                <span>الاختيار قرب...</span>
-                <strong>لحظة صمت قبل النتيجة</strong>
-              </motion.div>
-            )}
-
-            {!isSpinning && spun && (
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="text-center space-y-6 w-full"
-              >
-                {(() => {
-                  const parsedLoser = normalizeArabicName(loser);
-                  const parsedMySpinName = normalizeArabicName(mySpinName);
-                  const parsedUrlName = normalizeArabicName(urlName);
-                  
-                  const isLoser = parsedLoser !== "" && (parsedLoser === parsedMySpinName || parsedLoser === parsedUrlName);
-                  const isGuest = parsedMySpinName === "" && parsedUrlName === "";
-                  
-                  const myDisplayName = mySpinName || urlName || (isLoser ? loser : "ضيفنا");
-                  const resultContent = getPhraseContent(myDisplayName, isLoser, loser);
-
-                  if (isLoser) {
-                    return (
-                      <div className="roulette-result-card roulette-v14-result wahag-wow-result is-loser p-6 bg-violet-500/20 border border-violet-500/50 rounded-3xl text-violet-100 space-y-4">
-                        {paymentStatus === "failed" && (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            className="bg-gradient-to-br from-red-500 to-rose-600 text-white p-6 justify-center items-center rounded-3xl flex flex-col gap-3 shadow-xl shadow-red-500/20 border border-white/20 relative overflow-hidden mb-4"
-                          >
-                            <div className="absolute top-0 right-0 w-32 h-32 wahag-participant-chip bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
-                            <div className="w-14 h-14 wahag-result-card bg-white rounded-full flex items-center justify-center shadow-inner relative z-10 shrink-0">
-                              <AlertCircle className="w-7 h-7 text-red-500" strokeWidth={3} />
-                            </div>
-                            <div className="text-center relative z-10 w-full">
-                              <h3 className="text-xl font-extrabold mb-1">فشلت العملية يا {urlName || mySpinName || loser} 💔</h3>
-                              <p className="text-white/90 font-medium text-sm leading-relaxed">{errorMsg}</p>
-                            </div>
-                          </motion.div>
-                        )}
-                        <div className="roulette-v14-result-icon"><Trophy className="w-7 h-7" /></div>
-                        <h2 className="text-3xl font-black text-white">{resultContent.title}</h2>
-                        <p className="font-bold text-violet-200">
-                          {resultContent.desc}
-                        </p>
-                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10 text-sm">
-                           <p className="mb-2 opacity-80">الفاتورة الإجمالية:</p>
-                           <p className="text-2xl font-black text-white">{order.total.toFixed(3)} د.ك</p>
-                        </div>
-                        <button
-                          onClick={() =>
-                            handlePay(
-                              urlName || mySpinName || loser,
-                              mySpinPhone || order.customerPhone || "00000000",
-                              String(order.total),
-                            )
-                          }
-                          className="w-full bg-white text-violet-600 font-black py-4 rounded-xl mt-4 active:scale-95 transition-transform flex justify-center items-center gap-2 shadow-[0_0_25px_rgba(139,92,246,0.3)]"
-                        >
-                          <CreditCard className="w-5 h-5" />
-                          {paymentStatus === "failed" ? "جرب مرة ثانية 🔄" : `تأكيد ودفع القطية`}
-                        </button>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div className="roulette-result-card roulette-v14-result wahag-wow-result is-safe p-6 bg-fuchsia-500/20 border border-fuchsia-500/50 rounded-3xl text-fuchsia-100 space-y-4">
-                      <div className="roulette-v14-result-icon is-safe"><ShieldCheck className="w-7 h-7" /></div>
-                      <h2 className="text-3xl font-black text-white">{resultContent.title}</h2>
-                      <p className="font-bold text-fuchsia-200">
-                        {resultContent.desc}
-                      </p>
-                      <div className="pt-4 border-t border-fuchsia-500/30">
-                        <p className="text-sm opacity-80">تم تصفية القطية لهذا الطلب بنجاح بانتظار الدفع من {loser}</p>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </motion.div>
-            )}
-          </motion.div>
+          <DallahPhysicalGame
+            order={order}
+            participants={participants}
+            loser={loser}
+            loserIndex={loserIndex}
+            spun={spun}
+            isSpinning={isSpinning}
+            setIsSpinning={setIsSpinning}
+            spin={spin}
+            paymentStatus={paymentStatus}
+            urlName={urlName}
+            mySpinName={mySpinName}
+            mySpinPhone={mySpinPhone}
+            handlePay={handlePay}
+            errorMsg={errorMsg}
+            getPhraseContent={getPhraseContent}
+            normalizeArabicName={normalizeArabicName}
+          />
         )}
       </div>
     </div>
