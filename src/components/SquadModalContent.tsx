@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { User, Landmark, Crown, Users, LogIn } from "lucide-react";
+import { User, Landmark, Crown, Users, LogOut, Trophy, Gift, Clock3 } from "lucide-react";
 import { cn } from "../utils";
 
 interface SquadTier {
@@ -51,9 +51,11 @@ interface SquadModalContentProps {
   formatPoints: (n: number) => string;
   handleCreateSquad: () => void;
   handleJoinSquad: (id: string) => void;
+  handleLeaveSquad?: (id: string) => void;
   pendingGeofenceRequests?: any[];
   onRefresh?: () => void;
   userSquads?: any[];
+  settings?: any;
 }
 
 export const SquadModalContent: React.FC<SquadModalContentProps> = ({
@@ -88,9 +90,11 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   formatPoints,
   handleCreateSquad,
   handleJoinSquad,
+  handleLeaveSquad,
   pendingGeofenceRequests = [],
   onRefresh,
   userSquads = [],
+  settings,
 }) => {
   const [copied, setCopied] = React.useState(false);
   const isCurrentMember = squadInfo?.memberData?.isMember !== false && Boolean(squadInfo?.memberData?.phone || customerPhone);
@@ -147,8 +151,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       return;
     }
 
+    if (!isInsideKuwait(coords.lat, coords.lng)) {
+      alert("الموقع خارج نطاق الكويت تقريباً. تأكد من الرابط أو الإحداثيات قبل حفظ موقع الديوانية.");
+      return;
+    }
+
+    if (!confirm(`بنحفظ هذا المكان كموقع رسمي للديوانية:\n${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}\nمتأكد؟`)) return;
+
     setIsRegisteringGeo(true);
-    setGeoStatusMsg("جاري حفظ الموقع يدوياً... 💾");
+    setGeoStatusMsg("قاعد نثبت موقع الديوانية... 💾");
     try {
       const res = await fetch("/api/squad-set-location", {
         method: "POST",
@@ -180,11 +191,21 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       return;
     }
     setIsRegisteringGeo(true);
-    setGeoStatusMsg("جاري رصد إحداثيات موقعك الحالي عبر GPS... 📡");
+    setGeoStatusMsg("نثبت مكان الديوانية الحالي... 📡");
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const { latitude, longitude } = position.coords;
+        const { latitude, longitude, accuracy } = position.coords;
+        if (!isInsideKuwait(latitude, longitude)) {
+          setIsRegisteringGeo(false);
+          setGeoStatusMsg("الموقع طالع خارج الكويت تقريباً. افتح الخريطة وتأكد من المكان أو استخدم الإدخال اليدوي.");
+          return;
+        }
+        if (!confirm(`لقطنا موقع الديوانية بدقة تقريبية ${Math.round(accuracy || 0)} متر.\nنثبته للربع؟`)) {
+          setIsRegisteringGeo(false);
+          setGeoStatusMsg("تم إلغاء تثبيت الموقع.");
+          return;
+        }
         try {
           const res = await fetch("/api/squad-set-location", {
             method: "POST",
@@ -193,11 +214,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
               squadId: squadInfo.id,
               phone: customerPhone,
               lat: latitude,
-              lng: longitude
+              lng: longitude,
+              accuracy: Math.round(accuracy || 0)
             })
           });
           if (res.ok) {
-            setGeoStatusMsg("تم تسجيل موقع الديوانية الجغرافي بنجاح! 🎉");
+            setGeoStatusMsg("تم تثبيت موقع الديوانية بنجاح! الرادار جاهز للربع 🎉");
             if (onRefresh) onRefresh();
           } else {
             setGeoStatusMsg("فشل التسجيل. يرجى المحاولة لاحقاً.");
@@ -209,7 +231,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       },
       (error) => {
         setIsRegisteringGeo(false);
-        setGeoStatusMsg("❌ فشل الوصول إلى الـ GPS. تأكد من تفعيل صلاحيات الموقع بالمتصفح. 💡 تنويه: إذا تفحص التطبيق داخل المعاينة (iFrame)، يرجى فتحه بجانب نافذة جديدة/مستقلة لتفعيل الـ GPS، أو استخدام خيار الإدخال اليدوي للإحداثيات بالأسفل.");
+        setGeoStatusMsg("ما قدرنا نلقط الموقع. افتح صلاحية الموقع أو استخدم رابط خرائط جوجل بالأسفل.");
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
@@ -239,8 +261,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   };
 
   const handleShareSquadLink = async () => {
-    const link = `https://${window.location.host}/?squadId=${squadInfo?.id}`;
-    const shareText = `تعال انضم لديوانيتنا "ديوانية ${cleanSquadName(squadInfo?.name)}" في مطبخ التراث الكويتي وجمع نقاط معنا! عروض وخصومات مميزة بانتظارنا: ${link}`;
+    const inviteCode = makeInviteCode(squadInfo);
+    const link = `https://${window.location.host}/?squadCode=${encodeURIComponent(inviteCode)}&squadId=${encodeURIComponent(String(squadInfo?.id || ""))}`;
+    const shareText = `شرح بسيط لوهق ربعك: ادخل على رابط ديوانية ${cleanSquadName(squadInfo?.name)}، سجل رقمك، وكل طلب لك يحسب مع نقاط الديوانية. رمز الدعوة: ${inviteCode} ${link}`;
     const shareData: ShareData = {
       title: `انضم لديوانية ${cleanSquadName(squadInfo?.name)}`,
       text: shareText,
@@ -392,6 +415,28 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     return Number.isFinite(n) ? n : 0;
   };
 
+
+  const geofenceDistance = Math.max(10, toNumber(settings?.squadGeofenceDistance || 100));
+
+  const isInsideKuwait = (lat: number, lng: number) =>
+    lat >= 28.45 && lat <= 30.1 && lng >= 46.45 && lng <= 48.65;
+
+  const makeInviteCode = (sq: any) => String(sq?.inviteCode || sq?.code || sq?.id || "").trim();
+
+  const roleLabelFor = (sq: any) => {
+    const owner = sq?.phone && cleanPhoneLocal(sq.phone) === cleanPhoneLocal(customerPhone);
+    return owner ? "المعزب" : "عضو";
+  };
+
+  const squadOrderCount = toNumber(squadInfo?.orderCount ?? squadInfo?.ordersCount ?? squadInfo?.totalOrders ?? squadInfo?.kingOrders ?? 0);
+  const weeklyOrders = toNumber(squadInfo?.weeklyOrders ?? squadInfo?.weekOrders ?? Math.min(squadOrderCount, 4));
+  const weeklySpend = toNumber(squadInfo?.weeklySpend ?? squadInfo?.weekTotal ?? squadInfo?.monthlySpend ?? 0);
+  const favoriteItem = squadInfo?.favoriteItem || squadInfo?.topItem || squadInfo?.mostOrderedItem || "باقة الديوانية";
+  const bestMember = squadInfo?.topMember || squadInfo?.mostActiveMember || squadInfo?.membersList?.[0]?.name || "الربع";
+  const totalSavings = toNumber(squadInfo?.totalSavings ?? squadInfo?.savings ?? 0);
+  const ordersLeftForWeekend = Math.max(0, 5 - weeklyOrders);
+  const spendLeftForBonus = Math.max(0, 50 - weeklySpend);
+
   const cleanSquadName = (name: any) => {
     const raw = String(name || "").trim();
     return (
@@ -454,10 +499,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 <div className="flex items-center justify-between border-b border-stone-200/50 pb-2">
                    <span className="text-[10px] font-black bg-stone-200 text-stone-600 px-2 py-0.5 rounded-full">{userSquads.length} مسجلة</span>
                    <h4 className="text-xs font-black text-brand uppercase tracking-widest flex items-center gap-1.5 justify-end">
-                      إدارتي للدواوين والتنقل بينها 🛖
+                      دواويني: المعزب والعضويات 🛖
                    </h4>
                 </div>
                 
+                <p className="text-[10px] font-bold text-stone-500 leading-relaxed text-right bg-white/70 border border-stone-100 rounded-2xl p-3">
+                  الدخول هنا يعني تبدّل الديوانية المعروضة فقط. الخروج من الحساب يمسح الرقم من هذا الجهاز، أما الخروج من ديوانية معيّنة فهو زر منفصل تحت اسمها.
+                </p>
                 <div className="space-y-2 mt-1">
                    {userSquads.map((sq: any) => {
                       const isActive = String(squadInfo?.id) === String(sq.id);
@@ -489,7 +537,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                        : "bg-brand text-white hover:bg-accent hover:shadow-md active:scale-95"
                                   )}
                                >
-                                  {isActive ? "✨ مفعلة حالياً" : "✈️ تنظيم ودخول"}
+                                  {isActive ? "قاعد تعرضها" : "ادخل هالديوانية"}
                                </button>
                             </div>
 
@@ -509,8 +557,17 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                   </span>
                                </div>
                                <span className="text-[9px] font-bold text-stone-400 mt-1.5">
-                                  {sq.lat !== undefined ? `📍 موقع GPS: معرّف ومفعّل` : `⚠️ موقع غير مسجل بالخريطة`}
+                                  {sq.lat !== undefined ? `📍 رادار الديوانية مفعّل` : `⚠️ الرادار يحتاج تثبيت موقع`} · دورك: {roleLabelFor(sq)}
                                 </span>
+                                {!isOwnerOfSq && handleLeaveSquad && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleLeaveSquad(String(sq.id))}
+                                    className="mt-2 self-end text-[9px] font-black text-rose-500 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-100 transition-all flex items-center gap-1"
+                                  >
+                                    <LogOut className="w-3 h-3" /> خروج من هالديوانية
+                                  </button>
+                                )}
                             </div>
                          </div>
                       );
@@ -530,7 +587,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       }}
                       className="text-[10px] text-right font-black text-rose-500 hover:text-rose-600 transition-colors flex items-center gap-1 justify-end"
                    >
-                      🚫 تسجيل الخروج من رقم الهاتف الحالي
+                      🚪 خروج من الحساب على هذا الجهاز
                    </button>
                    <span className="text-[9px] font-bold text-stone-400 font-mono">
                       {customerPhone}
@@ -797,16 +854,71 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="rounded-[26px] bg-gradient-to-br from-amber-50 to-white border border-amber-100 p-4 text-right shadow-sm">
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="text-[10px] font-black text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">تحدي أسبوعي</span>
+                        <Trophy className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <p className="text-sm font-black text-brand leading-relaxed">
+                        {ordersLeftForWeekend > 0 ? `باقي ${ordersLeftForWeekend} طلبات وتفتحون عرض الويكند.` : "فتحتوا عرض الويكند — الديوانية مولّعة!"}
+                      </p>
+                      <p className="text-[10px] font-bold text-stone-500 mt-2">
+                        و{spendLeftForBonus > 0 ? `باقي ${spendLeftForBonus.toFixed(3)} د.ك على هدف 50 د.ك هذا الأسبوع.` : "وصلتوا هدف 50 د.ك هذا الأسبوع — جاهزة لكم مكافأة جماعية."}
+                      </p>
+                    </div>
+
+                    <div className="rounded-[26px] bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 p-4 text-right shadow-sm">
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="text-[10px] font-black text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">عرض ذكي</span>
+                        <Gift className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      <p className="text-sm font-black text-brand leading-relaxed">
+                        {favoriteItem ? `واضح إن ديوانيتكم تحب ${favoriteItem}.` : "الرادار يتابع ذوق الديوانية من الطلبات."}
+                      </p>
+                      <p className="text-[10px] font-bold text-stone-500 mt-2">
+                        الاقتراح: باقة ديوانية للربع أو عرض خميس إذا تكرر الطلب بنفس اليوم.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 text-right space-y-4">
+                    <div className="flex items-center justify-between border-b border-stone-50 pb-3">
+                      <span className="text-[10px] font-black bg-brand/5 text-brand px-3 py-1 rounded-full">سجل الديوانية</span>
+                      <h4 className="font-black text-brand text-sm flex items-center gap-1.5 justify-end">
+                        <Clock3 className="w-4 h-4 text-accent" /> دفتر الربع
+                      </h4>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-stone-50 rounded-2xl p-3 border border-stone-100">
+                        <p className="text-[9px] font-black text-stone-400">آخر الطلبات</p>
+                        <p className="text-sm font-black text-brand mt-1">{squadOrderCount} طلب</p>
+                      </div>
+                      <div className="bg-stone-50 rounded-2xl p-3 border border-stone-100">
+                        <p className="text-[9px] font-black text-stone-400">أكثر صنف مطلوب</p>
+                        <p className="text-sm font-black text-brand mt-1 truncate">{favoriteItem}</p>
+                      </div>
+                      <div className="bg-stone-50 rounded-2xl p-3 border border-stone-100">
+                        <p className="text-[9px] font-black text-stone-400">أكثر عضو طلب</p>
+                        <p className="text-sm font-black text-brand mt-1 truncate">{bestMember}</p>
+                      </div>
+                      <div className="bg-stone-50 rounded-2xl p-3 border border-stone-100">
+                        <p className="text-[9px] font-black text-stone-400">إجمالي التوفير</p>
+                        <p className="text-sm font-black text-brand mt-1">{totalSavings > 0 ? `${totalSavings.toFixed(3)} د.ك` : "ينحسب قريباً"}</p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* رادار تحديد الموقع الجغرافي للديوانية - للقائد */}
                   {isOwner && (
                     <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
                       <div className="flex items-center justify-between border-b border-stone-50 pb-3">
-                        <span className="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase tracking-wider">رادار GPS 📡</span>
-                        <h4 className="font-black text-brand text-sm">إرشاد الرادار الجغرافي</h4>
+                        <span className="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase tracking-wider">رادار الديوانية 📡</span>
+                        <h4 className="font-black text-brand text-sm">موقع ديوانيتك للربع</h4>
                       </div>
                       
                       <p className="text-xs font-bold text-stone-500 leading-relaxed">
-                        سجل موقع ديوانيتك عبر GPS ليتم رصد الربع تلقائياً عند اقترابهم بمسافة تقل عن ١٠٠ متر ودعوتهم للانضمام الفوري بنقرة واحدة!
+                        ثبت موقع الديوانية مرة وحدة. إذا واحد من الربع قرب لمسافة {geofenceDistance} متر حسب إعداد الأدمن، تطلع له بطاقة دخول حلوة ويرسل لك طلب موافقة فقط.
                       </p>
 
                       {squadInfo.lat !== undefined && squadInfo.lng !== undefined ? (
@@ -815,7 +927,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             <span>موقع الديوانية مسجّل ومفعّل حالياً بنجاح! ✅</span>
                           </p>
                           <p className="text-[10px] font-mono font-bold text-sky-600 tracking-tight">
-                            إحداثيات: {Number(squadInfo.lat).toFixed(6)}, {Number(squadInfo.lng).toFixed(6)}
+                            المكان المثبت: {Number(squadInfo.lat).toFixed(6)}, {Number(squadInfo.lng).toFixed(6)}
                           </p>
                           <a 
                             href={`https://www.google.com/maps/search/?api=1&query=${squadInfo.lat},${squadInfo.lng}`}
@@ -823,7 +935,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             rel="noopener noreferrer"
                             className="inline-block text-[10px] font-black text-accent hover:underline"
                           >
-                            عرض على خرائط جوجل 🧭
+                            افتح موقع الديوانية بالخريطة 🧭
                           </a>
                         </div>
                       ) : (
@@ -832,7 +944,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             ⚠️ موقع الديوانية غير مسجّل حتى الآن!
                           </p>
                           <p className="text-[10px] font-bold text-orange-600/80 mt-1 leading-normal">
-                            الربع القريبون لن يستقبلوا إشعارات الرادار للانضمام السريع إلا بعد تعيين موقع ديوانيتكم.
+                            الربع القراب ما راح تظهر لهم بطاقة الديوانية إلا بعد تثبيت موقع الديوانية.
                           </p>
                         </div>
                       )}
@@ -842,7 +954,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         disabled={isRegisteringGeo}
                         className="w-full bg-stone-50 hover:bg-stone-100 border-2 border-stone-200/80 text-brand font-black text-xs py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
                       >
-                        {isRegisteringGeo ? "جاري رصد إحداثيات GPS... 🛰️" : (squadInfo.lat !== undefined ? "📍 إعادة تعيين موقع الديوانية الحالي" : "📍 تعيين موقع الديوانية الجغرافي الحالي")}
+                        {isRegisteringGeo ? "نثبت المكان... 🛰️" : (squadInfo.lat !== undefined ? "📍 تحديث موقع الديوانية الحالي" : "📍 ثبت موقع الديوانية الحالي")}
                       </button>
 
                       <div className="pt-2 border-t border-stone-50 space-y-2">
@@ -851,13 +963,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           onClick={() => setShowManualInput(!showManualInput)}
                           className="w-full text-[11px] font-black text-stone-500 hover:text-accent transition-colors flex items-center justify-center gap-1"
                         >
-                          {showManualInput ? "إخفاء الخيار اليدوي ✖️" : "أو إدخال الموقع يدويًا (إحداثيات أو خرائط جوجل) 📍"}
+                          {showManualInput ? "إخفاء الخيار اليدوي ✖️" : "أو ثبتها برابط خرائط / إحداثيات 📍"}
                         </button>
 
                         {showManualInput && (
                           <div className="space-y-2 bg-stone-50 p-3.5 rounded-2xl border border-stone-100">
                             <label className="text-[10px] font-black text-stone-600 block text-right">
-                              ألصق رابط الموقع من خرائط جوجل أو الإحداثيات مباشرة:
+                              ألصق رابط خرائط جوجل أو الإحداثيات، ونتأكد منها قبل الحفظ:
                             </label>
                             <input
                               type="text"
@@ -872,7 +984,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               disabled={isRegisteringGeo}
                               className="w-full bg-accent hover:bg-accent/90 text-white font-black text-[10px] py-2 rounded-xl active:scale-95 transition-all text-center"
                             >
-                              حفظ الإحداثيات يدويًا 💾
+                              ثبت الموقع يدويًا 💾
                             </button>
                           </div>
                         )}
@@ -892,7 +1004,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       <div className="flex items-center justify-between border-b border-stone-50 pb-3">
                         <span className="text-[11px] font-mono font-black bg-accent/10 text-accent px-2.5 py-1 rounded-full">{pendingGeofenceRequests?.length || 0} معلق</span>
                         <h4 className="font-black text-brand text-sm flex items-center gap-1.5 justify-end">
-                          <Users className="w-4 h-4 text-accent" /> طلبات الرادار المعلقة
+                          <Users className="w-4 h-4 text-accent" /> طلبات دخول الديوانية
                         </h4>
                       </div>
 
@@ -901,7 +1013,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           {pendingGeofenceRequests.map((req: any, idx: number) => (
                             <div key={idx} className="p-3.5 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col gap-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">يبعد {req.distance || "أقل من ١٠٠"}م</span>
+                                <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">قريب: {req.distance || "داخل النطاق"}م</span>
                                 <span className="text-sm font-black text-brand">{req.name}</span>
                               </div>
                               <div className="flex items-center justify-between mt-1">
@@ -928,9 +1040,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         </div>
                       ) : (
                         <p className="text-xs font-bold text-stone-400 text-center py-4">
-                          لا توجد طلبات انضمام بالرادار حالياً. 
+                          ماكو أحد طاق الباب حالياً. 
                           <br />
-                          <span className="text-[10px] opacity-75">تظهر هنا فوراً عندما يقترب كنعور من ديوانيتك!</span>
+                          <span className="text-[10px] opacity-75">أي واحد يقرب وتظهر له بطاقة الديوانية، طلبه يطلع لك هني للموافقة.</span>
                         </p>
                       )}
                     </div>
@@ -939,8 +1051,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   {!isCurrentMember && (
                     <div className="rounded-[28px] bg-white border-2 border-accent/20 shadow-xl p-5 space-y-4 text-right">
                       <div>
-                        <h4 className="font-black text-brand text-lg">انضم لهذه الديوانية</h4>
-                        <p className="text-xs font-bold text-stone-500 mt-1">اكتب بياناتك مرة واحدة، وبعدها تظهر لك الديوانية ضمن دواوينك وتبقى نقاطك الشخصية محسوبة مع الجميع.</p>
+                        <h4 className="font-black text-brand text-lg">دخول ديوانية برمز دعوة</h4>
+                        <p className="text-xs font-bold text-stone-500 mt-1">اكتب بياناتك مرة واحدة. بعد الدخول، كل طلب لك ينحسب مع نقاط الديوانية وتقدر تبدّل بينها من قائمة دواويني.</p>
                       </div>
                       <input
                         type="text"
@@ -962,7 +1074,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         disabled={isSubmittingSquad}
                         className="w-full bg-accent text-white font-black text-sm py-4 rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-50"
                       >
-                        {isSubmittingSquad ? "جاري الانضمام..." : "انضم للديوانية الآن"}
+                        {isSubmittingSquad ? "جاري الانضمام..." : "ادخل برمز الدعوة"}
                       </button>
                     </div>
                   )}
@@ -971,7 +1083,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     onClick={handleShareSquadLink}
                     className="w-full bg-brand text-white font-black text-sm py-4 rounded-xl shadow-lg active:scale-95 transition-all text-center flex items-center justify-center gap-2"
                   >
-                    {copied ? "تم النسخ! 👍" : "انشر رابط دعوة ربعك للديوانية 🔗"}
+                    {copied ? "تم النسخ! 👍" : "شارك رمز ورابط الديوانية 🔗"}
                   </button>
                 </div>
               );

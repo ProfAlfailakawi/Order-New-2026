@@ -478,6 +478,22 @@ export default function CustomerSite() {
   const [showSquadModal, setShowSquadModal] = useState(false);
   const [activeSquadTab, setActiveSquadTab] = useState<"overview"|"leaderboard"|"tiers">("overview");
   const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
+  const [isRadarBannerCollapsed, setIsRadarBannerCollapsed] = useState(false);
+  const hasAnimatedRadarBannerRef = useRef(false);
+
+  useEffect(() => {
+    const hasPending = myGeofenceRequests.some(r => r.status === "pending");
+    if (hasPending && !hasAnimatedRadarBannerRef.current) {
+      hasAnimatedRadarBannerRef.current = true;
+      setIsRadarBannerCollapsed(false);
+      const timer = setTimeout(() => {
+        setIsRadarBannerCollapsed(true);
+      }, 6000);
+      return () => clearTimeout(timer);
+    } else if (!hasPending) {
+      hasAnimatedRadarBannerRef.current = false;
+    }
+  }, [myGeofenceRequests]);
 
   const fetchSquadGamification = useCallback(async () => {
     try {
@@ -507,6 +523,7 @@ export default function CustomerSite() {
   const [radarNearbySquads, setRadarNearbySquads] = useState<any[]>([]);
   const [radarLoadingMap, setRadarLoadingMap] = useState<Record<string, boolean>>({});
   const [radarSuccessMap, setRadarSuccessMap] = useState<Record<string, boolean>>({});
+  const [radarAccuracy, setRadarAccuracy] = useState<number | null>(null);
   const [radarDismissedList, setRadarDismissedList] = useState<string[]>(() => {
      try {
        return JSON.parse(localStorage.getItem("radar_dismissed_squads") || "[]");
@@ -545,6 +562,8 @@ export default function CustomerSite() {
      const checkPosition = (position: GeolocationPosition) => {
        const userLat = position.coords.latitude;
        const userLng = position.coords.longitude;
+       const accuracy = Math.round(position.coords.accuracy || 0);
+       setRadarAccuracy(accuracy || null);
 
        const nearby: any[] = [];
 
@@ -562,10 +581,13 @@ export default function CustomerSite() {
          if (sq.lat !== undefined && sq.lng !== undefined) {
            const dist = calculateDistance(userLat, userLng, Number(sq.lat), Number(sq.lng));
            const geofenceLimit = Number(settings?.squadGeofenceDistance || 100);
+           const maxUsefulAccuracy = Math.max(geofenceLimit * 2, 120);
+           if (accuracy && accuracy > maxUsefulAccuracy) return;
            if (dist < geofenceLimit) {
              nearby.push({
                ...sq,
-               distance: Math.round(dist)
+               distance: Math.round(dist),
+               accuracy
              });
            }
          }
@@ -629,7 +651,8 @@ export default function CustomerSite() {
            name: customerName || "عضو قريب",
            phone: customerPhone,
            squadId: targetSquad.id,
-           distance: targetSquad.distance || 0
+           distance: targetSquad.distance || 0,
+           accuracy: targetSquad.accuracy || radarAccuracy || 0
          })
        });
        if (res.ok) {
@@ -715,17 +738,56 @@ export default function CustomerSite() {
     setIsSubmittingSquad(false);
   };
   
+  const cleanPhoneLocal = (phone: any) => {
+    const digits = String(phone || "").replace(/\D/g, "");
+    const withoutCode = digits.startsWith("965") && digits.length > 8 ? digits.slice(3) : digits;
+    return withoutCode.length >= 8 ? withoutCode.slice(-8) : withoutCode;
+  };
+
+  const handleLeaveSquad = async (squadId: string) => {
+    if (!customerPhone || !squadId) return;
+    const target = userSquads.find((sq: any) => String(sq.id) === String(squadId));
+    if (target?.phone && cleanPhoneLocal(target.phone) === cleanPhoneLocal(customerPhone)) {
+      alert("أنت المعزب لهالديوانية. خروج المعزب غير متاح من هني عشان ما تضيع الديوانية على الربع.");
+      return;
+    }
+    if (!confirm(`تبي تطلع من ديوانية ${target?.name || squadId}؟\nنقاطك الشخصية ما تنمسح، بس ما راح تنحسب مع هالديوانية بعد الخروج.`)) return;
+
+    try {
+      const res = await fetch("/api/squad-leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: customerPhone, squadId })
+      });
+      if (!res.ok) throw new Error("leave failed");
+      setUserSquads((prev) => prev.filter((sq: any) => String(sq.id) !== String(squadId)));
+      if (String(activeSquadId) === String(squadId)) {
+        const next = userSquads.find((sq: any) => String(sq.id) !== String(squadId));
+        const nextId = next?.id ? String(next.id) : "";
+        if (nextId) localStorage.setItem("squadId", nextId);
+        else localStorage.removeItem("squadId");
+        setActiveSquadId(nextId);
+      }
+      window.setTimeout(fetchSquadGamification, 50);
+    } catch (e) {
+      alert("ما قدرنا نطلعك من الديوانية حالياً. حاول مرة ثانية.");
+    }
+  };
+
   // Track magic link
   useEffect(() => {
     // Basic fast check to ensure reliability across all browsers
     const searchStr = window.location.search;
     const urlParams = new URLSearchParams(searchStr);
     
+    const sCode = urlParams.get("squadCode");
     const sId = urlParams.get("squadId");
-    if (sId) {
-      localStorage.setItem("squadId", sId);
-      setActiveSquadId(sId);
+    if (sCode || sId) {
+      const resolved = sCode || sId || "";
+      localStorage.setItem("squadId", resolved);
+      setActiveSquadId(resolved);
       setShowSquadModal(true);
+      urlParams.delete("squadCode");
       urlParams.delete("squadId");
       setSearchParams(urlParams, { replace: true });
     }
@@ -3743,6 +3805,7 @@ export default function CustomerSite() {
                         activeSquadTab={activeSquadTab}
                         squadInfo={squadInfo}
                         userSquads={userSquads}
+                        settings={settings}
                         SQUAD_TIERS={SQUAD_TIERS}
                         getSquadTier={getSquadTier}
                         topSquads={topSquads}
@@ -3772,6 +3835,7 @@ export default function CustomerSite() {
                         formatPoints={formatPoints}
                         handleCreateSquad={handleCreateSquad}
                         handleJoinSquad={handleJoinSquad}
+                        handleLeaveSquad={handleLeaveSquad}
                        pendingGeofenceRequests={pendingGeofenceRequests}
                        onRefresh={fetchSquadGamification}
                       />
@@ -3848,7 +3912,7 @@ export default function CustomerSite() {
           />
         ))}
 
-        {/* رادار التراث - إشعار جيو لوكيشن ذكي للديوانيات القريبة */}
+        {/* رادار الديوانية - يلتقط الدواوين القريبة */}
         <AnimatePresence>
           {radarNearbySquads.length > 0 && (
             <motion.div
@@ -3864,16 +3928,21 @@ export default function CustomerSite() {
                 </div>
                 
                 <div className="flex-1">
-                  <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار التراث الجغرافي 📡</span>
+                  <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار الديوانية 📡</span>
                   <h4 className="font-black text-sm mt-2 text-amber-100">
-                    رصد ديوانيات الربع حولك! 📍
+                    لقطنا ديوانية قريبة 👀
                   </h4>
                 </div>
               </div>
 
               <p className="text-[11px] font-bold text-slate-300 leading-normal">
-                تم كشف ديوانيات قريبة جداً من موقعك الحالي. أرسل طلب انضمام فوري أو تجاهل:
+                إذا هذه ديوانية ربعك، اطرق الباب. المعزب يوافق أول، وما تدخل على كيفك:
               </p>
+              {radarAccuracy && (
+                <p className="text-[9px] font-bold text-slate-400 -mt-2">
+                  دقة الرادار تقريباً {radarAccuracy} متر · المسافة مأخوذة من إعدادات الأدمن.
+                </p>
+              )}
 
               <div className="space-y-3">
                 {radarNearbySquads.map((sq: any) => {
@@ -3887,14 +3956,14 @@ export default function CustomerSite() {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-500/10 px-2 py-0.5 rounded-lg font-mono">
-                          تبعد {sq.distance}م 📍
+                          تبعد {sq.distance} متر 📍
                         </span>
                         <span className="text-xs font-black text-white">ديوانية {sq.name}</span>
                       </div>
 
                       {isSuccess ? (
                         <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-1.5 px-3 rounded-xl text-[10px] font-black text-center animate-pulse">
-                          تم إرسال طلب الانضمام! بانتظار موافقة القائد 📡
+                          تم إرسال طلبك للمعزب. إذا وافق، تنضم رسمياً للديوانية ✅
                         </div>
                       ) : (
                         <div className="flex gap-2 justify-end mt-1">
@@ -3913,7 +3982,7 @@ export default function CustomerSite() {
                             disabled={isLoading}
                             className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
                           >
-                            {isLoading ? "جاري الإرسال..." : "طلب انضمام 📡"}
+                            {isLoading ? "جاري الإرسال..." : "طق الباب للمعزب 🚪"}
                           </button>
                         </div>
                       )}
@@ -3924,33 +3993,63 @@ export default function CustomerSite() {
 
               {!customerPhone && (
                 <p className="text-[9px] font-bold text-amber-500/50 text-center pt-2">
-                  سجل دخول برقمك عشان يوصلهم طلبك بأسمك ورقمك!
+                  سجل رقمك عشان يوصل طلبك للمعزب باسمك ورقمك.
                 </p>
               )}
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* جاري انتظار القبول من القائد */}
+        {/* جاري انتظار القبول من صاحب الديوانية */}
         <AnimatePresence>
           {myGeofenceRequests.some(r => r.status === "pending") && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -50 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -50 }}
-              className="fixed top-24 left-6 right-6 md:left-auto md:right-6 md:w-[350px] bg-slate-900/95 text-slate-100 rounded-3xl p-4 shadow-xl z-50 border border-amber-500/20 text-right backdrop-blur-md"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="relative flex h-2.5 w-2.5 shrink-0">
+            isRadarBannerCollapsed ? (
+              <motion.button
+                key="collapsed-radar"
+                initial={{ opacity: 0, scale: 0.8, x: 50 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.8, x: 50 }}
+                onClick={() => setIsRadarBannerCollapsed(false)}
+                className="fixed top-24 left-4 md:left-auto md:right-6 bg-slate-900/95 text-slate-100 rounded-full p-3.5 shadow-2xl z-50 border border-amber-500/40 text-right backdrop-blur-md flex items-center gap-2 hover:bg-slate-800 transition-all select-none group"
+                title="توسيع رادار الانضمام"
+              >
+                <div className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
                 </div>
-                <div className="flex-1">
-                  <p className="text-xs font-black">جاري انتظار قبول القائد للديوانية... 📡</p>
-                  <p className="text-[10px] opacity-75 font-semibold mt-0.5">طلبك قيد المراجعة الفورية بالرادار.</p>
+                <span className="text-[10px] font-black text-amber-400 hidden group-hover:inline max-w-0 group-hover:max-w-xs transition-with-duration duration-300 overflow-hidden whitespace-nowrap">
+                  جاري المراجعة بالرادار... 📡
+                </span>
+                <span className="text-xs">📡</span>
+              </motion.button>
+            ) : (
+              <motion.div
+                key="expanded-radar"
+                initial={{ opacity: 0, scale: 0.95, y: -50 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -50 }}
+                className="fixed top-24 left-6 right-6 md:left-auto md:right-6 md:w-[350px] bg-slate-900/95 text-slate-100 rounded-3xl p-4 shadow-xl z-50 border border-amber-500/20 text-right backdrop-blur-md"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <button 
+                    onClick={() => setIsRadarBannerCollapsed(true)}
+                    className="text-stone-400 hover:text-white text-xs bg-white/10 w-6 h-6 rounded-full flex items-center justify-center transition-all"
+                  >
+                    ✕
+                  </button>
+                  <div className="flex-1 flex items-center justify-end gap-2.5">
+                    <div className="flex flex-col text-right">
+                      <p className="text-xs font-black text-slate-100">ناطرين موافقة المعزب... 📡</p>
+                      <p className="text-[10px] opacity-75 font-semibold text-slate-300 mt-0.5 animate-pulse">طلبك وصل. إذا المعزب وافق، تدخل رسمياً.</p>
+                    </div>
+                    <div className="relative flex h-2.5 w-2.5 shrink-0 mt-1">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            )
           )}
         </AnimatePresence>
       </motion.div>
@@ -4117,7 +4216,7 @@ const ChefWhisperCard = ({
       >
         {/* Front Side */}
         <div
-          className={`menu-product-card orser-product-card relative w-full bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex ${isHorizontal ? "menu-product-card-horizontal flex-col justify-start p-4 pb-3 h-full" : "orser-product-card-row gap-5 p-5 min-h-[110px] items-center"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-white hover:border-accent/20 hover:shadow-[0_20px_50px_rgba(26,46,34,0.06)] hover:-translate-y-1"} transition-all duration-500 cursor-pointer`}
+          className={`menu-product-card relative w-full bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex ${isHorizontal ? "menu-product-card-horizontal flex-col justify-start p-4 pb-3 h-full" : "flex-row items-center p-4 gap-4 min-h-[120px]"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-white hover:border-accent/20 hover:shadow-[0_20px_50px_rgba(26,46,34,0.06)] hover:-translate-y-1"} transition-all duration-500 cursor-pointer`}
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
@@ -4149,66 +4248,110 @@ const ChefWhisperCard = ({
             </div>
           )}
 
-          <div
-            className={`menu-product-image relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-stone-50/50 rounded-2xl border border-stone-100/50 shadow-inner ${isHorizontal ? "w-20 h-20 mx-auto mb-2" : "w-16 h-16"}`}
-          >
-            {isHot && <SizzlingSteam />}
-            <img
-              referrerPolicy="no-referrer"
-              src={imgUrl}
-              onError={(e) => {
-                if (e.currentTarget.src.includes(fallbackLogo)) {
-                  e.currentTarget.onerror = null;
-                  if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO))
-                    e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
-                } else {
-                  e.currentTarget.src = fallbackLogo;
-                }
-              }}
-              alt={product.name}
-              className="menu-product-img orser-product-img w-full h-full object-contain p-1 transform hover:scale-105 transition-transform bg-white relative z-0"
-            />
-          </div>
-          <div
-            className={`orser-product-content flex flex-col flex-grow ${isHorizontal ? "text-center" : "justify-center"} overflow-hidden relative z-10`}
-          >
-            <h3
-              className="orser-product-title font-black text-lg sm:text-lg text-brand leading-tight tracking-tight mt-1"
-              style={{ wordBreak: "break-word" }}
-            >
-              {product.name}
-            </h3>
-            {product.preparationInstructions && (
-              <div className="orser-prep-note mt-2 flex items-start gap-1.5 p-1.5 sm:p-2 bg-red-50 border border-red-100/50 rounded-lg shadow-sm">
-                <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
-                <p className="text-[10px] sm:text-[11px] text-red-600 font-extrabold leading-snug line-clamp-2">
-                  {product.preparationInstructions}
+          {/* Horizontal Layout (Carousel) remains unchanged */}
+          {isHorizontal ? (
+            <>
+              <div className="menu-product-image relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-stone-50/50 rounded-2xl border border-stone-100/50 shadow-inner w-20 h-20 mx-auto mb-2">
+                {isHot && <SizzlingSteam />}
+                <img
+                  referrerPolicy="no-referrer"
+                  src={imgUrl}
+                  onError={(e) => {
+                    if (e.currentTarget.src.includes(fallbackLogo)) {
+                      e.currentTarget.onerror = null;
+                      if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO))
+                        e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
+                    } else {
+                      e.currentTarget.src = fallbackLogo;
+                    }
+                  }}
+                  alt={product.name}
+                  className="w-full h-full object-contain p-1 transform hover:scale-105 transition-transform bg-white relative z-0"
+                />
+              </div>
+              <div className="flex flex-col flex-grow text-center overflow-hidden relative z-10">
+                <h3 className="font-black text-lg text-brand leading-tight tracking-tight mt-1" style={{ wordBreak: "break-word" }}>
+                  {product.name}
+                </h3>
+                {product.preparationInstructions && (
+                  <div className="mt-2 flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-100/50 rounded-lg shadow-sm">
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-red-600 font-extrabold leading-snug line-clamp-2">
+                      {product.preparationInstructions}
+                    </p>
+                  </div>
+                )}
+                <p className="text-brand text-lg font-black mt-2">
+                  {calculateItemBasePriceWithHiddenAddons({
+                    id: "", productId: product.id, name: product.name, quantity: 1, price: product.price, selectedExtras: [], product: normalizeProductForAddons(product)
+                  })}{" "}
+                  <span className="text-[10px] text-accent font-bold">د.ك</span>
                 </p>
               </div>
-            )}
-            <p className="text-brand text-lg font-black mt-2">
-              {calculateItemBasePriceWithHiddenAddons({
-                id: "",
-                productId: product.id,
-                name: product.name,
-                quantity: 1,
-                price: product.price,
-                selectedExtras: [],
-                product: normalizeProductForAddons(product),
-              })}{" "}
-              <span className="text-[10px] sm:text-[11px] text-accent font-bold">
-                د.ك
-              </span>
-            </p>
-          </div>
-          {!isHorizontal && (
-            <div className="orser-product-add-wrap flex items-center justify-center relative z-10">
-              <div
-                className={`menu-product-add p-2 sm:p-3 text-white rounded-2xl shadow-lg transition-all hover:scale-110 ${product.isOutOfStock ? "bg-stone-300" : "bg-gradient-to-tr from-accent to-amber-500 shadow-accent/30"}`}
-              >
-                <Plus className="w-5 h-5 stroke-[3]" />
+            </>
+          ) : (
+            /* NEW VERTICAL LAYOUT FOR LIST ITEMS EXACTLY AS REQUESTED */
+            <>
+              {/* Right Side: Add Button (first child in RTL renders on the right) */}
+              <div className="flex-shrink-0 flex items-center justify-center relative z-10 w-12 h-full">
+                <div
+                  className={`w-12 h-12 flex items-center justify-center text-white rounded-2xl shadow-lg transition-all hover:scale-110 ${product.isOutOfStock ? "bg-stone-300" : "bg-gradient-to-tr from-accent to-amber-500 shadow-accent/30"}`}
+                >
+                  <Plus className="w-5 h-5 stroke-[3]" />
+                </div>
               </div>
-            </div>
+
+              {/* Center Content: Title over Image over Price over Notes */}
+              <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10 py-1 pl-4">
+                {/* 1. Title */}
+                <h3 className="font-black text-[17px] sm:text-lg text-brand leading-snug tracking-tight mb-3" style={{ wordBreak: "break-word" }}>
+                  {product.name}
+                </h3>
+                
+                {/* The Box wrapping Image and Price */}
+                <div className="relative w-full max-w-[220px] flex flex-col items-center border border-stone-200/60 rounded-[28px] p-4 bg-gradient-to-b from-white to-stone-50/30">
+                  {/* 2. Image */}
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 flex items-center justify-center z-10 mb-2">
+                    {isHot && <SizzlingSteam />}
+                    <img
+                      referrerPolicy="no-referrer"
+                      src={imgUrl}
+                      onError={(e) => {
+                        if (e.currentTarget.src.includes(fallbackLogo)) {
+                          e.currentTarget.onerror = null;
+                          if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO))
+                            e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
+                        } else {
+                          e.currentTarget.src = fallbackLogo;
+                        }
+                      }}
+                      alt={product.name}
+                      className="w-full h-full object-contain transform hover:scale-110 transition-transform relative z-0"
+                    />
+                  </div>
+
+                  {/* 3. Price (overlapping bottom edge of the box) */}
+                  <div className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 bg-white border border-stone-200/50 shadow-[0_2px_10px_rgba(0,0,0,0.03)] px-4 py-1 rounded-full flex items-center justify-center z-20 whitespace-nowrap">
+                    <span className="text-brand font-black text-sm">
+                      {calculateItemBasePriceWithHiddenAddons({
+                        id: "", productId: product.id, name: product.name, quantity: 1, price: product.price, selectedExtras: [], product: normalizeProductForAddons(product)
+                      })}
+                    </span>
+                    <span className="text-[11px] text-accent font-bold mx-1">د.ك</span>
+                  </div>
+                </div>
+
+                {/* 4. Notes */}
+                {product.preparationInstructions && (
+                  <div className="mt-5 flex items-center gap-1.5 px-4 py-1.5 bg-red-50 border border-red-100/50 rounded-full shadow-[0_2px_10px_rgba(239,68,68,0.05)] w-max max-w-full z-10">
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                    <p className="text-[11px] text-red-600 font-extrabold truncate">
+                      {product.preparationInstructions}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
 
