@@ -491,6 +491,7 @@ export default function CustomerSite() {
   const [showSquadModal, setShowSquadModal] = useState(false);
   const [activeSquadTab, setActiveSquadTab] = useState<"overview"|"leaderboard"|"tiers">("overview");
   const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
+  const squadSessionTokenRef = useRef(0);
   const [isRadarBannerCollapsed, setIsRadarBannerCollapsed] = useState(false);
   const hasAnimatedRadarBannerRef = useRef(false);
 
@@ -509,15 +510,38 @@ export default function CustomerSite() {
   }, [myGeofenceRequests]);
 
   const fetchSquadGamification = useCallback(async () => {
+    const requestToken = squadSessionTokenRef.current;
+    const requestPhone = customerPhone;
+    const requestSquadId = activeSquadId;
     try {
-       const endpoint = `/api/squad-gamification?phone=${encodeURIComponent(customerPhone)}&squadId=${encodeURIComponent(activeSquadId)}`;
+       const endpoint = `/api/squad-gamification?phone=${encodeURIComponent(requestPhone)}&squadId=${encodeURIComponent(requestSquadId)}`;
        const res = await fetch(endpoint);
        if (!res.ok) return;
        const data = await res.json();
+       if (requestToken !== squadSessionTokenRef.current) return;
+
        setTopSquads(data.topSquads || []);
+       setActiveSquads(data.activeSquads || []);
+
+       // بيانات المستخدم والديوانية لا تنعرض إلا إذا فيه رقم مسجل فعلاً.
+       // هذا يمنع رجوع كروت الديوانية بعد تسجيل الخروج بسبب رد قديم من السيرفر.
+       if (!requestPhone) {
+         setUserSquads([]);
+         setPendingGeofenceRequests([]);
+         setMyGeofenceRequests([]);
+         setSquadPresence([]);
+         setActiveGroupOrder(null);
+         setTempCodes([]);
+         setUsualOrder(null);
+         setSquadBeautifulLog(null);
+         setDiwaniyaNotifications([]);
+         setUnreadDiwaniyaNotifications(0);
+         setSquadInfo(null);
+         return;
+       }
+
        setUserSquads(data.userSquads || []);
        setPendingGeofenceRequests(data.pendingGeofenceRequests || []);
-       setActiveSquads(data.activeSquads || []);
        setMyGeofenceRequests(data.myGeofenceRequests || []);
        setSquadPresence(data.squadPresence || []);
        setActiveGroupOrder(data.activeGroupOrder || null);
@@ -526,7 +550,7 @@ export default function CustomerSite() {
        setSquadBeautifulLog(data.squadBeautifulLog || null);
        setDiwaniyaNotifications(data.diwaniyaNotifications || []);
        setUnreadDiwaniyaNotifications(Number(data.unreadDiwaniyaNotifications || 0));
-       if (data.mySquad || activeSquadId) {
+       if (data.mySquad || requestSquadId) {
          if (data.myMemberData?.name && data.myMemberData.name !== "عميل") {
             setCustomerName(prev => prev || data.myMemberData.name);
          }
@@ -535,6 +559,8 @@ export default function CustomerSite() {
             rank: data.myRank,
             memberData: data.myMemberData
          } : null);
+       } else {
+         setSquadInfo(null);
        }
     } catch(e) {}
   }, [customerPhone, activeSquadId]);
@@ -543,6 +569,9 @@ export default function CustomerSite() {
   const [radarNearbySquads, setRadarNearbySquads] = useState<any[]>([]);
   const [radarLoadingMap, setRadarLoadingMap] = useState<Record<string, boolean>>({});
   const [radarSuccessMap, setRadarSuccessMap] = useState<Record<string, boolean>>({});
+  const [radarStatus, setRadarStatus] = useState<"idle" | "checking" | "ready" | "denied" | "weak" | "unsupported" | "empty">("idle");
+  const [radarStatusMsg, setRadarStatusMsg] = useState("فعّل رادار الديوانية عشان تظهر لك الدواوين القريبة مثل قبل.");
+  const [radarAccuracy, setRadarAccuracy] = useState<number | null>(null);
   const [radarDismissedList, setRadarDismissedList] = useState<string[]>(() => {
      try {
        return JSON.parse(localStorage.getItem("radar_dismissed_squads") || "[]");
@@ -555,6 +584,82 @@ export default function CustomerSite() {
   useEffect(() => {
      localStorage.setItem("radar_dismissed_squads", JSON.stringify(radarDismissedList));
   }, [radarDismissedList]);
+
+  useEffect(() => {
+     // عند تغيير الرقم أو الخروج نرجع رادار الديوانيات نظيفاً حتى تظهر بطاقات القرب للضيف الجديد.
+     setRadarDismissedList([]);
+     setRadarSuccessMap({});
+     setRadarNearbySquads([]);
+     try { localStorage.removeItem("radar_dismissed_squads"); } catch(e) {}
+  }, [customerPhone]);
+
+  const refreshRadarOnce = useCallback(() => {
+     if (!navigator.geolocation) {
+       setRadarStatus("unsupported");
+       setRadarStatusMsg("جهازك أو المتصفح لا يدعم تحديد الموقع.");
+       return;
+     }
+     setRadarStatus("checking");
+     setRadarStatusMsg("نطلب السماح بالموقع لتشغيل رادار الديوانيات القريبة...");
+     setRadarDismissedList([]);
+     try { localStorage.removeItem("radar_dismissed_squads"); } catch(e) {}
+
+     navigator.geolocation.getCurrentPosition(
+       (position) => {
+         const accuracy = Number(position.coords.accuracy || 0);
+         setRadarAccuracy(Math.round(accuracy));
+         if (accuracy > 150) {
+           setRadarStatus("weak");
+           setRadarStatusMsg("الموقع وصلنا لكن دقته ضعيفة. قرّب من الديوانية أو جرّب تفعيل الموقع مرة ثانية.");
+         } else {
+           setRadarStatus("ready");
+           setRadarStatusMsg("الرادار شغال. إذا فيه ديوانية قريبة راح تظهر لك مباشرة.");
+         }
+       },
+       (err) => {
+         setRadarStatus(err.code === 1 ? "denied" : "idle");
+         setRadarStatusMsg(err.code === 1 ? "صلاحية الموقع مرفوضة. فعّلها من إعدادات المتصفح ثم اضغط تشغيل الرادار." : "تعذر تشغيل الرادار حالياً. حاول مرة ثانية.");
+       },
+       { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+     );
+  }, []);
+
+  const clearSquadSessionOnThisDevice = useCallback(() => {
+     squadSessionTokenRef.current += 1;
+     setCustomerPhone("");
+     setCustomerName("");
+     setGuestPhone("");
+     setGuestName("");
+     setLoginPhone("");
+     setIsCreatingSquad(false);
+     setIsJoiningSquad(false);
+     setActiveSquadId("");
+     setSquadInfo(null);
+     setUserSquads([]);
+     setPendingGeofenceRequests([]);
+     setMyGeofenceRequests([]);
+     setSquadPresence([]);
+     setActiveGroupOrder(null);
+     setTempCodes([]);
+     setUsualOrder(null);
+     setSquadBeautifulLog(null);
+     setDiwaniyaNotifications([]);
+     setUnreadDiwaniyaNotifications(0);
+     setRadarNearbySquads([]);
+     setRadarDismissedList([]);
+     setRadarSuccessMap({});
+     setRadarStatus("idle");
+     setRadarStatusMsg("سجل دخول أو فعّل الرادار لاكتشاف الديوانيات القريبة.");
+     try {
+       localStorage.removeItem("customer_phone_track");
+       localStorage.removeItem("squadId");
+       localStorage.removeItem("radar_dismissed_squads");
+       localStorage.removeItem("split_prefill_members");
+     } catch(e) {}
+     window.setTimeout(() => {
+       setShowSquadModal(true);
+     }, 0);
+  }, []);
 
   // Distance formula using Haversine
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -574,7 +679,17 @@ export default function CustomerSite() {
 
   // Watch position with highest accuracy
   useEffect(() => {
-     if (!navigator.geolocation || activeSquads.length === 0) return;
+     if (!navigator.geolocation) {
+       setRadarStatus("unsupported");
+       setRadarStatusMsg("جهازك أو المتصفح لا يدعم تحديد الموقع.");
+       return;
+     }
+     if (activeSquads.length === 0) {
+       setRadarStatus("empty");
+       setRadarStatusMsg("ما فيه دواوين مفعلة بالرادار حالياً.");
+       setRadarNearbySquads([]);
+       return;
+     }
 
      let watchId: number | null = null;
 
@@ -582,7 +697,15 @@ export default function CustomerSite() {
        const userLat = position.coords.latitude;
        const userLng = position.coords.longitude;
        const accuracy = Number(position.coords.accuracy || 0);
-       if (accuracy > 150) return;
+       setRadarAccuracy(Math.round(accuracy));
+       if (accuracy > 150) {
+         setRadarStatus("weak");
+         setRadarStatusMsg("الموقع غير دقيق كفاية حالياً، لذلك ما نعرض ديوانيات بالغلط.");
+         setRadarNearbySquads([]);
+         return;
+       }
+       setRadarStatus("ready");
+       setRadarStatusMsg(`الرادار شغال حسب مسافة الأدمن (${Number(settings?.squadGeofenceDistance || 100)}م). إذا قربت من ديوانية، تظهر لك بطاقة الدخول أو التبديل.`);
 
        const nearby: any[] = [];
 
@@ -619,6 +742,8 @@ export default function CustomerSite() {
        checkPosition,
        (err) => {
          console.warn("Geofence watchPosition error: ", err);
+         setRadarStatus(err.code === 1 ? "denied" : "idle");
+         setRadarStatusMsg(err.code === 1 ? "صلاحية الموقع مرفوضة. فعّلها من إعدادات المتصفح واضغط تشغيل الرادار." : "تعذر تشغيل الرادار حالياً. اضغط تشغيل الرادار للمحاولة مرة ثانية.");
        },
        { enableHighAccuracy: true, timeout: 20050, maximumAge: 10000 }
      );
@@ -639,7 +764,7 @@ export default function CustomerSite() {
        }, 5000);
      }
 
-     const approvedReq = myGeofenceRequests.find(r => r.status === "approved" && String(r.squadId) !== String(activeSquadId));
+     const approvedReq = customerPhone ? myGeofenceRequests.find(r => r.status === "approved" && String(r.squadId) !== String(activeSquadId)) : null;
      if (approvedReq) {
        localStorage.setItem("squadId", approvedReq.squadId);
        setActiveSquadId(approvedReq.squadId);
@@ -664,9 +789,22 @@ export default function CustomerSite() {
 
   const handleSendRadarRequest = async (targetSquad: any) => {
      if (!targetSquad) return;
-     if (!customerPhone) {
-       alert("يرجى إدخال رقم هاتفك وتأكيده أولاً لتتمكن من الانضمام بقروب ربعك!");
-       return;
+     let requestPhone = customerPhone;
+     let requestName = customerName || "عضو قريب";
+     if (!requestPhone) {
+       const typedPhone = window.prompt("اكتب رقم تلفونك ٨ أرقام عشان نرسل طلبك للمعزب:");
+       const cleanTypedPhone = cleanPhoneForSquad(normalizeDigits(typedPhone || "")).slice(0, 8);
+       if (!cleanTypedPhone || cleanTypedPhone.length < 8) {
+         alert("لازم رقم تلفون صحيح عشان المعزب يعرف طلبك.");
+         return;
+       }
+       const typedName = window.prompt("اكتب اسمك للمعزب:", "عضو قريب") || "عضو قريب";
+       requestPhone = cleanTypedPhone;
+       requestName = typedName;
+       setCustomerPhone(cleanTypedPhone);
+       setGuestPhone(cleanTypedPhone);
+       setCustomerName(prev => prev || typedName);
+       try { localStorage.setItem("customer_phone_track", cleanTypedPhone); } catch(e) {}
      }
 
      setRadarLoadingMap(prev => ({ ...prev, [targetSquad.id]: true }));
@@ -675,8 +813,8 @@ export default function CustomerSite() {
          method: "POST",
          headers: { "Content-Type": "application/json" },
          body: JSON.stringify({
-           name: customerName || "عضو قريب",
-           phone: customerPhone,
+           name: requestName || "عضو قريب",
+           phone: requestPhone,
            squadId: targetSquad.id,
            distance: targetSquad.distance || 0
          })
@@ -3825,6 +3963,8 @@ export default function CustomerSite() {
                         setActiveSquadId={setActiveSquadId}
                         setCustomerPhone={setCustomerPhone}
                         setCustomerName={setCustomerName}
+                        setSquadInfo={setSquadInfo}
+                        onClearSquadSession={clearSquadSessionOnThisDevice}
                         normalizeDigits={normalizeDigits}
                         formatPoints={formatPoints}
                         handleCreateSquad={handleCreateSquad}
@@ -3905,6 +4045,34 @@ export default function CustomerSite() {
           />
         ))}
 
+        {/* حالة رادار الديوانية وتشغيل اللوكيشن بوضوح */}
+        <AnimatePresence>
+          {showSquadModal && radarNearbySquads.length === 0 && radarStatus !== "empty" && (
+            <motion.div
+              initial={{ opacity: 0, y: 80, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 80, scale: 0.96 }}
+              className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-[390px] bg-white text-brand rounded-[28px] p-4 shadow-2xl z-50 border border-amber-100 text-right font-sans"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  onClick={refreshRadarOnce}
+                  className="bg-brand text-white rounded-2xl px-4 py-2 text-[11px] font-black active:scale-95"
+                >
+                  {radarStatus === "checking" ? "نحاول..." : "تشغيل الرادار"}
+                </button>
+                <div>
+                  <div className="text-xs font-black">
+                    {radarStatus === "ready" ? "الرادار شغال ✅" : radarStatus === "denied" ? "الرادار يحتاج سماح ⚠️" : radarStatus === "weak" ? "الموقع غير دقيق ⚠️" : "رادار الديوانية"}
+                  </div>
+                  <div className="text-[10px] font-bold text-stone-500 mt-0.5 leading-relaxed">{radarStatusMsg}</div>
+                  {radarAccuracy !== null && <div className="text-[9px] font-black text-stone-400 mt-1">دقة الموقع تقريباً: {radarAccuracy}م</div>}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* رادار التراث - إشعار جيو لوكيشن ذكي للديوانيات القريبة */}
         <AnimatePresence>
           {radarNearbySquads.length > 0 && (
@@ -3944,7 +4112,7 @@ export default function CustomerSite() {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-500/10 px-2 py-0.5 rounded-lg font-mono">
-                          تبعد {sq.distance}م 📍
+                          تبعد {sq.distance}م ������
                         </span>
                         <span className="text-xs font-black text-white">ديوانية {sq.name}</span>
                       </div>
