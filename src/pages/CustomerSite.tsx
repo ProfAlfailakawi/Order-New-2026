@@ -594,7 +594,6 @@ export default function CustomerSite() {
        return [];
      }
   });
-  const [lastDismissedRadarSquad, setLastDismissedRadarSquad] = useState<any>(null);
 
   // Save dismissed array
   useEffect(() => {
@@ -815,10 +814,10 @@ export default function CustomerSite() {
      let requestPhone = customerPhone;
      let requestName = customerName || "عضو قريب";
      if (!requestPhone) {
-       const typedPhone = window.prompt("اكتب رقم تلفونك 8 أرقام فقط عشان نرسل طلبك للمعزب:");
-       const cleanTypedPhone = cleanPhoneForSquad(normalizeDigits(typedPhone || "").replace(/[^0-9]/g, "")).slice(0, 8);
+       const typedPhone = window.prompt("اكتب رقم تلفونك 8 أرقام عشان نرسل طلبك للمعزب:");
+       const cleanTypedPhone = cleanPhoneForSquad(normalizeDigits(typedPhone || "")).slice(0, 8);
        if (!cleanTypedPhone || cleanTypedPhone.length < 8) {
-         alert("اكتب 8 أرقام فقط. الأرقام العربية تتحول تلقائياً للإنجليزية.");
+         alert("لازم رقم تلفون صحيح عشان المعزب يعرف طلبك.");
          return;
        }
        const typedName = window.prompt("اكتب اسمك للمعزب:", "عضو قريب") || "عضو قريب";
@@ -4151,8 +4150,7 @@ export default function CustomerSite() {
                       ) : (
                         <div className="flex gap-2 justify-end mt-1">
                           <button
-                           onClick={() => {
-                              setLastDismissedRadarSquad(sq);
+                            onClick={() => {
                               setRadarDismissedList(prev => [...prev, String(sq.id)]);
                               setRadarNearbySquads(prev => prev.filter(s => String(s.id) !== String(sq.id)));
                             }}
@@ -4190,31 +4188,6 @@ export default function CustomerSite() {
                 </p>
               )}
             </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {lastDismissedRadarSquad && radarNearbySquads.length === 0 && (
-            <motion.button
-              key="radar-reopen-chip"
-              initial={{ opacity: 0, scale: 0.78, x: -24 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.78, x: -24 }}
-              onClick={() => {
-                const sq = lastDismissedRadarSquad;
-                setRadarDismissedList(prev => prev.filter(id => String(id) !== String(sq.id)));
-                setRadarNearbySquads(prev => prev.some(item => String(item.id) === String(sq.id)) ? prev : [sq, ...prev]);
-                setLastDismissedRadarSquad(null);
-              }}
-              className="fixed left-4 top-[46%] z-50 rounded-full bg-slate-900/95 text-amber-300 border border-amber-400/35 shadow-2xl backdrop-blur-md px-3.5 py-3 flex items-center gap-2 active:scale-95"
-              title="إظهار الديوانية القريبة مرة ثانية"
-            >
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75 animate-ping" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-400" />
-              </span>
-              <span className="text-sm">📡</span>
-            </motion.button>
           )}
         </AnimatePresence>
 
@@ -4508,54 +4481,66 @@ const ChefWhisperCard = ({
               </div>
             </>
           ) : (
+            /* NEW VERTICAL LAYOUT FOR LIST ITEMS EXACTLY AS REQUESTED */
             <>
-              <div className="product-thumb-panel menu-product-image relative shrink-0 overflow-hidden">
-                {isHot && <SizzlingSteam />}
-                <img
-                  referrerPolicy="no-referrer"
-                  src={imgUrl}
-                  onError={(e) => {
-                    if (e.currentTarget.src.includes(fallbackLogo)) {
-                      e.currentTarget.onerror = null;
-                      if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO))
-                        e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
-                    } else {
-                      e.currentTarget.src = fallbackLogo;
-                    }
-                  }}
-                  alt={product.name}
-                  className="menu-product-img w-full h-full object-cover transition-transform duration-500 relative z-0"
-                />
+              {/* Right Side: Add Button (first child in RTL renders on the right) */}
+              <div className="flex-shrink-0 flex items-center justify-center relative z-10 w-12 h-full">
+                <div
+                  className={`w-12 h-12 flex items-center justify-center text-white rounded-2xl shadow-lg transition-all hover:scale-110 ${product.isOutOfStock ? "bg-stone-300" : "bg-gradient-to-tr from-accent to-amber-500 shadow-accent/30"}`}
+                >
+                  <Plus className="w-5 h-5 stroke-[3]" />
+                </div>
               </div>
 
-              <div className="product-card-copy flex-1 min-w-0 relative z-10 text-right">
-                <h3 className="product-title font-black text-brand" style={{ wordBreak: "break-word" }}>
+              {/* Center Content: Title over Image over Price over Notes */}
+              <div className="orser-product-content flex-1 flex flex-col items-center justify-center text-center relative z-10 py-1 pl-4">
+                {/* 1. Title */}
+                <h3 className="product-title font-black text-[17px] sm:text-lg text-brand leading-snug tracking-tight mb-3" style={{ wordBreak: "break-word" }}>
                   {product.name}
                 </h3>
+                
+                {/* The Box wrapping Image and Price */}
+                <div className="product-media-frame relative w-full max-w-[220px] flex flex-col items-center border border-stone-200/60 rounded-[28px] p-4 bg-gradient-to-b from-white to-stone-50/30">
+                  {/* 2. Image */}
+                  <div className="menu-product-image relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 flex items-center justify-center z-10 mb-2">
+                    {isHot && <SizzlingSteam />}
+                    <img
+                      referrerPolicy="no-referrer"
+                      src={imgUrl}
+                      onError={(e) => {
+                        if (e.currentTarget.src.includes(fallbackLogo)) {
+                          e.currentTarget.onerror = null;
+                          if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO))
+                            e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
+                        } else {
+                          e.currentTarget.src = fallbackLogo;
+                        }
+                      }}
+                      alt={product.name}
+                      className="menu-product-img w-full h-full object-contain transform hover:scale-110 transition-transform relative z-0"
+                    />
+                  </div>
+
+                  {/* 3. Price (overlapping bottom edge of the box) */}
+                  <div className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 bg-white border border-stone-200/50 shadow-[0_2px_10px_rgba(0,0,0,0.03)] px-4 py-1 rounded-full flex items-center justify-center z-20 whitespace-nowrap">
+                    <span className="text-brand font-black text-sm">
+                      {calculateItemBasePriceWithHiddenAddons({
+                        id: "", productId: product.id, name: product.name, quantity: 1, price: product.price, selectedExtras: [], product: normalizeProductForAddons(product)
+                      })}
+                    </span>
+                    <span className="text-[11px] text-accent font-bold mx-1">د.ك</span>
+                  </div>
+                </div>
+
+                {/* 4. Notes */}
                 {product.preparationInstructions && (
-                  <div className="product-notes-soft flex items-center gap-1.5">
+                  <div className="product-notes-soft mt-5 flex items-center gap-1.5 px-4 py-1.5 bg-red-50 border border-red-100/50 rounded-full shadow-[0_2px_10px_rgba(239,68,68,0.05)] w-max max-w-full z-10">
                     <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                    <p>
+                    <p className="text-[11px] text-red-600 font-extrabold truncate">
                       {product.preparationInstructions}
                     </p>
                   </div>
                 )}
-              </div>
-
-              <div className="product-card-action relative z-10 shrink-0">
-                <div className="product-price-pill">
-                  <span>
-                    {calculateItemBasePriceWithHiddenAddons({
-                      id: "", productId: product.id, name: product.name, quantity: 1, price: product.price, selectedExtras: [], product: normalizeProductForAddons(product)
-                    })}
-                  </span>
-                  <small>د.ك</small>
-                </div>
-                <div
-                  className={`product-add-orb ${product.isOutOfStock ? "is-disabled" : ""}`}
-                >
-                  <Plus className="w-5 h-5 stroke-[3]" />
-                </div>
               </div>
             </>
           )}
@@ -4891,10 +4876,10 @@ function ProductModal({
                     e.currentTarget.src = fallback;
                   }
                 }}
-                className="product-detail-image w-28 h-28 sm:w-32 sm:h-32 object-cover rounded-[28px] shadow-md relative border border-stone-100 bg-stone-50"
+                className="w-[63px] h-[63px] object-contain bg-white rounded-2xl shadow-md relative border-2 border-stone-50 p-0"
               />
             ) : (
-              <div className="w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center bg-stone-50/80 backdrop-blur-sm border border-stone-100 text-stone-400 rounded-[28px] shadow-md relative p-3">
+              <div className="w-[48px] h-[48px] flex items-center justify-center bg-stone-50/80 backdrop-blur-sm border-2 border-stone-100 text-stone-400 rounded-2xl shadow-md relative p-1">
                 <span className="text-[10px] font-medium p-1 text-center leading-tight">
                   صورة غير متوفرة
                 </span>
