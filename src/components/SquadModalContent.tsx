@@ -114,7 +114,18 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 }) => {
   const [copied, setCopied] = React.useState(false);
   const [myDiwaniyaTab, setMyDiwaniyaTab] = React.useState<"home" | "orders" | "notifications" | "location">("home");
-  const isCurrentMember = Boolean(customerPhone && squadInfo?.id) && squadInfo?.memberData?.isMember !== false && Boolean(squadInfo?.memberData?.phone || customerPhone);
+
+  const cleanPhoneLocal = (ph: string): string => {
+    if (!ph) return "";
+    const cleaned = String(ph).replace(/[^0-9]/g, "");
+    if (cleaned.startsWith("965") && cleaned.length > 8) {
+      return cleaned.slice(3);
+    }
+    return cleaned;
+  };
+
+  const isOwner = Boolean(squadInfo?.phone && customerPhone && cleanPhoneLocal(squadInfo.phone) === cleanPhoneLocal(customerPhone));
+  const isCurrentMember = Boolean(squadInfo?.id && (isOwner || (customerPhone && squadInfo?.memberData?.isMember !== false && Boolean(squadInfo?.memberData?.phone || customerPhone))));
 
   // Geofencing states & actions
   const [isRegisteringGeo, setIsRegisteringGeo] = React.useState(false);
@@ -122,6 +133,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const [isApproving, setIsApproving] = React.useState<Record<string, boolean>>({});
   const [manualInput, setManualInput] = React.useState("");
   const [showManualInput, setShowManualInput] = React.useState(false);
+  const [showResetLocation, setShowResetLocation] = React.useState(false);
 
   const parseGoogleMapsInput = (input: string) => {
     // Regex for decimal coordinates: lat, lng
@@ -144,17 +156,6 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     }
     return null;
   };
-
-  const cleanPhoneLocal = (ph: string): string => {
-    if (!ph) return "";
-    const cleaned = String(ph).replace(/[^0-9]/g, "");
-    if (cleaned.startsWith("965") && cleaned.length > 8) {
-      return cleaned.slice(3);
-    }
-    return cleaned;
-  };
-
-  const isOwner = squadInfo?.phone && customerPhone && (cleanPhoneLocal(squadInfo.phone) === cleanPhoneLocal(customerPhone));
 
   const handleManualLocationSubmit = async () => {
     if (!manualInput.trim()) {
@@ -185,6 +186,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         setGeoStatusMsg("تم تسجيل موقع الديوانية الجغرافي بنجاح! 🎉");
         setManualInput("");
         setShowManualInput(false);
+        setShowResetLocation(false);
         if (onRefresh) onRefresh();
       } else {
         setGeoStatusMsg("فشل التسجيل يدوياً. يرجى المحاولة لاحقاً.");
@@ -219,6 +221,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           });
           if (res.ok) {
             setGeoStatusMsg("تم تسجيل موقع الديوانية الجغرافي بنجاح! 🎉");
+            setShowResetLocation(false);
             if (onRefresh) onRefresh();
           } else {
             setGeoStatusMsg("فشل التسجيل. يرجى المحاولة لاحقاً.");
@@ -418,19 +421,17 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const getSquadGeofenceDistance = () => {
     const candidates = [
       settings?.squadGeofenceDistance,
-      settings?.settings?.squadGeofenceDistance,
+      settings?.squadSettings?.geofenceDistance,
+      settings?.squadSettings?.squadGeofenceDistance,
       settings?.diwaniyaGeofenceDistance,
-      settings?.geofenceDistance,
       settings?.radarDistance,
-      settings?.radarGeofenceDistance,
     ];
     for (const value of candidates) {
-      const n = Number(normalizeDigits(String(value ?? "")).replace(/[^0-9.]/g, ""));
+      const n = Number(value);
       if (Number.isFinite(n) && n > 0) return n;
     }
     return 100;
   };
-  const squadGeofenceDistance = getSquadGeofenceDistance();
   const visibleNotifications = (diwaniyaNotifications || []).filter((n: any) => !n.readAt);
   const hasRealUsualOrder = Boolean(usualOrder?.items?.length && Number(usualOrder?.total || 0) > 0);
   const hasRealBeautifulLog = Boolean(squadBeautifulLog && (Number(squadBeautifulLog.ordersCount || 0) > 0 || Number(squadBeautifulLog.presentCount || 0) > 0 || squadBeautifulLog.favoriteItemName));
@@ -441,6 +442,18 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const [activeTempCode, setActiveTempCode] = React.useState<any>(null);
   const [tempJoinCode, setTempJoinCode] = React.useState("");
   const [groupOrderLoading, setGroupOrderLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!squadInfo?.id || !isOwner) return;
+    let createdId = "";
+    try { createdId = sessionStorage.getItem("created_squad_needs_location") || ""; } catch(e) {}
+    if (createdId && String(createdId) === String(squadInfo.id)) {
+      setMyDiwaniyaTab("location");
+      setShowResetLocation(false);
+      setGeoStatusMsg("تم تأسيس الديوانية. فعّل الموقع الآن حتى تظهر للربع القريبين منك.");
+      try { sessionStorage.removeItem("created_squad_needs_location"); } catch(e) {}
+    }
+  }, [squadInfo?.id, isOwner]);
 
   const handleLoginByPhone = async () => {
     const cleanLoginPhone = normalizeDigits(loginPhone || guestPhone || "").replace(/[^0-9]/g, "").slice(0, 8);
@@ -655,7 +668,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
 
           {squadInfo && isCurrentMember && (
-            <div className="bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm relative z-0">
+            <div className="bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm relative z-10">
               <div className="grid grid-cols-4 gap-1 text-center" dir="rtl">
                 {[
                   { id: "home", label: "الرئيسية", icon: "🏠" },
@@ -981,9 +994,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     type="tel"
                     value={guestPhone}
                     onChange={(e) =>
-                      setGuestPhone(normalizeDigits(e.target.value))
+                      setGuestPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8))
                     }
-                    placeholder="8 أرقام"
+                    placeholder="رقم تلفونك بالإنجليزي - 8 أرقام"
                     maxLength={8}
                     inputMode="numeric"
                     pattern="[0-9]*"
@@ -1054,7 +1067,6 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
               return (
                 <div key="overview-content" className="flex flex-col gap-6">
-                  {myDiwaniyaTab === "home" && (<>
                   <div
                     className={cn(
                       "rounded-[32px] p-6 border-2 shadow-sm relative overflow-hidden transition-all duration-500",
@@ -1194,7 +1206,6 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         ))}
                     </div>
                   </div>
-                  </>)}
 
                   {/* رادار تحديد الموقع الجغرافي للديوانية - للقائد */}
                   {isOwner && myDiwaniyaTab === "location" && (
@@ -1205,7 +1216,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       </div>
                       
                       <p className="text-xs font-bold text-stone-500 leading-relaxed">
-                        ثبت موقع ديوانيتك حتى تظهر بطاقة الدخول للربع تلقائياً عند اقترابهم ضمن مسافة الأدمن ({formatEnglishNumber(squadGeofenceDistance)} متر).
+                        ثبت موقع ديوانيتك حتى تظهر بطاقة الدخول للربع تلقائياً عند اقترابهم ضمن مسافة الأدمن ({formatEnglishNumber(getSquadGeofenceDistance())} متر).
                       </p>
 
                       {squadInfo.lat !== undefined && squadInfo.lng !== undefined ? (
@@ -1235,13 +1246,23 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         </div>
                       )}
 
-                      <button
-                        onClick={handleRegisterLocation}
-                        disabled={isRegisteringGeo}
-                        className="w-full bg-stone-50 hover:bg-stone-100 border-2 border-stone-200/80 text-brand font-black text-xs py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
-                      >
-                        {isRegisteringGeo ? "جاري تثبيت الموقع... 🛰️" : (squadInfo.lat !== undefined ? "📍 إعادة تعيين موقع الديوانية الحالي" : "📍 تعيين موقع الديوانية الجغرافي الحالي")}
-                      </button>
+                      {squadInfo.lat !== undefined && squadInfo.lng !== undefined && !showResetLocation ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowResetLocation(true)}
+                          className="w-full bg-white hover:bg-stone-50 border-2 border-stone-200/80 text-stone-600 font-black text-xs py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
+                        >
+                          📍 تغيير موقع الديوانية عند الانتقال لمكان جديد
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleRegisterLocation}
+                          disabled={isRegisteringGeo}
+                          className="w-full bg-stone-50 hover:bg-stone-100 border-2 border-stone-200/80 text-brand font-black text-xs py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
+                        >
+                          {isRegisteringGeo ? "جاري تثبيت الموقع... 🛰️" : (squadInfo.lat !== undefined ? "📍 تأكيد تغيير موقع الديوانية الحالي" : "📍 تعيين موقع الديوانية الجغرافي الحالي")}
+                        </button>
+                      )}
 
                       <div className="pt-2 border-t border-stone-50 space-y-2">
                         <button
@@ -1299,7 +1320,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           {pendingGeofenceRequests.map((req: any, idx: number) => (
                             <div key={idx} className="p-3.5 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col gap-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">يبعد {req.distance ? formatEnglishNumber(req.distance) : `أقل من ${formatEnglishNumber(squadGeofenceDistance)}`}م</span>
+                                <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">يبعد {req.distance ? formatEnglishNumber(req.distance) : "أقل من 100"}م</span>
                                 <span className="text-sm font-black text-brand">{req.name}</span>
                               </div>
                               <div className="flex items-center justify-between mt-1">
