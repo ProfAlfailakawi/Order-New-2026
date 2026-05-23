@@ -207,7 +207,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     setIsRegisteringGeo(false);
   };
 
-  const saveCurrentLocationForSquad = React.useCallback((options?: { auto?: boolean }) => {
+  const saveCurrentLocationForSquad = React.useCallback((options?: { auto?: boolean; changeCheck?: boolean }) => {
     if (!squadInfo?.id) return;
     if (!navigator.geolocation) {
       const msg = "جهازك لا يدعم نظام تحديد المواقع الجغرافي.";
@@ -215,7 +215,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       return;
     }
     setIsRegisteringGeo(true);
-    setGeoStatusMsg(options?.auto ? "نحاول تثبيت موقع ديوانيتك الحالية تلقائياً... 📡" : "جاري تثبيت موقع الديوانية الحالي... 📡");
+    setGeoStatusMsg(options?.auto ? "نحاول تثبيت موقع ديوانيتك الحالية تلقائياً... 📡" : (options?.changeCheck ? "نتأكد من موقعك الحالي قبل تغيير موقع الديوانية... 📡" : "جاري تثبيت موقع الديوانية الحالي... 📡"));
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -225,7 +225,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           if (diff < 8) {
             setIsRegisteringGeo(false);
             setShowResetLocation(false);
-            setGeoStatusMsg("أنت بنفس موقع الديوانية تقريباً، ما يحتاج نغيّر اللوكيشن ✅");
+            setGeoStatusMsg("أنت بالموقع الحالي للديوانية، ما يحتاج نغيّر اللوكيشن ✅");
             return;
           }
         }
@@ -253,10 +253,19 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         }
         setIsRegisteringGeo(false);
       },
-      () => {
+      (err) => {
         setIsRegisteringGeo(false);
         setShowResetLocation(true);
-        setGeoStatusMsg("الموقع يحتاج سماح. فعّل اللوكيشن من المتصفح أو استخدم الإدخال اليدوي لتثبيت ديوانيتك الحالية.");
+        const code = Number(err?.code || 0);
+        if (code === 1) {
+          setGeoStatusMsg("الموقع يحتاج سماح. فعّل اللوكيشن من المتصفح أو استخدم الإدخال اليدوي لتثبيت ديوانيتك الحالية.");
+        } else if (code === 2) {
+          setGeoStatusMsg("المتصفح لم يتمكن من قراءة موقعك حالياً. جرّب مرة ثانية أو استخدم الإدخال اليدوي.");
+        } else if (code === 3) {
+          setGeoStatusMsg("انتهت مهلة قراءة الموقع. إذا كنت بنفس المكان اضغط مرة ثانية، أو استخدم الإدخال اليدوي عند الحاجة.");
+        } else {
+          setGeoStatusMsg("تعذر قراءة الموقع حالياً. جرّب مرة ثانية أو استخدم الإدخال اليدوي.");
+        }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
@@ -1289,10 +1298,11 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       {squadInfo.lat !== undefined && squadInfo.lng !== undefined && !showResetLocation ? (
                         <button
                           type="button"
-                          onClick={() => setShowResetLocation(true)}
-                          className="w-full bg-white hover:bg-stone-50 border-2 border-stone-200/80 text-stone-600 font-black text-xs py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
+                          onClick={() => saveCurrentLocationForSquad({ changeCheck: true })}
+                          disabled={isRegisteringGeo}
+                          className="w-full bg-white hover:bg-stone-50 border-2 border-stone-200/80 text-stone-600 font-black text-xs py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                         >
-                          📍 تغيير موقع الديوانية عند الانتقال لمكان جديد
+                          {isRegisteringGeo ? "نتأكد من موقعك... 🛰️" : "📍 تغيير موقع الديوانية عند الانتقال لمكان جديد"}
                         </button>
                       ) : (
                         <button
