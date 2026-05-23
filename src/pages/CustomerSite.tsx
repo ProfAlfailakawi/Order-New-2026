@@ -537,18 +537,7 @@ export default function CustomerSite() {
     }
   }, [myGeofenceRequests]);
 
-  const fetchSquadGamification = useCallback(async () => {
-    const requestToken = squadSessionTokenRef.current;
-    const requestPhone = customerPhone;
-    const requestSquadId = activeSquadId;
-    try {
-       const endpoint = `/api/squad-gamification?phone=${encodeURIComponent(requestPhone)}&squadId=${encodeURIComponent(requestSquadId)}`;
-       const res = await fetch(endpoint);
-       if (!res.ok) return;
-       const data = await res.json();
-       if (requestToken !== squadSessionTokenRef.current) return;
-       if (latestSquadRequestRef.current.phone !== requestPhone || latestSquadRequestRef.current.squadId !== requestSquadId) return;
-
+  const applySquadGamificationData = useCallback((data: any, requestPhone: string, requestSquadId: string) => {
        setTopSquads(data.topSquads || []);
        setActiveSquads(data.activeSquads || []);
 
@@ -591,8 +580,29 @@ export default function CustomerSite() {
        } else {
          setSquadInfo(null);
        }
+  }, []);
+
+  const fetchSquadGamificationFor = useCallback(async (phoneOverride?: string, squadIdOverride?: string) => {
+    const requestToken = squadSessionTokenRef.current;
+    const requestPhone = phoneOverride ?? customerPhone;
+    const requestSquadId = squadIdOverride ?? activeSquadId;
+    try {
+       const endpoint = `/api/squad-gamification?phone=${encodeURIComponent(requestPhone)}&squadId=${encodeURIComponent(requestSquadId)}`;
+       const res = await fetch(endpoint);
+       if (!res.ok) return;
+       const data = await res.json();
+       const isExplicitRefresh = phoneOverride !== undefined || squadIdOverride !== undefined;
+       if (!isExplicitRefresh) {
+         if (requestToken !== squadSessionTokenRef.current) return;
+         if (latestSquadRequestRef.current.phone !== requestPhone || latestSquadRequestRef.current.squadId !== requestSquadId) return;
+       }
+       applySquadGamificationData(data, requestPhone, requestSquadId);
     } catch(e) {}
-  }, [customerPhone, activeSquadId]);
+  }, [customerPhone, activeSquadId, applySquadGamificationData]);
+
+  const fetchSquadGamification = useCallback(() => {
+    return fetchSquadGamificationFor();
+  }, [fetchSquadGamificationFor]);
 
   // Geofencing background states
   const [radarNearbySquads, setRadarNearbySquads] = useState<any[]>([]);
@@ -947,11 +957,14 @@ export default function CustomerSite() {
           localStorage.setItem("customer_phone_track", cleanOwnerPhone);
           localStorage.setItem("squadId", data.squad.id.toString());
           sessionStorage.setItem("created_squad_needs_location", data.squad.id.toString());
-          setActiveSquadId(data.squad.id.toString());
+          const newSquadId = data.squad.id.toString();
+          squadSessionTokenRef.current += 1;
+          latestSquadRequestRef.current = { phone: cleanOwnerPhone, squadId: newSquadId };
+          setActiveSquadId(newSquadId);
           setSquadInfo({ ...data.squad, memberData: { name: guestName || "عميل", phone: cleanOwnerPhone, isMember: true } });
           setIsCreatingSquad(false);
           setUserSquads((prev) => [data.squad, ...prev.filter((s:any) => String(s.id) !== String(data.squad.id))]);
-          window.setTimeout(fetchSquadGamification, 50);
+          await fetchSquadGamificationFor(cleanOwnerPhone, newSquadId);
        }
     } catch(e) {}
     setIsSubmittingSquad(false);
