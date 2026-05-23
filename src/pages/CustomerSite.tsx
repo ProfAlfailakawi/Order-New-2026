@@ -3947,13 +3947,6 @@ export default function CustomerSite() {
                       </button>
                    </div>
 
-                   <div className="px-5 pt-3 mb-2 -mx-5 bg-stone-50 shrink-0 border-b border-stone-100">
-                      <div className="bg-white border border-stone-100 rounded-2xl px-4 py-3 text-right">
-                        <div className="text-[11px] font-black text-brand">كل شيء يخص الديوانية مرتب تحت التابات بالأسفل.</div>
-                        <div className="text-[10px] font-bold text-stone-400 mt-0.5">الرئيسية للحضور والترتيب، الموقع للرادار، والكود للدخول السريع.</div>
-                      </div>
-                   </div>
-
                    <div className="flex-1 overflow-y-auto p-5 pb-8 custom-scrollbar relative z-0">
                       <SquadModalContent 
                         activeSquadTab={activeSquadTab}

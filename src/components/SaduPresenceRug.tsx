@@ -325,14 +325,14 @@ export function SaduPresenceRug({
 
         <div className="flex flex-col text-right">
           <span className="text-[10.5px] font-black text-amber-500 flex items-center gap-1 justify-end uppercase tracking-wider">
-            سجادة السدو المباشرة 📡 <Sparkles className="w-3 h-3 text-amber-400 fill-amber-400" />
+            مجلس الديوانية المباشر 📡 <Sparkles className="w-3 h-3 text-amber-400 fill-amber-400" />
           </span>
-          <p className="text-[10px] font-bold text-stone-400 mt-0.5">جلسة تفاعلية حية تدردش بالفناجين والقدوع مع الربع</p>
+          <p className="text-[10px] font-bold text-stone-400 mt-0.5">المعزب والحضور مرتبين بدون زحمة</p>
         </div>
       </div>
 
       {/* THE COVETED TRADITIONAL KUWAITI SADU RUG */}
-      <div className="relative shadow-2xl rounded-3xl border border-stone-900/60 overflow-hidden bg-[#240405] w-full py-7 px-4 min-h-[440px] flex flex-col justify-between">
+      <div className="relative shadow-2xl rounded-3xl border border-stone-900/60 overflow-hidden bg-[#240405] w-full py-7 px-4 min-h-[360px] flex flex-col">
         {/* Weave overlay for coarse fabric look */}
         <div 
           className="absolute inset-0 pointer-events-none opacity-[0.22]"
@@ -405,28 +405,24 @@ export function SaduPresenceRug({
         </div>
 
         {hostMember && (
-          <div className="absolute top-9 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center max-w-[220px] px-3">
+          <div className="relative z-20 mx-10 sm:mx-14 mb-4 rounded-[26px] border border-amber-400/20 bg-stone-950/80 backdrop-blur-md px-4 py-3 shadow-xl text-right">
+            <div className="flex items-center justify-between gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-lg">👑</div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-black text-amber-300">المعزب</div>
+                <div className="text-sm font-black text-[#faf0d9] truncate">{hostMember.name || "المعزب"}</div>
+              </div>
+            </div>
             {isCurrentlyWobbling(hostMember.wobbleAt) && (
-              <div className="mb-2 bg-stone-950/95 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-2xl text-[9px] font-black shadow-xl text-center leading-snug">
+              <div className="mt-2 bg-amber-400/10 text-amber-300 border border-amber-500/20 px-3 py-1.5 rounded-2xl text-[9px] font-black text-center leading-snug">
                 {hostMember.wobbleMsg || "حيالله الربع، المجلس منوّر!"}
               </div>
             )}
-            <div className="rounded-[24px] border border-amber-400/20 bg-stone-950/75 backdrop-blur-md px-4 py-3 shadow-2xl text-center min-w-[170px]">
-              <div className="flex items-center justify-center gap-2 text-[10px] font-black text-amber-300 mb-1">
-                <span>👑</span>
-                <span>المعزب</span>
-                <span>🪔</span>
-              </div>
-              <div className="inline-flex items-center justify-center rounded-full bg-emerald-400 text-stone-950 px-4 py-1 text-sm font-black shadow-md max-w-full truncate">
-                {hostMember.name || "المعزب"}
-              </div>
-              <div className="mt-1 text-[9px] font-bold text-stone-300">راعي الديوانية ومضيف الربع</div>
-            </div>
           </div>
         )}
 
         {/* Central visual piece: The Golden Dallah on visual hot embers inside a traditional burner */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none z-10 scale-90 sm:scale-100">
+        <div className="relative mx-auto mt-2 mb-3 flex flex-col items-center justify-center pointer-events-none z-10 scale-90 sm:scale-100 h-36">
           <div className="relative group flex items-center justify-center">
             {/* Hot Embers Glow */}
             <div className="absolute w-28 h-28 bg-[#d42d13] blur-2xl rounded-full opacity-45 mix-blend-screen animate-pulse" />
@@ -501,7 +497,7 @@ export function SaduPresenceRug({
         </div>
 
         {/* جلسة الديوانية بدون زحمة: بطاقات صغيرة مرتبة بدل تكدس حول الدلة */}
-        <div className="relative z-20 mt-8 mb-2 px-3">
+        <div className="relative z-20 mt-3 mb-2 px-3">
           <div className="rounded-[28px] border border-amber-500/15 bg-stone-950/70 backdrop-blur-md shadow-2xl p-4">
             <div className="flex items-center justify-between gap-3 mb-3">
               <span className="text-[9px] font-black text-amber-300 bg-amber-400/10 border border-amber-400/15 rounded-full px-2.5 py-1">
@@ -522,7 +518,7 @@ export function SaduPresenceRug({
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[185px] overflow-y-auto pr-1 custom-scrollbar">
                 {displayEntities.map((entity: any, i: number) => {
                   const isMe = cleanPhoneLocal(entity.phone) === cleanPhoneLocal(currentMemberPhone);
                   const parsedPoints = entity.points || entity.score || 0;

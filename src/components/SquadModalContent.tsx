@@ -840,13 +840,22 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 {hasRealUsualOrder && <button onClick={() => alert("الطلب المعتاد جاهز كفكرة عرض داخل الديوانية، وربطه بالسلة يحتاج مسار إضافة الأصناف للسلة في صفحة الطلب.")} className="w-full bg-stone-50 text-brand border border-stone-100 rounded-2xl py-3 text-xs font-black">كرر الطلب المعتاد للديوانية ({usualOrder.items.length} أصناف)</button>}
               </div>}
 
-              {myDiwaniyaTab === "code" && <div className="bg-stone-50 p-5 rounded-[30px] border border-stone-100 space-y-3">
-                <div className="flex items-center justify-between"><span className="text-[10px] font-black bg-white text-stone-500 px-3 py-1 rounded-full border">صالح ساعتين</span><h4 className="text-sm font-black text-brand">كود دخول الضيف</h4></div>
-                <p className="text-[11px] font-bold text-stone-500 leading-relaxed">راعي الديوانية يطلع كود من هنا ويعطيه للضيف، والضيف يدخل من تبويب الكود مباشرة.</p>
-                {isOwner ? <>
-                  <button onClick={handleCreateTempCode} disabled={tempCodeLoading} className="w-full bg-accent text-white rounded-2xl py-3 text-xs font-black">{tempCodeLoading ? "نجهز الكود..." : "إنشاء كود دخول للضيف"}</button>
-                  {(activeTempCode?.code || tempCodes[0]?.code) && <div className="text-center bg-white rounded-2xl p-4 border border-stone-100"><div className="text-[10px] font-black text-stone-400">الكود الحالي</div><div className="text-3xl font-black tracking-[0.3em] text-brand">{activeTempCode?.code || tempCodes[0]?.code}</div></div>}
-                </> : <div className="flex gap-2"><input inputMode="numeric" value={tempJoinCode} onChange={(e)=>setTempJoinCode(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,4))} placeholder="كود الضيف" className="flex-1 bg-white border border-stone-100 rounded-2xl px-4 py-3 text-center font-black"/><button onClick={handleJoinWithTempCode} disabled={tempCodeLoading} className="bg-brand text-white rounded-2xl px-4 text-xs font-black">دخول</button></div>}
+              {myDiwaniyaTab === "code" && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[10px] font-black bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-100">صالح ساعتين</span>
+                  <div className="text-right"><h4 className="text-base font-black text-brand">كود دخول الضيف</h4><p className="text-[10px] font-bold text-stone-400 mt-0.5">للمعزب فقط: أنشئ كود سريع واعطه للضيف.</p></div>
+                </div>
+                {isOwner ? <div className="space-y-3">
+                  <button onClick={handleCreateTempCode} disabled={tempCodeLoading} className="w-full bg-brand hover:bg-accent text-white rounded-2xl py-4 text-sm font-black shadow-md active:scale-95 transition-all">{tempCodeLoading ? "نجهز الكود..." : "إنشاء كود دخول للضيف 🔐"}</button>
+                  {(activeTempCode?.code || tempCodes[0]?.code) ? <div className="text-center bg-stone-50 rounded-3xl p-5 border border-stone-100">
+                    <div className="text-[10px] font-black text-stone-400 mb-2">الكود الحالي</div>
+                    <div className="inline-flex bg-white border border-amber-100 rounded-2xl px-5 py-3 text-4xl font-black tracking-[0.35em] text-brand shadow-sm" dir="ltr">{activeTempCode?.code || tempCodes[0]?.code}</div>
+                    <p className="text-[10px] font-bold text-stone-400 mt-3">الضيف يفتح تبويب الكود ويدخل الرقم مباشرة.</p>
+                  </div> : <div className="bg-stone-50 border border-stone-100 rounded-2xl p-4 text-center text-[11px] font-bold text-stone-500">اضغط إنشاء كود وسيظهر هنا فوراً.</div>}
+                </div> : <div className="space-y-3">
+                  <p className="text-[11px] font-bold text-stone-500 leading-relaxed">اكتب الكود الذي أرسله لك المعزب للدخول السريع.</p>
+                  <div className="flex gap-2"><input inputMode="numeric" value={tempJoinCode} onChange={(e)=>setTempJoinCode(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,4))} placeholder="كود الضيف" className="flex-1 bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3 text-center font-black"/><button onClick={handleJoinWithTempCode} disabled={tempCodeLoading} className="bg-brand text-white rounded-2xl px-5 text-xs font-black">دخول</button></div>
+                </div>}
               </div>}
 
               {myDiwaniyaTab === "orders" && hasRealBeautifulLog && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-3">
@@ -1095,101 +1104,6 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
               return (
                 <div key="overview-content" className="flex flex-col gap-6">
-                  <div
-                    className={cn(
-                      "rounded-[32px] p-6 border-2 shadow-sm relative overflow-hidden transition-all duration-500",
-                      currentSquadTier.bg,
-                      currentSquadTier.id === "diamond"
-                        ? "border-sky-200"
-                        : currentSquadTier.id === "gold"
-                          ? "border-yellow-200"
-                          : currentSquadTier.id === "silver"
-                            ? "border-stone-200"
-                            : "border-amber-100",
-                    )}
-                  >
-                    <div className="flex items-center justify-end gap-4 mb-6 relative z-10">
-                      <div className="flex flex-col text-right">
-                        <h4 className="font-black text-xl text-brand mb-1 flex items-center gap-2">
-                          ديوانية {cleanSquadName(squadInfo.name)}
-                          {currentSquadTier.id === "diamond" && (
-                            <Crown className="w-5 h-5 text-sky-500 fill-current" />
-                          )}
-                        </h4>
-                        <p
-                          className={cn(
-                            "text-xs font-black uppercase tracking-widest",
-                            currentSquadTier.color,
-                          )}
-                        >
-                          مستوى {currentSquadTier.name}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="relative z-10 w-full mb-6">
-                      {nextSquadTier ? (
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-end px-0.5">
-                            <div className="text-right text-[10px] font-black text-brand flex flex-col gap-0.5">
-                              <span className="opacity-60 font-bold">
-                                رصيد ديوانيتكم:
-                              </span>
-                              <span>{squadPoints} نقطة</span>
-                            </div>
-                            <div className="text-left text-[10px] font-black text-brand flex flex-col items-start gap-0.5">
-                              <span className="opacity-60 font-bold">
-                                باقي لكم:
-                              </span>
-                              <span className="text-accent underline font-black">
-                                {Math.max(0, nextRequiredPoints - squadPoints)}{" "}
-                                نقطة
-                              </span>
-                            </div>
-                          </div>
-                          <div className="h-4 bg-white/80 rounded-full overflow-hidden border border-stone-100/50 p-0.5 shadow-inner">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${progressPercent}%` }}
-                              transition={{ duration: 1.5, ease: "easeOut" }}
-                              className={cn(
-                                "h-full rounded-full relative overflow-hidden",
-                                currentSquadTier.id === "gold"
-                                  ? "bg-yellow-500"
-                                  : currentSquadTier.id === "diamond"
-                                    ? "bg-sky-500"
-                                    : currentSquadTier.id === "silver"
-                                      ? "bg-stone-500"
-                                      : "bg-amber-500",
-                              )}
-                            >
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-                            </motion.div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="p-4 bg-sky-500/10 rounded-2xl border border-sky-200/50 flex items-center gap-3">
-                          <div className="bg-sky-500 p-2 rounded-lg text-white">
-                            <Crown className="w-5 h-5" />
-                          </div>
-                          <div className="text-right">
-                            <h4 className="font-black text-sm text-sky-700">
-                              لقادة الديوانية!
-                            </h4>
-                            <p className="text-[10px] font-bold text-sky-600/80">
-                              أنتم أسياد المكان، رصيدكم {squadPoints} نقطة!
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4 bg-white/60 backdrop-blur-md rounded-2xl text-[11px] font-black text-brand border border-white/40 shadow-sm leading-relaxed mb-4 text-right">
-                      {currentSquadTier.benefit}
-                    </div>
-                    <p className="text-[10px] font-bold text-stone-400 text-center">
-                      كل ١ دينار = ١ نقطة لجميع أعضاء الديوانية.
-                    </p>
-                  </div>
-
                   {myDiwaniyaTab === "home" && (
                   <div className="flex flex-col gap-3">
                     <h4 className="font-black text-brand text-lg flex items-center gap-2 text-right">
