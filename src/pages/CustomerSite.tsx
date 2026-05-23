@@ -486,6 +486,8 @@ export default function CustomerSite() {
   const [tempCodes, setTempCodes] = useState<any[]>([]);
   const [usualOrder, setUsualOrder] = useState<any>(null);
   const [squadBeautifulLog, setSquadBeautifulLog] = useState<any>(null);
+  const [diwaniyaNotifications, setDiwaniyaNotifications] = useState<any[]>([]);
+  const [unreadDiwaniyaNotifications, setUnreadDiwaniyaNotifications] = useState(0);
   const [showSquadModal, setShowSquadModal] = useState(false);
   const [activeSquadTab, setActiveSquadTab] = useState<"overview"|"leaderboard"|"tiers">("overview");
   const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
@@ -522,6 +524,8 @@ export default function CustomerSite() {
        setTempCodes(data.tempCodes || []);
        setUsualOrder(data.usualOrder || null);
        setSquadBeautifulLog(data.squadBeautifulLog || null);
+       setDiwaniyaNotifications(data.diwaniyaNotifications || []);
+       setUnreadDiwaniyaNotifications(Number(data.unreadDiwaniyaNotifications || 0));
        if (data.mySquad || activeSquadId) {
          if (data.myMemberData?.name && data.myMemberData.name !== "عميل") {
             setCustomerName(prev => prev || data.myMemberData.name);
@@ -3794,6 +3798,8 @@ export default function CustomerSite() {
                         tempCodes={tempCodes}
                         usualOrder={usualOrder}
                         squadBeautifulLog={squadBeautifulLog}
+                        diwaniyaNotifications={diwaniyaNotifications}
+                        unreadDiwaniyaNotifications={unreadDiwaniyaNotifications}
                         SQUAD_TIERS={SQUAD_TIERS}
                         getSquadTier={getSquadTier}
                         topSquads={topSquads}

@@ -60,6 +60,8 @@ interface SquadModalContentProps {
   tempCodes?: any[];
   usualOrder?: any;
   squadBeautifulLog?: any;
+  diwaniyaNotifications?: any[];
+  unreadDiwaniyaNotifications?: number;
 }
 
 export const SquadModalContent: React.FC<SquadModalContentProps> = ({
@@ -103,6 +105,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   tempCodes = [],
   usualOrder = null,
   squadBeautifulLog = null,
+  diwaniyaNotifications = [],
+  unreadDiwaniyaNotifications = 0,
 }) => {
   const [copied, setCopied] = React.useState(false);
   const isCurrentMember = squadInfo?.memberData?.isMember !== false && Boolean(squadInfo?.memberData?.phone || customerPhone);
@@ -504,6 +508,27 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     setGroupOrderLoading(false);
   };
 
+  const markDiwaniyaNotificationsRead = async (notificationId?: string) => {
+    if (!currentMemberPhone) return;
+    try {
+      await fetch("/api/diwaniya-notifications/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: currentMemberPhone, notificationId, all: !notificationId })
+      });
+      if (onRefresh) onRefresh();
+    } catch {}
+  };
+
+  const notificationIcon = (type: string) => {
+    if (type === "join_request") return "🚪";
+    if (type === "join_approved") return "🎉";
+    if (type === "group_order_open") return "🍽️";
+    if (type === "presence_in") return "👋";
+    if (type === "temp_code") return "🔐";
+    return "🔔";
+  };
+
   const cleanSquadName = (name: any) => {
     const raw = String(name || "").trim();
     return (
@@ -560,6 +585,48 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
             </div>
           )}
 
+
+          {customerPhone && diwaniyaNotifications.length > 0 && (
+            <div className="bg-white rounded-[30px] border border-amber-100 shadow-sm p-5 text-right space-y-3 font-sans">
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  onClick={() => markDiwaniyaNotificationsRead()}
+                  className="text-[10px] font-black text-stone-400 bg-stone-50 px-3 py-1.5 rounded-xl active:scale-95"
+                >
+                  تحديد الكل كمقروء
+                </button>
+                <div>
+                  <h4 className="text-base font-black text-brand flex items-center justify-end gap-2">
+                    إشعارات الديوانية
+                    {unreadDiwaniyaNotifications > 0 && (
+                      <span className="bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-full">{unreadDiwaniyaNotifications}</span>
+                    )}
+                  </h4>
+                  <p className="text-[10px] font-bold text-stone-400">تنبيهات الربع والدخول والطلبات الجماعية، منفصلة عن الدفع.</p>
+                </div>
+              </div>
+              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                {diwaniyaNotifications.slice(0, 8).map((n: any) => (
+                  <button
+                    key={n.id}
+                    onClick={() => markDiwaniyaNotificationsRead(n.id)}
+                    className={cn(
+                      "w-full p-3 rounded-2xl border text-right flex items-start justify-between gap-3 transition-all active:scale-[0.99]",
+                      n.readAt ? "bg-stone-50 border-stone-100 opacity-75" : "bg-amber-50 border-amber-200 shadow-sm"
+                    )}
+                  >
+                    <span className="text-xl shrink-0">{notificationIcon(n.type)}</span>
+                    <div className="flex-1">
+                      <div className="text-xs font-black text-brand">{n.title}</div>
+                      <div className="text-[10px] font-bold text-stone-500 leading-relaxed mt-1">{n.message}</div>
+                      <div className="text-[9px] font-black text-stone-300 mt-1">{n.squadName ? `ديوانية ${cleanSquadName(n.squadName)}` : "تنبيه ديوانية"}</div>
+                    </div>
+                    {!n.readAt && <span className="w-2 h-2 rounded-full bg-amber-500 mt-1 shrink-0" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {squadInfo && isCurrentMember && (
             <div className="grid gap-3 text-right font-sans">

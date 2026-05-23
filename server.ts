@@ -351,6 +351,34 @@ function cleanPhone(phone) {
   return cleaned;
 }
 
+function makeDiwaniyaNotification(input: any) {
+  const now = new Date().toISOString();
+  return {
+    id: "DN-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7),
+    type: input.type || "diwaniya",
+    squadId: input.squadId ? String(input.squadId) : "",
+    squadName: input.squadName || "",
+    toPhone: cleanPhone(input.toPhone || ""),
+    fromPhone: cleanPhone(input.fromPhone || ""),
+    fromName: input.fromName || "",
+    title: input.title || "تنبيه ديوانية",
+    message: input.message || "",
+    meta: input.meta || {},
+    createdAt: now,
+    readAt: null
+  };
+}
+
+function pushDiwaniyaNotification(list: any[], input: any) {
+  const n = makeDiwaniyaNotification(input);
+  if (!n.toPhone) return list;
+  return [n, ...(Array.isArray(list) ? list : [])].slice(0, 300);
+}
+
+function pushDiwaniyaNotifications(list: any[], inputs: any[]) {
+  return (inputs || []).reduce((acc, item) => pushDiwaniyaNotification(acc, item), Array.isArray(list) ? list : []);
+}
+
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
@@ -1002,6 +1030,13 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const favoriteItemName = Object.entries(productCounter).sort((a:any,b:any)=>b[1]-a[1])[0]?.[0] || "";
       const usualOrder = squadOrders[0] ? { items: squadOrders[0].items || squadOrders[0].cart || [], total: squadOrders[0].total || squadOrders[0].totalAmount || 0, orderId: squadOrders[0].id || squadOrders[0].orderId } : null;
       const squadBeautifulLog = mySquad ? { recentOrders: squadOrders.slice(0, 5), favoriteItemName, ordersCount: squadOrders.length, presentCount: squadPresence.length, savings: Number(mySquad.savings || mySquad.totalSavings || 0) } : null;
+      const diwaniyaNotifications = cleanQPhone
+        ? (Array.isArray(data.diwaniyaNotifications) ? data.diwaniyaNotifications : [])
+            .filter((n: any) => cleanPhone(n.toPhone || "") === cleanQPhone)
+            .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+            .slice(0, 30)
+        : [];
+      const unreadDiwaniyaNotifications = diwaniyaNotifications.filter((n: any) => !n.readAt).length;
 
       res.json({
          topSquads,
@@ -1016,11 +1051,32 @@ app.get("/api/debug/order/:id", async (req, res) => {
          activeGroupOrder,
          tempCodes,
          usualOrder,
-         squadBeautifulLog
+         squadBeautifulLog,
+         diwaniyaNotifications,
+         unreadDiwaniyaNotifications
       });
     } catch(e) {
       res.status(500).json({ error: String(e) });
     }
+  });
+
+  app.post("/api/diwaniya-notifications/read", async (req, res) => {
+    const { phone, notificationId, all } = req.body || {};
+    if (!phone) return res.status(400).json({ error: "Missing phone" });
+    const cleanTarget = cleanPhone(phone);
+    const now = new Date().toISOString();
+    const ok = await updateAppDataAtomically((current: any) => {
+      const notifications = Array.isArray(current.diwaniyaNotifications) ? [...current.diwaniyaNotifications] : [];
+      const updated = notifications.map((n: any) => {
+        const belongs = cleanPhone(n.toPhone || "") === cleanTarget;
+        const matchesId = notificationId ? String(n.id) === String(notificationId) : true;
+        if (belongs && (all || matchesId)) return { ...n, readAt: n.readAt || now };
+        return n;
+      });
+      return { diwaniyaNotifications: updated };
+    });
+    if (!ok) return res.status(500).json({ error: "Failed to mark notifications" });
+    res.json({ success: true });
   });
 
   app.post("/api/squad-set-location", async (req, res) => {
@@ -1053,6 +1109,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const cleanQPhone = cleanPhone(phone);
       const ok = await updateAppDataAtomically((current: any) => {
         const reqs = Array.isArray(current.geofenceJoinRequests) ? [...current.geofenceJoinRequests] : [];
+        const squads = Array.isArray(current.squads) ? current.squads : [];
+        const squad = squads.find((s: any) => String(s.id) === String(squadId));
         
         // Remove existing pending/rejected from same user for same squad to overwrite nicely
         const filtered = reqs.filter((r: any) => !(cleanPhone(r.phone) === cleanQPhone && String(r.squadId) === String(squadId)));
@@ -1065,7 +1123,18 @@ app.get("/api/debug/order/:id", async (req, res) => {
           timestamp: new Date().toISOString(),
           status: "pending"
         });
-        return { geofenceJoinRequests: filtered };
+        const diwaniyaNotifications = pushDiwaniyaNotification(current.diwaniyaNotifications || [], {
+          type: "join_request",
+          squadId,
+          squadName: squad?.name || "",
+          toPhone: squad?.phone || "",
+          fromPhone: phone,
+          fromName: name || "عضو قريب",
+          title: "طلب دخول جديد للديوانية",
+          message: `${name || "أحد الربع"} قريب من ديوانيتكم ويطلب دخول.`,
+          meta: { distance: Number(distance || 0) }
+        });
+        return { geofenceJoinRequests: filtered, diwaniyaNotifications };
       });
       if (!ok) throw new Error("Failed to save geofence request");
       res.json({ success: true });
@@ -1142,7 +1211,22 @@ app.get("/api/debug/order/:id", async (req, res) => {
           }
         }
 
-        return { geofenceJoinRequests: reqs, squads, customers };
+        const notifyTitle = approved ? "تم قبولك في الديوانية" : "تم رفض طلب الدخول";
+        const notifyMessage = approved
+          ? `تم قبولك رسمياً في ديوانية ${joinedSquad?.name || "ربعك"}.`
+          : `المعزب راجع طلبك لديوانية ${requestObj?.squadName || "الربع"} ولم يتم قبوله حالياً.`;
+        const diwaniyaNotifications = pushDiwaniyaNotification(current.diwaniyaNotifications || [], {
+          type: approved ? "join_approved" : "join_rejected",
+          squadId,
+          squadName: joinedSquad?.name || requestObj?.squadName || "",
+          toPhone: phone,
+          fromPhone: joinedSquad?.phone || "",
+          fromName: "المعزب",
+          title: notifyTitle,
+          message: notifyMessage
+        });
+
+        return { geofenceJoinRequests: reqs, squads, customers, diwaniyaNotifications };
       });
       if (!ok) throw new Error("Failed atomic transaction");
       res.json({ success: true, squad: joinedSquad });
@@ -1161,12 +1245,29 @@ app.get("/api/debug/order/:id", async (req, res) => {
     let presence: any[] = [];
     const ok = await updateAppDataAtomically((current: any) => {
       const all = Array.isArray(current.squadPresence) ? [...current.squadPresence] : [];
+      const squads = Array.isArray(current.squads) ? current.squads : [];
+      const squad = squads.find((s: any) => String(s.id) === String(squadId));
       const filtered = all.filter((p: any) => !(String(p.squadId) === String(squadId) && cleanPhone(p.phone) === cleanTarget));
       if (action === "in") {
         filtered.push({ squadId: String(squadId), phone: cleanTarget, name: name || "عضو", checkedInAt: now, lastSeenAt: now });
       }
       presence = filtered.filter((p: any) => String(p.squadId) === String(squadId));
-      return { squadPresence: filtered };
+      const recipients = (squad?.membersList || [])
+        .map((m: any) => m.phone)
+        .filter((ph: any) => ph && cleanPhone(ph) !== cleanTarget);
+      const diwaniyaNotifications = action === "in"
+        ? pushDiwaniyaNotifications(current.diwaniyaNotifications || [], recipients.map((toPhone: string) => ({
+            type: "presence_in",
+            squadId,
+            squadName: squad?.name || "",
+            toPhone,
+            fromPhone: phone,
+            fromName: name || "عضو",
+            title: "واحد من الربع وصل",
+            message: `${name || "أحد الربع"} موجود الآن في ديوانية ${squad?.name || "الربع"}.`
+          })))
+        : (current.diwaniyaNotifications || []);
+      return { squadPresence: filtered, diwaniyaNotifications };
     });
     if (!ok) return res.status(500).json({ error: "Failed to update presence" });
     res.json({ success: true, presence });
@@ -1186,7 +1287,18 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const fresh = codes.filter((c: any) => !(String(c.squadId) === String(squadId) && cleanPhone(c.ownerPhone || "") === cleanPhone(phone)) && new Date(c.expiresAt || 0).getTime() > Date.now());
       entry = { squadId: String(squadId), code, ownerPhone: cleanPhone(phone), createdAt: new Date().toISOString(), expiresAt, usedBy: [] };
       fresh.push(entry);
-      return { squadTempCodes: fresh };
+      const diwaniyaNotifications = pushDiwaniyaNotification(current.diwaniyaNotifications || [], {
+        type: "temp_code",
+        squadId,
+        squadName: squad?.name || "",
+        toPhone: phone,
+        fromPhone: phone,
+        fromName: "المعزب",
+        title: "كود دخول مؤقت جاهز",
+        message: `كود الدخول المؤقت لديوانية ${squad?.name || "ربعك"}: ${code}`,
+        meta: { code, expiresAt }
+      });
+      return { squadTempCodes: fresh, diwaniyaNotifications };
     });
     if (!ok || !entry) return res.status(403).json({ error: "Only squad owner can create code" });
     res.json({ success: true, code, expiresAt });
@@ -1223,7 +1335,29 @@ app.get("/api/debug/order/:id", async (req, res) => {
       } else {
         customers.push({ id: "CUST-" + Date.now().toString(36), name: name || "", phone: cleanTarget, address: "", lastOrderDate: new Date().toISOString(), squadId: squad.id, squadIds: [String(squad.id)], diwaniyaName: squad.name, diwaniyaMemberships: [membership], loyaltyPoints: 0, points: 0 });
       }
-      return { squadTempCodes: codes, squads, customers };
+      const diwaniyaNotifications = pushDiwaniyaNotifications(current.diwaniyaNotifications || [], [
+        {
+          type: "temp_code_joined",
+          squadId: squad.id,
+          squadName: squad.name,
+          toPhone: squad.phone || codes[cIdx]?.ownerPhone || "",
+          fromPhone: phone,
+          fromName: name || "عضو",
+          title: "عضو دخل بكود مؤقت",
+          message: `${name || "أحد الربع"} دخل ديوانية ${squad.name} بالكود المؤقت.`
+        },
+        {
+          type: "temp_code_join_success",
+          squadId: squad.id,
+          squadName: squad.name,
+          toPhone: phone,
+          fromPhone: squad.phone || "",
+          fromName: "المعزب",
+          title: "دخلت الديوانية",
+          message: `تم ربطك بديوانية ${squad.name} بنجاح.`
+        }
+      ]);
+      return { squadTempCodes: codes, squads, customers, diwaniyaNotifications };
     });
     if (!ok || !joinedSquad) return res.status(404).json({ error: "Invalid or expired code" });
     res.json({ success: true, squad: joinedSquad });
@@ -1235,11 +1369,24 @@ app.get("/api/debug/order/:id", async (req, res) => {
     let groupOrder: any = null;
     const ok = await updateAppDataAtomically((current: any) => {
       const groupOrders = Array.isArray(current.squadGroupOrders) ? [...current.squadGroupOrders] : [];
+      const squads = Array.isArray(current.squads) ? current.squads : [];
+      const squad = squads.find((s: any) => String(s.id) === String(squadId));
       let idx = groupOrders.findIndex((g: any) => String(g.squadId) === String(squadId) && g.status === "open");
       if (action === "close") {
         if (idx >= 0) groupOrders[idx] = { ...groupOrders[idx], status: "closed", closedAt: new Date().toISOString() };
         groupOrder = idx >= 0 ? groupOrders[idx] : null;
-        return { squadGroupOrders: groupOrders };
+        const recipients = (squad?.membersList || []).map((m: any) => m.phone).filter((ph: any) => ph && cleanPhone(ph) !== cleanPhone(phone));
+        const diwaniyaNotifications = pushDiwaniyaNotifications(current.diwaniyaNotifications || [], recipients.map((toPhone: string) => ({
+          type: "group_order_closed",
+          squadId,
+          squadName: squad?.name || "",
+          toPhone,
+          fromPhone: phone,
+          fromName: name || "عضو",
+          title: "تم إغلاق الطلب الجماعي",
+          message: `تم إغلاق طلب ديوانية ${squad?.name || "الربع"}.`
+        })));
+        return { squadGroupOrders: groupOrders, diwaniyaNotifications };
       }
       if (idx < 0) {
         groupOrders.push({ id: "SGO-" + Date.now().toString(36), squadId: String(squadId), title: title || "طلب الديوانية المفتوح", status: "open", createdAt: new Date().toISOString(), ownerPhone: cleanPhone(phone), ownerName: name || "المعزب", items: [], participants: [] });
@@ -1254,7 +1401,19 @@ app.get("/api/debug/order/:id", async (req, res) => {
       }
       groupOrders[idx] = go;
       groupOrder = go;
-      return { squadGroupOrders: groupOrders };
+      const isNewOpen = action === "open" && (!Array.isArray(current.squadGroupOrders) || !current.squadGroupOrders.some((g: any) => String(g.squadId) === String(squadId) && g.status === "open"));
+      const recipients = isNewOpen ? (squad?.membersList || []).map((m: any) => m.phone).filter((ph: any) => ph && cleanPhone(ph) !== cleanPhone(phone)) : [];
+      const diwaniyaNotifications = pushDiwaniyaNotifications(current.diwaniyaNotifications || [], recipients.map((toPhone: string) => ({
+        type: "group_order_open",
+        squadId,
+        squadName: squad?.name || "",
+        toPhone,
+        fromPhone: phone,
+        fromName: name || "عضو",
+        title: "طلب جماعي مفتوح",
+        message: `${name || "أحد الربع"} فتح طلب جماعي لديوانية ${squad?.name || "الربع"}. جهز طلبك والقطية جاهزة بالأسماء والأرقام.`
+      })));
+      return { squadGroupOrders: groupOrders, diwaniyaNotifications };
     });
     if (!ok) return res.status(500).json({ error: "Failed to update group order" });
     res.json({ success: true, groupOrder });
@@ -1339,7 +1498,17 @@ app.get("/api/debug/order/:id", async (req, res) => {
        } else {
          customers.push({ id: "CUST-" + Date.now().toString(36), name: name || "", phone, address: "", lastOrderDate: new Date().toISOString(), squadId: squad.id, squadIds: [String(squad.id)], diwaniyaName: squad.name, diwaniyaMemberships: [membership], loyaltyPoints: 0, points: 0 });
        }
-       return { customers, squads };
+       const diwaniyaNotifications = pushDiwaniyaNotification(current.diwaniyaNotifications || [], {
+         type: "member_joined",
+         squadId: squad.id,
+         squadName: squad.name,
+         toPhone: squad.phone || "",
+         fromPhone: phone,
+         fromName: name || "عميل",
+         title: "عضو جديد في الديوانية",
+         message: `${name || "أحد الربع"} انضم إلى ديوانية ${squad.name}.`
+       });
+       return { customers, squads, diwaniyaNotifications };
      });
      if (!ok) throw new Error("Failed to join squad");
      res.json({ success: true, squad: joinedSquad });
