@@ -47,6 +47,8 @@ interface SquadModalContentProps {
   setActiveSquadId: (v: string | null) => void;
   setCustomerPhone: (v: string) => void;
   setCustomerName: (v: string) => void;
+  setSquadInfo?: (v: any) => void;
+  onClearSquadSession?: () => void;
   normalizeDigits: (s: string) => string;
   formatPoints: (n: number) => string;
   handleCreateSquad: () => void;
@@ -92,6 +94,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   setActiveSquadId,
   setCustomerPhone,
   setCustomerName,
+  setSquadInfo,
+  onClearSquadSession,
   normalizeDigits,
   formatPoints,
   handleCreateSquad,
@@ -109,7 +113,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   unreadDiwaniyaNotifications = 0,
 }) => {
   const [copied, setCopied] = React.useState(false);
-  const isCurrentMember = squadInfo?.memberData?.isMember !== false && Boolean(squadInfo?.memberData?.phone || customerPhone);
+  const isCurrentMember = Boolean(customerPhone && squadInfo?.id) && squadInfo?.memberData?.isMember !== false && Boolean(squadInfo?.memberData?.phone || customerPhone);
 
   // Geofencing states & actions
   const [isRegisteringGeo, setIsRegisteringGeo] = React.useState(false);
@@ -196,7 +200,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       return;
     }
     setIsRegisteringGeo(true);
-    setGeoStatusMsg("جاري رصد إحداثيات موقعك الحالي عبر GPS... 📡");
+    setGeoStatusMsg("جاري تثبيت موقع الديوانية الحالي... 📡");
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -225,7 +229,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       },
       (error) => {
         setIsRegisteringGeo(false);
-        setGeoStatusMsg("❌ فشل الوصول إلى الـ GPS. تأكد من تفعيل صلاحيات الموقع بالمتصفح. 💡 تنويه: إذا تفحص التطبيق داخل المعاينة (iFrame)، يرجى فتحه بجانب نافذة جديدة/مستقلة لتفعيل الـ GPS، أو استخدام خيار الإدخال اليدوي للإحداثيات بالأسفل.");
+        setGeoStatusMsg("❌ تعذر الوصول للموقع. تأكد من السماح للموقع من إعدادات المتصفح، أو استخدم خيار الإدخال اليدوي بالأسفل.");
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
@@ -414,6 +418,32 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const [activeTempCode, setActiveTempCode] = React.useState<any>(null);
   const [tempJoinCode, setTempJoinCode] = React.useState("");
   const [groupOrderLoading, setGroupOrderLoading] = React.useState(false);
+
+  const handleLoginByPhone = () => {
+    const cleanLoginPhone = normalizeDigits(loginPhone || guestPhone || "").replace(/[^0-9]/g, "").slice(0, 8);
+    if (!cleanLoginPhone || cleanLoginPhone.length < 8) {
+      alert("اكتب رقم التلفون ٨ أرقام عشان نرجع دواوينك.");
+      return;
+    }
+    setCustomerPhone(cleanLoginPhone);
+    setGuestPhone(cleanLoginPhone);
+    setActiveSquadId("");
+    if (setSquadInfo) setSquadInfo(null);
+    try {
+      localStorage.setItem("customer_phone_track", cleanLoginPhone);
+      localStorage.removeItem("squadId");
+      localStorage.removeItem("radar_dismissed_squads");
+    } catch(e) {}
+    if (onRefresh) window.setTimeout(onRefresh, 80);
+  };
+
+  const startCreateNewSquad = () => {
+    setIsCreatingSquad(true);
+    setIsJoiningSquad(false);
+    setNewSquadName("");
+    if (customerPhone && !guestPhone) setGuestPhone(customerPhone);
+    if (customerName && !guestName) setGuestName(customerName);
+  };
 
   const currentMemberPhone = customerPhone || guestPhone;
   const isPresentNow = squadPresence.some((p: any) => cleanPhoneLocal(p.phone) === cleanPhoneLocal(currentMemberPhone));
@@ -628,7 +658,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
             </div>
           )}
 
-          {squadInfo && isCurrentMember && (
+          {!isCreatingSquad && squadInfo && isCurrentMember && (
             <div className="grid gap-3 text-right font-sans">
               <div className="bg-gradient-to-br from-brand to-stone-900 text-white p-5 rounded-[30px] shadow-xl border border-white/10 space-y-4 overflow-hidden relative">
                 <div className="absolute -left-10 -top-10 w-32 h-32 bg-accent/20 blur-3xl rounded-full" />
@@ -640,8 +670,27 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   </div>
                 </div>
                 <div className="relative flex gap-2">
-                  <button onClick={() => handlePresenceToggle("in")} disabled={isPresenceLoading || isPresentNow} className={cn("flex-1 py-3 rounded-2xl text-xs font-black transition-all", isPresentNow ? "bg-emerald-400 text-brand" : "bg-white text-brand active:scale-95")}>{isPresentNow ? "موجود حالياً ✅" : "أنا وصلت"}</button>
-                  <button onClick={() => handlePresenceToggle("out")} disabled={isPresenceLoading || !isPresentNow} className="flex-1 py-3 rounded-2xl text-xs font-black bg-white/10 text-white border border-white/10 active:scale-95 disabled:opacity-40">طلعت من الديوانية</button>
+                  <button
+                    onClick={() => handlePresenceToggle("in")}
+                    disabled={isPresenceLoading || isPresentNow}
+                    className={cn(
+                      "flex-1 py-3 rounded-2xl text-xs font-black transition-all disabled:cursor-not-allowed",
+                      isPresentNow ? "bg-emerald-400 text-brand opacity-100" : "bg-white text-brand active:scale-95",
+                      (isPresenceLoading || isPresentNow) && "pointer-events-none"
+                    )}
+                  >
+                    {isPresentNow ? "أنت موجود الآن ✅" : "أنا وصلت"}
+                  </button>
+                  <button
+                    onClick={() => handlePresenceToggle("out")}
+                    disabled={isPresenceLoading || !isPresentNow}
+                    className={cn(
+                      "flex-1 py-3 rounded-2xl text-xs font-black border border-white/10 transition-all disabled:cursor-not-allowed",
+                      isPresentNow ? "bg-white text-brand active:scale-95" : "bg-white/10 text-white/45 opacity-50 pointer-events-none"
+                    )}
+                  >
+                    طلعت / إيقاف الحضور
+                  </button>
                 </div>
                 <div className="relative bg-white/8 rounded-2xl p-3 border border-white/10">
                   <div className="text-[10px] font-black text-white/60 mb-2">منو موجود؟</div>
@@ -690,7 +739,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           )}
 
           {/* My Diwaniyas Panel with Switcher and Role Indicators */}
-          {customerPhone && userSquads && userSquads.length > 0 && (
+          {!isCreatingSquad && customerPhone && userSquads && userSquads.length > 0 && (
              <div className="flex flex-col gap-3 bg-stone-100/55 p-5 rounded-[28px] border border-stone-200/50 text-right font-sans">
                 <div className="flex items-center justify-between border-b border-stone-200/50 pb-2">
                    <span className="text-[10px] font-black bg-stone-200 text-stone-600 px-2 py-0.5 rounded-full">{userSquads.length} مسجلة</span>
@@ -750,7 +799,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                   </span>
                                </div>
                                <span className="text-[9px] font-bold text-stone-400 mt-1.5">
-                                  {sq.lat !== undefined ? `📍 موقع GPS: معرّف ومفعّل` : `⚠️ موقع غير مسجل بالخريطة`}
+                                  {sq.lat !== undefined ? `📍 موقع الرادار: مثبت` : `⚠️ موقع الرادار غير مثبت`}
                                 </span>
                             </div>
                          </div>
@@ -758,15 +807,38 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                    })}
                 </div>
 
+                <div className="grid grid-cols-1 gap-2 pt-2">
+                   <button
+                      type="button"
+                      onClick={startCreateNewSquad}
+                      className="w-full bg-accent text-white rounded-2xl py-3 text-[11px] font-black shadow-sm active:scale-95"
+                   >
+                      + تأسيس ديوانية جديدة في موقع ثاني
+                   </button>
+                   <p className="text-[9px] font-bold text-stone-400 text-right leading-relaxed">
+                      تقدر تكون معزب بأكثر من ديوانية أو عضو عند ربعك، وتختار الديوانية الحالية وقت الطلب.
+                   </p>
+                </div>
+
                 {/* Logout of Phone Account Button */}
                 <div className="pt-2 border-t border-stone-200/50 flex items-center justify-between mt-1 text-[10px]">
                    <button 
                       onClick={() => {
                          if (confirm("هل تبي تسجل خروج بالكامل ومسح رقم هاتفك الحالي من هذا الجهاز؟ يمكنك دائماً الدخول مجدداً.")) {
-                            setCustomerPhone("");
-                            setCustomerName("");
-                            setActiveSquadId(null);
-                            if (onRefresh) onRefresh();
+                            if (onClearSquadSession) {
+                               onClearSquadSession();
+                            } else {
+                               setCustomerPhone("");
+                               setCustomerName("");
+                               setActiveSquadId(null);
+                               if (setSquadInfo) setSquadInfo(null);
+                               try {
+                                  localStorage.removeItem("customer_phone_track");
+                                  localStorage.removeItem("squadId");
+                                  localStorage.removeItem("radar_dismissed_squads");
+                               } catch(e) {}
+                               if (onRefresh) onRefresh();
+                            }
                          }
                       }}
                       className="text-[10px] text-right font-black text-rose-500 hover:text-rose-600 transition-colors flex items-center gap-1 justify-end"
@@ -853,7 +925,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
             </motion.div>
           )}
 
-          {squadInfo ? (
+          {!isCreatingSquad && squadInfo ? (
             (() => {
               const squadPoints = safePoints(
                 squadInfo.points ??
@@ -1042,12 +1114,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   {isOwner && (
                     <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
                       <div className="flex items-center justify-between border-b border-stone-50 pb-3">
-                        <span className="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase tracking-wider">رادار GPS 📡</span>
+                        <span className="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase tracking-wider">رادار الديوانية 📡</span>
                         <h4 className="font-black text-brand text-sm">إرشاد الرادار الجغرافي</h4>
                       </div>
                       
                       <p className="text-xs font-bold text-stone-500 leading-relaxed">
-                        سجل موقع ديوانيتك عبر GPS ليتم رصد الربع تلقائياً عند اقترابهم بمسافة تقل عن {settings?.squadGeofenceDistance || 100} متر ودعوتهم للانضمام الفوري بنقرة واحدة!
+                        ثبت موقع ديوانيتك حتى تظهر بطاقة الدخول للربع تلقائياً عند اقترابهم ضمن مسافة الأدمن ({settings?.squadGeofenceDistance || 100} متر).
                       </p>
 
                       {squadInfo.lat !== undefined && squadInfo.lng !== undefined ? (
@@ -1083,7 +1155,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         disabled={isRegisteringGeo}
                         className="w-full bg-stone-50 hover:bg-stone-100 border-2 border-stone-200/80 text-brand font-black text-xs py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
                       >
-                        {isRegisteringGeo ? "جاري رصد إحداثيات GPS... 🛰️" : (squadInfo.lat !== undefined ? "📍 إعادة تعيين موقع الديوانية الحالي" : "📍 تعيين موقع الديوانية الجغرافي الحالي")}
+                        {isRegisteringGeo ? "جاري تثبيت الموقع... 🛰️" : (squadInfo.lat !== undefined ? "📍 إعادة تعيين موقع الديوانية الحالي" : "📍 تعيين موقع الديوانية الجغرافي الحالي")}
                       </button>
 
                       <div className="pt-2 border-t border-stone-50 space-y-2">
@@ -1208,34 +1280,68 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     </div>
                   )}
 
-                  <button
-                    onClick={handleShareSquadLink}
-                    className="w-full bg-brand text-white font-black text-sm py-4 rounded-xl shadow-lg active:scale-95 transition-all text-center flex items-center justify-center gap-2"
-                  >
-                    {copied ? "تم النسخ! 👍" : "انشر رابط دعوة ربعك للديوانية 🔗"}
-                  </button>
+                  {isCurrentMember && (
+                    <button
+                      onClick={handleShareSquadLink}
+                      className="w-full bg-brand text-white font-black text-sm py-4 rounded-xl shadow-lg active:scale-95 transition-all text-center flex items-center justify-center gap-2"
+                    >
+                      {copied ? "تم النسخ! 👍" : "انشر رابط دعوة ربعك للديوانية 🔗"}
+                    </button>
+                  )}
                 </div>
               );
             })()
-          ) : (
-            <div className="bg-orange-50 rounded-2xl p-6 border border-orange-100 shadow-sm flex flex-col items-center justify-center text-center">
-              <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 mb-4 shadow-inner">
-                <Users className="w-8 h-8" />
+          ) : !isCreatingSquad ? (
+            <div className="bg-orange-50 rounded-[30px] p-6 border border-orange-100 shadow-sm flex flex-col gap-4 text-center">
+              <div className="flex flex-col items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 mb-4 shadow-inner">
+                  <Users className="w-8 h-8" />
+                </div>
+                <h4 className="font-black text-lg text-brand mb-2">
+                  دخول أو تأسيس ديوانية
+                </h4>
+                <p className="text-sm font-bold text-stone-600 px-4 leading-relaxed">
+                  بدلت تلفونك؟ دخل رقمك ونرجّع دواوينك. أو أسس ديوانية جديدة للمكان اللي أنت فيه.
+                </p>
               </div>
-              <h4 className="font-black text-lg text-brand mb-2">
-                مو مسجل بأي ديوانية! 🧐
-              </h4>
-              <p className="text-sm font-bold text-stone-600 mb-6 px-4">
-                ادخل من رابط دعوة ربعك أو أسس ديوانية يديدة الحين!
-              </p>
+
+              <div className="bg-white rounded-3xl p-4 border border-orange-100 space-y-3 text-right">
+                <label className="text-[10px] font-black text-stone-400 mr-2">
+                  رقم تلفونك
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="tel"
+                    value={loginPhone || guestPhone}
+                    onChange={(e) => {
+                      const v = normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8);
+                      setLoginPhone(v);
+                      setGuestPhone(v);
+                    }}
+                    placeholder="٨ أرقام"
+                    maxLength={8}
+                    className="flex-1 bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
+                  />
+                  <button
+                    onClick={handleLoginByPhone}
+                    className="bg-brand text-white font-black text-xs px-4 rounded-2xl shadow-md active:scale-95"
+                  >
+                    دخول
+                  </button>
+                </div>
+                <p className="text-[10px] font-bold text-stone-400 leading-relaxed">
+                  إذا الرقم مرتبط بدواوين، راح تظهر لك فوراً وتقدر تختار الحالية.
+                </p>
+              </div>
+
               <button
-                onClick={() => setIsCreatingSquad(true)}
-                className="w-full bg-brand text-white font-black text-sm py-4 rounded-xl shadow-md active:scale-95"
+                onClick={startCreateNewSquad}
+                className="w-full bg-brand text-white font-black text-sm py-4 rounded-2xl shadow-md active:scale-95"
               >
-                تأسيس ديوانية ربعك ✨
+                تأسيس ديوانية جديدة ✨
               </button>
             </div>
-          )}
+          ) : null}
         </div>
       )}
 
