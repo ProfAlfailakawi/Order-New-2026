@@ -1251,7 +1251,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
 
   app.post("/api/squad-presence", async (req, res) => {
-    const { squadId, phone, name, action } = req.body || {};
+    const { squadId, phone, name, action, message } = req.body || {};
     if (!squadId || !phone || !action) return res.status(400).json({ error: "Missing squadId, phone, or action" });
     const cleanTarget = cleanPhone(phone);
     const now = new Date().toISOString();
@@ -1263,6 +1263,26 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const filtered = all.filter((p: any) => !(String(p.squadId) === String(squadId) && cleanPhone(p.phone) === cleanTarget));
       if (action === "in") {
         filtered.push({ squadId: String(squadId), phone: cleanTarget, name: name || "عضو", checkedInAt: now, lastSeenAt: now });
+      } else if (action === "wobble") {
+        const existing = all.find((p: any) => String(p.squadId) === String(squadId) && cleanPhone(p.phone) === cleanTarget);
+        if (existing) {
+          filtered.push({
+            ...existing,
+            lastSeenAt: now,
+            wobbleAt: now,
+            wobbleMsg: message || "يا هلا بالربع! ☕"
+          });
+        } else {
+          filtered.push({
+            squadId: String(squadId),
+            phone: cleanTarget,
+            name: name || "عضو",
+            checkedInAt: now,
+            lastSeenAt: now,
+            wobbleAt: now,
+            wobbleMsg: message || "يا هلا بالربع! ☕"
+          });
+        }
       }
       presence = filtered.filter((p: any) => String(p.squadId) === String(squadId));
       const recipients = (squad?.membersList || [])
