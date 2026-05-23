@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { User, Landmark, Crown, Users, LogOut, Trophy, Gift, Clock3 } from "lucide-react";
+import { User, Landmark, Crown, Users, LogOut, Trophy, Gift, Clock3, KeyRound } from "lucide-react";
 import { cn } from "../utils";
 
 interface SquadTier {
@@ -105,6 +105,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const [isApproving, setIsApproving] = React.useState<Record<string, boolean>>({});
   const [manualInput, setManualInput] = React.useState("");
   const [showManualInput, setShowManualInput] = React.useState(false);
+  const [isRecoveringDiwaniyas, setIsRecoveringDiwaniyas] = React.useState(false);
+  const [recoverMsg, setRecoverMsg] = React.useState("");
 
   const parseGoogleMapsInput = (input: string) => {
     // Regex for decimal coordinates: lat, lng
@@ -138,6 +140,41 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   };
 
   const isOwner = squadInfo?.phone && customerPhone && (cleanPhoneLocal(squadInfo.phone) === cleanPhoneLocal(customerPhone));
+
+  const handleRecoverDiwaniyas = async () => {
+    const phone = cleanPhoneLocal(loginPhone || guestPhone || customerPhone);
+    if (!phone || phone.length < 8) {
+      setRecoverMsg("دخل رقم تلفونك ٨ أرقام عشان نرجع ديوانياتك.");
+      return;
+    }
+    setIsRecoveringDiwaniyas(true);
+    setRecoverMsg("ندور على ديوانياتك...");
+    try {
+      const res = await fetch(`/api/squad-gamification?phone=${encodeURIComponent(phone)}`);
+      if (!res.ok) throw new Error("recover failed");
+      const data = await res.json();
+      const squads = Array.isArray(data.userSquads) ? data.userSquads : [];
+      if (squads.length === 0) {
+        setRecoverMsg("ما لقينا ديوانية مرتبطة بهالرقم. تقدر تنشئ ديوانية أو تدخل برمز دعوة.");
+        return;
+      }
+      const firstSquadId = String(data.mySquad?.id || squads[0]?.id || "");
+      setCustomerPhone(phone);
+      setGuestPhone(phone);
+      if (data.myMemberData?.name && data.myMemberData.name !== "عميل") setCustomerName(data.myMemberData.name);
+      if (firstSquadId) setActiveSquadId(firstSquadId);
+      try {
+        localStorage.setItem("customer_phone_track", phone);
+        if (firstSquadId) localStorage.setItem("squadId", firstSquadId);
+      } catch (e) {}
+      setRecoverMsg(squads.length === 1 ? "تم الدخول ورجعنا ديوانيتك." : `تم الدخول. لقينا ${squads.length} دواوين، تقدر تتنقل بينها من القائمة.`);
+      window.setTimeout(() => { if (onRefresh) onRefresh(); }, 80);
+    } catch (e) {
+      setRecoverMsg("ما قدرنا نرجع الديوانيات حالياً. تأكد من الرقم وحاول مرة ثانية.");
+    } finally {
+      setIsRecoveringDiwaniyas(false);
+    }
+  };
 
   const handleManualLocationSubmit = async () => {
     if (!manualInput.trim()) {
@@ -493,6 +530,64 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
             </div>
           )}
 
+          {!customerPhone && (
+            <div className="flex flex-col gap-4 bg-white p-5 rounded-[28px] border-2 border-stone-100 shadow-sm text-right font-sans">
+              <div className="flex items-center justify-between gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-accent/10 text-accent flex items-center justify-center shrink-0">
+                  <KeyRound className="w-6 h-6" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-base font-black text-brand">دخول واسترجاع الديوانية</h4>
+                  <p className="text-[11px] font-bold text-stone-500 leading-relaxed mt-1">
+                    بدلت تلفونك أو ضاع؟ دخل رقمك ونرجع لك كل الدواوين المرتبطة فيه: اللي أنت معزبها واللي أنت عضو فيها.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-black text-stone-400 mr-2">رقم التلفون</label>
+                <input
+                  type="tel"
+                  value={loginPhone}
+                  onChange={(e) => setLoginPhone(normalizeDigits(e.target.value))}
+                  placeholder="٨ أرقام"
+                  maxLength={8}
+                  className="w-full bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
+                />
+              </div>
+              {recoverMsg && (
+                <div className="text-[11px] font-black text-stone-600 bg-stone-50 border border-stone-100 rounded-2xl p-3 leading-relaxed">
+                  {recoverMsg}
+                </div>
+              )}
+              <button
+                onClick={handleRecoverDiwaniyas}
+                disabled={isRecoveringDiwaniyas}
+                className="w-full bg-brand text-white font-black text-xs py-4 rounded-2xl shadow-lg shadow-brand/20 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {isRecoveringDiwaniyas ? "جاري الاسترجاع..." : "دخول / استرجاع ديوانياتي"}
+              </button>
+            </div>
+          )}
+
+          {customerPhone && (!userSquads || userSquads.length === 0) && (
+            <div className="flex flex-col gap-3 bg-white p-5 rounded-[28px] border-2 border-stone-100 shadow-sm text-right font-sans">
+              <h4 className="text-base font-black text-brand">ما عندك ديوانية مرتبطة بهالرقم</h4>
+              <p className="text-[11px] font-bold text-stone-500 leading-relaxed">
+                تقدر تنشئ ديوانية جديدة، أو تدخل ديوانية ربعك برمز الدعوة، أو تطلب الدخول إذا الرادار لقط ديوانية قريبة منك.
+              </p>
+              <button
+                onClick={() => {
+                  setCustomerPhone("");
+                  setActiveSquadId(null);
+                  try { localStorage.removeItem("customer_phone_track"); localStorage.removeItem("squadId"); } catch(e) {}
+                }}
+                className="self-end text-[10px] font-black text-rose-500 bg-rose-50 hover:bg-rose-100 px-3 py-2 rounded-xl border border-rose-100 transition-all"
+              >
+                تغيير الرقم / خروج
+              </button>
+            </div>
+          )}
+
           {/* My Diwaniyas Panel with Switcher and Role Indicators */}
           {customerPhone && userSquads && userSquads.length > 0 && (
              <div className="flex flex-col gap-3 bg-stone-100/55 p-5 rounded-[28px] border border-stone-200/50 text-right font-sans">
@@ -525,8 +620,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                <button 
                                   onClick={() => {
                                      if (!isActive) {
-                                        setActiveSquadId(sq.id);
-                                        if (onRefresh) onRefresh();
+                                        setActiveSquadId(String(sq.id));
+                                        try { localStorage.setItem("squadId", String(sq.id)); } catch(e) {}
+                                        window.setTimeout(() => { if (onRefresh) onRefresh(); }, 50);
                                      }
                                   }}
                                   disabled={isActive}
@@ -581,7 +677,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                          if (confirm("هل تبي تسجل خروج بالكامل ومسح رقم هاتفك الحالي من هذا الجهاز؟ يمكنك دائماً الدخول مجدداً.")) {
                             setCustomerPhone("");
                             setCustomerName("");
+                            setLoginPhone("");
                             setActiveSquadId(null);
+                            try { localStorage.removeItem("customer_phone_track"); localStorage.removeItem("squadId"); } catch(e) {}
                             if (onRefresh) onRefresh();
                          }
                       }}
