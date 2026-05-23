@@ -1,150 +1,18 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Sparkles, Trophy, CreditCard, ShieldCheck, RefreshCw, AlertCircle, Info, Volume2, VolumeX } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  CreditCard,
+  RefreshCw,
+  ShieldCheck,
+  Sparkles,
+  Trophy,
+  UserRound,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { cn } from "../utils";
-
-// Synth sound system using Web Audio API
-class DallahSynth {
-  private ctx: AudioContext | null = null;
-  public enabled: boolean = true;
-
-  constructor() {
-    // Lazy initialisation on first interaction
-  }
-
-  private initCtx() {
-    if (!this.ctx) {
-      this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    if (this.ctx.state === "suspended") {
-      this.ctx.resume();
-    }
-  }
-
-  // Play coffee cup clinking & brass rattling sound
-  public playClink(speedRatio: number = 1.0) {
-    if (!this.enabled) return;
-    try {
-      this.initCtx();
-      if (!this.ctx) return;
-
-      const now = this.ctx.currentTime;
-      
-      // Brass resonant element
-      const osc1 = this.ctx.createOscillator();
-      const gain1 = this.ctx.createGain();
-      osc1.type = "sine";
-      // High frequency metal ring
-      osc1.frequency.setValueAtTime(3200 + Math.random() * 400 * speedRatio, now);
-      osc1.frequency.exponentialRampToValueAtTime(1200, now + 0.15);
-      
-      gain1.gain.setValueAtTime(0.3 * Math.min(1.0, speedRatio), now);
-      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-
-      // Ceramic cup ring element
-      const osc2 = this.ctx.createOscillator();
-      const gain2 = this.ctx.createGain();
-      osc2.type = "triangle";
-      osc2.frequency.setValueAtTime(1500 + Math.random() * 200, now);
-      osc2.frequency.exponentialRampToValueAtTime(800, now + 0.1);
-      
-      gain2.gain.setValueAtTime(0.15 * Math.min(1.0, speedRatio), now);
-      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-
-      // Noise sizzle for rough textures
-      const bufferSize = this.ctx.sampleRate * 0.02; // Very brief snap
-      const bufferSource = this.ctx.createBufferSource();
-      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
-      bufferSource.buffer = buffer;
-      const noiseGain = this.ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.08 * Math.min(1.0, speedRatio), now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
-
-      // Connect nodes
-      osc1.connect(gain1);
-      gain1.connect(this.ctx.destination);
-      
-      osc2.connect(gain2);
-      gain2.connect(this.ctx.destination);
-
-      bufferSource.connect(noiseGain);
-      noiseGain.connect(this.ctx.destination);
-
-      osc1.start(now);
-      osc2.start(now);
-      bufferSource.start(now);
-
-      osc1.stop(now + 0.2);
-      osc2.stop(now + 0.2);
-    } catch (e) {
-      console.warn("Audio Context blocked or failed:", e);
-    }
-  }
-
-  // Play huge red structural earthquake bang & rumble
-  public playEarthquake() {
-    if (!this.enabled) return;
-    try {
-      this.initCtx();
-      if (!this.ctx) return;
-
-      const now = this.ctx.currentTime;
-      
-      // Low bass boom
-      const boom = this.ctx.createOscillator();
-      const boomGain = this.ctx.createGain();
-      boom.type = "sine";
-      boom.frequency.setValueAtTime(90, now);
-      boom.frequency.exponentialRampToValueAtTime(25, now + 0.8);
-      
-      boomGain.gain.setValueAtTime(0.8, now);
-      boomGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-
-      // Rumbly noise buffer
-      const bufferSize = this.ctx.sampleRate * 1.5; // 1.5 seconds rumble
-      const bufferSource = this.ctx.createBufferSource();
-      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
-      bufferSource.buffer = buffer;
-      
-      // Bandpass filter for low shake sound
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.frequency.setValueAtTime(50, now);
-      filter.frequency.exponentialRampToValueAtTime(15, now + 1.2);
-      filter.Q.setValueAtTime(2.0, now);
-
-      const rumbleGain = this.ctx.createGain();
-      rumbleGain.gain.setValueAtTime(0.5, now);
-      rumbleGain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
-
-      // Connect nodes
-      boom.connect(boomGain);
-      boomGain.connect(this.ctx.destination);
-
-      bufferSource.connect(filter);
-      filter.connect(rumbleGain);
-      rumbleGain.connect(this.ctx.destination);
-
-      boom.start(now);
-      bufferSource.start(now);
-
-      boom.stop(now + 1.0);
-      bufferSource.stop(now + 1.6);
-    } catch (e) {
-      console.warn("Audio Context blocked or failed:", e);
-    }
-  }
-}
-
-const synth = new DallahSynth();
 
 interface DallahPhysicalGameProps {
   order: any;
@@ -165,6 +33,39 @@ interface DallahPhysicalGameProps {
   normalizeArabicName: (name: string) => string;
 }
 
+type Phase = "idle" | "passing" | "settling" | "revealed";
+
+const DALLAH_IMAGE = "/dallah-gulf-gold.png";
+
+function arabicSafeName(value: any, fallback = "ضيف") {
+  const name = String(value?.name || value || "").trim();
+  return name || fallback;
+}
+
+function softTick(enabled: boolean, intensity = 0.16) {
+  if (!enabled || typeof window === "undefined") return;
+  try {
+    const AudioCtor = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtor) return;
+    const ctx = new AudioCtor();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(620, now);
+    osc.frequency.exponentialRampToValueAtTime(360, now + 0.07);
+    gain.gain.setValueAtTime(intensity, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.1);
+    setTimeout(() => ctx.close().catch(() => undefined), 150);
+  } catch {
+    // Browser can block audio; the visual experience remains complete.
+  }
+}
+
 export function DallahPhysicalGame({
   order,
   participants,
@@ -183,729 +84,370 @@ export function DallahPhysicalGame({
   getPhraseContent,
   normalizeArabicName,
 }: DallahPhysicalGameProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<number | null>(null);
+  const timerRef = useRef<number | null>(null);
+  const targetIndexRef = useRef(-1);
+  const spunRef = useRef(spun);
+  const [phase, setPhase] = useState<Phase>(spun ? "revealed" : "idle");
+  const [visualIndex, setVisualIndex] = useState(0);
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [spinError, setSpinError] = useState("");
 
-  // Sound enablement state
-  const [audioEnabled, setAudioEnabled] = useState(true);
+  const validParticipants = useMemo(
+    () => participants.filter((p: any) => arabicSafeName(p?.name, "").length > 0),
+    [participants],
+  );
 
-  // Dallah rotation state
-  const [angle, setAngle] = useState(0);
-  const angleRef = useRef(0);
+  const count = Math.max(validParticipants.length, 1);
+  const targetIndex = useMemo(() => {
+    if (!spun || validParticipants.length === 0) return -1;
+    if (typeof loserIndex === "number" && loserIndex >= 0 && loserIndex < validParticipants.length) return loserIndex;
+    const normalizedLoser = normalizeArabicName(loser || "");
+    return validParticipants.findIndex((p: any) => normalizeArabicName(p.name) === normalizedLoser);
+  }, [spun, validParticipants, loserIndex, loser, normalizeArabicName]);
 
-  // Interactive custom drag/spin states
-  const [isDragging, setIsDragging] = useState(false);
-  const isDraggingRef = useRef(false);
-  const dragStartAngleRef = useRef(0);
-  const currentRotationOffsetRef = useRef(0);
-
-  // Velocity measurements
-  const dragHistoryRef = useRef<{ angle: number; time: number }[]>([]);
-  const lastActiveIndexRef = useRef(-1);
-
-  // Earthquake game impact trigger state
-  const [earthquake, setEarthquake] = useState(false);
-  const [hasTriggeredEarthquake, setHasTriggeredEarthquake] = useState(false);
-
-  // Animation timeline control
-  // "idle" | "spinning_free" | "decelerating" | "halted"
-  const [gameState, setGameState] = useState<"idle" | "spinning_free" | "decelerating" | "halted">("idle");
-  const gameStateRef = useRef<"idle" | "spinning_free" | "decelerating" | "halted">("idle");
-
-  // Deceleration target parameters
-  const decelerationStartAngleRef = useRef(0);
-  const decelerationTargetAngleRef = useRef(0);
-  const decelerationDurationRef = useRef(180); // frames
-  const decelerationFrameRef = useRef(0);
-
-  // Fallback spin trigger state so spin animation works even without user interaction
-  const prevSpunRef = useRef(spun);
+  const selectedIndex = phase === "revealed" && targetIndex >= 0 ? targetIndex : visualIndex % count;
+  const selectedName = targetIndex >= 0 ? arabicSafeName(validParticipants[targetIndex], loser || "الكريم") : loser || "الكريم";
 
   useEffect(() => {
-    synth.enabled = audioEnabled;
-  }, [audioEnabled]);
-
-  // Update backend spun status change triggers automated visual spin
-  useEffect(() => {
-    if (spun && !prevSpunRef.current && gameStateRef.current === "idle") {
-      triggerAutomatedSpin(15); // Auto trigger with generous starter sweep speed
+    targetIndexRef.current = targetIndex;
+    spunRef.current = spun;
+    if (spun && targetIndex >= 0) {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+      setVisualIndex(targetIndex);
+      setPhase("revealed");
+      setIsSpinning(false);
     }
-    prevSpunRef.current = spun;
-  }, [spun]);
-
-  // Handle manual interaction on the spinner
-  const getAngleFromCenter = (clientX: number, clientY: number) => {
-    if (!containerRef.current) return 0;
-    const rect = containerRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    const dx = clientX - centerX;
-    const dy = clientY - centerY;
-    // convert to degrees in range [-180, 180]
-    return Math.atan2(dy, dx) * (180 / Math.PI);
-  };
-
-  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
-    if (gameStateRef.current !== "idle" && gameStateRef.current !== "halted") return;
-    
-    // Resume audio context
-    synth.playClink(0.2);
-
-    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
-    
-    const clickAngle = getAngleFromCenter(clientX, clientY);
-    dragStartAngleRef.current = clickAngle;
-    currentRotationOffsetRef.current = angleRef.current;
-    
-    setIsDragging(true);
-    isDraggingRef.current = true;
-    dragHistoryRef.current = [{ angle: angleRef.current, time: Date.now() }];
-    
-    setEarthquake(false);
-    setHasTriggeredEarthquake(false);
-  };
-
-  const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDraggingRef.current) return;
-    e.preventDefault();
-
-    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
-
-    const currentAngle = getAngleFromCenter(clientX, clientY);
-    const deltaAngle = currentAngle - dragStartAngleRef.current;
-    
-    // Apply new continuous rotation
-    const nextAngle = currentRotationOffsetRef.current + deltaAngle;
-    angleRef.current = nextAngle;
-    setAngle(nextAngle);
-
-    // Track snapshot to compute momentum velocity upon let-go
-    const now = Date.now();
-    dragHistoryRef.current.push({ angle: nextAngle, time: now });
-    if (dragHistoryRef.current.length > 5) {
-      dragHistoryRef.current.shift();
-    }
-
-    // Gentle clink feedback when user drag changes segments
-    const segmentAngle = 360 / Math.max(2, participants.length);
-    const activeSeg = Math.floor(nextAngle / segmentAngle);
-    if (activeSeg !== lastActiveIndexRef.current) {
-      synth.playClink(0.4);
-      lastActiveIndexRef.current = activeSeg;
-    }
-  };
-
-  const handleDragEnd = () => {
-    if (!isDraggingRef.current) return;
-    setIsDragging(false);
-    isDraggingRef.current = false;
-
-    // Calculate final swipe angular velocity (degrees per millisecond)
-    const history = dragHistoryRef.current;
-    let computedVelocity = 0;
-    if (history.length >= 2) {
-      const first = history[0];
-      const last = history[history.length - 1];
-      const timeDiff = last.time - first.time;
-      if (timeDiff > 10) {
-        computedVelocity = (last.angle - first.angle) / timeDiff;
-      }
-    }
-
-    const velocityInDegreesPerFrame = computedVelocity * 16.67; // approx 60fps frame duration
-    const speedRatio = Math.abs(velocityInDegreesPerFrame);
-
-    // If swiped hard enough, initiate physics spin. Otherwise reset
-    if (speedRatio > 1.5) {
-      triggerAutomatedSpin(velocityInDegreesPerFrame);
-    } else {
-      // Gentle snap or rest
-    }
-  };
-
-  const triggerAutomatedSpin = (initialVelocity: number = 15) => {
-    if (gameStateRef.current === "spinning_free" || gameStateRef.current === "decelerating") return;
-
-    // Enforce speed limitation safeguards
-    const sign = Math.sign(initialVelocity) || 1;
-    let speed = Math.abs(initialVelocity);
-    speed = Math.max(10, Math.min(24, speed)); // Ensure high adrenaline but safe bounds
-    const startingVelocity = speed * sign;
-
-    setIsSpinning(true);
-    setEarthquake(false);
-    setHasTriggeredEarthquake(false);
-    setGameState("spinning_free");
-    gameStateRef.current = "spinning_free";
-
-    // Play initial heavy rotational rattle sound
-    synth.playClink(1.3);
-
-    // Trigger backend lottery selection if it hasn't spun yet
-    if (!spun) {
-      spin().catch((err) => {
-        console.error("Backend spin activation fail:", err);
-      });
-    }
-
-    startAnimationLoop(startingVelocity);
-  };
-
-  const startAnimationLoop = (initialVelocity: number) => {
-    let currentVelocity = initialVelocity;
-    let freeSpinFrames = 0;
-    const maxFreeSpinFrames = 110; // ~ 1.8 seconds of beautiful high velocity spinning
-
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
-
-    const loop = () => {
-      const segmentAngle = 360 / Math.max(1, participants.length);
-
-      if (gameStateRef.current === "spinning_free") {
-        // Continuous free rotation
-        angleRef.current += currentVelocity;
-        
-        // Very slow deceleration so spin energy persists beautifully
-        currentVelocity *= 0.992;
-        freeSpinFrames++;
-
-        // Sync local React representation
-        setAngle(angleRef.current);
-
-        // Sound sync based on angle segment crosses
-        const activeSeg = Math.floor(angleRef.current / segmentAngle);
-        if (activeSeg !== lastActiveIndexRef.current) {
-          synth.playClink(Math.abs(currentVelocity) / 10);
-          lastActiveIndexRef.current = activeSeg;
-        }
-
-        // Once the minimum free spin timeout elapsed, check if target (loserIndex) is populated securely
-        if (freeSpinFrames >= maxFreeSpinFrames && hasValidTarget()) {
-          // Transition to precise targeting deceleration
-          prepareDeceleration();
-        }
-
-        animationRef.current = requestAnimationFrame(loop);
-      } 
-      else if (gameStateRef.current === "decelerating") {
-        decelerationFrameRef.current++;
-        const totalFrames = decelerationDurationRef.current;
-        const currentFrame = decelerationFrameRef.current;
-
-        if (currentFrame >= totalFrames) {
-          // Finished! Force snap exactly onto targeted index angle
-          angleRef.current = decelerationTargetAngleRef.current;
-          setAngle(decelerationTargetAngleRef.current);
-          handleStopImpact();
-        } else {
-          // Standard majestic Cubic Ease-Out interpolation
-          const t = currentFrame / totalFrames;
-          const curve = 1 - Math.pow(1 - t, 3); // cubic ease-out
-          
-          const nextAngle = decelerationStartAngleRef.current + 
-            (decelerationTargetAngleRef.current - decelerationStartAngleRef.current) * curve;
-          
-          angleRef.current = nextAngle;
-          setAngle(nextAngle);
-
-          // As rotation slows down, the tempo of the sound matches the angular delta perfectly
-          const currentStepVelocity = (decelerationTargetAngleRef.current - decelerationStartAngleRef.current) * 
-            (3 * Math.pow(1 - t, 2)) / totalFrames; // derivative of cubic ease-out
-
-          const activeSeg = Math.floor(nextAngle / segmentAngle);
-          if (activeSeg !== lastActiveIndexRef.current) {
-            synth.playClink(Math.max(0.12, Math.abs(currentStepVelocity) / 10));
-            lastActiveIndexRef.current = activeSeg;
-          }
-
-          animationRef.current = requestAnimationFrame(loop);
-        }
-      }
-    };
-
-    animationRef.current = requestAnimationFrame(loop);
-  };
-
-  const hasValidTarget = () => {
-    // Requires that order.rouletteLoser / loser index points to a validated participant
-    return typeof loserIndex === "number" && loserIndex >= 0 && loserIndex < participants.length;
-  };
-
-  const prepareDeceleration = () => {
-    const segmentAngle = 360 / Math.max(1, participants.length);
-    
-    // The spout should target exactly: Angle = (loserIndex * segmentAngle)
-    const exactTargetRemainder = loserIndex * segmentAngle;
-
-    // Current pointer angle mapped to continuous scale
-    const currentAngle = angleRef.current;
-    
-    // Find next multiples of 360 matching exact target angle with spectacular dramatic rotations (e.g. 2 full extra spins)
-    const baseRotations = Math.floor(currentAngle / 360) + 2;
-    const finalTargetAngle = baseRotations * 360 + exactTargetRemainder;
-
-    decelerationStartAngleRef.current = currentAngle;
-    decelerationTargetAngleRef.current = finalTargetAngle;
-    decelerationFrameRef.current = 0;
-    // Lower spacing count means faster, more abrupt brake. 
-    // High spacing count (150-180) means majestic, movie-like dramatic deceleration
-    decelerationDurationRef.current = 140; 
-
-    setGameState("decelerating");
-    gameStateRef.current = "decelerating";
-  };
-
-  const handleStopImpact = () => {
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-      animationRef.current = null;
-    }
-
-    setGameState("halted");
-    gameStateRef.current = "halted";
-    setIsSpinning(false);
-
-    // Safeguard: trigger high-octane earthquake zinzal shockwave once!
-    if (!hasTriggeredEarthquake) {
-      setEarthquake(true);
-      setHasTriggeredEarthquake(true);
-      synth.playEarthquake();
-
-      // Clear structural earthquake vibration after 2.5 seconds
-      setTimeout(() => {
-        setEarthquake(false);
-      }, 2500);
-    }
-  };
+  }, [spun, targetIndex, setIsSpinning]);
 
   useEffect(() => {
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      if (timerRef.current) window.clearInterval(timerRef.current);
     };
   }, []);
 
-  // Compute pointer segment angles
-  const numParticipants = Math.max(1, participants.length);
-  const segmentAngle = 360 / numParticipants;
+  const beginDallahPass = async () => {
+    if (validParticipants.length < 2) {
+      setSpinError("نحتاج شخصين على الأقل حتى تبدأ الدلة بالاختيار.");
+      return;
+    }
+    if (phase === "passing" || phase === "settling") return;
 
-  // Render variables
-  const isLobbyEmpty = participants.length === 0;
-  const currentDegrees = angle % 360;
-  
-  // Highlighting current highlighted index in motion
-  const currentPointingIndex = Math.round(currentDegrees / segmentAngle) % numParticipants;
-  const highlightIdx = currentPointingIndex >= 0 ? currentPointingIndex : (numParticipants + currentPointingIndex) % numParticipants;
+    setSpinError("");
+    setPhase("passing");
+    setIsSpinning(true);
+    let ticks = 0;
+    let delay = 74;
+    let localIndex = visualIndex;
 
-  // Check if we show final results
-  const isFinalHalted = gameState === "halted" && spun;
+    const step = () => {
+      ticks += 1;
+      localIndex += 1;
+      setVisualIndex(localIndex % count);
+      if (ticks % 2 === 0) softTick(audioEnabled, Math.max(0.04, 0.16 - ticks * 0.002));
 
-  // Style helper: Translate current physical angle to layout
-  // Add 90 offset to account for SVG pointer facing UPwards natively
-  const rotatedDegrees = angle - 90;
+      if (ticks === 30) setPhase("settling");
+
+      const liveTarget = targetIndexRef.current;
+      const hasBackendTarget = spunRef.current && liveTarget >= 0;
+      const enoughDrama = ticks > 44;
+      if (enoughDrama && hasBackendTarget) {
+        if (timerRef.current) window.clearTimeout(timerRef.current);
+        landOnTarget(liveTarget, localIndex);
+        return;
+      }
+
+      if (ticks > 88) {
+        if (timerRef.current) window.clearTimeout(timerRef.current);
+        setPhase("idle");
+        setIsSpinning(false);
+        setSpinError("تأخر الاختيار من الخادم. جرّب مرة ثانية بعد لحظات.");
+        return;
+      }
+
+      delay = Math.min(210, delay + (ticks > 28 ? 7 : 1));
+      timerRef.current = window.setTimeout(step, delay);
+    };
+
+    timerRef.current = window.setTimeout(step, delay);
+
+    try {
+      await spin();
+    } catch (e: any) {
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+      setPhase("idle");
+      setIsSpinning(false);
+      setSpinError(e?.message || "تعذر تشغيل الاختيار.");
+    }
+  };
+
+  const landOnTarget = (target: number, current: number) => {
+    setPhase("settling");
+    const extraRounds = count * 2;
+    const normalizedCurrent = current % count;
+    const distance = (target - normalizedCurrent + count) % count;
+    const steps = extraRounds + distance;
+    let done = 0;
+
+    const settle = () => {
+      done += 1;
+      setVisualIndex((prev) => (prev + 1) % count);
+      softTick(audioEnabled, Math.max(0.035, 0.1 - done * 0.004));
+
+      if (done >= steps) {
+        setVisualIndex(target);
+        setPhase("revealed");
+        setIsSpinning(false);
+        return;
+      }
+
+      timerRef.current = window.setTimeout(settle, 130 + done * 24);
+    };
+
+    timerRef.current = window.setTimeout(settle, 130);
+  };
+
+  const normalizedLoser = normalizeArabicName(loser || "");
+  const normalizedMine = normalizeArabicName(mySpinName || "");
+  const normalizedUrl = normalizeArabicName(urlName || "");
+  const isMyTurnToPay =
+    normalizedLoser !== "" && (normalizedLoser === normalizedMine || normalizedLoser === normalizedUrl);
+  const myDisplayName = mySpinName || urlName || (isMyTurnToPay ? selectedName : "ضيفنا");
+  const resultContent = getPhraseContent(myDisplayName, isMyTurnToPay, selectedName || "الكريم");
+
+  const canStart = validParticipants.length >= 2 && !spun && !isSpinning && phase === "idle";
+  const isActiveAnimation = phase === "passing" || phase === "settling" || isSpinning;
 
   return (
-    <div className={cn(
-      "relative w-full rounded-[38px] p-6 text-center overflow-hidden transition-all duration-700 bg-stone-950 border border-amber-500/10 shadow-2xl shadow-black",
-      earthquake && "animate-[shake_0.15s_ease-in-out_infinite]"
-    )}>
-      {/* Background radial glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(214,173,75,0.06)_0%,transparent_70%)] pointer-events-none" />
+    <section
+      className="wahag-dallah-stage relative overflow-hidden rounded-[36px] border border-amber-300/20 bg-[#080604] text-white shadow-2xl shadow-black/50"
+      dir="rtl"
+      aria-label="الدلة تختار الكريم"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(214,173,75,0.2),transparent_36%),linear-gradient(180deg,rgba(255,221,147,0.08),transparent_24%,rgba(19,97,58,0.05))]" />
+      <div className="absolute inset-0 opacity-[0.06] [background-image:radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:22px_22px]" />
 
-      {/* Embedded CSS rules for the earthquake shaking keyframes & special glow animations */}
-      <style>{`
-        @keyframes shake {
-          0% { transform: translate(1px, 2px) rotate(0deg); }
-          10% { transform: translate(-2px, -1px) rotate(-1deg); }
-          20% { transform: translate(-3px, 0px) rotate(1deg); }
-          30% { transform: translate(0px, 2px) rotate(0deg); }
-          40% { transform: translate(1px, -1px) rotate(1deg); }
-          50% { transform: translate(-1px, 2px) rotate(-1deg); }
-          60% { transform: translate(-3px, 1px) rotate(0deg); }
-          70% { transform: translate(2px, 1px) rotate(-1deg); }
-          80% { transform: translate(-1px, -1px) rotate(1deg); }
-          90% { transform: translate(2px, 2px) rotate(0deg); }
-          100% { transform: translate(1px, -2px) rotate(-1deg); }
-        }
-        @keyframes ringPulse {
-          0% { transform: scale(0.95); opacity: 0.15; }
-          50% { transform: scale(1.15); opacity: 0.4; }
-          100% { transform: scale(0.95); opacity: 0.15; }
-        }
-        @keyframes earthquakeRipple {
-          0% { transform: scale(0.5); opacity: 1; border-width: 8px; }
-          10% { transform: scale(0.7); opacity: 1; border-width: 12px; }
-          100% { transform: scale(2.8); opacity: 0; border-width: 1px; }
-        }
-        @keyframes goldenEmbroidery {
-          0% { filter: drop-shadow(0 0 8px rgba(214,173,75,0.5)) brightness(1.0); }
-          50% { filter: drop-shadow(0 0 16px rgba(214,173,75,0.9)) brightness(1.25); }
-          100% { filter: drop-shadow(0 0 8px rgba(214,173,75,0.5)) brightness(1.0); }
-        }
-        @keyframes lightTrace {
-          0% { stroke-dashoffset: 0; }
-          100% { stroke-dashoffset: 200; }
-        }
-      `}</style>
-
-      {/* Header controls layout */}
-      <div className="flex items-center justify-between mb-4 relative z-10">
-        <button
-          onClick={() => setAudioEnabled(!audioEnabled)}
-          className="p-2.5 rounded-full bg-stone-900/80 border border-white/5 text-stone-400 hover:text-white transition-all active:scale-95"
-          title={audioEnabled ? "كتم الصوت" : "تشغيل الصوت"}
-        >
-          {audioEnabled ? <Volume2 className="w-4 h-4 text-amber-400 animate-pulse" /> : <VolumeX className="w-4 h-4" />}
-        </button>
-        <span className="text-[10px] font-bold tracking-widest text-amber-500/80 bg-stone-900 px-3 py-1 rounded-full border border-amber-500/10 inline-flex items-center gap-1.5 font-sans">
-          <Sparkles className="w-3 h-3 text-amber-400" />
-          لعبة وهّق غيرك الفيزيائية
-        </span>
-      </div>
-
-      {/* Main Physics Arena Container */}
-      <div className="relative w-full max-w-[340px] aspect-square mx-auto flex items-center justify-center py-6">
-        
-        {/* Dynamic ambient halo ring backdrop */}
-        <div 
-          className="absolute w-[290px] h-[290px] rounded-full border border-dashed border-amber-500/20" 
-          style={{ animation: "ringPulse 4s ease-in-out infinite" }}
-        />
-
-        {/* Circular Orbit layout for participants cards */}
-        {!isLobbyEmpty ? (
-          participants.map((p, idx) => {
-            // Calculate absolute rotational angle of each participant seat around the dial
-            const itemAngle = idx * segmentAngle - 90; // Align with center rotation
-            const radius = 108; // Orbit radius in pixels
-            const rad = (itemAngle * Math.PI) / 180;
-            const x = Math.cos(rad) * radius;
-            const y = Math.sin(rad) * radius;
-
-            const isPointed = highlightIdx === idx;
-            const isTargetLoser = spun && idx === loserIndex;
-            const isWinnerRevealed = isFinalHalted && isTargetLoser;
-
-            return (
-              <div
-                key={`${p.phone}-${idx}`}
-                className="absolute z-10 transition-all duration-300"
-                style={{
-                  transform: `translate(${x}px, ${y}px)`,
-                }}
-              >
-                {/* Participant badge card */}
-                <div className={cn(
-                  "relative flex flex-col items-center justify-center w-[54px] h-[54px] rounded-2xl bg-stone-900/90 border transition-all duration-300 font-sans shadow-lg",
-                  isPointed && !isWinnerRevealed && "border-amber-400 bg-amber-950/20 scale-110 shadow-amber-400/20",
-                  !isPointed && "border-white/5",
-                  isWinnerRevealed && "border-red-500 bg-red-950/40 scale-125 z-30 shadow-2xl shadow-red-500/40 animate-pulse"
-                )}>
-                  {/* Absolute earthquake impact ripple flash on winner */}
-                  {isWinnerRevealed && earthquake && (
-                    <div className="absolute inset-0 rounded-2xl border-4 border-red-500 pointer-events-none"
-                         style={{ animation: "earthquakeRipple 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards" }} />
-                  )}
-
-                  {/* Icon text letter */}
-                  <div className={cn(
-                    "w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-black font-sans uppercase mb-0.5",
-                    isPointed ? "bg-amber-400 text-stone-950" : "bg-stone-800 text-stone-400",
-                    isWinnerRevealed && "bg-red-500 text-white animate-bounce"
-                  )}>
-                    {p.name?.charAt(0) || "؟"}
-                  </div>
-                  
-                  {/* Truncated Name Label */}
-                  <span className={cn(
-                    "text-[8px] font-bold font-sans truncate max-w-[48px]",
-                    isPointed ? "text-amber-300" : "text-stone-400",
-                    isWinnerRevealed && "text-red-400 font-black"
-                  )}>
-                    {p.name}
-                  </span>
-
-                  {/* Mini floating Crown or Skull badge labels */}
-                  {isWinnerRevealed && (
-                    <div className="absolute -top-3.5 bg-red-500 text-white font-black text-[7px] px-1.5 py-0.5 rounded-full border border-red-400 shadow shadow-black flex items-center gap-0.5 animate-bounce">
-                      💥 الضحية
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <div className="text-stone-500 text-xs font-sans max-w-[180px] leading-relaxed relative z-20">
-            أضف الأسماء باللوبي أولاً ثم اسحب الدلة لتدير اللعبة!
+      <div className="relative z-10 px-5 py-6 sm:px-7 sm:py-8 space-y-6">
+        <div className="flex items-center justify-between gap-3">
+          <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-100 shadow-inner shadow-amber-900/40">
+            <Sparkles className="w-4 h-4 text-amber-300" />
+            ميزة ديوانية
           </div>
+          <button
+            type="button"
+            onClick={() => setAudioEnabled((value) => !value)}
+            className="w-11 h-11 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-amber-100 active:scale-95 transition-transform"
+            aria-label={audioEnabled ? "إيقاف الصوت" : "تشغيل الصوت"}
+          >
+            {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
+        </div>
+
+        <header className="text-center space-y-2">
+          <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-200 to-amber-500">
+            الدلة تختار الكريم
+          </h2>
+          <p className="text-sm font-bold text-stone-300 leading-relaxed">
+            اختيار أنيق وعشوائي بين الربع — بلا إحراج وبمزاج ديوانية.
+          </p>
+        </header>
+
+        <div className="relative mx-auto h-[430px] max-w-[430px] select-none">
+          <div className="absolute inset-x-8 top-12 bottom-14 rounded-full border border-dashed border-amber-200/20" />
+          <div className="wahag-dallah-orbit-line absolute inset-x-10 top-14 bottom-16 rounded-full" />
+
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className={cn("wahag-dallah-pulse", isActiveAnimation && "wahag-dallah-pulse-live")} />
+          </div>
+
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <motion.div
+              animate={
+                isActiveAnimation
+                  ? { scale: [1, 1.035, 1], rotate: [0, 1.4, -1.4, 0] }
+                  : { scale: phase === "revealed" ? [1, 1.02, 1] : 1 }
+              }
+              transition={{ duration: isActiveAnimation ? 1.1 : 2.4, repeat: isActiveAnimation || phase === "revealed" ? Infinity : 0 }}
+              className="relative mt-8"
+            >
+              <div className="absolute -inset-12 rounded-full bg-amber-400/15 blur-3xl" />
+              <img
+                src={DALLAH_IMAGE}
+                alt="دلة قهوة خليجية ذهبية"
+                className="relative z-10 w-[235px] sm:w-[265px] drop-shadow-[0_34px_42px_rgba(0,0,0,0.72)]"
+                draggable={false}
+              />
+              <div className="absolute left-1/2 top-[78%] z-0 h-12 w-64 -translate-x-1/2 rounded-full bg-amber-300/25 blur-2xl" />
+            </motion.div>
+          </div>
+
+          {validParticipants.length === 0 ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="rounded-3xl border border-white/10 bg-black/40 px-5 py-4 text-sm font-bold text-stone-300">
+                بانتظار دخول الربع
+              </div>
+            </div>
+          ) : (
+            validParticipants.slice(0, 8).map((participant: any, index: number) => {
+              const orbitTotal = Math.min(validParticipants.length, 8);
+              const angle = -90 + (360 / orbitTotal) * index;
+              const radiusX = 168;
+              const radiusY = 178;
+              const x = Math.cos((angle * Math.PI) / 180) * radiusX;
+              const y = Math.sin((angle * Math.PI) / 180) * radiusY;
+              const isSelected = selectedIndex === index;
+              const isFinal = phase === "revealed" && targetIndex === index;
+
+              return (
+                <motion.div
+                  key={`${participant.phone || participant.name || index}-${index}`}
+                  className="absolute left-1/2 top-1/2"
+                  style={{ x: `calc(-50% + ${x}px)`, y: `calc(-50% + ${y}px)` }}
+                  animate={{ scale: isSelected ? 1.09 : 1, y: isSelected ? -4 : 0 }}
+                  transition={{ type: "spring", stiffness: 360, damping: 24 }}
+                >
+                  <div
+                    className={cn(
+                      "relative w-[82px] min-h-[78px] rounded-[24px] border bg-black/50 backdrop-blur-xl px-2 py-3 flex flex-col items-center justify-center gap-1 shadow-xl transition-all duration-300",
+                      isSelected ? "border-amber-200/90 shadow-amber-400/25 bg-amber-200/10" : "border-white/10",
+                      isFinal && "border-emerald-300 bg-emerald-400/12 shadow-emerald-400/25",
+                    )}
+                  >
+                    {isSelected && <span className="absolute -inset-1 rounded-[27px] border border-amber-200/35 animate-pulse" />}
+                    <UserRound className={cn("w-5 h-5", isFinal ? "text-emerald-200" : "text-amber-200")} />
+                    <span className="relative z-10 max-w-full truncate text-sm font-black text-amber-50">
+                      {arabicSafeName(participant)}
+                    </span>
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.85)]" />
+                  </div>
+                </motion.div>
+              );
+            })
+          )}
+
+          <div className="absolute inset-x-0 bottom-0 text-center space-y-3">
+            <div className="inline-flex items-center gap-3 rounded-full border border-emerald-300/20 bg-emerald-400/10 px-5 py-2.5 text-sm font-black text-emerald-200 shadow-lg shadow-emerald-900/20">
+              <span className="wahag-heartbeat-line" />
+              {phase === "passing" && "الدلة تمر بين الربع..."}
+              {phase === "settling" && "الدلة تهدّي وتقرّب..."}
+              {phase === "idle" && (validParticipants.length >= 2 ? "جاهزة للاختيار" : "بانتظار اكتمال الربع")}
+              {phase === "revealed" && `الدلة وقفت عند: ${selectedName}`}
+              <span className="wahag-heartbeat-line" />
+            </div>
+          </div>
+        </div>
+
+        {validParticipants.length > 8 && (
+          <p className="text-center text-xs font-bold text-stone-400">
+            +{validParticipants.length - 8} مشاركين آخرين داخل الاختيار.
+          </p>
         )}
 
-        {/* Central Spinning Golden Dallah Container */}
-        <div 
-          ref={containerRef}
-          onMouseDown={handleDragStart}
-          onMouseMove={handleDragMove}
-          onMouseUp={handleDragEnd}
-          onMouseLeave={handleDragEnd}
-          onTouchStart={handleDragStart}
-          onTouchMove={handleDragMove}
-          onTouchEnd={handleDragEnd}
-          className={cn(
-            "relative w-[130px] h-[130px] rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing select-none transition-transform z-20",
-            isDragging && "scale-[1.02]"
+        <AnimatePresence mode="wait">
+          {spinError && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="flex items-center gap-2 rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-100"
+            >
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              {spinError}
+            </motion.div>
           )}
-        >
-          {/* Neon pointer glow ring underneath Dallah */}
-          <div className="absolute inset-0 rounded-full border border-amber-500/20 bg-stone-900/35 pointer-events-none shadow-inner" />
+        </AnimatePresence>
 
-          {/* Golden energy light trail tracking rotation angle */}
-          <div 
-            className="absolute inset-2 rounded-full border border-dashed border-amber-400/40 pointer-events-none"
-            style={{ 
-              transform: `rotate(${rotatedDegrees}deg)`,
-              animation: isSpinning ? "lightTrace 1.5s linear infinite" : "none"
-            }}
-          />
-
-          {/* DALLAH 3D SVG VECTOR REPRESENTATION */}
-          <div 
-            className="w-full h-full p-2 relative flex items-center justify-center pointer-events-none"
-            style={{ 
-              transform: `rotate(${rotatedDegrees}deg)`,
-              // Custom continuous glowing embroidery filter
-              animation: "goldenEmbroidery 3s ease-in-out infinite"
-            }}
+        <div className="grid grid-cols-[1fr_auto] gap-3">
+          <button
+            type="button"
+            onClick={beginDallahPass}
+            disabled={!canStart}
+            className={cn(
+              "rounded-[26px] py-4 px-5 text-lg font-black transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-2xl",
+              canStart
+                ? "bg-gradient-to-b from-amber-100 via-amber-300 to-amber-500 text-stone-950 shadow-amber-600/25"
+                : "bg-white/8 text-stone-500 border border-white/10 cursor-not-allowed",
+            )}
           >
-            {/* Embedded illuminated pointer arrow facing UP (the Spout) */}
-            <div className="absolute top-1 left-1/2 -translate-x-1/2 w-4 h-4 flex items-center justify-center text-amber-400 text-[10px] animate-bounce z-10 font-sans">
-              ▼
-            </div>
+            <Sparkles className="w-5 h-5" />
+            {isActiveAnimation ? "جاري الاختيار" : spun ? "تم الاختيار" : "ابدأ الاختيار"}
+          </button>
 
-            <svg 
-              viewBox="0 0 160 160" 
-              className="w-full h-full drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]"
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {/* Illuminated glow back layer */}
-              <circle cx="80" cy="80" r="44" fill="url(#dallahGlow)" opacity="0.32" />
-
-              {/* Spout vector (فوهة الدلة) */}
-              <path 
-                d="M 80 44 L 68 25 C 65 18 80 14 80 10 C 80 14 95 18 92 25 Z" 
-                fill="url(#goldGradient3D)" 
-                stroke="#FFE17D" 
-                strokeWidth="1.5"
-                strokeLinejoin="round"
-              />
-
-              {/* Lid / Peak crescent top (غطاء الدلة) */}
-              <path 
-                d="M 80 44 C 70 44 64 56 68 62 L 92 62 C 96 56 90 44 80 44 Z" 
-                fill="url(#goldGradientDeep)" 
-                stroke="#FFE17D" 
-                strokeWidth="1.5"
-              />
-              {/* Crescent crest tip */}
-              <circle cx="80" cy="40" r="3.5" fill="#FFF5D6" />
-
-              {/* Traditional curved handle (مقبض الدلة) */}
-              <path 
-                d="M 92 78 C 114 74 114 104 94 106 C 104 106 102 88 92 86" 
-                fill="none" 
-                stroke="url(#goldGradient3D)" 
-                strokeWidth="4" 
-                strokeLinecap="round"
-              />
-
-              {/* Main Pear-shaped Body (جرم الدلة) */}
-              <path 
-                d="M 68 62 L 92 62 C 94 62 98 76 96 82 C 94 88 98 106 90 114 C 80 120 80 120 70 114 C 62 106 66 88 64 82 C 62 76 66 62 68 62 Z" 
-                fill="url(#goldGradient3D)" 
-                stroke="#FFE17D" 
-                strokeWidth="2"
-              />
-
-              {/* Embroidered core light panel (تطريز نقوش السدو الكويتي المنورة) */}
-              <path 
-                d="M 74 74 L 86 74 L 84 94 L 76 94 Z" 
-                fill="rgba(15,81,48,0.3)" 
-                stroke="#0FFFEB" 
-                strokeWidth="1" 
-                opacity="0.9"
-              />
-              
-              {/* Sadu inspired bright diamonds sewn into embroidery */}
-              <polygon points="80,78 83,82 80,86 77,82" fill="#D6AD4B" />
-              <polygon points="80,84 83,88 80,92 77,88" fill="#FF4B4B" />
-
-              {/* Base skirt */}
-              <path 
-                d="M 70 114 L 90 114 C 86 118 86 122 80 122 C 74 122 74 118 70 114 Z" 
-                fill="url(#goldGradientDeep)" 
-                stroke="#FFE17D"
-              />
-
-              {/* Highlight reflections */}
-              <path 
-                d="M 72 65 C 70 75 70 95 72 105" 
-                fill="none" 
-                stroke="#FFF" 
-                strokeWidth="1.5" 
-                opacity="0.5" 
-                strokeLinecap="round"
-              />
-
-              {/* Definitions for gorgeous gold gradients and lighting effects */}
-              <defs>
-                <radialGradient id="dallahGlow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#D6AD4B" />
-                  <stop offset="100%" stopColor="transparent" />
-                </radialGradient>
-                <linearGradient id="goldGradient3D" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FFF2B2" />
-                  <stop offset="35%" stopColor="#D6AD4B" />
-                  <stop offset="70%" stopColor="#B38622" />
-                  <stop offset="100%" stopColor="#705210" />
-                </linearGradient>
-                <linearGradient id="goldGradientDeep" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#D6AD4B" />
-                  <stop offset="50%" stopColor="#B38622" />
-                  <stop offset="100%" stopColor="#573D07" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (isActiveAnimation || spun) return;
+              setVisualIndex((prev) => (prev + 1) % count);
+            }}
+            disabled={isActiveAnimation || spun}
+            className="rounded-[24px] border border-amber-200/20 bg-white/5 px-4 text-sm font-black text-amber-100 active:scale-95 disabled:opacity-40"
+          >
+            <RefreshCw className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Dynamic real-time speed display pointer at the very bottom of the dial */}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-stone-900/80 px-3 py-1.5 rounded-2xl border border-white/5 font-mono text-[9px] text-stone-500 font-bold tracking-widest pointer-events-none select-none">
-          {isDragging ? "سحب حر..." : isSpinning ? "جاري الدوران 🌀" : "اسحب الدلة لتدور!"}
-        </div>
-      </div>
+        <p className="text-center text-xs font-bold text-stone-500">
+          تجربة مرحة وخفيفة للطلب الجماعي — الاختيار يتم عشوائيًا بين المشاركين فقط.
+        </p>
 
-      {/* Action triggers and visual logs info */}
-      <AnimatePresence mode="wait">
-        {!spun && !isSpinning && participants.length >= 2 && (
+        {phase === "revealed" && spun && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="mt-2 space-y-3"
+            initial={{ opacity: 0, y: 18, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className={cn(
+              "rounded-[30px] border p-5 text-center space-y-4",
+              isMyTurnToPay
+                ? "border-amber-300/35 bg-amber-200/10 text-amber-50"
+                : "border-emerald-300/30 bg-emerald-400/10 text-emerald-50",
+            )}
           >
-            <div className="flex justify-center items-center gap-2 p-3.5 bg-stone-900/60 rounded-2xl border border-amber-500/5 text-right">
-              <Info className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-              <p className="text-[11px] text-stone-300 font-bold leading-relaxed font-sans">
-                دش اللعبة، مرر إصبعك من فوق "فوهة الدلة الذهبية" لتدور بكامل فيزياء العزم والجاذبية، وتختار من يدفع الكي نت! ☕🎰
-              </p>
+            {paymentStatus === "failed" && isMyTurnToPay && (
+              <div className="rounded-2xl border border-red-400/25 bg-red-500/15 p-4 text-right text-sm font-bold text-red-100 flex gap-2">
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-black mb-1">تعذر إتمام الدفع</div>
+                  <div className="leading-relaxed">{errorMsg}</div>
+                </div>
+              </div>
+            )}
+
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/15 bg-white/10">
+              {isMyTurnToPay ? <Trophy className="h-7 w-7 text-amber-200" /> : <ShieldCheck className="h-7 w-7 text-emerald-200" />}
             </div>
-            
-            <button
-              onClick={() => triggerAutomatedSpin(19)}
-              className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-stone-950 font-black py-4 rounded-2xl shadow-lg shadow-amber-500/10 active:scale-95 transition-all text-xs flex items-center justify-center gap-2 font-sans"
-            >
-              <RefreshCw className="w-4 h-4 animate-spin-slow" />
-              دش النبضة الحين!
-            </button>
+
+            <div>
+              <h3 className="text-xl font-black leading-snug">{resultContent.title}</h3>
+              <p className="mt-2 text-sm font-bold leading-relaxed text-white/70">{resultContent.desc}</p>
+            </div>
+
+            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/25 px-4 py-3">
+              <span className="text-xs font-bold text-white/55">إجمالي الطلب</span>
+              <strong className="text-lg font-black text-white">{Number(order.total || 0).toFixed(3)} د.ك</strong>
+            </div>
+
+            {isMyTurnToPay ? (
+              <button
+                type="button"
+                onClick={() =>
+                  handlePay(
+                    urlName || mySpinName || selectedName || "عضو",
+                    mySpinPhone || order.customerPhone || "00000000",
+                    String(order.total),
+                  )
+                }
+                className="w-full rounded-2xl bg-white py-4 font-black text-stone-950 shadow-xl shadow-white/10 active:scale-[0.98] flex items-center justify-center gap-2"
+              >
+                <CreditCard className="w-5 h-5 text-amber-600" />
+                {paymentStatus === "failed" ? "حاول الدفع مرة ثانية" : "تأكيد ودفع الطلب"}
+              </button>
+            ) : (
+              <div className="rounded-2xl border border-emerald-300/20 bg-black/25 px-4 py-3 text-sm font-bold text-emerald-100 flex items-center justify-center gap-2">
+                <CheckCircle2 className="w-5 h-5" />
+                بانتظار إتمام الدفع بواسطة {selectedName}
+              </div>
+            )}
           </motion.div>
         )}
-      </AnimatePresence>
-
-      {/* Halted Game Display States & Actions */}
-      {isFinalHalted && (
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="text-center space-y-5 w-full mt-6"
-        >
-          {(() => {
-            const parsedLoser = normalizeArabicName(loser || "");
-            const parsedMySpinName = normalizeArabicName(mySpinName || "");
-            const parsedUrlName = normalizeArabicName(urlName || "");
-            
-            const isLoser = parsedLoser !== "" && (parsedLoser === parsedMySpinName || parsedLoser === parsedUrlName);
-            const myDisplayName = mySpinName || urlName || (isLoser ? (loser || "ضيف") : "ضيفنا");
-            const resultContent = getPhraseContent(myDisplayName, isLoser, loser || "عضو");
-
-            if (isLoser) {
-              return (
-                <div className="p-6 bg-red-950/20 border border-red-500/40 rounded-3xl text-red-100 space-y-4 shadow-xl shadow-red-500/5 transition-all">
-                  {paymentStatus === "failed" && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      className="bg-gradient-to-br from-red-600 to-rose-700 text-white p-5 justify-center items-center rounded-2xl flex flex-col gap-2.5 border border-white/10 mb-4 font-sans text-right"
-                    >
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="w-5 h-5 text-white shrink-0 animate-bounce" />
-                        <h4 className="text-sm font-black">فشلت عملية الدفع يا بطل! 💔</h4>
-                      </div>
-                      <p className="text-[11px] text-white/95 font-bold leading-relaxed">{errorMsg}</p>
-                    </motion.div>
-                  )}
-
-                  <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center mx-auto mb-1 animate-pulse">
-                    <Trophy className="w-6 h-6 text-red-500" />
-                  </div>
-
-                  <h3 className="text-xl font-extrabold text-red-400 font-sans leading-snug">
-                    {resultContent.title}
-                  </h3>
-                  
-                  <p className="font-bold text-xs text-stone-300 font-sans leading-relaxed">
-                    {resultContent.desc}
-                  </p>
-
-                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5 text-sm font-sans flex items-center justify-between">
-                    <span className="text-stone-400 text-xs font-bold font-sans">إجمالي الحساب:</span>
-                    <strong className="text-xl font-black text-white font-sans">{order.total.toFixed(3)} د.ك</strong>
-                  </div>
-
-                  <button
-                    onClick={() =>
-                      handlePay(
-                        urlName || mySpinName || loser || "عضو",
-                        mySpinPhone || order.customerPhone || "00000000",
-                        String(order.total),
-                      )
-                    }
-                    className="w-full bg-white text-stone-950 hover:bg-stone-100 font-black py-4 rounded-xl mt-4 active:scale-95 transition-all flex justify-center items-center gap-2 shadow-lg shadow-white/5 text-xs font-sans"
-                  >
-                    <CreditCard className="w-4 h-4 text-amber-600" />
-                    {paymentStatus === "failed" ? "حاول مجدداً 🔄" : `تأكيد ودفع القطية`}
-                  </button>
-                </div>
-              );
-            }
-
-            return (
-              <div className="p-6 bg-stone-900/90 border border-green-500/40 rounded-3xl text-stone-200 space-y-4 shadow-xl">
-                <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center mx-auto mb-1">
-                  <ShieldCheck className="w-6 h-6 text-green-400" />
-                </div>
-                
-                <h3 className="text-lg font-extrabold text-white font-sans leading-snug">
-                  {resultContent.title}
-                </h3>
-
-                <p className="font-bold text-xs text-stone-400 font-sans leading-relaxed">
-                  {resultContent.desc}
-                </p>
-
-                <div className="pt-3 border-t border-stone-800 text-[10px] text-stone-500 font-bold font-sans">
-                  اللوبي بانتظار إتمام الدفع بواسطة {loser || "صاحب الحظ"}
-                </div>
-              </div>
-            );
-          })()}
-        </motion.div>
-      )}
-    </div>
+      </div>
+    </section>
   );
 }

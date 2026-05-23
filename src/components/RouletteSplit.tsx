@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import React, { useEffect, useMemo, useState } from "react";
+import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Users, Crown, CreditCard, PartyPopper, ArrowRight, AlertCircle, Check, Trophy, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check, CreditCard, PartyPopper, Send, Sparkles, Users } from "lucide-react";
 import { normalizeDigits } from "../utils";
 import { DallahPhysicalGame } from "./DallahPhysicalGame";
 
@@ -24,6 +24,8 @@ const getSafeSplitPayments = (order: any): any[] => {
   return [];
 };
 
+const cleanPhone = (value: string) => normalizeDigits(value).replace(/[^0-9]/g, "").slice(0, 8);
+
 export function RouletteSplit({
   order,
   handlePay,
@@ -38,173 +40,165 @@ export function RouletteSplit({
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const participants = order.splitParticipants || [];
-  const spun = !!order.rouletteLoser;
-  const loser = order.rouletteLoser;
+  const [localParticipants, setLocalParticipants] = useState<any[]>(() => order.splitParticipants || []);
+  const [localRouletteLoser, setLocalRouletteLoser] = useState<string | null>(() => order.rouletteLoser || null);
+  const participants = localParticipants;
+  const spun = !!localRouletteLoser;
+  const loser = localRouletteLoser;
   const [isSpinning, setIsSpinning] = useState(false);
-  const [isSettling, setIsSettling] = useState(false);
   const [localSuccess, setLocalSuccess] = useState(false);
-  const [mySpinName, setMySpinName] = useState(
-    () => localStorage.getItem(`roulette_${order.id}`) || "",
-  );
-  const [mySpinPhone, setMySpinPhone] = useState(
-    () => localStorage.getItem(`roulette_phone_${order.id}`) || "",
-  );
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [mySpinName, setMySpinName] = useState(() => localStorage.getItem(`roulette_${order.id}`) || "");
+  const [mySpinPhone, setMySpinPhone] = useState(() => localStorage.getItem(`roulette_phone_${order.id}`) || "");
+  const [joinError, setJoinError] = useState("");
+
   useEffect(() => {
-    if (paymentStatus === "success") {
-      setLocalSuccess(true);
-    }
+    setLocalParticipants(order.splitParticipants || []);
+    if (order.rouletteLoser) setLocalRouletteLoser(order.rouletteLoser);
+  }, [order.id, order.splitParticipants, order.rouletteLoser]);
+
+  useEffect(() => {
+    if (paymentStatus === "success") setLocalSuccess(true);
   }, [paymentStatus]);
 
-  const errorMsg = React.useMemo(() => {
+  const errorMsg = useMemo(() => {
     const errorMsgs = [
-      "ما انخصم شيء من حسابك، شكلها عين! جرب تدفع مرة ثانية 😂",
-      "الرصيد زعلان ولا شسالفة؟ جرب مرة ثانية 💳",
-      "البنك يقول لا.. بس إحنا نقول ماكو فكة، حاول مرة ثانية! 🏦",
-      "شكلها الشبكة فصلت عليك، جرب مرة ثانية 📡",
-      "فلوسك عزيزة عليك؟ ادفع مرة ثانية وخلصنا! 💸😆",
-      "عمليتك ما مشت، لا تحاتي ما راح شيء.. طق مرة ثانية 🔄"
+      "ما انخصم شيء من حسابك. جرّب مرة ثانية بعد لحظات.",
+      "تعذر إتمام عملية الدفع. تأكد من البطاقة أو الشبكة وحاول مرة ثانية.",
+      "البنك رفض العملية مؤقتًا. حاول مرة أخرى.",
+      "يبدو أن الاتصال تأخر. أعد المحاولة وسيتم التحقق من الدفع بأمان.",
     ];
     return errorMsgs[Math.floor(Math.random() * errorMsgs.length)];
   }, []);
 
   const join = async () => {
-    if (!name.trim()) return;
-    if (phone.length !== 8) return alert("يرجى إدخال رقم هاتف صحيح مكون من 8 أرقام");
+    const cleanName = name.trim();
+    const clean = cleanPhone(phone);
+    setJoinError("");
+
+    if (!cleanName) {
+      setJoinError("اكتب اسمك أولًا حتى تدخل اختيار الدلة.");
+      return;
+    }
+    if (clean.length !== 8) {
+      setJoinError("رقم الهاتف لازم يكون 8 أرقام بالإنجليزي.");
+      return;
+    }
+
     try {
       const res = await fetch(`/api/orders/${order.id}/join-roulette`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone }),
+        body: JSON.stringify({ name: cleanName, phone: clean }),
       });
-      if (!res.ok) throw new Error('تعذر تسجيل الاسم في الروليت');
-      setMySpinName(name);
-      setMySpinPhone(phone);
-      localStorage.setItem(`roulette_${order.id}`, name);
-      localStorage.setItem(`roulette_phone_${order.id}`, phone);
+      if (!res.ok) throw new Error("تعذر تسجيل الاسم في اختيار الدلة");
+      setMySpinName(cleanName);
+      setMySpinPhone(clean);
+      setLocalParticipants((prev) => {
+        const exists = prev.some((p: any) => p.name === cleanName || (clean && p.phone === clean));
+        return exists ? prev : [...prev, { name: cleanName, phone: clean, joinedAt: new Date().toISOString() }];
+      });
+      localStorage.setItem(`roulette_${order.id}`, cleanName);
+      localStorage.setItem(`roulette_phone_${order.id}`, clean);
     } catch (e: any) {
-      if (
-        e &&
-        e.message &&
-        (e.message.includes("Load failed") ||
-          e.message.includes("Failed to fetch"))
-      ) {
-        alert(
-          "فشل الاتصال بالخادم. يبدو أن الخادم قيد إعادة التشغيل لتطبيق التحديثات. يرجى الانتظار والمحاولة مرة أخرى.",
-        );
+      if (e?.message?.includes("Load failed") || e?.message?.includes("Failed to fetch")) {
+        setJoinError("فشل الاتصال بالخادم. انتظر لحظات ثم حاول مرة أخرى.");
       } else {
-        alert("فشل الانضمام: " + (e?.message || "حدث خطأ غير متوقع"));
+        setJoinError(e?.message || "حدث خطأ غير متوقع أثناء الانضمام.");
       }
     }
   };
 
   const spin = async () => {
-    if (participants.length < 2) return alert("نحتاج شخصين عالأقل للقطية!");
-    try {
-      const res = await fetch(`/api/orders/${order.id}/spin-roulette`, { method: "POST" });
-      if (!res.ok) throw new Error('تعذر تشغيل الروليت');
-    } catch (e: any) {
-      if (
-        e &&
-        e.message &&
-        (e.message.includes("Load failed") ||
-          e.message.includes("Failed to fetch"))
-      ) {
-        alert(
-          "فشل الاتصال بالخادم. يبدو أن الخادم قيد إعادة التشغيل لتطبيق التحديثات. يرجى الانتظار والمحاولة مرة أخرى.",
-        );
-      } else {
-        alert("فشل السحب: " + (e?.message || "حدث خطأ غير متوقع"));
-      }
+    if (participants.length < 2) {
+      throw new Error("نحتاج شخصين على الأقل حتى تبدأ الدلة.");
     }
+    const res = await fetch(`/api/orders/${order.id}/spin-roulette`, { method: "POST" });
+    if (!res.ok) throw new Error("تعذر تشغيل الاختيار");
+    const data = await res.json().catch(() => null);
+    if (data?.loser) setLocalRouletteLoser(data.loser);
+    return data;
   };
 
-  useEffect(() => {
-    if (spun && !isSpinning && participants.length > 0) {
-      if (!sessionStorage.getItem(`spun_${order.id}`)) {
-        setIsSpinning(true);
-        let count = 0;
-        const interval = setInterval(() => {
-          setActiveIndex((prev) => prev + 1);
-          count++;
-          if (count > 40) {
-            clearInterval(interval);
-            setIsSettling(true);
-            setTimeout(() => {
-              setIsSpinning(false);
-              setIsSettling(false);
-              sessionStorage.setItem(`spun_${order.id}`, "true");
-            }, 900);
-          }
-        }, 60);
-      }
-    }
-  }, [spun, participants.length, order.id, isSpinning]);
-
-  const loserIndex = React.useMemo(() => {
+  const loserIndex = useMemo(() => {
     if (!loser || participants.length === 0) return 0;
     const normalizedLoser = normalizeArabicName(loser);
-    const idx = participants.findIndex((p: any) => 
-      normalizeArabicName(p.name) === normalizedLoser
-    );
+    const idx = participants.findIndex((p: any) => normalizeArabicName(p.name) === normalizedLoser);
     return idx === -1 ? 0 : idx;
   }, [loser, participants]);
-
-  const displayIndex = isSpinning ? activeIndex : loserIndex;
-  const pulseParticipants = participants.length > 0 ? participants : [{ name: loser || "؟" }];
-  const pulseIndex = pulseParticipants.length > 0 ? ((displayIndex % pulseParticipants.length) + pulseParticipants.length) % pulseParticipants.length : 0;
 
   const totalPaid = getSafeSplitPayments(order)
     .filter((p: any) => p.status === "paid")
     .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
+
   const isFullyPaid =
     localSuccess ||
     order.total - totalPaid <= 0.005 ||
     order.paymentStatus === "paid" ||
     order.status?.startsWith("تم الدفع");
 
+  const payPhrases = [
+    { title: "الدلة اختارتك يا {name} 👑", desc: "اليوم أنت كريم الربع. أكمل الدفع وخلي العزيمة على سنع." },
+    { title: "كفو يا {name}، الدلة وقفت عندك ☕", desc: "اختيار الدلة لك اليوم. ادفع الطلب والباقي دعوات الربع لك." },
+    { title: "يا مرحبا بالكريم {name} ✨", desc: "الاختيار طلع باسمك. كمل الدفع وخل الديوانية تستانس." },
+    { title: "الدلة قالتها: {name} اليوم معزب", desc: "الطلب عليك اليوم بروح حلوة، والربع ما ينسون الكرم." },
+  ];
+
+  const savedPhrases = [
+    { title: "الدلة عدّت عليك يا {name} 😄", desc: "الاختيار وقف عند {loser}. استمتع بالطلب وخل الدعاء للكريم." },
+    { title: "مرّت بسلام يا {name} ✨", desc: "اليوم الكرم على {loser}. بالعافية عليكم جميعًا." },
+    { title: "الدلة اختارت غيرك يا {name}", desc: "الاختيار وقف عند {loser}. تابعوا الطلب واستمتعوا بالجمعة." },
+    { title: "حظك طيب يا {name} ☕", desc: "الكريم اليوم هو {loser}. الله يزيده من فضله." },
+  ];
+
+  const getPhraseContent = (myName: string, isPaying: boolean, loserName: string) => {
+    const list = isPaying ? payPhrases : savedPhrases;
+    let hash = 0;
+    const key = loserName || "الكريم";
+    for (let i = 0; i < key.length; i++) hash += key.charCodeAt(i) * (i + 1);
+    const phrase = list[hash % list.length];
+    return {
+      title: phrase.title.replace(/{name}/g, myName),
+      desc: phrase.desc.replace(/{name}/g, myName).replace(/{loser}/g, key),
+    };
+  };
+
+  const shareGame = () => {
+    const shareText = `الدلة تختار الكريم للطلب ${Number(order?.total || 0).toFixed(3)} د.ك. ادخل وشارك: ${window.location.href}`;
+    if (navigator.share) {
+      navigator.share({ title: "الدلة تختار الكريم", text: shareText, url: window.location.href }).catch(() => undefined);
+    } else {
+      navigator.clipboard.writeText(shareText);
+      alert("تم نسخ الرابط");
+    }
+  };
+
   if (isFullyPaid) {
     return (
-      <div
-        className="min-h-screen bg-stone-900 text-white font-sans flex items-center justify-center p-6 text-center"
-        dir="rtl"
-      >
+      <div className="min-h-screen bg-stone-950 text-white font-sans flex items-center justify-center p-6 text-center" dir="rtl">
         {paymentStatus === "success" ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white p-8 justify-center items-center rounded-[32px] flex flex-col gap-4 shadow-xl shadow-[#25D366]/20 border border-white/20 relative overflow-hidden max-w-md w-full"
+            className="bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white p-8 rounded-[32px] flex flex-col gap-4 shadow-xl shadow-[#25D366]/20 border border-white/20 max-w-md w-full"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 wahag-participant-chip bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full blur-xl -ml-12 -mb-12" />
-            <div className="w-16 h-16 wahag-result-card bg-white rounded-full flex items-center justify-center shadow-inner relative z-10">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-inner">
               <Check className="w-8 h-8 text-[#25D366]" strokeWidth={3} />
             </div>
-            <div className="text-center relative z-10 w-full">
-              <h3 className="text-2xl font-extrabold mb-2">كفو يا {urlName || loser || "بطل"}! 🥳</h3>
-              <p className="text-white/90 font-medium leading-relaxed">
-                دفعك تم بنجاح، مبروك فوزك بلقب الكريم اليوم!<br/>استمتعوا بالعشاء الهني وبالعافية عليكم! ✨
-              </p>
-              <div className="mt-6 flex items-center justify-center gap-2 text-sm text-green-100/80 bg-black/10 py-2 px-4 rounded-full w-fit mx-auto">
-                <span className="animate-spin inline-block">⏳</span> جاري التحويل للطلب...
-              </div>
-            </div>
+            <h3 className="text-2xl font-extrabold">كفو يا {urlName || loser || "الكريم"}</h3>
+            <p className="text-white/90 font-medium leading-relaxed">
+              تم الدفع بنجاح، والطلب قاعد يتجهز لكم.
+            </p>
           </motion.div>
         ) : (
           <div className="bg-green-500/20 border border-green-500/50 rounded-3xl p-8 max-w-md w-full space-y-4">
             <PartyPopper className="w-16 h-16 mx-auto text-green-400" />
-            <h2 className="text-3xl font-black text-green-400">انتهت اللعبة! 🎯</h2>
+            <h2 className="text-3xl font-black text-green-400">تم الدفع بالكامل</h2>
             <p className="font-bold text-green-100">
-              تم دفع الفاتورة بالكامل عن طريق{" "}
-              <span className="text-white bg-black/30 px-2 py-1 rounded-md">
-                {loser || "صاحب الحظ"}
-              </span>
+              تم دفع الفاتورة بواسطة <span className="text-white bg-black/30 px-2 py-1 rounded-md">{loser || "الكريم"}</span>
             </p>
-            <p className="text-sm text-green-200 mt-4">الطلب قاعد يتجهز وبطريجه لكم 🚀</p>
             <button
               onClick={() => navigate(`/track?order_id=${order.id}`)}
-              className="mt-6 bg-white text-green-600 font-black py-4 px-6 rounded-xl w-full active:scale-95 transition-transform"
+              className="mt-6 bg-white text-green-700 font-black py-4 px-6 rounded-xl w-full active:scale-95 transition-transform"
             >
               متابعة الطلب
             </button>
@@ -214,51 +208,10 @@ export function RouletteSplit({
     );
   }
 
-  const payPhrases = [
-    { title: "مبروك طاحت براسك يا {name}! 💸", desc: "وهق غيرك اختارتك، جهز الكي نت ولا تبخل على ربعك!" },
-    { title: "كفو يا {name}! أنت الكريم 👑", desc: "اليوم عشاهم على حسابك، ادفع وأنت تضحك!" },
-    { title: "منور يا {name}! الشرف لك اليوم 🌟", desc: "الفاتورة من نصيبك، بيّض الوجه وادفع!" },
-    { title: "صادوه يا {name}! 🎣", desc: "لعبة وهق غيرك ما ترحم، افتح البوك وسدد اللي عليك يا بطل!" },
-    { title: "لبستها يا {name}! 👕", desc: "يا حظك بطيبتك، الفاتورة عليك اليوم!" },
-    { title: "يعطيك العافية مقدماً يا {name}! 👏", desc: "ربعك مستانسين وجيبك قاعد يبكي، توكل على الله وادفع!" },
-    { title: "كشخة يا {name}، العشا عليك! 🍽️", desc: "لعبة وهق غيرك حبتك، طلع المخبى وراونا كرمك!" },
-    { title: "جابها الحظ لك يا {name}! 🎲", desc: "تستاهل تكون المعزب اليوم، الكي نت ينطرك!" },
-    { title: "يا زينك وأنت تدفع يا {name}! 😍", desc: "مو خسارة بربعك، الحساب عندك اليوم!" },
-    { title: "فديت قلبك يا {name}، الفاتورة باسمك! 💌", desc: "ادفع وابتسم، لأن باجي الشباب مستانسين!" }
-  ];
-
-  const savedPhrases = [
-    { title: "طلعت منها براءة يا {name}! 😅", desc: "كفووو! العشا بلاش، أكل واشرب على حساب {loser}!" },
-    { title: "مبروك يا {name}! عشاك ببلاش 🎉", desc: "عليك بالعافية، {loser} بيدفع دم قلبه اليوم!" },
-    { title: "يا حظك يا {name}! 🕊️", desc: "ارتاح، الفاتورة طاحت براس {loser}، خله يغرم!" },
-    { title: "{name}، نام مرتاح اليوم 😴", desc: "ماكو دفع اليوم! {loser} أكل المقلب وراح يحاسب!" },
-    { title: "النحشة صح يا {name}! 🏃‍♂️💨", desc: "وهق غيرك طافت عليك، {loser} بيلبس الفاتورة كاملة!" },
-    { title: "سلمت منها يا {name}! 😁", desc: "وفر فلوسك، باجي الربع دبسوها بـ {loser}!" },
-    { title: "عدت على خير يا {name}! 🛡️", desc: "الرصيد في أمان اليوم، العشا خالص من {loser}!" },
-    { title: "سلكت معاك يا {name}! 🎢", desc: "الحمدلله ما يت فيك، جهز بطنك لأكل {loser}!" },
-    { title: "طافت عليك يا {name}! 🎯", desc: "فلوسك الحين بجيبك، والفاتورة بحضن {loser}!" },
-    { title: "أنت محظوظ يا {name}! 🍀", desc: "لعبة وهق غيرك عدتك، خل {loser} يعيش اللحظة ويدفع!" }
-  ];
-
-  const getPhraseContent = (myName: string, isPaying: boolean, loserName: string) => {
-    const list = isPaying ? payPhrases : savedPhrases;
-    let hash = 0;
-    const key = loserName || "الفائز";
-    for (let i = 0; i < key.length; i++) hash += (key.charCodeAt(i) * (i + 1));
-    const phrase = list[hash % list.length];
-    return {
-      title: phrase.title.replace(/{name}/g, myName),
-      desc: phrase.desc.replace(/{name}/g, myName).replace(/{loser}/g, key)
-    };
-  };
-
   return (
-    <div
-      className="min-h-screen roulette-ultra-shell wahag-wow-shell text-white font-sans selection:bg-fuchsia-500/30"
-      dir="rtl"
-    >
+    <div className="min-h-screen wahag-dallah-page text-white font-sans selection:bg-amber-300/25" dir="rtl">
       <div className="max-w-md lg:max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-32 relative">
-        <button 
+        <button
           onClick={() => navigate("/?checkout=payment")}
           className="payment-back-floating wahag-back-to-payment"
           aria-label="الرجوع إلى طريقة الدفع"
@@ -266,154 +219,112 @@ export function RouletteSplit({
           <ArrowRight className="w-6 h-6" />
           <span>طريقة الدفع</span>
         </button>
-        <header className="roulette-ultra-hero roulette-v14-hero wahag-wow-hero text-center pt-10 space-y-4">
-          <div className="roulette-v14-marquee">
-            <span>مطبخ التراث الكويتي</span>
-            <span>وهق غيرك</span>
-            <span>{participants.length} مشارك</span>
+
+        <header className="text-center pt-10 space-y-4">
+          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-amber-200/20 bg-amber-200/10 px-4 py-2 text-xs font-black text-amber-100">
+            <Sparkles className="w-4 h-4" />
+            وهق ربعك بنسخة الدلة
           </div>
-          <div className="roulette-ultra-orb roulette-v14-orb w-20 h-20 bg-gradient-to-tr from-violet-600 to-fuchsia-600 rounded-full flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(217,70,239,0.3)]">
-            <Sparkles className="w-10 h-10 text-white" />
-          </div>
-          <div className="roulette-title-card">
-            <span className="roulette-kicker">تحدي الربع</span>
-            <h1 className="text-3xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-300 via-white to-violet-300">
-              وهق غيرك 🎰
+          <div className="space-y-2">
+            <h1 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-amber-600">
+              الدلة تختار الكريم
             </h1>
-            <p className="text-stone-300 font-bold mt-2 leading-relaxed max-w-xl mx-auto">
-              مشهد واحد، أسماء الربع، ولحظة اختيار تخلي الكل ماسك نفسه. الفاتورة {order.total.toFixed(3)} د.ك
+            <p className="text-stone-300 font-bold leading-relaxed max-w-xl mx-auto">
+              تجربة ديوانية أنيقة لاختيار من يتكفل بطلب اليوم. الإجمالي {Number(order.total || 0).toFixed(3)} د.ك
             </p>
           </div>
-          <div className="roulette-status-strip roulette-v14-status-strip">
-            <span>{participants.length} مشارك</span>
-            <span>{spun ? "تم السحب" : "بانتظار الربع"}</span>
-            <span>{order.total.toFixed(3)} د.ك</span>
+          <div className="grid grid-cols-3 gap-2 rounded-[24px] border border-white/10 bg-white/5 p-2 text-xs font-black text-stone-300">
+            <span className="rounded-2xl bg-black/25 py-2">{participants.length} مشارك</span>
+            <span className="rounded-2xl bg-black/25 py-2">{spun ? "تم الاختيار" : "بانتظار الربع"}</span>
+            <span className="rounded-2xl bg-black/25 py-2">{Number(order.total || 0).toFixed(3)} د.ك</span>
           </div>
         </header>
 
-        {!spun && !isSpinning && (
+        {!mySpinName && !spun ? (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            className="roulette-ultra-card roulette-v14-card wahag-wow-card bg-white/5 border border-white/10 rounded-3xl p-5 sm:p-6 space-y-5"
+            className="rounded-[34px] border border-amber-200/15 bg-white/[0.06] p-5 sm:p-6 space-y-5 shadow-2xl shadow-black/30"
           >
-            {!mySpinName ? (
-              <div className="space-y-4">
-                <h2 className="font-bold text-center">
-                  اسم المتورط
-                </h2>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="الاسم (مثال: محمد)"
-                  className="w-full bg-white text-slate-950 border border-white/20 rounded-2xl px-4 py-3.5 text-center font-bold focus:outline-none focus:ring-4 focus:ring-fuchsia-500/25 focus:border-fuchsia-400 mb-2"
-                />
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={phone}
-                  onChange={(e) => setPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8))}
-                  placeholder="رقم الهاتف (مثال: 90000000)"
-                  className="w-full bg-white text-slate-950 border border-white/20 rounded-2xl px-4 py-3.5 text-center font-bold focus:outline-none focus:ring-4 focus:ring-fuchsia-500/25 focus:border-fuchsia-400"
-                  dir="ltr"
-                />
-                <button
-                  onClick={join}
-                  className="w-full bg-white text-slate-950 font-black py-4 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_18px_45px_rgba(255,255,255,0.12)]"
-                >
-                  <Users className="w-5 h-5" />
-                  دش نبضة الربع
-                </button>
+            <div className="text-center space-y-2">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-200/10 border border-amber-200/20">
+                <Users className="w-7 h-7 text-amber-200" />
               </div>
-            ) : (
-              <div className="text-center space-y-4">
-                <div className="text-stone-400 font-bold">
-                  انت في اللوبي باسم:{" "}
-                  <span className="text-fuchsia-400">{mySpinName}</span>
-                </div>
+              <h2 className="text-xl font-black text-white">ادخل اختيار الدلة</h2>
+              <p className="text-sm font-bold text-stone-400 leading-relaxed">
+                اكتب اسمك ورقمك حتى تشارك مع الربع في الاختيار.
+              </p>
+            </div>
 
-                <div className="roulette-lobby-panel roulette-v14-lobby bg-black/40 rounded-2xl p-4 min-h-[100px]">
-                  <div className="roulette-v14-lobby-head">
-                    <h3 className="text-xs text-stone-300 font-bold">
-                      الشباب باللوبي ({participants.length})
-                    </h3>
-                    <span>{participants.length >= 2 ? "جاهزين للسحب" : "نحتاج شخصين"}</span>
-                  </div>
-                  <div className="roulette-v14-participants">
-                    {participants.map((p: any, i: number) => (
-                      <motion.span
-                        key={i}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.03 }}
-                      >
-                        <b>{p.name?.charAt(0) || "؟"}</b>
-                        {p.name}
-                      </motion.span>
-                    ))}
-                  </div>
-                  {participants.length >= 2 && (
-                    <p className="roulette-v14-hint">
-                      تأكدوا أن الكل دش، وإذا العدد كمل أي شخص يقدر يوهقكم وتشوفون النتيجة مباشرة.
-                    </p>
-                  )}
-                </div>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="الاسم"
+              className="w-full bg-white text-slate-950 border border-white/20 rounded-2xl px-4 py-3.5 text-center font-bold focus:outline-none focus:ring-4 focus:ring-amber-400/20"
+            />
+            <input
+              type="tel"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={phone}
+              onChange={(e) => setPhone(cleanPhone(e.target.value))}
+              placeholder="رقم الهاتف 8 أرقام"
+              className="w-full bg-white text-slate-950 border border-white/20 rounded-2xl px-4 py-3.5 text-center font-bold focus:outline-none focus:ring-4 focus:ring-amber-400/20"
+              dir="ltr"
+              maxLength={8}
+            />
 
-                <button
-                  onClick={() => {
-                    const shareText = `دش لعبة وهق غيرك، واحد فينا راح يدفع العشا ${order?.total.toFixed(3)} د.ك! ادخل: ${window.location.href}`;
-                    if (navigator.share) {
-                      navigator.share({
-                        title: "لعبة وهق غيرك 🎯",
-                        text: shareText,
-                        url: window.location.href,
-                      }).catch(() => {});
-                    } else {
-                      navigator.clipboard.writeText(shareText);
-                      alert("تم نسخ الرابط!");
-                    }
-                  }}
-                  className="w-full wahag-participant-chip bg-white/10 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 mt-4 hover:bg-white/20 transition-colors border border-white/10"
-                >
-                  <Sparkles className="w-5 h-5 text-fuchsia-400" />
-                  دز الرابط للربع وخلي النبضة تختار
-                </button>
-
-                {participants.length >= 2 && (
-                  <button
-                    onClick={spin}
-                    className="roulette-spin-button w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 font-black py-4 rounded-2xl shadow-lg shadow-fuchsia-500/20 active:scale-95 transition-transform mt-4"
-                  >
-                    ابدأ النبضة
-                  </button>
-                )}
+            {joinError && (
+              <div className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-100">
+                {joinError}
               </div>
             )}
-          </motion.div>
-        )}
 
-        {(isSpinning ||
-          (spun && sessionStorage.getItem(`spun_${order.id}`))) && (
-          <DallahPhysicalGame
-            order={order}
-            participants={participants}
-            loser={loser}
-            loserIndex={loserIndex}
-            spun={spun}
-            isSpinning={isSpinning}
-            setIsSpinning={setIsSpinning}
-            spin={spin}
-            paymentStatus={paymentStatus}
-            urlName={urlName}
-            mySpinName={mySpinName}
-            mySpinPhone={mySpinPhone}
-            handlePay={handlePay}
-            errorMsg={errorMsg}
-            getPhraseContent={getPhraseContent}
-            normalizeArabicName={normalizeArabicName}
-          />
+            <button
+              onClick={join}
+              className="w-full bg-gradient-to-b from-amber-100 via-amber-300 to-amber-500 text-stone-950 font-black py-4 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_18px_45px_rgba(217,119,6,0.18)]"
+            >
+              <CreditCard className="w-5 h-5" />
+              دخول الاختيار
+            </button>
+          </motion.div>
+        ) : (
+          <div className="space-y-5">
+            <div className="rounded-[26px] border border-white/10 bg-white/[0.055] p-4 flex items-center justify-between gap-3">
+              <div className="text-right">
+                <p className="text-xs font-bold text-stone-400">أنت داخل باسم</p>
+                <p className="text-lg font-black text-amber-100">{mySpinName || urlName || "ضيف"}</p>
+              </div>
+              <button
+                type="button"
+                onClick={shareGame}
+                className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-black text-white flex items-center gap-2 active:scale-95 transition-transform border border-white/10"
+              >
+                <Send className="w-4 h-4 text-amber-200" />
+                دز الرابط
+              </button>
+            </div>
+
+            <DallahPhysicalGame
+              order={order}
+              participants={participants}
+              loser={loser}
+              loserIndex={loserIndex}
+              spun={spun}
+              isSpinning={isSpinning}
+              setIsSpinning={setIsSpinning}
+              spin={spin}
+              paymentStatus={paymentStatus}
+              urlName={urlName}
+              mySpinName={mySpinName}
+              mySpinPhone={mySpinPhone}
+              handlePay={handlePay}
+              errorMsg={errorMsg}
+              getPhraseContent={getPhraseContent}
+              normalizeArabicName={normalizeArabicName}
+            />
+          </div>
         )}
       </div>
     </div>
