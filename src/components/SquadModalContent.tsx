@@ -207,13 +207,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     setIsRegisteringGeo(false);
   };
 
-  const handleRegisterLocation = () => {
+  const saveCurrentLocationForSquad = React.useCallback((options?: { auto?: boolean }) => {
+    if (!squadInfo?.id) return;
     if (!navigator.geolocation) {
-      alert("جهازك لا يدعم نظام تحديد المواقع الجغرافي.");
+      const msg = "جهازك لا يدعم نظام تحديد المواقع الجغرافي.";
+      if (options?.auto) setGeoStatusMsg(msg); else alert(msg);
       return;
     }
     setIsRegisteringGeo(true);
-    setGeoStatusMsg("جاري تثبيت موقع الديوانية الحالي... 📡");
+    setGeoStatusMsg(options?.auto ? "نحاول تثبيت موقع ديوانيتك الحالية تلقائياً... 📡" : "جاري تثبيت موقع الديوانية الحالي... 📡");
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -241,7 +243,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           if (res.ok) {
             setGeoStatusMsg("تم تسجيل موقع الديوانية الجغرافي بنجاح! 🎉");
             setShowResetLocation(false);
-            if (onRefresh) onRefresh();
+            setSquadInfo?.({ ...squadInfo, lat: latitude, lng: longitude });
+            if (onRefresh) window.setTimeout(onRefresh, 100);
           } else {
             setGeoStatusMsg("فشل التسجيل. يرجى المحاولة لاحقاً.");
           }
@@ -250,13 +253,26 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         }
         setIsRegisteringGeo(false);
       },
-      (error) => {
+      () => {
         setIsRegisteringGeo(false);
-        setGeoStatusMsg("تعذر الوصول للموقع. فعّل السماح للموقع من المتصفح، أو استخدم الإدخال اليدوي بالأسفل.");
+        setShowResetLocation(true);
+        setGeoStatusMsg("الموقع يحتاج سماح. فعّل اللوكيشن من المتصفح أو استخدم الإدخال اليدوي لتثبيت ديوانيتك الحالية.");
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  };
+  }, [squadInfo, customerPhone, onRefresh, setSquadInfo]);
+
+  const handleRegisterLocation = () => saveCurrentLocationForSquad();
+
+  const autoLocationSquadRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    const squadId = squadInfo?.id ? String(squadInfo.id) : "";
+    const isOwnerOfCurrent = Boolean(squadInfo?.phone && customerPhone && cleanPhoneLocal(squadInfo.phone) === cleanPhoneLocal(customerPhone));
+    const needsLocation = squadInfo?.lat === undefined || squadInfo?.lng === undefined;
+    if (!squadId || !isOwnerOfCurrent || !needsLocation || autoLocationSquadRef.current === squadId) return;
+    autoLocationSquadRef.current = squadId;
+    saveCurrentLocationForSquad({ auto: true });
+  }, [squadInfo?.id, squadInfo?.phone, squadInfo?.lat, squadInfo?.lng, customerPhone, saveCurrentLocationForSquad]);
 
   const handleApproveRejectRequest = async (targetPhone: string, approved: boolean) => {
     setIsApproving(prev => ({ ...prev, [targetPhone]: true }));
@@ -1007,8 +1023,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                <button 
                                   onClick={() => {
                                      if (!isActive) {
-                                        setActiveSquadId(sq.id);
-                                        if (onRefresh) onRefresh();
+                                        const nextSquadId = String(sq.id);
+                                        try { localStorage.setItem("squadId", nextSquadId); } catch(e) {}
+                                        setActiveSquadId(nextSquadId);
+                                        setSquadInfo?.({ ...sq, memberData: { ...(sq.memberData || {}), phone: customerPhone, name: customerName || sq.memberData?.name || "عميل", isMember: true } });
                                      }
                                   }}
                                   disabled={isActive}

@@ -32,6 +32,7 @@ import {
   PartyPopper,
   Crown,
   Users,
+  BellRing,
   LogIn,
 } from "lucide-react";
 import { Product, OrderItem, Order, Address, Region } from "../types";
@@ -517,6 +518,7 @@ export default function CustomerSite() {
   const [activeSquadTab, setActiveSquadTab] = useState<"overview"|"orders"|"notifications"|"location"|"leaderboard"|"tiers">("overview");
   const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
   const squadSessionTokenRef = useRef(0);
+  const latestSquadRequestRef = useRef({ phone: "", squadId: "" });
   const [isRadarBannerCollapsed, setIsRadarBannerCollapsed] = useState(false);
   const [isNearbyRadarPanelCollapsed, setIsNearbyRadarPanelCollapsed] = useState(false);
   const hasAnimatedRadarBannerRef = useRef(false);
@@ -545,6 +547,7 @@ export default function CustomerSite() {
        if (!res.ok) return;
        const data = await res.json();
        if (requestToken !== squadSessionTokenRef.current) return;
+       if (latestSquadRequestRef.current.phone !== requestPhone || latestSquadRequestRef.current.squadId !== requestSquadId) return;
 
        setTopSquads(data.topSquads || []);
        setActiveSquads(data.activeSquads || []);
@@ -897,14 +900,15 @@ export default function CustomerSite() {
      setRadarLoadingMap(prev => ({ ...prev, [targetSquad.id]: false }));
   };
 
-  const handleOwnerJoinDecision = async (targetPhone: string, approved: boolean) => {
-     if (!targetPhone || !squadInfo?.id) return;
+  const handleOwnerJoinDecision = async (targetPhone: string, approved: boolean, targetSquadId?: string) => {
+     const decisionSquadId = targetSquadId || squadInfo?.id;
+     if (!targetPhone || !decisionSquadId) return;
      setOwnerJoinDecisionLoading(prev => ({ ...prev, [targetPhone]: true }));
      try {
        const res = await fetch("/api/squad-geofence-approve-request", {
          method: "POST",
          headers: { "Content-Type": "application/json" },
-         body: JSON.stringify({ phone: targetPhone, squadId: squadInfo.id, approved })
+         body: JSON.stringify({ phone: targetPhone, squadId: decisionSquadId, approved })
        });
        if (res.ok) {
          await fetchSquadGamification();
@@ -1010,10 +1014,12 @@ export default function CustomerSite() {
   }, []); // Run only once on mount
 
   useEffect(() => {
+    squadSessionTokenRef.current += 1;
+    latestSquadRequestRef.current = { phone: customerPhone, squadId: activeSquadId };
     if (activeSquadId) {
        localStorage.setItem("squadId", activeSquadId);
     }
-  }, [activeSquadId]);
+  }, [activeSquadId, customerPhone]);
 
   // Fetch gamification info
   useEffect(() => {
@@ -4279,7 +4285,7 @@ export default function CustomerSite() {
 
         {/* تنبيه عام للمعزب عند وصول طلب انضمام حتى خارج صفحة الديوانية */}
         <AnimatePresence>
-          {customerPhone && squadInfo && cleanPhoneForSquad(squadInfo?.phone || "") === cleanPhoneForSquad(customerPhone || "") && pendingGeofenceRequests.length > 0 && (
+          {customerPhone && pendingGeofenceRequests.length > 0 && (
             isOwnerJoinAlertCollapsed ? (
               <motion.button
                 key="owner-join-alert-collapsed"
@@ -4294,7 +4300,7 @@ export default function CustomerSite() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
                 </span>
-                <Users className="w-5 h-5" />
+                <BellRing className="w-5 h-5" />
               </motion.button>
             ) : (
               <motion.div
@@ -4329,20 +4335,21 @@ export default function CustomerSite() {
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-500/10 px-2 py-0.5 rounded-lg">يبعد {req.distance ? normalizeDigits(String(req.distance)) : "قريب"}م</span>
                         <div className="text-right">
+                          {req.squadName && <div className="text-[9px] font-black text-amber-300 mb-0.5">ديوانية {req.squadName}</div>}
                           <div className="text-xs font-black text-white">{req.name || "عضو قريب"}</div>
                           <div className="text-[10px] font-bold text-slate-400 font-mono">{req.phone}</div>
                         </div>
                       </div>
                       <div className="flex gap-2 justify-end">
                         <button
-                          onClick={() => handleOwnerJoinDecision(req.phone, false)}
+                          onClick={() => handleOwnerJoinDecision(req.phone, false, req.squadId)}
                           disabled={ownerJoinDecisionLoading[req.phone]}
                           className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 text-[10px] font-black px-3 py-2 rounded-xl active:scale-95"
                         >
                           رفض
                         </button>
                         <button
-                          onClick={() => handleOwnerJoinDecision(req.phone, true)}
+                          onClick={() => handleOwnerJoinDecision(req.phone, true, req.squadId)}
                           disabled={ownerJoinDecisionLoading[req.phone]}
                           className="bg-emerald-400 hover:bg-emerald-500 text-slate-950 text-[10px] font-black px-4 py-2 rounded-xl active:scale-95 shadow-sm"
                         >

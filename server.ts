@@ -1022,9 +1022,16 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const activeSquadsWithCoords = enrichedSquads.filter((s: any) => s.lat !== undefined && s.lng !== undefined);
       
       let pendingGeofenceRequests: any[] = [];
-      if (mySquad && cleanQPhone && cleanPhone(mySquad.phone || "") === cleanQPhone) {
-         // The current user is the owner/king of this squad! Show them pending requests for approval.
-         pendingGeofenceRequests = allGeofenceRequests.filter((r: any) => String(r.squadId) === String(mySquad.id) && r.status === "pending");
+      if (cleanQPhone) {
+         // Show owner join requests for every diwaniya owned by this phone, even if another diwaniya is currently active.
+         const ownedSquads = enrichedSquads.filter((sq: any) => cleanPhone(sq.phone || "") === cleanQPhone);
+         const ownedSquadIds = new Set(ownedSquads.map((sq: any) => String(sq.id)));
+         pendingGeofenceRequests = allGeofenceRequests
+           .filter((r: any) => ownedSquadIds.has(String(r.squadId)) && r.status === "pending")
+           .map((r: any) => {
+             const reqSquad = ownedSquads.find((sq: any) => String(sq.id) === String(r.squadId));
+             return { ...r, squadName: reqSquad?.name || r.squadName || "" };
+           });
       }
 
       // Check user's own requests
