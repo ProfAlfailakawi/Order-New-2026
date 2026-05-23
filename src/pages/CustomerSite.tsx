@@ -267,6 +267,9 @@ const normalizeProductForAddons = (product: any) => {
   };
 };
 
+const getAddonKey = (addon: any) =>
+  String(addon?.id || addon?.addonId || addon?.name || "");
+
 export default function CustomerSite() {
   const [settings, setSettings] = useState<any>(() => {
     try {
@@ -4876,14 +4879,20 @@ function ProductModal({
   const productAddons = useMemo(() => normalizeAddons((product as any).addons), [product]);
   const normalizedProduct = useMemo(() => ({ ...(product as any), addons: productAddons }), [product, productAddons]);
   const [selectedAddonsIds, setSelectedAddonsIds] = useState<string[]>(() => {
-    return productAddons.filter((a: any) => isAddonRequired(a) || a.quantityRule?.mode === 'auto').map((a: any) => a.id);
+    return productAddons
+      .filter((a: any) => {
+        const limits = getQuantityRuleLimits(a, 1);
+        return limits.available && (isAddonRequired(a) || a.quantityRule?.mode === 'auto' || a.quantityRule?.mode === 'required');
+      })
+      .map((a: any) => getAddonKey(a));
   });
   const [addonQuantities, setAddonQuantities] = useState<Record<string, number>>(() => {
     const qs: Record<string, number> = {};
     productAddons.forEach((a: any) => {
-      if (isAddonRequired(a) || a.quantityRule?.mode === 'auto') {
-        const limits = getQuantityRuleLimits(a, 1);
-        qs[a.id] = Math.max(limits.min, a.quantityRule?.mode === 'auto' ? limits.suggested : 1);
+      const limits = getQuantityRuleLimits(a, 1);
+      const key = getAddonKey(a);
+      if (limits.available && (isAddonRequired(a) || a.quantityRule?.mode === 'auto' || a.quantityRule?.mode === 'required')) {
+        qs[key] = Math.max(limits.min, a.quantityRule?.mode === 'auto' ? limits.suggested : 1);
       }
     });
     return qs;
@@ -4897,23 +4906,25 @@ function ProductModal({
           const limits = getQuantityRuleLimits(a, quantity);
           return limits.available && (isAddonRequired(a) || a.quantityRule?.mode === 'auto' || a.quantityRule?.mode === 'required');
         })
-        .map((a: any) => a.id);
-      return Array.from(new Set([...prev, ...forced]));
+        .map((a: any) => getAddonKey(a));
+      const available = new Set(productAddons.filter((a: any) => getQuantityRuleLimits(a, quantity).available).map((a: any) => getAddonKey(a)));
+      return Array.from(new Set([...prev.filter((id) => available.has(id)), ...forced]));
     });
     setAddonQuantities((prev) => {
       const next = { ...prev };
       productAddons.forEach((a: any) => {
         const limits = getQuantityRuleLimits(a, quantity);
+        const key = getAddonKey(a);
         if (!limits.available) {
-          delete next[a.id];
+          delete next[key];
           return;
         }
         const mustStay = isAddonRequired(a) || a.quantityRule?.mode === 'auto' || a.quantityRule?.mode === 'required';
         if (mustStay) {
-          const desired = a.quantityRule?.mode === 'auto' ? limits.suggested : Math.max(limits.min, next[a.id] ?? 1);
-          next[a.id] = Math.max(limits.min, Math.min(limits.max, desired));
-        } else if (next[a.id] !== undefined) {
-          next[a.id] = Math.max(limits.min, Math.min(limits.max, next[a.id]));
+          const desired = a.quantityRule?.mode === 'auto' ? limits.suggested : Math.max(limits.min, next[key] ?? 1);
+          next[key] = Math.max(limits.min, Math.min(limits.max, desired));
+        } else if (next[key] !== undefined) {
+          next[key] = Math.max(limits.min, Math.min(limits.max, next[key]));
         }
       });
       return next;
@@ -4944,7 +4955,7 @@ function ProductModal({
   };
 
   const toggleAddon = (addonId: string) => {
-    const addon = productAddons.find((a: any) => a.id === addonId);
+    const addon = productAddons.find((a: any) => getAddonKey(a) === addonId);
     if (!addon) return;
     const limits = getQuantityRuleLimits(addon, quantity);
     if (!limits.available) return;
@@ -4960,18 +4971,32 @@ function ProductModal({
       setAddonQuantities(newQs);
     } else {
       setSelectedAddonsIds([...selectedAddonsIds, addonId]);
-      setAddonQuantities({ ...addonQuantities, [addonId]: Math.max(limits.min, 1) });
+      setAddonQuantities({ ...addonQuantities, [addonId]: Math.max(limits.min, addon.quantityRule?.mode === 'auto' ? limits.suggested : 1) });
     }
   };
 
   const updateAddonQty = (addonId: string, delta: number) => {
-    const addon = productAddons.find((a: any) => a.id === addonId);
+    const addon = productAddons.find((a: any) => getAddonKey(a) === addonId);
     if (!addon) return;
     const limits = getQuantityRuleLimits(addon, quantity);
     if (!limits.available) return;
     const current = addonQuantities[addonId] ?? Math.max(limits.min, 1);
     const next = Math.max(limits.min, Math.min(limits.max, current + delta));
     setAddonQuantities({ ...addonQuantities, [addonId]: next });
+  };
+
+  const canAddProduct = () => {
+    for (const addon of productAddons) {
+      const key = getAddonKey(addon);
+      const limits = getQuantityRuleLimits(addon, quantity);
+      const selected = selectedAddonsIds.includes(key);
+      const qty = Number(addonQuantities[key] || 0);
+
+      if (!limits.available && selected) return false;
+      if (limits.available && selected && (qty < limits.min || qty > limits.max)) return false;
+      if (limits.available && (isAddonRequired(addon) || addon.quantityRule?.mode === 'required') && qty < limits.min) return false;
+    }
+    return true;
   };
 
   return (
@@ -5163,7 +5188,7 @@ function ProductModal({
 
           {productAddons.length > 0 && (
             <div className="space-y-4">
-              {productAddons.filter((a: any) => !selectedAddonsIds.includes(a.id)).slice(0, 1).map((recommendedAddon: any) => {
+              {productAddons.filter((a: any) => getQuantityRuleLimits(a, quantity).available && !selectedAddonsIds.includes(getAddonKey(a))).slice(0, 1).map((recommendedAddon: any) => {
                 const creativeMessages = [
                   // عبارات تشويقية
                   `أضف لمسة سحرية لطلبك مع "${recommendedAddon.name}" ✨`,
@@ -5216,18 +5241,21 @@ function ProductModal({
                 </label>
               <div className="product-addons-luxury grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {productAddons.map((addon: any) => {
-                  const isSelected = selectedAddonsIds.includes(addon.id);
+                  const addonKey = getAddonKey(addon);
+                  const isSelected = selectedAddonsIds.includes(addonKey);
                   const limits = getQuantityRuleLimits(addon, quantity);
                   const isMandatory = isAddonRequired(addon) || addon.quantityRule?.mode === 'auto';
                   const effectiveSelected = limits.available && (isSelected || isMandatory);
-                  const currentAddonQty = addonQuantities[addon.id] ?? Math.max(limits.min, 1);
+                  const currentAddonQty = addonQuantities[addonKey] ?? Math.max(limits.min, 1);
                   return (
                     <div
-                      key={addon.id}
-                      onClick={() => toggleAddon(addon.id)}
+                      key={addonKey}
+                      onClick={() => toggleAddon(addonKey)}
                       className={cn(
                         "addon-lux-card flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer",
-                        effectiveSelected
+                        !limits.available
+                          ? "border-stone-100 bg-stone-50/70 opacity-60 cursor-not-allowed"
+                          : effectiveSelected
                           ? isMandatory ? "addon-lux-card-selected addon-lux-card-required border-accent bg-accent/10 cursor-default opacity-90" : "addon-lux-card-selected border-accent bg-accent/5"
                           : "border-stone-50 bg-stone-50/30 hover:border-stone-100",
                       )}
@@ -5258,9 +5286,9 @@ function ProductModal({
                       <div className="flex items-center gap-2">
                         {effectiveSelected && (
                            <div className="addon-lux-qty flex items-center gap-2 bg-white rounded-md border border-stone-200" onClick={e => e.stopPropagation()}>
-                              <button disabled={currentAddonQty <= limits.min} className="px-2 text-stone-400 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addon.id, -1)}>-</button>
+                              <button disabled={!limits.available || currentAddonQty <= limits.min} className="px-2 text-stone-400 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addonKey, -1)}>-</button>
                               <span className="addon-lux-qty-value text-xs font-bold w-4 text-center text-brand">{currentAddonQty}</span>
-                              <button disabled={currentAddonQty >= limits.max} className="px-2 text-stone-400 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addon.id, 1)}>+</button>
+                              <button disabled={!limits.available || currentAddonQty >= limits.max} className="px-2 text-stone-400 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addonKey, 1)}>+</button>
                            </div>
                         )}
                         {addon.price > 0 && !addon.isHiddenPrice && (
@@ -5279,6 +5307,12 @@ function ProductModal({
                         )}
                         {addon.calculationType === 'per_x_items' && (
                             <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1 rounded block sm:inline whitespace-nowrap">كل {addon.xItemsThreshold || 1} أطباق تحسب مرة</span>
+                        )}
+                        {!limits.available && (
+                            <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1 rounded block sm:inline whitespace-nowrap">متاحة من كمية {limits.minProductQty}+</span>
+                        )}
+                        {limits.available && addon.quantityRule?.enabled && (
+                            <span className="text-[9px] font-bold text-stone-500 bg-stone-50 border border-stone-100 px-1 rounded block sm:inline whitespace-nowrap">المقترح {limits.suggested}</span>
                         )}
                       </div>
                     </div>
@@ -5333,7 +5367,9 @@ function ProductModal({
             </div>
             <motion.button
               whileTap={{ scale: 0.95 }}
-              onClick={(e) =>
+              disabled={!canAddProduct()}
+              onClick={(e) => {
+                if (!canAddProduct()) return;
                 onAdd(
                   {
                     id: "",
@@ -5356,9 +5392,9 @@ function ProductModal({
                     product: normalizeProductForAddons(product),
                   },
                   e,
-                )
-              }
-              className="flex-grow bg-brand text-white p-5 sm:p-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all shadow-xl text-xl"
+                );
+              }}
+              className="flex-grow bg-brand text-white p-5 sm:p-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all shadow-xl text-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span>حطه بالسلة</span>
               <span className="w-px h-6 bg-white/30"></span>

@@ -23,29 +23,31 @@ export function normalizeAddons(raw: any): any[] {
   return [];
 }
 
+const getAddonKey = (addon: any) =>
+  String(addon?.id || addon?.addonId || addon?.name || "");
+
 export function getQuantityRuleLimits(addon: any, productQty: number) {
   const rule = addon?.quantityRule || {};
   const baseMin = addon?.isRequired ? Math.max(1, Number(addon?.minQuantity || 1)) : Number(addon?.minQuantity || 0);
   const baseMax = addon?.maxQuantity !== undefined && addon?.maxQuantity !== null && addon?.maxQuantity !== '' ? Number(addon.maxQuantity) : 999;
 
   if (!rule?.enabled) {
-    return { available: true, min: baseMin, max: Math.max(baseMin, baseMax), suggested: baseMin, message: '' };
+    return { available: true, min: baseMin, max: Math.max(baseMin, baseMax), suggested: Math.max(baseMin, addon?.calculationType === 'fixed' ? 1 : baseMin), minProductQty: 1, message: '' };
   }
 
   const minProductQty = Math.max(1, Number(rule.minProductQty || 1));
   const perAddon = Math.max(1, Number(rule.maxProductQtyPerAddon || 1));
 
   if (Number(productQty || 0) < minProductQty) {
-    return { available: false, min: 0, max: 0, suggested: 0, message: `متاحة عند طلب ${minProductQty} أو أكثر` };
+    return { available: false, min: 0, max: 0, suggested: 0, minProductQty, message: `متاحة عند طلب ${minProductQty} أو أكثر` };
   }
 
-  // For per-addon rules, only count complete groups when suggesting a quantity.
-  // Using Math.floor avoids overestimating for partial quantities. Always return at least 1.
-  const suggested = Math.max(1, Math.floor(Number(productQty || 0) / perAddon));
-  const min = rule.mode === 'required' ? Math.max(baseMin, suggested) : baseMin;
-  const max = Math.max(min, Math.min(baseMax, suggested));
+  const suggestedRaw = Math.max(1, Math.ceil(Number(productQty || 0) / perAddon));
+  const min = rule.mode === 'required' ? Math.max(baseMin, suggestedRaw) : baseMin;
+  const max = Math.max(min, baseMax);
+  const suggested = Math.min(max, Math.max(min, suggestedRaw));
 
-  return { available: true, min, max, suggested, message: `كل إضافة تغطي حتى ${perAddon}` };
+  return { available: true, min, max, suggested, minProductQty, message: `كل إضافة تغطي حتى ${perAddon}` };
 }
 
 export function calculateItemAddons(item: OrderItem): OrderItemAddon[] {
@@ -65,13 +67,14 @@ export function calculateItemAddons(item: OrderItem): OrderItemAddon[] {
         addon.isRequired ||
         addon.quantityRule?.mode === 'auto' ||
         addon.quantityRule?.mode === 'required' ||
-        (item.selectedAddonsIds && item.selectedAddonsIds.includes(addon.id))
+        (item.selectedAddonsIds && item.selectedAddonsIds.includes(getAddonKey(addon)))
       );
     })
     .map((addon: any) => {
       const limits = getQuantityRuleLimits(addon, item.quantity || 1);
       let quantity = 0;
-      const customQty = item.addonQuantities && item.addonQuantities[addon.id] !== undefined ? Number(item.addonQuantities[addon.id]) : null;
+      const addonKey = getAddonKey(addon);
+      const customQty = item.addonQuantities && item.addonQuantities[addonKey] !== undefined ? Number(item.addonQuantities[addonKey]) : null;
 
       if (customQty !== null) {
         quantity = customQty;
@@ -100,7 +103,7 @@ export function calculateItemAddons(item: OrderItem): OrderItemAddon[] {
       }
 
       return {
-        addonId: addon.id,
+        addonId: addonKey,
         name: addon.name,
         price: addon.price,
         cost: addon.cost,
