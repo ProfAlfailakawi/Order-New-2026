@@ -2417,3 +2417,123 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
     border-radius: 18px !important;
   }
 }
+
+/* Order18 targeted polish: product menu card image/name/notes without changing card size */
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal){
+  grid-template-columns:54px minmax(0,1fr)!important;
+  min-height:142px!important;
+  padding:14px!important;
+  gap:10px!important;
+  align-items:center!important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) > .flex-shrink-0{
+  grid-column:1!important;
+  grid-row:1!important;
+  width:46px!important;
+  height:100%!important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .orser-product-content{
+  grid-column:2!important;
+  grid-row:1!important;
+  min-width:0!important;
+  width:100%!important;
+  padding-left:0!important;
+  align-items:stretch!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-title{
+  display:-webkit-box!important;
+  -webkit-line-clamp:2!important;
+  -webkit-box-orient:vertical!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  max-width:100%!important;
+  min-height:2.35em!important;
+  margin:0 0 8px!important;
+  font-size:clamp(1rem,1.55vw,1.18rem)!important;
+  line-height:1.18!important;
+  letter-spacing:-.01em!important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-media-frame{
+  width:100%!important;
+  max-width:none!important;
+  min-height:82px!important;
+  padding:7px 10px 18px!important;
+  border-radius:24px!important;
+  overflow:visible!important;
+  background:linear-gradient(180deg,#fff,#fffaf2)!important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-media-frame .menu-product-image{
+  width:min(138px,86%)!important;
+  height:66px!important;
+  margin-bottom:0!important;
+  border:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  border-radius:18px!important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-media-frame .menu-product-img,
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-media-frame img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  padding:0!important;
+  border-radius:18px!important;
+  background:transparent!important;
+  transform:scale(1.08)!important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-media-frame .absolute.-bottom-3\.5{
+  bottom:-12px!important;
+  padding:5px 13px!important;
+  border-radius:999px!important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-notes-soft{
+  width:100%!important;
+  max-width:100%!important;
+  margin-top:18px!important;
+  border-radius:14px!important;
+  padding:6px 9px!important;
+  justify-content:center!important;
+  background:rgba(254,242,242,.62)!important;
+  border-color:rgba(254,202,202,.55)!important;
+  box-shadow:none!important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-notes-soft p{
+  white-space:normal!important;
+  display:-webkit-box!important;
+  -webkit-line-clamp:2!important;
+  -webkit-box-orient:vertical!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  font-size:10px!important;
+  line-height:1.35!important;
+  font-weight:650!important;
+  color:#b45309!important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-notes-soft svg{
+  width:12px!important;
+  height:12px!important;
+  color:#d97706!important;
+}
+.payment-method-card-wahag span:last-child{
+  line-height:1.45!important;
+  max-width:230px!important;
+  text-transform:none!important;
+}
+@media(max-width:640px){
+  .category-signature-card .menu-product-card:not(.menu-product-card-horizontal){
+    grid-template-columns:50px minmax(0,1fr)!important;
+    min-height:136px!important;
+    padding:12px!important;
+    gap:9px!important;
+  }
+  .category-signature-card .menu-product-card:not(.menu-product-card-horizontal) > .flex-shrink-0{width:44px!important;}
+  .category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-title{font-size:1.02rem!important;margin-bottom:7px!important;}
+  .category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-media-frame{min-height:76px!important;padding:6px 8px 17px!important;border-radius:22px!important;}
+  .category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-media-frame .menu-product-image{width:min(126px,88%)!important;height:60px!important;}
+  .category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-notes-soft{margin-top:16px!important;padding:5px 8px!important;}
+}

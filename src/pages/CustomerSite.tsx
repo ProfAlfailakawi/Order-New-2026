@@ -4467,16 +4467,16 @@ const ChefWhisperCard = ({
               </div>
 
               {/* Center Content: Title over Image over Price over Notes */}
-              <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10 py-1 pl-4">
+              <div className="orser-product-content flex-1 flex flex-col items-center justify-center text-center relative z-10 py-1 pl-4">
                 {/* 1. Title */}
-                <h3 className="font-black text-[17px] sm:text-lg text-brand leading-snug tracking-tight mb-3" style={{ wordBreak: "break-word" }}>
+                <h3 className="product-title font-black text-[17px] sm:text-lg text-brand leading-snug tracking-tight mb-3" style={{ wordBreak: "break-word" }}>
                   {product.name}
                 </h3>
                 
                 {/* The Box wrapping Image and Price */}
-                <div className="relative w-full max-w-[220px] flex flex-col items-center border border-stone-200/60 rounded-[28px] p-4 bg-gradient-to-b from-white to-stone-50/30">
+                <div className="product-media-frame relative w-full max-w-[220px] flex flex-col items-center border border-stone-200/60 rounded-[28px] p-4 bg-gradient-to-b from-white to-stone-50/30">
                   {/* 2. Image */}
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 flex items-center justify-center z-10 mb-2">
+                  <div className="menu-product-image relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 flex items-center justify-center z-10 mb-2">
                     {isHot && <SizzlingSteam />}
                     <img
                       referrerPolicy="no-referrer"
@@ -4491,7 +4491,7 @@ const ChefWhisperCard = ({
                         }
                       }}
                       alt={product.name}
-                      className="w-full h-full object-contain transform hover:scale-110 transition-transform relative z-0"
+                      className="menu-product-img w-full h-full object-contain transform hover:scale-110 transition-transform relative z-0"
                     />
                   </div>
 
@@ -4508,7 +4508,7 @@ const ChefWhisperCard = ({
 
                 {/* 4. Notes */}
                 {product.preparationInstructions && (
-                  <div className="mt-5 flex items-center gap-1.5 px-4 py-1.5 bg-red-50 border border-red-100/50 rounded-full shadow-[0_2px_10px_rgba(239,68,68,0.05)] w-max max-w-full z-10">
+                  <div className="product-notes-soft mt-5 flex items-center gap-1.5 px-4 py-1.5 bg-red-50 border border-red-100/50 rounded-full shadow-[0_2px_10px_rgba(239,68,68,0.05)] w-max max-w-full z-10">
                     <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
                     <p className="text-[11px] text-red-600 font-extrabold truncate">
                       {product.preparationInstructions}
@@ -6129,8 +6129,8 @@ function CheckoutOverlay({
                              <PartyPopper className="w-6 h-6 text-white" />
                            </div>
                            <div className="flex flex-col items-start gap-1">
-                             <span className="text-[17px]">وهق غيرك 🎰</span>
-                             <span className="text-[10px] font-medium opacity-80 uppercase tracking-widest">الخاسر باللعبة يدفع الفاتورة!</span>
+                             <span className="text-[17px]">وهّق غيرك 🎰</span>
+                             <span className="text-[10px] font-medium opacity-90 tracking-wide">دخلوا أسماءكم… والنظام يختار من يتحمّل الطلب</span>
                            </div>
                         </div>
                       </button>
