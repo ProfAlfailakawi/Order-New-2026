@@ -506,6 +506,13 @@ export default function CustomerSite() {
        setPendingGeofenceRequests(data.pendingGeofenceRequests || []);
        setActiveSquads(data.activeSquads || []);
        setMyGeofenceRequests(data.myGeofenceRequests || []);
+       if (data.mySquad && !activeSquadId) {
+         const resolvedId = String(data.mySquad.id || "");
+         if (resolvedId) {
+           setActiveSquadId(resolvedId);
+           try { localStorage.setItem("squadId", resolvedId); } catch(e) {}
+         }
+       }
        if (data.mySquad || activeSquadId) {
          if (data.myMemberData?.name && data.myMemberData.name !== "عميل") {
             setCustomerName(prev => prev || data.myMemberData.name);
@@ -515,6 +522,8 @@ export default function CustomerSite() {
             rank: data.myRank,
             memberData: data.myMemberData
          } : null);
+       } else if (!data.mySquad) {
+         setSquadInfo(null);
        }
     } catch(e) {}
   }, [customerPhone, activeSquadId]);
