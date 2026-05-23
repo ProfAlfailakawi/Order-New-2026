@@ -351,28 +351,6 @@ function cleanPhone(phone) {
   return cleaned;
 }
 
-function normalizeInviteCode(value: any) {
-  return String(value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-}
-
-function makeSquadInviteCode(id: any, name: any) {
-  const base = normalizeInviteCode(String(name || "DIWANIYA").slice(0, 3)) || "DW";
-  return `${base}${String(id || Date.now()).slice(-5)}`.toUpperCase();
-}
-
-function isInsideKuwait(lat: number, lng: number) {
-  return lat >= 28.45 && lat <= 30.1 && lng >= 46.45 && lng <= 48.65;
-}
-
-function resolveSquadIndex(squads: any[], key: any) {
-  const requested = String(key || "");
-  const code = normalizeInviteCode(key);
-  return squads.findIndex((s: any) =>
-    String(s.id) === requested ||
-    normalizeInviteCode(s.inviteCode || s.code) === code
-  );
-}
-
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
@@ -951,7 +929,6 @@ app.get("/api/debug/order/:id", async (req, res) => {
          const computedTier = getTierForPoints(teamPoints);
          return {
             ...sq,
-            inviteCode: sq.inviteCode || sq.code || makeSquadInviteCode(sq.id, sq.name),
             points: teamPoints,
             totalPoints: teamPoints,
             teamPoints,
@@ -966,10 +943,6 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
       const cleanQPhone = phone ? cleanPhone(phone as string) : null;
       let joinedSquadId = squadId ? String(squadId) : null;
-      if (joinedSquadId) {
-         const requestedSquad = enrichedSquads.find((sq: any) => String(sq.id) === String(joinedSquadId) || normalizeInviteCode(sq.inviteCode || sq.code) === normalizeInviteCode(joinedSquadId));
-         if (requestedSquad) joinedSquadId = String(requestedSquad.id);
-      }
       let userSquads: any[] = [];
 
       if (cleanQPhone) {
@@ -980,7 +953,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
          
          // If a squadId was requested, check if it's valid
          if (joinedSquadId) {
-             // If not a member of requested, keep the requested one so they can view/join it.
+             const isMemberOfRequested = userSquads.some((sq: any) => String(sq.id) === joinedSquadId);
+             // If not a member of requested, but is a member of others, maybe keep the requested one so they can view/join it.
          } else if (userSquads.length > 0) {
              // Auto-select the first one if no squadId requested
              joinedSquadId = String(userSquads[0].id);
@@ -1017,6 +991,18 @@ app.get("/api/debug/order/:id", async (req, res) => {
       // Check user's own requests
       const myGeofenceRequests = cleanQPhone ? allGeofenceRequests.filter((r: any) => cleanPhone(r.phone) === cleanQPhone) : [];
 
+      const allPresence = Array.isArray(data.squadPresence) ? data.squadPresence : [];
+      const squadPresence = mySquad ? allPresence.filter((p: any) => String(p.squadId) === String(mySquad.id)) : [];
+      const allGroupOrders = Array.isArray(data.squadGroupOrders) ? data.squadGroupOrders : [];
+      const activeGroupOrder = mySquad ? allGroupOrders.find((g: any) => String(g.squadId) === String(mySquad.id) && g.status === "open") || null : null;
+      const tempCodes = mySquad ? (Array.isArray(data.squadTempCodes) ? data.squadTempCodes : []).filter((c: any) => String(c.squadId) === String(mySquad.id) && new Date(c.expiresAt || 0).getTime() > Date.now()) : [];
+      const squadOrders = mySquad ? (Array.isArray(data.orders) ? data.orders : []).filter((o: any) => String(o.squadId || o.squadID || "") === String(mySquad.id)).slice(-10).reverse() : [];
+      const productCounter: Record<string, number> = {};
+      squadOrders.forEach((o: any) => (o.items || o.cart || []).forEach((it: any) => { const n = it.name || it.title; if (n) productCounter[n] = (productCounter[n] || 0) + Number(it.quantity || 1); }));
+      const favoriteItemName = Object.entries(productCounter).sort((a:any,b:any)=>b[1]-a[1])[0]?.[0] || "";
+      const usualOrder = squadOrders[0] ? { items: squadOrders[0].items || squadOrders[0].cart || [], total: squadOrders[0].total || squadOrders[0].totalAmount || 0, orderId: squadOrders[0].id || squadOrders[0].orderId } : null;
+      const squadBeautifulLog = mySquad ? { recentOrders: squadOrders.slice(0, 5), favoriteItemName, ordersCount: squadOrders.length, presentCount: squadPresence.length, savings: Number(mySquad.savings || mySquad.totalSavings || 0) } : null;
+
       res.json({
          topSquads,
          mySquad,
@@ -1025,7 +1011,12 @@ app.get("/api/debug/order/:id", async (req, res) => {
          userSquads,
          activeSquads: activeSquadsWithCoords,
          pendingGeofenceRequests,
-         myGeofenceRequests
+         myGeofenceRequests,
+         squadPresence,
+         activeGroupOrder,
+         tempCodes,
+         usualOrder,
+         squadBeautifulLog
       });
     } catch(e) {
       res.status(500).json({ error: String(e) });
@@ -1033,21 +1024,16 @@ app.get("/api/debug/order/:id", async (req, res) => {
   });
 
   app.post("/api/squad-set-location", async (req, res) => {
-    const { squadId, phone, lat, lng, accuracy } = req.body;
+    const { squadId, phone, lat, lng } = req.body;
     if (!squadId || lat === undefined || lng === undefined) {
       return res.status(400).json({ error: "Missing squadId, lat, or lng" });
-    }
-    const numLat = Number(lat);
-    const numLng = Number(lng);
-    if (!Number.isFinite(numLat) || !Number.isFinite(numLng) || !isInsideKuwait(numLat, numLng)) {
-      return res.status(400).json({ error: "Location must be valid and inside Kuwait" });
     }
     try {
       const ok = await updateAppDataAtomically((current: any) => {
         const squads = Array.isArray(current.squads) ? [...current.squads] : [];
-        const idx = resolveSquadIndex(squads, squadId);
+        const idx = squads.findIndex((s: any) => String(s.id) === String(squadId));
         if (idx > -1) {
-          squads[idx] = { ...squads[idx], lat: numLat, lng: numLng, geoAccuracy: Number(accuracy || 0), locationUpdatedAt: new Date().toISOString(), inviteCode: squads[idx].inviteCode || makeSquadInviteCode(squads[idx].id, squads[idx].name) };
+          squads[idx] = { ...squads[idx], lat: Number(lat), lng: Number(lng) };
         }
         return { squads };
       });
@@ -1059,7 +1045,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   });
 
   app.post("/api/squad-geofence-join-request", async (req, res) => {
-    const { name, phone, squadId, distance, accuracy } = req.body;
+    const { name, phone, squadId, distance } = req.body;
     if (!phone || !squadId) {
       return res.status(400).json({ error: "Missing phone or squadId" });
     }
@@ -1067,19 +1053,15 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const cleanQPhone = cleanPhone(phone);
       const ok = await updateAppDataAtomically((current: any) => {
         const reqs = Array.isArray(current.geofenceJoinRequests) ? [...current.geofenceJoinRequests] : [];
-        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
-        const squadIndex = resolveSquadIndex(squads, squadId);
-        const resolvedSquadId = squadIndex > -1 ? String(squads[squadIndex].id) : String(squadId);
         
         // Remove existing pending/rejected from same user for same squad to overwrite nicely
-        const filtered = reqs.filter((r: any) => !(cleanPhone(r.phone) === cleanQPhone && String(r.squadId) === resolvedSquadId));
+        const filtered = reqs.filter((r: any) => !(cleanPhone(r.phone) === cleanQPhone && String(r.squadId) === String(squadId)));
         
         filtered.push({
           phone,
           name: name || "عضو قريب",
-          squadId: resolvedSquadId,
+          squadId: String(squadId),
           distance: Number(distance || 0),
-          accuracy: Number(accuracy || 0),
           timestamp: new Date().toISOString(),
           status: "pending"
         });
@@ -1102,18 +1084,16 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const squads = Array.isArray(current.squads) ? [...current.squads] : [];
         const customers = Array.isArray(current.customers) ? [...current.customers] : [];
         const reqs = Array.isArray(current.geofenceJoinRequests) ? [...current.geofenceJoinRequests] : [];
-        const resolvedIndexForRequest = resolveSquadIndex(squads, squadId);
-        const resolvedSquadId = resolvedIndexForRequest > -1 ? String(squads[resolvedIndexForRequest].id) : String(squadId);
 
         // Find and update status
-        const rIdx = reqs.findIndex((r: any) => cleanPhone(r.phone) === cleanTargetPhone && String(r.squadId) === resolvedSquadId);
+        const rIdx = reqs.findIndex((r: any) => cleanPhone(r.phone) === cleanTargetPhone && String(r.squadId) === String(squadId));
         const requestObj = rIdx > -1 ? reqs[rIdx] : null;
         if (rIdx > -1) {
           reqs[rIdx] = { ...reqs[rIdx], status: approved ? "approved" : "rejected" };
         }
 
         if (approved) {
-          let fIndex = resolveSquadIndex(squads, squadId);
+          let fIndex = squads.findIndex((s: any) => String(s.id) === String(squadId));
           if (fIndex > -1) {
             const squad = { ...squads[fIndex] };
             squad.membersList = Array.isArray(squad.membersList) ? [...squad.membersList] : [];
@@ -1122,8 +1102,6 @@ app.get("/api/debug/order/:id", async (req, res) => {
               squad.membersList.push({
                 phone: phone,
                 name: (requestObj ? requestObj.name : "") || "عضو قريب",
-                role: "member",
-                title: "عضو الديوانية",
                 points: 0,
                 joinedAt: new Date().toISOString()
               });
@@ -1133,7 +1111,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
             joinedSquad = squad;
 
             // Update customer membership info
-            const membership = { id: squad.id, squadId: squad.id, name: squad.name, role: cleanPhone(squad.phone) === cleanTargetPhone ? "host" : "member", title: cleanPhone(squad.phone) === cleanTargetPhone ? "المعزب" : "عضو الديوانية", inviteCode: squad.inviteCode || makeSquadInviteCode(squad.id, squad.name), joinedAt: new Date().toISOString() };
+            const membership = { id: squad.id, squadId: squad.id, name: squad.name, joinedAt: new Date().toISOString() };
             const cidx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanTargetPhone);
             if (cidx > -1) {
               const ids = new Set([...(customers[cidx].squadIds || []), customers[cidx].squadId].filter(Boolean).map(String));
@@ -1174,58 +1152,112 @@ app.get("/api/debug/order/:id", async (req, res) => {
   });
 
 
-  app.post("/api/squad-leave", async (req, res) => {
-    const { phone, squadId } = req.body;
-    if (!phone || !squadId) return res.status(400).json({ error: "Missing phone or squadId" });
-    try {
-      const cleanQPhone = cleanPhone(phone);
-      let hostBlocked = false;
-      const ok = await updateAppDataAtomically((current: any) => {
-        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
-        const customers = Array.isArray(current.customers) ? [...current.customers] : [];
-        const idx = resolveSquadIndex(squads, squadId);
-        if (idx === -1) return { squads, customers };
 
-        const squad = { ...squads[idx] };
-        if (cleanPhone(squad.phone) === cleanQPhone) {
-          hostBlocked = true;
-          return { squads, customers };
-        }
+  app.post("/api/squad-presence", async (req, res) => {
+    const { squadId, phone, name, action } = req.body || {};
+    if (!squadId || !phone || !action) return res.status(400).json({ error: "Missing squadId, phone, or action" });
+    const cleanTarget = cleanPhone(phone);
+    const now = new Date().toISOString();
+    let presence: any[] = [];
+    const ok = await updateAppDataAtomically((current: any) => {
+      const all = Array.isArray(current.squadPresence) ? [...current.squadPresence] : [];
+      const filtered = all.filter((p: any) => !(String(p.squadId) === String(squadId) && cleanPhone(p.phone) === cleanTarget));
+      if (action === "in") {
+        filtered.push({ squadId: String(squadId), phone: cleanTarget, name: name || "عضو", checkedInAt: now, lastSeenAt: now });
+      }
+      presence = filtered.filter((p: any) => String(p.squadId) === String(squadId));
+      return { squadPresence: filtered };
+    });
+    if (!ok) return res.status(500).json({ error: "Failed to update presence" });
+    res.json({ success: true, presence });
+  });
 
-        squad.membersList = Array.isArray(squad.membersList)
-          ? squad.membersList.filter((m: any) => cleanPhone(m.phone) !== cleanQPhone)
-          : [];
-        squad.members = squad.membersList.length;
-        squads[idx] = squad;
+  app.post("/api/squad-temp-code", async (req, res) => {
+    const { squadId, phone } = req.body || {};
+    if (!squadId || !phone) return res.status(400).json({ error: "Missing squadId or phone" });
+    const code = String(Math.floor(1000 + Math.random() * 9000));
+    const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+    let entry: any = null;
+    const ok = await updateAppDataAtomically((current: any) => {
+      const squads = Array.isArray(current.squads) ? current.squads : [];
+      const squad = squads.find((s: any) => String(s.id) === String(squadId));
+      if (!squad || cleanPhone(squad.phone || "") !== cleanPhone(phone)) return null;
+      const codes = Array.isArray(current.squadTempCodes) ? [...current.squadTempCodes] : [];
+      const fresh = codes.filter((c: any) => !(String(c.squadId) === String(squadId) && cleanPhone(c.ownerPhone || "") === cleanPhone(phone)) && new Date(c.expiresAt || 0).getTime() > Date.now());
+      entry = { squadId: String(squadId), code, ownerPhone: cleanPhone(phone), createdAt: new Date().toISOString(), expiresAt, usedBy: [] };
+      fresh.push(entry);
+      return { squadTempCodes: fresh };
+    });
+    if (!ok || !entry) return res.status(403).json({ error: "Only squad owner can create code" });
+    res.json({ success: true, code, expiresAt });
+  });
 
-        const cidx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanQPhone);
-        if (cidx > -1) {
-          const remainingIds = new Set(
-            [...(customers[cidx].squadIds || []), customers[cidx].squadId]
-              .filter(Boolean)
-              .map(String)
-              .filter((id: string) => id !== String(squad.id))
-          );
-          const remainingMemberships = (customers[cidx].diwaniyaMemberships || [])
-            .filter((m: any) => String(m.squadId || m.id) !== String(squad.id));
-          const nextMembership = remainingMemberships[0];
-          customers[cidx] = {
-            ...customers[cidx],
-            squadIds: [...remainingIds],
-            diwaniyaMemberships: remainingMemberships,
-            squadId: nextMembership ? (nextMembership.squadId || nextMembership.id) : null,
-            diwaniyaName: nextMembership ? nextMembership.name : ""
-          };
-        }
+  app.post("/api/squad-join-temp-code", async (req, res) => {
+    const { code, phone, name } = req.body || {};
+    if (!code || !phone) return res.status(400).json({ error: "Missing code or phone" });
+    const cleanTarget = cleanPhone(phone);
+    let joinedSquad: any = null;
+    const ok = await updateAppDataAtomically((current: any) => {
+      const codes = Array.isArray(current.squadTempCodes) ? [...current.squadTempCodes] : [];
+      const cIdx = codes.findIndex((c: any) => String(c.code) === String(code) && new Date(c.expiresAt || 0).getTime() > Date.now());
+      if (cIdx < 0) return null;
+      const squadId = codes[cIdx].squadId;
+      const squads = Array.isArray(current.squads) ? [...current.squads] : [];
+      const sIdx = squads.findIndex((s: any) => String(s.id) === String(squadId));
+      if (sIdx < 0) return null;
+      const squad = { ...squads[sIdx], membersList: Array.isArray(squads[sIdx].membersList) ? [...squads[sIdx].membersList] : [] };
+      if (!squad.membersList.some((m: any) => cleanPhone(m.phone) === cleanTarget)) {
+        squad.membersList.push({ phone: cleanTarget, name: name || "عضو", points: 0, joinedAt: new Date().toISOString(), joinedByTempCode: String(code) });
+      }
+      squad.members = squad.membersList.length;
+      squads[sIdx] = squad;
+      joinedSquad = squad;
+      codes[cIdx] = { ...codes[cIdx], usedBy: [...(codes[cIdx].usedBy || []), cleanTarget] };
+      const customers = Array.isArray(current.customers) ? [...current.customers] : [];
+      const cstIdx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanTarget);
+      const membership = { id: squad.id, squadId: squad.id, name: squad.name, joinedAt: new Date().toISOString(), via: "tempCode" };
+      if (cstIdx >= 0) {
+        const ids = new Set([...(customers[cstIdx].squadIds || []), customers[cstIdx].squadId].filter(Boolean).map(String));
+        ids.add(String(squad.id));
+        customers[cstIdx] = { ...customers[cstIdx], name: name || customers[cstIdx].name, squadId: squad.id, squadIds: [...ids], diwaniyaName: squad.name, diwaniyaMemberships: [...(customers[cstIdx].diwaniyaMemberships || []).filter((m:any)=>String(m.squadId||m.id)!==String(squad.id)), membership] };
+      } else {
+        customers.push({ id: "CUST-" + Date.now().toString(36), name: name || "", phone: cleanTarget, address: "", lastOrderDate: new Date().toISOString(), squadId: squad.id, squadIds: [String(squad.id)], diwaniyaName: squad.name, diwaniyaMemberships: [membership], loyaltyPoints: 0, points: 0 });
+      }
+      return { squadTempCodes: codes, squads, customers };
+    });
+    if (!ok || !joinedSquad) return res.status(404).json({ error: "Invalid or expired code" });
+    res.json({ success: true, squad: joinedSquad });
+  });
 
-        return { squads, customers };
-      });
-      if (hostBlocked) return res.status(409).json({ error: "Host cannot leave this diwaniya from here" });
-      if (!ok) throw new Error("Failed to leave squad");
-      res.json({ success: true });
-    } catch(e: any) {
-      res.status(500).json({ error: String(e) });
-    }
+  app.post("/api/squad-group-order", async (req, res) => {
+    const { squadId, phone, name, action, item, participants, title } = req.body || {};
+    if (!squadId || !phone) return res.status(400).json({ error: "Missing squadId or phone" });
+    let groupOrder: any = null;
+    const ok = await updateAppDataAtomically((current: any) => {
+      const groupOrders = Array.isArray(current.squadGroupOrders) ? [...current.squadGroupOrders] : [];
+      let idx = groupOrders.findIndex((g: any) => String(g.squadId) === String(squadId) && g.status === "open");
+      if (action === "close") {
+        if (idx >= 0) groupOrders[idx] = { ...groupOrders[idx], status: "closed", closedAt: new Date().toISOString() };
+        groupOrder = idx >= 0 ? groupOrders[idx] : null;
+        return { squadGroupOrders: groupOrders };
+      }
+      if (idx < 0) {
+        groupOrders.push({ id: "SGO-" + Date.now().toString(36), squadId: String(squadId), title: title || "طلب الديوانية المفتوح", status: "open", createdAt: new Date().toISOString(), ownerPhone: cleanPhone(phone), ownerName: name || "المعزب", items: [], participants: [] });
+        idx = groupOrders.length - 1;
+      }
+      const go = { ...groupOrders[idx], items: Array.isArray(groupOrders[idx].items) ? [...groupOrders[idx].items] : [], participants: Array.isArray(groupOrders[idx].participants) ? [...groupOrders[idx].participants] : [] };
+      if (item) go.items.push({ ...item, addedByPhone: cleanPhone(phone), addedByName: name || "عضو", addedAt: new Date().toISOString() });
+      if (Array.isArray(participants)) {
+        const map = new Map(go.participants.map((p: any) => [cleanPhone(p.phone), p]));
+        participants.forEach((p: any) => { if (p?.phone) map.set(cleanPhone(p.phone), { phone: cleanPhone(p.phone), name: p.name || "عضو" }); });
+        go.participants = Array.from(map.values());
+      }
+      groupOrders[idx] = go;
+      groupOrder = go;
+      return { squadGroupOrders: groupOrders };
+    });
+    if (!ok) return res.status(500).json({ error: "Failed to update group order" });
+    res.json({ success: true, groupOrder });
   });
 
   app.post("/api/squad-create", async (req, res) => {
@@ -1249,14 +1281,13 @@ app.get("/api/debug/order/:id", async (req, res) => {
            members: phone ? 1 : 0,
            king: customerName || "عميل",
            phone: phone,
-           inviteCode: makeSquadInviteCode(newSquadId, name),
-           membersList: phone ? [{ name: customerName || "عميل", phone: phone, role: "host", title: "المعزب", points: 0, joinedAt: new Date().toISOString() }] : [],
+           membersList: phone ? [{ name: customerName || "عميل", phone: phone, points: 0, joinedAt: new Date().toISOString() }] : [],
            createdAt: new Date().toISOString()
         };
         squads.push(createdSquad);
         if (phone) {
            const cidx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanQPhone);
-           const membership = { id: newSquadId, squadId: newSquadId, name, role: "host", title: "المعزب", inviteCode: createdSquad.inviteCode, joinedAt: new Date().toISOString() };
+           const membership = { id: newSquadId, squadId: newSquadId, name, joinedAt: new Date().toISOString() };
            if (cidx > -1) {
               const ids = new Set([...(customers[cidx].squadIds || []), customers[cidx].squadId].filter(Boolean).map(String));
               ids.add(String(newSquadId));
@@ -1283,23 +1314,23 @@ app.get("/api/debug/order/:id", async (req, res) => {
      const ok = await updateAppDataAtomically((current: any) => {
        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
        const customers = Array.isArray(current.customers) ? [...current.customers] : [];
-       let finalSquadIndex = resolveSquadIndex(squads, squadId);
+       let finalSquadIndex = squads.findIndex((s:any) => String(s.id) === String(squadId));
        if (finalSquadIndex === -1) {
-         squads.push({ id: squadId, name: `ديوانية ${squadId}`, inviteCode: makeSquadInviteCode(squadId, `ديوانية ${squadId}`), tier: "برونزية", points: 0, totalPoints: 0, teamPoints: 0, members: 0, membersList: [], createdAt: new Date().toISOString() });
+         squads.push({ id: squadId, name: `ديوانية ${squadId}`, tier: "برونزية", points: 0, totalPoints: 0, teamPoints: 0, members: 0, membersList: [], createdAt: new Date().toISOString() });
          finalSquadIndex = squads.length - 1;
        }
        const squad = { ...squads[finalSquadIndex] };
        squad.membersList = Array.isArray(squad.membersList) ? [...squad.membersList] : [];
        const existingMemberIndex = squad.membersList.findIndex((m:any) => cleanPhone(m.phone) === cleanQPhone);
        if (existingMemberIndex === -1) {
-         squad.membersList.push({ phone, name: name || "عميل", role: "member", title: "عضو الديوانية", points: 0, joinedAt: new Date().toISOString() });
+         squad.membersList.push({ phone, name: name || "عميل", points: 0, joinedAt: new Date().toISOString() });
        } else if (name) {
          squad.membersList[existingMemberIndex] = { ...squad.membersList[existingMemberIndex], name };
        }
        squad.members = squad.membersList.length;
        squads[finalSquadIndex] = squad;
        joinedSquad = squad;
-       const membership = { id: squad.id, squadId: squad.id, name: squad.name, role: cleanPhone(squad.phone) === cleanQPhone ? "host" : "member", title: cleanPhone(squad.phone) === cleanQPhone ? "المعزب" : "عضو الديوانية", inviteCode: squad.inviteCode || makeSquadInviteCode(squad.id, squad.name), joinedAt: new Date().toISOString() };
+       const membership = { id: squad.id, squadId: squad.id, name: squad.name, joinedAt: new Date().toISOString() };
        const cidx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanQPhone);
        if (cidx > -1) {
          const ids = new Set([...(customers[cidx].squadIds || []), customers[cidx].squadId].filter(Boolean).map(String));

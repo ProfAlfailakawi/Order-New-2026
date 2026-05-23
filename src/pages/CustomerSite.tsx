@@ -97,6 +97,12 @@ import { redirectToPayment } from "../utils/redirect";
 import { SquadModalContent } from "../components/SquadModalContent";
 import { buildWhatsAppInvoiceText, buildWhatsAppPaymentLinkText } from "../utils/invoiceShare";
 
+
+const cleanPhoneForSquad = (phone: any): string => {
+  const cleaned = String(phone || "").replace(/[^0-9]/g, "");
+  return cleaned.startsWith("965") && cleaned.length > 8 ? cleaned.slice(3) : cleaned;
+};
+
 const INITIAL_ADDRESS: Address = {
   region: "",
   block: "",
@@ -475,6 +481,11 @@ export default function CustomerSite() {
   const [pendingGeofenceRequests, setPendingGeofenceRequests] = useState<any[]>([]);
   const [activeSquads, setActiveSquads] = useState<any[]>([]);
   const [myGeofenceRequests, setMyGeofenceRequests] = useState<any[]>([]);
+  const [squadPresence, setSquadPresence] = useState<any[]>([]);
+  const [activeGroupOrder, setActiveGroupOrder] = useState<any>(null);
+  const [tempCodes, setTempCodes] = useState<any[]>([]);
+  const [usualOrder, setUsualOrder] = useState<any>(null);
+  const [squadBeautifulLog, setSquadBeautifulLog] = useState<any>(null);
   const [showSquadModal, setShowSquadModal] = useState(false);
   const [activeSquadTab, setActiveSquadTab] = useState<"overview"|"leaderboard"|"tiers">("overview");
   const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
@@ -506,13 +517,11 @@ export default function CustomerSite() {
        setPendingGeofenceRequests(data.pendingGeofenceRequests || []);
        setActiveSquads(data.activeSquads || []);
        setMyGeofenceRequests(data.myGeofenceRequests || []);
-       if (data.mySquad && !activeSquadId) {
-         const resolvedId = String(data.mySquad.id || "");
-         if (resolvedId) {
-           setActiveSquadId(resolvedId);
-           try { localStorage.setItem("squadId", resolvedId); } catch(e) {}
-         }
-       }
+       setSquadPresence(data.squadPresence || []);
+       setActiveGroupOrder(data.activeGroupOrder || null);
+       setTempCodes(data.tempCodes || []);
+       setUsualOrder(data.usualOrder || null);
+       setSquadBeautifulLog(data.squadBeautifulLog || null);
        if (data.mySquad || activeSquadId) {
          if (data.myMemberData?.name && data.myMemberData.name !== "عميل") {
             setCustomerName(prev => prev || data.myMemberData.name);
@@ -522,8 +531,6 @@ export default function CustomerSite() {
             rank: data.myRank,
             memberData: data.myMemberData
          } : null);
-       } else if (!data.mySquad) {
-         setSquadInfo(null);
        }
     } catch(e) {}
   }, [customerPhone, activeSquadId]);
@@ -532,7 +539,6 @@ export default function CustomerSite() {
   const [radarNearbySquads, setRadarNearbySquads] = useState<any[]>([]);
   const [radarLoadingMap, setRadarLoadingMap] = useState<Record<string, boolean>>({});
   const [radarSuccessMap, setRadarSuccessMap] = useState<Record<string, boolean>>({});
-  const [radarAccuracy, setRadarAccuracy] = useState<number | null>(null);
   const [radarDismissedList, setRadarDismissedList] = useState<string[]>(() => {
      try {
        return JSON.parse(localStorage.getItem("radar_dismissed_squads") || "[]");
@@ -571,8 +577,8 @@ export default function CustomerSite() {
      const checkPosition = (position: GeolocationPosition) => {
        const userLat = position.coords.latitude;
        const userLng = position.coords.longitude;
-       const accuracy = Math.round(position.coords.accuracy || 0);
-       setRadarAccuracy(accuracy || null);
+       const accuracy = Number(position.coords.accuracy || 0);
+       if (accuracy > 150) return;
 
        const nearby: any[] = [];
 
@@ -580,23 +586,21 @@ export default function CustomerSite() {
          if (String(sq.id) === String(activeSquadId)) return;
          if (radarDismissedList.includes(String(sq.id))) return;
 
-         // If already requested and wait response, skip!
+         // Smart nearby: members get a switch suggestion, non-members get a join request.
          const isAlreadyMember = userSquads.some((us: any) => String(us.id) === String(sq.id));
-         if (isAlreadyMember) return;
-
+         const isOwnerOfNearby = cleanPhoneForSquad(sq.phone || "") === cleanPhoneForSquad(customerPhone || "");
          const hasReq = myGeofenceRequests.some((r: any) => String(r.squadId) === String(sq.id));
-         if (hasReq) return;
+         if (!isAlreadyMember && hasReq) return;
 
          if (sq.lat !== undefined && sq.lng !== undefined) {
            const dist = calculateDistance(userLat, userLng, Number(sq.lat), Number(sq.lng));
            const geofenceLimit = Number(settings?.squadGeofenceDistance || 100);
-           const maxUsefulAccuracy = Math.max(geofenceLimit * 2, 120);
-           if (accuracy && accuracy > maxUsefulAccuracy) return;
            if (dist < geofenceLimit) {
              nearby.push({
                ...sq,
                distance: Math.round(dist),
-               accuracy
+               isAlreadyMember,
+               isOwnerOfNearby
              });
            }
          }
@@ -644,6 +648,16 @@ export default function CustomerSite() {
      };
   }, [myGeofenceRequests, activeSquadId, fetchSquadGamification]);
 
+  const handleSwitchToNearbySquad = (targetSquad: any) => {
+     if (!targetSquad?.id) return;
+     localStorage.setItem("squadId", String(targetSquad.id));
+     setActiveSquadId(String(targetSquad.id));
+     setRadarDismissedList(prev => [...prev.filter(id => String(id) !== String(targetSquad.id)), String(targetSquad.id)]);
+     setRadarNearbySquads(prev => prev.filter(s => String(s.id) !== String(targetSquad.id)));
+     setShowSquadModal(true);
+     window.setTimeout(fetchSquadGamification, 60);
+  };
+
   const handleSendRadarRequest = async (targetSquad: any) => {
      if (!targetSquad) return;
      if (!customerPhone) {
@@ -660,8 +674,7 @@ export default function CustomerSite() {
            name: customerName || "عضو قريب",
            phone: customerPhone,
            squadId: targetSquad.id,
-           distance: targetSquad.distance || 0,
-           accuracy: targetSquad.accuracy || radarAccuracy || 0
+           distance: targetSquad.distance || 0
          })
        });
        if (res.ok) {
@@ -747,56 +760,17 @@ export default function CustomerSite() {
     setIsSubmittingSquad(false);
   };
   
-  const cleanPhoneLocal = (phone: any) => {
-    const digits = String(phone || "").replace(/\D/g, "");
-    const withoutCode = digits.startsWith("965") && digits.length > 8 ? digits.slice(3) : digits;
-    return withoutCode.length >= 8 ? withoutCode.slice(-8) : withoutCode;
-  };
-
-  const handleLeaveSquad = async (squadId: string) => {
-    if (!customerPhone || !squadId) return;
-    const target = userSquads.find((sq: any) => String(sq.id) === String(squadId));
-    if (target?.phone && cleanPhoneLocal(target.phone) === cleanPhoneLocal(customerPhone)) {
-      alert("أنت المعزب لهالديوانية. خروج المعزب غير متاح من هني عشان ما تضيع الديوانية على الربع.");
-      return;
-    }
-    if (!confirm(`تبي تطلع من ديوانية ${target?.name || squadId}؟\nنقاطك الشخصية ما تنمسح، بس ما راح تنحسب مع هالديوانية بعد الخروج.`)) return;
-
-    try {
-      const res = await fetch("/api/squad-leave", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: customerPhone, squadId })
-      });
-      if (!res.ok) throw new Error("leave failed");
-      setUserSquads((prev) => prev.filter((sq: any) => String(sq.id) !== String(squadId)));
-      if (String(activeSquadId) === String(squadId)) {
-        const next = userSquads.find((sq: any) => String(sq.id) !== String(squadId));
-        const nextId = next?.id ? String(next.id) : "";
-        if (nextId) localStorage.setItem("squadId", nextId);
-        else localStorage.removeItem("squadId");
-        setActiveSquadId(nextId);
-      }
-      window.setTimeout(fetchSquadGamification, 50);
-    } catch (e) {
-      alert("ما قدرنا نطلعك من الديوانية حالياً. حاول مرة ثانية.");
-    }
-  };
-
   // Track magic link
   useEffect(() => {
     // Basic fast check to ensure reliability across all browsers
     const searchStr = window.location.search;
     const urlParams = new URLSearchParams(searchStr);
     
-    const sCode = urlParams.get("squadCode");
     const sId = urlParams.get("squadId");
-    if (sCode || sId) {
-      const resolved = sCode || sId || "";
-      localStorage.setItem("squadId", resolved);
-      setActiveSquadId(resolved);
+    if (sId) {
+      localStorage.setItem("squadId", sId);
+      setActiveSquadId(sId);
       setShowSquadModal(true);
-      urlParams.delete("squadCode");
       urlParams.delete("squadId");
       setSearchParams(urlParams, { replace: true });
     }
@@ -3815,6 +3789,11 @@ export default function CustomerSite() {
                         squadInfo={squadInfo}
                         userSquads={userSquads}
                         settings={settings}
+                        squadPresence={squadPresence}
+                        activeGroupOrder={activeGroupOrder}
+                        tempCodes={tempCodes}
+                        usualOrder={usualOrder}
+                        squadBeautifulLog={squadBeautifulLog}
                         SQUAD_TIERS={SQUAD_TIERS}
                         getSquadTier={getSquadTier}
                         topSquads={topSquads}
@@ -3844,7 +3823,6 @@ export default function CustomerSite() {
                         formatPoints={formatPoints}
                         handleCreateSquad={handleCreateSquad}
                         handleJoinSquad={handleJoinSquad}
-                        handleLeaveSquad={handleLeaveSquad}
                        pendingGeofenceRequests={pendingGeofenceRequests}
                        onRefresh={fetchSquadGamification}
                       />
@@ -3921,7 +3899,7 @@ export default function CustomerSite() {
           />
         ))}
 
-        {/* رادار الديوانية - يلتقط الدواوين القريبة */}
+        {/* رادار التراث - إشعار جيو لوكيشن ذكي للديوانيات القريبة */}
         <AnimatePresence>
           {radarNearbySquads.length > 0 && (
             <motion.div
@@ -3937,21 +3915,16 @@ export default function CustomerSite() {
                 </div>
                 
                 <div className="flex-1">
-                  <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار الديوانية 📡</span>
+                  <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار التراث الجغرافي 📡</span>
                   <h4 className="font-black text-sm mt-2 text-amber-100">
-                    لقطنا ديوانية قريبة 👀
+                    رصد ديوانيات الربع حولك! 📍
                   </h4>
                 </div>
               </div>
 
               <p className="text-[11px] font-bold text-slate-300 leading-normal">
-                إذا هذه ديوانية ربعك، اطرق الباب. المعزب يوافق أول، وما تدخل على كيفك:
+                لقطنا ديوانية قريبة منك 👀 إذا أنت عضو فيها بدّل لها، وإذا مو عضو اطلب دخول والمعزب يقرر.
               </p>
-              {radarAccuracy && (
-                <p className="text-[9px] font-bold text-slate-400 -mt-2">
-                  دقة الرادار تقريباً {radarAccuracy} متر · المسافة مأخوذة من إعدادات الأدمن.
-                </p>
-              )}
 
               <div className="space-y-3">
                 {radarNearbySquads.map((sq: any) => {
@@ -3965,14 +3938,14 @@ export default function CustomerSite() {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-500/10 px-2 py-0.5 rounded-lg font-mono">
-                          تبعد {sq.distance} متر 📍
+                          تبعد {sq.distance}م 📍
                         </span>
                         <span className="text-xs font-black text-white">ديوانية {sq.name}</span>
                       </div>
 
                       {isSuccess ? (
                         <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-1.5 px-3 rounded-xl text-[10px] font-black text-center animate-pulse">
-                          تم إرسال طلبك للمعزب. إذا وافق، تنضم رسمياً للديوانية ✅
+                          تم إرسال طلب الانضمام! بانتظار موافقه صاحب الديوانية 📡
                         </div>
                       ) : (
                         <div className="flex gap-2 justify-end mt-1">
@@ -3986,13 +3959,22 @@ export default function CustomerSite() {
                             تجاهل ❌
                           </button>
                           
-                          <button
-                            onClick={() => handleSendRadarRequest(sq)}
-                            disabled={isLoading}
-                            className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
-                          >
-                            {isLoading ? "جاري الإرسال..." : "طق الباب للمعزب 🚪"}
-                          </button>
+                          {sq.isAlreadyMember ? (
+                            <button
+                              onClick={() => handleSwitchToNearbySquad(sq)}
+                              className="bg-emerald-400 hover:bg-emerald-500 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
+                            >
+                              {sq.isOwnerOfNearby ? "فعّل ديوانيتك هنا 👑" : "أنا عضو هنا، خلّها الحالية ✅"}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleSendRadarRequest(sq)}
+                              disabled={isLoading}
+                              className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
+                            >
+                              {isLoading ? "جاري الإرسال..." : "طلب دخول للمعزب 📡"}
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -4002,7 +3984,7 @@ export default function CustomerSite() {
 
               {!customerPhone && (
                 <p className="text-[9px] font-bold text-amber-500/50 text-center pt-2">
-                  سجل رقمك عشان يوصل طلبك للمعزب باسمك ورقمك.
+                  سجل دخول برقمك عشان يوصلهم طلبك بأسمك ورقمك!
                 </p>
               )}
             </motion.div>
@@ -4048,8 +4030,8 @@ export default function CustomerSite() {
                   </button>
                   <div className="flex-1 flex items-center justify-end gap-2.5">
                     <div className="flex flex-col text-right">
-                      <p className="text-xs font-black text-slate-100">ناطرين موافقة المعزب... 📡</p>
-                      <p className="text-[10px] opacity-75 font-semibold text-slate-300 mt-0.5 animate-pulse">طلبك وصل. إذا المعزب وافق، تدخل رسمياً.</p>
+                      <p className="text-xs font-black text-slate-100">جاري انتظار قبول صاحب الديوانية... 📡</p>
+                      <p className="text-[10px] opacity-75 font-semibold text-slate-300 mt-0.5 animate-pulse">طلبك قيد المراجعة الفورية بالرادار.</p>
                     </div>
                     <div className="relative flex h-2.5 w-2.5 shrink-0 mt-1">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
