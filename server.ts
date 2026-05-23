@@ -1024,7 +1024,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const allGroupOrders = Array.isArray(data.squadGroupOrders) ? data.squadGroupOrders : [];
       const activeGroupOrder = mySquad ? allGroupOrders.find((g: any) => String(g.squadId) === String(mySquad.id) && g.status === "open") || null : null;
       const tempCodes = mySquad ? (Array.isArray(data.squadTempCodes) ? data.squadTempCodes : []).filter((c: any) => String(c.squadId) === String(mySquad.id) && new Date(c.expiresAt || 0).getTime() > Date.now()) : [];
-      const squadOrders = mySquad ? (Array.isArray(data.orders) ? data.orders : []).filter((o: any) => String(o.squadId || o.squadID || "") === String(mySquad.id)).slice(-10).reverse() : [];
+      const squadOrders = mySquad ? (Array.isArray(data.orders) ? data.orders : [])
+        .filter((o: any) => String(o.squadId || o.squadID || "") === String(mySquad.id))
+        .filter((o: any) => Array.isArray(o.items || o.cart) && (o.items || o.cart).length > 0)
+        .slice(-10).reverse() : [];
       const productCounter: Record<string, number> = {};
       squadOrders.forEach((o: any) => (o.items || o.cart || []).forEach((it: any) => { const n = it.name || it.title; if (n) productCounter[n] = (productCounter[n] || 0) + Number(it.quantity || 1); }));
       const favoriteItemName = Object.entries(productCounter).sort((a:any,b:any)=>b[1]-a[1])[0]?.[0] || "";
@@ -1067,11 +1070,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
     const now = new Date().toISOString();
     const ok = await updateAppDataAtomically((current: any) => {
       const notifications = Array.isArray(current.diwaniyaNotifications) ? [...current.diwaniyaNotifications] : [];
-      const updated = notifications.map((n: any) => {
+      const updated = notifications.filter((n: any) => {
         const belongs = cleanPhone(n.toPhone || "") === cleanTarget;
         const matchesId = notificationId ? String(n.id) === String(notificationId) : true;
-        if (belongs && (all || matchesId)) return { ...n, readAt: n.readAt || now };
-        return n;
+        return !(belongs && (all || matchesId));
       });
       return { diwaniyaNotifications: updated };
     });

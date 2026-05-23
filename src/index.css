@@ -2537,3 +2537,12 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
   .category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-media-frame .menu-product-image{width:min(126px,88%)!important;height:60px!important;}
   .category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-notes-soft{margin-top:16px!important;padding:5px 8px!important;}
 }
+
+/* يمنع تحرك صفحة العميل يمين ويسار على الجوال بدون التأثير على التمرير الداخلي المقصود */
+html, body, #root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+* {
+  box-sizing: border-box;
+}
