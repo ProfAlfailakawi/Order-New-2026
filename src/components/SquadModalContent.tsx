@@ -113,6 +113,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   unreadDiwaniyaNotifications = 0,
 }) => {
   const [copied, setCopied] = React.useState(false);
+  const [myDiwaniyaTab, setMyDiwaniyaTab] = React.useState<"home" | "orders" | "notifications" | "location">("home");
   const isCurrentMember = Boolean(customerPhone && squadInfo?.id) && squadInfo?.memberData?.isMember !== false && Boolean(squadInfo?.memberData?.phone || customerPhone);
 
   // Geofencing states & actions
@@ -637,7 +638,41 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           )}
 
 
-          {customerPhone && activeSquadTab === "notifications" && visibleNotifications.length > 0 && (
+          {squadInfo && isCurrentMember && (
+            <div className="bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm sticky top-0 z-10">
+              <div className="grid grid-cols-4 gap-1 text-center" dir="rtl">
+                {[
+                  { id: "home", label: "الرئيسية", icon: "🏠" },
+                  { id: "orders", label: "الطلب والكود", icon: "🍽️" },
+                  { id: "notifications", label: "الإشعارات", icon: "🔔", badge: unreadDiwaniyaNotifications },
+                  { id: "location", label: "الموقع", icon: "📍" },
+                ].map((tab: any) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setMyDiwaniyaTab(tab.id)}
+                    className={cn(
+                      "relative rounded-2xl px-2 py-2.5 text-[10px] font-black transition-all leading-tight",
+                      myDiwaniyaTab === tab.id
+                        ? "bg-brand text-white shadow-md scale-[1.02]"
+                        : "bg-stone-50 text-stone-500 border border-stone-100"
+                    )}
+                  >
+                    <span className="block text-base mb-0.5">{tab.icon}</span>
+                    <span>{tab.label}</span>
+                    {tab.badge > 0 && (
+                      <span className="absolute -top-1 -left-1 min-w-5 h-5 px-1 rounded-full bg-amber-500 text-white text-[9px] flex items-center justify-center">
+                        {formatEnglishNumber(tab.badge)}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+
+          {customerPhone && myDiwaniyaTab === "notifications" && visibleNotifications.length > 0 && (
             <div className="bg-white rounded-[30px] border border-amber-100 shadow-sm p-5 text-right space-y-3 font-sans">
               <div className="flex items-center justify-between gap-3">
                 <button
@@ -679,9 +714,17 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
             </div>
           )}
 
-          {!isCreatingSquad && squadInfo && isCurrentMember && (
+          {myDiwaniyaTab === "notifications" && visibleNotifications.length === 0 && customerPhone && (
+            <div className="bg-white rounded-[30px] border border-stone-100 shadow-sm p-6 text-center text-right font-sans">
+              <div className="text-3xl mb-2">🔔</div>
+              <h4 className="text-sm font-black text-brand">ما عندك إشعارات جديدة</h4>
+              <p className="text-[11px] font-bold text-stone-400 mt-1">أي تنبيه جديد للديوانية يظهر هنا بدون زحمة.</p>
+            </div>
+          )}
+
+          {!isCreatingSquad && squadInfo && isCurrentMember && myDiwaniyaTab !== "notifications" && (
             <div className="grid gap-3 text-right font-sans">
-              <div className="bg-gradient-to-br from-brand to-stone-900 text-white p-5 rounded-[30px] shadow-xl border border-white/10 space-y-4 overflow-hidden relative">
+              {myDiwaniyaTab === "home" && <div className="bg-gradient-to-br from-brand to-stone-900 text-white p-5 rounded-[30px] shadow-xl border border-white/10 space-y-4 overflow-hidden relative">
                 <div className="absolute -left-10 -top-10 w-32 h-32 bg-accent/20 blur-3xl rounded-full" />
                 <div className="relative flex items-center justify-between gap-3">
                   <div className="text-[10px] font-black bg-white/10 px-3 py-1 rounded-full">حضور الديوانية</div>
@@ -724,7 +767,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 </div>
               </div>
 
-              {activeSquadTab === "orders" && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-3">
+              }
+
+              {myDiwaniyaTab === "orders" && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[10px] font-black bg-accent/10 text-accent px-3 py-1 rounded-full">طلب جماعي + قطية</span>
                   <h4 className="text-sm font-black text-brand">طلب الديوانية المفتوح</h4>
@@ -740,7 +785,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 {hasRealUsualOrder && <button onClick={() => alert("الطلب المعتاد جاهز كفكرة عرض داخل الديوانية، وربطه بالسلة يحتاج مسار إضافة الأصناف للسلة في صفحة الطلب.")} className="w-full bg-stone-50 text-brand border border-stone-100 rounded-2xl py-3 text-xs font-black">كرر الطلب المعتاد للديوانية ({usualOrder.items.length} أصناف)</button>}
               </div>}
 
-              {activeSquadTab === "orders" && <div className="bg-stone-50 p-5 rounded-[30px] border border-stone-100 space-y-3">
+              {myDiwaniyaTab === "orders" && <div className="bg-stone-50 p-5 rounded-[30px] border border-stone-100 space-y-3">
                 <div className="flex items-center justify-between"><span className="text-[10px] font-black bg-white text-stone-500 px-3 py-1 rounded-full border">ساعتين</span><h4 className="text-sm font-black text-brand">كود دخول مؤقت</h4></div>
                 {isOwner ? <>
                   <button onClick={handleCreateTempCode} disabled={tempCodeLoading} className="w-full bg-accent text-white rounded-2xl py-3 text-xs font-black">{tempCodeLoading ? "نجهز الكود..." : "طلع كود مؤقت للضيف"}</button>
@@ -748,7 +793,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 </> : <div className="flex gap-2"><input inputMode="numeric" value={tempJoinCode} onChange={(e)=>setTempJoinCode(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,4))} placeholder="كود الضيف" className="flex-1 bg-white border border-stone-100 rounded-2xl px-4 py-3 text-center font-black"/><button onClick={handleJoinWithTempCode} disabled={tempCodeLoading} className="bg-brand text-white rounded-2xl px-4 text-xs font-black">دخول</button></div>}
               </div>}
 
-              {activeSquadTab === "orders" && hasRealBeautifulLog && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-3">
+              {myDiwaniyaTab === "orders" && hasRealBeautifulLog && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-3">
                 <h4 className="text-sm font-black text-brand">سجل الديوانية الجميل</h4>
                 <div className="grid grid-cols-2 gap-2 text-center">
                   <div className="bg-stone-50 rounded-2xl p-3"><div className="text-lg font-black text-brand">{squadBeautifulLog.ordersCount || 0}</div><div className="text-[9px] font-bold text-stone-400">طلبات قريبة</div></div>
@@ -760,7 +805,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           )}
 
           {/* My Diwaniyas Panel with Switcher and Role Indicators */}
-          {!isCreatingSquad && customerPhone && userSquads && userSquads.length > 0 && (
+          {myDiwaniyaTab === "home" && !isCreatingSquad && customerPhone && userSquads && userSquads.length > 0 && (
              <div className="flex flex-col gap-3 bg-stone-100/55 p-5 rounded-[28px] border border-stone-200/50 text-right font-sans">
                 <div className="flex items-center justify-between border-b border-stone-200/50 pb-2">
                    <span className="text-[10px] font-black bg-stone-200 text-stone-600 px-2 py-0.5 rounded-full">{userSquads.length} مسجلة</span>
@@ -1134,7 +1179,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   </div>
 
                   {/* رادار تحديد الموقع الجغرافي للديوانية - للقائد */}
-                  {isOwner && activeSquadTab === "location" && (
+                  {isOwner && myDiwaniyaTab === "location" && (
                     <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
                       <div className="flex items-center justify-between border-b border-stone-50 pb-3">
                         <span className="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase tracking-wider">رادار الديوانية 📡</span>
@@ -1222,7 +1267,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   )}
 
                   {/* طلبات الانضمام عبر الرادار - للقائد */}
-                  {isOwner && activeSquadTab === "location" && (
+                  {isOwner && myDiwaniyaTab === "location" && (
                     <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
                       <div className="flex items-center justify-between border-b border-stone-50 pb-3">
                         <span className="text-[11px] font-mono font-black bg-accent/10 text-accent px-2.5 py-1 rounded-full">{formatEnglishNumber(pendingGeofenceRequests?.length || 0)} معلق</span>

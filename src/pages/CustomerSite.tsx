@@ -1199,7 +1199,7 @@ export default function CustomerSite() {
       "أجر وعافية يا بعد طوايف أهلي.. هذي شورباتنا العريقة المطبوخة على نار هادئة وممزوجة بالخضار العطرة، رصيناها لج بالقمة عشان تدفي الصدر وتنعش الروح، عساها بالشفاء التام يا بنيتي 🍵✨"
     ],
     travel: [
-      "الحمد لله على السلامة يا بعد قلبي وتوّ ما نورت الديرة! ✈️ البيت فاضي وميتين يوع من السفر والدرب؟ فزعتنا الحين تجيكم! جربوا صوانينا السريعة المشبعة والساخنة اللي تترس العين والبطن وتتحضر فوراً وتنسيكم التعب 🚀💛",
+      "الحمد لله على السلامة يا بعد قلبي وتوّ ما نورت الديرة! ✈️ البيت فاضي وميتين يوع من السفر والدرب؟ فزعتنا الحين تجيكم! جربوا صوانينا السريعة المشبعة والساخنة اللي تترس العين والبطن وتتحضر فوراً وتنسيكم التعب ������💛",
       "قرت عينكم بالوصول والردة بالسلامة يا بعد قلبي! 💛 أدري البيت فاضي والتعب واصل حده.. الشيف جهّز لكم صواني الولائم السريعة الفورية والساخنة، توصلكم فوراً تسد الجوع وتدفئ نفوسكم! 🥘✨",
       "الحمد لله على سلامة الدرب يبا! 🌍 البيت خالي ولا تحاتون تشغيل جولة.. هذي صوانينا المشبعة المشهية السريعة اللي سويناها لعيون روعتكم، توصلكم ساخنة وتنهي اليوع ومحسوبة فوراً 🍽️👑"
     ],
@@ -3916,24 +3916,6 @@ export default function CustomerSite() {
                          className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0", activeSquadTab === "overview" ? "bg-accent text-white shadow-md scale-105" : "bg-white text-stone-400 border border-stone-200 hover:bg-stone-50")}
                       >
                          ديوانيتي 🏠
-                      </button>
-                      <button 
-                         onClick={() => setActiveSquadTab("orders")}
-                         className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0", activeSquadTab === "orders" ? "bg-accent text-white shadow-md scale-105" : "bg-white text-stone-400 border border-stone-200 hover:bg-stone-50")}
-                      >
-                         الطلب والكود 🍽️
-                      </button>
-                      <button 
-                         onClick={() => setActiveSquadTab("notifications")}
-                         className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0", activeSquadTab === "notifications" ? "bg-accent text-white shadow-md scale-105" : "bg-white text-stone-400 border border-stone-200 hover:bg-stone-50")}
-                      >
-                         الإشعارات 🔔
-                      </button>
-                      <button 
-                         onClick={() => setActiveSquadTab("location")}
-                         className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0", activeSquadTab === "location" ? "bg-accent text-white shadow-md scale-105" : "bg-white text-stone-400 border border-stone-200 hover:bg-stone-50")}
-                      >
-                         الموقع 📍
                       </button>
                       <button 
                          onClick={() => setActiveSquadTab("leaderboard")}
