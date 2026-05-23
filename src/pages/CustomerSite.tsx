@@ -3931,20 +3931,38 @@ export default function CustomerSite() {
                            {squadInfo ? "ديوانيتك الحالية" : "سجل الحين وطور ديوانيتك!"}
                          </p>
                       </div>
-                      <button
-                        type="button"
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setShowSquadModal(false);
-                        }}
-                        className="min-w-[92px] h-10 px-3 rounded-full bg-stone-100 flex items-center justify-center gap-1.5 text-stone-600 hover:text-brand hover:bg-stone-200 transition-colors font-black text-xs active:scale-95"
-                        aria-label="إغلاق صفحة الديوانية"
-                      >
-                        <X className="w-4 h-4" />
-                        <span>إغلاق</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {customerPhone && (
+                          <button
+                            type="button"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (confirm("هل تبي تسجل خروج من رقم الهاتف الحالي على هذا الجهاز؟")) {
+                                clearSquadSessionOnThisDevice();
+                              }
+                            }}
+                            className="h-10 px-3 rounded-full bg-rose-50 flex items-center justify-center gap-1.5 text-rose-500 hover:bg-rose-100 transition-colors font-black text-xs active:scale-95"
+                          >
+                            تسجيل خروج
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowSquadModal(false);
+                          }}
+                          className="h-10 px-3 rounded-full bg-stone-100 flex items-center justify-center gap-1.5 text-stone-600 hover:text-brand hover:bg-stone-200 transition-colors font-black text-xs active:scale-95"
+                          aria-label="إغلاق صفحة الديوانية"
+                        >
+                          <X className="w-4 h-4" />
+                          <span>إغلاق</span>
+                        </button>
+                      </div>
                    </div>
 
                    <div className="flex-1 overflow-y-auto p-5 pb-8 custom-scrollbar relative z-0">
