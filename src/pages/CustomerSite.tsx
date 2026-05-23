@@ -489,7 +489,7 @@ export default function CustomerSite() {
   const [diwaniyaNotifications, setDiwaniyaNotifications] = useState<any[]>([]);
   const [unreadDiwaniyaNotifications, setUnreadDiwaniyaNotifications] = useState(0);
   const [showSquadModal, setShowSquadModal] = useState(false);
-  const [activeSquadTab, setActiveSquadTab] = useState<"overview"|"leaderboard"|"tiers">("overview");
+  const [activeSquadTab, setActiveSquadTab] = useState<"overview"|"orders"|"notifications"|"location"|"leaderboard"|"tiers">("overview");
   const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
   const squadSessionTokenRef = useRef(0);
   const [isRadarBannerCollapsed, setIsRadarBannerCollapsed] = useState(false);
@@ -769,13 +769,20 @@ export default function CustomerSite() {
        localStorage.setItem("squadId", approvedReq.squadId);
        setActiveSquadId(approvedReq.squadId);
        fetchSquadGamification();
-       alert(`تم قبولك رسميًا في ديوانية ربعك! 🎉`);
      }
 
      return () => {
        if (pollInterval) clearInterval(pollInterval);
      };
   }, [myGeofenceRequests, activeSquadId, fetchSquadGamification]);
+
+  useEffect(() => {
+     if (!customerPhone || !activeSquadId) return;
+     const interval = window.setInterval(() => {
+       fetchSquadGamification();
+     }, 5000);
+     return () => window.clearInterval(interval);
+  }, [customerPhone, activeSquadId, fetchSquadGamification]);
 
   const handleSwitchToNearbySquad = (targetSquad: any) => {
      if (!targetSquad?.id) return;
@@ -792,7 +799,7 @@ export default function CustomerSite() {
      let requestPhone = customerPhone;
      let requestName = customerName || "عضو قريب";
      if (!requestPhone) {
-       const typedPhone = window.prompt("اكتب رقم تلفونك ٨ أرقام عشان نرسل طلبك للمعزب:");
+       const typedPhone = window.prompt("اكتب رقم تلفونك 8 أرقام عشان نرسل طلبك للمعزب:");
        const cleanTypedPhone = cleanPhoneForSquad(normalizeDigits(typedPhone || "")).slice(0, 8);
        if (!cleanTypedPhone || cleanTypedPhone.length < 8) {
          alert("لازم رقم تلفون صحيح عشان المعزب يعرف طلبك.");
@@ -3911,6 +3918,24 @@ export default function CustomerSite() {
                          ديوانيتي 🏠
                       </button>
                       <button 
+                         onClick={() => setActiveSquadTab("orders")}
+                         className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0", activeSquadTab === "orders" ? "bg-accent text-white shadow-md scale-105" : "bg-white text-stone-400 border border-stone-200 hover:bg-stone-50")}
+                      >
+                         الطلب والكود 🍽️
+                      </button>
+                      <button 
+                         onClick={() => setActiveSquadTab("notifications")}
+                         className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0", activeSquadTab === "notifications" ? "bg-accent text-white shadow-md scale-105" : "bg-white text-stone-400 border border-stone-200 hover:bg-stone-50")}
+                      >
+                         الإشعارات 🔔
+                      </button>
+                      <button 
+                         onClick={() => setActiveSquadTab("location")}
+                         className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0", activeSquadTab === "location" ? "bg-accent text-white shadow-md scale-105" : "bg-white text-stone-400 border border-stone-200 hover:bg-stone-50")}
+                      >
+                         الموقع 📍
+                      </button>
+                      <button 
                          onClick={() => setActiveSquadTab("leaderboard")}
                          className={cn("px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0", activeSquadTab === "leaderboard" ? "bg-accent text-white shadow-md scale-105" : "bg-white text-stone-400 border border-stone-200 hover:bg-stone-50")}
                       >
@@ -4112,14 +4137,14 @@ export default function CustomerSite() {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-500/10 px-2 py-0.5 rounded-lg font-mono">
-                          تبعد {sq.distance}م ������
+                          تبعد {normalizeDigits(String(sq.distance))}م
                         </span>
                         <span className="text-xs font-black text-white">ديوانية {sq.name}</span>
                       </div>
 
                       {isSuccess ? (
                         <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-1.5 px-3 rounded-xl text-[10px] font-black text-center animate-pulse">
-                          تم إرسال طلب الانضمام! بانتظار موافقه صاحب الديوانية 📡
+                          تم إرسال طلب الانضمام! بانتظار موافقة صاحب الديوانية 📡
                         </div>
                       ) : (
                         <div className="flex gap-2 justify-end mt-1">

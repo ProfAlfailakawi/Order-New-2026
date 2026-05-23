@@ -229,7 +229,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       },
       (error) => {
         setIsRegisteringGeo(false);
-        setGeoStatusMsg("❌ تعذر الوصول للموقع. تأكد من السماح للموقع من إعدادات المتصفح، أو استخدم خيار الإدخال اليدوي بالأسفل.");
+        setGeoStatusMsg("تعذر الوصول للموقع. فعّل السماح للموقع من المتصفح، أو استخدم الإدخال اليدوي بالأسفل.");
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
@@ -412,6 +412,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     return Number.isFinite(n) ? n : 0;
   };
 
+  const toEnglishDigits = (value: any) => normalizeDigits(String(value ?? ""));
+  const formatEnglishNumber = (value: any) => toEnglishDigits(String(value ?? ""));
+  const visibleNotifications = (diwaniyaNotifications || []).filter((n: any) => !n.readAt);
+  const hasRealUsualOrder = Boolean(usualOrder?.items?.length && Number(usualOrder?.total || 0) > 0);
+  const hasRealBeautifulLog = Boolean(squadBeautifulLog && (Number(squadBeautifulLog.ordersCount || 0) > 0 || Number(squadBeautifulLog.presentCount || 0) > 0 || squadBeautifulLog.favoriteItemName));
+
 
   const [isPresenceLoading, setIsPresenceLoading] = React.useState(false);
   const [tempCodeLoading, setTempCodeLoading] = React.useState(false);
@@ -419,22 +425,37 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const [tempJoinCode, setTempJoinCode] = React.useState("");
   const [groupOrderLoading, setGroupOrderLoading] = React.useState(false);
 
-  const handleLoginByPhone = () => {
+  const handleLoginByPhone = async () => {
     const cleanLoginPhone = normalizeDigits(loginPhone || guestPhone || "").replace(/[^0-9]/g, "").slice(0, 8);
     if (!cleanLoginPhone || cleanLoginPhone.length < 8) {
-      alert("اكتب رقم التلفون ٨ أرقام عشان نرجع دواوينك.");
+      alert("اكتب رقم التلفون 8 أرقام عشان نرجع دواوينك.");
       return;
     }
-    setCustomerPhone(cleanLoginPhone);
-    setGuestPhone(cleanLoginPhone);
-    setActiveSquadId("");
-    if (setSquadInfo) setSquadInfo(null);
     try {
-      localStorage.setItem("customer_phone_track", cleanLoginPhone);
-      localStorage.removeItem("squadId");
-      localStorage.removeItem("radar_dismissed_squads");
-    } catch(e) {}
-    if (onRefresh) window.setTimeout(onRefresh, 80);
+      const res = await fetch(`/api/squad-gamification?phone=${encodeURIComponent(cleanLoginPhone)}`);
+      const data = res.ok ? await res.json() : null;
+      const foundSquads = Array.isArray(data?.userSquads) ? data.userSquads : [];
+      if (!foundSquads.length) {
+        setGuestPhone(cleanLoginPhone);
+        setLoginPhone(cleanLoginPhone);
+        alert("هذا الرقم غير مرتبط بأي ديوانية حالياً. تقدر تطلب دخول بكود أو تؤسس ديوانية جديدة.");
+        return;
+      }
+      setCustomerPhone(cleanLoginPhone);
+      setGuestPhone(cleanLoginPhone);
+      const firstSquadId = String(foundSquads[0]?.id || "");
+      setActiveSquadId(firstSquadId);
+      if (setSquadInfo) setSquadInfo(null);
+      try {
+        localStorage.setItem("customer_phone_track", cleanLoginPhone);
+        if (firstSquadId) localStorage.setItem("squadId", firstSquadId);
+        else localStorage.removeItem("squadId");
+        localStorage.removeItem("radar_dismissed_squads");
+      } catch(e) {}
+      if (onRefresh) window.setTimeout(onRefresh, 80);
+    } catch(e) {
+      alert("تعذر التحقق من الرقم حالياً. حاول مرة ثانية.");
+    }
   };
 
   const startCreateNewSquad = () => {
@@ -616,7 +637,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           )}
 
 
-          {customerPhone && diwaniyaNotifications.length > 0 && (
+          {customerPhone && activeSquadTab === "notifications" && visibleNotifications.length > 0 && (
             <div className="bg-white rounded-[30px] border border-amber-100 shadow-sm p-5 text-right space-y-3 font-sans">
               <div className="flex items-center justify-between gap-3">
                 <button
@@ -636,13 +657,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 </div>
               </div>
               <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                {diwaniyaNotifications.slice(0, 8).map((n: any) => (
+                {visibleNotifications.slice(0, 12).map((n: any) => (
                   <button
                     key={n.id}
                     onClick={() => markDiwaniyaNotificationsRead(n.id)}
                     className={cn(
                       "w-full p-3 rounded-2xl border text-right flex items-start justify-between gap-3 transition-all active:scale-[0.99]",
-                      n.readAt ? "bg-stone-50 border-stone-100 opacity-75" : "bg-amber-50 border-amber-200 shadow-sm"
+                      "bg-amber-50 border-amber-200 shadow-sm"
                     )}
                   >
                     <span className="text-xl shrink-0">{notificationIcon(n.type)}</span>
@@ -703,7 +724,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 </div>
               </div>
 
-              <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-3">
+              {activeSquadTab === "orders" && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[10px] font-black bg-accent/10 text-accent px-3 py-1 rounded-full">طلب جماعي + قطية</span>
                   <h4 className="text-sm font-black text-brand">طلب الديوانية المفتوح</h4>
@@ -716,18 +737,18 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     <div className="flex gap-2"><button onClick={() => { try { localStorage.setItem("split_prefill_members", JSON.stringify(activeGroupOrder.participants || squadMembersForSplit)); } catch {}; alert("جهزنا أسماء وأرقام الربع للقطية."); }} className="flex-1 bg-brand text-white rounded-xl py-2 text-[10px] font-black">جهّز القطية</button><button onClick={handleCloseGroupOrder} disabled={groupOrderLoading} className="flex-1 bg-stone-100 text-stone-500 rounded-xl py-2 text-[10px] font-black">إغلاق الطلب</button></div>
                   </div>
                 ) : <button onClick={handleOpenGroupOrder} disabled={groupOrderLoading} className="w-full bg-brand text-white rounded-2xl py-3 text-xs font-black shadow-md active:scale-95">افتح طلب جماعي للربع</button>}
-                {usualOrder?.items?.length > 0 && <button onClick={() => alert("الطلب المعتاد جاهز كفكرة عرض داخل الديوانية، وربطه بالسلة يحتاج مسار إضافة الأصناف للسلة في صفحة الطلب.")} className="w-full bg-stone-50 text-brand border border-stone-100 rounded-2xl py-3 text-xs font-black">كرر الطلب المعتاد للديوانية ({usualOrder.items.length} أصناف)</button>}
-              </div>
+                {hasRealUsualOrder && <button onClick={() => alert("الطلب المعتاد جاهز كفكرة عرض داخل الديوانية، وربطه بالسلة يحتاج مسار إضافة الأصناف للسلة في صفحة الطلب.")} className="w-full bg-stone-50 text-brand border border-stone-100 rounded-2xl py-3 text-xs font-black">كرر الطلب المعتاد للديوانية ({usualOrder.items.length} أصناف)</button>}
+              </div>}
 
-              <div className="bg-stone-50 p-5 rounded-[30px] border border-stone-100 space-y-3">
+              {activeSquadTab === "orders" && <div className="bg-stone-50 p-5 rounded-[30px] border border-stone-100 space-y-3">
                 <div className="flex items-center justify-between"><span className="text-[10px] font-black bg-white text-stone-500 px-3 py-1 rounded-full border">ساعتين</span><h4 className="text-sm font-black text-brand">كود دخول مؤقت</h4></div>
                 {isOwner ? <>
                   <button onClick={handleCreateTempCode} disabled={tempCodeLoading} className="w-full bg-accent text-white rounded-2xl py-3 text-xs font-black">{tempCodeLoading ? "نجهز الكود..." : "طلع كود مؤقت للضيف"}</button>
                   {(activeTempCode?.code || tempCodes[0]?.code) && <div className="text-center bg-white rounded-2xl p-4 border border-stone-100"><div className="text-[10px] font-black text-stone-400">الكود الحالي</div><div className="text-3xl font-black tracking-[0.3em] text-brand">{activeTempCode?.code || tempCodes[0]?.code}</div></div>}
-                </> : <div className="flex gap-2"><input value={tempJoinCode} onChange={(e)=>setTempJoinCode(e.target.value.replace(/[^0-9]/g, '').slice(0,4))} placeholder="كود الضيف" className="flex-1 bg-white border border-stone-100 rounded-2xl px-4 py-3 text-center font-black"/><button onClick={handleJoinWithTempCode} disabled={tempCodeLoading} className="bg-brand text-white rounded-2xl px-4 text-xs font-black">دخول</button></div>}
-              </div>
+                </> : <div className="flex gap-2"><input inputMode="numeric" value={tempJoinCode} onChange={(e)=>setTempJoinCode(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,4))} placeholder="كود الضيف" className="flex-1 bg-white border border-stone-100 rounded-2xl px-4 py-3 text-center font-black"/><button onClick={handleJoinWithTempCode} disabled={tempCodeLoading} className="bg-brand text-white rounded-2xl px-4 text-xs font-black">دخول</button></div>}
+              </div>}
 
-              {squadBeautifulLog && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-3">
+              {activeSquadTab === "orders" && hasRealBeautifulLog && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-3">
                 <h4 className="text-sm font-black text-brand">سجل الديوانية الجميل</h4>
                 <div className="grid grid-cols-2 gap-2 text-center">
                   <div className="bg-stone-50 rounded-2xl p-3"><div className="text-lg font-black text-brand">{squadBeautifulLog.ordersCount || 0}</div><div className="text-[9px] font-bold text-stone-400">طلبات قريبة</div></div>
@@ -901,8 +922,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     onChange={(e) =>
                       setGuestPhone(normalizeDigits(e.target.value))
                     }
-                    placeholder="٨ أرقام"
+                    placeholder="8 أرقام"
                     maxLength={8}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     className="w-full bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
                   />
                 </div>
@@ -1103,7 +1126,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               </span>
                             </div>
                             <div className="bg-stone-50 px-3 py-1 rounded-full text-xs font-bold text-stone-600 border border-stone-100 font-mono">
-                              {mem.orderCount || 0}
+                              {formatEnglishNumber(mem.orderCount || 0)}
                             </div>
                           </div>
                         ))}
@@ -1111,7 +1134,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   </div>
 
                   {/* رادار تحديد الموقع الجغرافي للديوانية - للقائد */}
-                  {isOwner && (
+                  {isOwner && activeSquadTab === "location" && (
                     <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
                       <div className="flex items-center justify-between border-b border-stone-50 pb-3">
                         <span className="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase tracking-wider">رادار الديوانية 📡</span>
@@ -1119,7 +1142,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       </div>
                       
                       <p className="text-xs font-bold text-stone-500 leading-relaxed">
-                        ثبت موقع ديوانيتك حتى تظهر بطاقة الدخول للربع تلقائياً عند اقترابهم ضمن مسافة الأدمن ({settings?.squadGeofenceDistance || 100} متر).
+                        ثبت موقع ديوانيتك حتى تظهر بطاقة الدخول للربع تلقائياً عند اقترابهم ضمن مسافة الأدمن ({formatEnglishNumber(settings?.squadGeofenceDistance || 100)} متر).
                       </p>
 
                       {squadInfo.lat !== undefined && squadInfo.lng !== undefined ? (
@@ -1130,14 +1153,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           <p className="text-[10px] font-mono font-bold text-sky-600 tracking-tight">
                             إحداثيات: {Number(squadInfo.lat).toFixed(6)}, {Number(squadInfo.lng).toFixed(6)}
                           </p>
-                          <a 
-                            href={`https://www.google.com/maps/search/?api=1&query=${squadInfo.lat},${squadInfo.lng}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            type="button"
+                            onClick={() => { window.location.href = `https://www.google.com/maps/search/?api=1&query=${squadInfo.lat},${squadInfo.lng}`; }}
                             className="inline-block text-[10px] font-black text-accent hover:underline"
                           >
                             عرض على خرائط جوجل 🧭
-                          </a>
+                          </button>
                         </div>
                       ) : (
                         <div className="bg-orange-50 px-4 py-3 rounded-2xl border border-orange-100">
@@ -1200,10 +1222,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   )}
 
                   {/* طلبات الانضمام عبر الرادار - للقائد */}
-                  {isOwner && (
+                  {isOwner && activeSquadTab === "location" && (
                     <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
                       <div className="flex items-center justify-between border-b border-stone-50 pb-3">
-                        <span className="text-[11px] font-mono font-black bg-accent/10 text-accent px-2.5 py-1 rounded-full">{pendingGeofenceRequests?.length || 0} معلق</span>
+                        <span className="text-[11px] font-mono font-black bg-accent/10 text-accent px-2.5 py-1 rounded-full">{formatEnglishNumber(pendingGeofenceRequests?.length || 0)} معلق</span>
                         <h4 className="font-black text-brand text-sm flex items-center gap-1.5 justify-end">
                           <Users className="w-4 h-4 text-accent" /> طلبات الرادار المعلقة
                         </h4>
@@ -1214,7 +1236,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           {pendingGeofenceRequests.map((req: any, idx: number) => (
                             <div key={idx} className="p-3.5 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col gap-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">يبعد {req.distance || "أقل من ١٠٠"}م</span>
+                                <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">يبعد {req.distance ? formatEnglishNumber(req.distance) : "أقل من 100"}م</span>
                                 <span className="text-sm font-black text-brand">{req.name}</span>
                               </div>
                               <div className="flex items-center justify-between mt-1">
@@ -1265,11 +1287,27 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       <input
                         type="tel"
                         value={guestPhone}
-                        onChange={(e) => setGuestPhone(normalizeDigits(e.target.value))}
-                        placeholder="رقم تلفونك ٨ أرقام"
+                        onChange={(e) => setGuestPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8))}
+                        placeholder="رقم تلفونك 8 أرقام"
                         maxLength={8}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         className="w-full bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
                       />
+
+                      <div className="bg-stone-50 border border-stone-100 rounded-2xl p-3 space-y-2">
+                        <div className="text-[10px] font-black text-stone-500">عندك كود دخول ساعتين؟</div>
+                        <div className="flex gap-2">
+                          <input
+                            inputMode="numeric"
+                            value={tempJoinCode}
+                            onChange={(e)=>setTempJoinCode(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,4))}
+                            placeholder="الكود"
+                            className="flex-1 bg-white border border-stone-100 rounded-xl px-3 py-2 text-center font-black"
+                          />
+                          <button onClick={handleJoinWithTempCode} disabled={tempCodeLoading} className="bg-brand text-white rounded-xl px-4 text-xs font-black">دخول بالكود</button>
+                        </div>
+                      </div>
                       <button
                         onClick={() => handleJoinSquad(String(squadInfo.id))}
                         disabled={isSubmittingSquad}
@@ -1318,7 +1356,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       setLoginPhone(v);
                       setGuestPhone(v);
                     }}
-                    placeholder="٨ أرقام"
+                    placeholder="8 أرقام"
                     maxLength={8}
                     className="flex-1 bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
                   />
