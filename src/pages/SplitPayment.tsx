@@ -348,7 +348,7 @@ export default function SplitPayment() {
     
     const amountVal = String(overrideAmount ?? contributorAmount ?? "").trim();
     const finalName = String(actualName ?? contributorName ?? mySplitRecord?.name ?? "").trim();
-    const finalPhone = String(overridePhone ?? contributorPhone ?? mySplitRecord?.phone ?? "").replace(/\D/g, "").slice(-8);
+    const finalPhone = normalizePhone(String(overridePhone ?? contributorPhone ?? mySplitRecord?.phone ?? ""));
 
     if (!finalName) {
       alert("اكتب اسمك يالغالي");
@@ -891,7 +891,7 @@ export default function SplitPayment() {
                         pattern="[0-9]*"
                         value={contributorPhone}
                         onChange={(e) =>
-                          setContributorPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8))
+                          setContributorPhone(normalizePhone(e.target.value))
                         }
                         placeholder="90000000"
                         className="w-full bg-stone-50 border border-stone-100 rounded-xl px-4 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"

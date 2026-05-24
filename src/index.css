@@ -2622,3 +2622,13 @@ html, body, #root {
 .menu-product-card:hover .menu-product-image img{
   transform:scale(1.09)!important;
 }
+
+
+.squad-stable-tabs {
+  transform: translate3d(0,0,0);
+  backface-visibility: hidden;
+  contain: layout paint;
+}
+.squad-stable-tabs * {
+  transition-property: background-color, color, border-color, box-shadow, opacity, transform;
+}

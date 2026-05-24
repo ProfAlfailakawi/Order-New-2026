@@ -988,7 +988,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       {activeSquadTab === "overview" && (
         <div className="flex flex-col gap-6 animate-in fade-in duration-500">
           {squadInfo && isCurrentMember && (
-            <div className="bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm relative z-10 sticky top-2 backdrop-blur-xl">
+            <div className="squad-stable-tabs bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm relative z-10 backdrop-blur-xl">
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center" dir="rtl">
                 {[
                   { id: "home", label: "الرئيسية", icon: "🏠" },
@@ -1094,14 +1094,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       </button>
                       <div className="text-right min-w-0">
                         <div className="text-sm font-black text-brand truncate">{cleanSquadName(squadInfo?.name)}</div>
-                        {currentTier && (
-                          <div className="mt-1 inline-flex items-center justify-end gap-1.5 rounded-full bg-stone-50 border border-stone-100 px-2.5 py-1 text-[10px] font-black text-stone-500 max-w-full">
-                            <span className="text-xs">{currentTier.icon}</span>
-                            <span className="text-brand truncate">{currentTier.name}</span>
-                            <span className="text-stone-300">·</span>
-                            <span>رصيدك {formatPoints(currentPoints)}</span>
-                          </div>
-                        )}
+
                       </div>
                     </div>
                   </div>
