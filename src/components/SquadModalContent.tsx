@@ -56,6 +56,7 @@ interface SquadModalContentProps {
   handleJoinSquad: (id: string) => void;
   pendingGeofenceRequests?: any[];
   onRefresh?: () => void;
+  onPrepareQatya?: (members: any[]) => void;
   userSquads?: any[];
   settings?: any;
   squadPresence?: any[];
@@ -103,6 +104,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   handleJoinSquad,
   pendingGeofenceRequests = [],
   onRefresh,
+  onPrepareQatya,
   userSquads = [],
   settings,
   squadPresence = [],
@@ -677,10 +679,41 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       if (res.ok) {
         try { localStorage.setItem("split_prefill_members", JSON.stringify(squadMembersForSplit)); } catch {}
         if (onRefresh) onRefresh();
-      } else alert("تعذر فتح طلب جماعي.");
-    } catch { alert("خطأ اتصال أثناء فتح الطلب الجماعي."); }
+      } else alert("تعذر فتح طلب الربع.");
+    } catch { alert("خطأ اتصال أثناء فتح طلب الربع."); }
     setGroupOrderLoading(false);
   };
+
+
+  const getPreparedQatyaMembers = React.useCallback(() => {
+    const source = Array.isArray(activeGroupOrder?.participants) && activeGroupOrder.participants.length
+      ? activeGroupOrder.participants
+      : squadMembersForSplit;
+    const map = new Map<string, any>();
+    source.forEach((member: any) => {
+      const phone = cleanPhoneLocal(String(member?.phone || "")).slice(0, 8);
+      if (!phone) return;
+      map.set(phone, { phone, name: member?.name || "عضو" });
+    });
+    return Array.from(map.values());
+  }, [activeGroupOrder, squadMembersForSplit]);
+
+  const handlePrepareQatya = React.useCallback(() => {
+    const members = getPreparedQatyaMembers();
+    try {
+      localStorage.setItem("split_prefill_members", JSON.stringify(members));
+      localStorage.setItem("split_prefill_ready", "1");
+    } catch {}
+
+    if (onPrepareQatya) {
+      onPrepareQatya(members);
+      return;
+    }
+
+    alert(members.length
+      ? "جهزنا أسماء وأرقام الربع للقطية."
+      : "جهزنا القطيّة، أضف الربع عند صفحة الدفع.");
+  }, [getPreparedQatyaMembers, onPrepareQatya]);
 
   const handleCloseGroupOrder = async () => {
     if (!squadInfo?.id || !currentMemberPhone) return;
@@ -826,7 +859,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       <span className="bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-full">{unreadDiwaniyaNotifications}</span>
                     )}
                   </h4>
-                  <p className="text-[10px] font-bold text-stone-400">تنبيهات الربع والدخول والطلبات الجماعية، منفصلة عن الدفع.</p>
+                  <p className="text-[10px] font-bold text-stone-400">تنبيهات الربع والدخول وطلبات الديوانية، منفصلة عن الدفع.</p>
                 </div>
               </div>
               <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
@@ -912,17 +945,17 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
               {myDiwaniyaTab === "orders" && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-[10px] font-black bg-accent/10 text-accent px-3 py-1 rounded-full">طلب جماعي + قطية</span>
-                  <h4 className="text-sm font-black text-brand">طلب الديوانية المفتوح</h4>
+                  <span className="text-[10px] font-black bg-accent/10 text-accent px-3 py-1 rounded-full">طلب الربع + قطية</span>
+                  <h4 className="text-sm font-black text-brand">تنسيق طلب الربع</h4>
                 </div>
-                <p className="text-[11px] font-bold text-stone-500 leading-relaxed">افتح طلب جماعي للربع، وإذا بتسوون قطية تنحفظ أسماء الأعضاء وأرقامهم تلقائياً لتعبئة المشاركين بدون تعب.</p>
+                <p className="text-[11px] font-bold text-stone-500 leading-relaxed">جهّز طلب الربع وخلي القطيّة أسهل؛ نحفظ أسماء وأرقام الأعضاء تلقائياً لتعبئة المشاركين بسرعة.</p>
                 {activeGroupOrder ? (
                   <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-3 space-y-2">
                     <div className="flex items-center justify-between"><span className="text-[10px] font-black text-emerald-700">مفتوح الآن</span><strong className="text-xs text-brand">{activeGroupOrder.title || "طلب مفتوح"}</strong></div>
                     <div className="text-[10px] font-bold text-stone-500">المشاركين الجاهزين للقطية: {(activeGroupOrder.participants || squadMembersForSplit).length}</div>
-                    <div className="flex gap-2"><button onClick={() => { try { localStorage.setItem("split_prefill_members", JSON.stringify(activeGroupOrder.participants || squadMembersForSplit)); } catch {}; alert("جهزنا أسماء وأرقام الربع للقطية."); }} className="flex-1 bg-brand text-white rounded-xl py-2 text-[10px] font-black">جهّز القطية</button><button onClick={handleCloseGroupOrder} disabled={groupOrderLoading} className="flex-1 bg-stone-100 text-stone-500 rounded-xl py-2 text-[10px] font-black">إغلاق الطلب</button></div>
+                    <div className="flex gap-2"><button onClick={handlePrepareQatya} className="flex-1 bg-brand text-white rounded-xl py-2 text-[10px] font-black">جهّز القطية</button><button onClick={handleCloseGroupOrder} disabled={groupOrderLoading} className="flex-1 bg-stone-100 text-stone-500 rounded-xl py-2 text-[10px] font-black">إغلاق الطلب</button></div>
                   </div>
-                ) : <button onClick={handleOpenGroupOrder} disabled={groupOrderLoading} className="w-full bg-brand text-white rounded-2xl py-3 text-xs font-black shadow-md active:scale-95">افتح طلب جماعي للربع</button>}
+                ) : <button onClick={handleOpenGroupOrder} disabled={groupOrderLoading} className="w-full bg-brand text-white rounded-2xl py-3 text-xs font-black shadow-md active:scale-95">افتح طلب للربع</button>}
                 {hasRealUsualOrder && <button onClick={() => alert("الطلب المعتاد جاهز كفكرة عرض داخل الديوانية، وربطه بالسلة يحتاج مسار إضافة الأصناف للسلة في صفحة الطلب.")} className="w-full bg-stone-50 text-brand border border-stone-100 rounded-2xl py-3 text-xs font-black">كرر الطلب المعتاد للديوانية ({usualOrder.items.length} أصناف)</button>}
               </div>}
 
