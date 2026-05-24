@@ -2669,3 +2669,80 @@ html, body, #root {
     animation: none !important;
   }
 }
+
+/* V5 hard mobile fix: stop notification jitter on real phones without changing the alert content or features. */
+@media (max-width: 640px){
+  .customer-mobile-stable-alert,
+  .customer-mobile-stable-alert-bubble{
+    animation: none !important;
+    transition: opacity .10s ease, background-color .12s ease, border-color .12s ease !important;
+    transform: none !important;
+    translate: none !important;
+    rotate: none !important;
+    scale: none !important;
+    will-change: auto !important;
+    backface-visibility: visible !important;
+    -webkit-backface-visibility: visible !important;
+    transform-style: flat !important;
+    perspective: none !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .customer-mobile-stable-alert{
+    position: fixed !important;
+    top: auto !important;
+    left: max(12px, env(safe-area-inset-left)) !important;
+    right: max(12px, env(safe-area-inset-right)) !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px) !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: min(58vh, 360px) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    contain: paint !important;
+  }
+
+  .customer-mobile-stable-alert-bubble{
+    position: fixed !important;
+    left: max(14px, env(safe-area-inset-left)) !important;
+    right: auto !important;
+  }
+
+  .customer-mobile-stable-alert-bubble.bottom-\[96px\],
+  .customer-mobile-stable-alert-bubble.bottom-24,
+  .customer-mobile-stable-alert-bubble.bottom-6{
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px) !important;
+  }
+
+  .customer-mobile-stable-alert-bubble.bottom-\[156px\],
+  .customer-mobile-stable-alert-bubble.bottom-40{
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 146px) !important;
+  }
+
+  .customer-mobile-stable-alert-bubble.bottom-\[216px\]{
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 200px) !important;
+  }
+
+  .customer-mobile-stable-alert *,
+  .customer-mobile-stable-alert-bubble *{
+    animation: none !important;
+    transform: none !important;
+    translate: none !important;
+    rotate: none !important;
+    scale: none !important;
+    will-change: auto !important;
+    backface-visibility: visible !important;
+    -webkit-backface-visibility: visible !important;
+  }
+
+  .customer-mobile-stable-alert .animate-ping,
+  .customer-mobile-stable-alert-bubble .animate-ping,
+  .customer-mobile-stable-alert .animate-pulse,
+  .customer-mobile-stable-alert-bubble .animate-pulse{
+    animation: none !important;
+    opacity: .55 !important;
+  }
+}
