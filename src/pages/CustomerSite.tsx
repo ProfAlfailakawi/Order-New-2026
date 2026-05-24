@@ -486,6 +486,7 @@ export default function CustomerSite() {
   const [orderPaymentLink, setOrderPaymentLink] = useState("");
 
   const [lastOrderInfo, setLastOrderInfo] = useState<any>(null);
+  const [customerHistoricalOrdersCount, setCustomerHistoricalOrdersCount] = useState(0);
   const [isZeroClickLoading, setIsZeroClickLoading] = useState(false);
 
   const [orderSuccessCustomerData, setOrderSuccessCustomerData] = useState({
@@ -1505,6 +1506,7 @@ export default function CustomerSite() {
       if (customerPhone.length < 8) {
         setCustomerPoints(0);
         setLastOrderInfo(null);
+        setCustomerHistoricalOrdersCount(0);
         return;
       }
       try {
@@ -1522,6 +1524,7 @@ export default function CustomerSite() {
             const txt = await trackRes.text();
             const orders = JSON.parse(txt);
             if (orders && orders.length > 0) {
+              setCustomerHistoricalOrdersCount(orders.length);
               const successfulOrder = orders.find((o: any) => {
                 let rawStatus = o.status;
                 if (!rawStatus) {
@@ -1554,6 +1557,8 @@ export default function CustomerSite() {
               } else {
                 setLastOrderInfo(null);
               }
+            } else {
+              setCustomerHistoricalOrdersCount(0);
             }
           }
         } catch (e) {}
@@ -4274,6 +4279,7 @@ export default function CustomerSite() {
               setShowSquadModal={setShowSquadModal}
               getLoyaltyTier={getLoyaltyTier}
               lastOrderInfo={lastOrderInfo}
+              customerHistoricalOrdersCount={customerHistoricalOrdersCount}
               isZeroClickLoading={isZeroClickLoading}
               handleZeroClickOrder={handleZeroClickOrder}
             />
@@ -4562,7 +4568,7 @@ export default function CustomerSite() {
                   setIsOwnerJoinAlertCollapsed(true);
                 }}
                 className={cn(
-                  "fixed w-12 h-12 rounded-full relative bg-brand text-white border border-emerald-300/30 shadow-2xl z-[85] flex items-center justify-center backdrop-blur-md",
+                  "fixed w-12 h-12 rounded-full bg-brand text-white border border-emerald-300/30 shadow-2xl z-[85] flex items-center justify-center backdrop-blur-md",
                   floatingAlertBubbleSide,
                   floatingAlertBottomHigh,
                 )}
@@ -5730,6 +5736,7 @@ function CheckoutOverlay({
   setShowSquadModal,
   getLoyaltyTier,
   lastOrderInfo,
+  customerHistoricalOrdersCount = 0,
   isZeroClickLoading,
   handleZeroClickOrder,
 }: any) {
@@ -6094,7 +6101,7 @@ function CheckoutOverlay({
                 </div>
                 {customerPhone.length >= 8 && (
                   <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                    {lastOrderInfo && lastOrderItemsCount > 0 && (
+                    {customerHistoricalOrdersCount > 1 && lastOrderInfo && lastOrderItemsCount > 0 && (
                       <motion.div
                         initial={{ opacity: 0, y: 8, scale: 0.98 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}

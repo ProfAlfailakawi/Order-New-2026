@@ -883,189 +883,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     >
       {activeSquadTab === "overview" && (
         <div className="flex flex-col gap-6 animate-in fade-in duration-500">
-          {/* Personal Loyalty Tier - Moved from main screen */}
-          {customerPhone && (
-            <div className="flex flex-col gap-2">
-              <h4 className="text-xs font-black text-stone-400 uppercase tracking-widest text-right mb-1">
-                بروتوكول الولاء الشخصي
-              </h4>
-              {(() => {
-                const tier = getLoyaltyTier(customerPoints);
-                return (
-                  <div
-                    className={cn(
-                      "p-4 rounded-2xl border-2 flex items-center justify-between",
-                      tier.bg,
-                      tier.color === "text-sky-600"
-                        ? "border-sky-100"
-                        : tier.color === "text-yellow-600"
-                          ? "border-yellow-100"
-                          : "border-stone-100",
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-xl">
-                        {tier.icon}
-                      </div>
-                      <div className="flex flex-col text-right">
-                        <span className="text-sm font-black text-brand">
-                          مستوى {tier.name}
-                        </span>
-                        <span className="text-[10px] font-bold text-stone-500">
-                          رصيدك: {customerPoints} {formatPoints(customerPoints)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-[10px] font-black text-stone-400 opacity-60">
-                      حسابك الشخصي
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-
-
           {squadInfo && isCurrentMember && (
-            <div className="rounded-[32px] border border-stone-100 bg-white shadow-sm p-4 space-y-4 text-right font-sans" dir="rtl">
-	              <div className="flex items-start justify-between gap-3">
-	                <div className="min-w-0">
-	                  <div className="text-[10px] font-black text-accent bg-accent/10 px-3 py-1 rounded-full inline-flex mb-2">ديوانيتك الحالية</div>
-	                  <h3 className="text-xl font-black text-brand leading-tight truncate">ديوانية {cleanSquadName(squadInfo?.name)}</h3>
-	                  <p className="text-[11px] font-bold text-stone-400 mt-1">{isOwner ? "أنت المعزب" : "أنت من الربع"} · {formatEnglishNumber((squadInfo?.membersList || []).length || 1)} أعضاء · {squadInfo?.lat !== undefined ? "الموقع مثبت ✅" : "الموقع يحتاج تثبيت 📍"}</p>
-                    <div className={cn("mt-2 inline-flex rounded-full border px-3 py-1 text-[10px] font-black", currentUserRoleTone)}>
-                      دخولك الحالي: {currentUserRoleLabel}
-                    </div>
-	                </div>
-                {unreadDiwaniyaNotifications > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setMyDiwaniyaTab("notifications")}
-                    className="shrink-0 bg-amber-50 text-amber-700 border border-amber-100 rounded-2xl px-3 py-2 text-[10px] font-black active:scale-95"
-                  >
-                    {formatEnglishNumber(unreadDiwaniyaNotifications)} تنبيه 🔔
-                  </button>
-	                )}
-	              </div>
-
-	              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-	                {[
-	                  { label: "حاضر الآن", value: formatEnglishNumber(presentMembers.length || 0), tone: "bg-emerald-50 text-emerald-700 border-emerald-100" },
-	                  { label: "طلبات دخول", value: formatEnglishNumber(pendingGeofenceRequests?.length || 0), tone: "bg-amber-50 text-amber-700 border-amber-100" },
-	                  { label: "مدى الرادار", value: `${formatEnglishNumber(getSquadOwnGeofenceDistance())}م`, tone: "bg-sky-50 text-sky-700 border-sky-100" },
-	                  { label: "قطيات", value: formatEnglishNumber(openQatyaCount || 0), tone: "bg-stone-50 text-stone-600 border-stone-100" },
-	                ].map((item) => (
-	                  <div key={item.label} className={cn("rounded-2xl border px-3 py-2 text-right", item.tone)}>
-	                    <div className="text-sm font-black leading-none">{item.value}</div>
-	                    <div className="text-[9px] font-black opacity-70 mt-1">{item.label}</div>
-	                  </div>
-	                ))}
-	              </div>
-
-	              {openQatyaOrder && (
-                <div className="rounded-[28px] border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-amber-50/40 p-4 text-right shadow-sm space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={() => handleOpenActiveQatya(openQatyaOrder.id)}
-                      className="shrink-0 bg-brand text-white rounded-2xl px-4 py-3 text-[11px] font-black active:scale-95 shadow-sm"
-                    >
-                      ادخل وادفع قطيتك
-                    </button>
-                    <div className="min-w-0">
-                      <div className="text-[10px] font-black text-emerald-700 bg-white/70 border border-emerald-100 rounded-full px-3 py-1 inline-flex mb-2">قطية مفتوحة للديوانية</div>
-                      <h4 className="text-sm font-black text-brand leading-tight">قطية الربع جاهزة لك</h4>
-                      <p className="text-[10px] font-bold text-stone-500 mt-1 leading-relaxed">ادخل وحدد المبلغ وادفع مباشرة، اسمك ورقمك جاهزين من عضويتك.</p>
-                      {openQatyaCount > 1 && <div className="text-[9px] font-black text-emerald-700 mt-1">عندك {formatEnglishNumber(openQatyaCount)} قطيات مفتوحة</div>}
-                    </div>
-                  </div>
-                  <div className="rounded-2xl bg-white/80 border border-emerald-100 p-3">
-                    <div className="flex items-center justify-between text-[10px] font-black mb-2">
-                      <span className="text-emerald-700">اكتملت {formatEnglishNumber(Math.round(activeQatyaProgress))}%</span>
-                      <span className="text-stone-400">الباقي {activeQatyaRemaining.toFixed(3)} د.ك</span>
-                    </div>
-                    <div className="h-2.5 rounded-full bg-stone-100 overflow-hidden">
-                      <div className="h-full rounded-full bg-gradient-to-l from-emerald-500 to-amber-400 transition-all" style={{ width: `${activeQatyaProgress}%` }} />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-	              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-	                <button
-                  type="button"
-                  onClick={() => setMyDiwaniyaTab("orders")}
-                  className="rounded-3xl bg-brand text-white p-3 min-h-[86px] shadow-md active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
-                >
-                  <span className="text-2xl">🍽️</span>
-                  <span className="text-xs font-black">اطلب للربع</span>
-                  <span className="text-[9px] font-bold text-white/60">طلب وقطية</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handlePrepareQatya}
-                  className="rounded-3xl bg-accent text-white p-3 min-h-[86px] shadow-md active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
-                >
-                  <span className="text-2xl">💳</span>
-                  <span className="text-xs font-black">القطية</span>
-                  <span className="text-[9px] font-bold text-white/70">جهز الأسماء</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMyDiwaniyaTab(isOwner ? "manage" : "home")}
-                  className="rounded-3xl bg-stone-50 text-brand border border-stone-100 p-3 min-h-[86px] active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
-                >
-                  <span className="text-2xl">🛖</span>
-                  <span className="text-xs font-black">إدارة الديوانية</span>
-                  <span className="text-[9px] font-bold text-stone-400">الأعضاء والموقع</span>
-	                </button>
-	              </div>
-
-	              <div className="rounded-[28px] border border-brand/10 bg-gradient-to-br from-stone-50 to-white p-3">
-	                <div className="mb-3 flex items-center justify-between">
-	                  <span className="rounded-full bg-brand text-white px-3 py-1 text-[10px] font-black">مجلس اليوم</span>
-	                  <span className="text-xs font-black text-brand">كل شيء بمكانه</span>
-	                </div>
-	                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-	                  {[
-	                    { label: "الرئيسية", value: isPresentNow ? "حاضر" : "جاهز", tab: "home" },
-	                    { label: "الدواوين", value: `${formatEnglishNumber(userSquads.length || 1)}`, tab: "manage" },
-	                    { label: "الطلبات", value: openQatyaOrder ? "مفتوح" : "هادئ", tab: "orders" },
-	                    { label: "الموقع", value: squadInfo?.lat !== undefined ? `${formatEnglishNumber(getSquadOwnGeofenceDistance())}م` : "ناقص", tab: "location" },
-	                  ].map((item) => (
-	                    <button
-	                      key={item.label}
-	                      type="button"
-	                      onClick={() => setMyDiwaniyaTab(item.tab as any)}
-	                      className={cn(
-	                        "rounded-2xl border p-3 text-right transition-all active:scale-[0.98]",
-	                        myDiwaniyaTab === item.tab ? "bg-brand text-white border-brand shadow-md" : "bg-white text-brand border-stone-100"
-	                      )}
-	                    >
-	                      <div className="text-sm font-black">{item.value}</div>
-	                      <div className={cn("text-[9px] font-bold mt-1", myDiwaniyaTab === item.tab ? "text-white/60" : "text-stone-400")}>{item.label}</div>
-	                    </button>
-	                  ))}
-	                </div>
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {[
-                      { title: isPresentNow ? "حضورك مسجل" : "الحضور جاهز", body: isPresentNow ? "أنت ظاهر للربع الآن." : "اضغط أنا وصلت إذا وصلت الديوانية.", tone: "border-emerald-100 bg-emerald-50/65 text-emerald-700" },
-                      { title: openQatyaOrder ? "قطية مفتوحة" : "لا توجد قطية مفتوحة", body: openQatyaOrder ? `باقي ${activeQatyaRemaining.toFixed(3)} د.ك` : `جاهزين ${formatEnglishNumber(preparedQatyaPreview.length)} اسم للقطية.`, tone: "border-amber-100 bg-amber-50/65 text-amber-700" },
-                      { title: squadInfo?.lat !== undefined ? "الرادار مضبوط" : "الرادار ناقص", body: squadInfo?.lat !== undefined ? `المدى ${formatEnglishNumber(getSquadOwnGeofenceDistance())}م.` : "المعزب يثبت الموقع للتنبيهات.", tone: "border-sky-100 bg-sky-50/65 text-sky-700" },
-                    ].map((item) => (
-                      <div key={item.title} className={cn("rounded-2xl border p-3", item.tone)}>
-                        <div className="text-xs font-black">{item.title}</div>
-                        <div className="text-[10px] font-bold opacity-75 mt-1 leading-relaxed">{item.body}</div>
-                      </div>
-                    ))}
-                  </div>
-	              </div>
-	            </div>
-	          )}
-
-	          {squadInfo && isCurrentMember && (
-	            <div className="bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm relative z-10 sticky top-2 backdrop-blur-xl">
-	              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center" dir="rtl">
+            <div className="bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm relative z-10 sticky top-2 backdrop-blur-xl">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center" dir="rtl">
                 {[
                   { id: "home", label: "الرئيسية", icon: "🏠" },
                   { id: "manage", label: "دواويني", icon: "🛖" },
@@ -1097,7 +917,6 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
               </div>
             </div>
           )}
-
 
           {customerPhone && myDiwaniyaTab === "notifications" && visibleNotifications.length > 0 && (
             <div className="bg-white rounded-[30px] border border-amber-100 shadow-sm p-5 text-right space-y-3 font-sans">
@@ -1152,69 +971,21 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           {!isCreatingSquad && squadInfo && isCurrentMember && myDiwaniyaTab !== "notifications" && (
             <div className="grid gap-3 text-right font-sans">
 	              {myDiwaniyaTab === "home" && (
-	                <div className="space-y-4">
-	                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-	                    {[
-	                      { title: "الحضور", desc: isPresentNow ? "أنت مسجل حاضر" : "دخول سريع للّمة", action: isPresentNow ? "مسجل ✅" : "أنا وصلت", onClick: () => handlePresenceToggle("in"), disabled: isPresenceLoading || isPresentNow, tone: "bg-emerald-50 text-emerald-700 border-emerald-100" },
-	                      { title: "القطية", desc: openQatyaOrder ? "قطية مفتوحة الآن" : "جهز أسماء الربع", action: openQatyaOrder ? "ادخل القطية" : "جهز القطية", onClick: () => openQatyaOrder ? handleOpenActiveQatya(openQatyaOrder.id) : handlePrepareQatya(), disabled: false, tone: "bg-amber-50 text-amber-700 border-amber-100" },
-	                      { title: "الموقع", desc: squadInfo?.lat !== undefined ? `${formatEnglishNumber(getSquadOwnGeofenceDistance())}م مفعلة` : "ثبّت اللوكيشن", action: "فتح الموقع", onClick: () => setMyDiwaniyaTab("location"), disabled: false, tone: "bg-sky-50 text-sky-700 border-sky-100" },
-	                    ].map((item) => (
-	                      <button
-	                        key={item.title}
-	                        type="button"
-	                        onClick={item.onClick}
-	                        disabled={item.disabled}
-	                        className={cn("rounded-[24px] border p-4 text-right shadow-sm active:scale-[0.98] transition-all disabled:opacity-60", item.tone)}
-	                      >
-	                        <div className="text-sm font-black">{item.title}</div>
-	                        <div className="text-[10px] font-bold opacity-70 mt-1">{item.desc}</div>
-	                        <div className="mt-3 inline-flex rounded-xl bg-white/75 border border-current/10 px-3 py-1.5 text-[10px] font-black">{item.action}</div>
-	                      </button>
-	                    ))}
-	                  </div>
-
-	                  {openQatyaOrder && (
-                    <div className="bg-emerald-50 border border-emerald-100 rounded-[28px] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <button onClick={() => handleOpenActiveQatya(openQatyaOrder.id)} className="bg-brand text-white rounded-2xl px-5 py-3 text-xs font-black shadow-md active:scale-95 sm:order-1">ادخل وادفع قطيتك</button>
-                      <div className="text-right">
-                        <div className="text-[10px] font-black text-emerald-700 mb-1">قطية مفتوحة الآن</div>
-                        <h4 className="text-sm font-black text-brand">الربع ناطرين قطيتك</h4>
-                        <p className="text-[10px] font-bold text-stone-500 mt-1">ما تحتاج تكتب اسمك أو رقمك، حدد المبلغ فقط.</p>
-                      </div>
-                    </div>
-                  )}
-                  <div className="bg-gradient-to-br from-brand to-stone-900 text-white p-5 rounded-[30px] shadow-xl border border-white/10 space-y-4 overflow-hidden relative">
-                    <div className="absolute -left-10 -top-10 w-32 h-32 bg-accent/20 blur-3xl rounded-full" />
-                    <div className="relative flex items-center justify-between gap-3">
-                      <div className="text-[10px] font-black bg-white/10 px-3 py-1 rounded-full">حضور الديوانية</div>
-                      <div>
-                        <h4 className="text-base font-black">أنا في الديوانية الآن</h4>
-                        <p className="text-[11px] text-white/70 font-bold">دخول وخروج واضح بدون تتبع مزعج.</p>
-                      </div>
-                    </div>
-                    <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <button
-                        onClick={() => handlePresenceToggle("in")}
-                        disabled={isPresenceLoading || isPresentNow}
-                        className={cn(
-                          "w-full py-3 rounded-2xl text-xs font-black transition-all disabled:cursor-not-allowed whitespace-nowrap",
-                          isPresentNow ? "bg-emerald-400 text-brand opacity-100" : "bg-white text-brand active:scale-95",
-                          (isPresenceLoading || isPresentNow) && "pointer-events-none"
-                        )}
-                      >
-                        {isPresentNow ? "أنت موجود الآن ✅" : "أنا وصلت"}
-                      </button>
-                      <button
-                        onClick={() => handlePresenceToggle("out")}
-                        disabled={isPresenceLoading || !isPresentNow}
-                        className={cn(
-                          "w-full py-3 rounded-2xl text-xs font-black border border-white/10 transition-all disabled:cursor-not-allowed whitespace-nowrap",
-                          isPresentNow ? "bg-white text-brand active:scale-95" : "bg-white/10 text-white/45 opacity-50 pointer-events-none"
-                        )}
-                      >
-                        طلعت / إيقاف الحضور
-                      </button>
-                    </div>
+                <div className="space-y-4">
+                  <div className="flex justify-end" dir="rtl">
+                    <button
+                      type="button"
+                      onClick={() => handlePresenceToggle(isPresentNow ? "out" : "in")}
+                      disabled={isPresenceLoading}
+                      className={cn(
+                        "rounded-full px-5 py-3 text-xs font-black border shadow-sm active:scale-95 disabled:opacity-50 transition-all",
+                        isPresentNow
+                          ? "bg-white text-stone-600 border-stone-200"
+                          : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                      )}
+                    >
+                      {isPresentNow ? "طلعت من الديوانية" : "وصلت الديوانية"}
+                    </button>
                   </div>
 
                   {/* Sadu Rug - سجادة السدو الكويتية الحية */}
@@ -1226,6 +997,23 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     onWobbleAction={handleWobbleAction}
                     isOwner={isOwner}
                   />
+
+                  {customerPhone && (() => {
+                    const tier = getLoyaltyTier(customerPoints);
+                    return (
+                      <div className="rounded-[22px] border border-stone-100 bg-white/85 px-4 py-3 shadow-sm flex items-center justify-between gap-3" dir="rtl">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-9 h-9 rounded-2xl bg-stone-50 border border-stone-100 flex items-center justify-center text-lg shrink-0">
+                            {tier.icon}
+                          </span>
+                          <div className="flex flex-col text-right min-w-0">
+                            <span className="text-xs font-black text-brand truncate">مستوى شلة ديوانية {tier.name}</span>
+                            <span className="text-[10px] font-bold text-stone-400">رصيدك: {customerPoints} {formatPoints(customerPoints)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 

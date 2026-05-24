@@ -559,9 +559,10 @@ export default function OrderPage() {
     return order.total || 0;
   };
 
-  const lastReorderableOrder = orders.find(
-    (order: any) => Array.isArray(order.items) && order.items.length > 0,
-  );
+  const canShowSmartReorder = orders.length > 1;
+  const lastReorderableOrder = canShowSmartReorder
+    ? orders.find((order: any) => Array.isArray(order.items) && order.items.length > 0)
+    : null;
   const trackedCustomerName = getFirstName(orders[0]?.customerName);
 
   const [processingPayment, setProcessingPayment] = useState(false);
