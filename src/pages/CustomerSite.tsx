@@ -509,6 +509,7 @@ export default function CustomerSite() {
   const [myGeofenceRequests, setMyGeofenceRequests] = useState<any[]>([]);
   const [squadPresence, setSquadPresence] = useState<any[]>([]);
   const [activeGroupOrder, setActiveGroupOrder] = useState<any>(null);
+  const [activeQatyaOrders, setActiveQatyaOrders] = useState<any[]>([]);
   const [tempCodes, setTempCodes] = useState<any[]>([]);
   const [usualOrder, setUsualOrder] = useState<any>(null);
   const [squadBeautifulLog, setSquadBeautifulLog] = useState<any>(null);
@@ -549,6 +550,7 @@ export default function CustomerSite() {
          setMyGeofenceRequests([]);
          setSquadPresence([]);
          setActiveGroupOrder(null);
+         setActiveQatyaOrders([]);
          setTempCodes([]);
          setUsualOrder(null);
          setSquadBeautifulLog(null);
@@ -563,6 +565,7 @@ export default function CustomerSite() {
        setMyGeofenceRequests(data.myGeofenceRequests || []);
        setSquadPresence(data.squadPresence || []);
        setActiveGroupOrder(data.activeGroupOrder || null);
+       setActiveQatyaOrders(Array.isArray(data.activeQatyaOrders) ? data.activeQatyaOrders : []);
        setTempCodes(data.tempCodes || []);
        setUsualOrder(data.usualOrder || null);
        setSquadBeautifulLog(data.squadBeautifulLog || null);
@@ -938,6 +941,33 @@ export default function CustomerSite() {
     } else if (notification?.meta?.url) {
       navigate(notification.meta.url);
     }
+  };
+
+  const qatyaAlertItems = useMemo(() => {
+    const notificationItems = (qatyaNotifications || []).map((n: any) => ({ ...n, sourceKind: "notification" }));
+    const notifiedOrderIds = new Set(notificationItems.map((n: any) => String(n?.meta?.orderId || "")).filter(Boolean));
+    const orderItems = (activeQatyaOrders || [])
+      .filter((o: any) => o?.id && !notifiedOrderIds.has(String(o.id)))
+      .map((o: any) => ({
+        id: `active-qatya-${o.id}`,
+        type: "qatya_request",
+        sourceKind: "active_order",
+        title: "قطية مفتوحة للديوانية",
+        message: "ادخل وحدد قطيتك وادفع مباشرة، اسمك ورقمك جاهزين.",
+        squadName: o.squadName || squadInfo?.name || "",
+        meta: { orderId: o.id, url: `/split/${o.id}` },
+      }));
+    return [...notificationItems, ...orderItems].slice(0, 5);
+  }, [qatyaNotifications, activeQatyaOrders, squadInfo?.name]);
+
+  const handleOpenQatyaAlertItem = async (item: any) => {
+    if (item?.sourceKind === "notification") {
+      await handleOpenQatyaNotification(item);
+      return;
+    }
+    const phone = cleanPhoneForSquad(customerPhone || "").slice(-8);
+    const orderId = item?.meta?.orderId;
+    if (orderId) navigate(`/split/${orderId}?phone=${encodeURIComponent(phone)}&tab=payment`);
   };
 
   const handleOwnerJoinDecision = async (targetPhone: string, approved: boolean, targetSquadId?: string) => {
@@ -4118,6 +4148,7 @@ export default function CustomerSite() {
                         settings={settings}
                         squadPresence={squadPresence}
                         activeGroupOrder={activeGroupOrder}
+                        activeQatyaOrders={activeQatyaOrders}
                         tempCodes={tempCodes}
                         usualOrder={usualOrder}
                         squadBeautifulLog={squadBeautifulLog}
@@ -4457,7 +4488,7 @@ export default function CustomerSite() {
 
         {/* تنبيه قطية الديوانية للأعضاء حتى وهم يتصفحون المنيو */}
         <AnimatePresence>
-          {customerPhone && qatyaNotifications.length > 0 && (
+          {customerPhone && qatyaAlertItems.length > 0 && (
             isQatyaAlertCollapsed ? (
               <motion.button
                 key="qatya-alert-collapsed"
@@ -4497,11 +4528,11 @@ export default function CustomerSite() {
                   </div>
                 </div>
                 <div className="space-y-3">
-                  {qatyaNotifications.map((n: any) => (
+                  {qatyaAlertItems.map((n: any) => (
                     <button
                       key={n.id}
                       type="button"
-                      onClick={() => handleOpenQatyaNotification(n)}
+                      onClick={() => handleOpenQatyaAlertItem(n)}
                       className="w-full p-3 bg-white/10 hover:bg-white/15 rounded-2xl border border-white/10 text-right active:scale-[0.98] transition-all"
                     >
                       <div className="text-[10px] font-black text-emerald-100 mb-1">{n.squadName ? `ديوانية ${n.squadName}` : "ديوانية الربع"}</div>

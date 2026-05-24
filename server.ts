@@ -1042,10 +1042,42 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const allGroupOrders = Array.isArray(data.squadGroupOrders) ? data.squadGroupOrders : [];
       const activeGroupOrder = mySquad ? allGroupOrders.find((g: any) => String(g.squadId) === String(mySquad.id) && g.status === "open") || null : null;
       const tempCodes = mySquad ? (Array.isArray(data.squadTempCodes) ? data.squadTempCodes : []).filter((c: any) => String(c.squadId) === String(mySquad.id) && new Date(c.expiresAt || 0).getTime() > Date.now()) : [];
-      const squadOrders = mySquad ? (Array.isArray(data.orders) ? data.orders : [])
+      const allSquadOrders = mySquad ? (Array.isArray(data.orders) ? data.orders : [])
         .filter((o: any) => String(o.squadId || o.squadID || "") === String(mySquad.id))
-        .filter((o: any) => Array.isArray(o.items || o.cart) && (o.items || o.cart).length > 0)
-        .slice(-10).reverse() : [];
+        .filter((o: any) => Array.isArray(o.items || o.cart) && (o.items || o.cart).length > 0) : [];
+      const activeQatyaOrders = cleanQPhone && mySquad ? allSquadOrders
+        .filter((o: any) => {
+          const splitTypeValue = String(o.splitType || "").toLowerCase();
+          const payStatus = String(o.paymentStatus || "").toLowerCase();
+          const orderStatus = String(o.status || "");
+          const isSplit = Boolean(splitTypeValue && splitTypeValue !== "none") || payStatus === "split" || orderStatus.includes("قطية");
+          const isClosed = payStatus === "paid" || orderStatus.startsWith("تم الدفع") || orderStatus.includes("ملغي") || orderStatus.includes("انتهى");
+          const participants = [
+            ...(Array.isArray(o.splitPayments) ? o.splitPayments : []),
+            ...(Array.isArray(o.splitParticipants) ? o.splitParticipants : []),
+          ];
+          const belongsToMember = participants.some((m: any) => cleanPhone(m.phone || "") === cleanQPhone)
+            || (mySquad.membersList || []).some((m: any) => cleanPhone(m.phone || "") === cleanQPhone);
+          return isSplit && !isClosed && belongsToMember;
+        })
+        .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+        .slice(0, 3)
+        .map((o: any) => {
+          const paidAmount = (Array.isArray(o.splitPayments) ? o.splitPayments : [])
+            .filter((p: any) => String(p.status || "").toLowerCase() === "paid")
+            .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
+          return {
+            id: o.id,
+            total: Number(o.total || 0),
+            paidAmount,
+            remainingAmount: Math.max(0, Number(o.total || 0) - paidAmount),
+            createdAt: o.createdAt || "",
+            squadId: o.squadId || o.squadID || "",
+            squadName: o.squadName || mySquad.name || "",
+            status: o.status || "",
+          };
+        }) : [];
+      const squadOrders = allSquadOrders.slice(-10).reverse();
       const productCounter: Record<string, number> = {};
       squadOrders.forEach((o: any) => (o.items || o.cart || []).forEach((it: any) => { const n = it.name || it.title; if (n) productCounter[n] = (productCounter[n] || 0) + Number(it.quantity || 1); }));
       const favoriteItemName = Object.entries(productCounter).sort((a:any,b:any)=>b[1]-a[1])[0]?.[0] || "";
@@ -1073,6 +1105,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
          tempCodes,
          usualOrder,
          squadBeautifulLog,
+         activeQatyaOrders,
          diwaniyaNotifications,
          unreadDiwaniyaNotifications
       });
