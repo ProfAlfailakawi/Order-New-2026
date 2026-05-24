@@ -5059,7 +5059,7 @@ const ChefWhisperCard = ({
                     }
                   }}
                   alt={product.name}
-                  className="w-full h-full object-cover transform hover:scale-105 transition-transform relative z-0"
+                  className="w-full h-full object-contain p-2 bg-white relative z-0"
                 />
               </div>
               <div className="flex flex-col flex-grow text-center overflow-hidden relative z-10">
@@ -5119,7 +5119,7 @@ const ChefWhisperCard = ({
                         }
                       }}
                       alt={product.name}
-                      className="menu-product-img w-full h-full object-cover transform hover:scale-105 transition-transform relative z-0"
+                      className="menu-product-img w-full h-full object-contain p-2 bg-white relative z-0"
                     />
                   </div>
 

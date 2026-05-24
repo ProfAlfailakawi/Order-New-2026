@@ -393,6 +393,7 @@ function pushDiwaniyaNotifications(list: any[], inputs: any[]) {
 
 const IMPORTANT_DIWANIYA_PUSH_TYPES = new Set([
   "join_request",
+  "presence_in",
   "qatya_request",
   "roulette_result",
 ]);
@@ -428,6 +429,7 @@ async function sendDiwaniyaExternalPush(input: {
       .filter((item: any) => {
         const prefs = item?.prefs || {};
         if (input.type === "join_request") return true;
+        if (input.type === "presence_in") return prefs.presence !== false;
         if (input.type === "qatya_request") return prefs.qatya !== false;
         if (input.type === "roulette_result") return prefs.roulette !== false;
         return false;
@@ -458,6 +460,7 @@ async function sendDiwaniyaExternalPush(input: {
           tag: `diwaniya-${input.type}-${input.orderId || input.squadId || Date.now()}`,
           renotify: false,
           requireInteraction: input.type === "qatya_request",
+          silent: input.type === "presence_in",
         },
       },
     });
@@ -1548,9 +1551,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
         }
       }
       presence = filtered.filter((p: any) => String(p.squadId) === String(squadId));
-      const recipients = (squad?.membersList || [])
-        .map((m: any) => m.phone)
-        .filter((ph: any) => ph && cleanPhone(ph) !== cleanTarget);
+      const recipients = Array.from(new Set([
+        squad?.phone,
+        ...(squad?.membersList || []).map((m: any) => m.phone)
+      ].map(cleanPhone).filter((ph: any) => ph && ph !== cleanTarget))) as string[];
       const diwaniyaNotifications = action === "in"
         ? pushDiwaniyaNotifications(current.diwaniyaNotifications || [], recipients.map((toPhone: string) => ({
             type: "presence_in",
@@ -1566,6 +1570,26 @@ app.get("/api/debug/order/:id", async (req, res) => {
       return { squadPresence: filtered, diwaniyaNotifications };
     });
     if (!ok) return res.status(500).json({ error: "Failed to update presence" });
+    if (action === "in") {
+      try {
+        const current = await getAppData();
+        const squad = (Array.isArray(current.squads) ? current.squads : []).find((s: any) => String(s.id) === String(squadId));
+        const recipients = Array.from(new Set([
+          squad?.phone,
+          ...(squad?.membersList || []).map((m: any) => m.phone)
+        ].map(cleanPhone).filter((ph: any) => ph && ph !== cleanTarget)));
+        if (recipients.length) {
+          void sendDiwaniyaExternalPush({
+            toPhones: recipients,
+            type: "presence_in",
+            title: "واحد من الربع وصل",
+            body: `${name || "أحد الربع"} دخل ديوانية ${squad?.name || "الربع"}.`,
+            squadId: String(squadId),
+            url: "/?showSquads=true"
+          });
+        }
+      } catch {}
+    }
     res.json({ success: true, presence });
   });
 
