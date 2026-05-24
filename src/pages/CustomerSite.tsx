@@ -157,7 +157,7 @@ const INITIAL_ADDRESS: Address = {
 
 const triggerHapticAndSound = (type?: "success" | "click") => {
   try {
-    if (navigator.vibrate) navigator.vibrate(50);
+    // vibration disabled: keep visual notification stable
   } catch (e) {}
   try {
     const audioCtx = new (
@@ -1217,7 +1217,7 @@ export default function CustomerSite() {
     return watchDiwaniyaForegroundPush((payload) => {
       const title = payload?.notification?.title || "تنبيه ديوانية";
       setCartMoment(title);
-      try { if (navigator.vibrate) navigator.vibrate(35); } catch {}
+      // vibration disabled: keep visual notification stable
       window.setTimeout(() => setCartMoment(null), 3600);
     });
   }, []);
@@ -2453,7 +2453,9 @@ export default function CustomerSite() {
     setIsSubmitting(true);
 
     const splitPrefillSource = splitMode ? String(localStorage.getItem("split_prefill_source") || "") : "";
-    const isDiwaniyaQatya = Boolean(splitMode && splitPrefillSource.startsWith("diwaniya"));
+    const splitPrefillReady = splitMode ? String(localStorage.getItem("split_prefill_ready") || "") === "1" : false;
+    const splitPrefillRawMembers = splitMode ? String(localStorage.getItem("split_prefill_members") || "") : "";
+    const isDiwaniyaQatya = Boolean(splitMode && (splitPrefillSource.startsWith("diwaniya") || splitPrefillReady || splitPrefillRawMembers.length > 2));
 
     const orderData: any = {
       customerName,
@@ -2493,28 +2495,40 @@ export default function CustomerSite() {
       orderData.splitType = splitMode;
       try {
         const rawMembers = localStorage.getItem("split_prefill_members");
-        const members = rawMembers ? JSON.parse(rawMembers) : [];
-        if (Array.isArray(members) && members.length > 0) {
-          const cleanMap = new Map<string, any>();
-          const memberCount = Math.max(1, members.filter((member: any) => String(member?.phone || "").replace(/\D/g, "").slice(-8)).length);
-          const equalAmount = Number((Number(orderData.total || 0) / memberCount).toFixed(3));
-          members.forEach((member: any) => {
-            const phone = String(member?.phone || "").replace(/\D/g, "").slice(-8);
-            if (!phone) return;
-            cleanMap.set(phone, {
-              name: member?.name || "عضو",
-              phone,
-              amount: equalAmount,
-              status: "pending",
-              splitMode: "equal",
-              source: "diwaniya_qatya"
-            });
+        const storedMembers = rawMembers ? JSON.parse(rawMembers) : [];
+        const squadMembers = Array.isArray(squadInfo?.membersList) ? squadInfo.membersList : [];
+        const members = Array.isArray(storedMembers) && storedMembers.length > 0 ? storedMembers : squadMembers;
+        const cleanMap = new Map<string, any>();
+        members.forEach((member: any) => {
+          const phone = String(member?.phone || "").replace(/\D/g, "").slice(-8);
+          if (!phone) return;
+          cleanMap.set(phone, {
+            name: member?.name || member?.displayName || member?.customerName || "عضو",
+            phone,
           });
-          const preparedMembers = Array.from(cleanMap.values());
-          if (preparedMembers.length > 0) {
-            orderData.splitParticipants = preparedMembers;
-            orderData.splitPayments = preparedMembers;
-          }
+        });
+
+        const checkoutPhone = String(customerPhone || "").replace(/\D/g, "").slice(-8);
+        if (checkoutPhone && !cleanMap.has(checkoutPhone)) {
+          cleanMap.set(checkoutPhone, { name: customerName || "ضيف", phone: checkoutPhone });
+        }
+
+        const memberCount = Math.max(1, cleanMap.size);
+        const equalAmount = Number((Number(orderData.total || 0) / memberCount).toFixed(3));
+        const preparedMembers = Array.from(cleanMap.values()).map((member: any) => ({
+          name: member?.name || "عضو",
+          phone: member.phone,
+          amount: equalAmount,
+          status: "pending",
+          splitMode: "equal",
+          source: "diwaniya_qatya"
+        }));
+
+        if (preparedMembers.length > 0) {
+          orderData.splitParticipants = preparedMembers;
+          orderData.splitPayments = preparedMembers;
+          orderData.splitCount = preparedMembers.length;
+          orderData.equalSplitAmount = equalAmount;
         }
       } catch (e) {}
     } else if (splitMode) {
@@ -3706,7 +3720,7 @@ export default function CustomerSite() {
                       smartPick?.item?.image ||
                       DEFAULT_GLOBAL_LOGO
                     }
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain bg-white p-2"
                     onError={(e) => {
                       e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
                     }}
@@ -3978,7 +3992,7 @@ export default function CustomerSite() {
                         DEFAULT_GLOBAL_LOGO
                       }
                       alt="Product"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain bg-white p-2"
                       onError={(e) => {
                         e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
                       }}
@@ -5508,7 +5522,7 @@ function ProductModal({
                     e.currentTarget.src = fallback;
                   }
                 }}
-                className="w-[108px] h-[108px] sm:w-[126px] sm:h-[126px] object-cover rounded-[28px] shadow-[0_20px_48px_rgba(26,46,34,0.18)] relative ring-1 ring-white/80"
+                className="w-[108px] h-[108px] sm:w-[126px] sm:h-[126px] object-contain bg-white p-2 rounded-[28px] shadow-[0_20px_48px_rgba(26,46,34,0.18)] relative ring-1 ring-white/80"
               />
             ) : (
               <div className="w-[108px] h-[108px] sm:w-[126px] sm:h-[126px] flex items-center justify-center bg-stone-50/80 backdrop-blur-sm border border-stone-100 text-stone-400 rounded-[28px] shadow-md relative p-1">
@@ -5784,7 +5798,7 @@ function ProductModal({
               <button
                 onClick={() => {
                   try {
-                    if (navigator.vibrate) navigator.vibrate(30);
+                    // vibration disabled: keep visual notification stable
                   } catch (e) {}
                   setQuantity(Math.max(1, quantity - 1));
                 }}
@@ -5799,7 +5813,7 @@ function ProductModal({
               <button
                 onClick={() => {
                   try {
-                    if (navigator.vibrate) navigator.vibrate(30);
+                    // vibration disabled: keep visual notification stable
                   } catch (e) {}
                   setQuantity(quantity + 1);
                 }}

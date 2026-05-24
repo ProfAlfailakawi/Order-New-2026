@@ -215,7 +215,7 @@ export default function SplitPayment() {
   const triggerFeedback = () => {
     // Haptic feedback
     if ("vibrate" in navigator) {
-      navigator.vibrate([100, 50, 100]);
+      // vibration disabled: keep visual notification stable
     }
 
     // Water drop sound "بْلِب 💧" via Web Audio API
@@ -487,6 +487,7 @@ export default function SplitPayment() {
   const isDiwaniyaQatya = isDiwaniyaQatyaOrder(order);
   const paidPeople = splitPeople.filter((p: any) => String(p.status || "").toLowerCase() === "paid");
   const waitingPeople = splitPeople.filter((p: any) => String(p.status || "").toLowerCase() !== "paid");
+  const shareAmount = splitPeople.length > 0 ? Number(order.total || 0) / splitPeople.length : Number(order.total || 0);
   const visiblePaidPeople = isDiwaniyaQatya ? paidPeople : paidPeople;
   const visibleWaitingPeople = isDiwaniyaQatya ? waitingPeople : [];
   const currentPersonRole = isKnownDiwaniyaMember ? "عضو ديوانية" : urlPhone ? "ضيف مدعو" : "مشارك";
@@ -744,7 +745,7 @@ export default function SplitPayment() {
         {qatyaTab === "people" && (
           <div className="qatya-pay-card bg-white p-5 sm:p-6 rounded-[24px] shadow-sm border border-stone-100 space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <span className="rounded-full bg-stone-50 border border-stone-100 px-3 py-1 text-[10px] font-black text-stone-500">{paidPeople.length} دفعوا · {waitingPeople.length} بانتظار</span>
+              <span className="rounded-full bg-stone-50 border border-stone-100 px-3 py-1 text-[10px] font-black text-stone-500">{isDiwaniyaQatya ? `${paidPeople.length} دفعوا · ${waitingPeople.length} بانتظار · نصيب الفرد ${Number(shareAmount || 0).toFixed(3)} د.ك` : `${paidPeople.length} دفعوا · ${waitingPeople.length} بانتظار`}</span>
               <h3 className="font-black text-brand text-lg">المشاركون</h3>
             </div>
             {(isDiwaniyaQatya ? splitPeople : paidPeople).length ? (isDiwaniyaQatya ? splitPeople : paidPeople).map((person:any, idx:number) => {
@@ -754,6 +755,7 @@ export default function SplitPayment() {
               <div key={idx} className={cn("flex items-center justify-between rounded-2xl border p-3", paid ? "bg-emerald-50 border-emerald-100" : isMe ? "bg-amber-50 border-amber-100" : "bg-stone-50 border-stone-100")}>
                 <div className="text-right">
                   <span className="font-bold text-stone-700">{person.name || person.phone || `مشارك ${idx+1}`}</span>
+                  {isDiwaniyaQatya && person.phone && <div className="text-[9px] font-bold text-stone-400 mt-0.5" dir="ltr">{String(person.phone).replace(/\D/g, '').slice(-8)}</div>}
                   {isMe && <div className="text-[9px] font-black text-amber-700 mt-0.5">هذا أنت</div>}
                 </div>
                 <strong className={paid ? 'text-emerald-700' : 'text-stone-400'}>{paid ? 'دفع' : 'بانتظار'}</strong>
