@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
+import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegroundPush, type DiwaniyaPushState } from "../lib/diwaniyaPush";
 
 // Define the default product categories shown to customers.
 // Removed "المشويات" و "المشروبات" per latest requirements.  If these
@@ -629,8 +630,8 @@ export default function CustomerSite() {
   const [radarNearbySquads, setRadarNearbySquads] = useState<any[]>([]);
   const [radarLoadingMap, setRadarLoadingMap] = useState<Record<string, boolean>>({});
   const [radarSuccessMap, setRadarSuccessMap] = useState<Record<string, boolean>>({});
-  const [isOwnerJoinAlertCollapsed, setIsOwnerJoinAlertCollapsed] = useState(false);
-  const [isQatyaAlertCollapsed, setIsQatyaAlertCollapsed] = useState(false);
+  const [isOwnerJoinAlertCollapsed, setIsOwnerJoinAlertCollapsed] = useState(true);
+  const [isQatyaAlertCollapsed, setIsQatyaAlertCollapsed] = useState(true);
   const [ownerJoinDecisionLoading, setOwnerJoinDecisionLoading] = useState<Record<string, boolean>>({});
   const [radarStatus, setRadarStatus] = useState<"idle" | "checking" | "ready" | "denied" | "weak" | "unsupported" | "empty">("idle");
   const [radarStatusMsg, setRadarStatusMsg] = useState("فعّل رادار الديوانية عشان تظهر لك الدواوين القريبة مثل قبل.");
@@ -667,7 +668,7 @@ export default function CustomerSite() {
 
   useEffect(() => {
      if ((pendingGeofenceRequests?.length || 0) > 0) {
-       setIsOwnerJoinAlertCollapsed(false);
+       setIsOwnerJoinAlertCollapsed(true);
        setIsNearbyRadarPanelCollapsed(true);
        setIsQatyaAlertCollapsed(true);
      }
@@ -681,7 +682,7 @@ export default function CustomerSite() {
 
   useEffect(() => {
     if (qatyaNotifications.length > 0) {
-      setIsQatyaAlertCollapsed(false);
+      setIsQatyaAlertCollapsed(true);
       setIsNearbyRadarPanelCollapsed(true);
       setIsOwnerJoinAlertCollapsed(true);
     }
@@ -1004,6 +1005,26 @@ export default function CustomerSite() {
     if (orderId) navigate(`/split/${orderId}?phone=${encodeURIComponent(phone)}&tab=payment`);
   };
 
+  const enableImportantDiwaniyaPush = async () => {
+    if (!customerPhone || isEnablingDiwaniyaPush) return;
+    setIsEnablingDiwaniyaPush(true);
+    try {
+      const result = await enableDiwaniyaImportantPush({
+        phone: customerPhone,
+        squadId: activeSquadId || squadInfo?.id || "",
+      });
+      setDiwaniyaPushState(result.state);
+      setCartMoment(result.message);
+      window.setTimeout(() => setCartMoment(null), 3600);
+    } catch (error: any) {
+      setDiwaniyaPushState("error");
+      setCartMoment(error?.message || "تعذر تفعيل تنبيهات الديوانية");
+      window.setTimeout(() => setCartMoment(null), 3600);
+    } finally {
+      setIsEnablingDiwaniyaPush(false);
+    }
+  };
+
   const handleOwnerJoinDecision = async (targetPhone: string, approved: boolean, targetSquadId?: string) => {
      const decisionSquadId = targetSquadId || squadInfo?.id;
      if (!targetPhone || !decisionSquadId) return;
@@ -1167,6 +1188,9 @@ export default function CustomerSite() {
   >([]);
   const [cartBouncing, setCartBouncing] = useState(false);
   const [cartMoment, setCartMoment] = useState<string | null>(null);
+  const [diwaniyaPushState, setDiwaniyaPushState] = useState<DiwaniyaPushState | "idle">("idle");
+  const [isEnablingDiwaniyaPush, setIsEnablingDiwaniyaPush] = useState(false);
+  const [canUseDiwaniyaPush, setCanUseDiwaniyaPush] = useState(false);
   const [isOnline, setIsOnline] = useState(() => typeof navigator === "undefined" ? true : navigator.onLine);
 
   useEffect(() => {
@@ -1177,6 +1201,16 @@ export default function CustomerSite() {
       window.removeEventListener("online", updateOnline);
       window.removeEventListener("offline", updateOnline);
     };
+  }, []);
+
+  useEffect(() => {
+    isDiwaniyaPushReady().then(setCanUseDiwaniyaPush).catch(() => setCanUseDiwaniyaPush(false));
+    return watchDiwaniyaForegroundPush((payload) => {
+      const title = payload?.notification?.title || "تنبيه ديوانية";
+      setCartMoment(title);
+      try { if (navigator.vibrate) navigator.vibrate(35); } catch {}
+      window.setTimeout(() => setCartMoment(null), 3600);
+    });
   }, []);
 
   // Replace old hesitation state with a more robust Decision Psychology Engine state
@@ -1947,6 +1981,8 @@ export default function CustomerSite() {
     try {
       localStorage.setItem("split_prefill_members", JSON.stringify(cleanMembers));
       localStorage.setItem("split_prefill_ready", "1");
+      localStorage.setItem("split_prefill_source", "diwaniya_checkout");
+      if (squadInfo?.id) localStorage.setItem("split_prefill_squad_id", String(squadInfo.id));
     } catch (e) {}
 
     setShowSquadModal(false);
@@ -2407,6 +2443,9 @@ export default function CustomerSite() {
 
     setIsSubmitting(true);
 
+    const splitPrefillSource = splitMode ? String(localStorage.getItem("split_prefill_source") || "") : "";
+    const isDiwaniyaQatya = Boolean(splitMode && splitPrefillSource.startsWith("diwaniya"));
+
     const orderData: any = {
       customerName,
       customerPhone,
@@ -2428,12 +2467,20 @@ export default function CustomerSite() {
       source: "customer_website",
       paymentStatus: splitMode ? "split" : "pending",
       generalNotes,
-      squadId: squadInfo?.id || localStorage.getItem("squadId"),
-      squadName: squadInfo?.name,
-      squadTier: squadInfo?.tier,
     };
 
     if (splitMode) {
+      orderData.qatiaType = isDiwaniyaQatya ? "diwaniya" : "traditional";
+      orderData.splitOrigin = isDiwaniyaQatya ? splitPrefillSource : "customer_traditional";
+    }
+
+    if (isDiwaniyaQatya) {
+      orderData.squadId = squadInfo?.id || localStorage.getItem("split_prefill_squad_id") || localStorage.getItem("squadId");
+      orderData.squadName = squadInfo?.name;
+      orderData.squadTier = squadInfo?.tier;
+    }
+
+    if (splitMode && isDiwaniyaQatya) {
       orderData.splitType = splitMode;
       try {
         const rawMembers = localStorage.getItem("split_prefill_members");
@@ -2457,6 +2504,14 @@ export default function CustomerSite() {
             orderData.splitPayments = preparedMembers;
           }
         }
+      } catch (e) {}
+    } else if (splitMode) {
+      orderData.splitType = splitMode;
+      try {
+        localStorage.removeItem("split_prefill_members");
+        localStorage.removeItem("split_prefill_ready");
+        localStorage.removeItem("split_prefill_source");
+        localStorage.removeItem("split_prefill_squad_id");
       } catch (e) {}
     }
 
@@ -3193,7 +3248,8 @@ export default function CustomerSite() {
             >
               {/* Parallax background (simulated without heavy scroll listeners) */}
               <motion.div
-                className={`orser-context-bg absolute inset-0 bg-[url('${themeContext.image}')] bg-cover bg-center opacity-40 mix-blend-overlay`}
+                className="orser-context-bg absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
+                style={{ backgroundImage: `url(${themeContext.image})` }}
                 animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
                 transition={{
                   repeat: Infinity,
@@ -4475,7 +4531,7 @@ export default function CustomerSite() {
                   setIsQatyaAlertCollapsed(true);
                 }}
                 className={cn(
-                  "fixed w-12 h-12 rounded-full relative bg-slate-900/95 text-amber-100 border border-amber-500/30 shadow-2xl z-[85] flex items-center justify-center backdrop-blur-md",
+                  "customer-soft-alert-bubble is-amber fixed rounded-full relative bg-slate-900/95 text-amber-100 border border-amber-500/30 shadow-2xl z-[85] flex items-center justify-center backdrop-blur-md",
                   floatingAlertBubbleSide,
                   floatingAlertBottomMid,
                 )}
@@ -4486,6 +4542,7 @@ export default function CustomerSite() {
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
                 </span>
                 <BellRing className="w-5 h-5" />
+                <span className="customer-soft-alert-count">{pendingGeofenceRequests.length}</span>
               </motion.button>
             ) : (
               <motion.div
@@ -4568,7 +4625,7 @@ export default function CustomerSite() {
                   setIsOwnerJoinAlertCollapsed(true);
                 }}
                 className={cn(
-                  "fixed w-12 h-12 rounded-full bg-brand text-white border border-emerald-300/30 shadow-2xl z-[85] flex items-center justify-center backdrop-blur-md",
+                  "customer-soft-alert-bubble is-emerald fixed rounded-full bg-brand text-white border border-emerald-300/30 shadow-2xl z-[85] flex items-center justify-center backdrop-blur-md",
                   floatingAlertBubbleSide,
                   floatingAlertBottomHigh,
                 )}
@@ -4579,6 +4636,7 @@ export default function CustomerSite() {
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-300"></span>
                 </span>
                 <CreditCard className="w-5 h-5" />
+                <span className="customer-soft-alert-count">{qatyaAlertItems.length}</span>
               </motion.button>
             ) : (
               <motion.div
@@ -4606,6 +4664,21 @@ export default function CustomerSite() {
                     <p className="text-[10px] font-bold text-white/70 mt-1">ادخل وحدد قطيتك، اسمك ورقمك جاهزين من الديوانية.</p>
                   </div>
                 </div>
+                {canUseDiwaniyaPush && diwaniyaPushState !== "saved" && (
+                  <button
+                    type="button"
+                    onClick={enableImportantDiwaniyaPush}
+                    disabled={isEnablingDiwaniyaPush}
+                    className="w-full rounded-2xl bg-white text-brand px-4 py-3 text-[11px] font-black shadow-sm active:scale-[0.98] transition-all disabled:opacity-60"
+                  >
+                    {isEnablingDiwaniyaPush ? "جاري التفعيل..." : "فعّل تنبيهات القطيّة والروليت المهمة"}
+                  </button>
+                )}
+                {diwaniyaPushState === "saved" && (
+                  <div className="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-[11px] font-black text-emerald-100">
+                    تنبيهات القطيّة والروليت مفعّلة لهذا الجهاز
+                  </div>
+                )}
                 <div className="space-y-3">
                   {qatyaAlertItems.map((n: any) => (
                     <button
@@ -6663,7 +6736,15 @@ function CheckoutOverlay({
                   {!isSubmitting && (
                     <>
                       <button
-                        onClick={async () => { await prepareDiwaniyaSplitMembers(); onSubmit("traditional"); }}
+	                        onClick={() => {
+	                          try {
+	                            localStorage.removeItem("split_prefill_members");
+	                            localStorage.removeItem("split_prefill_ready");
+	                            localStorage.removeItem("split_prefill_source");
+	                            localStorage.removeItem("split_prefill_squad_id");
+	                          } catch (e) {}
+	                          onSubmit("traditional");
+	                        }}
                         className="payment-method-card payment-method-card-qatya w-full bg-stone-100 text-brand rounded-2xl p-4 sm:p-5 shadow-sm active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-stone-200 text-lg border border-stone-100 text-right"
                       >
                         <div className="flex items-center gap-4">
@@ -6676,8 +6757,16 @@ function CheckoutOverlay({
                           </div>
                         </div>
                       </button>
-                      <button
-                        onClick={() => onSubmit("roulette")}
+	                      <button
+	                        onClick={() => {
+	                          try {
+	                            localStorage.removeItem("split_prefill_members");
+	                            localStorage.removeItem("split_prefill_ready");
+	                            localStorage.removeItem("split_prefill_source");
+	                            localStorage.removeItem("split_prefill_squad_id");
+	                          } catch (e) {}
+	                          onSubmit("roulette");
+	                        }}
                         className="payment-method-card payment-method-card-wahag w-full bg-fuchsia-600 text-white rounded-2xl p-4 sm:p-5 shadow-md active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-fuchsia-700 text-lg text-right"
                       >
                          <div className="flex items-center gap-4">

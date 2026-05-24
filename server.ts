@@ -6,6 +6,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import { initializeApp } from "firebase/app";
+import admin from "firebase-admin";
+import { getMessaging } from "firebase-admin/messaging";
 import {
   initializeFirestore,
   setLogLevel,
@@ -68,6 +70,16 @@ const db = initializeFirestore(
   { experimentalForceLongPolling: true },
   firebaseConfig.firestoreDatabaseId || "(default)",
 );
+
+let adminMessaging: ReturnType<typeof getMessaging> | null = null;
+try {
+  const adminApp = admin.apps.length
+    ? admin.app()
+    : admin.initializeApp({ projectId: firebaseConfig.projectId });
+  adminMessaging = getMessaging(adminApp);
+} catch (error: any) {
+  console.warn("[DIWANIYA_PUSH] Firebase Admin messaging disabled:", error?.message || String(error));
+}
 
 let _appDataCache: any = null;
 let _appDataCacheTime = 0;
@@ -379,6 +391,97 @@ function pushDiwaniyaNotifications(list: any[], inputs: any[]) {
   return (inputs || []).reduce((acc, item) => pushDiwaniyaNotification(acc, item), Array.isArray(list) ? list : []);
 }
 
+const IMPORTANT_DIWANIYA_PUSH_TYPES = new Set([
+  "qatya_request",
+  "roulette_result",
+]);
+
+function normalizePushUrl(url: any) {
+  const value = String(url || "").trim();
+  if (!value) return "/";
+  if (value.startsWith("http")) return value;
+  return value.startsWith("/") ? value : `/${value}`;
+}
+
+async function sendDiwaniyaExternalPush(input: {
+  toPhones: any[];
+  title: string;
+  body: string;
+  type: string;
+  url?: string;
+  orderId?: string;
+  squadId?: string;
+}) {
+  if (!adminMessaging || !IMPORTANT_DIWANIYA_PUSH_TYPES.has(String(input.type || ""))) {
+    return { success: false, skipped: true, reason: "messaging-disabled-or-type-muted" };
+  }
+
+  const phones = new Set((input.toPhones || []).map(cleanPhone).filter(Boolean));
+  if (!phones.size) return { success: false, skipped: true, reason: "no-recipients" };
+
+  try {
+    const appData = await getAppData();
+    const tokens = (Array.isArray(appData.diwaniyaPushTokens) ? appData.diwaniyaPushTokens : [])
+      .filter((item: any) => phones.has(cleanPhone(item?.phone)))
+      .filter((item: any) => item?.active !== false && item?.token)
+      .filter((item: any) => {
+        const prefs = item?.prefs || {};
+        if (input.type === "qatya_request") return prefs.qatya !== false;
+        if (input.type === "roulette_result") return prefs.roulette !== false;
+        return false;
+      });
+
+    const uniqueTokens = [...new Set(tokens.map((item: any) => String(item.token)).filter(Boolean))] as string[];
+    if (!uniqueTokens.length) return { success: false, skipped: true, reason: "no-active-tokens" };
+
+    const response = await adminMessaging.sendEachForMulticast({
+      tokens: uniqueTokens.slice(0, 500),
+      notification: {
+        title: input.title,
+        body: input.body,
+      },
+      data: {
+        type: String(input.type || "diwaniya"),
+        url: normalizePushUrl(input.url),
+        orderId: String(input.orderId || ""),
+        squadId: String(input.squadId || ""),
+      },
+      webpush: {
+        fcmOptions: {
+          link: normalizePushUrl(input.url),
+        },
+        notification: {
+          icon: "/icon-192.png",
+          badge: "/icon-180.png",
+          tag: `diwaniya-${input.type}-${input.orderId || input.squadId || Date.now()}`,
+          renotify: false,
+          requireInteraction: input.type === "qatya_request",
+        },
+      },
+    });
+
+    const failedTokens = response.responses
+      .map((r, idx) => (!r.success ? uniqueTokens[idx] : ""))
+      .filter(Boolean);
+    if (failedTokens.length > 0) {
+      await updateAppDataAtomically((current) => {
+        const bad = new Set(failedTokens);
+        const currentTokens = Array.isArray(current.diwaniyaPushTokens) ? current.diwaniyaPushTokens : [];
+        return {
+          diwaniyaPushTokens: currentTokens.map((item: any) =>
+            bad.has(String(item.token)) ? { ...item, active: false, disabledAt: new Date().toISOString() } : item
+          )
+        };
+      });
+    }
+
+    return { success: true, successCount: response.successCount, failureCount: response.failureCount };
+  } catch (error: any) {
+    console.warn("[DIWANIYA_PUSH] send skipped:", error?.message || String(error));
+    return { success: false, error: error?.message || String(error) };
+  }
+}
+
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
@@ -388,6 +491,65 @@ async function startServer() {
   console.log(`[STARTUP] DEFAULT_APP_PORT: ${process.env.DEFAULT_APP_PORT}`);
 
   app.use(express.json());
+
+  app.post("/api/diwaniya-push/register", async (req, res) => {
+    try {
+      const { phone, token, squadId, prefs, userAgent } = req.body || {};
+      const clean = cleanPhone(phone);
+      const cleanToken = String(token || "").trim();
+      if (!clean || !cleanToken) return res.status(400).json({ error: "Missing phone or token" });
+
+      const ok = await updateAppDataAtomically((current) => {
+        const tokens = Array.isArray(current.diwaniyaPushTokens) ? [...current.diwaniyaPushTokens] : [];
+        const now = new Date().toISOString();
+        const nextPrefs = {
+          qatya: prefs?.qatya !== false,
+          roulette: prefs?.roulette !== false,
+        };
+        const idx = tokens.findIndex((item: any) => String(item.token) === cleanToken);
+        const entry = {
+          phone: clean,
+          token: cleanToken,
+          squadId: squadId ? String(squadId) : "",
+          prefs: nextPrefs,
+          active: true,
+          userAgent: String(userAgent || "").slice(0, 180),
+          updatedAt: now,
+          createdAt: idx >= 0 ? tokens[idx].createdAt || now : now,
+        };
+        if (idx >= 0) tokens[idx] = { ...tokens[idx], ...entry };
+        else tokens.unshift(entry);
+        return { diwaniyaPushTokens: tokens.slice(0, 1200) };
+      });
+
+      if (!ok) return res.status(500).json({ error: "Failed to save push token" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || String(error) });
+    }
+  });
+
+  app.post("/api/diwaniya-push/unregister", async (req, res) => {
+    try {
+      const { phone, token } = req.body || {};
+      const clean = cleanPhone(phone);
+      const cleanToken = String(token || "").trim();
+      const ok = await updateAppDataAtomically((current) => {
+        const tokens = Array.isArray(current.diwaniyaPushTokens) ? [...current.diwaniyaPushTokens] : [];
+        return {
+          diwaniyaPushTokens: tokens.map((item: any) => {
+            const matchesToken = cleanToken && String(item.token) === cleanToken;
+            const matchesPhone = !cleanToken && clean && cleanPhone(item.phone) === clean;
+            return matchesToken || matchesPhone ? { ...item, active: false, disabledAt: new Date().toISOString() } : item;
+          })
+        };
+      });
+      if (!ok) return res.status(500).json({ error: "Failed to disable push token" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || String(error) });
+    }
+  });
   app.use(express.urlencoded({ extended: true }));
 
   // API Routes
@@ -1048,8 +1210,19 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const activeQatyaOrders = cleanQPhone && mySquad ? allSquadOrders
         .filter((o: any) => {
           const splitTypeValue = String(o.splitType || "").toLowerCase();
+          const qatiaTypeValue = String(o.qatiaType || o.qatyaType || "").toLowerCase();
+          const splitOriginValue = String(o.splitOrigin || o.qatiaOrigin || "").toLowerCase();
           const payStatus = String(o.paymentStatus || "").toLowerCase();
           const orderStatus = String(o.status || "");
+          const hasDiwaniyaParticipant = [
+            ...(Array.isArray(o.splitPayments) ? o.splitPayments : []),
+            ...(Array.isArray(o.splitParticipants) ? o.splitParticipants : []),
+          ].some((m: any) => String(m?.source || "").toLowerCase().includes("diwaniya"));
+          const isDiwaniyaQatya =
+            qatiaTypeValue === "diwaniya" ||
+            splitOriginValue.startsWith("diwaniya") ||
+            hasDiwaniyaParticipant;
+          if (!isDiwaniyaQatya) return false;
           const isSplit = Boolean(splitTypeValue && splitTypeValue !== "none") || payStatus === "split" || orderStatus.includes("قطية");
           const isClosed = payStatus === "paid" || orderStatus.startsWith("تم الدفع") || orderStatus.includes("ملغي") || orderStatus.includes("انتهى");
           const participants = [
@@ -1986,6 +2159,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
       squadId,
       squadName,
       squadTier,
+      qatiaType,
+      splitOrigin,
     } = req.body;
 
     console.log(
@@ -2025,10 +2200,27 @@ app.get("/api/debug/order/:id", async (req, res) => {
       createdAt: new Date().toISOString(),
       source: "customer_website",
       generalNotes: generalNotes || "",
-      squadId: squadId || null,
-      squadName: squadName || null,
-      squadTier: squadTier || null,
     };
+
+    const normalizedQatiaType = String(qatiaType || "").toLowerCase();
+    const normalizedSplitOrigin = String(splitOrigin || "").toLowerCase();
+    const isDiwaniyaQatya =
+      Boolean(splitType) &&
+      (
+        normalizedQatiaType === "diwaniya" ||
+        normalizedSplitOrigin.startsWith("diwaniya")
+      );
+
+    if (splitType) {
+      newOrder.qatiaType = isDiwaniyaQatya ? "diwaniya" : "traditional";
+      newOrder.splitOrigin = isDiwaniyaQatya ? (splitOrigin || "diwaniya_checkout") : (splitOrigin || "customer_traditional");
+    }
+
+    if (isDiwaniyaQatya) {
+      newOrder.squadId = squadId || null;
+      newOrder.squadName = squadName || null;
+      newOrder.squadTier = squadTier || null;
+    }
 
     const cleanSplitPhone = (value: any) => String(value || "").replace(/\D/g, "").slice(-8);
     const normalizeSplitMembers = (source: any) => {
@@ -2112,7 +2304,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const customers = appData.customers || [];
       const squadsForSplit = appData.squads || [];
       const splitNotificationRecipients: any[] = [];
-      if (splitType && squadId) {
+      let qatyaExternalPushPhones: string[] = [];
+      if (isDiwaniyaQatya && squadId) {
         const squadMembers = normalizeSplitMembers([
           ...collectSquadSplitMembers(appData, squadId),
           ...(Array.isArray(newOrder.splitPayments) ? newOrder.splitPayments : []),
@@ -2154,8 +2347,11 @@ app.get("/api/debug/order/:id", async (req, res) => {
         orders.push(newOrder);
 
         let diwaniyaNotifications = Array.isArray(current.diwaniyaNotifications) ? current.diwaniyaNotifications : [];
-        if (splitType && splitNotificationRecipients.length > 0) {
+        if (isDiwaniyaQatya && splitNotificationRecipients.length > 0) {
           const makerPhone = cleanPhone(customerPhone);
+          qatyaExternalPushPhones = splitNotificationRecipients
+            .map((m: any) => cleanPhone(m.phone))
+            .filter((phone: string) => phone && phone !== makerPhone);
           diwaniyaNotifications = pushDiwaniyaNotifications(
             diwaniyaNotifications,
             splitNotificationRecipients
@@ -2196,7 +2392,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           });
         }
 
-        let attributedSquad = squadId;
+        let attributedSquad = isDiwaniyaQatya ? squadId : null;
         if (!attributedSquad && customerPhone) {
             const custSquad = squads.find((sq: any) => 
                  (sq.membersList || []).some((m: any) => cleanPhone(m.phone) === cleanPhoneQuery)
@@ -2230,6 +2426,17 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
       console.log(`[ORDER] Order ${newOrder.id} saved successfully`);
       void nudgeAdminOrderCreatedPush(newOrder);
+      if (isDiwaniyaQatya && qatyaExternalPushPhones.length > 0) {
+        void sendDiwaniyaExternalPush({
+          toPhones: qatyaExternalPushPhones,
+          type: "qatya_request",
+          title: "عندك قطيّة من الديوانية",
+          body: `ديوانية ${squadName || newOrder.squadName || "الربع"} فتحت قطيّة. ادخل وحدد قطيتك.`,
+          orderId: newOrder.id,
+          squadId: squadId || "",
+          url: `/split/${newOrder.id}`
+        });
+      }
       res.status(201).json(newOrder);
     } catch (e) {
       console.error("[ORDER] Critical error creating order:", e);
@@ -2809,6 +3016,9 @@ app.get("/api/debug/order/:id", async (req, res) => {
         return res.status(400).json({ error: "Order not found" });
 
       let loserName = "";
+      let roulettePushPhones: string[] = [];
+      let rouletteSquadId = "";
+      let rouletteSquadName = "";
       await updateAppDataAtomically((current) => {
         let orders = [...(current.orders || [])];
         const index = orders.findIndex((o: any) => o.id === id);
@@ -2828,8 +3038,25 @@ app.get("/api/debug/order/:id", async (req, res) => {
         orders[index].rouletteLoser = loser.name;
         orders[index].rouletteSpunAt = new Date().toISOString();
         loserName = loser.name;
+        rouletteSquadId = String(order.squadId || "");
+        rouletteSquadName = String(order.squadName || "");
+        roulettePushPhones = (order.splitParticipants || [])
+          .map((p: any) => cleanPhone(p.phone))
+          .filter(Boolean);
         return { orders };
       });
+
+      if (loserName && roulettePushPhones.length > 0) {
+        void sendDiwaniyaExternalPush({
+          toPhones: roulettePushPhones,
+          type: "roulette_result",
+          title: "طلعت نتيجة الروليت",
+          body: `${loserName} صار بطل الليلة${rouletteSquadName ? ` في ديوانية ${rouletteSquadName}` : ""}.`,
+          orderId: id,
+          squadId: rouletteSquadId,
+          url: `/track/${id}`,
+        });
+      }
 
       res.json({ success: true, loser: loserName });
     } catch (e) {
@@ -3097,19 +3324,22 @@ app.get("/api/debug/order/:id", async (req, res) => {
               currentStatus === "قيد تجميع القطية" ||
               (currentStatus || "").includes("ملغي")
             ) {
-              if (isExplicitFailure) {
-                orders[orderIndex].status = "فشل في عملية الدفع";
-                orders[orderIndex].paymentStatus = "failed";
-                updated = true;
-                console.log(
-                  `[PAYMENT] Order ${orderId} marked as failed via explicitly cancelled return URL`,
+	              if (isExplicitFailure) {
+	                orders[orderIndex].status = "فشل في عملية الدفع";
+	                orders[orderIndex].paymentStatus = "failed";
+	                orders[orderIndex].failedAt = new Date().toISOString();
+	                orders[orderIndex].paymentUpdatedAt = new Date().toISOString();
+	                updated = true;
+	                console.log(
+	                  `[PAYMENT] Order ${orderId} marked as failed via explicitly cancelled return URL`,
                 );
               } else if (isExplicitSuccess) {
                 if (orders[orderIndex].paymentStatus !== "paid" && !orders[orderIndex].status.startsWith("تم الدفع")) {
-                  orders[orderIndex].status = "تم الدفع وجاري التوصيل";
-                  orders[orderIndex].paymentStatus = "paid";
-                  orders[orderIndex].paidAt = new Date().toISOString();
-                  orders[orderIndex].transactionId =
+	                  orders[orderIndex].status = "تم الدفع وجاري التوصيل";
+	                  orders[orderIndex].paymentStatus = "paid";
+	                  orders[orderIndex].paidAt = new Date().toISOString();
+	                  orders[orderIndex].paymentUpdatedAt = new Date().toISOString();
+	                  orders[orderIndex].transactionId =
                     req.body?.reference?.id ||
                     req.body?.TrackID ||
                     req.query?.TrackID ||
@@ -3169,19 +3399,23 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
             if (currentStatus === "جديد" || currentStatus === "بانتظار الدفع" || currentStatus === "تم الدفع وجاري التوصيل") {
               const transactionId = req.body?.reference?.id || req.body?.TrackID || req.query?.TrackID || "upayments_auth";
-              if (isExplicitFailure) {
-                invoiceIndexes.forEach((idx: number) => {
-                  invoices[idx].status = "فشل في عملية الدفع";
-                  invoices[idx].paymentStatus = "failed";
-                  invoices[idx].transactionId = transactionId;
-                });
-                updated = true;
-              } else if (isExplicitSuccess) {
-                invoiceIndexes.forEach((idx: number) => {
-                  invoices[idx].status = "تم الدفع وجاري التوصيل";
-                  invoices[idx].paymentStatus = "paid";
-                  invoices[idx].transactionId = transactionId;
-                });
+	              if (isExplicitFailure) {
+	                invoiceIndexes.forEach((idx: number) => {
+	                  invoices[idx].status = "فشل في عملية الدفع";
+	                  invoices[idx].paymentStatus = "failed";
+	                  invoices[idx].failedAt = new Date().toISOString();
+	                  invoices[idx].paymentUpdatedAt = new Date().toISOString();
+	                  invoices[idx].transactionId = transactionId;
+	                });
+	                updated = true;
+	              } else if (isExplicitSuccess) {
+	                invoiceIndexes.forEach((idx: number) => {
+	                  invoices[idx].status = "تم الدفع وجاري التوصيل";
+	                  invoices[idx].paymentStatus = "paid";
+	                  invoices[idx].paidAt = new Date().toISOString();
+	                  invoices[idx].paymentUpdatedAt = new Date().toISOString();
+	                  invoices[idx].transactionId = transactionId;
+	                });
                 updated = true;
               }
             }
