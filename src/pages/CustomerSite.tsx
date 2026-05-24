@@ -4640,7 +4640,7 @@ export default function CustomerSite() {
                   setIsQatyaAlertCollapsed(true);
                 }}
                 className={cn(
-                  "customer-soft-alert-bubble is-amber fixed rounded-full relative bg-slate-900/95 text-amber-100 border border-amber-500/30 shadow-2xl z-[85] flex items-center justify-center backdrop-blur-md",
+                  "customer-soft-alert-bubble customer-mobile-stable-alert-bubble is-amber fixed rounded-full relative bg-slate-900/95 text-amber-100 border border-amber-500/30 shadow-2xl z-[85] flex items-center justify-center backdrop-blur-md",
                   floatingAlertBubbleSide,
                   floatingAlertBottomMid,
                 )}
@@ -4660,7 +4660,7 @@ export default function CustomerSite() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 120, scale: 0.92 }}
                 className={cn(
-                  "fixed md:w-[390px] max-h-[min(410px,calc(100dvh-160px))] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-5 shadow-2xl z-[85] border-2 border-amber-500/20 text-right font-sans space-y-4",
+                  "customer-mobile-stable-alert fixed md:w-[390px] max-h-[min(410px,calc(100dvh-160px))] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-5 shadow-2xl z-[85] border-2 border-amber-500/20 text-right font-sans space-y-4",
                   floatingAlertPanelSide,
                   floatingAlertBottom,
                 )}
@@ -4734,7 +4734,7 @@ export default function CustomerSite() {
                   setIsOwnerJoinAlertCollapsed(true);
                 }}
                 className={cn(
-                  "customer-soft-alert-bubble is-emerald fixed rounded-full bg-brand text-white border border-emerald-300/30 shadow-2xl z-[85] flex items-center justify-center backdrop-blur-md",
+                  "customer-soft-alert-bubble customer-mobile-stable-alert-bubble is-emerald fixed rounded-full bg-brand text-white border border-emerald-300/30 shadow-2xl z-[85] flex items-center justify-center backdrop-blur-md",
                   floatingAlertBubbleSide,
                   floatingAlertBottomHigh,
                 )}
@@ -4754,7 +4754,7 @@ export default function CustomerSite() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 120, scale: 0.92 }}
                 className={cn(
-                  "fixed md:w-[390px] max-h-[min(360px,calc(100dvh-160px))] overflow-y-auto bg-brand text-white rounded-[32px] p-5 shadow-2xl z-[85] border-2 border-emerald-300/20 text-right font-sans space-y-4",
+                  "customer-mobile-stable-alert fixed md:w-[390px] max-h-[min(360px,calc(100dvh-160px))] overflow-y-auto bg-brand text-white rounded-[32px] p-5 shadow-2xl z-[85] border-2 border-emerald-300/20 text-right font-sans space-y-4",
                   floatingAlertPanelSide,
                   floatingAlertBottom,
                 )}
@@ -4817,7 +4817,7 @@ export default function CustomerSite() {
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.8, x: 50 }}
                 onClick={() => setIsRadarBannerCollapsed(false)}
-                className="fixed top-24 left-4 md:left-auto md:right-6 bg-slate-900/95 text-slate-100 rounded-full p-3.5 shadow-2xl z-50 border border-amber-500/40 text-right backdrop-blur-md flex items-center gap-2 hover:bg-slate-800 transition-all select-none group"
+                className="customer-mobile-stable-alert-bubble fixed top-24 left-4 md:left-auto md:right-6 bg-slate-900/95 text-slate-100 rounded-full p-3.5 shadow-2xl z-50 border border-amber-500/40 text-right backdrop-blur-md flex items-center gap-2 hover:bg-slate-800 transition-all select-none group"
                 title="توسيع رادار الانضمام"
               >
                 <div className="relative flex h-2.5 w-2.5">
@@ -4835,7 +4835,7 @@ export default function CustomerSite() {
                 initial={{ opacity: 0, scale: 0.95, y: -50 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -50 }}
-                className="fixed top-24 left-6 right-6 md:left-auto md:right-6 md:w-[350px] bg-slate-900/95 text-slate-100 rounded-3xl p-4 shadow-xl z-50 border border-amber-500/20 text-right backdrop-blur-md"
+                className="customer-mobile-stable-alert fixed top-24 left-6 right-6 md:left-auto md:right-6 md:w-[350px] bg-slate-900/95 text-slate-100 rounded-3xl p-4 shadow-xl z-50 border border-amber-500/20 text-right backdrop-blur-md"
               >
                 <div className="flex items-start justify-between gap-3">
                   <button 

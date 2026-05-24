@@ -2632,3 +2632,40 @@ html, body, #root {
 .squad-stable-tabs * {
   transition-property: background-color, color, border-color, box-shadow, opacity, transform;
 }
+
+/* Mobile notification stability fix: keep the beautiful alert design, but stop the phone-only jitter. */
+.customer-mobile-stable-alert,
+.customer-mobile-stable-alert *{
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 640px){
+  .customer-mobile-stable-alert{
+    width: auto !important;
+    left: max(14px, env(safe-area-inset-left)) !important;
+    right: max(14px, env(safe-area-inset-right)) !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px) !important;
+    max-height: min(64dvh, 380px) !important;
+    transform: translate3d(0,0,0) !important;
+    will-change: opacity !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    contain: layout paint !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .customer-mobile-stable-alert-bubble{
+    transform: translate3d(0,0,0) !important;
+    will-change: opacity !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+  }
+
+  .customer-mobile-stable-alert .animate-ping,
+  .customer-mobile-stable-alert-bubble .animate-ping,
+  .customer-mobile-stable-alert .animate-pulse,
+  .customer-mobile-stable-alert-bubble .animate-pulse{
+    animation: none !important;
+  }
+}
