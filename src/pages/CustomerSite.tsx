@@ -638,6 +638,7 @@ export default function CustomerSite() {
   }, [fetchSquadGamificationFor]);
 
   // Geofencing background states
+  const [mockLocation, setMockLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [radarNearbySquads, setRadarNearbySquads] = useState<any[]>([]);
   const [radarLoadingMap, setRadarLoadingMap] = useState<Record<string, boolean>>({});
   const [radarSuccessMap, setRadarSuccessMap] = useState<Record<string, boolean>>({});
@@ -700,6 +701,11 @@ export default function CustomerSite() {
   }, [qatyaNotifications.length]);
 
   const refreshRadarOnce = useCallback(() => {
+      if (mockLocation) {
+        setRadarStatus("ready");
+        setRadarStatusMsg("تم تفعيل الموقع التجريبي المحاكي بجانب ديوانية قريبة للتجربة 🧪");
+        return;
+      }
      if (!navigator.geolocation) {
        setRadarStatus("unsupported");
        setRadarStatusMsg("جهازك أو المتصفح ما يدعم تحديد الموقع.");
@@ -733,6 +739,7 @@ export default function CustomerSite() {
 
   useEffect(() => {
      const askWhenLocationIsOff = async () => {
+        if (mockLocation) return;
        if (!navigator.geolocation) return;
        try {
          const permission = (navigator as any).permissions?.query
@@ -753,7 +760,7 @@ export default function CustomerSite() {
        window.removeEventListener("focus", askWhenLocationIsOff);
        document.removeEventListener("visibilitychange", onVisible);
      };
-  }, [refreshRadarOnce]);
+  }, [refreshRadarOnce, mockLocation]);
 
   const clearSquadSessionOnThisDevice = useCallback(() => {
      squadSessionTokenRef.current += 1;
@@ -815,7 +822,49 @@ export default function CustomerSite() {
        setRadarStatusMsg("جهازك أو المتصفح ما يدعم تحديد الموقع.");
        return;
      }
-     if (activeSquads.length === 0) {
+     if (mockLocation) {
+        const checkPositionMock = () => {
+          const userLat = mockLocation.lat;
+          const userLng = mockLocation.lng;
+          setRadarAccuracy(5);
+          setRadarStatus("ready");
+          setRadarStatusMsg("الموقع التجريبي مفعّل بنجاح. نحن الحين جنب ديوانية قريبة 🧪");
+
+          const nearby: any[] = [];
+
+          activeSquads.forEach((sq: any) => {
+            if (String(sq.id) === String(activeSquadId)) return;
+            if (radarDismissedList.includes(String(sq.id))) return;
+
+            const isAlreadyMember = userSquads.some((us: any) => String(us.id) === String(sq.id));
+            const isOwnerOfNearby = cleanPhoneForSquad(sq.phone || "") === cleanPhoneForSquad(customerPhone || "");
+            const hasReq = myGeofenceRequests.some((r: any) => String(r.squadId) === String(sq.id));
+            if (!isAlreadyMember && hasReq) return;
+
+            if (sq.lat !== undefined && sq.lng !== undefined) {
+              const dist = calculateDistance(userLat, userLng, Number(sq.lat), Number(sq.lng));
+              const geofenceLimit = getSquadSpecificGeofenceDistance(sq, settings);
+              if (dist < geofenceLimit) {
+                nearby.push({
+                  ...sq,
+                  distance: Math.round(dist),
+                  geofenceDistance: geofenceLimit,
+                  isAlreadyMember,
+                  isOwnerOfNearby
+                });
+              }
+            }
+          });
+
+          nearby.sort((a, b) => a.distance - b.distance);
+          setRadarNearbySquads(nearby);
+        };
+
+        checkPositionMock();
+        return;
+      }
+
+      if (activeSquads.length === 0) {
        setRadarStatus("empty");
        setRadarStatusMsg("ما فيه دواوين مفعلة بالرادار حالياً.");
        setRadarNearbySquads([]);
@@ -883,7 +932,7 @@ export default function CustomerSite() {
      return () => {
        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
      };
-  }, [activeSquads, activeSquadId, radarDismissedList, myGeofenceRequests, settings, userSquads]);
+  }, [activeSquads, activeSquadId, radarDismissedList, myGeofenceRequests, settings, userSquads, mockLocation]);
 
   // Polling for approved geofence requests
   useEffect(() => {
@@ -4410,20 +4459,43 @@ export default function CustomerSite() {
                 floatingAlertBottom,
               )}
             >
-              <div className="flex items-center justify-between gap-3">
-                <button
-                  onClick={refreshRadarOnce}
-                  className="bg-brand text-white rounded-2xl px-4 py-2 text-[11px] font-black active:scale-95"
-                >
-                  {radarStatus === "checking" ? "نحاول..." : "تشغيل الرادار"}
-                </button>
-                <div>
-                  <div className="text-xs font-black">
-                    {radarStatus === "ready" ? "الرادار شغال ✅" : radarStatus === "denied" ? "الرادار يحتاج سماح ⚠️" : radarStatus === "weak" ? "الموقع غير دقيق ⚠️" : "رادار الديوانية"}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-3">
+                  <button
+                    onClick={refreshRadarOnce}
+                    className="bg-brand text-white rounded-2xl px-4 py-2 text-[11px] font-black active:scale-95 shrink-0"
+                  >
+                    {radarStatus === "checking" ? "نحاول..." : "تشغيل الرادار"}
+                  </button>
+                  <div>
+                    <div className="text-xs font-black">
+                      {radarStatus === "ready" ? "الرادار شغال ✅" : radarStatus === "denied" ? "الرادار يحتاج سماح ⚠️" : radarStatus === "weak" ? "الموقع غير دقيق ⚠️" : "رادار الديوانية"}
+                    </div>
+                    <div className="text-[10px] font-bold text-stone-500 mt-0.5 leading-relaxed">{radarStatusMsg}</div>
+                    {radarAccuracy !== null && <div className="text-[9px] font-black text-stone-400 mt-1">دقة الموقع تقريباً: {radarAccuracy}م</div>}
                   </div>
-                  <div className="text-[10px] font-bold text-stone-500 mt-0.5 leading-relaxed">{radarStatusMsg}</div>
-                  {radarAccuracy !== null && <div className="text-[9px] font-black text-stone-400 mt-1">دقة الموقع تقريباً: {radarAccuracy}م</div>}
                 </div>
+
+                {activeSquads.length > 0 && (
+                  <button
+                    onClick={() => {
+                      const sqToMock = activeSquads.find((s: any) => s.lat && s.lng);
+                      if (sqToMock) {
+                        setMockLocation({
+                          lat: Number(sqToMock.lat) + 0.0001,
+                          lng: Number(sqToMock.lng) + 0.0001
+                        });
+                        setRadarStatus("ready");
+                        setRadarStatusMsg("تم تفعيل الموقع التجريبي المحاكي بجانب ديوانية قريبة للتجربة 🧪");
+                      } else {
+                        setMockLocation({ lat: 29.3759, lng: 47.9774 });
+                      }
+                    }}
+                    className="mt-2 w-full bg-amber-50 hover:bg-amber-100 text-amber-700 py-2 px-3 rounded-xl text-[10px] font-black border border-amber-200/50 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    🧪 تخطي إذن المتصفح وتجربة موقع وهمي
+                  </button>
+                )}
               </div>
             </motion.div>
           )}
@@ -4550,6 +4622,24 @@ export default function CustomerSite() {
                   <p className="text-[9px] font-bold text-amber-500/50 text-center pt-2">
                     سجل دخول برقمك عشان يوصلهم طلبك باسمك ورقمك!
                   </p>
+                )}
+
+                {mockLocation && (
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-2.5 flex items-center justify-between gap-2 mt-2">
+                    <button
+                      onClick={() => {
+                        setMockLocation(null);
+                        setRadarStatus("idle");
+                        setRadarStatusMsg("تم إيقاف الموقع التجريبي. اضغط لتشغيل الرادار الحقيقي.");
+                      }}
+                      className="bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold text-[9px] px-2.5 py-1 rounded-lg transition-all border border-red-500/10"
+                    >
+                      إيقاف المحاكاة 🔄
+                    </button>
+                    <span className="text-[10px] font-bold text-amber-400">
+                      🧪 رادار تجريبي محاكي نشط
+                    </span>
+                  </div>
                 )}
               </motion.div>
             )
