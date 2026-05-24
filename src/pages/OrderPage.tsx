@@ -455,7 +455,7 @@ export default function OrderPage() {
 
   const getStatusStory = (order: any) => {
     const label = getStatusDisplay(order).text;
-    if (label.includes("ملغي") || label.includes("إلغاء") || label.includes("الغاء")) return { title: "تم إلغاء الطلب", desc: "نعتذر، الفاتورة ملغية أو انتهى وقت القطيّة وما اكتمل المبلغ. للاستفسار تواصل معانا." };
+    if (label.includes("ملغي") || label.includes("إلغاء") || label.includes("الغاء")) return { title: "تم إلغاء الطلب", desc: "المعذرة، الفاتورة ملغية أو انتهى وقت القطيّة وما اكتمل المبلغ. للاستفسار تواصل معانا." };
     if (label.includes("قيد تجميع القطية")) return { title: "قيد تجميع القطية", desc: "اللمة ماشية، وكل دفعة تقرب الطلب من الاكتمال." };
     if (label.includes("بانتظار")) return { title: "بانتظار الدفع", desc: "كمل الدفع عشان نعتمد الطلب ونمشيه لك." };
     if (label.includes("فشل")) return { title: "فشلت عملية الدفع", desc: "ما عليه، جرب مرة ثانية أو اختار طريقة أنسب." };
@@ -603,7 +603,7 @@ export default function OrderPage() {
       orderTotal = orderTotal - totalPaid;
 
       if (orderTotal < 0.001) {
-        alert("اكتمل الدفع بالفعل!");
+        alert("الدفع مكتمل من قبل!");
         setProcessingPayment(false);
         return;
       }
@@ -679,7 +679,7 @@ export default function OrderPage() {
         }
       } else {
         console.error("Failed to generate payment link:", payData);
-        alert("حدث خطأ في إنشاء رابط الدفع الجديد.");
+        alert("ما قدرنا ننشئ رابط دفع جديد.");
         setProcessingPayment(false);
       }
     } catch (e: any) {
@@ -691,11 +691,11 @@ export default function OrderPage() {
       ) {
         // Silently ignore or just alert without console.error
         alert(
-          "لا يمكن الاتصال. الخادم يعيد التشغيل حالياً، يرجى الانتظار قليلاً ثم المحاولة.",
+          "ما نقدر نوصل الحين. السيرفر قاعد يعيد التشغيل، نطر شوي وجرب.",
         );
       } else {
         console.error(e);
-        alert("حدث خطأ في الاتصال بالخادم.");
+        alert("الاتصال تعطل. جرّب مرة ثانية.");
       }
       setProcessingPayment(false);
     }
@@ -853,7 +853,7 @@ export default function OrderPage() {
                     فشل الدفع!
                   </h3>
                   <p className="text-red-900/70 font-medium">
-                    خطأ في العملية، يرجى المحاولة.
+                    العملية ما ضبطت، جرّب مرة ثانية.
                   </p>
 
                   {/* Embers flying up */}
@@ -905,7 +905,7 @@ export default function OrderPage() {
               <input
                 type="tel"
                 inputMode="numeric"
-                placeholder="رقم الهاتف (مثل: 9999 9999)"
+                placeholder="رقم التلفون (مثل: 9999 9999)"
                 value={phone}
                 onChange={(e) => setPhone(normalizePhone(e.target.value))}
                 dir="ltr"
@@ -959,7 +959,7 @@ export default function OrderPage() {
                 <Package className="w-12 h-12" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-xl font-extrabold text-brand">لا توجد طلبات</h3>
+                <h3 className="text-xl font-extrabold text-brand">ماكو طلبات</h3>
                 <p className="text-stone-400 font-medium">
                   لم نجد أي طلبات مرتبطة بهذا الرقم حالياً
                 </p>
@@ -1264,7 +1264,7 @@ export default function OrderPage() {
                             disabled={processingPayment}
                             className="order-status-pay-btn disabled:opacity-50"
                           >
-                            {processingPayment ? "جاري التجهيز..." : getStatusDisplay(selectedOrder).text === "فشل في عملية الدفع" ? "الدفع مرة أخرى" : "ادفع الآن"}
+                            {processingPayment ? "نجهز الرابط..." : getStatusDisplay(selectedOrder).text === "فشل في عملية الدفع" ? "الدفع مرة أخرى" : "ادفع الآن"}
                           </button>
                         )}
                       </div>
@@ -1641,9 +1641,9 @@ export default function OrderPage() {
                       className="text-white/70 text-sm font-medium px-4 leading-relaxed max-w-sm mx-auto"
                     >
                       {getStatusDisplay(selectedOrder).text.includes("ملغي")
-                        ? "نعتذر، الفاتورة ملغية أو انتهى وقت القطية وما اكتمل المبلغ. للإستفسار تواصل معانا."
+                        ? "المعذرة، الفاتورة ملغية أو انتهى وقت القطية وما اكتمل المبلغ. للاستفسار تواصل معانا."
                         : getStatusDisplay(selectedOrder).text.includes("فشل")
-                        ? "نعتذر، محاولة الدفع فشلت. يرجى المحاولة مرة أخرى."
+                        ? "محاولة الدفع ما ضبطت. جرّب مرة ثانية."
                         : getStatusDisplay(selectedOrder).text.includes("توصيل")
                           ? "تبي المندوب ينتبه حق شي معين بالطريج أو الموقع؟ تواصل ويانا بالواتساب وبلغنا."
                           : getStatusDisplay(selectedOrder).text.includes(
@@ -1679,7 +1679,7 @@ export default function OrderPage() {
                             to={`/split/${selectedOrder.id}`}
                             className="w-full bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-200 p-4 rounded-2xl flex items-center justify-between text-sm font-bold transition-all shadow-sm outline-none"
                           >
-                            <span>ادخل صفحة القطية</span>
+                            <span>دش صفحة القطيّة</span>
                             <Users className="w-5 h-5" />
                           </Link>
 
@@ -1689,7 +1689,7 @@ export default function OrderPage() {
                             className="track-v14-secondary-action block w-full text-center p-4 rounded-2xl bg-stone-100 text-stone-600 font-bold text-[13px] hover:bg-stone-200 transition-all outline-none disabled:opacity-50"
                           >
                               {processingPayment
-                                ? "جاري التجهيز..."
+                                ? "نجهز الرابط..."
                                 : getSafeSplitPayments(selectedOrder)
                                     .filter((p: any) => p.status === "paid" || p.status === "SUCCESS")
                                     .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0) > 0

@@ -59,12 +59,12 @@ export function NewInvoiceModal({
         body: JSON.stringify(orderData)
       });
 
-      if (!response.ok) throw new Error("فشل إنشاء الفاتورة");
+      if (!response.ok) throw new Error("ما قدرنا ننشئ الفاتورة");
       
       onClose();
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء الإنشاء");
+      alert("تعطل إنشاء الفاتورة. جرّب مرة ثانية.");
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +135,7 @@ export function NewInvoiceModal({
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-stone-500 flex items-center gap-1.5"><Phone className="w-4 h-4" /> رقم الهاتف</label>
+                <label className="text-xs font-bold text-stone-500 flex items-center gap-1.5"><Phone className="w-4 h-4" /> رقم التلفون</label>
                 <input
                   type="tel"
                   required
@@ -201,7 +201,7 @@ export function NewInvoiceModal({
             form="new-invoice-form"
             className="w-full py-4 bg-brand text-white font-bold rounded-2xl hover:bg-brand/90 transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isLoading ? "جاري الإنشاء..." : "إنشاء فاتورة جديدة"}
+            {isLoading ? "نجهز الفاتورة..." : "إنشاء فاتورة جديدة"}
           </button>
         </div>
       </motion.div>

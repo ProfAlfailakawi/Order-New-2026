@@ -447,7 +447,7 @@ export default function SplitPayment() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50 gap-4">
         <span className="animate-spin text-4xl">⏳</span>
-        <p className="text-stone-500 font-bold">جاري تحميل صفحة القطية...</p>
+        <p className="text-stone-500 font-bold">نحمّل صفحة القطيّة...</p>
         <p className="text-stone-400 text-xs">رقم الطلب: {id || "غير متوفر"}</p>
       </div>
     );
@@ -467,7 +467,7 @@ export default function SplitPayment() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50 gap-4 text-center p-6">
         <span className="animate-spin text-4xl">⏳</span>
-        <p className="text-stone-500 font-bold">جاري تجهيز صفحة القطيّة...</p>
+        <p className="text-stone-500 font-bold">نجهز صفحة القطيّة...</p>
       </div>
     );
   }
@@ -559,7 +559,7 @@ export default function SplitPayment() {
                 <h3 className="text-2xl font-extrabold mb-1">تسلم الأيادي{urlName ? ` يا ${urlName}` : ""}!</h3>
                 <p className="text-white/90 font-medium">وصل الدفع وتم تسجيل الدفعة بنجاح</p>
                 <div className="mt-4 flex items-center justify-center gap-2 text-xs text-green-100/90 bg-black/10 py-1.5 px-3 rounded-full w-fit mx-auto font-bold">
-                  <span className="animate-spin inline-block">⏳</span> جاري تحديث الطلب...
+                  <span className="animate-spin inline-block">⏳</span> نحدّث الطلب...
                 </div>
               </div>
             </motion.div>
@@ -586,7 +586,7 @@ export default function SplitPayment() {
                   disabled={isSubmitting}
                   className="bg-white/20 hover:bg-white/30 disabled:opacity-50 text-white w-full py-3 rounded-xl font-bold transition-colors border border-white/30"
                 >
-                  {isSubmitting ? "جاري التحويل..." : "جرب مرة ثانية 🔄"}
+                  {isSubmitting ? "نحوّلك..." : "جرب مرة ثانية 🔄"}
                 </button>
               </div>
             </motion.div>
@@ -841,7 +841,7 @@ export default function SplitPayment() {
                 <Check className="w-8 h-8 text-white" strokeWidth={3} />
              </div>
              <h2 className="text-xl font-extrabold mb-1">تمت المساهمة بنجاح!</h2>
-             <p className="font-medium text-green-100 text-sm mt-2">يعطيك العافية، جاري تحويلك في ثواني...</p>
+             <p className="font-medium text-green-100 text-sm mt-2">يعطيك العافية، بنحوّلك خلال ثواني...</p>
           </div>
         ) : qatyaTab === "payment" ? (
           <div className="qatya-action-grid qatya-v14-action-grid qatya-wow-action-grid space-y-4">
@@ -961,7 +961,7 @@ export default function SplitPayment() {
                   className="w-full bg-brand text-white p-4 rounded-2xl font-extrabold disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-brand/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 qatya-pay-button"
                 >
                   {isSubmitting ? (
-                    <span className="animate-pulse">جاري التحويل...</span>
+                    <span className="animate-pulse">نحوّلك...</span>
                   ) : (
                     <>
                       ادفع قطيتك <Sparkles className="w-4 h-4 text-accent" />

@@ -47,7 +47,7 @@ export const enableDiwaniyaImportantPush = async ({ phone, squadId }: { phone: s
     serviceWorkerRegistration: registration,
   });
 
-  if (!token) return { state: 'error' as DiwaniyaPushState, message: 'تعذر إنشاء رمز الإشعار' };
+  if (!token) return { state: 'error' as DiwaniyaPushState, message: 'ما قدرنا نجهز رمز الإشعار' };
 
   const response = await fetch('/api/diwaniya-push/register', {
     method: 'POST',
@@ -61,7 +61,7 @@ export const enableDiwaniyaImportantPush = async ({ phone, squadId }: { phone: s
     }),
   });
 
-  if (!response.ok) throw new Error('تعذر حفظ إعداد الإشعارات');
+  if (!response.ok) throw new Error('ما قدرنا نحفظ إعداد الإشعارات');
   try { localStorage.setItem(TOKEN_STORAGE_KEY, token); } catch {}
   return { state: 'saved' as DiwaniyaPushState, message: 'تم تفعيل تنبيهات القطيّة والروليت' };
 };

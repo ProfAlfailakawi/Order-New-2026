@@ -186,7 +186,7 @@ export function RouletteSplit({
                 دفعك تم بنجاح، مبروك فوزك بلقب الكريم اليوم!<br/>استمتعوا بالعشاء الهني وبالعافية عليكم! ✨
               </p>
               <div className="mt-6 flex items-center justify-center gap-2 text-sm text-green-100/80 bg-black/10 py-2 px-4 rounded-full w-fit mx-auto">
-                <span className="animate-spin inline-block">⏳</span> جاري التحويل للطلب...
+                <span className="animate-spin inline-block">⏳</span> نحوّلك للطلب...
               </div>
             </div>
           </motion.div>

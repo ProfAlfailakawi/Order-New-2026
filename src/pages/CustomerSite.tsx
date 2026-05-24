@@ -3825,7 +3825,7 @@ export default function CustomerSite() {
                   >
                     <div className="w-20 h-2 bg-white/20 rounded-full mb-4" />
                     <h2 className="text-2xl font-bold text-white/60">
-                      جاري التحضير...
+                      قاعدين نجهز...
                     </h2>
                   </motion.div>
 
@@ -4511,7 +4511,7 @@ export default function CustomerSite() {
                                 disabled={isLoading}
                                 className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
                               >
-                                {isLoading ? "جاري الإرسال..." : "طلب دخول للمعزب 📡"}
+                                {isLoading ? "ندز الطلب..." : "طلب دخول للمعزب 📡"}
                               </button>
                             )}
                           </div>
@@ -4694,7 +4694,7 @@ export default function CustomerSite() {
                           disabled={ownerJoinDecisionLoading[req.phone]}
                           className="bg-emerald-400 hover:bg-emerald-500 text-slate-950 text-[10px] font-black px-4 py-2 rounded-xl active:scale-95 shadow-sm"
                         >
-                          {ownerJoinDecisionLoading[req.phone] ? "جاري..." : "قبول"}
+                          {ownerJoinDecisionLoading[req.phone] ? "ثواني..." : "قبول"}
                         </button>
                       </div>
                     </div>
@@ -4766,7 +4766,7 @@ export default function CustomerSite() {
                     disabled={isEnablingDiwaniyaPush}
                     className="w-full rounded-2xl bg-white text-brand px-4 py-3 text-[11px] font-black shadow-sm active:scale-[0.98] transition-all disabled:opacity-60"
                   >
-                    {isEnablingDiwaniyaPush ? "جاري التفعيل..." : "فعّل تنبيهات القطيّة والروليت المهمة"}
+                    {isEnablingDiwaniyaPush ? "نفعّلها..." : "فعّل تنبيهات القطيّة والروليت المهمة"}
                   </button>
                 )}
                 {diwaniyaPushState === "saved" && (
@@ -4811,7 +4811,7 @@ export default function CustomerSite() {
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
                 </div>
                 <span className="text-[10px] font-black text-amber-400 hidden group-hover:inline max-w-0 group-hover:max-w-xs transition-with-duration duration-300 overflow-hidden whitespace-nowrap">
-                  جاري المراجعة بالرادار... 📡
+                  نراجع الطلب بالرادار... 📡
                 </span>
                 <span className="text-xs">📡</span>
               </motion.button>
@@ -4832,7 +4832,7 @@ export default function CustomerSite() {
                   </button>
                   <div className="flex-1 flex items-center justify-end gap-2.5">
                     <div className="flex flex-col text-right">
-                      <p className="text-xs font-black text-slate-100">جاري انتظار قبول صاحب الديوانية... 📡</p>
+                      <p className="text-xs font-black text-slate-100">ناطرين قبول صاحب الديوانية... 📡</p>
                       <p className="text-[10px] opacity-75 font-semibold text-slate-300 mt-0.5 animate-pulse">طلبك قيد المراجعة الفورية بالرادار.</p>
                     </div>
                     <div className="relative flex h-2.5 w-2.5 shrink-0 mt-1">
@@ -6812,7 +6812,7 @@ function CheckoutOverlay({
                         className="flex items-center justify-center w-full gap-2"
                       >
                         <Sparkles className="w-5 h-5 opacity-80" />
-                        <span>جاري تجهيز الطلب بأمان...</span>
+                        <span>نجهز الطلب بأمان...</span>
                       </motion.div>
                     ) : (
                       <>
