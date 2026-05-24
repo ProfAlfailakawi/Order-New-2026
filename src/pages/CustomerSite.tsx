@@ -6845,13 +6845,18 @@ function CheckoutOverlay({
                   {!isSubmitting && (
                     <>
                       <button
-	                        onClick={() => {
-	                          try {
-	                            localStorage.removeItem("split_prefill_members");
-	                            localStorage.removeItem("split_prefill_ready");
-	                            localStorage.removeItem("split_prefill_source");
-	                            localStorage.removeItem("split_prefill_squad_id");
-	                          } catch (e) {}
+	                        onClick={async () => {
+	                          const hasCurrentDiwaniya = Boolean(squadInfo?.id || localStorage.getItem("squadId"));
+	                          if (hasCurrentDiwaniya) {
+	                            await prepareDiwaniyaSplitMembers();
+	                          } else {
+	                            try {
+	                              localStorage.removeItem("split_prefill_members");
+	                              localStorage.removeItem("split_prefill_ready");
+	                              localStorage.removeItem("split_prefill_source");
+	                              localStorage.removeItem("split_prefill_squad_id");
+	                            } catch (e) {}
+	                          }
 	                          onSubmit("traditional");
 	                        }}
                         className="payment-method-card payment-method-card-qatya w-full bg-stone-100 text-brand rounded-2xl p-4 sm:p-5 shadow-sm active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-stone-200 text-lg border border-stone-100 text-right"
