@@ -61,6 +61,7 @@ interface SquadModalContentProps {
   settings?: any;
   squadPresence?: any[];
   activeGroupOrder?: any;
+  activeQatyaOrders?: any[];
   tempCodes?: any[];
   usualOrder?: any;
   squadBeautifulLog?: any;
@@ -109,6 +110,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   settings,
   squadPresence = [],
   activeGroupOrder = null,
+  activeQatyaOrders = [],
   tempCodes = [],
   usualOrder = null,
   squadBeautifulLog = null,
@@ -129,6 +131,14 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
   const isOwner = Boolean(squadInfo?.phone && customerPhone && cleanPhoneLocal(squadInfo.phone) === cleanPhoneLocal(customerPhone));
   const isCurrentMember = Boolean(squadInfo?.id && (isOwner || (customerPhone && squadInfo?.memberData?.isMember !== false && Boolean(squadInfo?.memberData?.phone || customerPhone))));
+  const openQatyaOrder = (activeQatyaOrders || [])[0] || null;
+  const openQatyaCount = (activeQatyaOrders || []).length;
+  const handleOpenActiveQatya = (orderId?: string) => {
+    const targetId = orderId || openQatyaOrder?.id;
+    if (!targetId) return;
+    const phone = cleanPhoneLocal(customerPhone || "").slice(-8);
+    window.location.href = `/split/${targetId}?phone=${encodeURIComponent(phone)}&tab=payment`;
+  };
 
   // Geofencing states & actions
   const [isRegisteringGeo, setIsRegisteringGeo] = React.useState(false);
@@ -829,6 +839,24 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 )}
               </div>
 
+              {openQatyaOrder && (
+                <div className="rounded-[26px] border border-emerald-100 bg-emerald-50/80 p-4 flex items-center justify-between gap-3 text-right shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenActiveQatya(openQatyaOrder.id)}
+                    className="shrink-0 bg-brand text-white rounded-2xl px-4 py-3 text-[11px] font-black active:scale-95 shadow-sm"
+                  >
+                    ادخل وادفع قطيتك
+                  </button>
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-black text-emerald-700 bg-white/70 border border-emerald-100 rounded-full px-3 py-1 inline-flex mb-2">قطية مفتوحة للديوانية</div>
+                    <h4 className="text-sm font-black text-brand leading-tight">قطية الربع جاهزة لك</h4>
+                    <p className="text-[10px] font-bold text-stone-500 mt-1 leading-relaxed">ادخل وحدد المبلغ وادفع مباشرة، اسمك ورقمك جاهزين من عضويتك.</p>
+                    {openQatyaCount > 1 && <div className="text-[9px] font-black text-emerald-700 mt-1">عندك {formatEnglishNumber(openQatyaCount)} قطيات مفتوحة</div>}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
@@ -951,6 +979,16 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
             <div className="grid gap-3 text-right font-sans">
               {myDiwaniyaTab === "home" && (
                 <div className="space-y-4">
+                  {openQatyaOrder && (
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-[28px] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <button onClick={() => handleOpenActiveQatya(openQatyaOrder.id)} className="bg-brand text-white rounded-2xl px-5 py-3 text-xs font-black shadow-md active:scale-95 sm:order-1">ادخل وادفع قطيتك</button>
+                      <div className="text-right">
+                        <div className="text-[10px] font-black text-emerald-700 mb-1">قطية مفتوحة الآن</div>
+                        <h4 className="text-sm font-black text-brand">الربع ناطرين قطيتك</h4>
+                        <p className="text-[10px] font-bold text-stone-500 mt-1">ما تحتاج تكتب اسمك أو رقمك، حدد المبلغ فقط.</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="bg-gradient-to-br from-brand to-stone-900 text-white p-5 rounded-[30px] shadow-xl border border-white/10 space-y-4 overflow-hidden relative">
                     <div className="absolute -left-10 -top-10 w-32 h-32 bg-accent/20 blur-3xl rounded-full" />
                     <div className="relative flex items-center justify-between gap-3">
@@ -960,12 +998,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         <p className="text-[11px] text-white/70 font-bold">دخول وخروج واضح بدون تتبع مزعج.</p>
                       </div>
                     </div>
-                    <div className="relative flex gap-2">
+                    <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <button
                         onClick={() => handlePresenceToggle("in")}
                         disabled={isPresenceLoading || isPresentNow}
                         className={cn(
-                          "flex-1 py-3 rounded-2xl text-xs font-black transition-all disabled:cursor-not-allowed",
+                          "w-full py-3 rounded-2xl text-xs font-black transition-all disabled:cursor-not-allowed whitespace-nowrap",
                           isPresentNow ? "bg-emerald-400 text-brand opacity-100" : "bg-white text-brand active:scale-95",
                           (isPresenceLoading || isPresentNow) && "pointer-events-none"
                         )}
@@ -976,7 +1014,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         onClick={() => handlePresenceToggle("out")}
                         disabled={isPresenceLoading || !isPresentNow}
                         className={cn(
-                          "flex-1 py-3 rounded-2xl text-xs font-black border border-white/10 transition-all disabled:cursor-not-allowed",
+                          "w-full py-3 rounded-2xl text-xs font-black border border-white/10 transition-all disabled:cursor-not-allowed whitespace-nowrap",
                           isPresentNow ? "bg-white text-brand active:scale-95" : "bg-white/10 text-white/45 opacity-50 pointer-events-none"
                         )}
                       >
