@@ -392,6 +392,7 @@ function pushDiwaniyaNotifications(list: any[], inputs: any[]) {
 }
 
 const IMPORTANT_DIWANIYA_PUSH_TYPES = new Set([
+  "join_request",
   "qatya_request",
   "roulette_result",
 ]);
@@ -426,6 +427,7 @@ async function sendDiwaniyaExternalPush(input: {
       .filter((item: any) => item?.active !== false && item?.token)
       .filter((item: any) => {
         const prefs = item?.prefs || {};
+        if (input.type === "join_request") return true;
         if (input.type === "qatya_request") return prefs.qatya !== false;
         if (input.type === "roulette_result") return prefs.roulette !== false;
         return false;
@@ -1398,6 +1400,19 @@ app.get("/api/debug/order/:id", async (req, res) => {
         return { geofenceJoinRequests: filtered, diwaniyaNotifications };
       });
       if (!ok) throw new Error("Failed to save geofence request");
+      const ownerPhone = await getAppData()
+        .then((current: any) => (Array.isArray(current.squads) ? current.squads : []).find((s: any) => String(s.id) === String(squadId))?.phone || "")
+        .catch(() => "");
+      if (ownerPhone) {
+        void sendDiwaniyaExternalPush({
+          toPhones: [ownerPhone],
+          type: "join_request",
+          title: "وصل طلب دخول للديوانية",
+          body: `${name || "أحد الربع"} قريب من ديوانيتك ويطلب موافقة المعزب.`,
+          squadId: String(squadId),
+          url: "/?showSquads=true"
+        });
+      }
       res.json({ success: true });
     } catch(e) {
       res.status(500).json({ error: String(e) });

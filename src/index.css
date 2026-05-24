@@ -2603,3 +2603,22 @@ html, body, #root {
     height:18px!important;
   }
 }
+/* Smart menu image fit: same frame size, better crop/readability for small uploaded food photos. */
+.category-signature-card .menu-product-image,
+.menu-product-image{
+  isolation:isolate;
+  background:linear-gradient(145deg,#fffaf2,#f8fafc)!important;
+}
+.category-signature-card .menu-product-image .menu-product-img,
+.category-signature-card .menu-product-image img,
+.menu-product-image .menu-product-img{
+  object-fit:cover!important;
+  object-position:center!important;
+  padding:0!important;
+  transform:scale(1.04)!important;
+  filter:saturate(1.04) contrast(1.02)!important;
+}
+.menu-product-card:hover .menu-product-image .menu-product-img,
+.menu-product-card:hover .menu-product-image img{
+  transform:scale(1.09)!important;
+}
