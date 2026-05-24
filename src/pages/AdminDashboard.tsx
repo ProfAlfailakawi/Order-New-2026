@@ -324,7 +324,7 @@ export default function AdminDashboard() {
     });
 
     if (isInvalid) {
-        alert("رقم العميل غير موجود أو غير صالح");
+        alert("رقم العميل مو موجود أو مو مضبوط");
         return;
     }
 
@@ -432,7 +432,7 @@ export default function AdminDashboard() {
                 type="text" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="البحث برقم الهاتف، العميل أو الفاتورة..." 
+                placeholder="البحث برقم التلفون، العميل أو الفاتورة..." 
                 className="bg-transparent border-none outline-none text-sm w-full text-brand placeholder:text-stone-400 font-medium font-sans" 
               />
             </div>
@@ -558,7 +558,7 @@ export default function AdminDashboard() {
                                 <Inbox size={40} className="text-stone-300 empty-state-art" />
                               </div>
                               <div className="space-y-2">
-                                <h3 className="text-xl font-bold text-brand">لا توجد طلبات هنا</h3>
+                                <h3 className="text-xl font-bold text-brand">ماكو طلبات هني</h3>
                                 <p className="text-stone-400 font-medium max-w-sm mx-auto">لم يتم العثور على أي طلبات تطابق بحثك الحالي. جرب تغيير كلمات البحث.</p>
                               </div>
                             </motion.div>
@@ -779,7 +779,7 @@ export default function AdminDashboard() {
                               <div className="w-24 h-24 bg-gradient-to-tr from-stone-50 to-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-stone-50">
                                 <FileText className="w-10 h-10 text-stone-300 empty-state-art" />
                               </div>
-                              <h3 className="text-2xl font-black text-brand mb-3">لا توجد فواتير</h3>
+                              <h3 className="text-2xl font-black text-brand mb-3">ماكو فواتير</h3>
                               <p className="text-stone-400 font-medium max-w-sm mx-auto">لم يتم العثور على أي فواتير مطابقة لبحثك. هنا سيتم توثيق كل عملية دفع منجزة.</p>
                             </motion.div>
                           </td>
@@ -869,7 +869,7 @@ export default function AdminDashboard() {
                   <div className="space-y-3">
                     <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-2">رسالة الإغلاق</label>
                     <textarea 
-                        value={settings.storeStatus?.closeMessage || "عذراً، المتجر مغلق حالياً."}
+                        value={settings.storeStatus?.closeMessage || "المعذرة، المتجر مسكر الحين."}
                         onBlur={async (e) => {
                           try {
                            await fetch("/api/admin/settings/storeStatus", {
@@ -939,11 +939,11 @@ export default function AdminDashboard() {
                         if (res.ok) {
                           alert("تم حفظ مدى الرادار الجغرافي بنجاح! 🎯");
                         } else {
-                          alert("فشل الحفظ. حاول مرة أخرى.");
+                          alert("ما قدرنا نحفظ. جرّب مرة ثانية.");
                         }
                       } catch (e) {
                         console.error(e);
-                        alert("خطأ أثناء حفظ مدى الرادار.");
+                        alert("تعطل حفظ مدى الرادار.");
                       }
                     }}
                     className="w-full py-5 bg-brand text-white rounded-[24px] font-black shadow-xl hover:shadow-brand/20 transition-all flex items-center justify-center gap-3 active:scale-[0.98] font-sans"
@@ -1154,7 +1154,7 @@ export default function AdminDashboard() {
                         <thead>
                           <tr className="text-right text-[10px] text-stone-400 font-extrabold uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
                             <th className="p-8">المستوى</th>
-                            <th className="p-8">رقم الهاتف</th>
+                            <th className="p-8">رقم التلفون</th>
                             <th className="p-8">الاسم</th>
                             <th className="p-8 text-center">النقاط المدفوعة</th>
                           </tr>
@@ -1268,7 +1268,7 @@ export default function AdminDashboard() {
                     <div className="flex justify-end gap-4 pt-4">
                        <button 
                         onClick={async () => {
-                          if (!newZoneName) return alert("يرجى إدخال اسم المنطقة");
+                          if (!newZoneName) return alert("اكتب اسم المنطقة");
                           try {
                             const res = await fetch("/api/admin/zones", {
                               method: "POST",
@@ -1352,7 +1352,7 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <h3 className="text-2xl font-extrabold text-brand mb-1">رقم استقبال طلبات الواتساب</h3>
-                      <p className="text-stone-400 text-xs font-medium">أدخل الرقم المكون من 8 أرقام (مثال: 92225308). سيقوم النظام بإضافة المفتاح الدولي تلقائياً.</p>
+                      <p className="text-stone-400 text-xs font-medium">اكتب الرقم 8 أرقام (مثال: 92225308)، والنظام يضيف مفتاح الكويت تلقائياً.</p>
                       {(!settings.companyPhone && settings.restaurantNumbers?.[0]) && (
                         <p className="text-accent text-[10px] font-bold mt-2 flex items-center gap-2">
                           <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
@@ -1410,7 +1410,7 @@ export default function AdminDashboard() {
                               <div className="w-24 h-24 bg-gradient-to-tr from-stone-50 to-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-stone-50">
                                 <MapPin className="w-10 h-10 text-stone-300 empty-state-art" />
                               </div>
-                              <h3 className="text-2xl font-black text-brand mb-3">لا توجد مناطق توصيل</h3>
+                              <h3 className="text-2xl font-black text-brand mb-3">ماكو مناطق توصيل</h3>
                               <p className="text-stone-400 font-medium max-w-sm mx-auto">قم بإضافة مناطق التوصيل ليتمكن عملاؤك من إتمام طلباتهم.</p>
                             </motion.div>
                           </td>
@@ -1503,7 +1503,7 @@ export default function AdminDashboard() {
                                       if (!res.ok) throw new Error("Failed to delete");
                                     } catch (err) {
                                       console.error(err);
-                                      alert("فشل الحذف");
+                                      alert("ما قدرنا نحذف");
                                     }
                                   }}
                                   className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95"
@@ -1587,7 +1587,7 @@ export default function AdminDashboard() {
                       disabled={isAddingPromo || !newPromoCode || newPromoValue <= 0}
                       className="p-4 bg-brand text-white rounded-2xl font-extrabold text-xs uppercase tracking-widest shadow-md shadow-brand/20 active:scale-95 disabled:opacity-50"
                     >
-                      {isAddingPromo ? "جاري الإضافة..." : "إضافة كوبون"}
+                      {isAddingPromo ? "نضيف الكوبون..." : "إضافة كوبون"}
                     </button>
                   </div>
                 </div>
@@ -1614,7 +1614,7 @@ export default function AdminDashboard() {
                               <div className="w-24 h-24 bg-gradient-to-tr from-stone-50 to-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-stone-50">
                                 <CreditCard className="w-10 h-10 text-stone-300 empty-state-art" />
                               </div>
-                              <h3 className="text-2xl font-black text-brand mb-3">لا توجد كوبونات ذكية</h3>
+                              <h3 className="text-2xl font-black text-brand mb-3">ماكو كوبونات ذكية</h3>
                               <p className="text-stone-400 font-medium max-w-sm mx-auto">قم بإضافة كوبونات خصم لزيادة مبيعاتك وتفاعل العملاء.</p>
                             </motion.div>
                           </td>
@@ -1912,7 +1912,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
             )}
             {!order.status?.startsWith("تم الدفع") && order.status !== "جديد" && (
                 <div className="text-center p-4 rounded-xl bg-red-50 text-red-600 font-bold border border-red-100 text-[10px] tracking-widest uppercase">
-                  لا يمكن تحويل الطلب إلى فاتورة قبل تأكيد الدفع الإلكتروني
+                  ما يصير نحول الطلب لفاتورة قبل تأكيد الدفع الإلكتروني
                 </div>
             )}
           </div>

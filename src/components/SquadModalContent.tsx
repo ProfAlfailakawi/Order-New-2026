@@ -237,13 +237,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
   const handleManualLocationSubmit = async () => {
     if (!manualInput.trim()) {
-      alert("الرجاء إدخال الإحداثيات أو رابط خرائط جوجل أولاً!");
+      alert("حط الإحداثيات أو رابط خرائط جوجل أول.");
       return;
     }
     
     const coords = parseGoogleMapsInput(manualInput);
     if (!coords) {
-      alert("لم نتمكن من استخراج الإحداثيات. تأكد من إدخالها بالشكل الصحيح (مثال: 29.3759, 47.9774) أو لصق رابط خرائط جوجل صحيح.");
+      alert("ما قدرنا نطلع الإحداثيات. تأكد من الصيغة أو حط رابط خرائط صحيح.");
       return;
     }
 
@@ -257,7 +257,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     }
 
     setIsRegisteringGeo(true);
-    setGeoStatusMsg("جاري حفظ الموقع يدوياً... 💾");
+    setGeoStatusMsg("نحفظ الموقع يدويًا... 💾");
     try {
       const res = await fetch("/api/squad-set-location", {
         method: "POST",
@@ -278,10 +278,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         setSquadInfo?.({ ...squadInfo, lat: coords.lat, lng: coords.lng, geofenceDistance: localGeofenceDistance });
         if (onRefresh) onRefresh();
       } else {
-        setGeoStatusMsg("فشل التسجيل يدوياً. يرجى المحاولة لاحقاً.");
+        setGeoStatusMsg("ما ضبط التسجيل اليدوي. جرّب بعد شوي.");
       }
     } catch (e) {
-      setGeoStatusMsg("خطأ اتصال أثناء حفظ الموقع.");
+      setGeoStatusMsg("الاتصال تعطل وقت حفظ الموقع.");
     }
     setIsRegisteringGeo(false);
   };
@@ -294,7 +294,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       return;
     }
     setIsRegisteringGeo(true);
-    setGeoStatusMsg(options?.auto ? "نحاول تثبيت موقع ديوانيتك الحالية تلقائياً... 📡" : (options?.changeCheck ? "نتأكد من موقعك الحالي قبل تغيير موقع الديوانية... 📡" : "جاري تثبيت موقع الديوانية الحالي... 📡"));
+    setGeoStatusMsg(options?.auto ? "نحاول نثبت موقع ديوانيتك تلقائياً... 📡" : (options?.changeCheck ? "نتأكد من موقعك الحالي قبل تغيير موقع الديوانية... 📡" : "نثبت موقع الديوانية الحالي... 📡"));
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -326,10 +326,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
             setSquadInfo?.({ ...squadInfo, lat: latitude, lng: longitude, geofenceDistance: localGeofenceDistance });
             if (onRefresh) window.setTimeout(onRefresh, 100);
           } else {
-            setGeoStatusMsg("فشل التسجيل. يرجى المحاولة لاحقاً.");
+            setGeoStatusMsg("ما ضبط التسجيل. جرّب بعد شوي.");
           }
         } catch (e) {
-          setGeoStatusMsg("خطأ اتصال أثناء حفظ الموقع.");
+          setGeoStatusMsg("الاتصال تعطل وقت حفظ الموقع.");
         }
         setIsRegisteringGeo(false);
       },
@@ -347,7 +347,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
             : "انتهت مهلة قراءة الموقع. جرّب مرة ثانية أو استخدم الإدخال اليدوي عند الحاجة."
           );
         } else {
-          setGeoStatusMsg("تعذر قراءة الموقع حالياً. جرّب مرة ثانية أو استخدم الإدخال اليدوي.");
+          setGeoStatusMsg("ما قدرنا نقرأ الموقع الحين. جرّب مرة ثانية أو استخدم الإدخال اليدوي.");
         }
       },
       { enableHighAccuracy: true, timeout: options?.changeCheck ? 6000 : 10000, maximumAge: options?.changeCheck ? 60000 : 0 }
@@ -381,10 +381,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       if (res.ok) {
         if (onRefresh) onRefresh();
       } else {
-        alert("فشل تحديث الطلب.");
+      alert("ما قدرنا نحدّث الطلب.");
       }
     } catch (e) {
-      alert("خطأ اتصال أثناء تحديث الطلب.");
+      alert("الاتصال تعطل وقت تحديث الطلب.");
     }
     setIsApproving(prev => ({ ...prev, [targetPhone]: false }));
   };
@@ -696,7 +696,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       } catch(e) {}
       if (onRefresh) window.setTimeout(onRefresh, 80);
     } catch(e) {
-      alert("تعذر التحقق من الرقم حالياً. حاول مرة ثانية.");
+      alert("ما قدرنا نتأكد من الرقم الحين. جرّب مرة ثانية.");
     }
   };
 
@@ -726,8 +726,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         body: JSON.stringify({ squadId: squadInfo.id, phone: currentMemberPhone, name: customerName || guestName || "عضو", action })
       });
       if (res.ok && onRefresh) onRefresh();
-      else alert("تعذر تحديث حضورك حالياً.");
-    } catch { alert("خطأ اتصال أثناء تحديث الحضور."); }
+      else alert("ما قدرنا نحدّث حضورك الحين.");
+    } catch { alert("الاتصال تعطل وقت تحديث الحضور."); }
     setIsPresenceLoading(false);
   };
 
@@ -764,8 +764,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       if (res.ok) {
         setActiveTempCode(data);
         if (onRefresh) onRefresh();
-      } else alert(data?.error || "تعذر إنشاء كود مؤقت.");
-    } catch { alert("خطأ اتصال أثناء إنشاء الكود."); }
+      } else alert(data?.error || "ما قدرنا ننشئ كود مؤقت.");
+    } catch { alert("الاتصال تعطل وقت إنشاء الكود."); }
     setTempCodeLoading(false);
   };
 
@@ -781,7 +781,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
     if (!cleanTempPhone || cleanTempPhone.length !== 8 || !finalName) {
       setTempCodeNeedsProfile(true);
-      alert("الكود جاهز. ادخل اسمك ورقمك لإكمال الدخول للديوانية.");
+      alert("الكود جاهز. دش اسمك ورقمك عشان تكمل دخول الديوانية.");
       return;
     }
 
@@ -805,7 +805,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       } else {
         alert(data?.error || "الكود غير صحيح أو انتهت صلاحيته.");
       }
-    } catch { alert("خطأ اتصال أثناء استخدام الكود."); }
+    } catch { alert("الاتصال تعطل وقت استخدام الكود."); }
     setTempCodeLoading(false);
   };
 
@@ -821,8 +821,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       if (res.ok) {
         try { localStorage.setItem("split_prefill_members", JSON.stringify(squadMembersForSplit)); } catch {}
         if (onRefresh) onRefresh();
-      } else alert("تعذر فتح طلب الربع.");
-    } catch { alert("خطأ اتصال أثناء فتح طلب الربع."); }
+      } else alert("ما قدرنا نفتح طلب الربع.");
+    } catch { alert("الاتصال تعطل وقت فتح طلب الربع."); }
     setGroupOrderLoading(false);
   };
 
@@ -895,7 +895,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       return;
     }
 
-    alert("جهزنا قطية الضيف. اختار الأصناف وبعدها ادخل السلة واختر القطيّة.");
+    alert("جهزنا قطية الضيف. اختار الأصناف وبعدها دش السلة واختار القطيّة.");
   }, [
     cleanPhoneLocal,
     customerName,
@@ -1162,7 +1162,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   <span className="text-[10px] font-black bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-100">صالح ساعتين</span>
                   <div className="text-right">
                     <h4 className="text-base font-black text-brand">الكود السريع</h4>
-                    <p className="text-[10px] font-bold text-stone-400 mt-0.5">أنشئ كود للضيف أو ادخل كود ديوانية ثانية.</p>
+                    <p className="text-[10px] font-bold text-stone-400 mt-0.5">أنشئ كود للضيف أو دش كود ديوانية ثانية.</p>
                   </div>
                 </div>
 
@@ -1198,12 +1198,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       className="w-full flex-1 bg-white border border-stone-200 rounded-2xl px-4 py-3 text-center font-black text-brand"
                     />
                     <button onClick={handleJoinWithTempCode} disabled={tempCodeLoading} className="w-full sm:w-auto bg-brand text-white rounded-2xl px-5 py-3 text-xs font-black shadow-sm active:scale-95">
-                      {tempCodeLoading ? "جاري الدخول..." : "دخول بالكود"}
+                      {tempCodeLoading ? "ندخلك..." : "دخول بالكود"}
                     </button>
                   </div>
                   {tempCodeNeedsProfile && (
                     <div className="rounded-2xl bg-white border border-brand/10 p-3 space-y-2">
-                      <div className="text-[11px] font-black text-brand text-right">ادخل اسمك ورقمك لإكمال الدخول للديوانية</div>
+                      <div className="text-[11px] font-black text-brand text-right">دش اسمك ورقمك عشان تكمل دخول الديوانية</div>
                       <input
                         value={tempJoinName}
                         onChange={(e)=>setTempJoinName(e.target.value)}
@@ -1388,7 +1388,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     disabled={isSubmittingSquad}
                     className="flex-[2] bg-brand text-white font-black text-xs py-4 rounded-xl shadow-lg shadow-brand/20 active:scale-95 transition-all disabled:opacity-50"
                   >
-                    {isSubmittingSquad ? "جاري التأسيس..." : "أسس الحين 🚀"}
+                    {isSubmittingSquad ? "نأسسها..." : "أسس الحين 🚀"}
                   </button>
                 </div>
               </div>
@@ -1570,7 +1570,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           disabled={isRegisteringGeo}
                           className="w-full bg-stone-50 hover:bg-stone-100 border-2 border-stone-200/80 text-brand font-black text-xs py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
                         >
-                          {isRegisteringGeo ? "جاري تثبيت الموقع... 🛰️" : (squadInfo.lat !== undefined ? "📍 تأكيد تغيير موقع الديوانية الحالي" : "📍 تعيين موقع الديوانية الجغرافي الحالي")}
+                          {isRegisteringGeo ? "نثبت الموقع... 🛰️" : (squadInfo.lat !== undefined ? "📍 تأكيد تغيير موقع الديوانية الحالي" : "📍 تعيين موقع الديوانية الجغرافي الحالي")}
                         </button>
                       )}
 
@@ -1663,7 +1663,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                     disabled={isApproving[req.phone]}
                                     className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black px-4.5 py-1.5 rounded-xl shadow-sm active:scale-95 transition-all text-center"
                                   >
-                                    {isApproving[req.phone] ? "جاري..." : "قبول ✅"}
+                                    {isApproving[req.phone] ? "ثواني..." : "قبول ✅"}
                                   </button>
                                 </div>
                               </div>
@@ -1672,7 +1672,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         </div>
                       ) : (
                         <p className="text-xs font-bold text-stone-400 text-center py-4">
-                          لا توجد طلبات انضمام بالرادار حالياً. 
+                          ماكو طلبات انضمام بالرادار حالياً. 
                           <br />
                           <span className="text-[10px] opacity-75">تظهر هنا فوراً عندما يقترب كنعور من ديوانيتك!</span>
                         </p>
@@ -1714,7 +1714,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           disabled={isSubmittingSquad}
                           className="w-full bg-accent text-white font-black text-sm py-4 rounded-2xl shadow-lg active:scale-95 transition-all disabled:opacity-50"
                         >
-                          {isSubmittingSquad ? "جاري الانضمام..." : "انضم للديوانية الآن"}
+                          {isSubmittingSquad ? "ندخلك..." : "انضم للديوانية الآن"}
                         </button>
                       </div>
 
@@ -1743,7 +1743,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           <span className="text-[10px] font-black bg-brand/10 text-brand px-2.5 py-1 rounded-full border border-brand/10">سريع ومباشر</span>
                           <h5 className="text-sm font-black text-brand">عندك كود دخول ساعتين؟</h5>
                         </div>
-                        <p className="text-[11px] font-bold text-stone-500 leading-relaxed">إذا المعزب عطاك كود مؤقت، اكتب الكود هنا وادخل مباشرة بدون انتظار.</p>
+                        <p className="text-[11px] font-bold text-stone-500 leading-relaxed">إذا المعزب عطاك كود مؤقت، اكتب الكود هني ودش مباشرة بدون انتظار.</p>
                         <div className="flex flex-col sm:flex-row gap-2 sm:items-stretch">
                           <input
                             inputMode="numeric"
@@ -1757,12 +1757,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             disabled={tempCodeLoading}
                             className="w-full sm:w-auto bg-brand text-white rounded-2xl px-5 py-3 text-xs font-black shadow-sm active:scale-95"
                           >
-                            {tempCodeLoading ? "جاري الدخول..." : "دخول بالكود"}
+                            {tempCodeLoading ? "ندخلك..." : "دخول بالكود"}
                           </button>
                         </div>
                         {tempCodeNeedsProfile && (
                           <div className="rounded-2xl bg-white border border-brand/10 p-3 space-y-2">
-                            <div className="text-[11px] font-black text-brand text-right">ادخل اسمك ورقمك لإكمال الدخول للديوانية</div>
+                            <div className="text-[11px] font-black text-brand text-right">دش اسمك ورقمك عشان تكمل دخول الديوانية</div>
                             <input
                               value={tempJoinName}
                               onChange={(e)=>setTempJoinName(e.target.value)}
@@ -1858,7 +1858,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 </div>
                 {tempCodeNeedsProfile && (
                   <div className="grid grid-cols-1 gap-2">
-                    <div className="text-[11px] font-black text-brand text-right">ادخل اسمك ورقمك لإكمال الدخول للديوانية</div>
+                    <div className="text-[11px] font-black text-brand text-right">دش اسمك ورقمك عشان تكمل دخول الديوانية</div>
                     <input
                       value={tempJoinName}
                       onChange={(e)=>setTempJoinName(e.target.value)}

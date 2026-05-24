@@ -55,7 +55,7 @@ export function checkStoreStatus(storeStatus: any) {
   if (storeStatus.manualClose) {
     return { 
       isOpen: false, 
-      message: storeStatus.closeMessage || "عذراً، المتجر مغلق حالياً." 
+      message: storeStatus.closeMessage || "المعذرة، المتجر مسكر الحين." 
     };
   }
 
@@ -72,7 +72,7 @@ export function checkStoreStatus(storeStatus: any) {
     if (todaySchedule && todaySchedule.enabled === false) {
       return { 
         isOpen: false, 
-        message: storeStatus.closeMessage || "عذراً، المتجر مغلق اليوم كعطلة مجدولة." 
+        message: storeStatus.closeMessage || "المعذرة، المتجر مسكر اليوم حسب الجدول." 
       };
     }
 
@@ -97,7 +97,7 @@ export function checkStoreStatus(storeStatus: any) {
       if (!isOpenNow) {
          return { 
            isOpen: false, 
-           message: storeStatus.closeMessage || `عذراً، المتجر يفتح يومياً من ${todaySchedule.open} إلى ${todaySchedule.close}.`
+           message: storeStatus.closeMessage || `المعذرة، المتجر يفتح يومياً من ${todaySchedule.open} إلى ${todaySchedule.close}.`
          };
       }
     }
