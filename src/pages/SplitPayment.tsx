@@ -34,6 +34,17 @@ const getSafeSplitPayments = (order: any): any[] => {
   return [];
 };
 
+const isDiwaniyaQatyaOrder = (order: any): boolean => {
+  if (!order) return false;
+  const qatiaType = String(order.qatiaType || order.qatyaType || "").toLowerCase();
+  const splitOrigin = String(order.splitOrigin || order.qatiaOrigin || "").toLowerCase();
+  if (qatiaType === "diwaniya" || splitOrigin.startsWith("diwaniya")) return true;
+
+  return getSafeSplitPayments(order).some((person: any) =>
+    String(person?.source || "").toLowerCase().includes("diwaniya")
+  );
+};
+
 export default function SplitPayment() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -70,7 +81,7 @@ export default function SplitPayment() {
   const mySplitRecord = getSafeSplitPayments(order).find(
      (s: any) => s.phone && String(s.phone).replace(/\D/g, "").slice(-8) === mySplitPhone
   );
-  const isKnownDiwaniyaMember = Boolean(mySplitRecord && mySplitPhone.length === 8);
+  const isKnownDiwaniyaMember = Boolean(isDiwaniyaQatyaOrder(order) && mySplitRecord && mySplitPhone.length === 8);
   
   const isFullyPaid =
     localSuccess ||
@@ -471,8 +482,11 @@ export default function SplitPayment() {
   }
   if (isNaN(progressPercent)) progressPercent = 0;
   const splitPeople = getSafeSplitPayments(order);
+  const isDiwaniyaQatya = isDiwaniyaQatyaOrder(order);
   const paidPeople = splitPeople.filter((p: any) => String(p.status || "").toLowerCase() === "paid");
   const waitingPeople = splitPeople.filter((p: any) => String(p.status || "").toLowerCase() !== "paid");
+  const visiblePaidPeople = isDiwaniyaQatya ? paidPeople : paidPeople;
+  const visibleWaitingPeople = isDiwaniyaQatya ? waitingPeople : [];
   const currentPersonRole = isKnownDiwaniyaMember ? "عضو ديوانية" : urlPhone ? "ضيف مدعو" : "مشارك";
   const currentPersonTone = isKnownDiwaniyaMember
     ? "bg-emerald-50 text-emerald-700 border-emerald-100"
@@ -596,7 +610,7 @@ export default function SplitPayment() {
               </div>
               <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-3 text-right">
                 <div className="text-[9px] font-black text-emerald-700">دفعوا</div>
-                <div className="text-xs font-black text-emerald-800 mt-1">{paidPeople.length} / {splitPeople.length || 1}</div>
+                <div className="text-xs font-black text-emerald-800 mt-1">{paidPeople.length} / {isDiwaniyaQatya ? (splitPeople.length || 1) : Math.max(paidPeople.length, 1)}</div>
               </div>
               <div className="rounded-2xl bg-amber-50 border border-amber-100 p-3 text-right">
                 <div className="text-[9px] font-black text-amber-700">باقي</div>
@@ -694,7 +708,7 @@ export default function SplitPayment() {
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {paidPeople.slice(0, 4).map((person: any, idx: number) => (
+                {visiblePaidPeople.slice(0, 4).map((person: any, idx: number) => (
                   <div key={`paid-${person.phone || idx}`} className="rounded-2xl bg-white border border-emerald-100 p-3 flex items-center justify-between gap-2">
                     <span className="text-[10px] font-black text-emerald-700">دفع</span>
                     <div className="text-right min-w-0">
@@ -703,7 +717,7 @@ export default function SplitPayment() {
                     </div>
                   </div>
                 ))}
-                {waitingPeople.slice(0, Math.max(0, 4 - paidPeople.slice(0, 4).length)).map((person: any, idx: number) => (
+                {visibleWaitingPeople.slice(0, Math.max(0, 4 - visiblePaidPeople.slice(0, 4).length)).map((person: any, idx: number) => (
                   <div key={`wait-${person.phone || idx}`} className="rounded-2xl bg-white border border-stone-100 p-3 flex items-center justify-between gap-2">
                     <span className="text-[10px] font-black text-stone-400">ينتظر</span>
                     <div className="text-right min-w-0">
@@ -731,7 +745,7 @@ export default function SplitPayment() {
               <span className="rounded-full bg-stone-50 border border-stone-100 px-3 py-1 text-[10px] font-black text-stone-500">{paidPeople.length} دفعوا · {waitingPeople.length} بانتظار</span>
               <h3 className="font-black text-brand text-lg">المشاركون</h3>
             </div>
-            {splitPeople.length ? splitPeople.map((person:any, idx:number) => {
+            {(isDiwaniyaQatya ? splitPeople : paidPeople).length ? (isDiwaniyaQatya ? splitPeople : paidPeople).map((person:any, idx:number) => {
               const paid = String(person.status || '').toLowerCase() === 'paid';
               const isMe = mySplitPhone && String(person.phone || "").replace(/\D/g, "").slice(-8) === mySplitPhone;
               return (
@@ -742,7 +756,7 @@ export default function SplitPayment() {
                 </div>
                 <strong className={paid ? 'text-emerald-700' : 'text-stone-400'}>{paid ? 'دفع' : 'بانتظار'}</strong>
               </div>
-            )}) : <p className="text-sm font-bold text-stone-400">الربع يظهرون هنا تلقائياً إذا كانت القطيّة من الديوانية.</p>}
+            )}) : <p className="text-sm font-bold text-stone-400">{isDiwaniyaQatya ? "أعضاء الديوانية يظهرون هنا حسب القطيّة." : "المساهمون يظهرون هنا بعد الدفع فقط."}</p>}
           </div>
         )}
 

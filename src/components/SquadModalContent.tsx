@@ -845,6 +845,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     try {
       localStorage.setItem("split_prefill_members", JSON.stringify(members));
       localStorage.setItem("split_prefill_ready", "1");
+      localStorage.setItem("split_prefill_source", "diwaniya_checkout");
+      if (squadInfo?.id) localStorage.setItem("split_prefill_squad_id", String(squadInfo.id));
     } catch {}
 
     if (onPrepareQatya) {

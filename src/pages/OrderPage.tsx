@@ -97,6 +97,15 @@ const getSafeSplitPayments = (order: any): any[] => {
   return [];
 };
 
+const isDiwaniyaQatyaOrder = (order: any): boolean => {
+  const qatiaType = String(order?.qatiaType || order?.qatyaType || "").toLowerCase();
+  const splitOrigin = String(order?.splitOrigin || order?.qatiaOrigin || "").toLowerCase();
+  if (qatiaType === "diwaniya" || splitOrigin.startsWith("diwaniya")) return true;
+  return getSafeSplitPayments(order).some((p: any) =>
+    String(p?.source || "").toLowerCase().includes("diwaniya")
+  );
+};
+
 export default function OrderPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1690,9 +1699,9 @@ export default function OrderPage() {
                         </div>
                       )}
 
-                      {(getSafeSplitPayments(selectedOrder).filter(
-                        (p: any) => p.status === "paid" || p.status === "pending"
-                      ).length > 0 || ((selectedOrder as any).splitParticipants || []).length > 0) && (
+	                      {(getSafeSplitPayments(selectedOrder).filter(
+	                        (p: any) => p.status === "paid" || (isDiwaniyaQatyaOrder(selectedOrder) && p.status === "pending")
+	                      ).length > 0 || (((selectedOrder as any).splitType === "roulette" || isDiwaniyaQatyaOrder(selectedOrder)) && ((selectedOrder as any).splitParticipants || []).length > 0)) && (
                         <div className="track-v14-social-card track-wow-social-card bg-stone-50 p-4 rounded-2xl border border-stone-100">
                           <h4 className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                             <Users className="w-3 h-3" /> {(selectedOrder as any).splitType === 'roulette' ? 'المشاركون في وهق غيرك' : 'المساهمين في القطية'}
@@ -1706,7 +1715,7 @@ export default function OrderPage() {
                             </div>
                           )}
                           <div className="space-y-2">
-                            {(selectedOrder as any).splitType === 'roulette' ? (
+	                            {(selectedOrder as any).splitType === 'roulette' ? (
                               ((selectedOrder as any).splitParticipants || []).map((p: any, i: number) => (
                                 <div
                                   key={i}
@@ -1728,9 +1737,9 @@ export default function OrderPage() {
                                 </div>
                               ))
                             ) : (
-                              Object.values(
-                                getSafeSplitPayments(selectedOrder)
-                                  .filter((p: any) => p.status === "paid" || p.status === "pending")
+	                              Object.values(
+	                                getSafeSplitPayments(selectedOrder)
+	                                  .filter((p: any) => p.status === "paid" || (isDiwaniyaQatyaOrder(selectedOrder) && p.status === "pending"))
                                   .reduce((acc: any, p: any) => {
                                     const key = `${p.name}-${p.phone}`;
                                     if (!acc[key] || p.status === "paid" || acc[key].status === "failed") {
