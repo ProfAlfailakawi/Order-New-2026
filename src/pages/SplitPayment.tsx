@@ -26,9 +26,11 @@ import { RouletteSplit } from "../components/RouletteSplit";
 const getSafeSplitPayments = (order: any): any[] => {
   if (!order) return [];
   const splits = order.splitPayments;
-  if (!splits) return [];
-  if (Array.isArray(splits)) return splits;
-  if (typeof splits === "object") return Object.values(splits);
+  const participants = order.splitParticipants;
+  const source = Array.isArray(splits) && splits.length ? splits : participants;
+  if (!source) return [];
+  if (Array.isArray(source)) return source;
+  if (typeof source === "object") return Object.values(source);
   return [];
 };
 
@@ -38,6 +40,7 @@ export default function SplitPayment() {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawUrlName = searchParams.get("name");
   const urlName = rawUrlName ? rawUrlName.split('?')[0].split('&')[0] : "";
+  const urlPhone = normalizeDigits(searchParams.get("phone") || "").replace(/[^0-9]/g, "").slice(-8);
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,7 +52,7 @@ export default function SplitPayment() {
   const prevPaidCountRef = useRef(0);
 
   const [contributorName, setContributorName] = useState(() => localStorage.getItem("split_name") || "");
-  const [contributorPhone, setContributorPhone] = useState(() => localStorage.getItem("split_phone") || "");
+  const [contributorPhone, setContributorPhone] = useState(() => urlPhone || localStorage.getItem("split_phone") || "");
   const [contributorAmount, setContributorAmount] = useState<string>(() => localStorage.getItem("split_amount") || "");
   const isDev =
     searchParams.get("dev") === "true" || searchParams.get("2dev") === "true";
@@ -63,10 +66,11 @@ export default function SplitPayment() {
 
   // Dynamically determine payment status to resist buggy Upayments Apple Pay redirection cancel URLs
   const rawPaymentStatus = searchParams.get("payment");
-  const mySplitPhone = contributorPhone.replace(/\D/g, "").slice(-8);
+  const mySplitPhone = (urlPhone || contributorPhone).replace(/\D/g, "").slice(-8);
   const mySplitRecord = getSafeSplitPayments(order).find(
      (s: any) => s.phone && String(s.phone).replace(/\D/g, "").slice(-8) === mySplitPhone
   );
+  const isKnownDiwaniyaMember = Boolean(mySplitRecord && mySplitPhone.length === 8);
   
   const isFullyPaid =
     localSuccess ||
@@ -92,6 +96,19 @@ export default function SplitPayment() {
   }, []);
 
   const celebrationTriggered = useRef(false);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "payment") setQatyaTab("payment");
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!mySplitRecord) return;
+    const nextName = String(mySplitRecord.name || "").trim();
+    const nextPhone = String(mySplitRecord.phone || "").replace(/\D/g, "").slice(-8);
+    if (nextName && nextName !== contributorName) setContributorName(nextName);
+    if (nextPhone && nextPhone !== contributorPhone) setContributorPhone(nextPhone);
+  }, [mySplitRecord, contributorName, contributorPhone]);
 
   useEffect(() => {
     if (paymentStatus === "success" && isFullyPaid) {
@@ -317,8 +334,8 @@ export default function SplitPayment() {
     const actualName = isEvent ? undefined : (overrideName as string);
     
     const amountVal = String(overrideAmount ?? contributorAmount ?? "").trim();
-    const finalName = String(actualName ?? contributorName ?? "").trim();
-    const finalPhone = String(overridePhone ?? contributorPhone ?? "").trim();
+    const finalName = String(actualName ?? contributorName ?? mySplitRecord?.name ?? "").trim();
+    const finalPhone = String(overridePhone ?? contributorPhone ?? mySplitRecord?.phone ?? "").replace(/\D/g, "").slice(-8);
 
     if (!finalName) {
       alert("يرجى إدخال الاسم");
@@ -665,7 +682,7 @@ export default function SplitPayment() {
                 <span className="font-bold text-stone-700">{person.name || person.phone || `مشارك ${idx+1}`}</span>
                 <strong className={String(person.status || '').toLowerCase() === 'paid' ? 'text-emerald-700' : 'text-stone-400'}>{String(person.status || '').toLowerCase() === 'paid' ? 'دفع' : 'بانتظار'}</strong>
               </div>
-            )) : <p className="text-sm font-bold text-stone-400">أول مشارك يظهر هنا بعد الدفع.</p>}
+            )) : <p className="text-sm font-bold text-stone-400">الربع يظهرون هنا تلقائياً إذا كانت القطيّة من الديوانية.</p>}
           </div>
         )}
 
@@ -762,39 +779,51 @@ export default function SplitPayment() {
               </div>
               {!paymentStatus && (
                 <div className="bg-brand/5 border border-brand/10 p-3 rounded-xl text-brand font-bold text-sm mb-4">
-                  {urlName ? `ترا ناطرين تحويلك يا ${urlName} 💸😎` : "اذا ما دفعت قطيتك، ادفعها الحين ولا تصير البخيل باللمة! 💸😂"}
+                  {isKnownDiwaniyaMember
+                    ? `حياك ${mySplitRecord?.name || contributorName || "يا الغالي"}، اسمك ورقمك جاهزين من الديوانية. حدد قطيتك وادفع مباشرة.`
+                    : (urlName ? `ترا ناطرين تحويلك يا ${urlName} 💸😎` : "اذا ما دفعت قطيتك، ادفعها الحين ولا تصير البخيل باللمة! 💸😂")}
                 </div>
               )}
               <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-bold text-stone-500 mb-1 block">
-                    اسمك الكريم
-                  </label>
-                  <input
-                    type="text"
-                    value={contributorName}
-                    onChange={(e) => setContributorName(e.target.value)}
-                    placeholder="مثال: محمد"
-                    className="w-full bg-stone-50 border border-stone-100 rounded-xl px-4 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-stone-500 mb-1 block">
-                    رقم تلفونك *
-                  </label>
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={contributorPhone}
-                    onChange={(e) =>
-                      setContributorPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8))
-                    }
-                    placeholder="90000000"
-                    className="w-full bg-stone-50 border border-stone-100 rounded-xl px-4 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
-                    dir="ltr"
-                  />
-                </div>
+                {isKnownDiwaniyaMember ? (
+                  <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-4 text-right">
+                    <div className="text-[10px] font-black text-emerald-700 mb-1">تم التعرف عليك من أعضاء الديوانية ✅</div>
+                    <div className="font-black text-brand">{mySplitRecord?.name || contributorName}</div>
+                    <div className="text-xs font-bold text-stone-500 font-mono mt-1" dir="ltr">{mySplitPhone}</div>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="text-xs font-bold text-stone-500 mb-1 block">
+                        اسمك الكريم
+                      </label>
+                      <input
+                        type="text"
+                        value={contributorName}
+                        onChange={(e) => setContributorName(e.target.value)}
+                        placeholder="مثال: محمد"
+                        className="w-full bg-stone-50 border border-stone-100 rounded-xl px-4 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-stone-500 mb-1 block">
+                        رقم تلفونك *
+                      </label>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={contributorPhone}
+                        onChange={(e) =>
+                          setContributorPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8))
+                        }
+                        placeholder="90000000"
+                        className="w-full bg-stone-50 border border-stone-100 rounded-xl px-4 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
+                        dir="ltr"
+                      />
+                    </div>
+                  </>
+                )}
                 <div>
                   <label className="text-xs font-bold text-stone-500 mb-1 block">
                     قطيتك (د.ك) *
@@ -850,7 +879,7 @@ export default function SplitPayment() {
                   onClick={handlePay}
                   disabled={
                     isSubmitting ||
-                    !contributorName.trim() ||
+                    (!isKnownDiwaniyaMember && !contributorName.trim()) ||
                     !contributorAmount
                   }
                   className="w-full bg-brand text-white p-4 rounded-2xl font-extrabold disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-brand/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 qatya-pay-button"

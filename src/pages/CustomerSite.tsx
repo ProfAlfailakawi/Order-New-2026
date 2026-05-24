@@ -609,6 +609,7 @@ export default function CustomerSite() {
   const [radarLoadingMap, setRadarLoadingMap] = useState<Record<string, boolean>>({});
   const [radarSuccessMap, setRadarSuccessMap] = useState<Record<string, boolean>>({});
   const [isOwnerJoinAlertCollapsed, setIsOwnerJoinAlertCollapsed] = useState(false);
+  const [isQatyaAlertCollapsed, setIsQatyaAlertCollapsed] = useState(false);
   const [ownerJoinDecisionLoading, setOwnerJoinDecisionLoading] = useState<Record<string, boolean>>({});
   const [radarStatus, setRadarStatus] = useState<"idle" | "checking" | "ready" | "denied" | "weak" | "unsupported" | "empty">("idle");
   const [radarStatusMsg, setRadarStatusMsg] = useState("فعّل رادار الديوانية عشان تظهر لك الدواوين القريبة مثل قبل.");
@@ -646,6 +647,16 @@ export default function CustomerSite() {
        setIsOwnerJoinAlertCollapsed(false);
      }
   }, [pendingGeofenceRequests?.length]);
+
+  const qatyaNotifications = useMemo(() => {
+    return (diwaniyaNotifications || [])
+      .filter((n: any) => String(n.type || "") === "qatya_request" && !n.readAt && (n.meta?.orderId || n.meta?.url))
+      .slice(0, 5);
+  }, [diwaniyaNotifications]);
+
+  useEffect(() => {
+    if (qatyaNotifications.length > 0) setIsQatyaAlertCollapsed(false);
+  }, [qatyaNotifications.length]);
 
   const refreshRadarOnce = useCallback(() => {
      if (!navigator.geolocation) {
@@ -908,6 +919,25 @@ export default function CustomerSite() {
        alert("خطأ في الاتصال بالسيرفر.");
      }
      setRadarLoadingMap(prev => ({ ...prev, [targetSquad.id]: false }));
+  };
+
+  const handleOpenQatyaNotification = async (notification: any) => {
+    const phone = cleanPhoneForSquad(customerPhone || "").slice(-8);
+    const orderId = notification?.meta?.orderId;
+    try {
+      if (phone && notification?.id) {
+        await fetch("/api/diwaniya-notifications/read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, notificationId: notification.id })
+        });
+      }
+    } catch(e) {}
+    if (orderId) {
+      navigate(`/split/${orderId}?phone=${encodeURIComponent(phone)}&tab=payment`);
+    } else if (notification?.meta?.url) {
+      navigate(notification.meta.url);
+    }
   };
 
   const handleOwnerJoinDecision = async (targetPhone: string, approved: boolean, targetSquadId?: string) => {
@@ -4054,13 +4084,13 @@ export default function CustomerSite() {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              if (confirm("هل تبي تسجل خروج من رقم الهاتف الحالي على هذا الجهاز؟")) {
-                                clearSquadSessionOnThisDevice();
-                              }
+                              clearSquadSessionOnThisDevice();
                             }}
-                            className="h-10 px-3 rounded-full bg-rose-50 flex items-center justify-center gap-1.5 text-rose-500 hover:bg-rose-100 transition-colors font-black text-xs active:scale-95"
+                            className="h-10 w-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 hover:bg-rose-100 transition-colors font-black text-lg active:scale-95"
+                            aria-label="تسجيل خروج من الديوانية"
+                            title="تسجيل خروج"
                           >
-                            تسجيل خروج
+                            🚪
                           </button>
                         )}
                         <button
@@ -4071,11 +4101,11 @@ export default function CustomerSite() {
                             e.stopPropagation();
                             setShowSquadModal(false);
                           }}
-                          className="h-10 px-3 rounded-full bg-stone-100 flex items-center justify-center gap-1.5 text-stone-600 hover:text-brand hover:bg-stone-200 transition-colors font-black text-xs active:scale-95"
+                          className="h-10 w-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 hover:text-brand hover:bg-stone-200 transition-colors font-black text-xs active:scale-95"
                           aria-label="إغلاق صفحة الديوانية"
+                          title="إغلاق"
                         >
-                          <X className="w-4 h-4" />
-                          <span>إغلاق</span>
+                          <X className="w-5 h-5" />
                         </button>
                       </div>
                    </div>
@@ -4418,6 +4448,66 @@ export default function CustomerSite() {
                         </button>
                       </div>
                     </div>
+                  ))}
+                </div>
+              </motion.div>
+            )
+          )}
+        </AnimatePresence>
+
+        {/* تنبيه قطية الديوانية للأعضاء حتى وهم يتصفحون المنيو */}
+        <AnimatePresence>
+          {customerPhone && qatyaNotifications.length > 0 && (
+            isQatyaAlertCollapsed ? (
+              <motion.button
+                key="qatya-alert-collapsed"
+                initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: 20 }}
+                onClick={() => setIsQatyaAlertCollapsed(false)}
+                className="fixed bottom-40 left-6 md:left-auto md:right-6 w-12 h-12 rounded-full relative bg-brand text-white border border-emerald-300/30 shadow-2xl z-50 flex items-center justify-center backdrop-blur-md"
+                title="قطية ديوانية"
+              >
+                <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-300"></span>
+                </span>
+                <CreditCard className="w-5 h-5" />
+              </motion.button>
+            ) : (
+              <motion.div
+                key="qatya-alert-expanded"
+                initial={{ opacity: 0, y: 120, scale: 0.92 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 120, scale: 0.92 }}
+                className="fixed bottom-40 left-6 right-6 md:left-auto md:right-6 md:w-[390px] max-h-[360px] overflow-y-auto bg-brand text-white rounded-[32px] p-5 shadow-2xl z-50 border-2 border-emerald-300/20 text-right font-sans space-y-4"
+              >
+                <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
+                  <button
+                    onClick={() => setIsQatyaAlertCollapsed(true)}
+                    className="w-8 h-8 rounded-full bg-white/10 text-white/80 hover:text-white hover:bg-white/15 flex items-center justify-center transition-all shrink-0"
+                    title="تصغير إشعار القطيّة"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <div className="flex-1">
+                    <span className="text-[10px] font-black bg-white/10 text-emerald-100 px-3 py-1 rounded-full border border-white/10">قطية الديوانية 💳</span>
+                    <h4 className="font-black text-sm mt-2 text-white">عندك قطية من الربع</h4>
+                    <p className="text-[10px] font-bold text-white/70 mt-1">ادخل وحدد قطيتك، اسمك ورقمك جاهزين من الديوانية.</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {qatyaNotifications.map((n: any) => (
+                    <button
+                      key={n.id}
+                      type="button"
+                      onClick={() => handleOpenQatyaNotification(n)}
+                      className="w-full p-3 bg-white/10 hover:bg-white/15 rounded-2xl border border-white/10 text-right active:scale-[0.98] transition-all"
+                    >
+                      <div className="text-[10px] font-black text-emerald-100 mb-1">{n.squadName ? `ديوانية ${n.squadName}` : "ديوانية الربع"}</div>
+                      <div className="text-xs font-black text-white">{n.title || "عندك قطيّة"}</div>
+                      <div className="text-[10px] font-bold text-white/70 mt-1">{n.message || "ادخل وحدد قطيتك وادفع مباشرة."}</div>
+                    </button>
                   ))}
                 </div>
               </motion.div>
@@ -5547,6 +5637,60 @@ function CheckoutOverlay({
       (r.name || "").includes(regionSearch),
   );
 
+  const prepareDiwaniyaSplitMembers = async () => {
+    const cleanPhoneForSplit = (value: any) => String(value || "").replace(/[^0-9]/g, "").replace(/^965(?=\d{8}$)/, "").slice(-8);
+    const currentSquadId = String(squadInfo?.id || localStorage.getItem("squadId") || "");
+    const map = new Map<string, any>();
+
+    const addMembers = (source: any) => {
+      if (!Array.isArray(source)) return;
+      source.forEach((member: any) => {
+        const phone = cleanPhoneForSplit(member?.phone || member?.mobile || member?.customerPhone);
+        if (!phone || phone.length < 8) return;
+        const name = String(member?.name || member?.customerName || member?.displayName || "عضو").trim() || "عضو";
+        map.set(phone, { phone, name });
+      });
+    };
+
+    addMembers(squadInfo?.membersList);
+    addMembers(squadInfo?.participants);
+    const activeUserSquad = Array.isArray(userSquads)
+      ? userSquads.find((sq: any) => String(sq?.id) === currentSquadId)
+      : null;
+    addMembers(activeUserSquad?.membersList);
+
+    const customerCleanPhone = cleanPhoneForSplit(customerPhone);
+    if (customerCleanPhone) {
+      map.set(customerCleanPhone, {
+        phone: customerCleanPhone,
+        name: String(customerName || squadInfo?.memberData?.name || "أنت").trim() || "أنت",
+      });
+    }
+
+    if (currentSquadId && customerCleanPhone) {
+      try {
+        const res = await fetch(`/api/squad-gamification?phone=${encodeURIComponent(customerCleanPhone)}&squadId=${encodeURIComponent(currentSquadId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          addMembers(data?.mySquad?.membersList);
+          const apiUserSquad = Array.isArray(data?.userSquads)
+            ? data.userSquads.find((sq: any) => String(sq?.id) === currentSquadId)
+            : null;
+          addMembers(apiUserSquad?.membersList);
+        }
+      } catch (e) {}
+    }
+
+    const members = Array.from(map.values());
+    try {
+      localStorage.setItem("split_prefill_members", JSON.stringify(members));
+      localStorage.setItem("split_prefill_ready", members.length ? "1" : "0");
+      localStorage.setItem("split_prefill_source", "diwaniya_checkout");
+      localStorage.setItem("split_prefill_squad_id", currentSquadId);
+    } catch (e) {}
+    return members;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -6108,7 +6252,7 @@ function CheckoutOverlay({
                 )}
             </div>
           ) : step === "payment" ? (
-            <div className="payment-wow-step animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center justify-center w-full pt-6 pb-3 px-2">
+            <div className="payment-wow-step animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center justify-start w-full pt-1 pb-1 px-2">
               <motion.div
                 initial={{ opacity: 0, y: 18, rotateX: -8 }}
                 animate={{ opacity: 1, y: 0, rotateX: 0 }}
@@ -6143,7 +6287,7 @@ function CheckoutOverlay({
         </div>
 
         {cart.length > 0 && (
-          <div className={`checkout-wow-footer checkout-footer-${step} p-6 bg-white border-t border-stone-100 space-y-6 shadow-[0_-15px_40px_rgba(0,0,0,0.02)]`}>
+          <div className={`checkout-wow-footer checkout-footer-${step} ${step === "payment" ? "p-4 sm:p-5 space-y-3" : "p-6 space-y-6"} bg-white border-t border-stone-100 shadow-[0_-15px_40px_rgba(0,0,0,0.02)]`}>
             <AnimatePresence>
               {formError && (
                 <motion.div
@@ -6400,7 +6544,7 @@ function CheckoutOverlay({
                   {!isSubmitting && (
                     <>
                       <button
-                        onClick={() => onSubmit("traditional")}
+                        onClick={async () => { await prepareDiwaniyaSplitMembers(); onSubmit("traditional"); }}
                         className="payment-method-card payment-method-card-qatya w-full bg-stone-100 text-brand rounded-2xl p-4 sm:p-5 shadow-sm active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-stone-200 text-lg border border-stone-100 text-right"
                       >
                         <div className="flex items-center gap-4">
@@ -6435,9 +6579,6 @@ function CheckoutOverlay({
             })()}
           </div>
         )}
-        <div className="fixed bottom-2 left-0 right-0 text-center text-stone-400/40 text-[9px] font-bold pointer-events-none z-0">
-          الاصدار 2.6
-        </div>
       </motion.div>
     </motion.div>
   );
