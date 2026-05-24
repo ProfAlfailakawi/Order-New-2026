@@ -183,8 +183,11 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   }, []);
 
   const getSquadOwnGeofenceDistance = React.useCallback(() => {
+    let storedDistance: any = undefined;
+    try { storedDistance = squadInfo?.id ? localStorage.getItem(`squad_geofence_distance_${squadInfo.id}`) : undefined; } catch(e) {}
     return clampGeofenceDistance(
       squadInfo?.geofenceDistance ??
+        storedDistance ??
         squadInfo?.squadGeofenceDistance ??
         squadInfo?.diwaniyaGeofenceDistance ??
         squadInfo?.radarDistance ??
@@ -192,7 +195,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       50,
       1000
     );
-  }, [clampGeofenceDistance, squadInfo]);
+  }, [
+    clampGeofenceDistance,
+    squadInfo?.id,
+    squadInfo?.geofenceDistance,
+    squadInfo?.squadGeofenceDistance,
+    squadInfo?.diwaniyaGeofenceDistance,
+    squadInfo?.radarDistance,
+    squadInfo?.location?.geofenceDistance,
+  ]);
 
   const [localGeofenceDistance, setLocalGeofenceDistance] = React.useState(() => getSquadOwnGeofenceDistance());
 
@@ -534,7 +545,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
   const toEnglishDigits = (value: any) => normalizeDigits(String(value ?? ""));
   const formatEnglishNumber = (value: any) => toEnglishDigits(String(value ?? ""));
-  const getSquadGeofenceDistance = () => {
+  const getSquadGeofenceDistance = React.useCallback(() => {
     const candidates = [
       settings?.maxSquadGeofenceDistance,
       settings?.settings?.maxSquadGeofenceDistance,
@@ -554,12 +565,53 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       settings?.radarGeofenceDistance,
       settings?.settings?.radarGeofenceDistance,
     ];
-    for (const value of candidates) {
-      const n = Number(value);
-      if (Number.isFinite(n) && n > 0) return clampGeofenceDistance(n, 100, 1000);
+    const allowed = candidates
+      .map((value: any) => Number(value))
+      .filter((n: number) => Number.isFinite(n) && n > 0);
+    if (allowed.length > 0) return clampGeofenceDistance(Math.max(...allowed), 50, 1000);
+    return 50;
+  }, [clampGeofenceDistance, settings]);
+
+  React.useEffect(() => {
+    if (!geoDistanceTouched || !squadInfo?.id || squadInfo?.lat === undefined || squadInfo?.lng === undefined) return;
+    const nextDistance = clampGeofenceDistance(localGeofenceDistance, getSquadOwnGeofenceDistance(), getSquadGeofenceDistance());
+    if (Number(squadInfo?.geofenceDistance) !== nextDistance || Number(squadInfo?.location?.geofenceDistance) !== nextDistance) {
+      setSquadInfo?.({
+        ...squadInfo,
+        geofenceDistance: nextDistance,
+        squadGeofenceDistance: nextDistance,
+        location: { ...(squadInfo?.location || {}), geofenceDistance: nextDistance },
+      });
     }
-    return 100;
-  };
+    const timer = window.setTimeout(async () => {
+      try {
+        await fetch("/api/squad-set-location", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            squadId: squadInfo.id,
+            phone: customerPhone,
+            lat: squadInfo.lat,
+            lng: squadInfo.lng,
+            geofenceDistance: nextDistance,
+          }),
+        });
+      } catch {}
+    }, 450);
+    return () => window.clearTimeout(timer);
+  }, [
+    geoDistanceTouched,
+    localGeofenceDistance,
+    squadInfo?.id,
+    squadInfo?.lat,
+    squadInfo?.lng,
+    customerPhone,
+    clampGeofenceDistance,
+    getSquadOwnGeofenceDistance,
+    getSquadGeofenceDistance,
+    setSquadInfo,
+  ]);
+
   const calculateDistanceMeters = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371e3;
     const f1 = lat1 * Math.PI / 180;
@@ -1039,18 +1091,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         <span>{isPresentNow ? "طلعت من الديوانية" : "وصلت الديوانية"}</span>
                       </button>
                       <div className="text-right min-w-0">
-                        <div className="text-sm font-black text-brand truncate">ديوانية {cleanSquadName(squadInfo?.name)}</div>
-                        {customerPhone && (() => {
-                          const tier = getLoyaltyTier(customerPoints);
-                          return (
-                            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-stone-50 border border-stone-100 px-3 py-1 text-[10px] font-bold text-stone-500">
-                              <span className="text-xs">{tier.icon}</span>
-                              <span className="text-brand font-black">مستوى {tier.name}</span>
-                              <span className="text-stone-300">·</span>
-                              <span>رصيدك {formatPoints(customerPoints)}</span>
-                            </div>
-                          );
-                        })()}
+                        <div className="text-sm font-black text-brand truncate">{cleanSquadName(squadInfo?.name)}</div>
+                        {currentTier && (
+                          <div className="mt-1 inline-flex items-center justify-end gap-1.5 rounded-full bg-stone-50 border border-stone-100 px-2.5 py-1 text-[10px] font-black text-stone-500 max-w-full">
+                            <span className="text-xs">{currentTier.icon}</span>
+                            <span className="text-brand truncate">{currentTier.name}</span>
+                            <span className="text-stone-300">·</span>
+                            <span>رصيدك {formatPoints(currentPoints)}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1242,7 +1291,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                      </span>
                                   )}
                                   <span className="text-sm font-black text-brand leading-none">
-                                     ديوانية {sq.name}
+                                     {cleanSquadName(sq.name)}
                                   </span>
                                </div>
                                <span className="text-[9px] font-bold text-stone-400 mt-1.5">
@@ -1445,7 +1494,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       </div>
                       
                       <p className="text-xs font-bold text-stone-500 leading-relaxed">
-                        ثبّت موقع ديوانيتك واختر المسافة المناسبة لظهور بطاقة الدخول للربع القريبين منك. أقصى مدى متاح لك حالياً: {formatEnglishNumber(getSquadGeofenceDistance())} متر.
+                        ثبّت موقع ديوانيتك واختر مدى ظهور بطاقة الدخول للربع القريبين منك، وخله على المسافة الأنسب لجلساتكم.
                       </p>
 
                       <div className="rounded-[24px] bg-emerald-50/70 border border-emerald-100 p-4 space-y-3">
@@ -1464,13 +1513,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           max={Math.max(10, getSquadGeofenceDistance())}
                           value={clampGeofenceDistance(localGeofenceDistance, getSquadOwnGeofenceDistance(), getSquadGeofenceDistance())}
                           onChange={(e) => {
+                            const nextDistance = clampGeofenceDistance(e.target.value, getSquadOwnGeofenceDistance(), getSquadGeofenceDistance());
                             setGeoDistanceTouched(true);
-                            setLocalGeofenceDistance(clampGeofenceDistance(e.target.value, getSquadOwnGeofenceDistance(), getSquadGeofenceDistance()));
+                            setLocalGeofenceDistance(nextDistance);
+                            try { localStorage.setItem(`squad_geofence_distance_${squadInfo?.id}`, String(nextDistance)); } catch(e) {}
                           }}
                           className="w-full accent-emerald-600"
                         />
                         <div className="flex items-center justify-between text-[9px] font-black text-stone-400">
-                          <span>الأقصى {formatEnglishNumber(getSquadGeofenceDistance())}م</span>
+                          <span>حتى {formatEnglishNumber(getSquadGeofenceDistance())}م</span>
                           <span>دقيق 10م</span>
                         </div>
                       </div>
