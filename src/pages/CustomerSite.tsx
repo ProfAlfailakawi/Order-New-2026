@@ -724,9 +724,9 @@ export default function CustomerSite() {
        (position) => {
          const accuracy = Number(position.coords.accuracy || 0);
          setRadarAccuracy(Math.round(accuracy));
-         if (accuracy > 150) {
+         if (accuracy > 600) {
            setRadarStatus("weak");
-           setRadarStatusMsg("الموقع وصلنا لكن دقته ضعيفة. قرّب من الديوانية أو جرّب تفعيل الموقع مرة ثانية.");
+           setRadarStatusMsg("الموقع وصلنا لكن الإشارة ضعيفة. يفضل الاقتراب من الديوانية أو تشغيل الـ GPS دقة عالية.");
          } else {
            setRadarStatus("ready");
            setRadarStatusMsg("الرادار شغال. إذا فيه ديوانية قريبة راح تظهر لك مباشرة.");
@@ -741,32 +741,47 @@ export default function CustomerSite() {
        },
        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
      );
-  }, []);
+  }, [mockLocation]);
 
   useEffect(() => {
      const askWhenLocationIsOff = async () => {
-        if (mockLocation) return;
+       if (mockLocation) return;
        if (!navigator.geolocation) return;
+       if (radarStatus === "ready") return;
+
        try {
-         const permission = (navigator as any).permissions?.query
-           ? await (navigator as any).permissions.query({ name: "geolocation" as PermissionName })
-           : null;
-         if (!permission || permission.state !== "granted") refreshRadarOnce();
+         if (navigator.permissions && (navigator as any).permissions?.query) {
+           const permission = await (navigator as any).permissions.query({ name: "geolocation" as PermissionName });
+           if (permission.state === "prompt" && radarStatus === "idle") {
+             refreshRadarOnce();
+           }
+         }
        } catch(e) {
-         refreshRadarOnce();
+         // On unsupported platforms (iOS Safari), do NOT auto-reset or auto-prompt on focus
        }
      };
+
      askWhenLocationIsOff();
+
      const onVisible = () => {
-       if (document.visibilityState === "visible") askWhenLocationIsOff();
+       if (document.visibilityState === "visible" && radarStatus !== "ready" && radarStatus !== "checking") {
+         askWhenLocationIsOff();
+       }
      };
-     window.addEventListener("focus", askWhenLocationIsOff);
+
+     const onFocus = () => {
+       if (radarStatus !== "ready" && radarStatus !== "checking") {
+         askWhenLocationIsOff();
+       }
+     };
+
+     window.addEventListener("focus", onFocus);
      document.addEventListener("visibilitychange", onVisible);
      return () => {
-       window.removeEventListener("focus", askWhenLocationIsOff);
+       window.removeEventListener("focus", onFocus);
        document.removeEventListener("visibilitychange", onVisible);
      };
-  }, [refreshRadarOnce, mockLocation]);
+  }, [refreshRadarOnce, mockLocation, radarStatus]);
 
   const clearSquadSessionOnThisDevice = useCallback(() => {
      squadSessionTokenRef.current += 1;
@@ -884,7 +899,7 @@ export default function CustomerSite() {
        const userLng = position.coords.longitude;
        const accuracy = Number(position.coords.accuracy || 0);
        setRadarAccuracy(Math.round(accuracy));
-       if (accuracy > 150) {
+       if (accuracy > 600) {
          setRadarStatus("weak");
        setRadarStatusMsg("الموقع مو دقيق كفاية الحين، فما نبي نطلع لك ديوانيات بالغلط.");
          setRadarNearbySquads([]);
