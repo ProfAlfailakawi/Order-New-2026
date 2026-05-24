@@ -915,7 +915,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     try {
       const { distance } = req.body;
       const docRef = doc(db, "appData", "shared_company_data");
-      const normalizedDistance = Number(distance);
+      const normalizedDistance = Math.max(10, Math.min(100, Math.round(Number(distance) || 100)));
       await setDoc(docRef, { 
         squadGeofenceDistance: normalizedDistance,
         settings: { 
@@ -1133,7 +1133,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   });
 
   app.post("/api/squad-set-location", async (req, res) => {
-    const { squadId, phone, lat, lng } = req.body;
+    const { squadId, phone, lat, lng, geofenceDistance } = req.body;
     if (!squadId || lat === undefined || lng === undefined) {
       return res.status(400).json({ error: "Missing squadId, lat, or lng" });
     }
@@ -1142,12 +1142,24 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const squads = Array.isArray(current.squads) ? [...current.squads] : [];
         const idx = squads.findIndex((s: any) => String(s.id) === String(squadId));
         if (idx > -1) {
-          squads[idx] = { ...squads[idx], lat: Number(lat), lng: Number(lng) };
+          const normalizedDistance = Math.max(10, Math.min(100, Math.round(Number(geofenceDistance ?? squads[idx]?.geofenceDistance ?? 17) || 17)));
+          squads[idx] = {
+            ...squads[idx],
+            lat: Number(lat),
+            lng: Number(lng),
+            geofenceDistance: normalizedDistance,
+            location: {
+              ...(squads[idx]?.location || {}),
+              lat: Number(lat),
+              lng: Number(lng),
+              geofenceDistance: normalizedDistance,
+            },
+          };
         }
         return { squads };
       });
       if (!ok) throw new Error("Failed to set squad location in database");
-      res.json({ success: true, lat, lng });
+      res.json({ success: true, lat, lng, geofenceDistance });
     } catch(e) {
       res.status(500).json({ error: String(e) });
     }
@@ -1896,6 +1908,40 @@ app.get("/api/debug/order/:id", async (req, res) => {
     return `${prefix}-${timestamp}-${randomSuffix}`;
   }
 
+  const ADMIN_PUSH_ORDER_CREATED_URL =
+    process.env.ADMIN_PUSH_ORDER_CREATED_URL ||
+    process.env.ADMIN_PUSH_ENDPOINT ||
+    "https://alturath-admin-0200723670.web.app/api/push/order-created-alert";
+
+  async function nudgeAdminOrderCreatedPush(order: any) {
+    if (!order?.id) return;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2500);
+
+    try {
+      const response = await fetch(ADMIN_PUSH_ORDER_CREATED_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: order.id,
+          orderNumber: order.orderNumber || order.invoiceNo || order.id,
+          total: Number(order.total || order.totalAmount || 0),
+          source: "order_server_create",
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        console.warn(`[PUSH_NUDGE] Admin push endpoint returned ${response.status}`);
+      }
+    } catch (error: any) {
+      console.warn("[PUSH_NUDGE] Admin push nudge skipped:", error?.message || String(error));
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
   // 7. Orders Submission
   app.post("/api/orders", async (req, res) => {
     const {
@@ -2160,6 +2206,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       });
 
       console.log(`[ORDER] Order ${newOrder.id} saved successfully`);
+      void nudgeAdminOrderCreatedPush(newOrder);
       res.status(201).json(newOrder);
     } catch (e) {
       console.error("[ORDER] Critical error creating order:", e);

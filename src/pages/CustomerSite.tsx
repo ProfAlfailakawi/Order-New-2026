@@ -104,6 +104,12 @@ const cleanPhoneForSquad = (phone: any): string => {
   return cleaned.startsWith("965") && cleaned.length > 8 ? cleaned.slice(3) : cleaned;
 };
 
+const clampSquadGeofenceDistance = (value: any, fallback = 100): number => {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return fallback;
+  return Math.max(10, Math.min(100, Math.round(n)));
+};
+
 const getSquadGeofenceDistance = (settings: any): number => {
   const candidates = [
     settings?.squadGeofenceDistance,
@@ -121,9 +127,20 @@ const getSquadGeofenceDistance = (settings: any): number => {
   ];
   for (const value of candidates) {
     const n = Number(value);
-    if (Number.isFinite(n) && n > 0) return n;
+    if (Number.isFinite(n) && n > 0) return clampSquadGeofenceDistance(n);
   }
   return 100;
+};
+
+const getSquadSpecificGeofenceDistance = (squad: any, settings: any): number => {
+  return clampSquadGeofenceDistance(
+    squad?.geofenceDistance ??
+      squad?.squadGeofenceDistance ??
+      squad?.diwaniyaGeofenceDistance ??
+      squad?.radarDistance ??
+      squad?.location?.geofenceDistance,
+    getSquadGeofenceDistance(settings)
+  );
 };
 
 const INITIAL_ADDRESS: Address = {
@@ -642,12 +659,16 @@ export default function CustomerSite() {
   useEffect(() => {
      if (radarNearbySquads.length > 0) {
        setIsNearbyRadarPanelCollapsed(false);
+       setIsOwnerJoinAlertCollapsed(true);
+       setIsQatyaAlertCollapsed(true);
      }
   }, [radarNearbySquads.length]);
 
   useEffect(() => {
      if ((pendingGeofenceRequests?.length || 0) > 0) {
        setIsOwnerJoinAlertCollapsed(false);
+       setIsNearbyRadarPanelCollapsed(true);
+       setIsQatyaAlertCollapsed(true);
      }
   }, [pendingGeofenceRequests?.length]);
 
@@ -658,7 +679,11 @@ export default function CustomerSite() {
   }, [diwaniyaNotifications]);
 
   useEffect(() => {
-    if (qatyaNotifications.length > 0) setIsQatyaAlertCollapsed(false);
+    if (qatyaNotifications.length > 0) {
+      setIsQatyaAlertCollapsed(false);
+      setIsNearbyRadarPanelCollapsed(true);
+      setIsOwnerJoinAlertCollapsed(true);
+    }
   }, [qatyaNotifications.length]);
 
   const refreshRadarOnce = useCallback(() => {
@@ -785,7 +810,7 @@ export default function CustomerSite() {
          return;
        }
        setRadarStatus("ready");
-       setRadarStatusMsg(`الرادار شغال حسب مسافة الأدمن (${getSquadGeofenceDistance(settings)}م). إذا قربت من ديوانية، تظهر لك بطاقة الدخول أو التبديل.`);
+       setRadarStatusMsg(`الرادار شغال حسب مسافة كل ديوانية بحد أقصى ${getSquadGeofenceDistance(settings)}م. إذا قربت، تظهر لك بطاقة الدخول أو التبديل.`);
 
        const nearby: any[] = [];
 
@@ -801,11 +826,12 @@ export default function CustomerSite() {
 
          if (sq.lat !== undefined && sq.lng !== undefined) {
            const dist = calculateDistance(userLat, userLng, Number(sq.lat), Number(sq.lng));
-           const geofenceLimit = getSquadGeofenceDistance(settings);
+           const geofenceLimit = getSquadSpecificGeofenceDistance(sq, settings);
            if (dist < geofenceLimit) {
              nearby.push({
                ...sq,
                distance: Math.round(dist),
+               geofenceDistance: geofenceLimit,
                isAlreadyMember,
                isOwnerOfNearby
              });
@@ -959,6 +985,13 @@ export default function CustomerSite() {
       }));
     return [...notificationItems, ...orderItems].slice(0, 5);
   }, [qatyaNotifications, activeQatyaOrders, squadInfo?.name]);
+
+  const hasCustomerCartDock = cart.length > 0 && !isCheckout && !orderSuccess && !selectedProduct;
+  const floatingAlertBottom = hasCustomerCartDock ? "bottom-[96px] sm:bottom-[104px]" : "bottom-6";
+  const floatingAlertBottomMid = hasCustomerCartDock ? "bottom-[156px] sm:bottom-[164px]" : "bottom-24";
+  const floatingAlertBottomHigh = hasCustomerCartDock ? "bottom-[216px] sm:bottom-[224px]" : "bottom-40";
+  const floatingAlertBubbleSide = "left-4 md:left-auto md:right-6";
+  const floatingAlertPanelSide = "left-4 right-4 md:left-auto md:right-6";
 
   const handleOpenQatyaAlertItem = async (item: any) => {
     if (item?.sourceKind === "notification") {
@@ -4269,7 +4302,11 @@ export default function CustomerSite() {
               initial={{ opacity: 0, y: 80, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 80, scale: 0.96 }}
-              className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-[390px] bg-white text-brand rounded-[28px] p-4 shadow-2xl z-50 border border-amber-100 text-right font-sans"
+              className={cn(
+                "fixed md:w-[390px] bg-white text-brand rounded-[28px] p-4 shadow-2xl z-[85] border border-amber-100 text-right font-sans",
+                floatingAlertPanelSide,
+                floatingAlertBottom,
+              )}
             >
               <div className="flex items-center justify-between gap-3">
                 <button
@@ -4299,8 +4336,16 @@ export default function CustomerSite() {
                 initial={{ opacity: 0, scale: 0.85, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.85, y: 20 }}
-                onClick={() => setIsNearbyRadarPanelCollapsed(false)}
-                className="fixed bottom-6 left-6 md:left-auto md:right-6 w-12 h-12 bg-slate-900/95 text-amber-100 rounded-full shadow-2xl z-50 border border-amber-500/30 backdrop-blur-md flex items-center justify-center text-xs font-black"
+                onClick={() => {
+                  setIsNearbyRadarPanelCollapsed(false);
+                  setIsOwnerJoinAlertCollapsed(true);
+                  setIsQatyaAlertCollapsed(true);
+                }}
+                className={cn(
+                  "fixed w-12 h-12 bg-slate-900/95 text-amber-100 rounded-full shadow-2xl z-[85] border border-amber-500/30 backdrop-blur-md flex items-center justify-center text-xs font-black",
+                  floatingAlertBubbleSide,
+                  floatingAlertBottom,
+                )}
                 title="فتح رادار الديوانيات القريبة"
               >
                 <span className="relative flex h-2.5 w-2.5">
@@ -4315,7 +4360,11 @@ export default function CustomerSite() {
                 initial={{ opacity: 0, y: 150, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 150, scale: 0.9 }}
-                className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-[400px] max-h-[420px] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-6 shadow-2xl z-50 border-2 border-amber-500/20 text-right font-sans space-y-4"
+                className={cn(
+                  "fixed md:w-[400px] max-h-[min(420px,calc(100dvh-140px))] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-6 shadow-2xl z-[85] border-2 border-amber-500/20 text-right font-sans space-y-4",
+                  floatingAlertPanelSide,
+                  floatingAlertBottom,
+                )}
               >
                 <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-3">
                   <button
@@ -4414,8 +4463,16 @@ export default function CustomerSite() {
                 initial={{ opacity: 0, scale: 0.85, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.85, y: 20 }}
-                onClick={() => setIsOwnerJoinAlertCollapsed(false)}
-                className="fixed bottom-24 left-6 md:left-auto md:right-6 w-12 h-12 rounded-full relative bg-slate-900/95 text-amber-100 border border-amber-500/30 shadow-2xl z-50 flex items-center justify-center backdrop-blur-md"
+                onClick={() => {
+                  setIsOwnerJoinAlertCollapsed(false);
+                  setIsNearbyRadarPanelCollapsed(true);
+                  setIsQatyaAlertCollapsed(true);
+                }}
+                className={cn(
+                  "fixed w-12 h-12 rounded-full relative bg-slate-900/95 text-amber-100 border border-amber-500/30 shadow-2xl z-[85] flex items-center justify-center backdrop-blur-md",
+                  floatingAlertBubbleSide,
+                  floatingAlertBottomMid,
+                )}
                 title="طلبات انضمام معلقة"
               >
                 <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
@@ -4430,7 +4487,11 @@ export default function CustomerSite() {
                 initial={{ opacity: 0, y: 120, scale: 0.92 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 120, scale: 0.92 }}
-                className="fixed bottom-24 left-6 right-6 md:left-auto md:right-6 md:w-[390px] max-h-[410px] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-5 shadow-2xl z-50 border-2 border-amber-500/20 text-right font-sans space-y-4"
+                className={cn(
+                  "fixed md:w-[390px] max-h-[min(410px,calc(100dvh-160px))] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-5 shadow-2xl z-[85] border-2 border-amber-500/20 text-right font-sans space-y-4",
+                  floatingAlertPanelSide,
+                  floatingAlertBottom,
+                )}
               >
                 <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
                   <button
@@ -4495,8 +4556,16 @@ export default function CustomerSite() {
                 initial={{ opacity: 0, scale: 0.85, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.85, y: 20 }}
-                onClick={() => setIsQatyaAlertCollapsed(false)}
-                className="fixed bottom-40 left-6 md:left-auto md:right-6 w-12 h-12 rounded-full relative bg-brand text-white border border-emerald-300/30 shadow-2xl z-50 flex items-center justify-center backdrop-blur-md"
+                onClick={() => {
+                  setIsQatyaAlertCollapsed(false);
+                  setIsNearbyRadarPanelCollapsed(true);
+                  setIsOwnerJoinAlertCollapsed(true);
+                }}
+                className={cn(
+                  "fixed w-12 h-12 rounded-full relative bg-brand text-white border border-emerald-300/30 shadow-2xl z-[85] flex items-center justify-center backdrop-blur-md",
+                  floatingAlertBubbleSide,
+                  floatingAlertBottomHigh,
+                )}
                 title="قطية ديوانية"
               >
                 <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
@@ -4511,7 +4580,11 @@ export default function CustomerSite() {
                 initial={{ opacity: 0, y: 120, scale: 0.92 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 120, scale: 0.92 }}
-                className="fixed bottom-40 left-6 right-6 md:left-auto md:right-6 md:w-[390px] max-h-[360px] overflow-y-auto bg-brand text-white rounded-[32px] p-5 shadow-2xl z-50 border-2 border-emerald-300/20 text-right font-sans space-y-4"
+                className={cn(
+                  "fixed md:w-[390px] max-h-[min(360px,calc(100dvh-160px))] overflow-y-auto bg-brand text-white rounded-[32px] p-5 shadow-2xl z-[85] border-2 border-emerald-300/20 text-right font-sans space-y-4",
+                  floatingAlertPanelSide,
+                  floatingAlertBottom,
+                )}
               >
                 <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
                   <button
@@ -4797,7 +4870,7 @@ const ChefWhisperCard = ({
           {/* Horizontal Layout (Carousel) remains unchanged */}
           {isHorizontal ? (
             <>
-              <div className="menu-product-image relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-stone-50/50 rounded-2xl border border-stone-100/50 shadow-inner w-20 h-20 mx-auto mb-2">
+              <div className="menu-product-image relative flex-shrink-0 overflow-hidden flex items-center justify-center rounded-[22px] w-20 h-20 mx-auto mb-2 shadow-[0_14px_28px_rgba(26,46,34,0.12)] ring-1 ring-white/70">
                 {isHot && <SizzlingSteam />}
                 <img
                   referrerPolicy="no-referrer"
@@ -4812,7 +4885,7 @@ const ChefWhisperCard = ({
                     }
                   }}
                   alt={product.name}
-                  className="w-full h-full object-contain p-1 transform hover:scale-105 transition-transform bg-white relative z-0"
+                  className="w-full h-full object-cover transform hover:scale-105 transition-transform relative z-0"
                 />
               </div>
               <div className="flex flex-col flex-grow text-center overflow-hidden relative z-10">
@@ -4854,10 +4927,10 @@ const ChefWhisperCard = ({
                   {product.name}
                 </h3>
                 
-                {/* The Box wrapping Image and Price */}
-                <div className="product-media-frame relative w-full max-w-[220px] flex flex-col items-center border border-stone-200/60 rounded-[28px] p-4 bg-gradient-to-b from-white to-stone-50/30">
+                {/* Image-first display: no white frame, just the food as the visual anchor */}
+                <div className="product-media-frame relative w-full max-w-[214px] flex flex-col items-center pt-1 pb-4">
                   {/* 2. Image */}
-                  <div className="menu-product-image relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 flex items-center justify-center z-10 mb-2">
+                  <div className="menu-product-image relative w-[150px] h-[86px] sm:w-[168px] sm:h-[94px] flex-shrink-0 overflow-hidden flex items-center justify-center z-10 mb-2 rounded-[22px] shadow-[0_16px_38px_rgba(26,46,34,0.16)] ring-1 ring-white/80 bg-stone-100">
                     {isHot && <SizzlingSteam />}
                     <img
                       referrerPolicy="no-referrer"
@@ -4872,12 +4945,12 @@ const ChefWhisperCard = ({
                         }
                       }}
                       alt={product.name}
-                      className="menu-product-img w-full h-full object-contain transform hover:scale-110 transition-transform relative z-0"
+                      className="menu-product-img w-full h-full object-cover transform hover:scale-105 transition-transform relative z-0"
                     />
                   </div>
 
-                  {/* 3. Price (overlapping bottom edge of the box) */}
-                  <div className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 bg-white border border-stone-200/50 shadow-[0_2px_10px_rgba(0,0,0,0.03)] px-4 py-1 rounded-full flex items-center justify-center z-20 whitespace-nowrap">
+                  {/* 3. Price (floating under the image, not attached to a frame) */}
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-white/80 shadow-[0_8px_22px_rgba(26,46,34,0.08)] px-4 py-1 rounded-full flex items-center justify-center z-20 whitespace-nowrap">
                     <span className="text-brand font-black text-sm">
                       {calculateItemBasePriceWithHiddenAddons({
                         id: "", productId: product.id, name: product.name, quantity: 1, price: product.price, selectedExtras: [], product: normalizeProductForAddons(product)
@@ -5201,9 +5274,17 @@ function ProductModal({
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="product-detail-layer bg-white w-full max-w-lg rounded-t-[32px] p-6 sm:p-8 max-h-[92vh] overflow-y-auto no-scrollbar shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.1)] relative"
+        className="product-detail-layer bg-gradient-to-b from-[#fffaf2] via-white to-white w-full max-w-lg rounded-t-[32px] p-6 sm:p-8 max-h-[92vh] overflow-y-auto no-scrollbar shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.1)] relative"
         onClick={(e) => e.stopPropagation()}
       >
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-44 opacity-20 blur-3xl"
+          style={{
+            backgroundImage: `url(${(product as any).imageUrl || product.image || settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
         <button
           onClick={onClose}
           className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 bg-stone-50/80 backdrop-blur-sm hover:bg-stone-100 rounded-full text-stone-500 transition-colors"
@@ -5215,14 +5296,14 @@ function ProductModal({
           <div className="w-12 h-1 bg-stone-100 rounded-full" />
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-6 mb-8 mt-2 group relative">
+        <div className="flex flex-col sm:flex-row gap-6 mb-8 mt-2 group relative z-10">
           <div className="relative shrink-0 flex justify-center">
             {(product as any).isNewProduct && (
-              <span className="absolute top-0 right-0 sm:-right-2 -mt-2 bg-gradient-to-r from-red-500 to-rose-500 text-white text-[10px] sm:text-xs font-extrabold px-3 py-1 rounded-full z-20 shadow-[0_4px_15px_rgba(239,68,68,0.4)] border-2 border-white transform rotate-3">
+              <span className="absolute top-1 right-1 sm:-right-3 sm:-top-2 bg-gradient-to-r from-red-500 to-rose-500 text-white text-[10px] sm:text-xs font-extrabold px-3 py-1 rounded-full z-20 shadow-[0_4px_15px_rgba(239,68,68,0.4)] border-2 border-white transform rotate-3">
                 جديد
               </span>
             )}
-            <div className="absolute inset-0 bg-brand blur-xl opacity-10 transform scale-90 group-hover:scale-100 transition-transform"></div>
+            <div className="absolute inset-0 bg-brand blur-2xl opacity-15 transform scale-90 group-hover:scale-100 transition-transform"></div>
             {(product as any).imageUrl ||
             product.image ||
             settings?.companyLogo ||
@@ -5253,10 +5334,10 @@ function ProductModal({
                     e.currentTarget.src = fallback;
                   }
                 }}
-                className="w-[63px] h-[63px] object-contain bg-white rounded-2xl shadow-md relative border-2 border-stone-50 p-0"
+                className="w-[108px] h-[108px] sm:w-[126px] sm:h-[126px] object-cover rounded-[28px] shadow-[0_20px_48px_rgba(26,46,34,0.18)] relative ring-1 ring-white/80"
               />
             ) : (
-              <div className="w-[48px] h-[48px] flex items-center justify-center bg-stone-50/80 backdrop-blur-sm border-2 border-stone-100 text-stone-400 rounded-2xl shadow-md relative p-1">
+              <div className="w-[108px] h-[108px] sm:w-[126px] sm:h-[126px] flex items-center justify-center bg-stone-50/80 backdrop-blur-sm border border-stone-100 text-stone-400 rounded-[28px] shadow-md relative p-1">
                 <span className="text-[10px] font-medium p-1 text-center leading-tight">
                   صورة غير متوفرة
                 </span>
