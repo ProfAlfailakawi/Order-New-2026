@@ -17,7 +17,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { Order } from "../types";
-import { normalizePhone, normalizeDigits } from "../utils";
+import { cn, normalizePhone, normalizeDigits } from "../utils";
 import confetti from "canvas-confetti";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
@@ -470,6 +470,13 @@ export default function SplitPayment() {
     progressPercent = Math.min(100, (paidAmount / order.total) * 100);
   }
   if (isNaN(progressPercent)) progressPercent = 0;
+  const splitPeople = getSafeSplitPayments(order);
+  const paidPeople = splitPeople.filter((p: any) => String(p.status || "").toLowerCase() === "paid");
+  const waitingPeople = splitPeople.filter((p: any) => String(p.status || "").toLowerCase() !== "paid");
+  const currentPersonRole = isKnownDiwaniyaMember ? "عضو ديوانية" : urlPhone ? "ضيف مدعو" : "مشارك";
+  const currentPersonTone = isKnownDiwaniyaMember
+    ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+    : "bg-sky-50 text-sky-700 border-sky-100";
 
   if ((order as any).splitType === "roulette") {
     return <RouletteSplit order={order} handlePay={handlePay} paymentStatus={paymentStatus} urlName={urlName} />;
@@ -582,10 +589,24 @@ export default function SplitPayment() {
 
         {qatyaTab === "overview" && <div className="qatya-signature-stage qatya-v14-stage">
           <div className="qatya-hero-card qatya-v14-hero bg-white p-5 sm:p-6 rounded-[28px] shadow-sm border border-stone-100">
+            <div className="grid grid-cols-3 gap-2 mb-5" dir="rtl">
+              <div className="rounded-2xl bg-stone-50 border border-stone-100 p-3 text-right">
+                <div className="text-[9px] font-black text-stone-400">دورك</div>
+                <div className="text-xs font-black text-brand mt-1">{currentPersonRole}</div>
+              </div>
+              <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-3 text-right">
+                <div className="text-[9px] font-black text-emerald-700">دفعوا</div>
+                <div className="text-xs font-black text-emerald-800 mt-1">{paidPeople.length} / {splitPeople.length || 1}</div>
+              </div>
+              <div className="rounded-2xl bg-amber-50 border border-amber-100 p-3 text-right">
+                <div className="text-[9px] font-black text-amber-700">باقي</div>
+                <div className="text-xs font-black text-amber-800 mt-1">{remainingAmount.toFixed(3)} د.ك</div>
+              </div>
+            </div>
             <div className="qatya-v14-topline relative z-10">
               <span className="qatya-v14-live-dot">مباشر</span>
               <span>قطيّة الربع</span>
-              <span>{getSafeSplitPayments(order).filter((p) => String(p.status || "").toLowerCase() === "paid").length} مساهم</span>
+              <span>{paidPeople.length} مساهم</span>
             </div>
 
             <div className="qatya-council-mini" dir="rtl">
@@ -664,6 +685,36 @@ export default function SplitPayment() {
               </div>
             </div>
 
+            <div className="mt-5 rounded-[24px] bg-stone-50 border border-stone-100 p-4" dir="rtl">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <span className={cn("rounded-full border px-3 py-1 text-[10px] font-black", currentPersonTone)}>{currentPersonRole}</span>
+                <div className="text-right">
+                  <div className="text-sm font-black text-brand">مجلس القطيّة الحي</div>
+                  <div className="text-[10px] font-bold text-stone-400">واضح من دفع ومن ناطرين عليه</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {paidPeople.slice(0, 4).map((person: any, idx: number) => (
+                  <div key={`paid-${person.phone || idx}`} className="rounded-2xl bg-white border border-emerald-100 p-3 flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-black text-emerald-700">دفع</span>
+                    <div className="text-right min-w-0">
+                      <div className="text-xs font-black text-brand truncate">{person.name || person.phone || "مشارك"}</div>
+                      <div className="text-[9px] font-bold text-stone-400">{Number(person.amount || 0).toFixed(3)} د.ك</div>
+                    </div>
+                  </div>
+                ))}
+                {waitingPeople.slice(0, Math.max(0, 4 - paidPeople.slice(0, 4).length)).map((person: any, idx: number) => (
+                  <div key={`wait-${person.phone || idx}`} className="rounded-2xl bg-white border border-stone-100 p-3 flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-black text-stone-400">ينتظر</span>
+                    <div className="text-right min-w-0">
+                      <div className="text-xs font-black text-brand truncate">{person.name || person.phone || "مشارك"}</div>
+                      <div className="text-[9px] font-bold text-stone-400">لم يدفع بعد</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <button
               onClick={handleCopyLink}
               className="qatya-overview-share w-full mt-5 bg-white border-2 border-stone-100 text-stone-700 p-4 rounded-[24px] font-black shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2 hover:bg-stone-50"
@@ -676,13 +727,22 @@ export default function SplitPayment() {
 
         {qatyaTab === "people" && (
           <div className="qatya-pay-card bg-white p-5 sm:p-6 rounded-[24px] shadow-sm border border-stone-100 space-y-3">
-            <h3 className="font-black text-brand text-lg">المشاركون</h3>
-            {getSafeSplitPayments(order).length ? getSafeSplitPayments(order).map((person:any, idx:number) => (
-              <div key={idx} className="flex items-center justify-between rounded-2xl bg-stone-50 border border-stone-100 p-3">
-                <span className="font-bold text-stone-700">{person.name || person.phone || `مشارك ${idx+1}`}</span>
-                <strong className={String(person.status || '').toLowerCase() === 'paid' ? 'text-emerald-700' : 'text-stone-400'}>{String(person.status || '').toLowerCase() === 'paid' ? 'دفع' : 'بانتظار'}</strong>
+            <div className="flex items-center justify-between gap-3">
+              <span className="rounded-full bg-stone-50 border border-stone-100 px-3 py-1 text-[10px] font-black text-stone-500">{paidPeople.length} دفعوا · {waitingPeople.length} بانتظار</span>
+              <h3 className="font-black text-brand text-lg">المشاركون</h3>
+            </div>
+            {splitPeople.length ? splitPeople.map((person:any, idx:number) => {
+              const paid = String(person.status || '').toLowerCase() === 'paid';
+              const isMe = mySplitPhone && String(person.phone || "").replace(/\D/g, "").slice(-8) === mySplitPhone;
+              return (
+              <div key={idx} className={cn("flex items-center justify-between rounded-2xl border p-3", paid ? "bg-emerald-50 border-emerald-100" : isMe ? "bg-amber-50 border-amber-100" : "bg-stone-50 border-stone-100")}>
+                <div className="text-right">
+                  <span className="font-bold text-stone-700">{person.name || person.phone || `مشارك ${idx+1}`}</span>
+                  {isMe && <div className="text-[9px] font-black text-amber-700 mt-0.5">هذا أنت</div>}
+                </div>
+                <strong className={paid ? 'text-emerald-700' : 'text-stone-400'}>{paid ? 'دفع' : 'بانتظار'}</strong>
               </div>
-            )) : <p className="text-sm font-bold text-stone-400">الربع يظهرون هنا تلقائياً إذا كانت القطيّة من الديوانية.</p>}
+            )}) : <p className="text-sm font-bold text-stone-400">الربع يظهرون هنا تلقائياً إذا كانت القطيّة من الديوانية.</p>}
           </div>
         )}
 
