@@ -301,15 +301,6 @@ export default function CustomerSite() {
     return () => mediaQuery.removeEventListener?.("change", updatePhoneLayout);
   }, []);
 
-  const stableMobileAlertMotion = isPhoneLayout
-    ? {
-        initial: false as const,
-        animate: { opacity: 1 },
-        exit: { opacity: 0 },
-        transition: { duration: 0.08 },
-      }
-    : null;
-
   const [settings, setSettings] = useState<any>(() => {
     try {
       const cached = localStorage.getItem("cached_settings");
@@ -3987,7 +3978,7 @@ export default function CustomerSite() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.9 }}
               className={cn(
-                "fixed border-2 border-accent/10 focus:border-accent/40 bg-stone-50/50 hover:bg-stone-50 transition-colors rounded-3xl shadow-xl p-5 z-[70] transition-all",
+                "fixed border-2 border-accent/10 focus:border-accent/40 bg-stone-50/50 hover:bg-stone-50 transition-colors rounded-3xl shadow-xl p-5 z-[70]",
                 psychMessage && psychMessage.title.includes("جمعة")
                   ? "bottom-[40%] left-6 right-6 sm:left-1/2 sm:-translate-x-1/2 sm:w-96 ring-4 ring-accent/10 scale-110"
                   : isCheckout
@@ -4074,7 +4065,7 @@ export default function CustomerSite() {
                 exit={{ opacity: 0, y: 20, scale: 0.9 }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
                 className={cn(
-                  "fixed right-4 sm:right-6 z-40 pointer-events-auto transition-all duration-500",
+                  "fixed right-4 sm:right-6 z-40 pointer-events-auto transition-[bottom] duration-300",
                   cart.length > 0
                     ? "bottom-24 sm:bottom-28"
                     : "bottom-6 sm:bottom-8",
@@ -4134,13 +4125,11 @@ export default function CustomerSite() {
         <AnimatePresence>
           {!isOnline && (
             <motion.div
-              className="customer-offline-toast customer-mobile-no-jitter-toast"
+              className="customer-offline-toast"
               dir="rtl"
-              {...(stableMobileAlertMotion || {
-                initial: { opacity: 0, y: -10, scale: 0.96 },
-                animate: { opacity: 1, y: 0, scale: 1 },
-                exit: { opacity: 0, y: -10, scale: 0.96 },
-              })}
+              initial={{ opacity: 0, y: -10, x: "-50%", scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, x: "-50%", scale: 1 }}
+              exit={{ opacity: 0, y: -10, x: "-50%", scale: 0.96 }}
             >
               <span />
               <div>
@@ -4154,13 +4143,11 @@ export default function CustomerSite() {
         <AnimatePresence>
           {cartMoment && !isCheckout && (
             <motion.div
-              className="cart-moment-toast customer-mobile-no-jitter-toast"
+              className="cart-moment-toast"
               dir="rtl"
-              {...(stableMobileAlertMotion || {
-                initial: { opacity: 0, y: 18, scale: 0.96 },
-                animate: { opacity: 1, y: 0, scale: 1 },
-                exit: { opacity: 0, y: 18, scale: 0.96 },
-              })}
+              initial={{ opacity: 0, y: 18, x: "-50%", scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, x: "-50%", scale: 1 }}
+              exit={{ opacity: 0, y: 18, x: "-50%", scale: 0.96 }}
             >
               <Check className="w-4 h-4" />
               <strong>{cartMoment}</strong>
@@ -4414,11 +4401,9 @@ export default function CustomerSite() {
         <AnimatePresence>
           {!isCheckout && radarNearbySquads.length === 0 && radarStatus !== "empty" && radarStatus !== "ready" && (
             <motion.div
-              {...(stableMobileAlertMotion || {
-                initial: { opacity: 0, y: 80, scale: 0.96 },
-                animate: { opacity: 1, y: 0, scale: 1 },
-                exit: { opacity: 0, y: 80, scale: 0.96 },
-              })}
+              initial={{ opacity: 0, y: 80, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 80, scale: 0.96 }}
               className={cn(
                 "customer-mobile-stable-alert fixed md:w-[390px] bg-white text-brand rounded-[28px] p-4 shadow-2xl z-[85] border border-amber-100 text-right font-sans",
                 floatingAlertPanelSide,
@@ -4450,11 +4435,9 @@ export default function CustomerSite() {
             isNearbyRadarPanelCollapsed ? (
               <motion.button
                 key="collapsed-nearby-radar"
-                {...(stableMobileAlertMotion || {
-                  initial: { opacity: 0, scale: 0.85, y: 20 },
-                  animate: { opacity: 1, scale: 1, y: 0 },
-                  exit: { opacity: 0, scale: 0.85, y: 20 },
-                })}
+                initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: 20 }}
                 onClick={() => {
                   setIsNearbyRadarPanelCollapsed(false);
                   setIsOwnerJoinAlertCollapsed(true);
@@ -4476,11 +4459,9 @@ export default function CustomerSite() {
             ) : (
               <motion.div
                 key="expanded-nearby-radar"
-                {...(stableMobileAlertMotion || {
-                  initial: { opacity: 0, y: 150, scale: 0.9 },
-                  animate: { opacity: 1, y: 0, scale: 1 },
-                  exit: { opacity: 0, y: 150, scale: 0.9 },
-                })}
+                initial={{ opacity: 0, y: 150, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 150, scale: 0.9 }}
                 className={cn(
                   "customer-mobile-stable-alert fixed md:w-[400px] max-h-[min(420px,calc(100dvh-140px))] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-6 shadow-2xl z-[85] border-2 border-amber-500/20 text-right font-sans space-y-4",
                   floatingAlertPanelSide,
@@ -4661,11 +4642,9 @@ export default function CustomerSite() {
             isOwnerJoinAlertCollapsed ? (
               <motion.button
                 key="owner-join-alert-collapsed"
-                {...(stableMobileAlertMotion || {
-                  initial: { opacity: 0, scale: 0.85, y: 20 },
-                  animate: { opacity: 1, scale: 1, y: 0 },
-                  exit: { opacity: 0, scale: 0.85, y: 20 },
-                })}
+                initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: 20 }}
                 onClick={() => {
                   setIsOwnerJoinAlertCollapsed(false);
                   setIsNearbyRadarPanelCollapsed(true);
@@ -4688,11 +4667,9 @@ export default function CustomerSite() {
             ) : (
               <motion.div
                 key="owner-join-alert-expanded"
-                {...(stableMobileAlertMotion || {
-                  initial: { opacity: 0, y: 120, scale: 0.92 },
-                  animate: { opacity: 1, y: 0, scale: 1 },
-                  exit: { opacity: 0, y: 120, scale: 0.92 },
-                })}
+                initial={{ opacity: 0, y: 120, scale: 0.92 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 120, scale: 0.92 }}
                 className={cn(
                   "customer-mobile-stable-alert fixed md:w-[390px] max-h-[min(410px,calc(100dvh-160px))] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-5 shadow-2xl z-[85] border-2 border-amber-500/20 text-right font-sans space-y-4",
                   floatingAlertPanelSide,
@@ -4759,11 +4736,9 @@ export default function CustomerSite() {
             isQatyaAlertCollapsed ? (
               <motion.button
                 key="qatya-alert-collapsed"
-                {...(stableMobileAlertMotion || {
-                  initial: { opacity: 0, scale: 0.85, y: 20 },
-                  animate: { opacity: 1, scale: 1, y: 0 },
-                  exit: { opacity: 0, scale: 0.85, y: 20 },
-                })}
+                initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: 20 }}
                 onClick={() => {
                   setIsQatyaAlertCollapsed(false);
                   setIsNearbyRadarPanelCollapsed(true);
@@ -4786,11 +4761,9 @@ export default function CustomerSite() {
             ) : (
               <motion.div
                 key="qatya-alert-expanded"
-                {...(stableMobileAlertMotion || {
-                  initial: { opacity: 0, y: 120, scale: 0.92 },
-                  animate: { opacity: 1, y: 0, scale: 1 },
-                  exit: { opacity: 0, y: 120, scale: 0.92 },
-                })}
+                initial={{ opacity: 0, y: 120, scale: 0.92 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 120, scale: 0.92 }}
                 className={cn(
                   "customer-mobile-stable-alert fixed md:w-[390px] max-h-[min(360px,calc(100dvh-160px))] overflow-y-auto bg-brand text-white rounded-[32px] p-5 shadow-2xl z-[85] border-2 border-emerald-300/20 text-right font-sans space-y-4",
                   floatingAlertPanelSide,
@@ -4851,11 +4824,9 @@ export default function CustomerSite() {
             isRadarBannerCollapsed ? (
               <motion.button
                 key="collapsed-radar"
-                {...(stableMobileAlertMotion || {
-                  initial: { opacity: 0, scale: 0.8, x: 50 },
-                  animate: { opacity: 1, scale: 1, x: 0 },
-                  exit: { opacity: 0, scale: 0.8, x: 50 },
-                })}
+                initial={{ opacity: 0, scale: 0.8, x: 50 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.8, x: 50 }}
                 onClick={() => setIsRadarBannerCollapsed(false)}
                 className="customer-mobile-stable-alert-bubble fixed top-24 left-4 md:left-auto md:right-6 bg-slate-900/95 text-slate-100 rounded-full p-3.5 shadow-2xl z-50 border border-amber-500/40 text-right backdrop-blur-md flex items-center gap-2 hover:bg-slate-800 transition-all select-none group"
                 title="توسيع رادار الانضمام"
@@ -4872,11 +4843,9 @@ export default function CustomerSite() {
             ) : (
               <motion.div
                 key="expanded-radar"
-                {...(stableMobileAlertMotion || {
-                  initial: { opacity: 0, scale: 0.95, y: -50 },
-                  animate: { opacity: 1, scale: 1, y: 0 },
-                  exit: { opacity: 0, scale: 0.95, y: -50 },
-                })}
+                initial={{ opacity: 0, scale: 0.95, y: -50 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -50 }}
                 className="customer-mobile-stable-alert fixed top-24 left-6 right-6 md:left-auto md:right-6 md:w-[350px] bg-slate-900/95 text-slate-100 rounded-3xl p-4 shadow-xl z-50 border border-amber-500/20 text-right backdrop-blur-md"
               >
                 <div className="flex items-start justify-between gap-3">
