@@ -11,6 +11,7 @@ import {
   ArrowRight,
   MessageCircle,
   MapPin,
+  Compass,
   Phone,
   User,
   Landmark,
@@ -639,6 +640,7 @@ export default function CustomerSite() {
 
   // Geofencing background states
   const [mockLocation, setMockLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [hideMockOption, setHideMockOption] = useState(false);
   const [radarNearbySquads, setRadarNearbySquads] = useState<any[]>([]);
   const [radarLoadingMap, setRadarLoadingMap] = useState<Record<string, boolean>>({});
   const [radarSuccessMap, setRadarSuccessMap] = useState<Record<string, boolean>>({});
@@ -646,6 +648,7 @@ export default function CustomerSite() {
   const [isQatyaAlertCollapsed, setIsQatyaAlertCollapsed] = useState(true);
   const [ownerJoinDecisionLoading, setOwnerJoinDecisionLoading] = useState<Record<string, boolean>>({});
   const [radarStatus, setRadarStatus] = useState<"idle" | "checking" | "ready" | "denied" | "weak" | "unsupported" | "empty">("idle");
+  const [showRadarInstructionModal, setShowRadarInstructionModal] = useState(false);
   const [radarStatusMsg, setRadarStatusMsg] = useState("فعّل رادار الديوانية عشان تظهر لك الدواوين القريبة مثل قبل.");
   const [radarAccuracy, setRadarAccuracy] = useState<number | null>(null);
   const [radarDismissedList, setRadarDismissedList] = useState<string[]>(() => {
@@ -732,6 +735,9 @@ export default function CustomerSite() {
        (err) => {
          setRadarStatus(err.code === 1 ? "denied" : "idle");
          setRadarStatusMsg(err.code === 1 ? "الموقع مو مفعّل. فعّله من إعدادات المتصفح وبعدين شغّل الرادار." : "الرادار ما اشتغل الحين. جرّب مرة ثانية.");
+         if (err.code === 1) {
+           setShowRadarInstructionModal(true);
+         }
        },
        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
      );
@@ -4471,30 +4477,49 @@ export default function CustomerSite() {
                     <div className="text-xs font-black">
                       {radarStatus === "ready" ? "الرادار شغال ✅" : radarStatus === "denied" ? "الرادار يحتاج سماح ⚠️" : radarStatus === "weak" ? "الموقع غير دقيق ⚠️" : "رادار الديوانية"}
                     </div>
-                    <div className="text-[10px] font-bold text-stone-500 mt-0.5 leading-relaxed">{radarStatusMsg}</div>
+                    <div className="text-[10px] font-bold text-stone-500 mt-0.5 leading-relaxed">
+                      {radarStatusMsg}
+                      {radarStatus === "denied" && (
+                        <button
+                          onClick={() => setShowRadarInstructionModal(true)}
+                          className="text-amber-600 underline font-black mr-1 block text-[10px] hover:text-amber-700 mt-1 transition-all pointer-events-auto cursor-pointer text-right"
+                        >
+                          أنقر هنا لرؤية شرح طريقة التفعيل بالخطوات البسيطة ⚙️
+                        </button>
+                      )}
+                    </div>
                     {radarAccuracy !== null && <div className="text-[9px] font-black text-stone-400 mt-1">دقة الموقع تقريباً: {radarAccuracy}م</div>}
                   </div>
                 </div>
 
-                {activeSquads.length > 0 && (
-                  <button
-                    onClick={() => {
-                      const sqToMock = activeSquads.find((s: any) => s.lat && s.lng);
-                      if (sqToMock) {
-                        setMockLocation({
-                          lat: Number(sqToMock.lat) + 0.0001,
-                          lng: Number(sqToMock.lng) + 0.0001
-                        });
-                        setRadarStatus("ready");
-                        setRadarStatusMsg("تم تفعيل الموقع التجريبي المحاكي بجانب ديوانية قريبة للتجربة 🧪");
-                      } else {
-                        setMockLocation({ lat: 29.3759, lng: 47.9774 });
-                      }
-                    }}
-                    className="mt-2 w-full bg-amber-50 hover:bg-amber-100 text-amber-700 py-2 px-3 rounded-xl text-[10px] font-black border border-amber-200/50 transition-all flex items-center justify-center gap-1.5"
-                  >
-                    🧪 تخطي إذن المتصفح وتجربة موقع وهمي
-                  </button>
+                {activeSquads.length > 0 && !hideMockOption && (
+                  <div className="mt-2 flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        const sqToMock = activeSquads.find((s: any) => s.lat && s.lng);
+                        if (sqToMock) {
+                          setMockLocation({
+                            lat: Number(sqToMock.lat) + 0.0001,
+                            lng: Number(sqToMock.lng) + 0.0001
+                          });
+                          setRadarStatus("ready");
+                          setRadarStatusMsg("تم تفعيل الموقع التجريبي المحاكي بجانب ديوانية قريبة للتجربة 🧪");
+                        } else {
+                          setMockLocation({ lat: 29.3759, lng: 47.9774 });
+                        }
+                      }}
+                      className="flex-1 bg-amber-50/70 hover:bg-amber-100 text-amber-700 py-1.5 px-2.5 rounded-xl text-[10px] font-black border border-amber-200/40 transition-all flex items-center justify-center gap-1"
+                    >
+                      🧪 تجربة موقع وهمي
+                    </button>
+                    <button
+                      onClick={() => setHideMockOption(true)}
+                      className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-lg transition-colors flex items-center justify-center shrink-0"
+                      title="إخفاء خيار التجربة"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 )}
               </div>
             </motion.div>
@@ -4719,6 +4744,136 @@ export default function CustomerSite() {
                     className="w-full rounded-2xl bg-amber-500 text-slate-950 px-4 py-4 text-sm font-black shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all disabled:opacity-45"
                   >
                     أرسل الطلب للمعزب
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* دليل تشغيل الرادار وتفعيل الموقع للمتصفح والأجهزة */}
+        <AnimatePresence>
+          {showRadarInstructionModal && (
+            <motion.div
+              key="radar-instruction-modal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[140] bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setShowRadarInstructionModal(false);
+              }}
+            >
+              <motion.div
+                initial={{ y: 40, scale: 0.95, opacity: 0 }}
+                animate={{ y: 0, scale: 1, opacity: 1 }}
+                exit={{ y: 30, scale: 0.96, opacity: 0 }}
+                className="w-full max-w-md rounded-[32px] bg-white text-brand p-6 shadow-2xl border border-stone-100 text-right font-sans relative my-8"
+                dir="rtl"
+              >
+                {/* Close Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowRadarInstructionModal(false)}
+                  className="absolute top-5 left-5 h-10 w-10 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors"
+                  aria-label="إغلاق"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* Modal Header */}
+                <div className="flex items-center gap-3.5 mb-5 mt-2">
+                  <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 shrink-0">
+                    <Compass className="w-6 h-6 animate-spin-slow" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-amber-600 tracking-wide">رادار الديوانية 📡</span>
+                    <h3 className="text-xl font-black text-brand">طريقة تفعيل الموقع بالموبايل</h3>
+                  </div>
+                </div>
+
+                {/* Direct Explanation */}
+                <p className="text-xs font-bold text-stone-600 mb-4 leading-relaxed">
+                  الرادار يسهل عليك معرفة الدواوين القريبة منك تلقائياً دون إدخال رابط أو البحث اليدوي. إذا لم يظهر لك طلب الإذن أو ضغطت "حظر" بالخطأ، اتبع الخطوات البسيطة التالية لتشغيله:
+                </p>
+
+                {/* Step Guide Tabs or accordion style for browsers */}
+                <div className="space-y-4">
+                  {/* Safari Tab / Guide */}
+                  <div className="bg-gradient-to-l from-stone-50 to-white p-4 rounded-2xl border border-stone-100">
+                    <div className="flex items-center gap-2 mb-2 text-brand">
+                      <span className="text-lg">🍏</span>
+                      <h4 className="font-extrabold text-xs">أجهزة آيفون (متصفح Safari)</h4>
+                    </div>
+                    <ul className="text-[11px] font-bold text-stone-500 space-y-2 leading-relaxed">
+                      <li className="flex items-start gap-1 justify-start">
+                        <span className="text-amber-500 shrink-0">1️⃣</span>
+                        <span>اضغط على رمز <b className="text-brand">aA</b> أو <b className="text-brand">القفل 🔒</b> في شريط عنوان الموقع بالأسفل أو الأعلى.</span>
+                      </li>
+                      <li className="flex items-start gap-1 justify-start">
+                        <span className="text-amber-500 shrink-0">2️⃣</span>
+                        <span>اختر <b className="text-brand">"إعدادات موقع الويب" (Website Settings)</b>.</span>
+                      </li>
+                      <li className="flex items-start gap-1 justify-start">
+                        <span className="text-amber-500 shrink-0">3️⃣</span>
+                        <span>ابحث عن <b className="text-brand">"الموقع" (Location)</b> وغيّر الإذن من "طلب" إلى <b className="text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-black">"سماح" (Allow)</b>.</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Chrome Tab / Guide */}
+                  <div className="bg-gradient-to-l from-stone-50 to-white p-4 rounded-2xl border border-stone-100">
+                    <div className="flex items-center gap-2 mb-2 text-brand">
+                      <span className="text-lg">🤖</span>
+                      <h4 className="font-extrabold text-xs">أندرويد والكمبيوتر (متصفح Chrome)</h4>
+                    </div>
+                    <ul className="text-[11px] font-bold text-stone-500 space-y-2 leading-relaxed">
+                      <li className="flex items-start gap-1 justify-start">
+                        <span className="text-amber-500 shrink-0">1️⃣</span>
+                        <span>اضغط على رمز <b className="text-brand">القفل 🔒</b> أو <b className="text-brand">الإعدادات ⚙️</b> بجانب عنوان الموقع في الأعلى.</span>
+                      </li>
+                      <li className="flex items-start gap-1 justify-start">
+                        <span className="text-amber-500 shrink-0">2️⃣</span>
+                        <span>اختر <b className="text-brand">"إعدادات الموقع"</b> أو قم بتفعيل خيار <b className="text-brand">"الموقع الجغرافي" (Location)</b>.</span>
+                      </li>
+                      <li className="flex items-start gap-1 justify-start">
+                        <span className="text-amber-500 shrink-0">3️⃣</span>
+                        <span>حوّله إلى <b className="text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-black">"سماح" (Allow)</b>.</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* WhatsApp/Snapchat warning */}
+                  <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-200/40">
+                    <div className="flex items-center gap-2 mb-1.5 text-amber-800">
+                      <span className="text-lg shrink-0">📱</span>
+                      <h4 className="font-black text-xs">داخل تطبيقات التواصل (سناب/واتساب)</h4>
+                    </div>
+                    <p className="text-[10px] font-bold text-amber-700 leading-relaxed font-sans">
+                      المتصفح الداخلي لتطبيقات مثل واتساب وسناب شات قد يقيد استخدام الجي بي إس كلياً. 
+                      للحصول على نتيجة ممتازة، <b>اضغط على النقاط الثلاث بالزاوية بالأعلى</b> واختر <b>"فتح في Safari"</b> أو <b>"فتح في Chrome الحقيقي"</b> 🌐.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="mt-6 flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowRadarInstructionModal(false);
+                      refreshRadarOnce();
+                    }}
+                    className="w-full py-4 rounded-2xl bg-brand hover:bg-brand/95 text-white text-xs font-black shadow-lg shadow-brand/15 active:scale-95 transition-all text-center flex items-center justify-center gap-2"
+                  >
+                    طبقّت الخطوات، افحص الإذن وجرّب الحين! 📡
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowRadarInstructionModal(false)}
+                    className="w-full py-3 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-500 text-xs font-bold transition-all text-center"
+                  >
+                    تراجع
                   </button>
                 </div>
               </motion.div>
