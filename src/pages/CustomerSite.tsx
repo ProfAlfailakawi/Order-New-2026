@@ -4134,11 +4134,13 @@ export default function CustomerSite() {
         <AnimatePresence>
           {!isOnline && (
             <motion.div
-              className="customer-offline-toast"
+              className="customer-offline-toast customer-mobile-no-jitter-toast"
               dir="rtl"
-              initial={{ opacity: 0, y: -10, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.96 }}
+              {...(stableMobileAlertMotion || {
+                initial: { opacity: 0, y: -10, scale: 0.96 },
+                animate: { opacity: 1, y: 0, scale: 1 },
+                exit: { opacity: 0, y: -10, scale: 0.96 },
+              })}
             >
               <span />
               <div>
@@ -4152,11 +4154,13 @@ export default function CustomerSite() {
         <AnimatePresence>
           {cartMoment && !isCheckout && (
             <motion.div
-              className="cart-moment-toast"
+              className="cart-moment-toast customer-mobile-no-jitter-toast"
               dir="rtl"
-              initial={{ opacity: 0, y: 18, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 18, scale: 0.96 }}
+              {...(stableMobileAlertMotion || {
+                initial: { opacity: 0, y: 18, scale: 0.96 },
+                animate: { opacity: 1, y: 0, scale: 1 },
+                exit: { opacity: 0, y: 18, scale: 0.96 },
+              })}
             >
               <Check className="w-4 h-4" />
               <strong>{cartMoment}</strong>
@@ -4847,9 +4851,11 @@ export default function CustomerSite() {
             isRadarBannerCollapsed ? (
               <motion.button
                 key="collapsed-radar"
-                initial={{ opacity: 0, scale: 0.8, x: 50 }}
-                animate={{ opacity: 1, scale: 1, x: 0 }}
-                exit={{ opacity: 0, scale: 0.8, x: 50 }}
+                {...(stableMobileAlertMotion || {
+                  initial: { opacity: 0, scale: 0.8, x: 50 },
+                  animate: { opacity: 1, scale: 1, x: 0 },
+                  exit: { opacity: 0, scale: 0.8, x: 50 },
+                })}
                 onClick={() => setIsRadarBannerCollapsed(false)}
                 className="customer-mobile-stable-alert-bubble fixed top-24 left-4 md:left-auto md:right-6 bg-slate-900/95 text-slate-100 rounded-full p-3.5 shadow-2xl z-50 border border-amber-500/40 text-right backdrop-blur-md flex items-center gap-2 hover:bg-slate-800 transition-all select-none group"
                 title="توسيع رادار الانضمام"
@@ -4866,9 +4872,11 @@ export default function CustomerSite() {
             ) : (
               <motion.div
                 key="expanded-radar"
-                initial={{ opacity: 0, scale: 0.95, y: -50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -50 }}
+                {...(stableMobileAlertMotion || {
+                  initial: { opacity: 0, scale: 0.95, y: -50 },
+                  animate: { opacity: 1, scale: 1, y: 0 },
+                  exit: { opacity: 0, scale: 0.95, y: -50 },
+                })}
                 className="customer-mobile-stable-alert fixed top-24 left-6 right-6 md:left-auto md:right-6 md:w-[350px] bg-slate-900/95 text-slate-100 rounded-3xl p-4 shadow-xl z-50 border border-amber-500/20 text-right backdrop-blur-md"
               >
                 <div className="flex items-start justify-between gap-3">

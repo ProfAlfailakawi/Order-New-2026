@@ -2746,3 +2746,78 @@ html, body, #root {
     opacity: .55 !important;
   }
 }
+
+/* V6 phone-only notification anti-jitter patch.
+   The previous shaking came from overlapping CSS transform animations and Framer Motion transforms
+   on fixed mobile notifications. Keep the same visual skin, but make phone notifications static. */
+@media (max-width: 640px), (hover: none) and (pointer: coarse){
+  .customer-mobile-no-jitter-toast,
+  .customer-mobile-stable-alert,
+  .customer-mobile-stable-alert-bubble,
+  .cart-moment-toast,
+  .customer-offline-toast,
+  [data-sonner-toast],
+  .sonner-toast{
+    animation: none !important;
+    transition: opacity .08s linear, background-color .12s linear, border-color .12s linear !important;
+    transform: none !important;
+    translate: none !important;
+    rotate: none !important;
+    scale: none !important;
+    will-change: auto !important;
+    contain: paint !important;
+    backface-visibility: visible !important;
+    -webkit-backface-visibility: visible !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+  }
+
+  .customer-mobile-no-jitter-toast *,
+  .customer-mobile-stable-alert *,
+  .customer-mobile-stable-alert-bubble *,
+  .cart-moment-toast *,
+  .customer-offline-toast *,
+  [data-sonner-toast] *,
+  .sonner-toast *{
+    animation: none !important;
+    transition-property: opacity, color, background-color, border-color !important;
+    transform: none !important;
+    translate: none !important;
+    rotate: none !important;
+    scale: none !important;
+    will-change: auto !important;
+  }
+
+  .cart-moment-toast,
+  .customer-mobile-no-jitter-toast.cart-moment-toast{
+    position: fixed !important;
+    left: max(12px, env(safe-area-inset-left)) !important;
+    right: max(12px, env(safe-area-inset-right)) !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px) !important;
+    width: auto !important;
+    max-width: none !important;
+    justify-content: center !important;
+  }
+
+  .customer-offline-toast,
+  .customer-mobile-no-jitter-toast.customer-offline-toast{
+    position: fixed !important;
+    top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+    left: max(12px, env(safe-area-inset-left)) !important;
+    right: max(12px, env(safe-area-inset-right)) !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  .cart-moment-toast:before,
+  .cart-moment-toast:after,
+  .customer-offline-toast:before,
+  .customer-offline-toast:after,
+  .customer-mobile-stable-alert:before,
+  .customer-mobile-stable-alert:after,
+  .customer-mobile-stable-alert-bubble:before,
+  .customer-mobile-stable-alert-bubble:after{
+    animation: none !important;
+    transform: none !important;
+  }
+}
