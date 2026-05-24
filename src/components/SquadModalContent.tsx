@@ -1022,6 +1022,18 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
             </div>
           )}
 
+          {myDiwaniyaTab === "home" && !isCreatingSquad && squadInfo && isCurrentMember && (
+            <div className="rounded-[30px] border border-amber-100 bg-gradient-to-br from-white via-amber-50/40 to-white p-5 shadow-sm text-right font-sans mb-3" dir="rtl">
+              <div className="flex items-start justify-between gap-3">
+                <span className="rounded-2xl bg-brand text-white px-3 py-1.5 text-[10px] font-black shadow-sm">ديوانيتك الحالية</span>
+                <div className="min-w-0">
+                  <h3 className="text-xl font-black text-brand truncate">{cleanSquadName(squadInfo?.name)}</h3>
+                  <p className="mt-1 text-[11px] font-bold text-stone-400">المستوى: {currentTier?.name || 'مستوى الديوانية'} · رصيدك {formatEnglishNumber(customerPoints || 0)} نقطة</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {customerPhone && myDiwaniyaTab === "notifications" && visibleNotifications.length > 0 && (
             <div className="bg-white rounded-[30px] border border-amber-100 shadow-sm p-5 text-right space-y-3 font-sans">
               <div className="flex items-center justify-between gap-3">
@@ -1093,8 +1105,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         <span>{isPresentNow ? "طلعت من الديوانية" : "وصلت الديوانية"}</span>
                       </button>
                       <div className="text-right min-w-0">
-                        <div className="text-sm font-black text-brand truncate">{cleanSquadName(squadInfo?.name)}</div>
-
+                        <div className="text-[10px] font-black text-stone-400">حضورك الحالي</div>
                       </div>
                     </div>
                   </div>
