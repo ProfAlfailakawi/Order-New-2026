@@ -1426,13 +1426,13 @@ app.get("/api/debug/order/:id", async (req, res) => {
           toPhone,
           fromPhone: phone,
           fromName: name || "عضو",
-          title: "تم إغلاق الطلب الجماعي",
+          title: "تم إغلاق طلب الربع",
           message: `تم إغلاق طلب ديوانية ${squad?.name || "الربع"}.`
         })));
         return { squadGroupOrders: groupOrders, diwaniyaNotifications };
       }
       if (idx < 0) {
-        groupOrders.push({ id: "SGO-" + Date.now().toString(36), squadId: String(squadId), title: title || "طلب الديوانية المفتوح", status: "open", createdAt: new Date().toISOString(), ownerPhone: cleanPhone(phone), ownerName: name || "المعزب", items: [], participants: [] });
+        groupOrders.push({ id: "SGO-" + Date.now().toString(36), squadId: String(squadId), title: title || "طلب الربع", status: "open", createdAt: new Date().toISOString(), ownerPhone: cleanPhone(phone), ownerName: name || "المعزب", items: [], participants: [] });
         idx = groupOrders.length - 1;
       }
       const go = { ...groupOrders[idx], items: Array.isArray(groupOrders[idx].items) ? [...groupOrders[idx].items] : [], participants: Array.isArray(groupOrders[idx].participants) ? [...groupOrders[idx].participants] : [] };
@@ -1453,8 +1453,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
         toPhone,
         fromPhone: phone,
         fromName: name || "عضو",
-        title: "طلب جماعي مفتوح",
-        message: `${name || "أحد الربع"} فتح طلب جماعي لديوانية ${squad?.name || "الربع"}. جهز طلبك والقطية جاهزة بالأسماء والأرقام.`
+        title: "طلب الربع مفتوح",
+        message: `${name || "أحد الربع"} فتح طلب للربع في ديوانية ${squad?.name || "الربع"}. جهز طلبك والقطية جاهزة بالأسماء والأرقام.`
       })));
       return { squadGroupOrders: groupOrders, diwaniyaNotifications };
     });

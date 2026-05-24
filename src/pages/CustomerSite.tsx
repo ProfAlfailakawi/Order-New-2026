@@ -1844,6 +1844,30 @@ export default function CustomerSite() {
     }
   }, [searchParams, products.length, setSearchParams]);
 
+  const handlePrepareQatyaFromDiwaniya = useCallback((members: any[] = []) => {
+    const cleanMembers = Array.isArray(members) ? members : [];
+    try {
+      localStorage.setItem("split_prefill_members", JSON.stringify(cleanMembers));
+      localStorage.setItem("split_prefill_ready", "1");
+    } catch (e) {}
+
+    setShowSquadModal(false);
+
+    if (cart.length > 0) {
+      setCheckoutInitialStep("payment");
+      setIsCheckout(true);
+      setCartMoment(cleanMembers.length
+        ? "جهزنا القطيّة بأسماء الربع. اختار القطيّة من طرق الدفع."
+        : "جهزنا القطيّة. اختار القطيّة من طرق الدفع.");
+      window.setTimeout(() => setCartMoment(null), 3500);
+      return;
+    }
+
+    setCartMoment("جهزنا القطيّة. اختار الأصناف أولاً، وبعدها افتح السلة واختر القطيّة.");
+    window.setTimeout(() => setCartMoment(null), 4500);
+    window.setTimeout(() => document.getElementById("products-section")?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+  }, [cart.length]);
+
   const itemsTotal = cart.reduce(
     (sum, item) => sum + calculateItemTotalWithAddons(item),
     0,
@@ -2313,6 +2337,29 @@ export default function CustomerSite() {
 
     if (splitMode) {
       orderData.splitType = splitMode;
+      try {
+        const rawMembers = localStorage.getItem("split_prefill_members");
+        const members = rawMembers ? JSON.parse(rawMembers) : [];
+        if (Array.isArray(members) && members.length > 0) {
+          const cleanMap = new Map<string, any>();
+          members.forEach((member: any) => {
+            const phone = String(member?.phone || "").replace(/\D/g, "").slice(-8);
+            if (!phone) return;
+            cleanMap.set(phone, {
+              name: member?.name || "عضو",
+              phone,
+              amount: 0,
+              status: "pending",
+              source: "diwaniya_qatya"
+            });
+          });
+          const preparedMembers = Array.from(cleanMap.values());
+          if (preparedMembers.length > 0) {
+            orderData.splitParticipants = preparedMembers;
+            orderData.splitPayments = preparedMembers;
+          }
+        }
+      } catch (e) {}
     }
 
     try {
@@ -4079,6 +4126,7 @@ export default function CustomerSite() {
                         handleJoinSquad={handleJoinSquad}
                        pendingGeofenceRequests={pendingGeofenceRequests}
                        onRefresh={fetchSquadGamification}
+                       onPrepareQatya={handlePrepareQatyaFromDiwaniya}
                       />
                    </div>
                 </motion.div>
