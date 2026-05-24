@@ -691,11 +691,11 @@ export default function CustomerSite() {
   const refreshRadarOnce = useCallback(() => {
      if (!navigator.geolocation) {
        setRadarStatus("unsupported");
-       setRadarStatusMsg("جهازك أو المتصفح لا يدعم تحديد الموقع.");
+       setRadarStatusMsg("جهازك أو المتصفح ما يدعم تحديد الموقع.");
        return;
      }
      setRadarStatus("checking");
-     setRadarStatusMsg("نطلب السماح بالموقع لتشغيل رادار الديوانيات القريبة...");
+     setRadarStatusMsg("اسمح بالموقع عشان نلقط لك الديوانيات القريبة...");
      setRadarDismissedList([]);
      setIsNearbyRadarPanelCollapsed(false);
      try { localStorage.removeItem("radar_dismissed_squads"); } catch(e) {}
@@ -714,21 +714,34 @@ export default function CustomerSite() {
        },
        (err) => {
          setRadarStatus(err.code === 1 ? "denied" : "idle");
-         setRadarStatusMsg(err.code === 1 ? "صلاحية الموقع مرفوضة. فعّلها من إعدادات المتصفح ثم اضغط تشغيل الرادار." : "تعذر تشغيل الرادار حالياً. حاول مرة ثانية.");
+         setRadarStatusMsg(err.code === 1 ? "الموقع مو مفعّل. فعّله من إعدادات المتصفح وبعدين شغّل الرادار." : "الرادار ما اشتغل الحين. جرّب مرة ثانية.");
        },
        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
      );
   }, []);
 
   useEffect(() => {
-     // أول دخول للموقع: نطلب تفعيل اللوكيشن للرادار مرة واحدة بشكل خفيف.
-     try {
-       const asked = localStorage.getItem("radar_location_prompted_once");
-       if (!asked && navigator.geolocation) {
-         localStorage.setItem("radar_location_prompted_once", "1");
+     const askWhenLocationIsOff = async () => {
+       if (!navigator.geolocation) return;
+       try {
+         const permission = (navigator as any).permissions?.query
+           ? await (navigator as any).permissions.query({ name: "geolocation" as PermissionName })
+           : null;
+         if (!permission || permission.state !== "granted") refreshRadarOnce();
+       } catch(e) {
          refreshRadarOnce();
        }
-     } catch(e) {}
+     };
+     askWhenLocationIsOff();
+     const onVisible = () => {
+       if (document.visibilityState === "visible") askWhenLocationIsOff();
+     };
+     window.addEventListener("focus", askWhenLocationIsOff);
+     document.addEventListener("visibilitychange", onVisible);
+     return () => {
+       window.removeEventListener("focus", askWhenLocationIsOff);
+       document.removeEventListener("visibilitychange", onVisible);
+     };
   }, [refreshRadarOnce]);
 
   const clearSquadSessionOnThisDevice = useCallback(() => {
@@ -788,7 +801,7 @@ export default function CustomerSite() {
   useEffect(() => {
      if (!navigator.geolocation) {
        setRadarStatus("unsupported");
-       setRadarStatusMsg("جهازك أو المتصفح لا يدعم تحديد الموقع.");
+       setRadarStatusMsg("جهازك أو المتصفح ما يدعم تحديد الموقع.");
        return;
      }
      if (activeSquads.length === 0) {
@@ -807,7 +820,7 @@ export default function CustomerSite() {
        setRadarAccuracy(Math.round(accuracy));
        if (accuracy > 150) {
          setRadarStatus("weak");
-         setRadarStatusMsg("الموقع غير دقيق كفاية حالياً، لذلك ما نعرض ديوانيات بالغلط.");
+       setRadarStatusMsg("الموقع مو دقيق كفاية الحين، فما نبي نطلع لك ديوانيات بالغلط.");
          setRadarNearbySquads([]);
          return;
        }
@@ -851,7 +864,7 @@ export default function CustomerSite() {
        (err) => {
          console.warn("Geofence watchPosition error: ", err);
          setRadarStatus(err.code === 1 ? "denied" : "idle");
-         setRadarStatusMsg(err.code === 1 ? "صلاحية الموقع مرفوضة. فعّلها من إعدادات المتصفح واضغط تشغيل الرادار." : "تعذر تشغيل الرادار حالياً. اضغط تشغيل الرادار للمحاولة مرة ثانية.");
+       setRadarStatusMsg(err.code === 1 ? "الموقع مو مفعّل. فعّله من إعدادات المتصفح وبعدين شغّل الرادار." : "الرادار ما اشتغل الحين. اضغط تشغيل الرادار وجرب مرة ثانية.");
        },
        { enableHighAccuracy: true, timeout: 20050, maximumAge: 10000 }
      );
@@ -902,26 +915,11 @@ export default function CustomerSite() {
      window.setTimeout(fetchSquadGamification, 60);
   };
 
-  const handleSendRadarRequest = async (targetSquad: any) => {
-     if (!targetSquad) return;
-     let requestPhone = customerPhone;
-     let requestName = customerName || "عضو قريب";
-     if (!requestPhone) {
-       const typedPhone = window.prompt("اكتب رقم تلفونك 8 أرقام عشان نرسل طلبك للمعزب:");
-       const cleanTypedPhone = cleanPhoneForSquad(normalizeDigits(typedPhone || "")).slice(0, 8);
-       if (!cleanTypedPhone || cleanTypedPhone.length < 8) {
-         alert("لازم رقم تلفون صحيح عشان المعزب يعرف طلبك.");
-         return;
-       }
-       const typedName = window.prompt("اكتب اسمك للمعزب:", "عضو قريب") || "عضو قريب";
-       requestPhone = cleanTypedPhone;
-       requestName = typedName;
-       setCustomerPhone(cleanTypedPhone);
-       setGuestPhone(cleanTypedPhone);
-       setCustomerName(prev => prev || typedName);
-       try { localStorage.setItem("customer_phone_track", cleanTypedPhone); } catch(e) {}
-     }
+  const normalizeEightDigitPhone = (value: any) =>
+     cleanPhoneForSquad(normalizeDigits(String(value || "")).replace(/[^0-9]/g, "")).slice(0, 8);
 
+  const submitRadarJoinRequest = async (targetSquad: any, requestPhone: string, requestName: string) => {
+     if (!targetSquad?.id) return;
      setRadarLoadingMap(prev => ({ ...prev, [targetSquad.id]: true }));
      try {
        const res = await fetch("/api/squad-geofence-join-request", {
@@ -929,7 +927,7 @@ export default function CustomerSite() {
          headers: { "Content-Type": "application/json" },
          body: JSON.stringify({
            name: requestName || "عضو قريب",
-           phone: requestPhone,
+           phone: normalizeEightDigitPhone(requestPhone),
            squadId: targetSquad.id,
            distance: targetSquad.distance || 0
          })
@@ -937,19 +935,29 @@ export default function CustomerSite() {
        if (res.ok) {
          setRadarSuccessMap(prev => ({ ...prev, [targetSquad.id]: true }));
          fetchSquadGamification();
-         
-         // After showing validation, dismiss from layout beautifully
          setTimeout(() => {
            setRadarDismissedList(prev => [...prev, String(targetSquad.id)]);
            setRadarNearbySquads(prev => prev.filter(s => String(s.id) !== String(targetSquad.id)));
          }, 3000);
        } else {
-         alert("خطأ أثناء إرسال الطلب.");
+         alert("ما قدرنا ندز طلبك للمعزب. جرّب مرة ثانية.");
        }
      } catch (e) {
-       alert("خطأ في الاتصال بالسيرفر.");
+       alert("ما قدرنا نوصل للسيرفر. جرّب بعد شوي.");
      }
      setRadarLoadingMap(prev => ({ ...prev, [targetSquad.id]: false }));
+  };
+
+  const handleSendRadarRequest = async (targetSquad: any) => {
+     if (!targetSquad) return;
+     let requestPhone = customerPhone;
+     let requestName = customerName || "عضو قريب";
+     if (!requestPhone) {
+       setRadarJoinDraft({ squad: targetSquad, phone: "", name: "عضو قريب" });
+       return;
+     }
+
+     await submitRadarJoinRequest(targetSquad, requestPhone, requestName);
   };
 
   const handleOpenQatyaNotification = async (notification: any) => {
@@ -981,7 +989,7 @@ export default function CustomerSite() {
         type: "qatya_request",
         sourceKind: "active_order",
         title: "قطية مفتوحة للديوانية",
-        message: "ادخل وحدد قطيتك وادفع مباشرة، اسمك ورقمك جاهزين.",
+        message: "دش وحدد قطيتك وادفع، اسمك ورقمك جاهزين.",
         squadName: o.squadName || squadInfo?.name || "",
         meta: { orderId: o.id, url: `/split/${o.id}` },
       }));
@@ -1018,7 +1026,7 @@ export default function CustomerSite() {
       window.setTimeout(() => setCartMoment(null), 3600);
     } catch (error: any) {
       setDiwaniyaPushState("error");
-      setCartMoment(error?.message || "تعذر تفعيل تنبيهات الديوانية");
+      setCartMoment(error?.message || "ما قدرنا نفعّل تنبيهات الديوانية");
       window.setTimeout(() => setCartMoment(null), 3600);
     } finally {
       setIsEnablingDiwaniyaPush(false);
@@ -1038,10 +1046,10 @@ export default function CustomerSite() {
        if (res.ok) {
          await fetchSquadGamification();
        } else {
-         alert("فشل تحديث طلب الانضمام.");
+         alert("ما قدرنا نحدّث طلب الدخول.");
        }
      } catch(e) {
-       alert("خطأ اتصال أثناء تحديث طلب الانضمام.");
+       alert("الاتصال تعطل وقت تحديث طلب الدخول.");
      }
      setOwnerJoinDecisionLoading(prev => ({ ...prev, [targetPhone]: false }));
   };
@@ -1049,7 +1057,7 @@ export default function CustomerSite() {
   const handleCreateSquad = async () => {
     const cleanOwnerPhone = cleanPhoneForSquad(normalizeDigits(guestPhone || "")).slice(0, 8);
     if (!newSquadName.trim() || cleanOwnerPhone.length !== 8) {
-       alert("يرجى إدخال اسم الديوانية ورقم تلفونك 8 أرقام بالإنجليزي");
+       alert("اكتب اسم الديوانية ورقم تلفونك 8 أرقام بالإنجليزي");
        setGuestPhone(cleanOwnerPhone);
        return;
     }
@@ -1087,7 +1095,7 @@ export default function CustomerSite() {
 
   const handleJoinSquad = async (squadId: string) => {
     if (!guestPhone.trim()) {
-       alert("يرجى إدخال رقم هاتفك للمتابعة");
+       alert("اكتب رقم تلفونك عشان نكمل");
        return;
     }
     setIsSubmittingSquad(true);
@@ -1192,6 +1200,7 @@ export default function CustomerSite() {
   const [isEnablingDiwaniyaPush, setIsEnablingDiwaniyaPush] = useState(false);
   const [canUseDiwaniyaPush, setCanUseDiwaniyaPush] = useState(false);
   const [isOnline, setIsOnline] = useState(() => typeof navigator === "undefined" ? true : navigator.onLine);
+  const [radarJoinDraft, setRadarJoinDraft] = useState<{ squad: any; phone: string; name: string } | null>(null);
 
   useEffect(() => {
     const updateOnline = () => setIsOnline(typeof navigator === "undefined" ? true : navigator.onLine);
@@ -1506,10 +1515,10 @@ export default function CustomerSite() {
         setAppliedPromo(data.promo);
         setPromoCodeInput("");
       } else {
-        setPromoError(data.error || "كوبون غير صالح");
+        setPromoError(data.error || "الكوبون مو صحيح");
       }
     } catch (e) {
-      setPromoError("حدث خطأ أثناء التحقق من الكوبون");
+      setPromoError("ما قدرنا نتحقق من الكوبون");
     } finally {
       setIsValidatingPromo(false);
     }
@@ -1932,7 +1941,7 @@ export default function CustomerSite() {
               } else {
                 setTimeout(() => {
                   setPsychMessage({
-                    title: "عذراً، الطلب مخلص",
+                    title: "المعذرة، الطلب مخلص",
                     desc: "للأسف جميع الأصناف اللي في طلبك السابق غير متوفرة اليوم، تقدر تشوف المنيو وتجرب أطباقنا اليديدة.",
                   });
                 }, 800);
@@ -2254,7 +2263,7 @@ export default function CustomerSite() {
         }
       }
     } catch (e) {
-      alert("حدث خطأ أثناء تنفيذ الطلب.");
+      alert("تعطل تنفيذ الطلب. جرّب مرة ثانية.");
     } finally {
       setIsZeroClickLoading(false);
     }
@@ -2391,7 +2400,7 @@ export default function CustomerSite() {
     setFormError(null);
     const requiredFields = [
       { key: "name", value: customerName, label: "الاسم" },
-      { key: "phone", value: customerPhone, label: "رقم الهاتف" },
+      { key: "phone", value: customerPhone, label: "رقم التلفون" },
       { key: "region", value: address.region, label: "المنطقة" },
       { key: "block", value: address.block, label: "القطعة" },
       { key: "street", value: address.street, label: "الشارع" },
@@ -2404,14 +2413,14 @@ export default function CustomerSite() {
 
     if (missingFields.length > 0) {
       setFormError(
-        `يرجى إكمال الحقول التالية: ${missingFields.map((f) => f.label).join("، ")}`,
+        `كمل هالبيانات: ${missingFields.map((f) => f.label).join("، ")}`,
       );
       return;
     }
 
     if (deliveryFee === -1) {
       setFormError(
-        "عذراً، المنطقة المدخلة غير صحيحة. يرجى اختيار منطقة من القائمة.",
+        "المنطقة مو مضبوطة. اختار منطقة من القائمة.",
       );
       return;
     }
@@ -2430,7 +2439,7 @@ export default function CustomerSite() {
     );
     if (!matchedRegion) {
       setFormError(
-        "الرجاء اختيار منطقة صحيحة من القائمة حتى نحسب رسوم التوصيل بدقة.",
+        "اختار منطقة صحيحة من القائمة عشان نحسب التوصيل صح.",
       );
       return;
     }
@@ -2487,14 +2496,17 @@ export default function CustomerSite() {
         const members = rawMembers ? JSON.parse(rawMembers) : [];
         if (Array.isArray(members) && members.length > 0) {
           const cleanMap = new Map<string, any>();
+          const memberCount = Math.max(1, members.filter((member: any) => String(member?.phone || "").replace(/\D/g, "").slice(-8)).length);
+          const equalAmount = Number((Number(orderData.total || 0) / memberCount).toFixed(3));
           members.forEach((member: any) => {
             const phone = String(member?.phone || "").replace(/\D/g, "").slice(-8);
             if (!phone) return;
             cleanMap.set(phone, {
               name: member?.name || "عضو",
               phone,
-              amount: 0,
+              amount: equalAmount,
               status: "pending",
+              splitMode: "equal",
               source: "diwaniya_qatya"
             });
           });
@@ -2530,7 +2542,7 @@ export default function CustomerSite() {
           errData = JSON.parse(text);
         } catch (e) {}
         setFormError(
-          errData?.error || "عذراً، فشل إرسال الطلب. يرجى المحاولة مرة أخرى.",
+          errData?.error || "ما قدرنا ندز الطلب. جرّب مرة ثانية.",
         );
         setIsSubmitting(false);
         return;
@@ -2541,7 +2553,7 @@ export default function CustomerSite() {
       try {
         responseData = JSON.parse(responseDataText);
       } catch (e) {
-        setFormError("استجابة غير متوقعة من الخادم.");
+        setFormError("وصلنا رد مو مفهوم من السيرفر.");
         setIsSubmitting(false);
         return;
       }
@@ -2679,12 +2691,12 @@ export default function CustomerSite() {
       ) {
         // Silently handle Load failed to avoid AI Studio log spam
         setFormError(
-          "فشل الاتصال بالخادم. يبدو أن الخادم قيد إعادة التشغيل لتطبيق التحديثات. يرجى الانتظار 10 ثوانٍ والمحاولة مرة أخرى.",
+          "ما قدرنا نوصل للسيرفر. شكله قاعد يتحدث، نطر 10 ثواني وجرب مرة ثانية.",
         );
       } else {
         console.error("Order error:", error);
         setFormError(
-          "حدث خطأ في الاتصال بالخادم. يرجى التأكد من اتصال الإنترنت.",
+          "الاتصال تعطل. تأكد من النت وجرب مرة ثانية.",
         );
       }
     } finally {
@@ -2752,7 +2764,7 @@ export default function CustomerSite() {
             `/track?phone=${encodeURIComponent(cPhone)}&order_id=${orderId}`,
           );
       } else {
-        alert("حدث خطأ في تجهيز رابط الدفع");
+        alert("ما قدرنا نجهز رابط الدفع");
       }
     } catch (e: any) {
       if (
@@ -2762,10 +2774,10 @@ export default function CustomerSite() {
           e.message.includes("Failed to fetch"))
       ) {
         alert(
-          "لا يمكن الاتصال. الخادم يعيد التشغيل حالياً، يرجى الانتظار قليلاً ثم المحاولة.",
+          "ما نقدر نوصل الحين. السيرفر قاعد يعيد التشغيل، نطر شوي وجرب.",
         );
       } else {
-        alert("فشل الاتصال بخدمة الدفع");
+        alert("ما قدرنا نوصل لخدمة الدفع");
       }
     }
   };
@@ -3033,6 +3045,9 @@ export default function CustomerSite() {
                        <p className="text-sm font-black text-brand leading-tight flex items-center gap-1.5">
                          {squadInfo.name}
                        </p>
+                       <p className="mt-1 text-[11px] font-extrabold text-amber-700/85 leading-tight">
+                         {getSquadTier(getAnyPoints(squadInfo)).name} + رصيدك {getAnyPoints(squadInfo)} نقطة
+                       </p>
                     </div>
                  </div>
                  
@@ -3052,7 +3067,7 @@ export default function CustomerSite() {
                     <div className="flex flex-col">
                        <p className="text-[10px] text-stone-500 font-bold leading-tight">تحدي الدواوين 👑</p>
                        <p className="text-sm font-black text-brand leading-tight flex items-center gap-1.5">
-                         {topSquads.length > 0 ? `${topSquads[0].name} بالصدارة!` : "أسس أو ادخل ديوانيتك!"} 
+                         {topSquads.length > 0 ? `${topSquads[0].name} بالصدارة!` : "أسس أو دش ديوانيتك!"} 
                        </p>
                     </div>
                  </div>
@@ -4359,7 +4374,7 @@ export default function CustomerSite() {
 
         {/* حالة رادار الديوانية وتشغيل اللوكيشن بوضوح */}
         <AnimatePresence>
-          {showSquadModal && radarNearbySquads.length === 0 && radarStatus !== "empty" && (
+          {!isCheckout && radarNearbySquads.length === 0 && radarStatus !== "empty" && radarStatus !== "ready" && (
             <motion.div
               initial={{ opacity: 0, y: 80, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -4516,6 +4531,86 @@ export default function CustomerSite() {
           )}
         </AnimatePresence>
 
+        <AnimatePresence>
+          {radarJoinDraft && (
+            <motion.div
+              key="radar-join-phone-sheet"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[120] bg-slate-950/35 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setRadarJoinDraft(null);
+              }}
+            >
+              <motion.div
+                initial={{ y: 32, scale: 0.96, opacity: 0 }}
+                animate={{ y: 0, scale: 1, opacity: 1 }}
+                exit={{ y: 24, scale: 0.97, opacity: 0 }}
+                className="w-full max-w-sm rounded-[30px] bg-white text-brand p-5 shadow-2xl border border-amber-100 text-right"
+                dir="rtl"
+              >
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setRadarJoinDraft(null)}
+                    className="h-9 w-9 rounded-2xl bg-stone-100 text-stone-500 flex items-center justify-center"
+                    aria-label="إغلاق"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <div>
+                    <p className="text-[10px] font-black text-amber-600">طلب دخول ديوانية</p>
+                    <h3 className="text-lg font-black mt-1">رقمك للمعزب</h3>
+                    <p className="text-xs font-bold text-stone-500 mt-1 leading-6">
+                      اكتب رقم تلفونك 8 أرقام. الأرقام العربية تتحول تلقائياً، والحروف ما تنقبل.
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={8}
+                    value={radarJoinDraft.phone}
+                    onChange={(e) => setRadarJoinDraft((prev) => prev ? { ...prev, phone: normalizeEightDigitPhone(e.target.value) } : prev)}
+                    placeholder="90000000"
+                    className="w-full rounded-2xl border-2 border-stone-100 bg-stone-50 px-4 py-4 text-center text-xl font-black tracking-[0.18em] outline-none focus:border-amber-400"
+                    dir="ltr"
+                    autoFocus
+                  />
+                  <input
+                    type="text"
+                    value={radarJoinDraft.name}
+                    onChange={(e) => setRadarJoinDraft((prev) => prev ? { ...prev, name: e.target.value.slice(0, 30) } : prev)}
+                    placeholder="اسمك"
+                    className="w-full rounded-2xl border border-stone-100 bg-white px-4 py-3 text-right text-sm font-bold outline-none focus:border-amber-300"
+                  />
+                  <button
+                    type="button"
+                    disabled={radarJoinDraft.phone.length !== 8}
+                    onClick={async () => {
+                      const cleanPhone = normalizeEightDigitPhone(radarJoinDraft.phone);
+                      if (cleanPhone.length !== 8) return;
+                      setCustomerPhone(cleanPhone);
+                      setGuestPhone(cleanPhone);
+                      setCustomerName(prev => prev || radarJoinDraft.name || "عضو قريب");
+                      try { localStorage.setItem("customer_phone_track", cleanPhone); } catch(e) {}
+                      const draft = radarJoinDraft;
+                      setRadarJoinDraft(null);
+                      await submitRadarJoinRequest(draft.squad, cleanPhone, draft.name || "عضو قريب");
+                    }}
+                    className="w-full rounded-2xl bg-amber-500 text-slate-950 px-4 py-4 text-sm font-black shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all disabled:opacity-45"
+                  >
+                    أرسل الطلب للمعزب
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* تنبيه عام للمعزب عند وصول طلب انضمام حتى خارج صفحة الديوانية */}
         <AnimatePresence>
           {customerPhone && pendingGeofenceRequests.length > 0 && (
@@ -4661,7 +4756,7 @@ export default function CustomerSite() {
                   <div className="flex-1">
                     <span className="text-[10px] font-black bg-white/10 text-emerald-100 px-3 py-1 rounded-full border border-white/10">قطية الديوانية 💳</span>
                     <h4 className="font-black text-sm mt-2 text-white">عندك قطية من الربع</h4>
-                    <p className="text-[10px] font-bold text-white/70 mt-1">ادخل وحدد قطيتك، اسمك ورقمك جاهزين من الديوانية.</p>
+                    <p className="text-[10px] font-bold text-white/70 mt-1">دش وحدد قطيتك، اسمك ورقمك جاهزين من الديوانية.</p>
                   </div>
                 </div>
                 {canUseDiwaniyaPush && diwaniyaPushState !== "saved" && (
@@ -4689,7 +4784,7 @@ export default function CustomerSite() {
                     >
                       <div className="text-[10px] font-black text-emerald-100 mb-1">{n.squadName ? `ديوانية ${n.squadName}` : "ديوانية الربع"}</div>
                       <div className="text-xs font-black text-white">{n.title || "عندك قطيّة"}</div>
-                      <div className="text-[10px] font-bold text-white/70 mt-1">{n.message || "ادخل وحدد قطيتك وادفع مباشرة."}</div>
+                      <div className="text-[10px] font-bold text-white/70 mt-1">{n.message || "دش وحدد قطيتك وادفع مباشرة."}</div>
                     </button>
                   ))}
                 </div>
@@ -5946,7 +6041,7 @@ function CheckoutOverlay({
                         <div className="flex flex-col relative z-10">
                            <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">ديوانيتك الحالية</span>
                            <span className="text-base font-black text-brand leading-tight">
-                              {squadInfo.name} - تصنيف: {squadInfo.tier}
+                              {squadInfo.name}
                            </span>
                            {userSquads && userSquads.length > 1 && (
                               <button onClick={() => setShowSquadModal(true)} className="text-[10px] text-accent underline text-right mt-0.5">
@@ -6141,12 +6236,12 @@ function CheckoutOverlay({
             <div className={cn("address-wow-step animate-in slide-in-from-left-4 fade-in duration-300 space-y-6 pt-2", customerPhone.length >= 8 && "address-phone-complete")}>
                 <div className="space-y-2">
                   <label className="text-sm items-center gap-1.5 font-bold text-stone-700 flex px-1">
-                    <Phone className="w-4 h-4 text-accent" /> أدخل رقم هاتفك لإكمال الطلب
+                    <Phone className="w-4 h-4 text-accent" /> اكتب رقم تلفونك عشان نكمل الطلب
                   </label>
                   <input
                     type="tel"
                     inputMode="numeric"
-                    placeholder="رقم الهاتف (8 أرقام)"
+                    placeholder="رقم التلفون (8 أرقام)"
                     value={customerPhone}
                     pattern="[0-9]*"
                     onChange={(e) => {
@@ -6240,7 +6335,7 @@ function CheckoutOverlay({
                         >
                           {filteredRegions.length === 0 ? (
                             <div className="p-4 text-xs text-red-500 text-center font-extrabold bg-red-50/70 border-b border-red-100">
-                              الرجاء اختيار منطقة صحيحة من القائمة
+                              اختار منطقة صحيحة من القائمة
                             </div>
                           ) : (
                             filteredRegions.map((r: any, idx: number) => (
@@ -6266,7 +6361,7 @@ function CheckoutOverlay({
                       {address.region && deliveryFee === -1 && !showRegions && (
                         <div className="mt-2 rounded-xl border border-red-100 bg-red-50/80 px-3 py-2 text-[11px] font-extrabold text-red-600 flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 shrink-0" />
-                          <span>الرجاء اختيار منطقة صحيحة من القائمة حتى لا تظهر رسوم التوصيل بشكل خاطئ.</span>
+                          <span>اختار منطقة صحيحة من القائمة عشان رسوم التوصيل تطلع صح.</span>
                         </div>
                       )}
                     </div>
@@ -6395,7 +6490,7 @@ function CheckoutOverlay({
                       <div className="relative">
                         <input
                           type="text"
-                          placeholder="يرجى ادخال بياناتك (الاسم)"
+                          placeholder="اكتب اسمك"
                           value={customerName}
                           onChange={(e) => {
                             setCustomerName(e.target.value);
@@ -6658,11 +6753,11 @@ function CheckoutOverlay({
                     disabled={!isOpen}
                     onClick={() => {
                       if (customerPhone.length < 8) {
-                        setFormError("يرجى إدخال رقم هاتف صحيح مكون من 8 أرقام");
+                        setFormError("اكتب رقم تلفون صحيح من 8 أرقام");
                       } else if (deliveryFee === -1) {
-                        setFormError("يرجى اختيار منطقة صحيحة من القائمة");
+                        setFormError("اختار منطقة صحيحة من القائمة");
                       } else if (!customerName) {
-                        setFormError("يرجى ادخال بياناتك (الاسم)");
+                        setFormError("اكتب اسمك");
                       } else if (!isOpen) {
                         setFormError(message);
                       } else {
@@ -6680,11 +6775,11 @@ function CheckoutOverlay({
                     {!isOpen ? (
                       <span>{message}</span>
                     ) : customerPhone.length < 8 ? (
-                      <span>يرجى إدخال رقم هاتف صحيح مكون من 8 أرقام</span>
+                      <span>اكتب رقم تلفون صحيح من 8 أرقام</span>
                     ) : deliveryFee === -1 ? (
                       <span>اختار منطقة التوصيل يالغالي</span>
                     ) : !customerName ? (
-                      <span>يرجى ادخال بياناتك</span>
+                      <span>اكتب بياناتك</span>
                     ) : (
                       <>
                         <Check className="w-5 h-5 group-hover:scale-110 transition-transform" />

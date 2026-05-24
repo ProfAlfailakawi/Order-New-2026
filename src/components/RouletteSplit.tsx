@@ -70,14 +70,14 @@ export function RouletteSplit({
 
   const join = async () => {
     if (!name.trim()) return;
-    if (phone.length !== 8) return alert("يرجى إدخال رقم هاتف صحيح مكون من 8 أرقام");
+    if (phone.length !== 8) return alert("دخل رقم تلفون صحيح 8 أرقام");
     try {
       const res = await fetch(`/api/orders/${order.id}/join-roulette`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, phone }),
       });
-      if (!res.ok) throw new Error('تعذر تسجيل الاسم في الروليت');
+      if (!res.ok) throw new Error('ما قدرنا نسجل الاسم في الروليت');
       setMySpinName(name);
       setMySpinPhone(phone);
       localStorage.setItem(`roulette_${order.id}`, name);
@@ -90,19 +90,19 @@ export function RouletteSplit({
           e.message.includes("Failed to fetch"))
       ) {
         alert(
-          "فشل الاتصال بالخادم. يبدو أن الخادم قيد إعادة التشغيل لتطبيق التحديثات. يرجى الانتظار والمحاولة مرة أخرى.",
+          "السيرفر قاعد يتحدث، نطر شوي وجرب مرة ثانية.",
         );
       } else {
-        alert("فشل الانضمام: " + (e?.message || "حدث خطأ غير متوقع"));
+        alert("ما قدرنا ندخلك: " + (e?.message || "صار خلل غير متوقع"));
       }
     }
   };
 
   const spin = async () => {
-    if (participants.length < 2) return alert("نحتاج شخصين عالأقل للقطية!");
+    if (participants.length < 2) return alert("نحتاج شخصين عالأقل عشان نخليه يغرم!");
     try {
       const res = await fetch(`/api/orders/${order.id}/spin-roulette`, { method: "POST" });
-      if (!res.ok) throw new Error('تعذر تشغيل الروليت');
+      if (!res.ok) throw new Error('ما قدرنا نشغل الروليت');
     } catch (e: any) {
       if (
         e &&
@@ -111,10 +111,10 @@ export function RouletteSplit({
           e.message.includes("Failed to fetch"))
       ) {
         alert(
-          "فشل الاتصال بالخادم. يبدو أن الخادم قيد إعادة التشغيل لتطبيق التحديثات. يرجى الانتظار والمحاولة مرة أخرى.",
+          "السيرفر قاعد يتحدث، نطر شوي وجرب مرة ثانية.",
         );
       } else {
-        alert("فشل السحب: " + (e?.message || "حدث خطأ غير متوقع"));
+        alert("ما ضبط السحب: " + (e?.message || "صار خلل غير متوقع"));
       }
     }
   };
@@ -277,10 +277,10 @@ export function RouletteSplit({
           <div className="roulette-title-card">
             <span className="roulette-kicker">تحدي الربع</span>
             <h1 className="text-3xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-300 via-white to-violet-300">
-              وهق غيرك 🎰
+              خله يغرم 🎰
             </h1>
             <p className="text-stone-300 font-bold mt-2 leading-relaxed max-w-xl mx-auto">
-              مشهد واحد، أسماء الربع، ولحظة اختيار تخلي الكل ماسك نفسه. الفاتورة {order.total.toFixed(3)} د.ك
+              أسماء الربع تدخل، والنبضة تختار واحد يشيل العشا. الفاتورة {order.total.toFixed(3)} د.ك
             </p>
           </div>
           <div className="roulette-status-strip roulette-v14-status-strip">
@@ -314,7 +314,7 @@ export function RouletteSplit({
                   pattern="[0-9]*"
                   value={phone}
                   onChange={(e) => setPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8))}
-                  placeholder="رقم الهاتف (مثال: 90000000)"
+                  placeholder="رقم التلفون (مثال: 90000000)"
                   className="w-full bg-white text-slate-950 border border-white/20 rounded-2xl px-4 py-3.5 text-center font-bold focus:outline-none focus:ring-4 focus:ring-fuchsia-500/25 focus:border-fuchsia-400"
                   dir="ltr"
                 />
@@ -362,7 +362,7 @@ export function RouletteSplit({
 
                 <button
                   onClick={() => {
-                    const shareText = `دش لعبة وهق غيرك، واحد فينا راح يدفع العشا ${order?.total.toFixed(3)} د.ك! ادخل: ${window.location.href}`;
+                    const shareText = `دش لعبة وهق غيرك، واحد فينا بيدفع العشا ${order?.total.toFixed(3)} د.ك! دش: ${window.location.href}`;
                     if (navigator.share) {
                       navigator.share({
                         title: "لعبة وهق غيرك 🎯",
@@ -377,7 +377,7 @@ export function RouletteSplit({
                   className="w-full wahag-participant-chip bg-white/10 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 mt-4 hover:bg-white/20 transition-colors border border-white/10"
                 >
                   <Sparkles className="w-5 h-5 text-fuchsia-400" />
-                  دز الرابط للربع وخلي النبضة تختار
+                  دز الرابط للربع وخله يغرم
                 </button>
 
                 {participants.length >= 2 && (
@@ -385,7 +385,7 @@ export function RouletteSplit({
                     onClick={spin}
                     className="roulette-spin-button w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 font-black py-4 rounded-2xl shadow-lg shadow-fuchsia-500/20 active:scale-95 transition-transform mt-4"
                   >
-                    ابدأ النبضة
+                    خله يغرم
                   </button>
                 )}
               </div>
@@ -461,7 +461,7 @@ export function RouletteSplit({
                 animate={{ opacity: 1, y: 0 }}
                 className="wahag-silence-card"
               >
-                <span>الاختيار قرب...</span>
+                <span>الدور قرب...</span>
                 <strong>لحظة صمت قبل النتيجة</strong>
               </motion.div>
             )}
@@ -522,7 +522,7 @@ export function RouletteSplit({
                           className="w-full bg-white text-violet-600 font-black py-4 rounded-xl mt-4 active:scale-95 transition-transform flex justify-center items-center gap-2 shadow-[0_0_25px_rgba(139,92,246,0.3)]"
                         >
                           <CreditCard className="w-5 h-5" />
-                          {paymentStatus === "failed" ? "جرب مرة ثانية 🔄" : `تأكيد ودفع القطية`}
+                          {paymentStatus === "failed" ? "جرب مرة ثانية 🔄" : `ادفع الغرامة`}
                         </button>
                       </div>
                     );

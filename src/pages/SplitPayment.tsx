@@ -117,9 +117,11 @@ export default function SplitPayment() {
     if (!mySplitRecord) return;
     const nextName = String(mySplitRecord.name || "").trim();
     const nextPhone = String(mySplitRecord.phone || "").replace(/\D/g, "").slice(-8);
+    const nextAmount = Number(mySplitRecord.amount || 0) > 0 ? Number(mySplitRecord.amount || 0).toFixed(3) : "";
     if (nextName && nextName !== contributorName) setContributorName(nextName);
     if (nextPhone && nextPhone !== contributorPhone) setContributorPhone(nextPhone);
-  }, [mySplitRecord, contributorName, contributorPhone]);
+    if (isDiwaniyaQatyaOrder(order) && nextAmount && contributorAmount !== nextAmount) setContributorAmount(nextAmount);
+  }, [mySplitRecord, contributorName, contributorPhone, contributorAmount, order]);
 
   useEffect(() => {
     if (paymentStatus === "success" && isFullyPaid) {
@@ -296,7 +298,7 @@ export default function SplitPayment() {
         // ignore silently
       } else {
         console.error("SplitPayment: Fetch Exception", e);
-        if (!order) setError("تعذر تحميل الطلب");
+        if (!order) setError("ما قدرنا نحمّل الطلب");
       }
     } finally {
       if (!isSilent) setLoading(false);
@@ -305,7 +307,7 @@ export default function SplitPayment() {
 
   const handleCopyLink = async () => {
     const shareUrl = window.location.href;
-    const shareText = `عشانا اليوم من مطبخ التراث! الفاتورة ${order?.total.toFixed(3)} د.ك.. ادخل ادفع قطيتك: ${shareUrl}`;
+    const shareText = `عشانا اليوم من مطبخ التراث! الفاتورة ${order?.total.toFixed(3)} د.ك.. دش وادفع قطيتك: ${shareUrl}`;
     const shareData: ShareData = {
       title: "قطية مطبخ التراث",
       text: shareText,
@@ -349,19 +351,19 @@ export default function SplitPayment() {
     const finalPhone = String(overridePhone ?? contributorPhone ?? mySplitRecord?.phone ?? "").replace(/\D/g, "").slice(-8);
 
     if (!finalName) {
-      alert("يرجى إدخال الاسم");
+      alert("اكتب اسمك يالغالي");
       return;
     }
     if (!finalPhone) {
-      alert("يرجى إدخال رقم الهاتف");
+      alert("اكتب رقم تلفونك");
       return;
     }
     if (finalPhone.length < 8) {
-      alert("رقم الهاتف غير صالح");
+      alert("رقم التلفون مو مضبوط");
       return;
     }
     if (!amountVal || isNaN(Number(amountVal)) || Number(amountVal) <= 0) {
-      alert("المبلغ غير صالح للقطيّة");
+      alert("مبلغ القطيّة مو مضبوط");
       return;
     }
     if (!order) return;
@@ -413,14 +415,14 @@ export default function SplitPayment() {
       } else {
         console.error("SplitPayment: Non-JSON response", resText);
         throw new Error(
-          `تعذر معالجة استجابة الخادم (${res.status}) - ${resText.substring(0, 50)}`,
+          `ما قدرنا نفهم رد السيرفر (${res.status}) - ${resText.substring(0, 50)}`,
         );
       }
 
       if (res.ok && data.paymentLink) {
         window.location.href = data.paymentLink;
       } else {
-        alert(data.error || "فشل في إنشاء رابط الدفع - يرجى المحاولة مرة أخرى");
+        alert(data.error || "ما قدرنا نجهز رابط الدفع، جرب مرة ثانية");
         setIsSubmitting(false);
       }
     } catch (e: any) {
@@ -432,10 +434,10 @@ export default function SplitPayment() {
           e.message.includes("Failed to fetch"))
       ) {
         alert(
-          "فشل الاتصال بالخادم. يبدو أن الخادم قيد إعادة التشغيل لتطبيق التحديثات. يرجى الانتظار والمحاولة مرة أخرى.",
+          "السيرفر قاعد يتحدث، نطر شوي وجرب مرة ثانية.",
         );
       } else {
-        alert("فشل في الاتصال بالخادم: " + (e.message || "حدث خطأ غير متوقع"));
+        alert("ما قدرنا نوصل للسيرفر: " + (e.message || "صار خلل غير متوقع"));
       }
       setIsSubmitting(false);
     }
@@ -455,7 +457,7 @@ export default function SplitPayment() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-stone-50 p-6 flex-col text-center">
         <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-        <h1 className="text-xl font-bold mb-2">عذراً</h1>
+        <h1 className="text-xl font-bold mb-2">المعذرة</h1>
         <p className="text-stone-500">{error}</p>
       </div>
     );
@@ -854,7 +856,7 @@ export default function SplitPayment() {
               {!paymentStatus && (
                 <div className="bg-brand/5 border border-brand/10 p-3 rounded-xl text-brand font-bold text-sm mb-4">
                   {isKnownDiwaniyaMember
-                    ? `حياك ${mySplitRecord?.name || contributorName || "يا الغالي"}، اسمك ورقمك جاهزين من الديوانية. حدد قطيتك وادفع مباشرة.`
+                    ? `حيّاك ${mySplitRecord?.name || contributorName || "يا الغالي"}، اسمك ورقمك جاهزين من الديوانية. قطيتك متقسمة بالتساوي، ادفعها مباشرة.`
                     : (urlName ? `ترا ناطرين تحويلك يا ${urlName} 💸😎` : "اذا ما دفعت قطيتك، ادفعها الحين ولا تصير البخيل باللمة! 💸😂")}
                 </div>
               )}
@@ -921,7 +923,7 @@ export default function SplitPayment() {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="bg-stone-100 rounded-xl px-2 py-1 flex flex-col items-center justify-center border border-stone-100/50">
                     <span className="text-[9px] font-bold text-stone-400 mb-0.5">
-                      قسمة على كم؟
+                      قسمة سريعة
                     </span>
                     <div className="flex gap-1">
                       {[2, 3, 4].map((n) => (
