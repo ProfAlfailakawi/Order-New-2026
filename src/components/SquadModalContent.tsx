@@ -174,9 +174,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
     if (squadInfo?.lat !== undefined && squadInfo?.lng !== undefined) {
       const diff = calculateDistanceMeters(Number(squadInfo.lat), Number(squadInfo.lng), coords.lat, coords.lng);
-      if (diff < 8) {
+      if (diff < 30) {
         setShowResetLocation(false);
-        setGeoStatusMsg("الموقع نفسه تقريباً، ما يحتاج نغيّره ✅");
+        setGeoStatusMsg("أنت بالموقع الحالي للديوانية، ما يحتاج نغيّر اللوكيشن ✅");
         return;
       }
     }
@@ -224,7 +224,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         const { latitude, longitude } = position.coords;
         if (squadInfo?.lat !== undefined && squadInfo?.lng !== undefined) {
           const diff = calculateDistanceMeters(Number(squadInfo.lat), Number(squadInfo.lng), latitude, longitude);
-          if (diff < 8) {
+          if (diff < 30) {
             setIsRegisteringGeo(false);
             setShowResetLocation(false);
             setGeoStatusMsg("أنت بالموقع الحالي للديوانية، ما يحتاج نغيّر اللوكيشن ✅");
@@ -264,12 +264,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         } else if (code === 2) {
           setGeoStatusMsg("المتصفح لم يتمكن من قراءة موقعك حالياً. جرّب مرة ثانية أو استخدم الإدخال اليدوي.");
         } else if (code === 3) {
-          setGeoStatusMsg("يبدو أنك في نفس موقع الديوانية الحالي. إذا كنت انتقلت فعلاً لمكان جديد اضغط مرة ثانية، أو استخدم الإدخال اليدوي عند الحاجة.");
+          setGeoStatusMsg(options?.changeCheck
+            ? "يبدو أنك في نفس موقع الديوانية الحالي. إذا كنت انتقلت فعلاً لمكان جديد اضغط مرة ثانية، أو استخدم الإدخال اليدوي عند الحاجة."
+            : "انتهت مهلة قراءة الموقع. جرّب مرة ثانية أو استخدم الإدخال اليدوي عند الحاجة."
+          );
         } else {
           setGeoStatusMsg("تعذر قراءة الموقع حالياً. جرّب مرة ثانية أو استخدم الإدخال اليدوي.");
         }
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: options?.changeCheck ? 6000 : 10000, maximumAge: options?.changeCheck ? 60000 : 0 }
     );
   }, [squadInfo, customerPhone, onRefresh, setSquadInfo]);
 
@@ -674,7 +677,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       const res = await fetch("/api/squad-group-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ squadId: squadInfo.id, phone: currentMemberPhone, name: customerName || guestName || "عضو", action: "open", participants: squadMembersForSplit, title: `طلب ${cleanSquadName(squadInfo.name)} المفتوح` })
+        body: JSON.stringify({ squadId: squadInfo.id, phone: currentMemberPhone, name: customerName || guestName || "عضو", action: "open", participants: squadMembersForSplit, title: `طلب الربع - ${cleanSquadName(squadInfo.name)}` })
       });
       if (res.ok) {
         try { localStorage.setItem("split_prefill_members", JSON.stringify(squadMembersForSplit)); } catch {}
@@ -806,6 +809,57 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
             </div>
           )}
 
+
+          {squadInfo && isCurrentMember && (
+            <div className="rounded-[32px] border border-stone-100 bg-white shadow-sm p-4 space-y-4 text-right font-sans" dir="rtl">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-black text-accent bg-accent/10 px-3 py-1 rounded-full inline-flex mb-2">ديوانيتك الحالية</div>
+                  <h3 className="text-xl font-black text-brand leading-tight truncate">ديوانية {cleanSquadName(squadInfo?.name)}</h3>
+                  <p className="text-[11px] font-bold text-stone-400 mt-1">{isOwner ? "أنت المعزب" : "أنت من الربع"} · {formatEnglishNumber((squadInfo?.membersList || []).length || 1)} أعضاء · {squadInfo?.lat !== undefined ? "الموقع مثبت ✅" : "الموقع يحتاج تثبيت 📍"}</p>
+                </div>
+                {unreadDiwaniyaNotifications > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setMyDiwaniyaTab("notifications")}
+                    className="shrink-0 bg-amber-50 text-amber-700 border border-amber-100 rounded-2xl px-3 py-2 text-[10px] font-black active:scale-95"
+                  >
+                    {formatEnglishNumber(unreadDiwaniyaNotifications)} تنبيه 🔔
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMyDiwaniyaTab("orders")}
+                  className="rounded-3xl bg-brand text-white p-3 min-h-[86px] shadow-md active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
+                >
+                  <span className="text-2xl">🍽️</span>
+                  <span className="text-xs font-black">اطلب للربع</span>
+                  <span className="text-[9px] font-bold text-white/60">طلب وقطية</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePrepareQatya}
+                  className="rounded-3xl bg-accent text-white p-3 min-h-[86px] shadow-md active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
+                >
+                  <span className="text-2xl">💳</span>
+                  <span className="text-xs font-black">القطية</span>
+                  <span className="text-[9px] font-bold text-white/70">جهز الأسماء</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMyDiwaniyaTab(isOwner ? "manage" : "home")}
+                  className="rounded-3xl bg-stone-50 text-brand border border-stone-100 p-3 min-h-[86px] active:scale-95 transition-all flex flex-col items-center justify-center gap-1"
+                >
+                  <span className="text-2xl">🛖</span>
+                  <span className="text-xs font-black">إدارة الديوانية</span>
+                  <span className="text-[9px] font-bold text-stone-400">الأعضاء والموقع</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {squadInfo && isCurrentMember && (
             <div className="bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm relative z-10">
@@ -948,7 +1002,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   <span className="text-[10px] font-black bg-accent/10 text-accent px-3 py-1 rounded-full">طلب الربع + قطية</span>
                   <h4 className="text-sm font-black text-brand">تنسيق طلب الربع</h4>
                 </div>
-                <p className="text-[11px] font-bold text-stone-500 leading-relaxed">جهّز طلب الربع وخلي القطيّة أسهل؛ نحفظ أسماء وأرقام الأعضاء تلقائياً لتعبئة المشاركين بسرعة.</p>
+                <p className="text-[11px] font-bold text-stone-500 leading-relaxed">اختار الأصناف براحتك، وإذا وصلت القطيّة نجهّز أسماء وأرقام الربع تلقائياً بدون إدخال متكرر.</p>
                 {activeGroupOrder ? (
                   <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-3 space-y-2">
                     <div className="flex items-center justify-between"><span className="text-[10px] font-black text-emerald-700">مفتوح الآن</span><strong className="text-xs text-brand">{activeGroupOrder.title || "طلب مفتوح"}</strong></div>

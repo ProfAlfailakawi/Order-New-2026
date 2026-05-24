@@ -1879,6 +1879,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
       status,
       paymentStatus,
       splitType,
+      splitParticipants,
+      splitPayments,
       squadId,
       squadName,
       squadTier,
@@ -1926,8 +1928,72 @@ app.get("/api/debug/order/:id", async (req, res) => {
       squadTier: squadTier || null,
     };
 
+    const cleanSplitPhone = (value: any) => String(value || "").replace(/\D/g, "").slice(-8);
+    const normalizeSplitMembers = (source: any) => {
+      if (!Array.isArray(source)) return [];
+      const map = new Map<string, any>();
+      source.forEach((member: any) => {
+        const phone = cleanSplitPhone(
+          member?.phone ||
+          member?.mobile ||
+          member?.customerPhone ||
+          member?.phoneNumber ||
+          member?.tel ||
+          member?.msisdn ||
+          member?.whatsapp ||
+          member?.contactPhone ||
+          member?.number
+        );
+        if (!phone || phone.length < 8) return;
+        const current = map.get(phone) || {};
+        map.set(phone, {
+          id: current.id || member?.id || `P-${phone}`,
+          name: String(member?.name || member?.customerName || member?.displayName || member?.fullName || current.name || "عضو").trim() || "عضو",
+          phone,
+          amount: Number(member?.amount || current.amount || 0),
+          status: String(member?.status || current.status || "pending"),
+          source: member?.source || current.source || "diwaniya_qatya",
+        });
+      });
+      return Array.from(map.values());
+    };
+
+    const collectSquadSplitMembers = (appData: any, targetSquadId: any) => {
+      if (!targetSquadId) return [];
+      const sid = String(targetSquadId);
+      const squads = Array.isArray(appData.squads) ? appData.squads : [];
+      const squad = squads.find((sq: any) => String(sq.id) === sid);
+      const sources: any[] = [];
+
+      if (squad) {
+        [squad.membersList, squad.membersData, squad.membersDetails, squad.members, squad.participants].forEach((list: any) => {
+          if (Array.isArray(list)) sources.push(...list);
+        });
+      }
+
+      (Array.isArray(appData.customers) ? appData.customers : []).forEach((c: any) => {
+        const squadIds = [c.squadId, c.squadID, c.diwaniyaId, ...(Array.isArray(c.squadIds) ? c.squadIds : [])].filter(Boolean).map(String);
+        const memberships = Array.isArray(c.diwaniyaMemberships) ? c.diwaniyaMemberships : [];
+        const hasMembership = memberships.some((m: any) => String(m?.squadId || m?.id || m?.diwaniyaId || "") === sid);
+        if (squadIds.includes(sid) || hasMembership) sources.push(c);
+      });
+
+      (Array.isArray(appData.geofenceJoinRequests) ? appData.geofenceJoinRequests : []).forEach((r: any) => {
+        if (String(r.squadId) === sid && String(r.status || "").toLowerCase() === "approved") sources.push(r);
+      });
+
+      return normalizeSplitMembers(sources);
+    };
+
     if (splitType) {
       newOrder.splitType = splitType;
+      const requestSplitMembers = normalizeSplitMembers(
+        Array.isArray(splitPayments) && splitPayments.length ? splitPayments : splitParticipants
+      );
+      if (requestSplitMembers.length > 0) {
+        newOrder.splitParticipants = requestSplitMembers;
+        newOrder.splitPayments = requestSplitMembers;
+      }
     }
 
     try {
@@ -1942,6 +2008,25 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const appData = d.data() || {};
       const orders = appData.orders || [];
       const customers = appData.customers || [];
+      const squadsForSplit = appData.squads || [];
+      const splitNotificationRecipients: any[] = [];
+      if (splitType && squadId) {
+        const squadMembers = normalizeSplitMembers([
+          ...collectSquadSplitMembers(appData, squadId),
+          ...(Array.isArray(newOrder.splitPayments) ? newOrder.splitPayments : []),
+          ...(Array.isArray(newOrder.splitParticipants) ? newOrder.splitParticipants : []),
+        ]);
+        const customerClean = cleanSplitPhone(customerPhone);
+        if (customerClean) {
+          const hasCustomer = squadMembers.some((m: any) => cleanSplitPhone(m.phone) === customerClean);
+          if (!hasCustomer) squadMembers.push({ id: `P-${customerClean}`, name: customerName || "أنت", phone: customerClean, amount: 0, status: "pending", source: "diwaniya_qatya" });
+        }
+        if (squadMembers.length > 0) {
+          newOrder.splitParticipants = squadMembers;
+          newOrder.splitPayments = squadMembers;
+          splitNotificationRecipients.push(...squadMembers.filter((m: any) => cleanSplitPhone(m.phone)));
+        }
+      }
       const products = [
         ...(appData.products || []),
         ...(appData.supplierCopies || []),
@@ -1965,6 +2050,27 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const squads = [...(current.squads || [])];
         
         orders.push(newOrder);
+
+        let diwaniyaNotifications = Array.isArray(current.diwaniyaNotifications) ? current.diwaniyaNotifications : [];
+        if (splitType && splitNotificationRecipients.length > 0) {
+          const makerPhone = cleanPhone(customerPhone);
+          diwaniyaNotifications = pushDiwaniyaNotifications(
+            diwaniyaNotifications,
+            splitNotificationRecipients
+              .filter((m: any) => cleanPhone(m.phone) && cleanPhone(m.phone) !== makerPhone)
+              .map((m: any) => ({
+                type: "qatya_request",
+                squadId: squadId || "",
+                squadName: squadName || newOrder.squadName || "",
+                toPhone: m.phone,
+                fromPhone: customerPhone,
+                fromName: customerName || "المعزب",
+                title: "عندك قطيّة من الديوانية",
+                message: `عندك قطيّة من ديوانية ${squadName || newOrder.squadName || "الربع"}. ادخل وحدد قطيتك وادفع مباشرة.`,
+                meta: { orderId: newOrder.id, url: `/split/${newOrder.id}?phone=${cleanPhone(m.phone)}&tab=payment` }
+              }))
+          );
+        }
 
         const cleanPhoneQuery = cleanPhone(customerPhone);
         let existingIndex = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanPhoneQuery);
@@ -2017,7 +2123,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
                }
            }
         }
-        return { orders, customers, squads };
+        return { orders, customers, squads, diwaniyaNotifications };
       });
 
       console.log(`[ORDER] Order ${newOrder.id} saved successfully`);
@@ -2193,16 +2299,38 @@ app.get("/api/debug/order/:id", async (req, res) => {
            let orders = [...(current.orders || [])];
            let invoices = [...(current.invoices || [])];
            
+           const upsertSplitEntry = (target: any) => {
+              const reqCleanPhone = sanitizePhone(customerMobile);
+              if (!target.splitPayments) target.splitPayments = [];
+              const existingIdx = target.splitPayments.findIndex((sp: any) => sanitizePhone(sp.phone) === reqCleanPhone && String(sp.status || "").toLowerCase() !== "paid");
+              if (existingIdx >= 0) {
+                 target.splitPayments[existingIdx] = {
+                    ...target.splitPayments[existingIdx],
+                    id: target.splitPayments[existingIdx].id || splitId,
+                    name: name || target.splitPayments[existingIdx].name || "Customer",
+                    phone: customerMobile || target.splitPayments[existingIdx].phone || "",
+                    amount: numericAmount,
+                    status: "pending",
+                    date: new Date().toISOString(),
+                 };
+              } else {
+                 target.splitPayments.push(newSplitEntry);
+              }
+              if (!target.splitParticipants) target.splitParticipants = [];
+              const participantIdx = target.splitParticipants.findIndex((sp: any) => sanitizePhone(sp.phone) === reqCleanPhone);
+              if (participantIdx >= 0) {
+                 target.splitParticipants[participantIdx] = { ...target.splitParticipants[participantIdx], amount: numericAmount, status: "pending" };
+              }
+           };
+
            let idx = orders.findIndex((o: any) => String(o.id).trim().toUpperCase() === String(orderId).trim().toUpperCase());
            if (idx !== -1) {
-              if (!orders[idx].splitPayments) orders[idx].splitPayments = [];
-              orders[idx].splitPayments.push(newSplitEntry);
+              upsertSplitEntry(orders[idx]);
               return { orders };
            } else {
               idx = invoices.findIndex((o: any) => String(o.id).trim().toUpperCase() === String(orderId).trim().toUpperCase());
               if (idx !== -1) {
-                 if (!invoices[idx].splitPayments) invoices[idx].splitPayments = [];
-                 invoices[idx].splitPayments.push(newSplitEntry);
+                 upsertSplitEntry(invoices[idx]);
                  return { invoices };
               }
            }
