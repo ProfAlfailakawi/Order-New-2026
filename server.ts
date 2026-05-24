@@ -2356,9 +2356,19 @@ app.get("/api/debug/order/:id", async (req, res) => {
           if (!hasCustomer) squadMembers.push({ id: `P-${customerClean}`, name: customerName || "أنت", phone: customerClean, amount: 0, status: "pending", source: "diwaniya_qatya" });
         }
         if (squadMembers.length > 0) {
-          newOrder.splitParticipants = squadMembers;
-          newOrder.splitPayments = squadMembers;
-          splitNotificationRecipients.push(...squadMembers.filter((m: any) => cleanSplitPhone(m.phone)));
+          const equalAmount = Number((Number(total || 0) / squadMembers.length).toFixed(3));
+          const preparedSquadMembers = squadMembers.map((m: any) => ({
+            ...m,
+            amount: Number(m.amount || 0) > 0 ? Number(m.amount) : equalAmount,
+            status: String(m.status || "pending").toLowerCase() === "paid" ? "paid" : "pending",
+            splitMode: "equal",
+            source: m.source || "diwaniya_qatya",
+          }));
+          newOrder.splitParticipants = preparedSquadMembers;
+          newOrder.splitPayments = preparedSquadMembers;
+          newOrder.splitCount = preparedSquadMembers.length;
+          newOrder.equalSplitAmount = equalAmount;
+          splitNotificationRecipients.push(...preparedSquadMembers.filter((m: any) => cleanSplitPhone(m.phone)));
         }
       }
       const products = [
