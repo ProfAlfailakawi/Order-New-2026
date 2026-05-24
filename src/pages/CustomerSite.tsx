@@ -3082,13 +3082,13 @@ export default function CustomerSite() {
         {/* Header */}
         <header
           className={cn(
-            "sticky top-0 z-40 p-4 sm:p-6 flex items-center justify-between transition-all duration-500",
+            "sticky top-0 z-40 px-4 py-4 sm:px-6 sm:py-5 flex items-start justify-between gap-3 transition-all duration-500 overflow-visible",
             isCheckout
               ? "bg-white border-b border-stone-100 shadow-sm"
               : "bg-white/70 backdrop-blur-2xl border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
           )}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-3 min-w-0 flex-1 overflow-visible">
             <div className="w-10 h-10 flex items-center justify-center p-0.5 bg-white rounded-xl shadow-sm border border-stone-100 overflow-hidden shrink-0">
               <img
                 referrerPolicy="no-referrer"
@@ -3106,8 +3106,8 @@ export default function CustomerSite() {
                 className="w-full h-full object-contain bg-white"
               />
             </div>
-            <div className="flex flex-col">
-              <h1 className="text-xl font-bold text-brand leading-none tracking-tight flex items-center gap-2">
+            <div className="flex flex-col min-w-0 flex-1 text-right overflow-visible py-1">
+              <h1 className="text-xl sm:text-2xl font-black text-brand leading-[1.45] tracking-tight flex items-center gap-2 min-w-0 whitespace-normal break-words overflow-visible">
                 {settings?.companyName ? (
                   settings.companyName
                 ) : (
@@ -3117,7 +3117,7 @@ export default function CustomerSite() {
                   </>
                 )}
               </h1>
-              <div className="flex items-center gap-1.5 mt-1">
+              <div className="flex items-center gap-x-1.5 gap-y-1 mt-2 flex-wrap leading-[1.6] min-h-[24px] overflow-visible py-1">
                 <motion.div
                   animate={
                     tannourStatus.pulse
@@ -3132,14 +3132,14 @@ export default function CustomerSite() {
                 />
                 <span
                   className={cn(
-                    "text-[10px] font-extrabold uppercase tracking-wider",
+                    "text-[11px] font-extrabold uppercase tracking-wider leading-[1.6] py-0.5",
                     tannourStatus.color,
                   )}
                 >
                   {tannourStatus.text}
                 </span>
                 <span className="text-[10px] text-stone-300 mx-1">•</span>
-                <span className="text-[10px] font-bold text-stone-400">
+                <span className="text-[11px] font-bold text-stone-400 leading-[1.6] py-0.5">
                   {goldenHourTheme.name}
                 </span>
               </div>
@@ -6041,7 +6041,7 @@ function CheckoutOverlay({
                           )}
                         </div>
                         <div className="flex items-center justify-between pt-3 border-t border-stone-50">
-                          <span className="text-[10px] font-bold text-stone-400">
+                          <span className="text-[11px] font-bold text-stone-400 leading-[1.6] py-0.5">
                             المجموع الفرعي
                           </span>
                           <span className="text-lg font-medium text-brand">

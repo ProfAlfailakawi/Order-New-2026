@@ -1142,7 +1142,30 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const squads = Array.isArray(current.squads) ? [...current.squads] : [];
         const idx = squads.findIndex((s: any) => String(s.id) === String(squadId));
         if (idx > -1) {
-          const normalizedDistance = Math.max(10, Math.min(100, Math.round(Number(geofenceDistance ?? squads[idx]?.geofenceDistance ?? 17) || 17)));
+          const settings = current.settings || current.appSettings || current.config || {};
+          const maxDistanceCandidates = [
+            settings?.maxSquadGeofenceDistance,
+            settings?.maxDiwaniyaGeofenceDistance,
+            settings?.squadGeofenceDistance,
+            settings?.diwaniyaGeofenceDistance,
+            settings?.geofenceDistance,
+            settings?.radarDistance,
+            settings?.radarGeofenceDistance,
+            settings?.squadSettings?.maxGeofenceDistance,
+            settings?.squadSettings?.geofenceDistance,
+            settings?.settings?.maxSquadGeofenceDistance,
+            settings?.settings?.maxDiwaniyaGeofenceDistance,
+            settings?.settings?.squadGeofenceDistance,
+            settings?.settings?.diwaniyaGeofenceDistance,
+            settings?.settings?.geofenceDistance,
+            settings?.settings?.radarDistance,
+            settings?.settings?.radarGeofenceDistance,
+          ];
+          const numericMaxDistances = maxDistanceCandidates.map((v: any) => Number(v)).filter((n: number) => Number.isFinite(n) && n > 0);
+          const maxAllowedDistance = Math.max(10, Math.round(numericMaxDistances.length ? Math.max(...numericMaxDistances) : 50));
+          const fallbackDistance = Number(squads[idx]?.geofenceDistance ?? squads[idx]?.location?.geofenceDistance ?? 50);
+          const requestedDistance = Number(geofenceDistance ?? fallbackDistance);
+          const normalizedDistance = Math.max(10, Math.min(maxAllowedDistance, Math.round(Number.isFinite(requestedDistance) && requestedDistance > 0 ? requestedDistance : fallbackDistance || 50)));
           squads[idx] = {
             ...squads[idx],
             lat: Number(lat),
@@ -1159,7 +1182,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         return { squads };
       });
       if (!ok) throw new Error("Failed to set squad location in database");
-      res.json({ success: true, lat, lng, geofenceDistance });
+      res.json({ success: true, lat, lng, geofenceDistance: Number(geofenceDistance) });
     } catch(e) {
       res.status(500).json({ error: String(e) });
     }
