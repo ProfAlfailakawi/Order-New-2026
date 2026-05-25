@@ -61,6 +61,34 @@ const normalizeProductSearchText = (value?: string) =>
     .replace(/[ًٌٍَُِّْـ]/g, "")
     .trim();
 
+
+const getKuwaitiLiveMenuSignal = (products: any[], cart: any[], squadInfo?: any) => {
+  const hour = new Date().getHours();
+  const day = new Date().getDay();
+  const isWeekend = day === 4 || day === 5 || day === 6;
+  const active = (products || []).filter((p: any) => p?.isActive !== false && !p?.isOutOfStock);
+  const text = (p: any) => `${p?.name || ""} ${p?.category || ""} ${p?.description || ""}`.toLowerCase();
+  const groups = {
+    breakfast: active.filter((p: any) => /ريوق|فطور|خبز|جبن|بيض|كبدة|نخي/.test(text(p))),
+    lunch: active.filter((p: any) => /مجبوس|برياني|مطبق|مربين|عيش|وليمة|لحم|دجاج/.test(text(p))),
+    diwaniya: active.filter((p: any) => /ديوانية|صينية|بوكس|وليمة|مشويات|مقبلات|ورق|محشي|ميني/.test(text(p))),
+    light: active.filter((p: any) => /خفيف|شورب|سلط|روب|مرق|هريس|جريش/.test(text(p))),
+    sweet: active.filter((p: any) => /حلو|كيك|تمر|رهش|لقيمات|كاكاو/.test(text(p))),
+  };
+  const pick = (list: any[]) => list.filter(Boolean).slice(0, 3);
+  if (squadInfo?.id && pick(groups.diwaniya).length) return { title: "طلب حق الربع؟", subtitle: "اخترنا من المنيو أشياء تناسب الديوانية بدون ما نخترع منتجات.", items: pick(groups.diwaniya), tone: "diwaniya" };
+  if (cart?.length && active.length) {
+    const cartCategories = new Set(cart.map((i: any) => normalizeCategoryName(i.category)));
+    const complement = active.filter((p: any) => !cartCategories.has(normalizeCategoryName(p.category))).slice(0, 3);
+    if (complement.length) return { title: "نكملها لك؟", subtitle: "اقتراحات من المنتجات الموجودة عندكم وتناسب اللي بالسلة.", items: complement, tone: "cart" };
+  }
+  if (hour < 11 && pick(groups.breakfast).length) return { title: "صباحك مرتب", subtitle: "منيو خفيف يناسب بداية اليوم.", items: pick(groups.breakfast), tone: "morning" };
+  if (hour >= 11 && hour < 17 && pick(groups.lunch).length) return { title: "الغدا يبي قرار سريع", subtitle: "أقرب اختيارات مشبعة من المنيو الحالي.", items: pick(groups.lunch), tone: "lunch" };
+  if (isWeekend && pick(groups.diwaniya).length) return { title: "الويكند حق اليمعة", subtitle: "اختيارات ديوانية من منتجاتكم الموجودة.", items: pick(groups.diwaniya), tone: "weekend" };
+  if (hour >= 21 && pick(groups.light).length) return { title: "شي خفيف حق آخر الليل", subtitle: "اقتراحات هادية من المنيو.", items: pick(groups.light), tone: "night" };
+  return { title: "مختار لك من المنيو", subtitle: "اقتراحات هادية حسب الوقت بدون زحمة.", items: active.slice(0, 3), tone: "default" };
+};
+
 const getSharedProductCategories = (source: any, productList: any[] = []) => {
   const configured =
     source?.productCategories ||
@@ -2351,7 +2379,7 @@ export default function CustomerSite() {
         }
       }
     } catch (e) {
-      alert("تعطل تنفيذ الطلب. جرّب مرة ثانية.");
+      alert("ما ضبطت وياي الحين، جرّب مرة ثانية.");
     } finally {
       setIsZeroClickLoading(false);
     }
@@ -3460,6 +3488,52 @@ export default function CustomerSite() {
         <main className="p-4 sm:p-6 lg:p-8 space-y-8 customer-products-zone customer-wow-menu">
 
 
+
+          {(() => {
+            const liveSignal = getKuwaitiLiveMenuSignal(products, cart, squadInfo);
+            if (!liveSignal.items.length || moodQuery.trim()) return null;
+            return (
+              <section className="rounded-[30px] border border-amber-100 bg-white/90 p-4 shadow-sm backdrop-blur-xl">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="rounded-2xl bg-brand text-white px-3 py-2 text-[10px] font-black">منيو حي</div>
+                  <div className="text-right">
+                    <h3 className="text-lg font-black text-brand">{liveSignal.title}</h3>
+                    <p className="text-xs font-bold text-stone-500 leading-5">{liveSignal.subtitle}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {liveSignal.items.map((p: any) => (
+                    <button key={p.id || p.name} onClick={() => setSelectedProduct(p)} className="rounded-2xl border border-stone-100 bg-stone-50/70 p-3 text-right active:scale-[.98] transition-all">
+                      <div className="text-sm font-black text-brand line-clamp-1">{p.name}</div>
+                      <div className="mt-1 text-[11px] font-bold text-stone-500">{Number(p.price || 0).toFixed(3)} د.ك</div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            );
+          })()}
+
+
+
+          {cart.length > 0 && (() => {
+            const liveSignal = getKuwaitiLiveMenuSignal(products, cart, squadInfo);
+            const suggestion = liveSignal.items.find((p: any) => !cart.some((c: any) => c.productId === p.id || c.name === p.name));
+            if (!suggestion) return null;
+            return (
+              <section className="rounded-[26px] border border-emerald-100 bg-emerald-50/60 p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <button onClick={() => setSelectedProduct(suggestion)} className="rounded-2xl bg-emerald-700 px-4 py-2 text-[11px] font-black text-white active:scale-95">شوفه</button>
+                  <div className="text-right">
+                    <div className="text-[10px] font-black text-emerald-700">الطلب الذكي</div>
+                    <p className="text-sm font-black text-brand">طلبك ممكن يكمل مع {suggestion.name}</p>
+                    <p className="text-[11px] font-bold text-stone-500">اقتراح من منتجات المنيو الموجودة فقط.</p>
+                  </div>
+                </div>
+              </section>
+            );
+          })()}
+
+
           {/* Best Sellers */}
           {topProducts.length > 0 && !moodQuery.trim() && (
             <section className="mb-2">
@@ -3547,7 +3621,7 @@ export default function CustomerSite() {
                       return n.includes("جريش") || n.includes("هريس") || n.includes("مرق") || n.includes("شورب") || c.includes("شورب") || n.includes("مشخول") || n.includes("عيش مشغول");
                     });
                     
-                    displayProducts = [...sickCustomSoups, ...existingComforts];
+                    displayProducts = existingComforts.length ? existingComforts : products.filter((p) => p?.isActive !== false && !p?.isOutOfStock).slice(0, 5);
                  } else if (moodFilter === "سفر") {
                     // Fast, comforting, satisfying trays that solve starving-after-travel
                     const travelCustomTrays = [
@@ -3589,7 +3663,7 @@ export default function CustomerSite() {
                       return n.includes("صينية") || n.includes("صيني") || n.includes("مجبوس") || n.includes("برياني") || n.includes("قوزي") || n.includes("ذبيح") || c.includes("الولائم") || n.includes("بشاميل");
                     });
                     
-                    displayProducts = [...travelCustomTrays, ...existingTrays];
+                    displayProducts = existingTrays.length ? existingTrays : products.filter((p) => p?.isActive !== false && !p?.isOutOfStock).slice(0, 5);
                  } else if (moodFilter === "صواني") {
                     displayProducts = displayProducts.filter(p => p.name?.includes("صيني") || p.name?.includes("صينية") || p.category?.includes("صواني") || p.name?.includes("مجبوس") || p.name?.includes("طباخ"));
                  } else if (moodFilter === "خفيف") {
@@ -3665,15 +3739,15 @@ export default function CustomerSite() {
                       <input
                         value={quickProductSearch}
                         onChange={(e) => setQuickProductSearch(e.target.value)}
-                        placeholder="بحث سريع عن منتج..."
+                        placeholder="تدور على طبق معيّن؟"
                         className="bg-transparent outline-none w-full text-sm font-bold text-brand placeholder:text-stone-400"
                       />
                     </div>
                   </div>
                   <div className="al-empty-state p-8 text-center border-2 border-dashed border-amber-100 rounded-[28px] bg-white/80">
                     <div className="al-empty-icon">🍽️</div>
-                    <strong>هالقسم هادي حالياً</strong>
-                    <span>جرّب قسم ثاني من المنيو أو ابحث عن طبقك المفضل.</span>
+                    <strong>هالقسم فاضي الحين</strong>
+                    <span>جرّب قسم ثاني أو اكتب اسم الطبق اللي تبيه.</span>
                   </div>
                 </div>
               ) : (
@@ -3684,7 +3758,7 @@ export default function CustomerSite() {
                       <input
                         value={quickProductSearch}
                         onChange={(e) => setQuickProductSearch(e.target.value)}
-                        placeholder="بحث سريع عن منتج..."
+                        placeholder="تدور على طبق معيّن؟"
                         className="bg-transparent outline-none w-full text-sm font-bold text-brand placeholder:text-stone-400"
                       />
                     </div>
@@ -4352,6 +4426,19 @@ export default function CustomerSite() {
                    </div>
 
                    <div className="flex-1 overflow-y-auto p-5 pb-8 custom-scrollbar relative z-0">
+
+                      {squadInfo?.id && (
+                        <div className="mb-4 rounded-[26px] border border-amber-200/70 bg-gradient-to-l from-amber-50 to-white p-4 text-right shadow-sm">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="rounded-2xl bg-brand px-3 py-2 text-[10px] font-black text-white">مجلس الطلب</div>
+                            <div>
+                              <div className="text-sm font-black text-brand">الديوانية مرتبة</div>
+                              <p className="mt-1 text-xs font-bold leading-5 text-stone-500">المعزب يوافق، الربع يشاركون، والاقتراحات تطلع من المنيو بدون زحمة.</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <SquadModalContent 
                         activeSquadTab={activeSquadTab}
                         squadInfo={squadInfo}
