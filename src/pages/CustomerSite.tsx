@@ -76,17 +76,17 @@ const getKuwaitiLiveMenuSignal = (products: any[], cart: any[], squadInfo?: any)
     sweet: active.filter((p: any) => /حلو|كيك|تمر|رهش|لقيمات|كاكاو/.test(text(p))),
   };
   const pick = (list: any[]) => list.filter(Boolean).slice(0, 3);
-  if (squadInfo?.id && pick(groups.diwaniya).length) return { title: "طلب حق الربع؟", subtitle: "اخترنا من المنيو أشياء تناسب الديوانية بدون ما نخترع منتجات.", items: pick(groups.diwaniya), tone: "diwaniya" };
+  if (squadInfo?.id && pick(groups.diwaniya).length) return { title: "أصناف تحشم الربع وتنزل بمحلها بالديوانية ☕", subtitle: "", items: pick(groups.diwaniya), tone: "diwaniya" };
   if (cart?.length && active.length) {
     const cartCategories = new Set(cart.map((i: any) => normalizeCategoryName(i.category)));
     const complement = active.filter((p: any) => !cartCategories.has(normalizeCategoryName(p.category))).slice(0, 3);
-    if (complement.length) return { title: "نكملها لك؟", subtitle: "اقتراحات من المنتجات الموجودة عندكم وتناسب اللي بالسلة.", items: complement, tone: "cart" };
+    if (complement.length) return { title: "أصناف تلوق وتكمّل سلتك 👌", subtitle: "", items: complement, tone: "cart" };
   }
-  if (hour < 11 && pick(groups.breakfast).length) return { title: "صباحك مرتب", subtitle: "منيو خفيف يناسب بداية اليوم.", items: pick(groups.breakfast), tone: "morning" };
-  if (hour >= 11 && hour < 17 && pick(groups.lunch).length) return { title: "الغدا يبي قرار سريع", subtitle: "أقرب اختيارات مشبعة من المنيو الحالي.", items: pick(groups.lunch), tone: "lunch" };
-  if (isWeekend && pick(groups.diwaniya).length) return { title: "الويكند حق اليمعة", subtitle: "اختيارات ديوانية من منتجاتكم الموجودة.", items: pick(groups.diwaniya), tone: "weekend" };
-  if (hour >= 21 && pick(groups.light).length) return { title: "شي خفيف حق آخر الليل", subtitle: "اقتراحات هادية من المنيو.", items: pick(groups.light), tone: "night" };
-  return { title: "مختار لك من المنيو", subtitle: "اقتراحات هادية حسب الوقت بدون زحمة.", items: active.slice(0, 3), tone: "default" };
+  if (hour < 11 && pick(groups.breakfast).length) return { title: "ريوق طيِّب يفتّح النفس بهالصبحيات 🌅", subtitle: "", items: pick(groups.breakfast), tone: "morning" };
+  if (hour >= 11 && hour < 17 && pick(groups.lunch).length) return { title: "عساه مداخيل العافية وغدا يبرد الجبد يالغالين 🍛", subtitle: "", items: pick(groups.lunch), tone: "lunch" };
+  if (isWeekend && pick(groups.diwaniya).length) return { title: "يمعة الويكند الحلوة يبي لها هالذوق اللي يونس 🪵", subtitle: "", items: pick(groups.diwaniya), tone: "weekend" };
+  if (hour >= 21 && pick(groups.light).length) return { title: "خفايف لطيفة تونس السهرة وتعدل الراس تالي الليل 🌙", subtitle: "", items: pick(groups.light), tone: "night" };
+  return { title: "من اختياراتنا اللي نحبها وتلوق حق ذوقك ✨", subtitle: "", items: active.slice(0, 3), tone: "default" };
 };
 
 const getSharedProductCategories = (source: any, productList: any[] = []) => {
@@ -1380,7 +1380,7 @@ export default function CustomerSite() {
     if (hour >= 12 && hour < 16)
       return {
         id: "noon",
-        name: "زة الظهر",
+        name: "حزة الظهر",
         bg: "bg-[#fffaf0]", // Bright sunny
         accent: "text-amber-500",
         description: "وقت المكابيس والعيوش السنعة",
@@ -3493,21 +3493,48 @@ export default function CustomerSite() {
             const liveSignal = getKuwaitiLiveMenuSignal(products, cart, squadInfo);
             if (!liveSignal.items.length || moodQuery.trim()) return null;
             return (
-              <section className="rounded-[30px] border border-amber-100 bg-white/90 p-4 shadow-sm backdrop-blur-xl">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="rounded-2xl bg-brand text-white px-3 py-2 text-[10px] font-black">منيو حي</div>
+              <section className="relative overflow-hidden rounded-[32px] border border-amber-100/70 bg-[#faf8f4]/95 p-6 shadow-sm backdrop-blur-xl">
+                {/* Subtle light glow accent */}
+                <div className="absolute top-0 left-0 w-32 h-32 bg-amber-200/10 rounded-full blur-2xl pointer-events-none" />
+
+                <div className="flex items-center justify-between gap-4 mb-5 border-b border-amber-100/30 pb-4 relative z-10">
                   <div className="text-right">
-                    <h3 className="text-lg font-black text-brand">{liveSignal.title}</h3>
-                    <p className="text-xs font-bold text-stone-500 leading-5">{liveSignal.subtitle}</p>
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-amber-200 bg-amber-50 text-[10px] sm:text-[11px] font-bold text-amber-900 mb-2">
+                      ✨ من اختياراتنا لكم
+                    </span>
+                    <h3 className="text-base sm:text-lg font-black text-brand leading-snug">{liveSignal.title}</h3>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  {liveSignal.items.map((p: any) => (
-                    <button key={p.id || p.name} onClick={() => setSelectedProduct(p)} className="rounded-2xl border border-stone-100 bg-stone-50/70 p-3 text-right active:scale-[.98] transition-all">
-                      <div className="text-sm font-black text-brand line-clamp-1">{p.name}</div>
-                      <div className="mt-1 text-[11px] font-bold text-stone-500">{Number(p.price || 0).toFixed(3)} د.ك</div>
-                    </button>
-                  ))}
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
+                  {liveSignal.items.map((p: any) => {
+                    const fallbackLogo = settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO;
+                    const imgUrl = p.imageUrl || p.image || fallbackLogo;
+                    return (
+                      <button
+                        key={p.id || p.name}
+                        onClick={() => setSelectedProduct(p)}
+                        className="group flex items-center gap-3.5 rounded-2xl border border-stone-200/40 bg-white p-3 text-right active:scale-[.98] hover:border-amber-300 hover:shadow-md transition-all duration-300"
+                      >
+                        <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-stone-50 border border-stone-100 shadow-sm">
+                          <img
+                            src={imgUrl}
+                            alt={p.name}
+                            onError={(e) => {
+                              if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO)) {
+                                e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
+                              }
+                            }}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <div className="text-xs sm:text-sm font-extrabold text-brand line-clamp-1 group-hover:text-amber-950 transition-colors duration-200">{p.name}</div>
+                          <div className="inline-flex items-center text-[11px] font-black text-amber-800 bg-amber-50/50 px-2 py-0.5 rounded-md">{Number(p.price || 0).toFixed(3)} د.ك</div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </section>
             );
@@ -3519,17 +3546,36 @@ export default function CustomerSite() {
             const liveSignal = getKuwaitiLiveMenuSignal(products, cart, squadInfo);
             const suggestion = liveSignal.items.find((p: any) => !cart.some((c: any) => c.productId === p.id || c.name === p.name));
             if (!suggestion) return null;
+            const fallbackLogo = settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO;
             return (
-              <section className="rounded-[26px] border border-emerald-100 bg-emerald-50/60 p-4 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <button onClick={() => setSelectedProduct(suggestion)} className="rounded-2xl bg-emerald-700 px-4 py-2 text-[11px] font-black text-white active:scale-95">شوفه</button>
-                  <div className="text-right">
-                    <div className="text-[10px] font-black text-emerald-700">الطلب الذكي</div>
-                    <p className="text-sm font-black text-brand">طلبك ممكن يكمل مع {suggestion.name}</p>
-                    <p className="text-[11px] font-bold text-stone-500">اقتراح من منتجات المنيو الموجودة فقط.</p>
+              <button
+                onClick={() => setSelectedProduct(suggestion)}
+                className="w-full text-right group flex items-center justify-between gap-4 rounded-3xl border border-amber-200/50 bg-[#faf8f4]/90 hover:bg-amber-50/40 p-4 shadow-sm active:scale-[.99] transition-all duration-300"
+              >
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                  <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 shadow-sm border border-amber-100 bg-stone-50">
+                    <img
+                      src={suggestion.imageUrl || suggestion.image || fallbackLogo}
+                      alt={suggestion.name}
+                      onError={(e) => {
+                        if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO)) {
+                          e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
+                        }
+                      }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="text-right min-w-0 flex-1 space-y-1">
+                    <span className="inline-flex items-center text-[9px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100/50 rounded-full px-2.5 py-0.5">توليفة تكمّل سلتك 🍲</span>
+                    <p className="text-xs sm:text-sm font-black text-brand line-clamp-1 group-hover:text-amber-950 transition-colors">
+                      وش رايك نكمّلها مع <span className="text-amber-800 font-extrabold">{suggestion.name}</span>؟
+                    </p>
                   </div>
                 </div>
-              </section>
+                <div className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center text-amber-800 group-hover:bg-amber-100 group-hover:translate-x-1 transition-all shrink-0">
+                  <span className="text-sm font-black">←</span>
+                </div>
+              </button>
             );
           })()}
 
@@ -4426,18 +4472,6 @@ export default function CustomerSite() {
                    </div>
 
                    <div className="flex-1 overflow-y-auto p-5 pb-8 custom-scrollbar relative z-0">
-
-                      {squadInfo?.id && (
-                        <div className="mb-4 rounded-[26px] border border-amber-200/70 bg-gradient-to-l from-amber-50 to-white p-4 text-right shadow-sm">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="rounded-2xl bg-brand px-3 py-2 text-[10px] font-black text-white">مجلس الطلب</div>
-                            <div>
-                              <div className="text-sm font-black text-brand">الديوانية مرتبة</div>
-                              <p className="mt-1 text-xs font-bold leading-5 text-stone-500">المعزب يوافق، الربع يشاركون، والاقتراحات تطلع من المنيو بدون زحمة.</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
 
                       <SquadModalContent 
                         activeSquadTab={activeSquadTab}
