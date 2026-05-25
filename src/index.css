@@ -2604,24 +2604,62 @@ html, body, #root {
     height:18px!important;
   }
 }
-/* Smart menu image fit: same frame size, better crop/readability for small uploaded food photos. */
+/* Smart menu image fit: keeps the frame, zooms the food out, and removes white photo edges. */
 .category-signature-card .menu-product-image,
 .menu-product-image{
   isolation:isolate;
-  background:#ffffff!important;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255,249,231,.94) 0%, rgba(245,232,199,.72) 48%, rgba(218,199,154,.34) 72%, rgba(20,53,38,.08) 100%)!important;
+  border-color:rgba(214,173,75,.20)!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.72),
+    inset 0 -16px 30px rgba(20,53,38,.045),
+    0 16px 34px rgba(26,46,34,.13)!important;
+}
+.category-signature-card .menu-product-image::after,
+.menu-product-image::after{
+  content:"";
+  position:absolute;
+  inset:8px 10px;
+  border-radius:inherit;
+  background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0));
+  pointer-events:none;
+  z-index:0;
 }
 .category-signature-card .menu-product-image .menu-product-img,
 .category-signature-card .menu-product-image img,
-.menu-product-image .menu-product-img{
-  object-fit:cover!important;
+.menu-product-image .menu-product-img,
+.menu-product-image img.orser-product-img{
+  object-fit:contain!important;
   object-position:center!important;
   padding:0!important;
-  transform:scale(1.05)!important;
-  filter:saturate(1.04) contrast(1.02)!important;
+  background:transparent!important;
+  border-radius:18px!important;
+  transform:scale(.84)!important;
+  filter:drop-shadow(0 13px 18px rgba(26,46,34,.20)) saturate(1.05) contrast(1.02)!important;
+}
+.category-signature-card .product-media-frame .menu-product-image .menu-product-img,
+.category-signature-card .product-media-frame .menu-product-image img{
+  transform:scale(.80)!important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-media-frame .menu-product-image,
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-media-frame .menu-product-img,
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-media-frame img{
+  background:transparent!important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-media-frame .menu-product-image .menu-product-img,
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal) .product-media-frame .menu-product-image img{
+  object-fit:contain!important;
+  padding:0!important;
+  transform:scale(.80)!important;
 }
 .menu-product-card:hover .menu-product-image .menu-product-img,
 .menu-product-card:hover .menu-product-image img{
-  transform:scale(1.10)!important;
+  transform:scale(.88)!important;
+}
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal):hover .product-media-frame .menu-product-image .menu-product-img,
+.category-signature-card .menu-product-card:not(.menu-product-card-horizontal):hover .product-media-frame .menu-product-image img{
+  transform:scale(.84)!important;
 }
 
 
