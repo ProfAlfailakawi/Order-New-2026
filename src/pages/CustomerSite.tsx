@@ -4506,36 +4506,6 @@ export default function CustomerSite() {
                     {radarAccuracy !== null && <div className="text-[9px] font-black text-stone-400 mt-1">دقة الموقع تقريباً: {radarAccuracy}م</div>}
                   </div>
                 </div>
-
-                {activeSquads.length > 0 && !hideMockOption && (
-                  <div className="mt-2 flex items-center gap-1">
-                    <button
-                      onClick={() => {
-                        const sqToMock = activeSquads.find((s: any) => s.lat && s.lng);
-                        if (sqToMock) {
-                          setMockLocation({
-                            lat: Number(sqToMock.lat) + 0.0001,
-                            lng: Number(sqToMock.lng) + 0.0001
-                          });
-                          setRadarStatus("ready");
-                          setRadarStatusMsg("تم تفعيل الموقع التجريبي المحاكي بجانب ديوانية قريبة للتجربة 🧪");
-                        } else {
-                          setMockLocation({ lat: 29.3759, lng: 47.9774 });
-                        }
-                      }}
-                      className="flex-1 bg-amber-50/70 hover:bg-amber-100 text-amber-700 py-1.5 px-2.5 rounded-xl text-[10px] font-black border border-amber-200/40 transition-all flex items-center justify-center gap-1"
-                    >
-                      🧪 تجربة موقع وهمي
-                    </button>
-                    <button
-                      onClick={() => setHideMockOption(true)}
-                      className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-lg transition-colors flex items-center justify-center shrink-0"
-                      title="إخفاء خيار التجربة"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
               </div>
             </motion.div>
           )}
@@ -4662,24 +4632,6 @@ export default function CustomerSite() {
                   <p className="text-[9px] font-bold text-amber-500/50 text-center pt-2">
                     سجل دخول برقمك عشان يوصلهم طلبك باسمك ورقمك!
                   </p>
-                )}
-
-                {mockLocation && (
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-2.5 flex items-center justify-between gap-2 mt-2">
-                    <button
-                      onClick={() => {
-                        setMockLocation(null);
-                        setRadarStatus("idle");
-                        setRadarStatusMsg("تم إيقاف الموقع التجريبي. اضغط لتشغيل الرادار الحقيقي.");
-                      }}
-                      className="bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold text-[9px] px-2.5 py-1 rounded-lg transition-all border border-red-500/10"
-                    >
-                      إيقاف المحاكاة 🔄
-                    </button>
-                    <span className="text-[10px] font-bold text-amber-400">
-                      🧪 رادار تجريبي محاكي نشط
-                    </span>
-                  </div>
                 )}
               </motion.div>
             )
