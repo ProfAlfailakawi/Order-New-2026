@@ -5344,7 +5344,7 @@ const ChefWhisperCard = ({
                     }
                   }}
                   alt={product.name}
-                  className="w-full h-full object-contain p-2 bg-white relative z-0"
+                  className="menu-product-img orser-product-img w-full h-full object-contain bg-transparent relative z-0"
                 />
               </div>
               <div className="flex flex-col flex-grow text-center overflow-hidden relative z-10">
@@ -5389,7 +5389,7 @@ const ChefWhisperCard = ({
                 {/* Image-first display: no white frame, just the food as the visual anchor */}
                 <div className="product-media-frame relative w-full max-w-[214px] flex flex-col items-center pt-1 pb-4">
                   {/* 2. Image */}
-                  <div className="menu-product-image relative w-[150px] h-[86px] sm:w-[168px] sm:h-[94px] flex-shrink-0 overflow-hidden flex items-center justify-center z-10 mb-2 rounded-[22px] shadow-[0_16px_38px_rgba(26,46,34,0.16)] ring-1 ring-white/80 bg-stone-100">
+                  <div className="menu-product-image relative w-[150px] h-[86px] sm:w-[168px] sm:h-[94px] flex-shrink-0 overflow-hidden flex items-center justify-center z-10 mb-2 rounded-[22px] shadow-[0_16px_38px_rgba(26,46,34,0.16)] ring-1 ring-white/80">
                     {isHot && <SizzlingSteam />}
                     <img
                       referrerPolicy="no-referrer"
@@ -5404,7 +5404,7 @@ const ChefWhisperCard = ({
                         }
                       }}
                       alt={product.name}
-                      className="menu-product-img w-full h-full object-contain p-2 bg-white relative z-0"
+                      className="menu-product-img orser-product-img w-full h-full object-contain bg-transparent relative z-0"
                     />
                   </div>
 
