@@ -715,7 +715,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
   const handlePresenceToggle = async (action: "in" | "out") => {
     if (!squadInfo?.id || !currentMemberPhone) {
-      alert("دخل رقمك أولاً عشان نعرف حضورك بالديوانية.");
+      alert("حط رقم تلفونك أول عشان نثبت حضورك بالديوانية.");
       return;
     }
     setIsPresenceLoading(true);
@@ -775,13 +775,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     const finalName = (tempJoinName || guestName || customerName || "").trim();
 
     if (!cleanCode) {
-      alert("اكتب كود الديوانية أولاً.");
+      alert("حط كود الديوانية أول.");
       return;
     }
 
     if (!cleanTempPhone || cleanTempPhone.length !== 8 || !finalName) {
       setTempCodeNeedsProfile(true);
-      alert("الكود جاهز. دش اسمك ورقمك عشان تكمل دخول الديوانية.");
+      alert("الكود مضبوط. حط اسمك ورقم تلفونك ونكمل دخولك للديوانية.");
       return;
     }
 
@@ -1207,7 +1207,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   </div>
                   {tempCodeNeedsProfile && (
                     <div className="rounded-2xl bg-white border border-brand/10 p-3 space-y-2">
-                      <div className="text-[11px] font-black text-brand text-right">دش اسمك ورقمك عشان تكمل دخول الديوانية</div>
+                      <div className="text-[11px] font-black text-brand text-right">حط اسمك ورقم تلفونك ونكمل دخولك للديوانية</div>
                       <input
                         value={tempJoinName}
                         onChange={(e)=>setTempJoinName(e.target.value)}
@@ -1688,7 +1688,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     <div className="rounded-[28px] bg-white border-2 border-accent/20 shadow-xl p-5 space-y-4 text-right">
                       <div className="space-y-1">
                         <h4 className="font-black text-brand text-lg">انضم لهذه الديوانية</h4>
-                        <p className="text-xs font-bold text-stone-500">تقدر تدخل بطريقتين: تسجل رقمك واسمك، أو تستخدم كود الضيف اللي يولّده المعزب.</p>
+                        <p className="text-xs font-bold text-stone-500">تقدر تدخل بطريقتين: تحط اسمك ورقمك، أو تستخدم كود الضيف من المعزب.</p>
                       </div>
 
                       <div className="rounded-[24px] border border-stone-100 bg-stone-50 p-4 space-y-3">
@@ -1766,7 +1766,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         </div>
                         {tempCodeNeedsProfile && (
                           <div className="rounded-2xl bg-white border border-brand/10 p-3 space-y-2">
-                            <div className="text-[11px] font-black text-brand text-right">دش اسمك ورقمك عشان تكمل دخول الديوانية</div>
+                            <div className="text-[11px] font-black text-brand text-right">حط اسمك ورقم تلفونك ونكمل دخولك للديوانية</div>
                             <input
                               value={tempJoinName}
                               onChange={(e)=>setTempJoinName(e.target.value)}
@@ -1862,7 +1862,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 </div>
                 {tempCodeNeedsProfile && (
                   <div className="grid grid-cols-1 gap-2">
-                    <div className="text-[11px] font-black text-brand text-right">دش اسمك ورقمك عشان تكمل دخول الديوانية</div>
+                    <div className="text-[11px] font-black text-brand text-right">حط اسمك ورقم تلفونك ونكمل دخولك للديوانية</div>
                     <input
                       value={tempJoinName}
                       onChange={(e)=>setTempJoinName(e.target.value)}
@@ -1879,7 +1879,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   </div>
                 )}
                 <p className="text-[10px] font-bold text-stone-400 leading-relaxed">
-                  اكتب الكود، وإذا ما كنت مسجل بنطلب اسمك ورقمك لإكمال الدخول.
+                  اكتب الكود، وإذا مو مسجل بنطلب اسمك ورقم تلفونك ونكمل دخولك.
                 </p>
               </div>
 
