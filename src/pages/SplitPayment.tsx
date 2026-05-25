@@ -45,6 +45,14 @@ const isDiwaniyaQatyaOrder = (order: any): boolean => {
   );
 };
 
+const formatToDisplayOrderId = (orderId: string | undefined | null) => {
+  const clean = String(orderId || "").trim().toUpperCase();
+  if (!clean) return "ORD-0000";
+  const stripped = clean.replace(/^(ORD|INV|REF)[-\s#]*/ig, "").replace(/[^A-Z0-9]/ig, "");
+  const last4 = stripped.slice(-4);
+  return last4 ? `ORD-${last4}` : `ORD-${clean.slice(-4) || "0000"}`;
+};
+
 export default function SplitPayment() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -448,7 +456,7 @@ export default function SplitPayment() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50 gap-4">
         <span className="animate-spin text-4xl">⏳</span>
         <p className="text-stone-500 font-bold">نحمّل صفحة القطيّة...</p>
-        <p className="text-stone-400 text-xs">رقم الطلب: {id || "غير متوفر"}</p>
+        <p className="text-stone-400 text-xs">رقم الطلب: {id ? formatToDisplayOrderId(id) : "غير متوفر"}</p>
       </div>
     );
   }

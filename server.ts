@@ -8,6 +8,7 @@ import fs from "fs";
 import { initializeApp } from "firebase/app";
 import admin from "firebase-admin";
 import { getMessaging } from "firebase-admin/messaging";
+import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
 import {
   initializeFirestore,
   setLogLevel,
@@ -72,11 +73,13 @@ const db = initializeFirestore(
 );
 
 let adminMessaging: ReturnType<typeof getMessaging> | null = null;
+let adminDb: ReturnType<typeof getAdminFirestore> | null = null;
 try {
   const adminApp = admin.apps.length
     ? admin.app()
     : admin.initializeApp({ projectId: firebaseConfig.projectId });
   adminMessaging = getMessaging(adminApp);
+  adminDb = getAdminFirestore(adminApp, firebaseConfig.firestoreDatabaseId || "(default)");
 } catch (error: any) {
   console.warn("[DIWANIYA_PUSH] Firebase Admin messaging disabled:", error?.message || String(error));
 }
@@ -185,9 +188,144 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
   }
 }
 
+async function sendAdminPushDirectOnce(input: {
+  eventId: string;
+  title: string;
+  body: string;
+  alertType: string;
+  orderId?: string;
+  invoiceId?: string;
+  url?: string;
+}) {
+  if (!adminMessaging || !adminDb || !input?.eventId) {
+    return { success: false, skipped: true, reason: "admin-push-not-ready" };
+  }
+
+  const eventRef = adminDb.collection("pushEvents").doc(String(input.eventId));
+  try {
+    await eventRef.create({
+      eventId: String(input.eventId),
+      source: "order-server-direct-push",
+      status: "claimed",
+      alertType: input.alertType,
+      orderId: input.orderId || null,
+      invoiceId: input.invoiceId || null,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (error: any) {
+    const msg = String(error?.code || error?.message || "");
+    if (msg.includes("already-exists") || msg.includes("ALREADY_EXISTS") || msg.includes("6")) {
+      return { success: true, skipped: true, reason: "already-sent-or-claimed" };
+    }
+    throw error;
+  }
+
+  const snap = await adminDb.collection("pushTokens").where("active", "==", true).get();
+  const tokens = snap.docs
+    .map((doc: any) => String((doc.data() || {}).token || ""))
+    .filter((token: string) => token.length > 50 && /^[\x20-\x7E]+$/.test(token));
+
+  if (tokens.length === 0) {
+    await eventRef.set({
+      status: "no_tokens",
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    return { success: false, tokensCount: 0, reason: "no-active-tokens" };
+  }
+
+  const url = input.url || (
+    input.invoiceId
+      ? `https://admin.alturathkw.shop/?invoice=${encodeURIComponent(input.invoiceId)}`
+      : `https://admin.alturathkw.shop/?order=${encodeURIComponent(input.orderId || "")}`
+  );
+
+  const response = await adminMessaging.sendEachForMulticast({
+    tokens: tokens.slice(0, 500),
+    notification: {
+      title: input.title,
+      body: input.body,
+    },
+    data: {
+      type: "smart_alert",
+      alertType: input.alertType,
+      eventId: input.eventId,
+      notificationTag: input.eventId,
+      url,
+      click_action: url,
+      title: input.title,
+      body: input.body,
+      orderId: input.orderId || "",
+      invoiceId: input.invoiceId || "",
+    },
+    webpush: {
+      headers: {
+        Urgency: "high",
+        TTL: "1800",
+      },
+      fcmOptions: {
+        link: url,
+      },
+      notification: {
+        title: input.title,
+        body: input.body,
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        tag: input.eventId,
+        renotify: false,
+        requireInteraction: true,
+        data: {
+          url,
+          eventId: input.eventId,
+          notificationTag: input.eventId,
+          alertType: input.alertType,
+        },
+      },
+    },
+  });
+
+  if (response.failureCount > 0) {
+    const batch = adminDb.batch();
+    let changed = 0;
+    response.responses.forEach((resp: any, idx: number) => {
+      if (!resp.success) {
+        const code = resp.error?.code;
+        if (
+          code === "messaging/registration-token-not-registered" ||
+          code === "messaging/invalid-registration-token" ||
+          code === "messaging/invalid-argument"
+        ) {
+          batch.update(adminDb!.collection("pushTokens").doc(tokens[idx]), {
+            active: false,
+            disabledAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+          changed += 1;
+        }
+      }
+    });
+    if (changed > 0) await batch.commit();
+  }
+
+  const result = {
+    success: true,
+    tokensCount: tokens.length,
+    successCount: response.successCount,
+    failureCount: response.failureCount,
+  };
+
+  await eventRef.set({
+    status: response.successCount > 0 ? "sent" : "send_failed",
+    result,
+    sentAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  return result;
+}
+
 async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: boolean, providerData: any) {
   console.log(`[PAYMENT_UPDATE] Processing Order:${orderId} Split:${splitId} Success:${isSuccess}`);
   const docRef = doc(db, "appData", "shared_company_data");
+  const directPushes: any[] = [];
   
   try {
     await runTransaction(db, async (transaction) => {
@@ -258,6 +396,13 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
                 orders[oIdx].status = "تم الدفع وجاري التوصيل";
                 orders[oIdx].paymentStatus = "paid";
                 orders[oIdx].paidAt = new Date().toISOString();
+                directPushes.push({
+                  eventId: `safe-worker-qatia-completed-${orders[oIdx].id}`,
+                  title: "✅ اكتملت القطية",
+                  body: `اكتملت القطية للطلب ${orders[oIdx].id} — تم الدفع وجاري التوصيل${Number(orders[oIdx].total) ? ` — القيمة ${Number(orders[oIdx].total).toFixed(3)} د.ك` : ""}`,
+                  alertType: "qatia_completed",
+                  orderId: orders[oIdx].id,
+                });
                 
                 // Distribute points ONLY when fully paid
                 orders[oIdx].splitPayments.filter((s: any) => s.status === "paid").forEach((p: any) => {
@@ -286,6 +431,13 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
               orders[oIdx].paymentStatus = "paid";
               orders[oIdx].paidAt = new Date().toISOString();
               orders[oIdx].transactionId = providerData?.reference?.id || providerData?.TrackID || "upayments_auth";
+              directPushes.push({
+                eventId: `safe-worker-payment-paid-${orders[oIdx].id}`,
+                title: "✅ تم دفع طلب",
+                body: `تم دفع الطلب ${orders[oIdx].id}${Number(orders[oIdx].total) ? ` — القيمة ${Number(orders[oIdx].total).toFixed(3)} د.ك` : ""}`,
+                alertType: "payment_paid",
+                orderId: orders[oIdx].id,
+              });
               
               // Loyalty points
               const cPhone = cleanPhone(orders[oIdx].customerPhone);
@@ -303,6 +455,13 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
           } else if (currentStatus === "جديد" || currentStatus === "بانتظار الدفع") {
              orders[oIdx].status = "فشل في عملية الدفع";
              orders[oIdx].paymentStatus = "failed";
+             directPushes.push({
+               eventId: `safe-worker-payment-failed-${orders[oIdx].id}`,
+               title: "❌ فشل دفع طلب",
+               body: `فشل دفع الطلب ${orders[oIdx].id}${Number(orders[oIdx].total) ? ` — القيمة ${Number(orders[oIdx].total).toFixed(3)} د.ك` : ""}`,
+               alertType: "payment_failed",
+               orderId: orders[oIdx].id,
+             });
              updated = true;
           }
         }
@@ -315,10 +474,24 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
             inv.status = "تم الدفع وجاري التوصيل";
             inv.paymentStatus = "paid";
             inv.paidAt = new Date().toISOString();
+            directPushes.push({
+              eventId: `safe-worker-invoice-paid-${inv.id}`,
+              title: "✅ تم دفع فاتورة",
+              body: `تم دفع الفاتورة ${inv.id}${Number(inv.totalAmount ?? inv.total ?? inv.amount) ? ` — القيمة ${Number(inv.totalAmount ?? inv.total ?? inv.amount).toFixed(3)} د.ك` : ""}`,
+              alertType: "invoice_paid",
+              invoiceId: inv.id,
+            });
             updated = true;
           } else if (!isSuccess && (inv.status === "جديد" || inv.status === "بانتظار الدفع")) {
             inv.status = "فشل في عملية الدفع";
             inv.paymentStatus = "failed";
+            directPushes.push({
+              eventId: `safe-worker-invoice-failed-${inv.id}`,
+              title: "❌ فشلت عملية الدفع",
+              body: `فشلت عملية الدفع للفاتورة ${inv.id}${Number(inv.totalAmount ?? inv.total ?? inv.amount) ? ` — القيمة ${Number(inv.totalAmount ?? inv.total ?? inv.amount).toFixed(3)} د.ك` : ""}`,
+              alertType: "invoice_payment_failed",
+              invoiceId: inv.id,
+            });
             updated = true;
           }
         }
@@ -328,6 +501,14 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
         transaction.update(docRef, { orders, invoices, customers });
       }
     });
+    for (const push of directPushes) {
+      try {
+        const result = await sendAdminPushDirectOnce(push);
+        console.log(`[PAYMENT_UPDATE] Direct admin push ${push.eventId}:`, JSON.stringify(result));
+      } catch (pushError: any) {
+        console.warn(`[PAYMENT_UPDATE] Direct admin push failed ${push.eventId}:`, pushError?.message || String(pushError));
+      }
+    }
     console.log(`[PAYMENT_UPDATE] Successfully processed Order:${orderId}`);
   } catch (err) {
     console.error(`[PAYMENT_UPDATE] Concurrency error or logical failure for Order:${orderId}:`, err);
@@ -673,10 +854,21 @@ app.get("/api/debug/order/:id", async (req, res) => {
         }
         if (!match && order_id) {
           let qid = String(order_id).trim().toUpperCase();
+          
+          let last4Match = "";
+          if (qid.startsWith("ORD-") && qid.length >= 7) {
+            last4Match = qid.replace("ORD-", "");
+          } else if (qid.length === 4) {
+            last4Match = qid;
+          }
+
           match =
             String(item.id).toUpperCase() === qid ||
             String(item.linkedInvoiceId).toUpperCase() === qid ||
-            String(item.invoiceId).toUpperCase() === qid;
+            String(item.invoiceId).toUpperCase() === qid ||
+            (!!last4Match && String(item.id).toUpperCase().endsWith(last4Match)) ||
+            (!!last4Match && item.invoiceId && String(item.invoiceId).toUpperCase().endsWith(last4Match)) ||
+            (!!last4Match && item.linkedInvoiceId && String(item.linkedInvoiceId).toUpperCase().endsWith(last4Match));
 
           if (!match && qid.includes("-S-")) {
             const base = qid.split("-S-")[0];
@@ -2166,7 +2358,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     if (!order?.id) return;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2500);
+    const timeout = setTimeout(() => controller.abort(), 8000);
 
     try {
       const response = await fetch(ADMIN_PUSH_ORDER_CREATED_URL, {
@@ -2189,6 +2381,19 @@ app.get("/api/debug/order/:id", async (req, res) => {
     } finally {
       clearTimeout(timeout);
     }
+  }
+
+  function scheduleAdminOrderCreatedPush(order: any) {
+    void nudgeAdminOrderCreatedPush(order);
+
+    const pendingRetryMs = Math.max(
+      30000,
+      Math.min(10 * 60 * 1000, Number(process.env.ADMIN_PENDING_PUSH_RETRY_MS || 125000))
+    );
+
+    setTimeout(() => {
+      void nudgeAdminOrderCreatedPush(order);
+    }, pendingRetryMs);
   }
 
   // 7. Orders Submission
@@ -2488,7 +2693,16 @@ app.get("/api/debug/order/:id", async (req, res) => {
       });
 
       console.log(`[ORDER] Order ${newOrder.id} saved successfully`);
-      void nudgeAdminOrderCreatedPush(newOrder);
+      scheduleAdminOrderCreatedPush(newOrder);
+      if (newOrder.paymentStatus === "paid" || String(newOrder.status || "").startsWith("تم الدفع")) {
+        void sendAdminPushDirectOnce({
+          eventId: `safe-worker-payment-paid-${newOrder.id}`,
+          title: "✅ تم دفع طلب",
+          body: `تم دفع الطلب ${newOrder.id}${Number(newOrder.total) ? ` — القيمة ${Number(newOrder.total).toFixed(3)} د.ك` : ""}`,
+          alertType: "payment_paid",
+          orderId: newOrder.id,
+        });
+      }
       if (isDiwaniyaQatya && qatyaExternalPushPhones.length > 0) {
         void sendDiwaniyaExternalPush({
           toPhones: qatyaExternalPushPhones,

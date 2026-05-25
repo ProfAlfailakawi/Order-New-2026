@@ -83,9 +83,11 @@ const getFirstName = (name?: string) => {
 };
 
 const getOrderReference = (order: any) => {
-  const raw = String(order?.invoiceId || order?.id || order?.displayId || "").trim();
-  if (!raw) return "#0000";
-  return raw.startsWith("#") ? raw : `#${raw}`;
+  const raw = String(order?.invoiceId || order?.id || order?.displayId || "").trim().toUpperCase();
+  if (!raw) return "ORD-0000";
+  const stripped = raw.replace(/^(ORD|INV|REF)[-\s#]*/ig, "").replace(/[^A-Z0-9]/ig, "");
+  const last4 = stripped.slice(-4);
+  return last4 ? `ORD-${last4}` : `ORD-${raw.slice(-4) || "0000"}`;
 };
 
 const getSafeSplitPayments = (order: any): any[] => {
@@ -1066,7 +1068,7 @@ export default function OrderPage() {
                             رقم الطلب
                           </span>
                           <span className="text-xs font-extrabold text-brand bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-100">
-                            #{(order.id || "").toUpperCase()}
+                            {getOrderReference(order)}
                           </span>
                           {(order.paymentStatus === "paid" ||
                             (order.status || "").startsWith("تم الدفع") ||
@@ -1207,7 +1209,7 @@ export default function OrderPage() {
                           )}
                       </h3>
                       <p className="text-stone-400 text-xs font-medium uppercase tracking-widest mt-1">
-                        ORDER {getOrderReference(selectedOrder).toUpperCase()}
+                        {getOrderReference(selectedOrder)}
                       </p>
                     </div>
                   </div>
