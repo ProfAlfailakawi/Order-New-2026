@@ -104,13 +104,13 @@ const playSynthSound = (type: "clink" | "pour" | "flame") => {
 // Standard Kuwaiti cultural messages to shout / express inside the Diwaniyah
 const SADU_PHRASES = [
   "يا دله صبي باليمين وفكي العـوق! ☕",
-  "يا هلا بملفى الربع وسفير الدوانية! 👑",
+  "يا هلا بملفى الربع ونورت الديوانية! 👑",
   "تقهو يا بعد حيي وخلك ريلاكس! ✨",
   "استكانة شاي خدران بالنعناع تعدل الراس! 🌿",
-  "الديوانية عامرة بأهلها والربع كلهم! ❤️",
+  "الديوانية عامرة فيكم وبالربع كلهم! ❤️",
   "أكرمكم الله وعاشت كويت التراث! 🇰🇼",
   "يا معود صب شاي سنقيل حار! ☕",
-  "الدلة تدور والفنجان رنان! 🔔"
+  "الدلة تدور والفنجان حاضر! 🔔"
 ];
 
 // Determine Cup representation model based on member points/tier
@@ -502,7 +502,7 @@ export function SaduPresenceRug({
                     </div>
                     {wobbling && (
                       <div className={cn("mt-1 text-[8px] font-black rounded-lg px-2 py-1 leading-snug truncate", isMe ? "bg-white/35 text-stone-950" : "bg-amber-400/10 text-amber-300")}>
-                        {entity.wobbleMsg || "يا هلا بالربع!"}
+                        {entity.wobbleMsg || "يا هلا والله بالربع!"}
                       </div>
                     )}
                   </button>

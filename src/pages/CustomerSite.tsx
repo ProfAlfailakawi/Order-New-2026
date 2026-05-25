@@ -649,7 +649,7 @@ export default function CustomerSite() {
   const [ownerJoinDecisionLoading, setOwnerJoinDecisionLoading] = useState<Record<string, boolean>>({});
   const [radarStatus, setRadarStatus] = useState<"idle" | "checking" | "ready" | "denied" | "weak" | "unsupported" | "empty">("idle");
   const [showRadarInstructionModal, setShowRadarInstructionModal] = useState(false);
-  const [radarStatusMsg, setRadarStatusMsg] = useState("فعّل رادار الديوانية عشان تظهر لك الدواوين القريبة مثل قبل.");
+  const [radarStatusMsg, setRadarStatusMsg] = useState("الرادار اختياري؛ شغّله بس إذا تبي ندور لك ديوانيات قريبة.");
   const [radarAccuracy, setRadarAccuracy] = useState<number | null>(null);
   const [radarDismissedList, setRadarDismissedList] = useState<string[]>(() => {
      try {
@@ -715,7 +715,7 @@ export default function CustomerSite() {
        return;
      }
      setRadarStatus("checking");
-     setRadarStatusMsg("اسمح بالموقع عشان نلقط لك الديوانيات القريبة...");
+     setRadarStatusMsg("نطلب موقعك مرة وحدة عشان نقرّب لك الديوانيات القريبة.");
      setRadarDismissedList([]);
      setIsNearbyRadarPanelCollapsed(false);
      try { localStorage.removeItem("radar_dismissed_squads"); } catch(e) {}
@@ -726,7 +726,7 @@ export default function CustomerSite() {
          setRadarAccuracy(Math.round(accuracy));
          if (accuracy > 600) {
            setRadarStatus("weak");
-           setRadarStatusMsg("الموقع وصلنا لكن الإشارة ضعيفة. يفضل الاقتراب من الديوانية أو تشغيل الـ GPS دقة عالية.");
+           setRadarStatusMsg("الموقع طالع تقريبي من الجهاز، فبننتظر دقة أفضل قبل لا نحكم إنك بعيد عن الديوانية.");
          } else {
            setRadarStatus("ready");
            setRadarStatusMsg("الرادار شغال. إذا فيه ديوانية قريبة راح تظهر لك مباشرة.");
@@ -734,7 +734,7 @@ export default function CustomerSite() {
        },
        (err) => {
          setRadarStatus(err.code === 1 ? "denied" : "idle");
-         setRadarStatusMsg(err.code === 1 ? "الموقع مو مفعّل. فعّله من إعدادات المتصفح وبعدين شغّل الرادار." : "الرادار ما اشتغل الحين. جرّب مرة ثانية.");
+         setRadarStatusMsg(err.code === 1 ? "الموقع مقفّل من المتصفح. فعّله إذا تبي الرادار يطلع لك الدواوين القريبة." : "الرادار ما اشتغل الحين. جرّب تحديث الموقع مرة ثانية.");
          if (err.code === 1) {
            setShowRadarInstructionModal(true);
          }
@@ -752,8 +752,9 @@ export default function CustomerSite() {
        try {
          if (navigator.permissions && (navigator as any).permissions?.query) {
            const permission = await (navigator as any).permissions.query({ name: "geolocation" as PermissionName });
-           if (permission.state === "prompt" && radarStatus === "idle") {
-             refreshRadarOnce();
+           if (permission.state === "granted" && radarStatus === "idle") {
+             setRadarStatus("ready");
+             setRadarStatusMsg("الرادار جاهز. اضغط تحديث الموقع إذا تبي نطلع لك الدواوين القريبة.");
            }
          }
        } catch(e) {
@@ -808,7 +809,7 @@ export default function CustomerSite() {
      setRadarDismissedList([]);
      setRadarSuccessMap({});
      setRadarStatus("idle");
-     setRadarStatusMsg("سجل دخول أو فعّل الرادار لاكتشاف الديوانيات القريبة.");
+     setRadarStatusMsg("سجل دخولك أو شغّل الرادار إذا تبي نطلع لك الدواوين القريبة.");
      try {
        localStorage.removeItem("customer_phone_track");
        localStorage.removeItem("squadId");
@@ -901,12 +902,12 @@ export default function CustomerSite() {
        setRadarAccuracy(Math.round(accuracy));
        if (accuracy > 600) {
          setRadarStatus("weak");
-       setRadarStatusMsg("الموقع مو دقيق كفاية الحين، فما نبي نطلع لك ديوانيات بالغلط.");
+       setRadarStatusMsg("الموقع طالع تقريبي حيل، فما نبي نقول إنك بعيد أو قريب بالغلط.");
          setRadarNearbySquads([]);
          return;
        }
        setRadarStatus("ready");
-       setRadarStatusMsg(`الرادار شغال حسب مسافة كل ديوانية بحد أقصى ${getSquadGeofenceDistance(settings)}م. إذا قربت، تظهر لك بطاقة الدخول أو التبديل.`);
+       setRadarStatusMsg(`الرادار شغال. إذا كنت قريب من ديوانية، بنطلع لك بطاقة الدخول أو التبديل.`);
 
        const nearby: any[] = [];
 
@@ -945,7 +946,7 @@ export default function CustomerSite() {
        (err) => {
          console.warn("Geofence watchPosition error: ", err);
          setRadarStatus(err.code === 1 ? "denied" : "idle");
-       setRadarStatusMsg(err.code === 1 ? "الموقع مو مفعّل. فعّله من إعدادات المتصفح وبعدين شغّل الرادار." : "الرادار ما اشتغل الحين. اضغط تشغيل الرادار وجرب مرة ثانية.");
+       setRadarStatusMsg(err.code === 1 ? "الموقع مقفّل من المتصفح. فعّله إذا تبي الرادار يطلع لك الدواوين القريبة." : "الرادار ما اشتغل الحين. اضغط تشغيل الرادار وجرب مرة ثانية.");
        },
        { enableHighAccuracy: true, timeout: 20050, maximumAge: 10000 }
      );
@@ -1193,7 +1194,7 @@ export default function CustomerSite() {
        if (res.ok) {
           const data = await res.json().catch(() => ({}));
           if (data?.pendingApproval) {
-            alert("تم إرسال طلب الدخول للمعزب. راح تدخل الديوانية بعد الموافقة.");
+            alert("دزينا طلبك للمعزب. إذا وافق تدش الديوانية على طول.");
             setIsJoiningSquad(false);
           } else {
             setCustomerPhone(guestPhone);
@@ -4475,7 +4476,7 @@ export default function CustomerSite() {
 
         {/* حالة رادار الديوانية وتشغيل اللوكيشن بوضوح */}
         <AnimatePresence>
-          {!isCheckout && radarNearbySquads.length === 0 && radarStatus !== "empty" && radarStatus !== "ready" && (
+          {!isCheckout && radarNearbySquads.length === 0 && radarStatus !== "idle" && radarStatus !== "empty" && radarStatus !== "ready" && (
             <motion.div
               initial={{ opacity: 0, y: 80, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -4492,11 +4493,11 @@ export default function CustomerSite() {
                     onClick={refreshRadarOnce}
                     className="bg-brand text-white rounded-2xl px-4 py-2 text-[11px] font-black active:scale-95 shrink-0"
                   >
-                    {radarStatus === "checking" ? "نحاول..." : "تشغيل الرادار"}
+                    {radarStatus === "checking" ? "نحاول..." : radarStatus === "weak" ? "تحديث الموقع" : "تشغيل الرادار"}
                   </button>
                   <div>
                     <div className="text-xs font-black">
-                      {radarStatus === "ready" ? "الرادار شغال ✅" : radarStatus === "denied" ? "الرادار يحتاج سماح ⚠️" : radarStatus === "weak" ? "الموقع غير دقيق ⚠️" : "رادار الديوانية"}
+                      {radarStatus === "ready" ? "الرادار شغال ✅" : radarStatus === "denied" ? "الرادار يحتاج إذن الموقع ⚠️" : radarStatus === "weak" ? "الموقع تقريبي ⚠️" : "رادار الديوانية"}
                     </div>
                     <div className="text-[10px] font-bold text-stone-500 mt-0.5 leading-relaxed">
                       {radarStatusMsg}
@@ -4509,7 +4510,7 @@ export default function CustomerSite() {
                         </button>
                       )}
                     </div>
-                    {radarAccuracy !== null && <div className="text-[9px] font-black text-stone-400 mt-1">دقة الموقع تقريباً: {radarAccuracy}م</div>}
+                    {radarAccuracy !== null && <div className="text-[9px] font-black text-stone-400 mt-1">دقة الموقع من الجهاز: {radarAccuracy}م</div>}
                   </div>
                 </div>
               </div>
@@ -4565,9 +4566,9 @@ export default function CustomerSite() {
                     <X className="w-4 h-4" />
                   </button>
                   <div className="flex-1">
-                    <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار التراث الجغرافي 📡</span>
+                    <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار الديوانية 📡</span>
                     <h4 className="font-black text-sm mt-2 text-amber-100">
-                      رصد ديوانيات الربع حولك! 📍
+                      لقطنا دواوين قريبة منك 📍
                     </h4>
                   </div>
                   <div className="relative flex h-3 w-3 mt-1.5 shrink-0">
@@ -4577,7 +4578,7 @@ export default function CustomerSite() {
                 </div>
 
                 <p className="text-[11px] font-bold text-slate-300 leading-normal">
-                  لقطنا ديوانية قريبة منك 👀 إذا أنت عضو فيها بدّل لها، وإذا مو عضو اطلب دخول والمعزب يقرر.
+                  إذا هذي ديوانيتك بدّل لها، وإذا مو عضو دز طلب والمعزب يوافق عليك.
                 </p>
 
                 <div className="space-y-3">
@@ -4599,7 +4600,7 @@ export default function CustomerSite() {
 
                         {isSuccess ? (
                           <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-1.5 px-3 rounded-xl text-[10px] font-black text-center animate-pulse">
-                            تم إرسال طلب الانضمام! بانتظار موافقة صاحب الديوانية 📡
+                            دزينا طلبك للمعزب! ناطرين موافقته 📡
                           </div>
                         ) : (
                           <div className="flex gap-2 justify-end mt-1 flex-wrap">
@@ -4624,7 +4625,7 @@ export default function CustomerSite() {
                                 disabled={isLoading}
                                 className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
                               >
-                                {isLoading ? "ندز الطلب..." : "طلب دخول للمعزب 📡"}
+                                {isLoading ? "ندز الطلب..." : "دز طلب للمعزب 📡"}
                               </button>
                             )}
                           </div>
@@ -4636,7 +4637,7 @@ export default function CustomerSite() {
 
                 {!customerPhone && (
                   <p className="text-[9px] font-bold text-amber-500/50 text-center pt-2">
-                    سجل دخول برقمك عشان يوصلهم طلبك باسمك ورقمك!
+                    سجل رقمك عشان يوصل طلبك للمعزب باسمك ورقمك!
                   </p>
                 )}
               </motion.div>
@@ -4903,7 +4904,7 @@ export default function CustomerSite() {
                     <X className="w-4 h-4" />
                   </button>
                   <div className="flex-1">
-                    <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار التراث الجغرافي 📡</span>
+                    <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار الديوانية 📡</span>
                     <h4 className="font-black text-sm mt-2 text-amber-100">وصل طلب انضمام للمعزب</h4>
                     <p className="text-[10px] font-bold text-slate-400 mt-1">تقدر تقبل أو ترفض الطلب من هنا حتى وأنت تتصفح المنيو.</p>
                   </div>
@@ -5223,8 +5224,7 @@ const ChefWhisperCard = ({
 
   const fallbackLogo =
     settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO;
-  const defaultProductImage = "data:image/svg+xml;utf8," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 420'><defs><linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#fff7ed'/><stop offset='1' stop-color='#f7e7c7'/></linearGradient><radialGradient id='plate' cx='50%' cy='44%' r='48%'><stop offset='0' stop-color='#ffffff'/><stop offset='1' stop-color='#f3eadc'/></radialGradient></defs><rect width='640' height='420' rx='42' fill='url(#bg)'/><circle cx='108' cy='86' r='76' fill='#d4af37' opacity='.16'/><circle cx='540' cy='335' r='98' fill='#1f5137' opacity='.10'/><ellipse cx='320' cy='224' rx='210' ry='124' fill='url(#plate)'/><ellipse cx='320' cy='224' rx='155' ry='82' fill='#d6a84b'/><path d='M190 220c48-54 206-70 278 0-52 58-218 63-278 0Z' fill='#ddb75f'/><circle cx='272' cy='210' r='34' fill='#9f3528'/><circle cx='383' cy='246' r='42' fill='#1f5137'/><path d='M176 320c78 32 212 38 292 0' fill='none' stroke='#b88937' stroke-width='10' stroke-linecap='round' opacity='.35'/><text x='320' y='377' text-anchor='middle' font-family='Arial, sans-serif' font-size='26' font-weight='900' fill='#1f5137'>صورة المنتج</text></svg>`);
-  const imgUrl = product.imageUrl || product.image || defaultProductImage || fallbackLogo;
+  const imgUrl = product.imageUrl || product.image || fallbackLogo;
 
   return (
     <div
