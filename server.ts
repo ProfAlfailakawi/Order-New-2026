@@ -554,7 +554,7 @@ function makeDiwaniyaNotification(input: any) {
     toPhone: cleanPhone(input.toPhone || ""),
     fromPhone: cleanPhone(input.fromPhone || ""),
     fromName: input.fromName || "",
-    title: input.title || "تنبيه ديوانية",
+    title: input.title || "تنبيه من الديوانية",
     message: input.message || "",
     meta: input.meta || {},
     createdAt: now,
@@ -1588,8 +1588,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
           toPhone: squad?.phone || "",
           fromPhone: phone,
           fromName: name || "عضو قريب",
-          title: "طلب دخول جديد للديوانية",
-          message: `${name || "أحد الربع"} قريب من ديوانيتكم ويطلب دخول.`,
+          title: "واحد قريب من ديوانيتكم",
+          message: `${name || "أحد الربع"} ناطر موافقة المعزب.`,
           meta: { distance: Number(distance || 0) }
         });
         return { geofenceJoinRequests: filtered, diwaniyaNotifications };
@@ -1602,8 +1602,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
         void sendDiwaniyaExternalPush({
           toPhones: [ownerPhone],
           type: "join_request",
-          title: "وصل طلب دخول للديوانية",
-          body: `${name || "أحد الربع"} قريب من ديوانيتك ويطلب موافقة المعزب.`,
+          title: "طلب دخول قريب",
+          body: `${name || "أحد الربع"} عند الديوانية وناطر موافقتك.`,
           squadId: String(squadId),
           url: "/?showSquads=true"
         });
@@ -1682,10 +1682,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
           }
         }
 
-        const notifyTitle = approved ? "تم قبولك في الديوانية" : "تم رفض طلب الدخول";
+        const notifyTitle = approved ? "المعزب قبلك" : "طلبك ما تم";
         const notifyMessage = approved
-          ? `تم قبولك رسمياً في ديوانية ${joinedSquad?.name || "ربعك"}.`
-          : `المعزب راجع طلبك لديوانية ${requestObj?.squadName || "الربع"} ولم يتم قبوله حالياً.`;
+          ? `دش ديوانية ${joinedSquad?.name || "ربعك"}، حياك.`
+          : `المعزب ما قبل طلب دخول ديوانية ${requestObj?.squadName || "الربع"} الحين.`;
         const diwaniyaNotifications = pushDiwaniyaNotification(current.diwaniyaNotifications || [], {
           type: approved ? "join_approved" : "join_rejected",
           squadId,
@@ -1756,7 +1756,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
             fromPhone: phone,
             fromName: name || "عضو",
             title: "واحد من الربع وصل",
-            message: `${name || "أحد الربع"} موجود الآن في ديوانية ${squad?.name || "الربع"}.`
+            message: `${name || "أحد الربع"} موجود بديوانية ${squad?.name || "الربع"}.`
           })))
         : (current.diwaniyaNotifications || []);
       return { squadPresence: filtered, diwaniyaNotifications };
@@ -1775,7 +1775,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
             toPhones: recipients,
             type: "presence_in",
             title: "واحد من الربع وصل",
-            body: `${name || "أحد الربع"} دخل ديوانية ${squad?.name || "الربع"}.`,
+            body: `${name || "أحد الربع"} دش ديوانية ${squad?.name || "الربع"}.`,
             squadId: String(squadId),
             url: "/?showSquads=true"
           });
@@ -1806,8 +1806,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
         toPhone: phone,
         fromPhone: phone,
         fromName: "المعزب",
-        title: "كود دخول مؤقت جاهز",
-        message: `كود الدخول المؤقت لديوانية ${squad?.name || "ربعك"}: ${code}`,
+        title: "كود الدخول جاهز",
+        message: `كود ديوانية ${squad?.name || "ربعك"}: ${code}`,
         meta: { code, expiresAt }
       });
       return { squadTempCodes: fresh, diwaniyaNotifications };
@@ -1858,8 +1858,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
           toPhone: squad.phone || codes[cIdx]?.ownerPhone || "",
           fromPhone: phone,
           fromName: name || "عضو",
-          title: "عضو دخل بكود مؤقت",
-          message: `${name || "أحد الربع"} دخل ديوانية ${squad.name} بالكود المؤقت.`
+          title: "عضو دش بالكود",
+          message: `${name || "أحد الربع"} دش ديوانية ${squad.name}.`
         },
         {
           type: "temp_code_join_success",
@@ -1868,8 +1868,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
           toPhone: phone,
           fromPhone: squad.phone || "",
           fromName: "المعزب",
-          title: "دخلت الديوانية",
-          message: `تم ربطك بديوانية ${squad.name} بنجاح.`
+          title: "دشيت الديوانية",
+          message: `ارتبطت بديوانية ${squad.name}.`
         }
       ]);
       return { squadTempCodes: codes, squads, customers, diwaniyaNotifications };
@@ -1898,8 +1898,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
           toPhone,
           fromPhone: phone,
           fromName: name || "عضو",
-          title: "تم إغلاق طلب الربع",
-          message: `تم إغلاق طلب ديوانية ${squad?.name || "الربع"}.`
+          title: "طلب الربع تسكر",
+          message: `طلب ديوانية ${squad?.name || "الربع"} تسكر.`
         })));
         return { squadGroupOrders: groupOrders, diwaniyaNotifications };
       }
@@ -1926,7 +1926,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         fromPhone: phone,
         fromName: name || "عضو",
         title: "طلب الربع مفتوح",
-        message: `${name || "أحد الربع"} فتح طلب للربع في ديوانية ${squad?.name || "الربع"}. جهز طلبك والقطية جاهزة بالأسماء والأرقام.`
+        message: `${name || "أحد الربع"} فتح طلب ديوانية ${squad?.name || "الربع"}. قطيتكم جاهزة.`
       })));
       return { squadGroupOrders: groupOrders, diwaniyaNotifications };
     });
@@ -2021,8 +2021,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
          toPhone: squad.phone || "",
          fromPhone: cleanQPhone,
          fromName: name || "عميل",
-         title: "طلب دخول جديد للديوانية",
-         message: `${name || "أحد الربع"} يطلب موافقة المعزب للانضمام إلى ديوانية ${squad.name}.`,
+         title: "طلب دخول جديد",
+         message: `${name || "أحد الربع"} ناطر موافقة المعزب لديوانية ${squad.name}.`,
          meta: { source: "manual_join" }
        });
        joinedSquad = { ...squad, joinRequestPending: true };
@@ -2034,8 +2034,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
        void sendDiwaniyaExternalPush({
          toPhones: [ownerPhone],
          type: "join_request",
-         title: "وصل طلب دخول للديوانية",
-         body: `${name || "أحد الربع"} يطلب موافقة المعزب للانضمام للديوانية.`,
+         title: "طلب دخول جديد",
+         body: `${name || "أحد الربع"} ناطر موافقة المعزب.`,
          squadId: String(squadId),
          url: "/?showSquads=true"
        });
@@ -2631,8 +2631,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
                 toPhone: m.phone,
                 fromPhone: customerPhone,
                 fromName: customerName || "المعزب",
-                title: "عندك قطيّة من الديوانية",
-                message: `عندك قطيّة من ديوانية ${squadName || newOrder.squadName || "الربع"}. ادخل وحدد قطيتك وادفع مباشرة.`,
+                title: `قطية ${squadName || newOrder.squadName || "الديوانية"} جاهزة`,
+                message: "دش وحدد قطيتك.",
                 meta: { orderId: newOrder.id, url: `/split/${newOrder.id}?phone=${cleanPhone(m.phone)}&tab=payment` }
               }))
           );
@@ -2707,8 +2707,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
         void sendDiwaniyaExternalPush({
           toPhones: qatyaExternalPushPhones,
           type: "qatya_request",
-          title: "عندك قطيّة من الديوانية",
-          body: `ديوانية ${squadName || newOrder.squadName || "الربع"} فتحت قطيّة. ادخل وحدد قطيتك.`,
+          title: `قطية ${squadName || newOrder.squadName || "الديوانية"} جاهزة`,
+          body: "دش وحدد قطيتك.",
           orderId: newOrder.id,
           squadId: squadId || "",
           url: `/split/${newOrder.id}`
@@ -3327,8 +3327,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
         void sendDiwaniyaExternalPush({
           toPhones: roulettePushPhones,
           type: "roulette_result",
-          title: "طلعت نتيجة الروليت",
-          body: `${loserName} صار بطل الليلة${rouletteSquadName ? ` في ديوانية ${rouletteSquadName}` : ""}.`,
+          title: "طلعت نتيجة وهق غيرك",
+          body: `${loserName} عليه الغرامة${rouletteSquadName ? ` بديوانية ${rouletteSquadName}` : ""}.`,
           orderId: id,
           squadId: rouletteSquadId,
           url: `/track/${id}`,

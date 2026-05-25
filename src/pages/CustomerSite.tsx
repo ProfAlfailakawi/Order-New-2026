@@ -1331,7 +1331,7 @@ export default function CustomerSite() {
   useEffect(() => {
     isDiwaniyaPushReady().then(setCanUseDiwaniyaPush).catch(() => setCanUseDiwaniyaPush(false));
     return watchDiwaniyaForegroundPush((payload) => {
-      const title = payload?.notification?.title || "تنبيه ديوانية";
+      const title = payload?.notification?.title || "تنبيه من الديوانية";
       setCartMoment(title);
       // vibration disabled: keep visual notification stable
       window.setTimeout(() => setCartMoment(null), 3600);
@@ -5026,8 +5026,8 @@ export default function CustomerSite() {
                   </button>
                   <div className="flex-1">
                     <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار الديوانية 📡</span>
-                    <h4 className="font-black text-sm mt-2 text-amber-100">وصل طلب انضمام للمعزب</h4>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1">تقدر تقبل أو ترفض الطلب من هنا حتى وأنت تتصفح المنيو.</p>
+                    <h4 className="font-black text-sm mt-2 text-amber-100">في واحد ناطر موافقة المعزب</h4>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1">اقبل أو ارفض من هني بدون لا تطلع من المنيو.</p>
                   </div>
                   <div className="relative flex h-3 w-3 mt-1.5 shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -5131,12 +5131,12 @@ export default function CustomerSite() {
                     disabled={isEnablingDiwaniyaPush}
                     className="w-full rounded-2xl bg-white text-brand px-4 py-3 text-[11px] font-black shadow-sm active:scale-[0.98] transition-all disabled:opacity-60"
                   >
-                    {isEnablingDiwaniyaPush ? "نفعّلها..." : "فعّل تنبيهات القطيّة والروليت المهمة"}
+                    {isEnablingDiwaniyaPush ? "نفعّلها..." : "فعّل تنبيهات القطيّة ووهق غيرك المهمة"}
                   </button>
                 )}
                 {diwaniyaPushState === "saved" && (
                   <div className="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-[11px] font-black text-emerald-100">
-                    تنبيهات القطيّة والروليت مفعّلة لهذا الجهاز
+                    تنبيهات القطيّة ووهق غيرك مفعّلة على هالجهاز
                   </div>
                 )}
                 <div className="space-y-3">

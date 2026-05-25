@@ -27,7 +27,7 @@ export const enableDiwaniyaImportantPush = async ({ phone, squadId }: { phone: s
   const cleanPhone = String(phone || '').replace(/\D/g, '').slice(-8);
   if (!cleanPhone) return { state: 'error' as DiwaniyaPushState, message: 'رقم العميل غير واضح' };
   if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-    return { state: 'unsupported' as DiwaniyaPushState, message: 'المتصفح لا يدعم إشعارات الديوانية الخارجية' };
+  return { state: 'unsupported' as DiwaniyaPushState, message: 'المتصفح ما يدعم تنبيهات الديوانية الخارجية' };
   }
   if (!VAPID_KEY) {
     return { state: 'missing-key' as DiwaniyaPushState, message: 'مفتاح إشعارات الويب غير مفعّل حالياً' };
@@ -37,7 +37,7 @@ export const enableDiwaniyaImportantPush = async ({ phone, squadId }: { phone: s
 
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') {
-    return { state: 'blocked' as DiwaniyaPushState, message: 'تم إلغاء إذن الإشعارات' };
+    return { state: 'blocked' as DiwaniyaPushState, message: 'إذن التنبيهات مسكر' };
   }
 
   const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
@@ -63,7 +63,7 @@ export const enableDiwaniyaImportantPush = async ({ phone, squadId }: { phone: s
 
   if (!response.ok) throw new Error('ما قدرنا نحفظ إعداد الإشعارات');
   try { localStorage.setItem(TOKEN_STORAGE_KEY, token); } catch {}
-  return { state: 'saved' as DiwaniyaPushState, message: 'تم تفعيل تنبيهات القطيّة والروليت' };
+  return { state: 'saved' as DiwaniyaPushState, message: 'تنبيهات القطيّة ووهق غيرك تفعّلت' };
 };
 
 export const watchDiwaniyaForegroundPush = (onNotify: (payload: any) => void) => {
