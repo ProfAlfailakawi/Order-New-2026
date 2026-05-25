@@ -1191,17 +1191,23 @@ export default function CustomerSite() {
           })
        });
        if (res.ok) {
-          setCustomerPhone(guestPhone);
-          if (guestName) setCustomerName(guestName);
-          localStorage.setItem("customer_phone_track", guestPhone);
-          localStorage.setItem("squadId", squadId);
-          setActiveSquadId(squadId);
-          if (false) {
-            setSquadInfo({} as any);
-            setUserSquads((prev) => prev);
+          const data = await res.json().catch(() => ({}));
+          if (data?.pendingApproval) {
+            alert("تم إرسال طلب الدخول للمعزب. راح تدخل الديوانية بعد الموافقة.");
+            setIsJoiningSquad(false);
+          } else {
+            setCustomerPhone(guestPhone);
+            if (guestName) setCustomerName(guestName);
+            localStorage.setItem("customer_phone_track", guestPhone);
+            localStorage.setItem("squadId", squadId);
+            setActiveSquadId(squadId);
+            if (false) {
+              setSquadInfo({} as any);
+              setUserSquads((prev) => prev);
+            }
+            setIsJoiningSquad(false);
+            window.setTimeout(fetchSquadGamification, 50);
           }
-          setIsJoiningSquad(false);
-          window.setTimeout(fetchSquadGamification, 50);
        }
     } catch(e) {}
     setIsSubmittingSquad(false);
@@ -5217,7 +5223,8 @@ const ChefWhisperCard = ({
 
   const fallbackLogo =
     settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO;
-  const imgUrl = product.imageUrl || product.image || fallbackLogo;
+  const defaultProductImage = "data:image/svg+xml;utf8," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 420'><defs><linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#fff7ed'/><stop offset='1' stop-color='#f7e7c7'/></linearGradient><radialGradient id='plate' cx='50%' cy='44%' r='48%'><stop offset='0' stop-color='#ffffff'/><stop offset='1' stop-color='#f3eadc'/></radialGradient></defs><rect width='640' height='420' rx='42' fill='url(#bg)'/><circle cx='108' cy='86' r='76' fill='#d4af37' opacity='.16'/><circle cx='540' cy='335' r='98' fill='#1f5137' opacity='.10'/><ellipse cx='320' cy='224' rx='210' ry='124' fill='url(#plate)'/><ellipse cx='320' cy='224' rx='155' ry='82' fill='#d6a84b'/><path d='M190 220c48-54 206-70 278 0-52 58-218 63-278 0Z' fill='#ddb75f'/><circle cx='272' cy='210' r='34' fill='#9f3528'/><circle cx='383' cy='246' r='42' fill='#1f5137'/><path d='M176 320c78 32 212 38 292 0' fill='none' stroke='#b88937' stroke-width='10' stroke-linecap='round' opacity='.35'/><text x='320' y='377' text-anchor='middle' font-family='Arial, sans-serif' font-size='26' font-weight='900' fill='#1f5137'>صورة المنتج</text></svg>`);
+  const imgUrl = product.imageUrl || product.image || defaultProductImage || fallbackLogo;
 
   return (
     <div
@@ -5296,7 +5303,7 @@ const ChefWhisperCard = ({
                     }
                   }}
                   alt={product.name}
-                  className="menu-product-img orser-product-img w-full h-full object-contain bg-transparent relative z-0"
+                  className="menu-product-img orser-product-img w-full h-full object-cover bg-transparent relative z-0"
                 />
               </div>
               <div className="flex flex-col flex-grow text-center overflow-hidden relative z-10">
@@ -5356,7 +5363,7 @@ const ChefWhisperCard = ({
                         }
                       }}
                       alt={product.name}
-                      className="menu-product-img orser-product-img w-full h-full object-contain bg-transparent relative z-0"
+                      className="menu-product-img orser-product-img w-full h-full object-cover bg-transparent relative z-0"
                     />
                   </div>
 
