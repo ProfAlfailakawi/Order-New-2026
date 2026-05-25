@@ -1795,46 +1795,60 @@ app.get("/api/debug/order/:id", async (req, res) => {
      let joinedSquad: any = null;
      const ok = await updateAppDataAtomically((current: any) => {
        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
-       const customers = Array.isArray(current.customers) ? [...current.customers] : [];
        let finalSquadIndex = squads.findIndex((s:any) => String(s.id) === String(squadId));
        if (finalSquadIndex === -1) {
-         squads.push({ id: squadId, name: `ديوانية ${squadId}`, tier: "برونزية", points: 0, totalPoints: 0, teamPoints: 0, members: 0, membersList: [], createdAt: new Date().toISOString() });
-         finalSquadIndex = squads.length - 1;
+         return null;
        }
        const squad = { ...squads[finalSquadIndex] };
        squad.membersList = Array.isArray(squad.membersList) ? [...squad.membersList] : [];
+       const ownerPhone = cleanPhone(squad.phone || "");
        const existingMemberIndex = squad.membersList.findIndex((m:any) => cleanPhone(m.phone) === cleanQPhone);
-       if (existingMemberIndex === -1) {
-         squad.membersList.push({ phone, name: name || "عميل", points: 0, joinedAt: new Date().toISOString() });
-       } else if (name) {
-         squad.membersList[existingMemberIndex] = { ...squad.membersList[existingMemberIndex], name };
+       if (ownerPhone && ownerPhone === cleanQPhone) {
+         joinedSquad = squad;
+         return { squads };
        }
-       squad.members = squad.membersList.length;
-       squads[finalSquadIndex] = squad;
-       joinedSquad = squad;
-       const membership = { id: squad.id, squadId: squad.id, name: squad.name, joinedAt: new Date().toISOString() };
-       const cidx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanQPhone);
-       if (cidx > -1) {
-         const ids = new Set([...(customers[cidx].squadIds || []), customers[cidx].squadId].filter(Boolean).map(String));
-         ids.add(String(squad.id));
-         customers[cidx] = { ...customers[cidx], name: name || customers[cidx].name, squadId: squad.id, squadIds: [...ids], diwaniyaName: squad.name, diwaniyaMemberships: [...(customers[cidx].diwaniyaMemberships || []).filter((m:any)=>String(m.squadId||m.id)!==String(squad.id)), membership] };
-       } else {
-         customers.push({ id: "CUST-" + Date.now().toString(36), name: name || "", phone, address: "", lastOrderDate: new Date().toISOString(), squadId: squad.id, squadIds: [String(squad.id)], diwaniyaName: squad.name, diwaniyaMemberships: [membership], loyaltyPoints: 0, points: 0 });
+       if (existingMemberIndex > -1) {
+         joinedSquad = squad;
+         return { squads };
        }
+       const reqs = Array.isArray(current.geofenceJoinRequests) ? [...current.geofenceJoinRequests] : [];
+       const filteredReqs = reqs.filter((r: any) => !(cleanPhone(r.phone) === cleanQPhone && String(r.squadId) === String(squadId) && String(r.status || "pending") === "pending"));
+       filteredReqs.push({
+         phone: cleanQPhone,
+         name: name || "عميل",
+         squadId: String(squadId),
+         distance: null,
+         timestamp: new Date().toISOString(),
+         status: "pending",
+         source: "manual_join"
+       });
        const diwaniyaNotifications = pushDiwaniyaNotification(current.diwaniyaNotifications || [], {
-         type: "member_joined",
+         type: "join_request",
          squadId: squad.id,
          squadName: squad.name,
          toPhone: squad.phone || "",
-         fromPhone: phone,
+         fromPhone: cleanQPhone,
          fromName: name || "عميل",
-         title: "عضو جديد في الديوانية",
-         message: `${name || "أحد الربع"} انضم إلى ديوانية ${squad.name}.`
+         title: "طلب دخول جديد للديوانية",
+         message: `${name || "أحد الربع"} يطلب موافقة المعزب للانضمام إلى ديوانية ${squad.name}.`,
+         meta: { source: "manual_join" }
        });
-       return { customers, squads, diwaniyaNotifications };
+       joinedSquad = { ...squad, joinRequestPending: true };
+       return { squads, geofenceJoinRequests: filteredReqs, diwaniyaNotifications };
      });
-     if (!ok) throw new Error("Failed to join squad");
-     res.json({ success: true, squad: joinedSquad });
+     if (!ok) throw new Error("Failed to request squad join");
+     const ownerPhone = cleanPhone(joinedSquad?.phone || "");
+     if (joinedSquad?.joinRequestPending && ownerPhone) {
+       void sendDiwaniyaExternalPush({
+         toPhones: [ownerPhone],
+         type: "join_request",
+         title: "وصل طلب دخول للديوانية",
+         body: `${name || "أحد الربع"} يطلب موافقة المعزب للانضمام للديوانية.`,
+         squadId: String(squadId),
+         url: "/?showSquads=true"
+       });
+     }
+     res.json({ success: true, pendingApproval: Boolean(joinedSquad?.joinRequestPending), squad: joinedSquad });
    } catch(e) {
      res.status(500).json({ error: String(e) });
    }
