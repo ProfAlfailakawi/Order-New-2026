@@ -13,9 +13,9 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const title = payload?.notification?.title || 'تنبيه ديوانية';
+  const title = payload?.notification?.title || 'تنبيه من الديوانية';
   const options = {
-    body: payload?.notification?.body || 'عندك تنبيه مهم من الديوانية.',
+    body: payload?.notification?.body || 'عندك شي ناطر من الربع.',
     icon: '/icon-192.png',
     badge: '/icon-180.png',
     tag: payload?.data?.tag || `diwaniya-${payload?.data?.type || 'important'}`,

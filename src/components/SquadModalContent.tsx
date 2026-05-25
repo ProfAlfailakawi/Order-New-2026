@@ -1045,12 +1045,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 </button>
                 <div>
                   <h4 className="text-base font-black text-brand flex items-center justify-end gap-2">
-                    إشعارات الديوانية
+                    تنبيهات الديوانية
                     {unreadDiwaniyaNotifications > 0 && (
                       <span className="bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-full">{unreadDiwaniyaNotifications}</span>
                     )}
                   </h4>
-                  <p className="text-[10px] font-bold text-stone-400">تنبيهات الربع والدخول وطلبات الديوانية، منفصلة عن الدفع.</p>
+                  <p className="text-[10px] font-bold text-stone-400">كل شي يخص الربع والدخول والقطيّة، بدون زحمة.</p>
                 </div>
               </div>
               <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
@@ -1067,7 +1067,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     <div className="flex-1">
                       <div className="text-xs font-black text-brand">{n.title}</div>
                       <div className="text-[10px] font-bold text-stone-500 leading-relaxed mt-1">{n.message}</div>
-                      <div className="text-[9px] font-black text-stone-300 mt-1">{n.squadName ? `ديوانية ${cleanSquadName(n.squadName)}` : "تنبيه ديوانية"}</div>
+                      <div className="text-[9px] font-black text-stone-300 mt-1">{n.squadName ? `ديوانية ${cleanSquadName(n.squadName)}` : "تنبيه من الديوانية"}</div>
                     </div>
                     {!n.readAt && <span className="w-2 h-2 rounded-full bg-amber-500 mt-1 shrink-0" />}
                   </button>
@@ -1080,7 +1080,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
             <div className="bg-white rounded-[30px] border border-stone-100 shadow-sm p-6 text-center text-right font-sans">
               <div className="text-3xl mb-2">🔔</div>
               <h4 className="text-sm font-black text-brand">ما عندك إشعارات جديدة</h4>
-              <p className="text-[11px] font-bold text-stone-400 mt-1">أي تنبيه جديد للديوانية يظهر هنا بدون زحمة.</p>
+              <p className="text-[11px] font-bold text-stone-400 mt-1">أي شي جديد من الربع يطلع هني بهدوء.</p>
             </div>
           )}
 

@@ -77,7 +77,7 @@ export function RouletteSplit({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, phone }),
       });
-      if (!res.ok) throw new Error('ما قدرنا نسجل الاسم في الروليت');
+      if (!res.ok) throw new Error('ما قدرنا ندخلك وهق غيرك');
       setMySpinName(name);
       setMySpinPhone(phone);
       localStorage.setItem(`roulette_${order.id}`, name);
@@ -102,7 +102,7 @@ export function RouletteSplit({
     if (participants.length < 2) return alert("نحتاج شخصين عالأقل عشان نخليه يغرم!");
     try {
       const res = await fetch(`/api/orders/${order.id}/spin-roulette`, { method: "POST" });
-      if (!res.ok) throw new Error('ما قدرنا نشغل الروليت');
+      if (!res.ok) throw new Error('ما قدرنا نشغل وهق غيرك');
     } catch (e: any) {
       if (
         e &&
