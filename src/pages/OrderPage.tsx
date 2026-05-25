@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { cn, normalizePhone } from "../utils";
+import { cn, normalizePhone, normalizeDigits } from "../utils";
 import { redirectToPayment } from "../utils/redirect";
 
 interface TrackedOrder {
@@ -924,7 +924,7 @@ export default function OrderPage() {
                 type="text"
                 placeholder="رقم الطلب (اختياري)"
                 value={searchOrderIdInput}
-                onChange={(e) => setSearchOrderIdInput(e.target.value)}
+                onChange={(e) => setSearchOrderIdInput(normalizeDigits(e.target.value))}
                 className="w-full py-6 pr-16 pl-6 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-xl font-extrabold text-brand placeholder:text-stone-300 text-center tracking-[0.2em] uppercase"
               />
             </div>

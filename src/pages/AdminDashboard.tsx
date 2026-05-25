@@ -431,7 +431,7 @@ export default function AdminDashboard() {
               <input 
                 type="text" 
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearchTerm(normalizeDigits(e.target.value))}
                 placeholder="البحث برقم التلفون، العميل أو الفاتورة..." 
                 className="bg-transparent border-none outline-none text-sm w-full text-brand placeholder:text-stone-400 font-medium font-sans" 
               />

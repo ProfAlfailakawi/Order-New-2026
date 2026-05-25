@@ -3461,7 +3461,7 @@ export default function CustomerSite() {
                   type="text"
                   placeholder={currentPlaceholder}
                   value={moodQuery}
-                  onChange={(e) => setMoodQuery(e.target.value)}
+                  onChange={(e) => setMoodQuery(normalizeDigits(e.target.value))}
                   dir="rtl" className="orser-search-input bg-transparent w-full outline-none text-sm font-bold text-brand placeholder:text-stone-400 placeholder:font-medium"
                 />
               </div>
