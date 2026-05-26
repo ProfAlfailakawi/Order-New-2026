@@ -679,7 +679,6 @@ export default function CustomerSite() {
   const [showRadarInstructionModal, setShowRadarInstructionModal] = useState(false);
   const [radarStatusMsg, setRadarStatusMsg] = useState("نطلب موقعك عشان الديوانية تعتمد على القرب الحقيقي.");
   const [radarAccuracy, setRadarAccuracy] = useState<number | null>(null);
-  const [radarRefreshNonce, setRadarRefreshNonce] = useState(0);
   const radarStatusRef = useRef<typeof radarStatus>("idle");
   const locationPromptAttemptsRef = useRef(0);
   const locationPromptTimerRef = useRef<number | null>(null);
@@ -735,20 +734,42 @@ export default function CustomerSite() {
     }
   }, [qatyaNotifications.length]);
 
-  const refreshRadarOnce = useCallback(() => {
+  const readGeolocationPermissionState = useCallback(async (): Promise<PermissionState | "unknown"> => {
+     try {
+       if (navigator.permissions && (navigator as any).permissions?.query) {
+         const permission = await (navigator as any).permissions.query({ name: "geolocation" as PermissionName });
+         return permission.state as PermissionState;
+       }
+     } catch(e) {}
+     return "unknown";
+  }, []);
+
+  const refreshRadarOnce = useCallback(async () => {
       if (mockLocation) {
         setRadarStatus("ready");
         setRadarStatusMsg("تم تفعيل الموقع التجريبي المحاكي بجانب ديوانية قريبة للتجربة 🧪");
-        setRadarRefreshNonce((nonce) => nonce + 1);
         return;
       }
      if (!navigator.geolocation) {
        setRadarStatus("unsupported");
-       setRadarStatusMsg("جهازك أو المتصفح ما يدعم تحديد الموقع.");
+       setRadarStatusMsg("جهازك أو المتصفح ما يدعم تحديد الموقع، لذلك الرادار ما يقدر يشتغل على هذا الجهاز.");
        return;
      }
+
+     const permissionState = await readGeolocationPermissionState();
+     if (permissionState === "denied") {
+       setRadarStatus("denied");
+       setRadarStatusMsg("المتصفح مانع الموقع نهائياً. الزر هنا ما يقدر يكسر قرار المتصفح؛ فعّل السماح من إعدادات الموقع ثم اضغط إعادة المحاولة.");
+       setShowRadarInstructionModal(true);
+       return;
+     }
+
      setRadarStatus("checking");
-     setRadarStatusMsg("نطلب موقعك مرة وحدة عشان نقرّب لك الديوانيات القريبة.");
+     setRadarStatusMsg(
+       permissionState === "granted"
+         ? "الإذن ظاهر عندنا مسموح. نلتقط موقعك الآن ونحدّث الرادار فوراً."
+         : "راح يطلع طلب سماح الموقع من المتصفح. اختر سماح حتى يشتغل الرادار."
+     );
      setRadarDismissedList([]);
      setIsNearbyRadarPanelCollapsed(false);
      try { localStorage.removeItem("radar_dismissed_squads"); } catch(e) {}
@@ -759,23 +780,27 @@ export default function CustomerSite() {
          setRadarAccuracy(Math.round(accuracy));
          if (accuracy > 600) {
            setRadarStatus("weak");
-           setRadarStatusMsg("الموقع طالع تقريبي من الجهاز، فبننتظر دقة أفضل قبل لا نحكم إنك بعيد عن الديوانية.");
+           setRadarStatusMsg("اشتغل الموقع، لكن الدقة ضعيفة جداً. افتح GPS أو الواي فاي وجرّب تحديث الموقع حتى لا نحكم عليك بعيد بالغلط.");
          } else {
            setRadarStatus("ready");
-           setRadarStatusMsg("الرادار شغال. إذا فيه ديوانية قريبة راح تظهر لك مباشرة.");
+           setRadarStatusMsg("تم التقاط موقعك بنجاح. الرادار شغال الآن، وإذا فيه ديوانية قريبة راح تظهر لك مباشرة.");
          }
-         setRadarRefreshNonce((nonce) => nonce + 1);
        },
        (err) => {
-         setRadarStatus(err.code === 1 ? "denied" : "idle");
-         setRadarStatusMsg(err.code === 1 ? "الموقع مقفّل من المتصفح. فعّله إذا تبي الرادار يطلع لك الدواوين القريبة." : "الرادار ما اشتغل الحين. جرّب تحديث الموقع مرة ثانية.");
-         if (err.code === 1) {
+         const isDenied = err.code === 1;
+         setRadarStatus(isDenied ? "denied" : "idle");
+         setRadarStatusMsg(
+           isDenied
+             ? "المتصفح رفض إعطاء الموقع. لا يوجد زر سحري يتجاوز الحظر؛ لازم تغيّر الإذن إلى سماح من إعدادات الموقع ثم تعيد المحاولة."
+             : "الرادار حاول فعلاً لكنه ما قدر يلتقط موقعك الآن. تأكد من تشغيل GPS والإنترنت ثم جرّب مرة ثانية."
+         );
+         if (isDenied) {
            setShowRadarInstructionModal(true);
          }
        },
        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
      );
-  }, [mockLocation]);
+  }, [mockLocation, readGeolocationPermissionState]);
 
   useEffect(() => {
      radarStatusRef.current = radarStatus;
@@ -1060,7 +1085,7 @@ export default function CustomerSite() {
      return () => {
        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
      };
-  }, [activeSquads, activeSquadId, radarDismissedList, myGeofenceRequests, settings, userSquads, mockLocation, radarRefreshNonce]);
+  }, [activeSquads, activeSquadId, radarDismissedList, myGeofenceRequests, settings, userSquads, mockLocation]);
 
   // Polling for approved geofence requests
   useEffect(() => {
@@ -4690,13 +4715,14 @@ export default function CustomerSite() {
                 <div className="flex items-center justify-between gap-3">
                   <button
                     onClick={refreshRadarOnce}
-                    className="bg-brand text-white rounded-2xl px-4 py-2 text-[11px] font-black active:scale-95 shrink-0"
+                    disabled={radarStatus === "checking"}
+                    className="bg-brand text-white rounded-2xl px-4 py-2 text-[11px] font-black active:scale-95 shrink-0 disabled:opacity-60"
                   >
-                    {radarStatus === "checking" ? "نحاول..." : radarStatus === "weak" ? "تحديث الموقع" : "تشغيل الرادار"}
+                    {radarStatus === "checking" ? "نحاول فعلياً..." : radarStatus === "denied" ? "إعادة المحاولة بعد السماح" : radarStatus === "weak" ? "تحسين الدقة" : "تشغيل الرادار"}
                   </button>
                   <div>
                     <div className="text-xs font-black">
-                      {radarStatus === "ready" ? "الرادار شغال ✅" : radarStatus === "denied" ? "الرادار يحتاج إذن الموقع ⚠️" : radarStatus === "weak" ? "الموقع تقريبي ⚠️" : "رادار الديوانية"}
+                      {radarStatus === "ready" ? "الرادار شغال ✅" : radarStatus === "denied" ? "المتصفح مانع الموقع بوضوح ⚠️" : radarStatus === "weak" ? "الموقع تقريبي ⚠️" : "رادار الديوانية"}
                     </div>
                     <div className="text-[10px] font-bold text-stone-500 mt-0.5 leading-relaxed">
                       {radarStatusMsg}
@@ -4705,7 +4731,7 @@ export default function CustomerSite() {
                           onClick={() => setShowRadarInstructionModal(true)}
                           className="text-amber-600 underline font-black mr-1 block text-[10px] hover:text-amber-700 mt-1 transition-all pointer-events-auto cursor-pointer text-right"
                         >
-                          أنقر هنا لرؤية شرح طريقة التفعيل بالخطوات البسيطة ⚙️
+                          أنقر هنا: الزر لا يتجاوز الحظر، لكنه يشرح أين تغيّر الإذن ⚙️
                         </button>
                       )}
                     </div>
@@ -4967,8 +4993,12 @@ export default function CustomerSite() {
 
                 {/* Direct Explanation */}
                 <p className="text-xs font-bold text-stone-600 mb-4 leading-relaxed">
-                  الرادار يسهل عليك معرفة الدواوين القريبة منك تلقائياً دون إدخال رابط أو البحث اليدوي. إذا لم يظهر لك طلب الإذن أو ضغطت "حظر" بالخطأ، اتبع الخطوات البسيطة التالية لتشغيله:
+                  الرادار يطلب الموقع من المتصفح فقط. إذا كان الإذن محظوراً، لا يوجد زر داخل الموقع يستطيع كسر الحظر؛ الحل الصحيح هو تغيير الإذن إلى سماح من إعدادات المتصفح ثم إعادة المحاولة.
                 </p>
+
+                <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-[11px] font-black text-amber-800 leading-relaxed">
+                  ✨ الوضع الذكي: الزر سيفحص الإذن فعلياً. إذا كان مسموحاً سيشغّل الرادار، وإذا كان محظوراً سيقولها صراحة بدون وهم.
+                </div>
 
                 {/* Step Guide Tabs or accordion style for browsers */}
                 <div className="space-y-4">
@@ -5039,7 +5069,7 @@ export default function CustomerSite() {
                     }}
                     className="w-full py-4 rounded-2xl bg-brand hover:bg-brand/95 text-white text-xs font-black shadow-lg shadow-brand/15 active:scale-95 transition-all text-center flex items-center justify-center gap-2"
                   >
-                    طبقّت الخطوات، افحص الإذن وجرّب الحين! 📡
+                    إعادة المحاولة بعد تفعيل السماح 📡
                   </button>
                   <button
                     type="button"
