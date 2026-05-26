@@ -3327,8 +3327,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
         void sendDiwaniyaExternalPush({
           toPhones: roulettePushPhones,
           type: "roulette_result",
-          title: "طلعت نتيجة خله يغرم 🎰",
-          body: `${loserName} عليه الغرامة${rouletteSquadName ? ` بديوانية ${rouletteSquadName}` : ""}.`,
+          title: "طلعت نتيجة وهق غيرك 🎰",
+          body: `طاحت الفاتورة براس ${loserName}${rouletteSquadName ? ` بديوانية ${rouletteSquadName}` : ""}! 💸`,
           orderId: id,
           squadId: rouletteSquadId,
           url: `/track/${id}`,

@@ -5131,12 +5131,12 @@ export default function CustomerSite() {
                     disabled={isEnablingDiwaniyaPush}
                     className="w-full rounded-2xl bg-white text-brand px-4 py-3 text-[11px] font-black shadow-sm active:scale-[0.98] transition-all disabled:opacity-60"
                   >
-                    {isEnablingDiwaniyaPush ? "نفعّلها..." : "فعّل تنبيهات القطيّة وخله يغرم 🎰 المهمة"}
+                    {isEnablingDiwaniyaPush ? "نفعّلها..." : "فعّل تنبيهات القطيّة ووهق غيرك 🎰 المهمة"}
                   </button>
                 )}
                 {diwaniyaPushState === "saved" && (
                   <div className="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-[11px] font-black text-emerald-100">
-                    تنبيهات القطيّة وخله يغرم 🎰 مفعّلة على هالجهاز
+                    تنبيهات القطيّة ووهق غيرك 🎰 مفعّلة على هالجهاز
                   </div>
                 )}
                 <div className="space-y-3">
@@ -7157,7 +7157,7 @@ function CheckoutOverlay({
                 <>
                 <div className="payment-choice-hint" dir="rtl">
                   <strong>اختر طريقة الدفع المناسبة</strong>
-                  <span>اسحب أو انزل شوي: الدفع الكامل، القطيّة، وخله يغرم 🎰 كلها متاحة هنا.</span>
+                  <span>اسحب أو انزل شوي: الدفع الكامل، القطيّة، ووهق غيرك كلها متاحة هنا.</span>
                 </div>
                 <div className="payment-method-wow-grid flex flex-col gap-3 animate-in slide-in-from-bottom-4 fade-in duration-500">
                   <button

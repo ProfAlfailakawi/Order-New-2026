@@ -63,7 +63,7 @@ export const enableDiwaniyaImportantPush = async ({ phone, squadId }: { phone: s
 
   if (!response.ok) throw new Error('ما قدرنا نحفظ إعداد الإشعارات');
   try { localStorage.setItem(TOKEN_STORAGE_KEY, token); } catch {}
-  return { state: 'saved' as DiwaniyaPushState, message: 'تنبيهات القطيّة وخله يغرم 🎰 تفعّلت' };
+  return { state: 'saved' as DiwaniyaPushState, message: 'تنبيهات القطيّة ووهق غيرك تفعّلت' };
 };
 
 export const watchDiwaniyaForegroundPush = (onNotify: (payload: any) => void) => {
