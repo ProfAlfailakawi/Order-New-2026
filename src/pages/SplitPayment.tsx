@@ -17,12 +17,11 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { Order } from "../types";
-import { cn, normalizePhone, normalizeDigits } from "../utils";
+import { cn, normalizePhone, normalizeDigits, getSaduAvatar } from "../utils";
 import confetti from "canvas-confetti";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { RouletteSplit } from "../components/RouletteSplit";
-import { SaduAvatar } from "../components/SaduAvatar";
 
 const getSafeSplitPayments = (order: any): any[] => {
   if (!order) return [];
@@ -720,30 +719,40 @@ export default function SplitPayment() {
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {visiblePaidPeople.slice(0, 4).map((person: any, idx: number) => (
-                  <div key={`paid-${person.phone || idx}`} className="rounded-2xl bg-white border border-emerald-100 p-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <SaduAvatar name={person.name} phone={person.phone} size="sm" />
-                      <div className="text-right min-w-0">
-                        <div className="text-xs font-black text-brand truncate">{person.name || person.phone || "مشارك"}</div>
-                        <div className="text-[9px] font-bold text-stone-400">{Number(person.amount || 0).toFixed(3)} د.ك</div>
+                {visiblePaidPeople.slice(0, 4).map((person: any, idx: number) => {
+                  const avatar = getSaduAvatar(person.name || person.phone || "مشارك", person.phone);
+                  return (
+                    <div key={`paid-${person.phone || idx}`} className="rounded-2xl bg-white border border-emerald-100 p-2.5 flex items-center justify-between gap-2 shadow-sm">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div className={cn("w-8 h-8 rounded-full bg-gradient-to-tr shrink-0 flex items-center justify-center border text-[11px] shadow-inner shadow-black/5 relative overflow-hidden", avatar.gradient)}>
+                          <span className="text-xs select-none">{avatar.emoji}</span>
+                        </div>
+                        <div className="text-right min-w-0 flex-1">
+                          <div className="text-xs font-black text-brand truncate">{person.name || person.phone || "مشارك"}</div>
+                          <div className="text-[9px] font-bold text-stone-400">{Number(person.amount || 0).toFixed(3)} د.ك</div>
+                        </div>
                       </div>
+                      <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100/50 shrink-0">دفع</span>
                     </div>
-                    <span className="text-[10px] font-black text-emerald-700 shrink-0">دفع</span>
-                  </div>
-                ))}
-                {visibleWaitingPeople.slice(0, Math.max(0, 4 - visiblePaidPeople.slice(0, 4).length)).map((person: any, idx: number) => (
-                  <div key={`wait-${person.phone || idx}`} className="rounded-2xl bg-white border border-stone-100 p-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <SaduAvatar name={person.name} phone={person.phone} size="sm" />
-                      <div className="text-right min-w-0">
-                        <div className="text-xs font-black text-brand truncate">{person.name || person.phone || "مشارك"}</div>
-                        <div className="text-[9px] font-bold text-stone-400">لم يدفع بعد</div>
+                  );
+                })}
+                {visibleWaitingPeople.slice(0, Math.max(0, 4 - visiblePaidPeople.slice(0, 4).length)).map((person: any, idx: number) => {
+                  const avatar = getSaduAvatar(person.name || person.phone || "مشارك", person.phone);
+                  return (
+                    <div key={`wait-${person.phone || idx}`} className="rounded-2xl bg-white border border-stone-100 p-2.5 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div className={cn("w-8 h-8 rounded-full bg-gradient-to-tr shrink-0 flex items-center justify-center border text-[11px] shadow-inner shadow-black/5 relative overflow-hidden", avatar.gradient)}>
+                          <span className="text-xs select-none">{avatar.emoji}</span>
+                        </div>
+                        <div className="text-right min-w-0 flex-1">
+                          <div className="text-xs font-black text-brand truncate">{person.name || person.phone || "مشارك"}</div>
+                          <div className="text-[9px] font-bold text-stone-400">لم يدفع بعد</div>
+                        </div>
                       </div>
+                      <span className="text-[9px] font-black text-stone-550 bg-stone-50 px-2 py-0.5 rounded-full border border-stone-100/50 shrink-0">ينتظر</span>
                     </div>
-                    <span className="text-[10px] font-black text-stone-400 shrink-0">ينتظر</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -766,17 +775,30 @@ export default function SplitPayment() {
             {(isDiwaniyaQatya ? splitPeople : paidPeople).length ? (isDiwaniyaQatya ? splitPeople : paidPeople).map((person:any, idx:number) => {
               const paid = String(person.status || '').toLowerCase() === 'paid';
               const isMe = mySplitPhone && String(person.phone || "").replace(/\D/g, "").slice(-8) === mySplitPhone;
+              const avatar = getSaduAvatar(person.name || person.phone || `مشارك ${idx+1}`, person.phone);
               return (
-              <div key={idx} className={cn("flex items-center justify-between rounded-2xl border p-3 gap-3", paid ? "bg-emerald-50 border-emerald-100" : isMe ? "bg-amber-50 border-amber-100" : "bg-stone-50 border-stone-100")}>
-                <div className="flex items-center gap-2 min-w-0">
-                  <SaduAvatar name={person.name} phone={person.phone} size="sm" />
+              <div key={idx} className={cn("flex items-center justify-between rounded-2xl border p-3.5 gap-4", paid ? "bg-emerald-50/75 border-emerald-100/80 shadow-sm" : isMe ? "bg-amber-50/75 border-amber-100/80 shadow-sm" : "bg-stone-50/75 border-stone-100/80")}>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className={cn("w-12 h-12 rounded-full bg-gradient-to-tr shrink-0 flex flex-col items-center justify-center border-2 shadow-inner shadow-black/10 relative overflow-hidden", avatar.gradient)}>
+                    <span className="text-xl filter drop-shadow-sm select-none">{avatar.emoji}</span>
+                    <span className="absolute bottom-0 inset-x-0 text-[7px] font-black tracking-tighter uppercase py-0.5 text-center bg-black/20 text-white leading-none scale-90 sm:scale-100">{avatar.label}</span>
+                  </div>
+                  
                   <div className="text-right min-w-0">
-                    <span className="font-bold text-stone-700 truncate block">{person.name || person.phone || `مشارك ${idx+1}`}</span>
-                    {isDiwaniyaQatya && person.phone && <div className="text-[9px] font-bold text-stone-400 mt-0.5" dir="ltr">{String(person.phone).replace(/\D/g, '').slice(-8)}</div>}
-                    {isMe && <div className="text-[9px] font-black text-amber-700 mt-0.5">هذا أنت</div>}
+                    <span className="block font-black text-brand text-sm sm:text-base truncate">{person.name || person.phone || `مشارك ${idx+1}`}</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {person.phone && <span className="text-[10px] font-bold text-stone-400 font-mono tracking-wider" dir="ltr">{String(person.phone).replace(/\D/g, '').slice(-8)}</span>}
+                      {isMe && <span className="text-[9px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded-full scale-90">أنت</span>}
+                    </div>
                   </div>
                 </div>
-                <strong className={paid ? 'text-emerald-700' : 'text-stone-400'}>{paid ? 'دفع' : 'بانتظار'}</strong>
+                
+                <div className="text-left shrink-0 pl-1">
+                  <span className={cn("text-xs font-black px-2.5 py-1 rounded-full border shadow-sm block text-center", paid ? "bg-emerald-500 text-white border-emerald-400" : "bg-white text-stone-500 border-stone-200")}>
+                    {paid ? 'تم الدفع' : 'بانتظار'}
+                  </span>
+                  {person.amount && <span className="block text-[10px] font-extrabold text-stone-500 text-center mt-1">{Number(person.amount).toFixed(3)} د.ك</span>}
+                </div>
               </div>
             )}) : <p className="text-sm font-bold text-stone-400">{isDiwaniyaQatya ? "أعضاء الديوانية يظهرون هنا حسب القطيّة." : "المساهمون يظهرون هنا بعد الدفع فقط."}</p>}
           </div>
@@ -917,6 +939,11 @@ export default function SplitPayment() {
                         className="w-full bg-stone-50 border border-stone-100 rounded-xl px-4 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
                         dir="ltr"
                       />
+                      {contributorPhone.length > 0 && contributorPhone.length < 8 && (
+                        <p className="text-rose-500 text-xs font-bold text-right mt-1.5 animate-pulse">
+                          ⚠️ الرقم يجب أن يتكون من 8 أرقام
+                        </p>
+                      )}
                     </div>
                   </>
                 )}
@@ -1056,7 +1083,9 @@ export default function SplitPayment() {
                         className="flex items-center justify-between p-3 rounded-xl bg-stone-50/80 border border-stone-100 shadow-sm"
                       >
                         <div className="flex items-center gap-3">
-                          <SaduAvatar name={p.name} phone={p.phone} size="sm" />
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-brand/80 flex items-center justify-center text-white font-extrabold text-xs shadow-sm">
+                            {p.name.charAt(0)}
+                          </div>
                           <div className="flex flex-col">
                             <div className="flex items-center gap-1.5">
                               <span className="font-bold text-sm text-stone-800">

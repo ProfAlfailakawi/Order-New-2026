@@ -31,6 +31,55 @@ export const isValidPhone = (value: string): boolean => {
   return normalizePhone(value).length === 8;
 };
 
+export interface SaduAvatarData {
+  emoji: string;
+  label: string;
+  gradient: string;
+  hash: number;
+}
+
+export const getSaduAvatar = (name: string, phone?: string): SaduAvatarData => {
+  const seed = String(name || phone || "").trim();
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  hash = Math.abs(hash);
+
+  const kuwaitiEmojis = [
+    { emoji: "🐪", label: "ذيب الربع" },
+    { emoji: "⛵", label: "البوم" },
+    { emoji: "☕", label: "دلة الكرم" },
+    { emoji: "📿", label: "المسباح" },
+    { emoji: "🛖", label: "بيت الشعر" },
+    { emoji: "🌴", label: "النخلة" },
+    { emoji: "🦅", label: "الصقر" },
+    { emoji: "🏺", label: "الغراف" },
+    { emoji: "🍲", label: "المجبوس" },
+    { emoji: "👳", label: "المعزب" }
+  ];
+
+  const item = kuwaitiEmojis[hash % kuwaitiEmojis.length];
+
+  const saduGradients = [
+    "from-amber-600 via-red-700 to-amber-900 border-amber-500/30 text-amber-100",
+    "from-slate-800 via-red-950 to-stone-900 border-red-800/20 text-red-100",
+    "from-yellow-600 via-amber-700 to-red-800 border-yellow-500/30 text-yellow-100",
+    "from-emerald-850 via-teal-900 to-emerald-950 border-teal-600/30 text-teal-100",
+    "from-red-600 via-orange-600 to-amber-800 border-red-400/30 text-orange-100",
+    "from-violet-900 via-indigo-950 to-stone-950 border-indigo-800/30 text-indigo-100",
+  ];
+
+  const gradient = saduGradients[hash % saduGradients.length];
+
+  return {
+    emoji: item.emoji,
+    label: item.label,
+    gradient,
+    hash
+  };
+};
+
 import { calculateItemTotalWithAddons } from "./utils/priceCalculation";
 
 export const calculateItemsTotal = (items: any[]) => {
