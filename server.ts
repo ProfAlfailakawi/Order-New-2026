@@ -3953,6 +3953,27 @@ app.get("/api/debug/order/:id", async (req, res) => {
     }
   });
 
+  app.patch("/api/admin/orders/:id/cancel", async (req, res) => {
+    const { id } = req.params;
+    try {
+      const ok = await updateAppDataAtomically((current: any) => {
+        const orders = Array.isArray(current.orders) ? [...current.orders] : [];
+        const idx = orders.findIndex((o: any) => String(o.id) === String(id));
+        if (idx !== -1) {
+          orders[idx] = { ...orders[idx], status: "ملغي", paymentStatus: "failed" };
+        }
+        return { orders };
+      });
+      if (ok) {
+        res.json({ message: "Order cancelled successfully" });
+      } else {
+        res.status(404).json({ error: "Order not found" });
+      }
+    } catch (e) {
+      res.status(500).json({ error: "Failed to cancel order" });
+    }
+  });
+
   // Fix free delivery logic to actually update the database in both lists!
   app.patch("/api/admin/orders/:id/free-delivery", async (req, res) => {
     const { id } = req.params;

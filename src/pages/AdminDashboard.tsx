@@ -293,6 +293,20 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleCancelOrder = async (id: string) => {
+    if (!confirm("هل أنت متأكد من إلغاء هذا الطلب كلياً ومسحه من القطيّة والأوردرات النشطة؟")) return;
+    try {
+      const res = await fetch(`/api/admin/orders/${id}/cancel`, { method: "PATCH" });
+      if (res.ok) {
+        setSelectedOrder(null);
+      } else {
+        alert("فشل في إلغاء الطلب.");
+      }
+    } catch (err) {
+      console.error("Failed to cancel order:", err);
+    }
+  };
+
   const contactCustomer = async (order: Order) => {
     // 1. Get raw phone reference from order
     let phoneToUse = order.customerPhone;
@@ -1664,6 +1678,7 @@ export default function AdminDashboard() {
             onClose={() => setSelectedOrder(null)} 
             onContact={() => contactCustomer(selectedOrder)}
             onPay={() => handleMarkAsPaid(selectedOrder.id)}
+            onCancel={() => handleCancelOrder(selectedOrder.id)}
             onFreeDelivery={() => handleFreeDelivery(selectedOrder)}
             getCustomerPoints={getCustomerPoints}
           />
@@ -1706,7 +1721,7 @@ function StatCard({ title, value, trend, icon, isNew, color }: any) {
   );
 }
 
-function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, getCustomerPoints }: { order: Order, onClose: () => void, onContact: () => void, onPay: () => void, onFreeDelivery?: () => void, getCustomerPoints: (phone?: string) => number }) {
+function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDelivery, getCustomerPoints }: { order: Order, onClose: () => void, onContact: () => void, onPay: () => void, onCancel?: () => void, onFreeDelivery?: () => void, getCustomerPoints: (phone?: string) => number }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-brand/40 backdrop-blur-md p-8" onClick={onClose}>
       <motion.div initial={{ scale: 0.95, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 30 }} className="bg-white w-full max-w-4xl rounded-[48px] shadow-xl overflow-hidden flex flex-col border border-stone-100" onClick={e => e.stopPropagation()}>
@@ -1914,6 +1929,18 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onFreeDelivery, ge
                 <div className="text-center p-4 rounded-xl bg-red-50 text-red-600 font-bold border border-red-100 text-[10px] tracking-widest uppercase">
                   ما يصير نحول الطلب لفاتورة قبل تأكيد الدفع الإلكتروني
                 </div>
+            )}
+            {onCancel && (
+              <div className="flex justify-center border-t border-stone-100 pt-4">
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="w-full bg-red-50 hover:bg-red-100 text-red-600 py-3.5 rounded-2xl font-black text-xs transition-colors border border-red-100 flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <AlertTriangle className="w-4 h-4 animate-pulse" />
+                  إلغاء وهق غيرك / القطيّة بالكامل لهذا الطلب ❌
+                </button>
+              </div>
             )}
           </div>
         )}

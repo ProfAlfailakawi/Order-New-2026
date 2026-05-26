@@ -1197,11 +1197,37 @@ export default function CustomerSite() {
     }
   };
 
+  const [dismissedQatyas, setDismissedQatyas] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("dismissed_qatyas") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  const dismissQatya = useCallback((id: string) => {
+    setDismissedQatyas((prev) => {
+      const fresh = [...prev, String(id)];
+      try {
+        localStorage.setItem("dismissed_qatyas", JSON.stringify(fresh));
+      } catch (e) {}
+      return fresh;
+    });
+  }, []);
+
   const qatyaAlertItems = useMemo(() => {
-    const notificationItems = (qatyaNotifications || []).map((n: any) => ({ ...n, sourceKind: "notification" }));
+    const notificationItems = (qatyaNotifications || [])
+      .map((n: any) => ({ ...n, sourceKind: "notification" }))
+      .filter((n: any) => !dismissedQatyas.includes(String(n.id)) && !dismissedQatyas.includes(String(n.meta?.orderId)));
+    
     const notifiedOrderIds = new Set(notificationItems.map((n: any) => String(n?.meta?.orderId || "")).filter(Boolean));
     const orderItems = (activeQatyaOrders || [])
-      .filter((o: any) => o?.id && !notifiedOrderIds.has(String(o.id)))
+      .filter((o: any) => {
+        if (!o?.id) return false;
+        const idStr = String(o.id);
+        const compositeId = `active-qatya-${idStr}`;
+        return !notifiedOrderIds.has(idStr) && !dismissedQatyas.includes(idStr) && !dismissedQatyas.includes(compositeId);
+      })
       .map((o: any) => ({
         id: `active-qatya-${o.id}`,
         type: "qatya_request",
@@ -1212,7 +1238,7 @@ export default function CustomerSite() {
         meta: { orderId: o.id, url: `/split/${o.id}` },
       }));
     return [...notificationItems, ...orderItems].slice(0, 5);
-  }, [qatyaNotifications, activeQatyaOrders, squadInfo?.name]);
+  }, [qatyaNotifications, activeQatyaOrders, squadInfo?.name, dismissedQatyas]);
 
   const hasCustomerCartDock = cart.length > 0 && !isCheckout && !orderSuccess && !selectedProduct;
   const floatingAlertBottom = hasCustomerCartDock ? "bottom-[96px] sm:bottom-[104px]" : "bottom-6";
@@ -5177,16 +5203,32 @@ export default function CustomerSite() {
                 )}
                 <div className="space-y-3">
                   {qatyaAlertItems.map((n: any) => (
-                    <button
-                      key={n.id}
-                      type="button"
-                      onClick={() => handleOpenQatyaAlertItem(n)}
-                      className="w-full p-3 bg-white/10 hover:bg-white/15 rounded-2xl border border-white/10 text-right active:scale-[0.98] transition-all"
-                    >
-                      <div className="text-[10px] font-black text-emerald-100 mb-1">{n.squadName ? `ديوانية ${n.squadName}` : "ديوانية الربع"}</div>
-                      <div className="text-xs font-black text-white">{n.title || "عندك قطيّة"}</div>
-                      <div className="text-[10px] font-bold text-white/70 mt-1">{n.message || "دش وحدد قطيتك وادفع مباشرة."}</div>
-                    </button>
+                    <div key={n.id} className="relative group/item">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenQatyaAlertItem(n)}
+                        className="w-full p-3 pl-12 bg-white/10 hover:bg-white/15 rounded-2xl border border-white/10 text-right active:scale-[0.98] transition-all"
+                      >
+                        <div className="text-[10px] font-black text-emerald-100 mb-1">{n.squadName ? `ديوانية ${n.squadName}` : "ديوانية الربع"}</div>
+                        <div className="text-xs font-black text-white">{n.title || "عندك قطيّة"}</div>
+                        <div className="text-[10px] font-bold text-white/70 mt-1">{n.message || "دش وحدد قطيتك وادفع مباشرة."}</div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          dismissQatya(n.id);
+                          if (n.meta?.orderId) {
+                            dismissQatya(n.meta.orderId);
+                          }
+                        }}
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/20 hover:bg-rose-500/30 text-white hover:text-rose-200 flex items-center justify-center transition-all shadow-sm z-10"
+                        title="إخفاء التنبيه"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               </motion.div>
