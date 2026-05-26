@@ -77,7 +77,7 @@ export function RouletteSplit({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, phone }),
       });
-      if (!res.ok) throw new Error('ما قدرنا ندخلك خله يغرم 🎰');
+      if (!res.ok) throw new Error('ما قدرنا ندخلك لعبة وهق غيرك 🎰');
       setMySpinName(name);
       setMySpinPhone(phone);
       localStorage.setItem(`roulette_${order.id}`, name);
@@ -99,10 +99,10 @@ export function RouletteSplit({
   };
 
   const spin = async () => {
-    if (participants.length < 2) return alert("نحتاج شخصين عالأقل عشان نخليه يغرم!");
+    if (participants.length < 2) return alert("نحتاج شخصين عالأقل عشان نوهق واحد!");
     try {
       const res = await fetch(`/api/orders/${order.id}/spin-roulette`, { method: "POST" });
-      if (!res.ok) throw new Error('ما قدرنا نشغل خله يغرم 🎰');
+      if (!res.ok) throw new Error('ما قدرنا نشغل لعبة وهق غيرك 🎰');
     } catch (e: any) {
       if (
         e &&
@@ -214,13 +214,13 @@ export function RouletteSplit({
   }
 
   const payPhrases = [
-    { title: "مبروك طاحت براسك يا {name}! 💸", desc: "خله يغرم 🎰 اختارتك، جهز الكي نت ولا تبخل على ربعك!" },
+    { title: "مبروك طاحت براسك يا {name}! 💸", desc: "لعبة وهق غيرك 🎰 اختارتك، جهز الكي نت ولا تبخل على ربعك!" },
     { title: "كفو يا {name}! أنت الكريم 👑", desc: "اليوم عشاهم على حسابك، ادفع وأنت تضحك!" },
     { title: "منور يا {name}! الشرف لك اليوم 🌟", desc: "الفاتورة من نصيبك، بيّض الوجه وادفع!" },
-    { title: "صادوه يا {name}! 🎣", desc: "لعبة خله يغرم 🎰 ما ترحم، افتح البوك وسدد اللي عليك يا بطل!" },
+    { title: "صادوه يا {name}! 🎣", desc: "لعبة وهق غيرك 🎰 ما ترحم، افتح البوك وسدد اللي عليك يا بطل!" },
     { title: "لبستها يا {name}! 👕", desc: "يا حظك بطيبتك، الفاتورة عليك اليوم!" },
     { title: "يعطيك العافية مقدماً يا {name}! 👏", desc: "ربعك مستانسين وجيبك قاعد يبكي، توكل على الله وادفع!" },
-    { title: "كشخة يا {name}، العشا عليك! 🍽️", desc: "لعبة خله يغرم 🎰 حبتك، طلع المخبى وراونا كرمك!" },
+    { title: "كشخة يا {name}، العشا عليك! 🍽️", desc: "لعبة وهق غيرك 🎰 حبتك، طلع المخبى وراونا كرمك!" },
     { title: "جابها الحظ لك يا {name}! 🎲", desc: "تستاهل تكون المعزب اليوم، الكي نت ينطرك!" },
     { title: "يا زينك وأنت تدفع يا {name}! 😍", desc: "مو خسارة بربعك، الحساب عندك اليوم!" },
     { title: "فديت قلبك يا {name}، الفاتورة باسمك! 💌", desc: "ادفع وابتسم، لأن باجي الشباب مستانسين!" }
@@ -229,14 +229,14 @@ export function RouletteSplit({
   const savedPhrases = [
     { title: "طلعت منها براءة يا {name}! 😅", desc: "كفووو! العشا بلاش، أكل واشرب على حساب {loser}!" },
     { title: "مبروك يا {name}! عشاك ببلاش 🎉", desc: "عليك بالعافية، {loser} بيدفع دم قلبه اليوم!" },
-    { title: "يا حظك يا {name}! 🕊️", desc: "ارتاح، الفاتورة طاحت براس {loser}، خله يغرم!" },
+    { title: "يا حظك يا {name}! 🕊️", desc: "ارتاح، الفاتورة طاحت براس {loser}، خله يدفع!" },
     { title: "{name}، نام مرتاح اليوم 😴", desc: "ماكو دفع اليوم! {loser} أكل المقلب وراح يحاسب!" },
-    { title: "النحشة صح يا {name}! 🏃‍♂️💨", desc: "خله يغرم 🎰 طافت عليك، {loser} بيلبس الفاتورة كاملة!" },
+    { title: "النحشة صح يا {name}! 🏃‍♂️💨", desc: "لعبة وهق غيرك 🎰 طافت عليك، {loser} بيلبس الفاتورة كاملة!" },
     { title: "سلمت منها يا {name}! 😁", desc: "وفر فلوسك، باجي الربع دبسوها بـ {loser}!" },
     { title: "عدت على خير يا {name}! 🛡️", desc: "الرصيد في أمان اليوم، العشا خالص من {loser}!" },
     { title: "سلكت معاك يا {name}! 🎢", desc: "الحمدلله ما يت فيك، جهز بطنك لأكل {loser}!" },
     { title: "طافت عليك يا {name}! 🎯", desc: "فلوسك الحين بجيبك، والفاتورة بحضن {loser}!" },
-    { title: "أنت محظوظ يا {name}! 🍀", desc: "لعبة خله يغرم 🎰 عدتك، خل {loser} يعيش اللحظة ويدفع!" }
+    { title: "أنت محظوظ يا {name}! 🍀", desc: "لعبة وهق غيرك 🎰 عدتك، خل {loser} يعيش اللحظة ويدفع!" }
   ];
 
   const getPhraseContent = (myName: string, isPaying: boolean, loserName: string) => {
@@ -268,7 +268,7 @@ export function RouletteSplit({
         <header className="roulette-ultra-hero roulette-v14-hero wahag-wow-hero text-center pt-10 space-y-4">
           <div className="roulette-v14-marquee">
             <span>مطبخ التراث الكويتي</span>
-            <span>خله يغرم 🎰</span>
+            <span>وهق غيرك</span>
             <span>{participants.length} مشارك</span>
           </div>
           <div className="roulette-ultra-orb roulette-v14-orb w-20 h-20 bg-gradient-to-tr from-violet-600 to-fuchsia-600 rounded-full flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(217,70,239,0.3)]">
@@ -277,7 +277,7 @@ export function RouletteSplit({
           <div className="roulette-title-card">
             <span className="roulette-kicker">تحدي الربع</span>
             <h1 className="text-3xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-300 via-white to-violet-300">
-              خله يغرم 🎰
+              وهق غيرك 🎰
             </h1>
             <p className="text-stone-300 font-bold mt-2 leading-relaxed max-w-xl mx-auto">
               أسماء الربع تدخل، والنبضة تختار واحد يشيل العشا. الفاتورة {order.total.toFixed(3)} د.ك
@@ -373,10 +373,10 @@ export function RouletteSplit({
 
                 <button
                   onClick={() => {
-                    const shareText = `دش لعبة خله يغرم 🎰، واحد فينا بيدفع العشا ${order?.total.toFixed(3)} د.ك! دش: ${window.location.href}`;
+                    const shareText = `دش لعبة وهق غيرك 🎰، واحد فينا بيدفع العشا ${order?.total.toFixed(3)} د.ك! دش: ${window.location.href}`;
                     if (navigator.share) {
                       navigator.share({
-                        title: "لعبة خله يغرم 🎰",
+                        title: "لعبة وهق غيرك 🎰",
                         text: shareText,
                         url: window.location.href,
                       }).catch(() => {});
@@ -388,7 +388,7 @@ export function RouletteSplit({
                   className="w-full wahag-participant-chip bg-white/10 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 mt-4 hover:bg-white/20 transition-colors border border-white/10"
                 >
                   <Sparkles className="w-5 h-5 text-fuchsia-400" />
-                  دز الرابط للربع وخله يغرم
+                  دز الرابط للربع ووهق غيرك 🎰
                 </button>
 
                 {participants.length >= 2 && (
@@ -396,7 +396,7 @@ export function RouletteSplit({
                     onClick={spin}
                     className="roulette-spin-button w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 font-black py-4 rounded-2xl shadow-lg shadow-fuchsia-500/20 active:scale-95 transition-transform mt-4"
                   >
-                    خله يغرم
+                    وهق غيرك 🎰
                   </button>
                 )}
               </div>
