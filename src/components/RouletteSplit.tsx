@@ -235,7 +235,7 @@ export function RouletteSplit({
     { title: "سلمت منها يا {name}! 😁", desc: "وفر فلوسك، باجي الربع دبسوها بـ {loser}!" },
     { title: "عدت على خير يا {name}! 🛡️", desc: "الرصيد في أمان اليوم، العشا خالص من {loser}!" },
     { title: "سلكت معاك يا {name}! 🎢", desc: "الحمدلله ما يت فيك، جهز بطنك لأكل {loser}!" },
-    { title: "طافت عليك يا {name}! 🎯", desc: "فلوسك الحين بجيبك، والفاتورة بحضن {loser}!" },
+    { title: "طافت عليك يا {name}! 🎯", desc: "فلوسك الحين بجيبك، والفاتورة طاحت براس {loser}!" },
     { title: "أنت محظوظ يا {name}! 🍀", desc: "لعبة وهق غيرك 🎰 عدتك، خل {loser} يعيش اللحظة ويدفع!" }
   ];
 
@@ -547,7 +547,7 @@ export function RouletteSplit({
                         {resultContent.desc}
                       </p>
                       <div className="pt-4 border-t border-fuchsia-500/30">
-                        <p className="text-sm opacity-80">تم تصفية القطية لهذا الطلب بنجاح بانتظار الدفع من {loser}</p>
+                        <p className="text-sm opacity-80">تسكرت الحسبة حق هالطلب وننطر يدفع {loser}</p>
                       </div>
                     </div>
                   );

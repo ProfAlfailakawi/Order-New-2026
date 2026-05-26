@@ -722,9 +722,14 @@ export default function CustomerSite() {
 
   const qatyaNotifications = useMemo(() => {
     return (diwaniyaNotifications || [])
-      .filter((n: any) => String(n.type || "") === "qatya_request" && !n.readAt && (n.meta?.orderId || n.meta?.url))
+      .filter((n: any) => {
+        if (String(n.type || "") !== "qatya_request" || n.readAt) return false;
+        const oId = n.meta?.orderId;
+        if (!oId) return false;
+        return (activeQatyaOrders || []).some((o: any) => String(o.id) === String(oId));
+      })
       .slice(0, 5);
-  }, [diwaniyaNotifications]);
+  }, [diwaniyaNotifications, activeQatyaOrders]);
 
   useEffect(() => {
     if (qatyaNotifications.length > 0) {
@@ -1202,7 +1207,7 @@ export default function CustomerSite() {
         type: "qatya_request",
         sourceKind: "active_order",
         title: "قطية مفتوحة للديوانية",
-        message: "دش وحدد قطيتك وادفع، اسمك ورقمك جاهزين.",
+        message: "اضغط هنا عشان تسجل اسمك وتدفع قطيتك بالكي نت 💰",
         squadName: o.squadName || squadInfo?.name || "",
         meta: { orderId: o.id, url: `/split/${o.id}` },
       }));
@@ -5152,7 +5157,7 @@ export default function CustomerSite() {
                   <div className="flex-1">
                     <span className="text-[10px] font-black bg-white/10 text-emerald-100 px-3 py-1 rounded-full border border-white/10">قطية الديوانية 💳</span>
                     <h4 className="font-black text-sm mt-2 text-white">عندك قطية من الربع</h4>
-                    <p className="text-[10px] font-bold text-white/70 mt-1">دش وحدد قطيتك، اسمك ورقمك جاهزين من الديوانية.</p>
+                    <p className="text-[10px] font-bold text-white/70 mt-1">الشباب بالديوانية ناطرينك تشارك بقطية الحساب.</p>
                   </div>
                 </div>
                 {canUseDiwaniyaPush && diwaniyaPushState !== "saved" && (
