@@ -22,6 +22,7 @@ import confetti from "canvas-confetti";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { RouletteSplit } from "../components/RouletteSplit";
+import { SaduAvatar } from "../components/SaduAvatar";
 
 const getSafeSplitPayments = (order: any): any[] => {
   if (!order) return [];
@@ -720,21 +721,27 @@ export default function SplitPayment() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {visiblePaidPeople.slice(0, 4).map((person: any, idx: number) => (
-                  <div key={`paid-${person.phone || idx}`} className="rounded-2xl bg-white border border-emerald-100 p-3 flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-black text-emerald-700">دفع</span>
-                    <div className="text-right min-w-0">
-                      <div className="text-xs font-black text-brand truncate">{person.name || person.phone || "مشارك"}</div>
-                      <div className="text-[9px] font-bold text-stone-400">{Number(person.amount || 0).toFixed(3)} د.ك</div>
+                  <div key={`paid-${person.phone || idx}`} className="rounded-2xl bg-white border border-emerald-100 p-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <SaduAvatar name={person.name} phone={person.phone} size="sm" />
+                      <div className="text-right min-w-0">
+                        <div className="text-xs font-black text-brand truncate">{person.name || person.phone || "مشارك"}</div>
+                        <div className="text-[9px] font-bold text-stone-400">{Number(person.amount || 0).toFixed(3)} د.ك</div>
+                      </div>
                     </div>
+                    <span className="text-[10px] font-black text-emerald-700 shrink-0">دفع</span>
                   </div>
                 ))}
                 {visibleWaitingPeople.slice(0, Math.max(0, 4 - visiblePaidPeople.slice(0, 4).length)).map((person: any, idx: number) => (
-                  <div key={`wait-${person.phone || idx}`} className="rounded-2xl bg-white border border-stone-100 p-3 flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-black text-stone-400">ينتظر</span>
-                    <div className="text-right min-w-0">
-                      <div className="text-xs font-black text-brand truncate">{person.name || person.phone || "مشارك"}</div>
-                      <div className="text-[9px] font-bold text-stone-400">لم يدفع بعد</div>
+                  <div key={`wait-${person.phone || idx}`} className="rounded-2xl bg-white border border-stone-100 p-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <SaduAvatar name={person.name} phone={person.phone} size="sm" />
+                      <div className="text-right min-w-0">
+                        <div className="text-xs font-black text-brand truncate">{person.name || person.phone || "مشارك"}</div>
+                        <div className="text-[9px] font-bold text-stone-400">لم يدفع بعد</div>
+                      </div>
                     </div>
+                    <span className="text-[10px] font-black text-stone-400 shrink-0">ينتظر</span>
                   </div>
                 ))}
               </div>
@@ -760,11 +767,14 @@ export default function SplitPayment() {
               const paid = String(person.status || '').toLowerCase() === 'paid';
               const isMe = mySplitPhone && String(person.phone || "").replace(/\D/g, "").slice(-8) === mySplitPhone;
               return (
-              <div key={idx} className={cn("flex items-center justify-between rounded-2xl border p-3", paid ? "bg-emerald-50 border-emerald-100" : isMe ? "bg-amber-50 border-amber-100" : "bg-stone-50 border-stone-100")}>
-                <div className="text-right">
-                  <span className="font-bold text-stone-700">{person.name || person.phone || `مشارك ${idx+1}`}</span>
-                  {isDiwaniyaQatya && person.phone && <div className="text-[9px] font-bold text-stone-400 mt-0.5" dir="ltr">{String(person.phone).replace(/\D/g, '').slice(-8)}</div>}
-                  {isMe && <div className="text-[9px] font-black text-amber-700 mt-0.5">هذا أنت</div>}
+              <div key={idx} className={cn("flex items-center justify-between rounded-2xl border p-3 gap-3", paid ? "bg-emerald-50 border-emerald-100" : isMe ? "bg-amber-50 border-amber-100" : "bg-stone-50 border-stone-100")}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <SaduAvatar name={person.name} phone={person.phone} size="sm" />
+                  <div className="text-right min-w-0">
+                    <span className="font-bold text-stone-700 truncate block">{person.name || person.phone || `مشارك ${idx+1}`}</span>
+                    {isDiwaniyaQatya && person.phone && <div className="text-[9px] font-bold text-stone-400 mt-0.5" dir="ltr">{String(person.phone).replace(/\D/g, '').slice(-8)}</div>}
+                    {isMe && <div className="text-[9px] font-black text-amber-700 mt-0.5">هذا أنت</div>}
+                  </div>
                 </div>
                 <strong className={paid ? 'text-emerald-700' : 'text-stone-400'}>{paid ? 'دفع' : 'بانتظار'}</strong>
               </div>
@@ -1046,9 +1056,7 @@ export default function SplitPayment() {
                         className="flex items-center justify-between p-3 rounded-xl bg-stone-50/80 border border-stone-100 shadow-sm"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-brand/80 flex items-center justify-center text-white font-extrabold text-xs shadow-sm">
-                            {p.name.charAt(0)}
-                          </div>
+                          <SaduAvatar name={p.name} phone={p.phone} size="sm" />
                           <div className="flex flex-col">
                             <div className="flex items-center gap-1.5">
                               <span className="font-bold text-sm text-stone-800">

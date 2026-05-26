@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Users, Crown, CreditCard, PartyPopper, ArrowRight, AlertCircle, Check, Trophy, ShieldCheck } from "lucide-react";
 import { normalizeDigits } from "../utils";
+import { SaduAvatar } from "./SaduAvatar";
 
 const normalizeArabicName = (name: string) => {
   return (name || "")
@@ -50,6 +51,70 @@ export function RouletteSplit({
     () => localStorage.getItem(`roulette_phone_${order.id}`) || "",
   );
   const [activeIndex, setActiveIndex] = useState(0);
+
+  // Luxury mechanical watch haptics and gold shimmer states
+  const [hapticVibrate, setHapticVibrate] = useState(false);
+  const [shimmerGold, setShimmerGold] = useState(false);
+
+  // Web Audio clockwork micro-ticks
+  const playMechanicalTick = () => {
+    try {
+      if (typeof window !== "undefined" && (window.AudioContext || (window as any).webkitAudioContext)) {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        const ctx = new AudioContext();
+        
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(3200, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.04);
+        
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+        
+        const filter = ctx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.value = 1800;
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.start();
+        osc.stop(ctx.currentTime + 0.05);
+      }
+    } catch (e) {}
+  };
+
+  // Luxury gold resonant chime chord
+  const playGoldSuccessBell = () => {
+    try {
+      if (typeof window !== "undefined" && (window.AudioContext || (window as any).webkitAudioContext)) {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        const ctx = new AudioContext();
+        
+        const playTone = (freq: number, delay: number, dur: number, vol: number) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+          gain.gain.setValueAtTime(vol, ctx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + dur);
+          
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + delay);
+          osc.stop(ctx.currentTime + delay + dur);
+        };
+        
+        playTone(523.25, 0, 1.8, 0.08); // C5
+        playTone(659.25, 0.05, 1.8, 0.06); // E5
+        playTone(783.99, 0.1, 1.8, 0.05); // G5
+        playTone(1046.50, 0.15, 2.5, 0.04); // C6
+      }
+    } catch (e) {}
+  };
   useEffect(() => {
     if (paymentStatus === "success") {
       setLocalSuccess(true);
@@ -123,20 +188,61 @@ export function RouletteSplit({
     if (spun && !isSpinning && participants.length > 0) {
       if (!sessionStorage.getItem(`spun_${order.id}`)) {
         setIsSpinning(true);
-        let count = 0;
-        const interval = setInterval(() => {
+        setIsSettling(false);
+        setShimmerGold(false);
+
+        // Find the index of the loser
+        const normalizedLoser = normalizeArabicName(loser);
+        const lIndex = participants.findIndex(
+          (p: any) => normalizeArabicName(p.name) === normalizedLoser
+        );
+        const targetLoserIndex = lIndex === -1 ? 0 : lIndex;
+
+        // Calculate steps so the final pointer lands EXACTLY on targetLoserIndex
+        const currentPos = activeIndex % participants.length;
+        const circles = 4; // at least 4 full circles for dramatic impact
+        const stepsToTake = (participants.length * circles) + ((targetLoserIndex - currentPos + participants.length) % participants.length);
+
+        let currentStep = 0;
+        
+        const runTick = () => {
           setActiveIndex((prev) => prev + 1);
-          count++;
-          if (count > 40) {
-            clearInterval(interval);
+          currentStep++;
+
+          // Visual ocular micro-shake trigger
+          setHapticVibrate(true);
+          setTimeout(() => setHapticVibrate(false), 22);
+
+          // Play luxury mechanical click sound
+          playMechanicalTick();
+
+          if (currentStep < stepsToTake) {
+            // Deceleration curve
+            const progress = currentStep / stepsToTake;
+            let delay = 35 + Math.pow(progress, 3.5) * 440;
+            
+            // Add slight watch-spring organic variance
+            delay += Math.sin(currentStep) * (progress * 15);
+            
+            setTimeout(runTick, delay);
+          } else {
+            // Clockwork pointer settles beautifully
             setIsSettling(true);
             setTimeout(() => {
               setIsSpinning(false);
               setIsSettling(false);
+              setShimmerGold(true);
+              
+              // Play gold chime
+              playGoldSuccessBell();
+              
               sessionStorage.setItem(`spun_${order.id}`, "true");
-            }, 900);
+            }, 1000);
           }
-        }, 60);
+        };
+
+        // Start luxury physical spin
+        setTimeout(runTick, 40);
       }
     }
   }, [spun, participants.length, order.id, isSpinning]);
@@ -347,9 +453,10 @@ export function RouletteSplit({
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.03 }}
+                        className="flex items-center gap-3 p-2 rounded-2xl bg-white/5 border border-white/5"
                       >
-                        <b>{p.name?.charAt(0) || "؟"}</b>
-                        {p.name}
+                        <SaduAvatar name={p.name} phone={p.phone} size="sm" />
+                        <span className="truncate">{p.name}</span>
                       </motion.span>
                     ))}
                   </div>
@@ -400,7 +507,63 @@ export function RouletteSplit({
             animate={{ scale: 1, opacity: 1 }}
             className="roulette-stage flex flex-col items-center justify-center py-8 sm:py-10 space-y-8"
           >
-            <div className={"wahag-pulse-core " + (isSpinning ? "is-scanning" : "is-revealed")}>
+            {/* Embedded styles for full browser compatibility of local luxury watch & haptics */}
+            <style>{`
+              @keyframes shimmerGold {
+                0%, 100% {
+                  box-shadow: 0 0 15px #d6ad4b, 0 0 35px #d6ad4b, inset 0 0 15px rgba(214,173,75,0.7);
+                  border-color: #f5d0fe;
+                  transform: scale(1.12);
+                }
+                50% {
+                  box-shadow: 0 0 35px #fff7d6, 0 0 65px #f59e0b, inset 0 0 25px rgba(255,255,255,1);
+                  border-color: #ffffff;
+                  transform: scale(1.18);
+                }
+              }
+              @keyframes hapticShudder {
+                0%, 100% { transform: translate(0, 0); }
+                20% { transform: translate(-1.5px, 0.8px) rotate(-0.3deg); }
+                40% { transform: translate(1.2px, -1.2px) rotate(0.4deg); }
+                60% { transform: translate(-0.8px, 1.4px) rotate(-0.2deg); }
+                80% { transform: translate(1.4px, -0.6px) rotate(0.1deg); }
+              }
+              .haptic-shake {
+                animation: hapticShudder 0.08s infinite !important;
+              }
+              .luxury-shimmer-gold {
+                animation: shimmerGold 1.2s ease-in-out infinite !important;
+                z-index: 50 !important;
+              }
+              .watch-tick-mark {
+                position: absolute;
+                width: 2px;
+                height: 8px;
+                background: linear-gradient(180deg, #d6ad4b, transparent);
+                opacity: 0.6;
+              }
+            `}</style>
+
+            <div 
+              className={`wahag-pulse-core relative overflow-hidden ${isSpinning ? "is-scanning" : "is-revealed"} ${hapticVibrate ? "haptic-shake" : ""}`}
+              style={{
+                border: "4px solid #d6ad4b33",
+                boxShadow: "0 0 0 6px #1e1b18, 0 20px 50px rgba(0,0,0,0.6)"
+              }}
+            >
+              {/* Luxury watch tick lines representing minutes / gears */}
+              {[...Array(12)].map((_, tickIdx) => (
+                <div
+                  key={`tick-${tickIdx}`}
+                  className="watch-tick-mark"
+                  style={{
+                    transform: `rotate(${tickIdx * 30}deg) translateY(-145px)`,
+                    left: "calc(50% - 1px)",
+                    top: "10px"
+                  }}
+                />
+              ))}
+
               <div className="wahag-pulse-grid" />
               <div className="wahag-pulse-aura" />
               <div className="wahag-pulse-ring ring-one" />
@@ -418,7 +581,8 @@ export function RouletteSplit({
                     className={
                       "wahag-pulse-orbit-card " +
                       (isActive ? "is-active " : "") +
-                      (isFinal ? "is-final" : "")
+                      (isFinal ? "is-final " : "") +
+                      (isFinal && shimmerGold ? "luxury-shimmer-gold " : "")
                     }
                     style={{
                       ['--pulse-angle' as any]: `${angle}deg`,
@@ -430,8 +594,8 @@ export function RouletteSplit({
                     }}
                     transition={{ duration: isSpinning ? 0.12 : 0.35, ease: "easeOut" }}
                   >
-                    <span>{p.name?.charAt(0) || "؟"}</span>
-                    <strong>{p.name || "ضيف"}</strong>
+                    <SaduAvatar name={p.name} phone={p.phone} size="sm" />
+                    <strong className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{p.name || "ضيف"}</strong>
                   </motion.div>
                 );
               })}
@@ -445,7 +609,7 @@ export function RouletteSplit({
                   className="wahag-pulse-name"
                 >
                   <span>{isSpinning ? "نبض الربع" : "الوهقة وصلت"}</span>
-                  <strong>
+                  <strong className={(!isSpinning && spun) && shimmerGold ? "text-amber-400 font-extrabold animate-pulse" : ""}>
                     {isSpinning
                       ? pulseParticipants[pulseIndex]?.name || "..."
                       : participants[loserIndex]?.name || loser}
