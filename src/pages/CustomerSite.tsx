@@ -759,7 +759,7 @@ export default function CustomerSite() {
      const permissionState = await readGeolocationPermissionState();
      if (permissionState === "denied") {
        setRadarStatus("denied");
-       setRadarStatusMsg("المتصفح مانع الموقع نهائياً. الزر هنا ما يقدر يكسر قرار المتصفح؛ فعّل السماح من إعدادات الموقع ثم اضغط إعادة المحاولة.");
+       setRadarStatusMsg("فعّل الموقع من المتصفح، ثم جرّب.");
        setShowRadarInstructionModal(true);
        return;
      }
@@ -4702,41 +4702,32 @@ export default function CustomerSite() {
         <AnimatePresence>
           {!isCheckout && radarNearbySquads.length === 0 && radarStatus !== "idle" && radarStatus !== "empty" && radarStatus !== "ready" && (
             <motion.div
-              initial={{ opacity: 0, y: 80, scale: 0.96 }}
+              initial={{ opacity: 0, y: 56, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 80, scale: 0.96 }}
+              exit={{ opacity: 0, y: 56, scale: 0.98 }}
               className={cn(
-                "customer-mobile-stable-alert fixed md:w-[390px] bg-white text-brand rounded-[28px] p-4 shadow-2xl z-[85] border border-amber-100 text-right font-sans",
+                "customer-mobile-stable-alert fixed md:w-[330px] bg-white text-brand rounded-[22px] px-3.5 py-3 shadow-xl z-[85] border border-amber-100 text-right font-sans",
                 floatingAlertPanelSide,
                 floatingAlertBottom,
               )}
             >
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-3">
-                  <button
-                    onClick={refreshRadarOnce}
-                    disabled={radarStatus === "checking"}
-                    className="bg-brand text-white rounded-2xl px-4 py-2 text-[11px] font-black active:scale-95 shrink-0 disabled:opacity-60"
-                  >
-                    {radarStatus === "checking" ? "نحاول فعلياً..." : radarStatus === "denied" ? "إعادة المحاولة بعد السماح" : radarStatus === "weak" ? "تحسين الدقة" : "تشغيل الرادار"}
-                  </button>
-                  <div>
-                    <div className="text-xs font-black">
-                      {radarStatus === "ready" ? "الرادار شغال ✅" : radarStatus === "denied" ? "المتصفح مانع الموقع بوضوح ⚠️" : radarStatus === "weak" ? "الموقع تقريبي ⚠️" : "رادار الديوانية"}
-                    </div>
-                    <div className="text-[10px] font-bold text-stone-500 mt-0.5 leading-relaxed">
-                      {radarStatusMsg}
-                      {radarStatus === "denied" && (
-                        <button
-                          onClick={() => setShowRadarInstructionModal(true)}
-                          className="text-amber-600 underline font-black mr-1 block text-[10px] hover:text-amber-700 mt-1 transition-all pointer-events-auto cursor-pointer text-right"
-                        >
-                          أنقر هنا: الزر لا يتجاوز الحظر، لكنه يشرح أين تغيّر الإذن ⚙️
-                        </button>
-                      )}
-                    </div>
-                    {radarAccuracy !== null && <div className="text-[9px] font-black text-stone-400 mt-1">دقة الموقع من الجهاز: {radarAccuracy}م</div>}
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  onClick={() => radarStatus === "denied" ? setShowRadarInstructionModal(true) : refreshRadarOnce()}
+                  disabled={radarStatus === "checking"}
+                  className="bg-brand text-white rounded-2xl px-4 py-2 text-[10px] font-black active:scale-95 shrink-0 disabled:opacity-60"
+                >
+                  {radarStatus === "checking" ? "جاري الفحص" : radarStatus === "denied" ? "طريقة التفعيل" : radarStatus === "weak" ? "تحسين الدقة" : "تشغيل الرادار"}
+                </button>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-end gap-1.5 text-[11px] font-black">
+                    <span>{radarStatus === "denied" ? "الموقع غير متاح" : radarStatus === "weak" ? "الموقع تقريبي" : "رادار الديوانية"}</span>
+                    {radarStatus === "denied" && <MapPin className="w-3.5 h-3.5 text-amber-500" />}
                   </div>
+                  <div className="text-[9px] font-bold text-stone-500 mt-0.5 leading-snug line-clamp-2">
+                    {radarStatus === "denied" ? "فعّله من المتصفح لتشغيل الرادار." : radarStatusMsg}
+                  </div>
+                  {radarAccuracy !== null && <div className="text-[8px] font-black text-stone-400 mt-0.5">الدقة: {radarAccuracy}م</div>}
                 </div>
               </div>
             </motion.div>
@@ -4958,127 +4949,59 @@ export default function CustomerSite() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[140] bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+              className="fixed inset-0 z-[140] bg-slate-950/55 backdrop-blur-md flex items-center justify-center p-4"
               onClick={(e) => {
                 if (e.target === e.currentTarget) setShowRadarInstructionModal(false);
               }}
             >
               <motion.div
-                initial={{ y: 40, scale: 0.95, opacity: 0 }}
+                initial={{ y: 22, scale: 0.97, opacity: 0 }}
                 animate={{ y: 0, scale: 1, opacity: 1 }}
-                exit={{ y: 30, scale: 0.96, opacity: 0 }}
-                className="w-full max-w-md rounded-[32px] bg-white text-brand p-6 shadow-2xl border border-stone-100 text-right font-sans relative my-8"
+                exit={{ y: 18, scale: 0.98, opacity: 0 }}
+                className="w-full max-w-[315px] rounded-[26px] bg-white text-brand px-5 py-5 shadow-2xl border border-amber-100 text-center font-sans relative"
                 dir="rtl"
               >
-                {/* Close Button */}
                 <button
                   type="button"
                   onClick={() => setShowRadarInstructionModal(false)}
-                  className="absolute top-5 left-5 h-10 w-10 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors"
+                  className="absolute top-3 left-3 h-8 w-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 flex items-center justify-center transition-colors"
                   aria-label="إغلاق"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
 
-                {/* Modal Header */}
-                <div className="flex items-center gap-3.5 mb-5 mt-2">
-                  <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 shrink-0">
-                    <Compass className="w-6 h-6 animate-spin-slow" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black uppercase text-amber-600 tracking-wide">رادار الديوانية 📡</span>
-                    <h3 className="text-xl font-black text-brand">طريقة تفعيل الموقع بالموبايل</h3>
-                  </div>
-                </div>
-
-                {/* Direct Explanation */}
-                <p className="text-xs font-bold text-stone-600 mb-4 leading-relaxed">
-                  الرادار يطلب الموقع من المتصفح فقط. إذا كان الإذن محظوراً، لا يوجد زر داخل الموقع يستطيع كسر الحظر؛ الحل الصحيح هو تغيير الإذن إلى سماح من إعدادات المتصفح ثم إعادة المحاولة.
+                <MapPin className="w-9 h-9 mx-auto text-amber-500 mb-3" />
+                <h3 className="text-lg font-black text-brand leading-tight">الموقع غير متاح</h3>
+                <p className="mt-1.5 text-[11px] font-bold text-stone-500 leading-relaxed">
+                  فعّله من المتصفح لتشغيل الرادار.
                 </p>
 
-                <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-[11px] font-black text-amber-800 leading-relaxed">
-                  ✨ الوضع الذكي: الزر سيفحص الإذن فعلياً. إذا كان مسموحاً سيشغّل الرادار، وإذا كان محظوراً سيقولها صراحة بدون وهم.
+                <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50/45 px-3 py-3 text-right">
+                  <p className="text-[11px] font-black text-brand mb-1">الخطوات</p>
+                  <ol className="space-y-1.5 text-[10px] font-bold text-stone-600 leading-relaxed list-decimal list-inside">
+                    <li>افتح إعدادات الموقع.</li>
+                    <li>اختر سماح.</li>
+                    <li>ارجع واضغط جرّب الآن.</li>
+                  </ol>
                 </div>
 
-                {/* Step Guide Tabs or accordion style for browsers */}
-                <div className="space-y-4">
-                  {/* Safari Tab / Guide */}
-                  <div className="bg-gradient-to-l from-stone-50 to-white p-4 rounded-2xl border border-stone-100">
-                    <div className="flex items-center gap-2 mb-2 text-brand">
-                      <span className="text-lg">🍏</span>
-                      <h4 className="font-extrabold text-xs">أجهزة آيفون (متصفح Safari)</h4>
-                    </div>
-                    <ul className="text-[11px] font-bold text-stone-500 space-y-2 leading-relaxed">
-                      <li className="flex items-start gap-1 justify-start">
-                        <span className="text-amber-500 shrink-0">1️⃣</span>
-                        <span>اضغط على رمز <b className="text-brand">aA</b> أو <b className="text-brand">القفل 🔒</b> في شريط عنوان الموقع بالأسفل أو الأعلى.</span>
-                      </li>
-                      <li className="flex items-start gap-1 justify-start">
-                        <span className="text-amber-500 shrink-0">2️⃣</span>
-                        <span>اختر <b className="text-brand">"إعدادات موقع الويب" (Website Settings)</b>.</span>
-                      </li>
-                      <li className="flex items-start gap-1 justify-start">
-                        <span className="text-amber-500 shrink-0">3️⃣</span>
-                        <span>ابحث عن <b className="text-brand">"الموقع" (Location)</b> وغيّر الإذن من "طلب" إلى <b className="text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-black">"سماح" (Allow)</b>.</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  {/* Chrome Tab / Guide */}
-                  <div className="bg-gradient-to-l from-stone-50 to-white p-4 rounded-2xl border border-stone-100">
-                    <div className="flex items-center gap-2 mb-2 text-brand">
-                      <span className="text-lg">🤖</span>
-                      <h4 className="font-extrabold text-xs">أندرويد والكمبيوتر (متصفح Chrome)</h4>
-                    </div>
-                    <ul className="text-[11px] font-bold text-stone-500 space-y-2 leading-relaxed">
-                      <li className="flex items-start gap-1 justify-start">
-                        <span className="text-amber-500 shrink-0">1️⃣</span>
-                        <span>اضغط على رمز <b className="text-brand">القفل 🔒</b> أو <b className="text-brand">الإعدادات ⚙️</b> بجانب عنوان الموقع في الأعلى.</span>
-                      </li>
-                      <li className="flex items-start gap-1 justify-start">
-                        <span className="text-amber-500 shrink-0">2️⃣</span>
-                        <span>اختر <b className="text-brand">"إعدادات الموقع"</b> أو قم بتفعيل خيار <b className="text-brand">"الموقع الجغرافي" (Location)</b>.</span>
-                      </li>
-                      <li className="flex items-start gap-1 justify-start">
-                        <span className="text-amber-500 shrink-0">3️⃣</span>
-                        <span>حوّله إلى <b className="text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-black">"سماح" (Allow)</b>.</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  {/* WhatsApp/Snapchat warning */}
-                  <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-200/40">
-                    <div className="flex items-center gap-2 mb-1.5 text-amber-800">
-                      <span className="text-lg shrink-0">📱</span>
-                      <h4 className="font-black text-xs">داخل تطبيقات التواصل (سناب/واتساب)</h4>
-                    </div>
-                    <p className="text-[10px] font-bold text-amber-700 leading-relaxed font-sans">
-                      المتصفح الداخلي لتطبيقات مثل واتساب وسناب شات قد يقيد استخدام الجي بي إس كلياً. 
-                      للحصول على نتيجة ممتازة، <b>اضغط على النقاط الثلاث بالزاوية بالأعلى</b> واختر <b>"فتح في Safari"</b> أو <b>"فتح في Chrome الحقيقي"</b> 🌐.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="mt-6 flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowRadarInstructionModal(false);
-                      refreshRadarOnce();
-                    }}
-                    className="w-full py-4 rounded-2xl bg-brand hover:bg-brand/95 text-white text-xs font-black shadow-lg shadow-brand/15 active:scale-95 transition-all text-center flex items-center justify-center gap-2"
-                  >
-                    إعادة المحاولة بعد تفعيل السماح 📡
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowRadarInstructionModal(false)}
-                    className="w-full py-3 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-500 text-xs font-bold transition-all text-center"
-                  >
-                    تراجع
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRadarInstructionModal(false);
+                    refreshRadarOnce();
+                  }}
+                  className="mt-4 w-full py-3 rounded-2xl bg-brand hover:bg-brand/95 text-white text-[11px] font-black shadow-lg shadow-brand/15 active:scale-95 transition-all text-center"
+                >
+                  جرّب الآن
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowRadarInstructionModal(false)}
+                  className="mt-2 w-full py-2.5 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-500 text-[11px] font-bold transition-all text-center"
+                >
+                  تراجع
+                </button>
               </motion.div>
             </motion.div>
           )}
