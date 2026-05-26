@@ -679,6 +679,7 @@ export default function CustomerSite() {
   const [showRadarInstructionModal, setShowRadarInstructionModal] = useState(false);
   const [radarStatusMsg, setRadarStatusMsg] = useState("نطلب موقعك عشان الديوانية تعتمد على القرب الحقيقي.");
   const [radarAccuracy, setRadarAccuracy] = useState<number | null>(null);
+  const [radarRefreshNonce, setRadarRefreshNonce] = useState(0);
   const radarStatusRef = useRef<typeof radarStatus>("idle");
   const locationPromptAttemptsRef = useRef(0);
   const locationPromptTimerRef = useRef<number | null>(null);
@@ -738,6 +739,7 @@ export default function CustomerSite() {
       if (mockLocation) {
         setRadarStatus("ready");
         setRadarStatusMsg("تم تفعيل الموقع التجريبي المحاكي بجانب ديوانية قريبة للتجربة 🧪");
+        setRadarRefreshNonce((nonce) => nonce + 1);
         return;
       }
      if (!navigator.geolocation) {
@@ -762,6 +764,7 @@ export default function CustomerSite() {
            setRadarStatus("ready");
            setRadarStatusMsg("الرادار شغال. إذا فيه ديوانية قريبة راح تظهر لك مباشرة.");
          }
+         setRadarRefreshNonce((nonce) => nonce + 1);
        },
        (err) => {
          setRadarStatus(err.code === 1 ? "denied" : "idle");
@@ -1057,7 +1060,7 @@ export default function CustomerSite() {
      return () => {
        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
      };
-  }, [activeSquads, activeSquadId, radarDismissedList, myGeofenceRequests, settings, userSquads, mockLocation]);
+  }, [activeSquads, activeSquadId, radarDismissedList, myGeofenceRequests, settings, userSquads, mockLocation, radarRefreshNonce]);
 
   // Polling for approved geofence requests
   useEffect(() => {
