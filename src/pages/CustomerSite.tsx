@@ -677,8 +677,11 @@ export default function CustomerSite() {
   const [ownerJoinDecisionLoading, setOwnerJoinDecisionLoading] = useState<Record<string, boolean>>({});
   const [radarStatus, setRadarStatus] = useState<"idle" | "checking" | "ready" | "denied" | "weak" | "unsupported" | "empty">("idle");
   const [showRadarInstructionModal, setShowRadarInstructionModal] = useState(false);
-  const [radarStatusMsg, setRadarStatusMsg] = useState("الرادار اختياري؛ شغّله بس إذا تبي ندور لك ديوانيات قريبة.");
+  const [radarStatusMsg, setRadarStatusMsg] = useState("نطلب موقعك عشان الديوانية تعتمد على القرب الحقيقي.");
   const [radarAccuracy, setRadarAccuracy] = useState<number | null>(null);
+  const radarStatusRef = useRef<typeof radarStatus>("idle");
+  const locationPromptAttemptsRef = useRef(0);
+  const locationPromptTimerRef = useRef<number | null>(null);
   const [radarDismissedList, setRadarDismissedList] = useState<string[]>(() => {
      try {
        return JSON.parse(localStorage.getItem("radar_dismissed_squads") || "[]");
@@ -770,6 +773,78 @@ export default function CustomerSite() {
        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
      );
   }, [mockLocation]);
+
+  useEffect(() => {
+     radarStatusRef.current = radarStatus;
+  }, [radarStatus]);
+
+  useEffect(() => {
+     if (mockLocation || !navigator.geolocation) return;
+
+     const clearPromptTimer = () => {
+       if (locationPromptTimerRef.current !== null) {
+         window.clearTimeout(locationPromptTimerRef.current);
+         locationPromptTimerRef.current = null;
+       }
+     };
+
+     const shouldTryAgain = async () => {
+       if (locationPromptAttemptsRef.current >= 3) return false;
+       if (["ready", "denied", "unsupported"].includes(radarStatusRef.current)) return false;
+       try {
+         if (navigator.permissions && (navigator as any).permissions?.query) {
+           const permission = await (navigator as any).permissions.query({ name: "geolocation" as PermissionName });
+           if (permission.state === "denied") {
+             setRadarStatus("denied");
+             setRadarStatusMsg("الموقع مقفّل من المتصفح. فعّله من إعدادات الموقع عشان الديوانية تعتمد عليك صح.");
+             setShowRadarInstructionModal(true);
+             return false;
+           }
+         }
+       } catch(e) {}
+       return true;
+     };
+
+     const askForDiwaniyaLocation = async () => {
+       clearPromptTimer();
+       if (!(await shouldTryAgain())) return;
+
+       locationPromptAttemptsRef.current += 1;
+       const attempt = locationPromptAttemptsRef.current;
+       setRadarStatusMsg(
+         attempt === 1
+           ? "نحتاج موقعك الآن عشان نربطك بالديوانية القريبة."
+           : attempt === 2
+             ? "نذكّرك مرة ثانية: فعّل اللوكيشن عشان تظهر لك ديوانيتك."
+             : "آخر تذكير للّوكيشن؛ الديوانية تعتمد على الموقع."
+       );
+       refreshRadarOnce();
+
+       if (attempt < 3) {
+         locationPromptTimerRef.current = window.setTimeout(async () => {
+           if (["ready", "denied", "unsupported"].includes(radarStatusRef.current)) return;
+           await askForDiwaniyaLocation();
+         }, 17000);
+       }
+     };
+
+     askForDiwaniyaLocation();
+
+     const onVisibleOrFocus = () => {
+       if (document.visibilityState !== "hidden" && !["ready", "checking", "denied", "unsupported"].includes(radarStatusRef.current)) {
+         askForDiwaniyaLocation();
+       }
+     };
+
+     window.addEventListener("focus", onVisibleOrFocus);
+     document.addEventListener("visibilitychange", onVisibleOrFocus);
+
+     return () => {
+       clearPromptTimer();
+       window.removeEventListener("focus", onVisibleOrFocus);
+       document.removeEventListener("visibilitychange", onVisibleOrFocus);
+     };
+  }, [mockLocation, refreshRadarOnce]);
 
   useEffect(() => {
      const askWhenLocationIsOff = async () => {
