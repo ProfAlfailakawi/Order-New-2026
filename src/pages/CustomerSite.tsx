@@ -39,6 +39,7 @@ import {
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
 import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegroundPush, type DiwaniyaPushState } from "../lib/diwaniyaPush";
+import { robustGetCurrentPosition } from "../utils/geolocation";
 
 // Define the default product categories shown to customers.
 // Removed "المشويات" و "المشروبات" per latest requirements.  If these
@@ -739,16 +740,6 @@ export default function CustomerSite() {
     }
   }, [qatyaNotifications.length]);
 
-  const readGeolocationPermissionState = useCallback(async (): Promise<PermissionState | "unknown"> => {
-     try {
-       if (navigator.permissions && (navigator as any).permissions?.query) {
-         const permission = await (navigator as any).permissions.query({ name: "geolocation" as PermissionName });
-         return permission.state as PermissionState;
-       }
-     } catch(e) {}
-     return "unknown";
-  }, []);
-
   const refreshRadarOnce = useCallback(async () => {
       if (mockLocation) {
         setRadarStatus("ready");
@@ -761,51 +752,41 @@ export default function CustomerSite() {
        return;
      }
 
-     const permissionState = await readGeolocationPermissionState();
-     if (permissionState === "denied") {
-       setRadarStatus("denied");
-       setRadarStatusMsg("فعّل الموقع من المتصفح، ثم جرّب.");
-       setShowRadarInstructionModal(true);
-       return;
-     }
-
      setRadarStatus("checking");
-     setRadarStatusMsg(
-       permissionState === "granted"
-         ? "الإذن ظاهر عندنا مسموح. نلتقط موقعك الآن ونحدّث الرادار فوراً."
-         : "راح يطلع طلب سماح الموقع من المتصفح. اختر سماح حتى يشتغل الرادار."
-     );
+     setRadarStatusMsg("جاري الاتصال بالأقمار الصناعية لتحديد موقعك... 📡");
      setRadarDismissedList([]);
      setIsNearbyRadarPanelCollapsed(false);
      try { localStorage.removeItem("radar_dismissed_squads"); } catch(e) {}
 
-     navigator.geolocation.getCurrentPosition(
-       (position) => {
-         const accuracy = Number(position.coords.accuracy || 0);
-         setRadarAccuracy(Math.round(accuracy));
-         if (accuracy > 600) {
-           setRadarStatus("weak");
-           setRadarStatusMsg("اشتغل الموقع، لكن الدقة ضعيفة جداً. افتح GPS أو الواي فاي وجرّب تحديث الموقع حتى لا نحكم عليك بعيد بالغلط.");
-         } else {
-           setRadarStatus("ready");
-           setRadarStatusMsg("تم التقاط موقعك بنجاح. الرادار شغال الآن، وإذا فيه ديوانية قريبة راح تظهر لك مباشرة.");
-         }
-       },
-       (err) => {
-         const isDenied = err.code === 1;
-         setRadarStatus(isDenied ? "denied" : "idle");
-         setRadarStatusMsg(
-           isDenied
-             ? "المتصفح رفض إعطاء الموقع. لا يوجد زر سحري يتجاوز الحظر؛ لازم تغيّر الإذن إلى سماح من إعدادات الموقع ثم تعيد المحاولة."
-             : "الرادار حاول فعلاً لكنه ما قدر يلتقط موقعك الآن. تأكد من تشغيل GPS والإنترنت ثم جرّب مرة ثانية."
-         );
-         if (isDenied) {
-           setShowRadarInstructionModal(true);
-         }
-       },
-       { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
-     );
-  }, [mockLocation, readGeolocationPermissionState]);
+     try {
+       const position = await robustGetCurrentPosition({
+         timeout: 25000,
+         maximumAge: 0,
+         enableHighAccuracy: true
+       });
+       
+       const accuracy = Number(position.coords.accuracy || 0);
+       setRadarAccuracy(Math.round(accuracy));
+       if (accuracy > 600) {
+         setRadarStatus("weak");
+         setRadarStatusMsg("اشتغل الموقع، لكن الدقة ضعيفة جداً. افتح GPS أو الواي فاي وجرّب تحديث الموقع حتى لا نحكم عليك بعيد بالغلط.");
+       } else {
+         setRadarStatus("ready");
+         setRadarStatusMsg("تم التقاط موقعك بنجاح. الرادار شغال الآن، وإذا فيه ديوانية قريبة راح تظهر لك مباشرة.");
+       }
+     } catch (err: any) {
+       const isDenied = err.code === 1;
+       setRadarStatus(isDenied ? "denied" : "idle");
+       setRadarStatusMsg(
+         isDenied
+           ? "المتصفح رفض إعطاء الموقع. لا يوجد زر سحري يتجاوز الحظر؛ لازم تغيّر الإذن إلى سماح من إعدادات الموقع ثم تعيد المحاولة."
+           : "الرادار حاول فعلاً لكنه ما قدر يلتقط موقعك الآن. تأكد من تشغيل GPS والإنترنت ثم جرّب مرة ثانية."
+       );
+       if (isDenied) {
+         setShowRadarInstructionModal(true);
+       }
+     }
+  }, [mockLocation]);
 
   useEffect(() => {
      radarStatusRef.current = radarStatus;

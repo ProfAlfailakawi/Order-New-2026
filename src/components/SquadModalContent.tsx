@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "motion/react";
 import { User, Landmark, Crown, Users, LogIn, DoorOpen, DoorClosed } from "lucide-react";
 import { cn } from "../utils";
+import { robustGetCurrentPosition } from "../utils/geolocation";
 import { SaduPresenceRug } from "./SaduPresenceRug";
 
 interface SquadTier {
@@ -207,6 +208,22 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
   const [localGeofenceDistance, setLocalGeofenceDistance] = React.useState(() => getSquadOwnGeofenceDistance());
 
+  const getRegisteredSquadLat = React.useCallback(() => {
+    const raw = squadInfo?.lat ?? squadInfo?.location?.lat ?? squadInfo?.latitude ?? squadInfo?.location?.latitude;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : undefined;
+  }, [squadInfo?.lat, squadInfo?.location?.lat, squadInfo?.latitude, squadInfo?.location?.latitude]);
+
+  const getRegisteredSquadLng = React.useCallback(() => {
+    const raw = squadInfo?.lng ?? squadInfo?.location?.lng ?? squadInfo?.longitude ?? squadInfo?.location?.longitude;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : undefined;
+  }, [squadInfo?.lng, squadInfo?.location?.lng, squadInfo?.longitude, squadInfo?.location?.longitude]);
+
+  const registeredSquadLat = getRegisteredSquadLat();
+  const registeredSquadLng = getRegisteredSquadLng();
+  const hasRegisteredSquadLocation = registeredSquadLat !== undefined && registeredSquadLng !== undefined;
+
   React.useEffect(() => {
     if (!geoDistanceTouched) {
       setLocalGeofenceDistance(getSquadOwnGeofenceDistance());
@@ -247,8 +264,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       return;
     }
 
-    if (squadInfo?.lat !== undefined && squadInfo?.lng !== undefined) {
-      const diff = calculateDistanceMeters(Number(squadInfo.lat), Number(squadInfo.lng), coords.lat, coords.lng);
+    if (registeredSquadLat !== undefined && registeredSquadLng !== undefined) {
+      const diff = calculateDistanceMeters(registeredSquadLat, registeredSquadLng, coords.lat, coords.lng);
       if (diff < 30) {
         setShowResetLocation(false);
         setGeoStatusMsg("أنت بالموقع الحالي للديوانية، ما يحتاج نغيّر اللوكيشن ✅");
@@ -275,7 +292,14 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         setManualInput("");
         setShowManualInput(false);
         setShowResetLocation(false);
-        setSquadInfo?.({ ...squadInfo, lat: coords.lat, lng: coords.lng, geofenceDistance: localGeofenceDistance });
+        setSquadInfo?.({
+          ...squadInfo,
+          lat: coords.lat,
+          lng: coords.lng,
+          geofenceDistance: localGeofenceDistance,
+          squadGeofenceDistance: localGeofenceDistance,
+          location: { ...(squadInfo?.location || {}), lat: coords.lat, lng: coords.lng, geofenceDistance: localGeofenceDistance },
+        });
         if (onRefresh) onRefresh();
       } else {
         setGeoStatusMsg("ما ضبط التسجيل اليدوي. جرّب بعد شوي.");
@@ -294,37 +318,17 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       return;
     }
 
-    const readCurrentPosition = () => new Promise<GeolocationPosition>((resolve, reject) => {
-      let settled = false;
-      let watchId: number | null = null;
-      const finish = (position?: GeolocationPosition, error?: GeolocationPositionError) => {
-        if (settled) return;
-        settled = true;
-        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-        if (position) resolve(position); else reject(error);
-      };
-
-      navigator.geolocation.getCurrentPosition(
-        finish,
-        () => {
-          watchId = navigator.geolocation.watchPosition(
-            (position) => finish(position),
-            (error) => finish(undefined, error),
-            { enableHighAccuracy: true, timeout: 20000, maximumAge: 15000 }
-          );
-        },
-        { enableHighAccuracy: true, timeout: options?.changeCheck ? 12000 : 18000, maximumAge: options?.changeCheck ? 60000 : 10000 }
-      );
-    });
-
     setIsRegisteringGeo(true);
     setGeoStatusMsg(options?.auto ? "نحاول نثبت موقع ديوانيتك تلقائياً... 📡" : (options?.changeCheck ? "نتأكد من موقعك الحالي قبل تغيير موقع الديوانية... 📡" : "نثبت موقع الديوانية الحالي... 📡"));
 
     try {
-      const position = await readCurrentPosition();
+      const position = await robustGetCurrentPosition({
+        timeout: options?.changeCheck ? 15000 : 20000,
+        enableHighAccuracy: true
+      });
       const { latitude, longitude } = position.coords;
-      if (squadInfo?.lat !== undefined && squadInfo?.lng !== undefined) {
-        const diff = calculateDistanceMeters(Number(squadInfo.lat), Number(squadInfo.lng), latitude, longitude);
+      if (registeredSquadLat !== undefined && registeredSquadLng !== undefined) {
+        const diff = calculateDistanceMeters(registeredSquadLat, registeredSquadLng, latitude, longitude);
         if (diff < 30) {
           setShowResetLocation(false);
           setGeoStatusMsg("أنت بالموقع الحالي للديوانية، ما يحتاج نغيّر اللوكيشن ✅");
@@ -351,6 +355,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           lat: latitude,
           lng: longitude,
           geofenceDistance: localGeofenceDistance,
+          squadGeofenceDistance: localGeofenceDistance,
           location: { ...(squadInfo?.location || {}), lat: latitude, lng: longitude, geofenceDistance: localGeofenceDistance },
         });
         if (onRefresh) window.setTimeout(onRefresh, 100);
@@ -373,7 +378,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     } finally {
       setIsRegisteringGeo(false);
     }
-  }, [squadInfo, customerPhone, onRefresh, setSquadInfo, localGeofenceDistance]);
+  }, [squadInfo, customerPhone, onRefresh, setSquadInfo, localGeofenceDistance, registeredSquadLat, registeredSquadLng]);
 
   const handleRegisterLocation = () => saveCurrentLocationForSquad();
 
@@ -381,11 +386,11 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   React.useEffect(() => {
     const squadId = squadInfo?.id ? String(squadInfo.id) : "";
     const isOwnerOfCurrent = Boolean(squadInfo?.phone && customerPhone && cleanPhoneLocal(squadInfo.phone) === cleanPhoneLocal(customerPhone));
-    const needsLocation = squadInfo?.lat === undefined || squadInfo?.lng === undefined;
+    const needsLocation = registeredSquadLat === undefined || registeredSquadLng === undefined;
     if (!squadId || !isOwnerOfCurrent || !needsLocation || autoLocationSquadRef.current === squadId) return;
     autoLocationSquadRef.current = squadId;
     saveCurrentLocationForSquad({ auto: true });
-  }, [squadInfo?.id, squadInfo?.phone, squadInfo?.lat, squadInfo?.lng, customerPhone, saveCurrentLocationForSquad]);
+  }, [squadInfo?.id, squadInfo?.phone, registeredSquadLat, registeredSquadLng, customerPhone, saveCurrentLocationForSquad]);
 
   const handleApproveRejectRequest = async (targetPhone: string, approved: boolean) => {
     setIsApproving(prev => ({ ...prev, [targetPhone]: true }));
@@ -594,7 +599,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   }, [clampGeofenceDistance, settings]);
 
   React.useEffect(() => {
-    if (!geoDistanceTouched || !squadInfo?.id || squadInfo?.lat === undefined || squadInfo?.lng === undefined) return;
+    if (!geoDistanceTouched || !squadInfo?.id || registeredSquadLat === undefined || registeredSquadLng === undefined) return;
     const nextDistance = clampGeofenceDistance(localGeofenceDistance, getSquadOwnGeofenceDistance(), getSquadGeofenceDistance());
     if (Number(squadInfo?.geofenceDistance) !== nextDistance || Number(squadInfo?.location?.geofenceDistance) !== nextDistance) {
       setSquadInfo?.({
@@ -612,8 +617,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           body: JSON.stringify({
             squadId: squadInfo.id,
             phone: customerPhone,
-            lat: squadInfo.lat,
-            lng: squadInfo.lng,
+            lat: registeredSquadLat,
+            lng: registeredSquadLng,
             geofenceDistance: nextDistance,
           }),
         });
@@ -624,8 +629,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     geoDistanceTouched,
     localGeofenceDistance,
     squadInfo?.id,
-    squadInfo?.lat,
-    squadInfo?.lng,
+    registeredSquadLat,
+    registeredSquadLng,
     customerPhone,
     clampGeofenceDistance,
     getSquadOwnGeofenceDistance,
@@ -1322,7 +1327,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                   </span>
                                </div>
                                <span className="text-[9px] font-bold text-stone-400 mt-1.5">
-                                  {sq.lat !== undefined ? `📍 موقع الرادار: مثبت` : `⚠️ موقع الرادار غير مثبت`}
+                                  {(sq.lat ?? sq.location?.lat) !== undefined ? `📍 موقع الرادار: مثبت` : `⚠️ موقع الرادار غير مثبت`}
                                 </span>
                             </div>
                          </div>
@@ -1553,17 +1558,17 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         </div>
                       </div>
 
-                      {squadInfo.lat !== undefined && squadInfo.lng !== undefined ? (
+                      {hasRegisteredSquadLocation ? (
                         <div className="bg-sky-50 px-4 py-3 rounded-2xl border border-sky-100 space-y-2">
                           <p className="text-xs font-black text-sky-800 flex items-center gap-1 justify-end">
                             <span>موقع الديوانية مسجّل ومفعّل حالياً بنجاح! ✅</span>
                           </p>
                           <p className="text-[10px] font-mono font-bold text-sky-600 tracking-tight">
-                            إحداثيات: {Number(squadInfo.lat).toFixed(6)}, {Number(squadInfo.lng).toFixed(6)}
+                            إحداثيات: {registeredSquadLat?.toFixed(6)}, {registeredSquadLng?.toFixed(6)}
                           </p>
                           <button
                             type="button"
-                            onClick={() => { window.location.href = `https://www.google.com/maps/search/?api=1&query=${squadInfo.lat},${squadInfo.lng}`; }}
+                            onClick={() => { window.location.href = `https://www.google.com/maps/search/?api=1&query=${registeredSquadLat},${registeredSquadLng}`; }}
                             className="inline-block text-[10px] font-black text-accent hover:underline"
                           >
                             عرض على خرائط جوجل 🧭
@@ -1580,7 +1585,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         </div>
                       )}
 
-                      {squadInfo.lat !== undefined && squadInfo.lng !== undefined && !showResetLocation ? (
+                      {hasRegisteredSquadLocation && !showResetLocation ? (
                         <button
                           type="button"
                           onClick={() => saveCurrentLocationForSquad({ changeCheck: true })}
@@ -1596,7 +1601,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           disabled={isRegisteringGeo}
                           className="w-full bg-stone-50 hover:bg-stone-100 border-2 border-stone-200/80 text-brand font-black text-xs py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
                         >
-                          {isRegisteringGeo ? "نثبت الموقع... 🛰️" : (squadInfo.lat !== undefined ? "📍 تأكيد تغيير موقع الديوانية الحالي" : "📍 تعيين موقع الديوانية الجغرافي الحالي")}
+                          {isRegisteringGeo ? "نثبت الموقع... 🛰️" : (hasRegisteredSquadLocation ? "📍 تأكيد تغيير موقع الديوانية الحالي" : "📍 تعيين موقع الديوانية الجغرافي الحالي")}
                         </button>
                       )}
 
