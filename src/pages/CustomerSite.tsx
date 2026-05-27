@@ -23,6 +23,9 @@ import {
   ShoppingBag,
   Sparkles,
   Star,
+  Trophy,
+  Medal,
+  Target,
   Flame,
   Gift,
   LayoutDashboard,
@@ -275,6 +278,33 @@ const parseAdminPoints = (value: any): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
+
+const getAdminSquadTierIconType = (tier: any): string => {
+  const raw = String(tier?.iconType || tier?.icon || "");
+  const byEmoji: Record<string, string> = { "🏆": "Trophy", "👑": "Crown", "⭐": "Star", "🏅": "Medal", "🥉": "Medal", "🔥": "Flame", "⚔️": "Swords", "💎": "Diamond", "🚀": "Rocket", "🛡️": "Shield", "🎯": "Target" };
+  return byEmoji[raw] || raw || "Target";
+};
+
+const renderAdminSquadTierBadge = (tier: any, sizeClass = "w-9 h-9") => {
+  const iconType = getAdminSquadTierIconType(tier);
+  const gradient = String(tier?.adminColor || tier?.iconColor || tier?.color || "").includes("from-")
+    ? String(tier?.adminColor || tier?.iconColor || tier?.color)
+    : "from-orange-400 to-orange-600";
+  const iconClass = sizeClass.includes("w-16") ? "w-8 h-8" : sizeClass.includes("w-12") ? "w-6 h-6" : "w-5 h-5";
+  const content = iconType === "Medal" ? <Medal className={iconClass} />
+    : iconType === "Star" ? <Star className={iconClass} />
+    : iconType === "Crown" ? <Crown className={iconClass} />
+    : iconType === "Trophy" ? <Trophy className={iconClass} />
+    : iconType === "Target" ? <Target className={iconClass} />
+    : iconType === "Flame" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}>🔥</span>
+    : iconType === "Swords" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}>⚔️</span>
+    : iconType === "Diamond" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}>💎</span>
+    : iconType === "Rocket" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}>🚀</span>
+    : iconType === "Shield" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}>🛡️</span>
+    : <Target className={iconClass} />;
+  return <span className={`${sizeClass} rounded-full flex items-center justify-center text-white bg-gradient-to-br ${gradient} shrink-0 shadow-sm`}>{content}</span>;
+};
+
 const normalizeSquadTierForCustomer = (tier: any, index: number, all: any[]) => {
   const sortedMins = all.map((t: any) => parseAdminPoints(t?.minPoints ?? t?.points ?? t?.requiredPoints ?? 0)).sort((a, b) => a - b);
   const minPoints = parseAdminPoints(tier?.minPoints ?? tier?.points ?? tier?.requiredPoints ?? 0);
@@ -289,7 +319,9 @@ const normalizeSquadTierForCustomer = (tier: any, index: number, all: any[]) => 
     minPoints,
     maxPoints: parseAdminPoints(tier?.maxPoints ?? (nextMin ? nextMin - 1 : 999999999)),
     color: String(tier?.color || "").startsWith("text-") ? tier.color : safeColors[index] || "text-brand",
+    adminColor: String(tier?.adminColor || tier?.iconColor || tier?.color || "").includes("from-") ? String(tier?.adminColor || tier?.iconColor || tier?.color) : "from-orange-400 to-orange-600",
     bg: String(tier?.bg || "").startsWith("bg-") ? tier.bg : safeBgs[index] || "bg-stone-50",
+    iconType,
     icon: tier?.icon || (iconType === "Trophy" ? "🏆" : iconType === "Crown" ? "👑" : iconType === "Star" ? "⭐" : iconType === "Medal" ? "🏅" : iconType === "Flame" ? "🔥" : iconType === "Swords" ? "⚔️" : iconType === "Diamond" ? "💎" : iconType === "Rocket" ? "🚀" : iconType === "Shield" ? "🛡️" : "🎯"),
     benefit: tier?.benefit || tier?.label || tier?.description || "",
   };
@@ -400,7 +432,7 @@ export default function CustomerSite() {
               whileHover={{ scale: 1.1, rotate: 10 }}
               className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center text-3xl shrink-0"
             >
-              {currentTier.icon}
+              {renderAdminSquadTierBadge(currentTier, "w-14 h-14")}
             </motion.div>
             <div className="text-right">
               <h3 className="text-xl font-black text-brand flex items-center gap-2">
