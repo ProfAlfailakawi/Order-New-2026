@@ -286,72 +286,93 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     setIsRegisteringGeo(false);
   };
 
-  const saveCurrentLocationForSquad = React.useCallback((options?: { auto?: boolean; changeCheck?: boolean }) => {
+  const saveCurrentLocationForSquad = React.useCallback(async (options?: { auto?: boolean; changeCheck?: boolean }) => {
     if (!squadInfo?.id) return;
     if (!navigator.geolocation) {
       const msg = "جهازك لا يدعم نظام تحديد المواقع الجغرافي.";
       if (options?.auto) setGeoStatusMsg(msg); else alert(msg);
       return;
     }
+
+    const readCurrentPosition = () => new Promise<GeolocationPosition>((resolve, reject) => {
+      let settled = false;
+      let watchId: number | null = null;
+      const finish = (position?: GeolocationPosition, error?: GeolocationPositionError) => {
+        if (settled) return;
+        settled = true;
+        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+        if (position) resolve(position); else reject(error);
+      };
+
+      navigator.geolocation.getCurrentPosition(
+        finish,
+        () => {
+          watchId = navigator.geolocation.watchPosition(
+            (position) => finish(position),
+            (error) => finish(undefined, error),
+            { enableHighAccuracy: true, timeout: 20000, maximumAge: 15000 }
+          );
+        },
+        { enableHighAccuracy: true, timeout: options?.changeCheck ? 12000 : 18000, maximumAge: options?.changeCheck ? 60000 : 10000 }
+      );
+    });
+
     setIsRegisteringGeo(true);
     setGeoStatusMsg(options?.auto ? "نحاول نثبت موقع ديوانيتك تلقائياً... 📡" : (options?.changeCheck ? "نتأكد من موقعك الحالي قبل تغيير موقع الديوانية... 📡" : "نثبت موقع الديوانية الحالي... 📡"));
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        if (squadInfo?.lat !== undefined && squadInfo?.lng !== undefined) {
-          const diff = calculateDistanceMeters(Number(squadInfo.lat), Number(squadInfo.lng), latitude, longitude);
-          if (diff < 30) {
-            setIsRegisteringGeo(false);
-            setShowResetLocation(false);
-            setGeoStatusMsg("أنت بالموقع الحالي للديوانية، ما يحتاج نغيّر اللوكيشن ✅");
-            return;
-          }
+    try {
+      const position = await readCurrentPosition();
+      const { latitude, longitude } = position.coords;
+      if (squadInfo?.lat !== undefined && squadInfo?.lng !== undefined) {
+        const diff = calculateDistanceMeters(Number(squadInfo.lat), Number(squadInfo.lng), latitude, longitude);
+        if (diff < 30) {
+          setShowResetLocation(false);
+          setGeoStatusMsg("أنت بالموقع الحالي للديوانية، ما يحتاج نغيّر اللوكيشن ✅");
+          return;
         }
-        try {
-          const res = await fetch("/api/squad-set-location", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              squadId: squadInfo.id,
-              phone: customerPhone,
-              lat: latitude,
-              lng: longitude,
-              geofenceDistance: localGeofenceDistance
-            })
-          });
-          if (res.ok) {
-            setGeoStatusMsg("تم تسجيل موقع الديوانية الجغرافي بنجاح! 🎉");
-            setShowResetLocation(false);
-            setSquadInfo?.({ ...squadInfo, lat: latitude, lng: longitude, geofenceDistance: localGeofenceDistance });
-            if (onRefresh) window.setTimeout(onRefresh, 100);
-          } else {
-            setGeoStatusMsg("ما ضبط التسجيل. جرّب بعد شوي.");
-          }
-        } catch (e) {
-          setGeoStatusMsg("الاتصال تعطل وقت حفظ الموقع.");
-        }
-        setIsRegisteringGeo(false);
-      },
-      (err) => {
-        setIsRegisteringGeo(false);
+      }
+
+      const res = await fetch("/api/squad-set-location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          squadId: squadInfo.id,
+          phone: customerPhone,
+          lat: latitude,
+          lng: longitude,
+          geofenceDistance: localGeofenceDistance
+        })
+      });
+      if (res.ok) {
+        setGeoStatusMsg("تم تسجيل موقع الديوانية الجغرافي بنجاح! 🎉");
+        setShowResetLocation(false);
+        setSquadInfo?.({
+          ...squadInfo,
+          lat: latitude,
+          lng: longitude,
+          geofenceDistance: localGeofenceDistance,
+          location: { ...(squadInfo?.location || {}), lat: latitude, lng: longitude, geofenceDistance: localGeofenceDistance },
+        });
+        if (onRefresh) window.setTimeout(onRefresh, 100);
+      } else {
         setShowResetLocation(true);
-        const code = Number(err?.code || 0);
-        if (code === 1) {
-          setGeoStatusMsg("الموقع يحتاج سماح. فعّل اللوكيشن من المتصفح أو استخدم الإدخال اليدوي لتثبيت ديوانيتك الحالية.");
-        } else if (code === 2) {
-          setGeoStatusMsg("المتصفح لم يتمكن من قراءة موقعك حالياً. جرّب مرة ثانية أو استخدم الإدخال اليدوي.");
-        } else if (code === 3) {
-          setGeoStatusMsg(options?.changeCheck
-            ? "يبدو أنك في نفس موقع الديوانية الحالي. إذا كنت انتقلت فعلاً لمكان جديد اضغط مرة ثانية، أو استخدم الإدخال اليدوي عند الحاجة."
-            : "انتهت مهلة قراءة الموقع. جرّب مرة ثانية أو استخدم الإدخال اليدوي عند الحاجة."
-          );
-        } else {
-          setGeoStatusMsg("ما قدرنا نقرأ الموقع الحين. جرّب مرة ثانية أو استخدم الإدخال اليدوي.");
-        }
-      },
-      { enableHighAccuracy: true, timeout: options?.changeCheck ? 6000 : 10000, maximumAge: options?.changeCheck ? 60000 : 0 }
-    );
+        setGeoStatusMsg("ما ضبط التسجيل. جرّب بعد شوي.");
+      }
+    } catch (err: any) {
+      setShowResetLocation(true);
+      const code = Number(err?.code || 0);
+      if (code === 1) {
+        setGeoStatusMsg("الموقع يحتاج سماح. فعّل اللوكيشن من المتصفح أو استخدم الإدخال اليدوي لتثبيت ديوانيتك الحالية.");
+      } else if (code === 2) {
+        setGeoStatusMsg("المتصفح لم يتمكن من قراءة موقعك حالياً. جرّب مرة ثانية أو استخدم الإدخال اليدوي.");
+      } else if (code === 3) {
+        setGeoStatusMsg("انتهت مهلة قراءة الموقع. فتح خرائط جوجل أو الإدخال اليدوي يظل متاحاً عند الحاجة.");
+      } else {
+        setGeoStatusMsg("ما قدرنا نقرأ الموقع الحين. جرّب مرة ثانية أو استخدم الإدخال اليدوي.");
+      }
+    } finally {
+      setIsRegisteringGeo(false);
+    }
   }, [squadInfo, customerPhone, onRefresh, setSquadInfo, localGeofenceDistance]);
 
   const handleRegisterLocation = () => saveCurrentLocationForSquad();
@@ -1570,6 +1591,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         </button>
                       ) : (
                         <button
+                          type="button"
                           onClick={handleRegisterLocation}
                           disabled={isRegisteringGeo}
                           className="w-full bg-stone-50 hover:bg-stone-100 border-2 border-stone-200/80 text-brand font-black text-xs py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
