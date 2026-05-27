@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { User, Landmark, Crown, Users, LogIn, DoorOpen, DoorClosed } from "lucide-react";
+import { User, Landmark, Crown, Users, LogIn, DoorOpen, DoorClosed, Trophy, Star, Medal, Target } from "lucide-react";
 import { cn } from "../utils";
 import { robustGetCurrentPosition } from "../utils/geolocation";
 import { SaduPresenceRug } from "./SaduPresenceRug";
@@ -14,6 +14,8 @@ interface SquadTier {
   description?: string;
   title?: string;
   icon: string;
+  iconType?: string;
+  adminColor?: string;
   bg: string;
   color: string;
   image?: string;
@@ -490,6 +492,33 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     );
   };
 
+
+  const getAdminSquadTierIconType = (tier: any): string => {
+    const raw = String(tier?.iconType || tier?.icon || "");
+    const byEmoji: Record<string, string> = { "🏆": "Trophy", "👑": "Crown", "⭐": "Star", "🏅": "Medal", "🥉": "Medal", "🔥": "Flame", "⚔️": "Swords", "💎": "Diamond", "🚀": "Rocket", "🛡️": "Shield", "🎯": "Target" };
+    return byEmoji[raw] || raw || "Target";
+  };
+
+  const renderAdminSquadTierBadge = (tier: any, sizeClass = "w-9 h-9") => {
+    const iconType = getAdminSquadTierIconType(tier);
+    const gradient = String(tier?.adminColor || tier?.iconColor || tier?.color || "").includes("from-")
+      ? String(tier?.adminColor || tier?.iconColor || tier?.color)
+      : "from-orange-400 to-orange-600";
+    const iconClass = sizeClass.includes("w-12") ? "w-6 h-6" : "w-5 h-5";
+    const content = iconType === "Medal" ? <Medal className={iconClass} />
+      : iconType === "Star" ? <Star className={iconClass} />
+      : iconType === "Crown" ? <Crown className={iconClass} />
+      : iconType === "Trophy" ? <Trophy className={iconClass} />
+      : iconType === "Target" ? <Target className={iconClass} />
+      : iconType === "Flame" ? <span className="text-xl">🔥</span>
+      : iconType === "Swords" ? <span className="text-xl">⚔️</span>
+      : iconType === "Diamond" ? <span className="text-xl">💎</span>
+      : iconType === "Rocket" ? <span className="text-xl">🚀</span>
+      : iconType === "Shield" ? <span className="text-xl">🛡️</span>
+      : <Target className={iconClass} />;
+    return <span className={`${sizeClass} rounded-full flex items-center justify-center text-white bg-gradient-to-br ${gradient} shrink-0 shadow-sm`}>{content}</span>;
+  };
+
   const normalizeSquadTier = (tier: any, index: number): SquadTier => {
     const fallbackColors = [
       "text-orange-700",
@@ -534,6 +563,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       description: tier?.description || tier?.label || tier?.benefit || "",
       title: tier?.title || tier?.name || "",
       icon: tier?.icon || iconByType[tier?.iconType] || "",
+      iconType: tier?.iconType || getAdminSquadTierIconType(tier),
+      adminColor: String(tier?.adminColor || tier?.iconColor || tier?.color || "").includes("from-") ? String(tier?.adminColor || tier?.iconColor || tier?.color) : "from-orange-400 to-orange-600",
       bg: tier?.bg || tier?.bgClass || fallbackBg[index % fallbackBg.length],
       color:
         tier?.textColor ||
@@ -2047,7 +2078,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <span>{tier.icon}</span>
+                          renderAdminSquadTierBadge(tier, "w-9 h-9")
                         )}
                       </div>
                       <span
@@ -2093,7 +2124,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        tier.icon
+                        renderAdminSquadTierBadge(tier, "w-10 h-10")
                       )}
                     </div>
                     <div className="flex flex-col flex-1 min-w-0">
