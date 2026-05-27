@@ -44,20 +44,25 @@ let localFallbackDB: any = {
 // Attempt to load entire fallback from file first
 try {
   if (fs.existsSync(path.join(__dirname, "app_data_fallback.json"))) {
+    console.log("Loading app_data_fallback.json");
     const fileData = JSON.parse(fs.readFileSync(path.join(__dirname, "app_data_fallback.json"), "utf8"));
     localFallbackDB = { ...localFallbackDB, ...fileData };
   } else {
     // legacy migrations
     if (fs.existsSync(path.join(__dirname, "shared_products.json"))) {
+      console.log("Loading shared_products.json - length=", JSON.parse(fs.readFileSync(path.join(__dirname, "shared_products.json"), "utf8"))?.length);
       localFallbackDB.products = JSON.parse(fs.readFileSync(path.join(__dirname, "shared_products.json"), "utf8"));
     }
     if (fs.existsSync(path.join(__dirname, "suppliers.json"))) {
+      console.log("Loading suppliers.json");
       localFallbackDB.supplierCopies = JSON.parse(fs.readFileSync(path.join(__dirname, "suppliers.json"), "utf8")).flatMap((s:any) => s.products || []);
     }
   }
 } catch(e) {
   console.log("Could not load local data files", e);
 }
+console.log("INITIAL FALLBACK DB products size: ", localFallbackDB.products.length);
+
 
 // Read firebase config safely for Node ESM
 const firebaseConfig = JSON.parse(
@@ -89,16 +94,21 @@ let _appDataCacheTime = 0;
 const CACHE_TTL = 0; // Disable cache to prevent concurrency issues and data loss during split payments
 
 async function getAppData() {
+  console.log("getAppData called!");
   if (_appDataCache && Date.now() - _appDataCacheTime < CACHE_TTL) {
     return _appDataCache;
   }
   try {
     const d = await getDoc(doc(db, "appData", "shared_company_data"));
     if (d.exists()) {
+      console.log("DB exists, products length: ", d.data().products?.length);
       _appDataCache = d.data();
       _appDataCacheTime = Date.now();
       return _appDataCache;
+    } else {
+      console.log("DB does NOT exist. Returning localFallbackDB. products length is: ", localFallbackDB.products?.length);
     }
+    // If not found, fall out of the Try block to return localFallbackDB
   } catch (error) {
     console.warn("Firebase read restricted or failed, using local in-memory fallback", error);
   }
@@ -170,13 +180,26 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
   try {
     await runTransaction(db, async (transaction) => {
       const sDoc = await transaction.get(docRef);
-      if (!sDoc.exists()) throw new Error("shared_company_data not found");
       
-      const currentData = sDoc.data();
+      let currentData: any = {};
+      let isNew = false;
+      if (!sDoc.exists()) {
+         isNew = true;
+         currentData = localFallbackDB;
+      } else {
+         currentData = sDoc.data();
+      }
+      
       const updates = updater(currentData);
       
       if (updates) {
-        transaction.update(docRef, updates);
+        if (isNew) {
+           transaction.set(docRef, { ...currentData, ...updates }, { merge: true });
+        } else {
+           transaction.update(docRef, updates);
+        }
+      } else if (isNew) {
+        transaction.set(docRef, currentData);
       }
     });
     _appDataCache = null;
