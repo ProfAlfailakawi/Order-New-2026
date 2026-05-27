@@ -121,7 +121,7 @@ const getCupType = (points: number, isHost: boolean = false): {
   icon: string;
 } => {
   if (isHost) {
-    return { id: "dallah", label: "دلة رسلان ذهبية", desc: "المعزب وقائد الدوانية كرم وريادة", icon: "👑" };
+    return { id: "dallah", label: "دلة رسلان ذهبية", desc: "المعزب وقائد الديوانية كرم وريادة", icon: "👑" };
   }
   if (points >= 500) {
     return { id: "royal_finjan", label: "فنجان ذهبي ملكي", desc: "مستوى بلاتينيوم - رتبة كنعور حكيم", icon: "🏆" };
@@ -132,7 +132,7 @@ const getCupType = (points: number, isHost: boolean = false): {
   if (points >= 100) {
     return { id: "gilded_tea", label: "استكانة شاي مذهبة", desc: "مستوى فضي - عضو فعال وهيبة", icon: "✨" };
   }
-  return { id: "plain_finjan", label: "فنجان قهوة تقليدي", desc: "مستوى برونزي - يديد بالدوانية ومنور", icon: "🤝" };
+  return { id: "plain_finjan", label: "فنجان قهوة تقليدي", desc: "مستوى برونزي - يديد بالديوانية ومنور", icon: "🤝" };
 };
 
 export function SaduPresenceRug({
@@ -646,17 +646,17 @@ export function SaduPresenceRug({
               </p>
             </div>
 
-            <div className="bg-stone-950/60 p-4 rounded-2xl border border-stone-800 text-xs font-bold text-stone-300 space-y-1">
-              <div className="flex justify-between">
-                <span className="text-stone-400">{selectedCupInfo.cupMeta.desc}</span>
-                <span className="text-stone-500">:المكانة بالدوانية</span>
+            <div className="bg-stone-950/60 p-4 rounded-2xl border border-stone-800 text-xs font-bold text-stone-300 space-y-2" dir="rtl">
+              <div className="grid grid-cols-[auto_1fr] items-center gap-3 text-right">
+                <span className="text-stone-500 shrink-0">المكانة بالديوانية:</span>
+                <span className="text-stone-400 min-w-0">{selectedCupInfo.cupMeta.desc}</span>
               </div>
               {selectedCupInfo.checkedInAt && (
-                <div className="flex justify-between">
-                  <span className="text-stone-400">
+                <div className="grid grid-cols-[auto_1fr] items-center gap-3 text-right">
+                  <span className="text-stone-500 shrink-0">وقت الحضور:</span>
+                  <span className="text-stone-400 min-w-0">
                     {new Date(selectedCupInfo.checkedInAt).toLocaleTimeString("ar-KW", { hour: '2-digit', minute: '2-digit' })}
                   </span>
-                  <span className="text-stone-500">:وقت الحضور</span>
                 </div>
               )}
             </div>
