@@ -126,7 +126,7 @@ export default function OrderPage() {
     if (oid) setUrlOrderId(oid);
   }, [searchParams]);
 
-  // If this window is a popup (e.g. from AI Studio), notify parent and close
+  // If this window is a popup from an editor flow, notify parent and close.
   useEffect(() => {
     if (window.opener && window.opener !== window && urlPayment && urlOrderId) {
       try {
@@ -460,7 +460,7 @@ export default function OrderPage() {
     if (label.includes("ملغي") || label.includes("إلغاء") || label.includes("الغاء")) return { title: "تم إلغاء الطلب", desc: "المعذرة، الفاتورة ملغية أو انتهى وقت القطيّة وما اكتمل المبلغ. للاستفسار تواصل معانا." };
     if (label.includes("قيد تجميع القطية")) return { title: "قيد تجميع القطية", desc: "اللمة ماشية، وكل دفعة تقرب الطلب من الاكتمال." };
     if (label.includes("بانتظار")) return { title: "بانتظار الدفع", desc: "كمل الدفع عشان نعتمد الطلب ونمشيه لك." };
-    if (label.includes("فشل")) return { title: "فشلت عملية الدفع", desc: "ما عليه، جرب مرة ثانية أو اختار طريقة أنسب." };
+    if (label.includes("فشل")) return { title: "فشلت عملية الدفع", desc: "جرّب مرة ثانية أو اختر طريقة أنسب." };
     if (label.includes("تم الدفع") || label.includes("توصيل")) return { title: "تم الدفع وجاري التوصيل", desc: "طلبك معتمد وجاري توصيله بهدوء." };
     return { title: "تم إنشاء الطلب", desc: "وصلنا طلبك، وبانتظار الخطوة التالية." };
   };
@@ -681,7 +681,7 @@ export default function OrderPage() {
         }
       } else {
         console.error("Failed to generate payment link:", payData);
-        alert("ما قدرنا ننشئ رابط دفع جديد.");
+        alert("تعذر إنشاء رابط دفع جديد.");
         setProcessingPayment(false);
       }
     } catch (e: any) {
@@ -693,11 +693,11 @@ export default function OrderPage() {
       ) {
         // Silently ignore or just alert without console.error
         alert(
-          "ما نقدر نوصل الحين. السيرفر قاعد يعيد التشغيل، نطر شوي وجرب.",
+          "الخدمة تُحدّث الآن. جرّب بعد ثواني.",
         );
       } else {
         console.error(e);
-        alert("الاتصال تعطل. جرّب مرة ثانية.");
+        alert("تعذر الاتصال. جرّب مرة ثانية.");
       }
       setProcessingPayment(false);
     }
@@ -855,7 +855,7 @@ export default function OrderPage() {
                     فشل الدفع!
                   </h3>
                   <p className="text-red-900/70 font-medium">
-                    العملية ما ضبطت، جرّب مرة ثانية.
+                    العملية لم تكتمل. جرّب مرة ثانية.
                   </p>
 
                   {/* Embers flying up */}
@@ -1645,7 +1645,7 @@ export default function OrderPage() {
                       {getStatusDisplay(selectedOrder).text.includes("ملغي")
                         ? "المعذرة، الفاتورة ملغية أو انتهى وقت القطية وما اكتمل المبلغ. للاستفسار تواصل معانا."
                         : getStatusDisplay(selectedOrder).text.includes("فشل")
-                        ? "محاولة الدفع ما ضبطت. جرّب مرة ثانية."
+                        ? "محاولة الدفع لم تكتمل. جرّب مرة ثانية."
                         : getStatusDisplay(selectedOrder).text.includes("توصيل")
                           ? "تبي المندوب ينتبه حق شي معين بالطريج أو الموقع؟ تواصل ويانا بالواتساب وبلغنا."
                           : getStatusDisplay(selectedOrder).text.includes(
