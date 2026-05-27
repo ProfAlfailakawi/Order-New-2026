@@ -25,7 +25,7 @@ interface SquadModalContentProps {
   activeSquadTab: string;
   squadInfo: any;
   SQUAD_TIERS: SquadTier[];
-  getSquadTier: (points: number) => SquadTier;
+  getSquadTier: (points: number) => SquadTier | null;
   topSquads: any[];
   customerPhone: string;
   customerName: string;
@@ -521,14 +521,14 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       tier?.maxPoints !== undefined ? toNumber(tier.maxPoints) : undefined;
     return {
       id: String(tier?.id ?? tier?.name ?? index),
-      name: tier?.name || tier?.title || `مستوى ${index + 1}`,
+      name: tier?.name || tier?.title || "",
       minPoints: min,
       maxPoints: max,
       benefit:
         tier?.benefit || tier?.label || tier?.description || tier?.reward || "",
       description: tier?.description || tier?.label || tier?.benefit || "",
       title: tier?.title || tier?.name || "",
-      icon: tier?.icon || iconByType[tier?.iconType] || "🏅",
+      icon: tier?.icon || iconByType[tier?.iconType] || "",
       bg: tier?.bg || tier?.bgClass || fallbackBg[index % fallbackBg.length],
       color:
         tier?.textColor ||
@@ -545,6 +545,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
   const sortedTiers = (SQUAD_TIERS || [])
     .map(normalizeSquadTier)
+    .filter((tier) => Boolean(String(tier?.name || "").trim()))
     .sort((a, b) => Number(a.minPoints || 0) - Number(b.minPoints || 0));
 
   const currentPoints = toNumber(
@@ -562,7 +563,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       .reverse()
       .find((t) => currentPoints >= Number(t.minPoints || 0)) ||
     sortedTiers[0] ||
-    getSquadTier(currentPoints);
+    null;
 
   const safePoints = (value: any) => {
     const n = toNumber(value);
@@ -1924,10 +1925,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       {activeSquadTab === "leaderboard" && (
         <div className="flex flex-col gap-6 animate-in fade-in duration-500">
           <h4 className="font-black text-brand text-lg flex items-center gap-2 text-right">
-            <Landmark className="w-5 h-5 text-accent" /> لوحة صدارة الدواوين
+            <Landmark className="w-5 h-5 text-accent" /> صدارة الدواوين
           </h4>
           <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden flex flex-col">
-            {topSquads?.map((sq: any, idx: number) => {
+            {(!topSquads || topSquads.length === 0) && (
+              <div className="p-5 text-center text-xs font-black text-stone-400">
+                أول ديوانية تجمع نقاطها راح تظهر هنا ضمن صدارة الدواوين.
+              </div>
+            )}
+            {topSquads?.slice(0, 5).map((sq: any, idx: number) => {
               const sqTier = getSquadTier(
                 toNumber(
                   sq.points ??
@@ -1961,7 +1967,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         {sq.name}
                       </span>
                       <span className="text-[10px] text-stone-400 font-bold">
-                        {sqTier.name}
+                        {sqTier?.name || ""}
                       </span>
                     </div>
                   </div>
@@ -1983,6 +1989,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
       {activeSquadTab === "tiers" && (
         <div className="space-y-5 animate-in fade-in duration-500 text-right">
+          {sortedTiers.length === 0 ? (
+            <div className="rounded-[28px] border border-stone-100 bg-white p-5 shadow-sm text-center text-xs font-black text-stone-400">
+              طريق الديوانية بانتظار إعداد مستوياته من لوحة الأدمن.
+            </div>
+          ) : null}
+          {sortedTiers.length > 0 ? (
           <div className="rounded-[28px] border border-stone-100 bg-white p-5 shadow-sm overflow-hidden">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -2052,7 +2064,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
               </div>
             </div>
           </div>
+          ) : null}
 
+          {sortedTiers.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
             {sortedTiers.map((tier) => {
               const reached = currentPoints >= Number(tier.minPoints || 0);
@@ -2105,6 +2119,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
               );
             })}
           </div>
+          ) : null}
         </div>
       )}
     </div>

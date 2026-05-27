@@ -243,13 +243,6 @@ const formatPoints = (count: number) => {
   return `${count} نقطة`;
 };
 
-const INITIAL_SQUAD_TIERS = [
-  { id: "bronze", name: "شلة ديوانية", minPoints: 0, maxPoints: 99, color: "text-amber-700", bg: "bg-amber-50", icon: "🤝", benefit: "ابنوا ديوانيتكم! جمعوا نقاط أكثر لفتح المزايا." },
-  { id: "silver", name: "عزوة", minPoints: 100, maxPoints: 499, color: "text-slate-600", bg: "bg-slate-100", icon: "🛡️", benefit: "خصم ثابت ٥٪ على كافة الطلبات لأعضاء الديوانية." },
-  { id: "gold", name: "نواخذة", minPoints: 500, maxPoints: 1499, color: "text-yellow-600", bg: "bg-yellow-50", icon: "👑", benefit: "خصم ثابت ١٠٪ على كافة الطلبات! أنتم فخرنا." },
-  { id: "diamond", name: "شيوخ", minPoints: 1500, maxPoints: 999999, color: "text-sky-600", bg: "bg-sky-50", icon: "🦅", benefit: "خصم ١٥٪ وتوصيل مجاني مدى الحياة! أسياد المكان." }
-];
-
 const INITIAL_LOYALTY_TIERS = [
   { id: "bronze", name: "شلة ديوانية", minPoints: 0, maxPoints: 99, color: "text-amber-700", bg: "bg-amber-50", icon: "🤝", benefit: "بداية أسطورة! طلعاتك الياية فيها مفاجآت." },
   { id: "silver", name: "عزوة", minPoints: 100, maxPoints: 499, color: "text-slate-600", bg: "bg-slate-100", icon: "🛡️", benefit: "خصم ٥٪ تلقائي على جميع طلباتك!" },
@@ -291,14 +284,14 @@ const normalizeSquadTierForCustomer = (tier: any, index: number, all: any[]) => 
   const iconType = String(tier?.iconType || tier?.icon || "");
   return {
     ...tier,
-    id: String(tier?.id ?? `${tier?.name || "tier"}-${index}`),
-    name: tier?.name || "مستوى",
+    id: String(tier?.id ?? tier?.name ?? tier?.title ?? index),
+    name: tier?.name || tier?.title || "",
     minPoints,
     maxPoints: parseAdminPoints(tier?.maxPoints ?? (nextMin ? nextMin - 1 : 999999999)),
     color: String(tier?.color || "").startsWith("text-") ? tier.color : safeColors[index] || "text-brand",
     bg: String(tier?.bg || "").startsWith("bg-") ? tier.bg : safeBgs[index] || "bg-stone-50",
-    icon: tier?.imageUrl || tier?.image ? (tier?.icon || "🏅") : (iconType === "Trophy" ? "🏆" : iconType === "Crown" ? "👑" : iconType === "Star" ? "⭐" : iconType === "Medal" ? "🏅" : tier?.icon || "🏅"),
-    benefit: tier?.benefit || tier?.label || "مزايا ديوانية خاصة",
+    icon: tier?.icon || (iconType === "Trophy" ? "🏆" : iconType === "Crown" ? "👑" : iconType === "Star" ? "⭐" : iconType === "Medal" ? "🏅" : ""),
+    benefit: tier?.benefit || tier?.label || tier?.description || "",
   };
 };
 
@@ -346,10 +339,11 @@ export default function CustomerSite() {
   }, [settings.loyaltyTiers, settings.loyaltyLevels, settings.loyaltySettings]);
 
   const SQUAD_TIERS = useMemo(() => {
+    // مستويات طريق الديوانية تؤخذ فقط من قاعدة البيانات المشتركة، بدون أي مستويات افتراضية من الواجهة.
     const rawTiers = normalizeAdminArray(settings.squadTiers ?? settings.squadLevels ?? settings.diwaniyaTiers ?? settings.diwaniyaLevels ?? settings.squadSettings?.tiers);
-    const source = rawTiers.length > 0 ? rawTiers : INITIAL_SQUAD_TIERS;
-    return [...source]
+    return [...rawTiers]
       .map((tier, index, all) => normalizeSquadTierForCustomer(tier, index, all))
+      .filter((tier: any) => Boolean(String(tier?.name || "").trim()))
       .sort((a, b) => Number(a.minPoints || 0) - Number(b.minPoints || 0));
   }, [settings.squadTiers, settings.squadLevels, settings.diwaniyaTiers, settings.diwaniyaLevels, settings.squadSettings]);
 
@@ -358,7 +352,7 @@ export default function CustomerSite() {
   }, [LOYALTY_TIERS]);
 
   const getSquadTier = useCallback((points: number) => {
-    return SQUAD_TIERS.find((t: any) => { const min = Number(t.minPoints ?? t.points ?? t.requiredPoints ?? 0); const max = Number(t.maxPoints ?? 999999999); return points >= min && points <= max; }) || [...SQUAD_TIERS].reverse().find((t: any) => points >= Number(t.minPoints ?? t.points ?? t.requiredPoints ?? 0)) || SQUAD_TIERS[0];
+    return SQUAD_TIERS.find((t: any) => { const min = Number(t.minPoints ?? t.points ?? t.requiredPoints ?? 0); const max = Number(t.maxPoints ?? 999999999); return points >= min && points <= max; }) || [...SQUAD_TIERS].reverse().find((t: any) => points >= Number(t.minPoints ?? t.points ?? t.requiredPoints ?? 0)) || null;
   }, [SQUAD_TIERS]);
 
   const LoyaltyTierCard = ({ customerPoints, customerName }: { customerPoints: number, customerName: string }) => {
@@ -564,6 +558,13 @@ export default function CustomerSite() {
   const [squadInfo, setSquadInfo] = useState<any>(null);
   const [userSquads, setUserSquads] = useState<any[]>([]);
   const [topSquads, setTopSquads] = useState<any[]>([]);
+  const strongestFiveSquads = useMemo(() => (Array.isArray(topSquads) ? topSquads : [])
+    .map((sq: any) => ({
+      ...sq,
+      displayPoints: getAnyPoints(sq) || Number(sq.teamPoints || sq.totalPoints || sq.points || sq.totalOrders || 0),
+    }))
+    .sort((a: any, b: any) => Number(b.displayPoints || 0) - Number(a.displayPoints || 0))
+    .slice(0, 5), [topSquads]);
   const [pendingGeofenceRequests, setPendingGeofenceRequests] = useState<any[]>([]);
   const [activeSquads, setActiveSquads] = useState<any[]>([]);
   const [myGeofenceRequests, setMyGeofenceRequests] = useState<any[]>([]);
@@ -1125,7 +1126,7 @@ export default function CustomerSite() {
          method: "POST",
          headers: { "Content-Type": "application/json" },
          body: JSON.stringify({
-           name: requestName || "عضو قريب",
+           name: (requestName || "").trim(),
            phone: normalizeEightDigitPhone(requestPhone),
            squadId: targetSquad.id,
            distance: targetSquad.distance || 0
@@ -1149,10 +1150,10 @@ export default function CustomerSite() {
 
   const handleSendRadarRequest = async (targetSquad: any) => {
      if (!targetSquad) return;
-     let requestPhone = customerPhone;
-     let requestName = customerName || "عضو قريب";
-     if (!requestPhone) {
-       setRadarJoinDraft({ squad: targetSquad, phone: "", name: "عضو قريب" });
+     let requestPhone = cleanPhoneForSquad(normalizeDigits(customerPhone || "")).slice(0, 8);
+     let requestName = (customerName || "").trim();
+     if (requestPhone.length !== 8 || !requestName) {
+       setRadarJoinDraft({ squad: targetSquad, phone: requestPhone, name: requestName });
        return;
      }
 
@@ -1281,12 +1282,15 @@ export default function CustomerSite() {
 
   const handleCreateSquad = async () => {
     const cleanOwnerPhone = cleanPhoneForSquad(normalizeDigits(guestPhone || "")).slice(0, 8);
-    if (!newSquadName.trim() || cleanOwnerPhone.length !== 8) {
-       alert("اكتب اسم الديوانية ورقم تلفونك 8 أرقام بالإنجليزي");
+    const cleanOwnerName = String(guestName || "").trim();
+    if (!newSquadName.trim() || cleanOwnerPhone.length !== 8 || !cleanOwnerName) {
+       alert("اكتب اسم الديوانية واسمك ورقم تلفونك 8 أرقام");
        setGuestPhone(cleanOwnerPhone);
+       setGuestName(cleanOwnerName);
        return;
     }
     setGuestPhone(cleanOwnerPhone);
+    setGuestName(cleanOwnerName);
     setIsSubmittingSquad(true);
     try {
        const res = await fetch("/api/squad-create", {
@@ -1295,13 +1299,13 @@ export default function CustomerSite() {
           body: JSON.stringify({
              name: newSquadName,
              phone: cleanOwnerPhone,
-             customerName: guestName || "عميل"
+             customerName: cleanOwnerName
           })
        });
        if (res.ok) {
           const data = await res.json();
           setCustomerPhone(cleanOwnerPhone);
-          if (guestName) setCustomerName(guestName);
+          setCustomerName(cleanOwnerName);
           localStorage.setItem("customer_phone_track", cleanOwnerPhone);
           localStorage.setItem("squadId", data.squad.id.toString());
           sessionStorage.setItem("created_squad_needs_location", data.squad.id.toString());
@@ -1309,7 +1313,7 @@ export default function CustomerSite() {
           squadSessionTokenRef.current += 1;
           latestSquadRequestRef.current = { phone: cleanOwnerPhone, squadId: newSquadId };
           setActiveSquadId(newSquadId);
-          setSquadInfo({ ...data.squad, memberData: { name: guestName || "عميل", phone: cleanOwnerPhone, isMember: true } });
+          setSquadInfo({ ...data.squad, memberData: { name: cleanOwnerName, phone: cleanOwnerPhone, isMember: true } });
           setIsCreatingSquad(false);
           setUserSquads((prev) => [data.squad, ...prev.filter((s:any) => String(s.id) !== String(data.squad.id))]);
           await fetchSquadGamificationFor(cleanOwnerPhone, newSquadId);
@@ -1319,19 +1323,25 @@ export default function CustomerSite() {
   };
 
   const handleJoinSquad = async (squadId: string) => {
-    if (!guestPhone.trim()) {
-       alert("اكتب رقم تلفونك عشان نكمل");
+    const cleanJoinPhone = cleanPhoneForSquad(normalizeDigits(guestPhone || "")).slice(0, 8);
+    const cleanJoinName = String(guestName || "").trim();
+    if (cleanJoinPhone.length !== 8 || !cleanJoinName) {
+       alert("اكتب اسمك ورقم تلفونك 8 أرقام عشان نكمل");
+       setGuestPhone(cleanJoinPhone);
+       setGuestName(cleanJoinName);
        return;
     }
+    setGuestPhone(cleanJoinPhone);
+    setGuestName(cleanJoinName);
     setIsSubmittingSquad(true);
     try {
        const res = await fetch("/api/squad-join", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-             phone: guestPhone,
+             phone: cleanJoinPhone,
              squadId: squadId,
-             name: guestName || "عميل"
+             name: cleanJoinName
           })
        });
        if (res.ok) {
@@ -1340,9 +1350,9 @@ export default function CustomerSite() {
             alert("دزينا طلبك للمعزب. إذا وافق تدش الديوانية على طول.");
             setIsJoiningSquad(false);
           } else {
-            setCustomerPhone(guestPhone);
-            if (guestName) setCustomerName(guestName);
-            localStorage.setItem("customer_phone_track", guestPhone);
+            setCustomerPhone(cleanJoinPhone);
+            setCustomerName(cleanJoinName);
+            localStorage.setItem("customer_phone_track", cleanJoinPhone);
             localStorage.setItem("squadId", squadId);
             setActiveSquadId(squadId);
             if (false) {
@@ -2255,7 +2265,7 @@ export default function CustomerSite() {
       discountAmount = appliedPromo.value;
     }
   } else if (squadInfo) {
-    const dynamicTierId = getSquadTier(getAnyPoints(squadInfo)).id;
+    const dynamicTierId = getSquadTier(getAnyPoints(squadInfo))?.id;
     if (dynamicTierId === "diamond") {
       discountAmount = itemsTotal * 0.15; // 15% discount for diamond
     } else if (dynamicTierId === "gold") {
@@ -3278,7 +3288,7 @@ export default function CustomerSite() {
           <div className="px-4 sm:px-6 pt-4 pb-2 bg-stone-50/80 backdrop-blur-sm border-b border-stone-100">
             {squadInfo ? (
               <div 
-                onClick={() => setShowSquadModal(true)}
+                onClick={() => { setActiveSquadTab("overview"); setShowSquadModal(true); }}
                 className="bg-gradient-to-l from-accent/10 to-transparent border border-accent/20 rounded-xl p-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-accent/15 transition-all shadow-sm"
               >
                  <div className="flex items-center gap-2.5">
@@ -3291,7 +3301,7 @@ export default function CustomerSite() {
                          {squadInfo.name}
                        </p>
                        <p className="mt-1 text-[11px] font-extrabold text-amber-700/85 leading-tight">
-                         {getSquadTier(getAnyPoints(squadInfo)).name} + رصيدك {getAnyPoints(squadInfo)} نقطة
+                         {getSquadTier(getAnyPoints(squadInfo))?.name ? `${getSquadTier(getAnyPoints(squadInfo))?.name} + ` : ""}رصيدك {getAnyPoints(squadInfo)} نقطة
                        </p>
                     </div>
                  </div>
@@ -3302,7 +3312,7 @@ export default function CustomerSite() {
               </div>
             ) : (
               <div 
-                onClick={() => setShowSquadModal(true)}
+                onClick={() => { setActiveSquadTab("leaderboard"); setShowSquadModal(true); }}
                 className="bg-gradient-to-l from-orange-50 to-transparent border border-orange-100 rounded-xl p-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-orange-100/50 transition-all shadow-sm"
               >
                  <div className="flex items-center gap-2.5">
@@ -3310,9 +3320,9 @@ export default function CustomerSite() {
                        <Crown className="w-5 h-5" />
                     </div>
                     <div className="flex flex-col">
-                       <p className="text-[10px] text-stone-500 font-bold leading-tight">تحدي الدواوين 👑</p>
+                       <p className="text-[10px] text-stone-500 font-bold leading-tight">صدارة الدواوين 👑</p>
                        <p className="text-sm font-black text-brand leading-tight flex items-center gap-1.5">
-                         {topSquads.length > 0 ? `${topSquads[0].name} بالصدارة!` : "أسس أو دش ديوانيتك!"} 
+                         {topSquads.length > 0 ? `${topSquads[0].name} بالصدارة!` : "ادخل التحدي مع ديوانيتك!"} 
                        </p>
                     </div>
                  </div>
@@ -3325,6 +3335,52 @@ export default function CustomerSite() {
                  </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Strongest 5 Diwaniyas - visible challenge board */}
+        {!isCheckout && (
+          <div className="px-4 sm:px-6 py-3 bg-stone-50/80 border-b border-stone-100" dir="rtl">
+            <button
+              type="button"
+              onClick={() => { setActiveSquadTab("leaderboard"); setShowSquadModal(true); }}
+              className="w-full text-right rounded-[24px] bg-white border border-amber-100 shadow-sm p-4 active:scale-[0.99] transition-all"
+            >
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div>
+                  <p className="text-[10px] font-black text-amber-600">تحدي الديوانيات</p>
+                  <h3 className="text-base font-black text-brand mt-0.5">صدارة الدواوين</h3>
+                </div>
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-xl shrink-0">🏆</div>
+              </div>
+
+              {strongestFiveSquads.length > 0 ? (
+                <div className="space-y-2">
+                  {strongestFiveSquads.map((sq: any, idx: number) => (
+                    <div
+                      key={sq.id || idx}
+                      className={cn(
+                        "flex items-center justify-between gap-3 rounded-2xl border px-3 py-2",
+                        idx === 0 ? "bg-amber-50 border-amber-100" : "bg-stone-50 border-stone-100"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={cn(
+                          "w-7 h-7 rounded-xl flex items-center justify-center text-xs font-black shrink-0",
+                          idx === 0 ? "bg-amber-500 text-white" : "bg-white text-stone-500 border border-stone-100"
+                        )}>{idx + 1}</span>
+                        <span className="text-xs font-black text-brand truncate">{sq.name || "ديوانية بدون اسم"}</span>
+                      </div>
+                      <span className="text-xs font-black text-amber-700 shrink-0">{Number(sq.displayPoints || 0).toLocaleString("en-US")} نقطة</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-stone-50 border border-stone-100 p-3 text-center text-[11px] font-black text-stone-400">
+                  ماكو ترتيب ظاهر حالياً. أول ديوانية تجمع نقاط راح تظهر هنا تلقائياً.
+                </div>
+              )}
+            </button>
           </div>
         )}
 
@@ -4546,7 +4602,7 @@ export default function CustomerSite() {
                       <div className="flex flex-col text-right">
                          <h3 className="font-black text-xl text-brand flex items-center gap-2">
                             <Crown className="w-5 h-5 text-accent" />
-                            {squadInfo ? squadInfo.name : "تحدي الدواوين 🏆"}
+                            {squadInfo ? squadInfo.name : "صدارة الدواوين 🏆"}
                          </h3>
                          <p className="text-stone-500 text-xs font-bold mt-1">
                            {squadInfo ? "ديوانيتك الحالية" : "سجل الحين وطور ديوانيتك!"}
@@ -4587,6 +4643,28 @@ export default function CustomerSite() {
                    </div>
 
                    <div className="flex-1 overflow-y-auto p-5 pb-8 custom-scrollbar relative z-0">
+
+                      <div className="grid grid-cols-3 gap-2 mb-5" dir="rtl">
+                        {[
+                          { id: "overview", label: "الديوانية" },
+                          { id: "leaderboard", label: "الصدارة" },
+                          { id: "tiers", label: "المستويات" },
+                        ].map((tab: any) => (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setActiveSquadTab(tab.id as any)}
+                            className={cn(
+                              "rounded-2xl px-3 py-3 text-[11px] font-black border transition-all",
+                              activeSquadTab === tab.id
+                                ? "bg-brand text-white border-brand shadow-md"
+                                : "bg-white text-stone-500 border-stone-100"
+                            )}
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
 
                       <SquadModalContent 
                         activeSquadTab={activeSquadTab}
@@ -4903,9 +4981,9 @@ export default function CustomerSite() {
                   </button>
                   <div>
                     <p className="text-[10px] font-black text-amber-600">طلب دخول ديوانية</p>
-                    <h3 className="text-lg font-black mt-1">رقمك للمعزب</h3>
+                    <h3 className="text-lg font-black mt-1">اسمك ورقمك للمعزب</h3>
                     <p className="text-xs font-bold text-stone-500 mt-1 leading-6">
-                      اكتب رقم تلفونك 8 أرقام. الأرقام العربية تتحول تلقائياً، والحروف ما تنقبل.
+                      اكتب اسمك ورقم تلفونك 8 أرقام. الاثنين مطلوبين عشان ندز طلب الدخول.
                     </p>
                   </div>
                 </div>
@@ -4931,17 +5009,22 @@ export default function CustomerSite() {
                   />
                   <button
                     type="button"
-                    disabled={radarJoinDraft.phone.length !== 8}
+                    disabled={radarJoinDraft.phone.length !== 8 || !String(radarJoinDraft.name || "").trim()}
                     onClick={async () => {
                       const cleanPhone = normalizeEightDigitPhone(radarJoinDraft.phone);
-                      if (cleanPhone.length !== 8) return;
+                      const cleanName = String(radarJoinDraft.name || "").trim();
+                      if (cleanPhone.length !== 8 || !cleanName) {
+                        alert("اكتب اسمك ورقم تلفونك 8 أرقام عشان نكمل طلب الدخول");
+                        return;
+                      }
                       setCustomerPhone(cleanPhone);
                       setGuestPhone(cleanPhone);
-                      setCustomerName(prev => prev || radarJoinDraft.name || "عضو قريب");
+                      setCustomerName(cleanName);
+                      setGuestName(cleanName);
                       try { localStorage.setItem("customer_phone_track", cleanPhone); } catch(e) {}
-                      const draft = radarJoinDraft;
+                      const draft = { ...radarJoinDraft, name: cleanName };
                       setRadarJoinDraft(null);
-                      await submitRadarJoinRequest(draft.squad, cleanPhone, draft.name || "عضو قريب");
+                      await submitRadarJoinRequest(draft.squad, cleanPhone, cleanName);
                     }}
                     className="w-full rounded-2xl bg-amber-500 text-slate-950 px-4 py-4 text-sm font-black shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all disabled:opacity-45"
                   >

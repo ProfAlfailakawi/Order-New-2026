@@ -81,6 +81,7 @@ export default function AdminDashboard() {
   const [newZoneName, setNewZoneName] = useState("");
   const [newZonePrice, setNewZonePrice] = useState<number>(0);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [squads, setSquads] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>({});
   const [loyaltyTiers, setLoyaltyTiers] = useState<any[]>([]);
   const [squadTiers, setSquadTiers] = useState<any[]>([]);
@@ -97,7 +98,7 @@ export default function AdminDashboard() {
 
 
   const LOYALTY_TIERS = loyaltyTiers.length > 0 ? loyaltyTiers : DEFAULT_LOYALTY_TIERS;
-  const SQUAD_TIERS = squadTiers.length > 0 ? squadTiers : DEFAULT_SQUAD_TIERS;
+  const SQUAD_TIERS = squadTiers.length > 0 ? squadTiers : [];
 
   const getLoyaltyTier = (points: number) => {
     return LOYALTY_TIERS.find((t: any) => points >= t.minPoints && points <= t.maxPoints) || LOYALTY_TIERS[0];
@@ -182,6 +183,7 @@ export default function AdminDashboard() {
            
            // Customers
            setCustomers(data.customers || []);
+           setSquads(data.squads || []);
            setLoyaltyTiers(data.loyaltyTiers || []);
            setSquadTiers(data.squadTiers || []);
            setLoyaltySettings(data.loyaltySettings || {});
@@ -348,6 +350,21 @@ export default function AdminDashboard() {
     const message = encodeURIComponent(sanitizeWhatsAppText(`مرحباً ${order.customerName}، بخصوص طلبك رقم ${order.id}...${addressDetails}\n\nhttps://alturathkw.shop`));
     window.open(`https://api.whatsapp.com/send?phone=${formattedForWhatsApp}&text=${message}`, "_blank");
   };
+
+  const strongestSquads = [...squads]
+    .map((sq: any) => {
+      const members = Array.isArray(sq.membersList) ? sq.membersList : [];
+      const teamPoints = members.reduce((sum: number, member: any) => {
+        const customer = customers.find((c: any) => cleanPhone(c.phone || c.customerPhone || "") === cleanPhone(member.phone || ""));
+        const points = customer
+          ? Number(customer.loyaltyPoints ?? customer.points ?? 0)
+          : Number(member.points ?? member.orderCount ?? 0);
+        return sum + (Number.isFinite(points) ? points : 0);
+      }, 0);
+      return { ...sq, teamPoints };
+    })
+    .sort((a: any, b: any) => Number(b.teamPoints || 0) - Number(a.teamPoints || 0))
+    .slice(0, 5);
 
   return (
     <div className="flex h-screen bg-[#fafaf9] text-brand selection:bg-brand selection:text-white" dir="rtl">
@@ -1069,6 +1086,38 @@ export default function AdminDashboard() {
                      </div>
 
                      <div className="p-8 space-y-6">
+                        <div className="rounded-[32px] border border-amber-100 bg-amber-50/50 p-6 shadow-sm">
+                           <div className="flex items-center justify-between gap-4 mb-5">
+                              <div>
+                                 <h3 className="text-lg font-black text-brand">صدارة الدواوين</h3>
+                                 <p className="text-[10px] text-stone-500 font-bold mt-1">يُحسب تلقائياً من قاعدة البيانات المشتركة حسب نقاط أعضاء كل ديوانية.</p>
+                              </div>
+                              <div className="w-12 h-12 rounded-2xl bg-white border border-amber-100 flex items-center justify-center text-2xl shadow-sm">🏆</div>
+                           </div>
+                           <div className="space-y-3">
+                              {strongestSquads.length === 0 && (
+                                 <div className="rounded-2xl bg-white/70 border border-amber-100 p-4 text-center text-xs font-black text-stone-400">
+                                    لم يتم تسجيل دواوين كافية للتحدي حتى الآن.
+                                 </div>
+                              )}
+                              {strongestSquads.map((sq: any, idx: number) => (
+                                 <div key={sq.id || idx} className="flex items-center justify-between gap-4 rounded-2xl bg-white border border-amber-100 p-4">
+                                    <div className="flex items-center gap-3">
+                                       <div className="w-9 h-9 rounded-xl bg-brand text-white flex items-center justify-center font-black text-sm">{idx + 1}</div>
+                                       <div>
+                                          <div className="font-black text-brand text-sm">{sq.name || 'ديوانية بدون اسم'}</div>
+                                          <div className="text-[10px] font-bold text-stone-400">{Array.isArray(sq.membersList) ? sq.membersList.length : 0} عضو</div>
+                                       </div>
+                                    </div>
+                                    <div className="text-left">
+                                       <div className="text-lg font-black text-accent font-mono">{Number(sq.teamPoints || 0)}</div>
+                                       <div className="text-[9px] font-black text-stone-400">نقطة</div>
+                                    </div>
+                                 </div>
+                              ))}
+                           </div>
+                        </div>
+
                         {SQUAD_TIERS.map((tier: any, idx: number) => (
                            <div key={idx} className={`p-6 rounded-[32px] border-2 transition-all ${tier.bg} border-stone-100 flex flex-col gap-4`}>
                               <div className="flex items-center justify-between gap-6">
