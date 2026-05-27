@@ -95,7 +95,49 @@ async function getAppData() {
   try {
     const d = await getDoc(doc(db, "appData", "shared_company_data"));
     if (d.exists()) {
-      _appDataCache = d.data();
+      const data = d.data() || {};
+      let modified = false;
+
+      // Seed products if missing or empty
+      if (!data.products || data.products.length === 0) {
+        console.log("[SEEDING] Products array is missing or empty in Firestore, seeding from shared_products.json...");
+        try {
+          const localProducts = JSON.parse(fs.readFileSync(path.join(__dirname, "shared_products.json"), "utf8"));
+          if (Array.isArray(localProducts) && localProducts.length > 0) {
+            data.products = localProducts;
+            modified = true;
+          }
+        } catch (err) {
+          console.error("[SEEDING] Failed to read/parse shared_products.json for seeding:", err);
+        }
+      }
+
+      // Seed supplierCopies if missing or empty
+      if (!data.supplierCopies || data.supplierCopies.length === 0) {
+        console.log("[SEEDING] SupplierCopies array is missing or empty in Firestore, seeding from suppliers.json...");
+        try {
+          const localSuppliers = JSON.parse(fs.readFileSync(path.join(__dirname, "suppliers.json"), "utf8"));
+          if (Array.isArray(localSuppliers) && localSuppliers.length > 0) {
+            data.supplierCopies = localSuppliers;
+            modified = true;
+          }
+        } catch (err) {
+          console.error("[SEEDING] Failed to read/parse suppliers.json for seeding:", err);
+        }
+      }
+
+      // If we modified either part, save it back to Firestore asynchronously so it is permanently seeded
+      if (modified) {
+        try {
+          const docRef = doc(db, "appData", "shared_company_data");
+          await setDoc(docRef, removeUndefinedDeep(data), { merge: true });
+          console.log("[SEEDING] Successfully seeded empty Firestore database with default products and supplier copies.");
+        } catch (saveErr) {
+          console.error("[SEEDING] Failed to save seeded data back to Firestore:", saveErr);
+        }
+      }
+
+      _appDataCache = data;
       _appDataCacheTime = Date.now();
       return _appDataCache;
     }
@@ -2111,6 +2153,29 @@ app.get("/api/debug/order/:id", async (req, res) => {
     }
   });
 
+  function categorizeProductByName(name: string, currentCategory?: string): string {
+    const normalized = (name || "").toLowerCase().trim();
+    if (currentCategory && currentCategory !== "عام" && currentCategory !== "") {
+      return currentCategory;
+    }
+    if (/ذبيحة|المفطح|قوزي/.test(normalized)) {
+      return "الولائم";
+    }
+    if (/لحم|موزات|بخاري/.test(normalized)) {
+      return "اللحوم";
+    }
+    if (/دجاج/.test(normalized)) {
+      return "الدجاج";
+    }
+    if (/سيباس|زبيدي|هامور|شعوم|نويبي|مربين|ربيان/.test(normalized)) {
+      return "البحري";
+    }
+    if (/ورق عنب|محاشي|جريش|هريس|خضار|بشاميل|مقبلات|سلطة|سلطات|روب|معبوج/.test(normalized)) {
+      return "المقبلات";
+    }
+    return "عام";
+  }
+
   // Helper function to process products uniformly
   const processProducts = (rawProducts: any[]) => {
     let products = (rawProducts || []).filter(
@@ -2137,7 +2202,13 @@ app.get("/api/debug/order/:id", async (req, res) => {
           isNew = true;
         }
       }
-      return { ...p, isNewProduct: isNew };
+      const itemCat = categorizeProductByName(p.name, p.category || p.productCategory);
+      return { 
+        ...p, 
+        isNewProduct: isNew,
+        category: itemCat,
+        productCategory: itemCat
+      };
     });
 
     return products;
