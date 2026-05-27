@@ -2594,15 +2594,6 @@ html, body, #root {
   font-weight:950;
   line-height:1;
 }
-.customer-radar-mini-card{
-  box-shadow:0 14px 36px rgba(20,53,38,.14)!important;
-}
-.customer-nearby-radar-card{
-  box-shadow:0 18px 48px rgba(2,6,23,.30)!important;
-}
-.diwaniya-entry-panel{
-  box-shadow:0 14px 34px rgba(20,53,38,.055)!important;
-}
 @media(max-width:640px){
   .customer-soft-alert-bubble{
     width:42px!important;
@@ -2611,48 +2602,6 @@ html, body, #root {
   .customer-soft-alert-bubble svg{
     width:18px!important;
     height:18px!important;
-  }
-  .customer-radar-mini-card{
-    left:12px!important;
-    right:12px!important;
-    bottom:88px!important;
-    width:auto!important;
-    border-radius:18px!important;
-    padding:10px 12px!important;
-  }
-  .customer-nearby-radar-card{
-    left:12px!important;
-    right:12px!important;
-    bottom:88px!important;
-    width:auto!important;
-    max-height:min(310px, calc(100dvh - 150px))!important;
-    border-radius:22px!important;
-    padding:14px!important;
-  }
-  .diwaniya-modal-card{
-    max-height:82dvh!important;
-    border-radius:26px 26px 0 0!important;
-  }
-  .diwaniya-modal-head{
-    padding:14px 16px!important;
-  }
-  .diwaniya-modal-head h3{
-    font-size:1rem!important;
-  }
-  .diwaniya-modal-body{
-    padding:14px 14px 88px!important;
-  }
-  .diwaniya-entry-panel{
-    border-radius:22px!important;
-    padding:14px!important;
-  }
-  .diwaniya-entry-panel .rounded-\[26px\],
-  .diwaniya-entry-panel .rounded-\[24px\],
-  .diwaniya-entry-panel .rounded-3xl{
-    border-radius:18px!important;
-  }
-  .diwaniya-entry-panel p{
-    line-height:1.55!important;
   }
 }
 /* Smart menu image fit: keeps the frame, zooms the food out, and removes white photo edges. */

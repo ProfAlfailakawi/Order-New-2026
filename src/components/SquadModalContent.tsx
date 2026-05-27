@@ -243,7 +243,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     
     const coords = parseGoogleMapsInput(manualInput);
     if (!coords) {
-      alert("تعذر قراءة الإحداثيات. استخدم رابط خرائط صحيح.");
+      alert("ما قدرنا نطلع الإحداثيات. تأكد من الصيغة أو حط رابط خرائط صحيح.");
       return;
     }
 
@@ -251,13 +251,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       const diff = calculateDistanceMeters(Number(squadInfo.lat), Number(squadInfo.lng), coords.lat, coords.lng);
       if (diff < 30) {
         setShowResetLocation(false);
-        setGeoStatusMsg("الموقع الحالي مسجّل بالفعل.");
+        setGeoStatusMsg("أنت بالموقع الحالي للديوانية، ما يحتاج نغيّر اللوكيشن ✅");
         return;
       }
     }
 
     setIsRegisteringGeo(true);
-    setGeoStatusMsg("نحفظ الموقع...");
+    setGeoStatusMsg("نحفظ الموقع يدويًا... 💾");
     try {
       const res = await fetch("/api/squad-set-location", {
         method: "POST",
@@ -271,17 +271,17 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           })
         });
       if (res.ok) {
-        setGeoStatusMsg("تم تسجيل موقع الديوانية.");
+        setGeoStatusMsg("تم تسجيل موقع الديوانية الجغرافي بنجاح! 🎉");
         setManualInput("");
         setShowManualInput(false);
         setShowResetLocation(false);
         setSquadInfo?.({ ...squadInfo, lat: coords.lat, lng: coords.lng, geofenceDistance: localGeofenceDistance });
         if (onRefresh) onRefresh();
       } else {
-        setGeoStatusMsg("تعذر الحفظ اليدوي. جرّب لاحقاً.");
+        setGeoStatusMsg("ما ضبط التسجيل اليدوي. جرّب بعد شوي.");
       }
     } catch (e) {
-      setGeoStatusMsg("تعذر الاتصال وقت الحفظ.");
+      setGeoStatusMsg("الاتصال تعطل وقت حفظ الموقع.");
     }
     setIsRegisteringGeo(false);
   };
@@ -294,7 +294,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       return;
     }
     setIsRegisteringGeo(true);
-    setGeoStatusMsg(options?.auto ? "نثبت موقع الديوانية..." : (options?.changeCheck ? "نتحقق من الموقع الحالي..." : "نثبت الموقع الحالي..."));
+    setGeoStatusMsg(options?.auto ? "نحاول نثبت موقع ديوانيتك تلقائياً... 📡" : (options?.changeCheck ? "نتأكد من موقعك الحالي قبل تغيير موقع الديوانية... 📡" : "نثبت موقع الديوانية الحالي... 📡"));
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -304,7 +304,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           if (diff < 30) {
             setIsRegisteringGeo(false);
             setShowResetLocation(false);
-            setGeoStatusMsg("الموقع الحالي مسجّل بالفعل.");
+            setGeoStatusMsg("أنت بالموقع الحالي للديوانية، ما يحتاج نغيّر اللوكيشن ✅");
             return;
           }
         }
@@ -321,15 +321,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
             })
           });
           if (res.ok) {
-            setGeoStatusMsg("تم تسجيل موقع الديوانية.");
+            setGeoStatusMsg("تم تسجيل موقع الديوانية الجغرافي بنجاح! 🎉");
             setShowResetLocation(false);
             setSquadInfo?.({ ...squadInfo, lat: latitude, lng: longitude, geofenceDistance: localGeofenceDistance });
             if (onRefresh) window.setTimeout(onRefresh, 100);
           } else {
-            setGeoStatusMsg("تعذر التسجيل. جرّب لاحقاً.");
+            setGeoStatusMsg("ما ضبط التسجيل. جرّب بعد شوي.");
           }
         } catch (e) {
-          setGeoStatusMsg("تعذر الاتصال وقت الحفظ.");
+          setGeoStatusMsg("الاتصال تعطل وقت حفظ الموقع.");
         }
         setIsRegisteringGeo(false);
       },
@@ -338,16 +338,16 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         setShowResetLocation(true);
         const code = Number(err?.code || 0);
         if (code === 1) {
-          setGeoStatusMsg("فعّل مشاركة الموقع أو استخدم الإدخال اليدوي.");
+          setGeoStatusMsg("الموقع يحتاج سماح. فعّل اللوكيشن من المتصفح أو استخدم الإدخال اليدوي لتثبيت ديوانيتك الحالية.");
         } else if (code === 2) {
-          setGeoStatusMsg("تعذر قراءة الموقع. جرّب أو أدخله يدوياً.");
+          setGeoStatusMsg("المتصفح لم يتمكن من قراءة موقعك حالياً. جرّب مرة ثانية أو استخدم الإدخال اليدوي.");
         } else if (code === 3) {
           setGeoStatusMsg(options?.changeCheck
-            ? "يبدو أنك في نفس الموقع. اضغط مرة أخرى للتأكيد."
-            : "انتهت المهلة. جرّب أو أدخل الموقع يدوياً."
+            ? "يبدو أنك في نفس موقع الديوانية الحالي. إذا كنت انتقلت فعلاً لمكان جديد اضغط مرة ثانية، أو استخدم الإدخال اليدوي عند الحاجة."
+            : "انتهت مهلة قراءة الموقع. جرّب مرة ثانية أو استخدم الإدخال اليدوي عند الحاجة."
           );
         } else {
-          setGeoStatusMsg("تعذر قراءة الموقع. جرّب أو أدخله يدوياً.");
+          setGeoStatusMsg("ما قدرنا نقرأ الموقع الحين. جرّب مرة ثانية أو استخدم الإدخال اليدوي.");
         }
       },
       { enableHighAccuracy: true, timeout: options?.changeCheck ? 6000 : 10000, maximumAge: options?.changeCheck ? 60000 : 0 }
@@ -381,10 +381,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       if (res.ok) {
         if (onRefresh) onRefresh();
       } else {
-      alert("تعذر تحديث الطلب.");
+      alert("ما قدرنا نحدّث الطلب.");
       }
     } catch (e) {
-      alert("تعذر الاتصال وقت التحديث.");
+      alert("الاتصال تعطل وقت تحديث الطلب.");
     }
     setIsApproving(prev => ({ ...prev, [targetPhone]: false }));
   };
@@ -662,7 +662,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     if (createdId && String(createdId) === String(squadInfo.id)) {
       setMyDiwaniyaTab("location");
       setShowResetLocation(false);
-      setGeoStatusMsg("تم التأسيس. فعّل الموقع لظهورها للربع.");
+      setGeoStatusMsg("تم تأسيس الديوانية. فعّل الموقع الآن حتى تظهر للربع القريبين منك.");
       try { sessionStorage.removeItem("created_squad_needs_location"); } catch(e) {}
     }
   }, [squadInfo?.id, isOwner]);
@@ -696,7 +696,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       } catch(e) {}
       if (onRefresh) window.setTimeout(onRefresh, 80);
     } catch(e) {
-      alert("تعذر التحقق من الرقم.");
+      alert("ما قدرنا نتأكد من الرقم الحين. جرّب مرة ثانية.");
     }
   };
 
@@ -715,7 +715,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
   const handlePresenceToggle = async (action: "in" | "out") => {
     if (!squadInfo?.id || !currentMemberPhone) {
-      alert("اكتب رقمك لتثبيت الحضور.");
+      alert("حط رقم تلفونك أول عشان نثبت حضورك بالديوانية.");
       return;
     }
     setIsPresenceLoading(true);
@@ -726,8 +726,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         body: JSON.stringify({ squadId: squadInfo.id, phone: currentMemberPhone, name: customerName || guestName || "عضو", action })
       });
       if (res.ok && onRefresh) onRefresh();
-      else alert("تعذر تحديث الحضور.");
-    } catch { alert("تعذر الاتصال وقت تحديث الحضور."); }
+      else alert("ما قدرنا نحدّث حضورك الحين.");
+    } catch { alert("الاتصال تعطل وقت تحديث الحضور."); }
     setIsPresenceLoading(false);
   };
 
@@ -764,8 +764,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       if (res.ok) {
         setActiveTempCode(data);
         if (onRefresh) onRefresh();
-      } else alert(data?.error || "تعذر إنشاء الكود.");
-    } catch { alert("تعذر الاتصال وقت إنشاء الكود."); }
+      } else alert(data?.error || "ما قدرنا ننشئ كود مؤقت.");
+    } catch { alert("الاتصال تعطل وقت إنشاء الكود."); }
     setTempCodeLoading(false);
   };
 
@@ -775,7 +775,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     const finalName = (tempJoinName || guestName || customerName || "").trim();
 
     if (!cleanCode) {
-      alert("اكتب كود الديوانية.");
+      alert("حط كود الديوانية أول.");
       return;
     }
 
@@ -805,7 +805,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       } else {
         alert(data?.error || "الكود غير صحيح أو انتهت صلاحيته.");
       }
-    } catch { alert("تعذر الاتصال وقت استخدام الكود."); }
+    } catch { alert("الاتصال تعطل وقت استخدام الكود."); }
     setTempCodeLoading(false);
   };
 
@@ -821,8 +821,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       if (res.ok) {
         try { localStorage.setItem("split_prefill_members", JSON.stringify(squadMembersForSplit)); } catch {}
         if (onRefresh) onRefresh();
-      } else alert("تعذر فتح طلب الربع.");
-    } catch { alert("تعذر الاتصال وقت فتح الطلب."); }
+      } else alert("ما قدرنا نفتح طلب الربع.");
+    } catch { alert("الاتصال تعطل وقت فتح طلب الربع."); }
     setGroupOrderLoading(false);
   };
 
@@ -1158,7 +1158,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     <div className="flex gap-2"><button onClick={handlePrepareQatya} className="flex-1 bg-brand text-white rounded-xl py-2 text-[10px] font-black">جهّز القطية</button><button onClick={handleCloseGroupOrder} disabled={groupOrderLoading} className="flex-1 bg-stone-100 text-stone-500 rounded-xl py-2 text-[10px] font-black">إغلاق الطلب</button></div>
                   </div>
                 ) : <button onClick={handleOpenGroupOrder} disabled={groupOrderLoading} className="w-full bg-brand text-white rounded-2xl py-3 text-xs font-black shadow-md active:scale-95">افتح طلب للربع</button>}
-                {hasRealUsualOrder && <button onClick={() => alert("الطلب المعتاد جاهز.")} className="w-full bg-stone-50 text-brand border border-stone-100 rounded-2xl py-3 text-xs font-black">كرر الطلب المعتاد ({usualOrder.items.length})</button>}
+                {hasRealUsualOrder && <button onClick={() => alert("الطلب المعتاد جاهز كفكرة عرض داخل الديوانية، وربطه بالسلة يحتاج مسار إضافة الأصناف للسلة في صفحة الطلب.")} className="w-full bg-stone-50 text-brand border border-stone-100 rounded-2xl py-3 text-xs font-black">كرر الطلب المعتاد للديوانية ({usualOrder.items.length} أصناف)</button>}
               </div>}
 
               {myDiwaniyaTab === "code" && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-4">
@@ -1318,7 +1318,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       + تأسيس ديوانية جديدة في موقع ثاني
                    </button>
                    <p className="text-[9px] font-bold text-stone-400 text-right leading-relaxed">
-                      اختر ديوانيتك الحالية أو أسس ديوانية جديدة.
+                      تقدر تكون معزب بأكثر من ديوانية أو عضو عند ربعك، وتختار الديوانية الحالية وقت الطلب.
                    </p>
                 </div>
              </div>
@@ -1535,7 +1535,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       {squadInfo.lat !== undefined && squadInfo.lng !== undefined ? (
                         <div className="bg-sky-50 px-4 py-3 rounded-2xl border border-sky-100 space-y-2">
                           <p className="text-xs font-black text-sky-800 flex items-center gap-1 justify-end">
-                            <span>موقع الديوانية مفعّل.</span>
+                            <span>موقع الديوانية مسجّل ومفعّل حالياً بنجاح! ✅</span>
                           </p>
                           <p className="text-[10px] font-mono font-bold text-sky-600 tracking-tight">
                             إحداثيات: {Number(squadInfo.lat).toFixed(6)}, {Number(squadInfo.lng).toFixed(6)}
@@ -1551,10 +1551,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       ) : (
                         <div className="bg-orange-50 px-4 py-3 rounded-2xl border border-orange-100">
                           <p className="text-xs font-black text-orange-850">
-                            موقع الديوانية غير مسجّل.
+                            ⚠️ موقع الديوانية غير مسجّل حتى الآن!
                           </p>
                           <p className="text-[10px] font-bold text-orange-600/80 mt-1 leading-normal">
-                            ثبّت الموقع ليظهر للربع القريبين.
+                            الربع القراب منك ما يقدرون يستقبلون إشعارات الرادار للانضمام السريع إلا بعد تعيين موقع ديوانيتكم.
                           </p>
                         </div>
                       )}
@@ -1566,7 +1566,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           disabled={isRegisteringGeo}
                           className="w-full bg-white hover:bg-stone-50 border-2 border-stone-200/80 text-stone-600 font-black text-xs py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                         >
-                          {isRegisteringGeo ? "نتأكد..." : "تغيير موقع الديوانية"}
+                          {isRegisteringGeo ? "نتأكد من موقعك... 🛰️" : "📍 تغيير موقع الديوانية عند الانتقال لمكان جديد"}
                         </button>
                       ) : (
                         <button
@@ -1574,7 +1574,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           disabled={isRegisteringGeo}
                           className="w-full bg-stone-50 hover:bg-stone-100 border-2 border-stone-200/80 text-brand font-black text-xs py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
                         >
-                          {isRegisteringGeo ? "نثبت..." : (squadInfo.lat !== undefined ? "تأكيد تغيير الموقع" : "تعيين موقع الديوانية")}
+                          {isRegisteringGeo ? "نثبت الموقع... 🛰️" : (squadInfo.lat !== undefined ? "📍 تأكيد تغيير موقع الديوانية الحالي" : "📍 تعيين موقع الديوانية الجغرافي الحالي")}
                         </button>
                       )}
 
@@ -1626,10 +1626,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         <h4 className="font-black text-brand text-sm">موقع الديوانية 📍</h4>
                       </div>
                       <p className="text-xs font-bold text-stone-500 leading-relaxed">
-                        تغيير موقع الرادار للمعزب فقط. كعضو فعّل مشاركة الموقع لعرض الدواوين القريبة.
+                        التحكم بتثبيت أو تغيير موقع الرادار للمعزب فقط. أنت كعضو تقدر تشغّل سماح الموقع من المتصفح حتى يظهر لك الرادار والتنقل بين الدواوين القريبة.
                       </p>
                       <div className="bg-stone-50 rounded-2xl border border-stone-100 p-4 text-[11px] font-bold text-stone-500 leading-relaxed">
-                        إذا ما ظهر الرادار: فعّل مشاركة الموقع واضغط تشغيل.
+                        إذا ما ظهر لك إشعار القرب: فعّل صلاحية الموقع من المتصفح، قرّب من الديوانية، ثم افتح صفحة الديوانية أو اضغط تشغيل الرادار من التنبيه.
                       </div>
                     </div>
                   )}
@@ -1685,19 +1685,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   )}
 
                   {!isCurrentMember && (
-                    <div className="diwaniya-entry-panel rounded-[28px] bg-white border-2 border-accent/20 shadow-xl p-5 space-y-4 text-right">
-                      <div className="space-y-2">
-                        <h4 className="font-black text-brand text-lg">دخول الديوانية</h4>
-                        <div className="grid grid-cols-3 gap-2 text-center">
-                          <span className="rounded-2xl bg-brand text-white py-2 text-[10px] font-black">انضمام</span>
-                          <span className="rounded-2xl bg-amber-50 text-amber-700 py-2 text-[10px] font-black border border-amber-100">ضيف</span>
-                          <span className="rounded-2xl bg-stone-50 text-stone-600 py-2 text-[10px] font-black border border-stone-100">معزب</span>
-                        </div>
+                    <div className="rounded-[28px] bg-white border-2 border-accent/20 shadow-xl p-5 space-y-4 text-right">
+                      <div className="space-y-1">
+                        <h4 className="font-black text-brand text-lg">انضم لهذه الديوانية</h4>
+                        <p className="text-xs font-bold text-stone-500">تقدر تدخل بطريقتين: تحط اسمك ورقمك، أو تستخدم كود الضيف من المعزب.</p>
                       </div>
 
                       <div className="rounded-[24px] border border-stone-100 bg-stone-50 p-4 space-y-3">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-[10px] font-black bg-white text-stone-500 px-2.5 py-1 rounded-full border border-stone-200">انضمام</span>
+                          <span className="text-[10px] font-black bg-white text-stone-500 px-2.5 py-1 rounded-full border border-stone-200">الخيار الأساسي</span>
                           <h5 className="text-sm font-black text-brand">دخول برقمك</h5>
                         </div>
                         <input
@@ -1722,36 +1718,36 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           disabled={isSubmittingSquad}
                           className="w-full bg-accent text-white font-black text-sm py-4 rounded-2xl shadow-lg active:scale-95 transition-all disabled:opacity-50"
                         >
-                          {isSubmittingSquad ? "ندخلك..." : "انضم الآن"}
+                          {isSubmittingSquad ? "ندخلك..." : "انضم للديوانية الآن"}
                         </button>
                       </div>
 
                       <div className="rounded-[26px] border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-4 space-y-3">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-[10px] font-black bg-white text-amber-700 px-2.5 py-1 rounded-full border border-amber-100">ضيف</span>
-                          <h5 className="text-sm font-black text-brand">قطية ضيف</h5>
+                          <span className="text-[10px] font-black bg-white text-amber-700 px-2.5 py-1 rounded-full border border-amber-100">ضيف + قطية</span>
+                          <h5 className="text-sm font-black text-brand">افتح قطية داخل الديوانية</h5>
                         </div>
                         <p className="text-[11px] font-bold text-stone-500 leading-relaxed">
-                          اطلب للربع بدون عضوية. اختر الأصناف ثم القطيّة.
+                          إذا أنت ضيف وتبي تطلب للربع، نربط الطلب باسم الديوانية ونجهز أسماء الأعضاء. اختار الأصناف وبعدها اختر القطيّة من الدفع.
                         </p>
                         <button
                           type="button"
                           onClick={handleGuestPrepareQatya}
                           className="w-full bg-brand text-white font-black text-sm py-4 rounded-2xl shadow-lg shadow-brand/15 active:scale-95 transition-all"
                         >
-                          جهّز القطيّة
+                          جهز قطية كضيف
                         </button>
                         <div className="text-[10px] font-bold text-amber-700 bg-white/70 border border-amber-100 rounded-2xl px-3 py-2 leading-relaxed">
-                          لا يضيفك كعضو. فقط يجهز الطلب.
+                          ما ندخلك كعضو تلقائياً، فقط نجهز القطيّة والطلب باسمك داخل هذه الديوانية.
                         </div>
                       </div>
 
                       <div className="rounded-[24px] border border-brand/10 bg-brand/[0.03] p-4 space-y-3">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-[10px] font-black bg-brand/10 text-brand px-2.5 py-1 rounded-full border border-brand/10">معزب</span>
-                          <h5 className="text-sm font-black text-brand">كود دخول</h5>
+                          <span className="text-[10px] font-black bg-brand/10 text-brand px-2.5 py-1 rounded-full border border-brand/10">سريع ومباشر</span>
+                          <h5 className="text-sm font-black text-brand">عندك كود دخول ساعتين؟</h5>
                         </div>
-                        <p className="text-[11px] font-bold text-stone-500 leading-relaxed">اكتب كود المعزب وادخل فوراً.</p>
+                        <p className="text-[11px] font-bold text-stone-500 leading-relaxed">إذا المعزب عطاك كود مؤقت، اكتب الكود هني ودش مباشرة بدون انتظار.</p>
                         <div className="flex flex-col sm:flex-row gap-2 sm:items-stretch">
                           <input
                             inputMode="numeric"
@@ -1770,7 +1766,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         </div>
                         {tempCodeNeedsProfile && (
                           <div className="rounded-2xl bg-white border border-brand/10 p-3 space-y-2">
-                            <div className="text-[11px] font-black text-brand text-right">اسمك ورقمك لإكمال الدخول</div>
+                            <div className="text-[11px] font-black text-brand text-right">حط اسمك ورقم تلفونك ونكمل دخولك للديوانية</div>
                             <input
                               value={tempJoinName}
                               onChange={(e)=>setTempJoinName(e.target.value)}
@@ -1802,19 +1798,17 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
               );
             })()
           ) : !isCreatingSquad ? (
-            <div className="diwaniya-entry-panel bg-orange-50 rounded-[30px] p-5 border border-orange-100 shadow-sm flex flex-col gap-4 text-center">
+            <div className="bg-orange-50 rounded-[30px] p-6 border border-orange-100 shadow-sm flex flex-col gap-4 text-center">
               <div className="flex flex-col items-center justify-center">
-                <div className="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 mb-3 shadow-inner">
+                <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 mb-4 shadow-inner">
                   <Users className="w-8 h-8" />
                 </div>
                 <h4 className="font-black text-lg text-brand mb-2">
-                  الديوانية
+                  دخول أو تأسيس ديوانية
                 </h4>
-                <div className="grid grid-cols-3 gap-2 w-full text-center">
-                  <span className="rounded-2xl bg-white text-brand py-2 text-[10px] font-black border border-orange-100">انضمام</span>
-                  <span className="rounded-2xl bg-white text-amber-700 py-2 text-[10px] font-black border border-orange-100">ضيف</span>
-                  <span className="rounded-2xl bg-white text-stone-600 py-2 text-[10px] font-black border border-orange-100">معزب</span>
-                </div>
+                <p className="text-sm font-bold text-stone-600 px-4 leading-relaxed">
+                  بدلت تلفونك؟ دخل رقمك ونرجّع دواوينك. أو أسس ديوانية جديدة للمكان اللي أنت فيه.
+                </p>
               </div>
 
               <div className="bg-white rounded-3xl p-4 border border-orange-100 space-y-3 text-right">
@@ -1842,13 +1836,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   </button>
                 </div>
                 <p className="text-[10px] font-bold text-stone-400 leading-relaxed">
-                  نعرض دواوينك فوراً.
+                  إذا الرقم مرتبط بدواوين، راح تظهر لك فوراً وتقدر تختار الحالية.
                 </p>
               </div>
 
               <div className="bg-white rounded-3xl p-4 border border-brand/10 space-y-3 text-right">
                 <label className="text-[10px] font-black text-stone-400 mr-2">
-                  كود المعزب
+                  عندك كود من المعزب؟
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -1868,7 +1862,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 </div>
                 {tempCodeNeedsProfile && (
                   <div className="grid grid-cols-1 gap-2">
-                    <div className="text-[11px] font-black text-brand text-right">اسمك ورقمك لإكمال الدخول</div>
+                    <div className="text-[11px] font-black text-brand text-right">حط اسمك ورقم تلفونك ونكمل دخولك للديوانية</div>
                     <input
                       value={tempJoinName}
                       onChange={(e)=>setTempJoinName(e.target.value)}
@@ -1885,7 +1879,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   </div>
                 )}
                 <p className="text-[10px] font-bold text-stone-400 leading-relaxed">
-                  أدخل الكود وادخل مباشرة.
+                  اكتب الكود، وإذا مو مسجل بنطلب اسمك ورقم تلفونك ونكمل دخولك.
                 </p>
               </div>
 
@@ -1893,7 +1887,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 onClick={startCreateNewSquad}
                 className="w-full bg-brand text-white font-black text-sm py-4 rounded-2xl shadow-md active:scale-95"
               >
-                أنا المعزب: تأسيس ديوانية
+                تأسيس ديوانية جديدة ✨
               </button>
             </div>
           ) : null}
