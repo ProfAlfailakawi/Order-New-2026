@@ -508,6 +508,11 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       Star: "⭐",
       Crown: "👑",
       Trophy: "🏆",
+      Flame: "🔥",
+      Swords: "⚔️",
+      Diamond: "💎",
+      Rocket: "🚀",
+      Shield: "🛡️",
     };
     const min = toNumber(
       tier?.minPoints ??
