@@ -290,7 +290,7 @@ const normalizeSquadTierForCustomer = (tier: any, index: number, all: any[]) => 
     maxPoints: parseAdminPoints(tier?.maxPoints ?? (nextMin ? nextMin - 1 : 999999999)),
     color: String(tier?.color || "").startsWith("text-") ? tier.color : safeColors[index] || "text-brand",
     bg: String(tier?.bg || "").startsWith("bg-") ? tier.bg : safeBgs[index] || "bg-stone-50",
-    icon: tier?.icon || (iconType === "Trophy" ? "🏆" : iconType === "Crown" ? "👑" : iconType === "Star" ? "⭐" : iconType === "Medal" ? "🏅" : ""),
+    icon: tier?.icon || (iconType === "Trophy" ? "🏆" : iconType === "Crown" ? "👑" : iconType === "Star" ? "⭐" : iconType === "Medal" ? "🏅" : iconType === "Flame" ? "🔥" : iconType === "Swords" ? "⚔️" : iconType === "Diamond" ? "💎" : iconType === "Rocket" ? "🚀" : iconType === "Shield" ? "🛡️" : "🎯"),
     benefit: tier?.benefit || tier?.label || tier?.description || "",
   };
 };
