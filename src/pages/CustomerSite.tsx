@@ -3641,12 +3641,12 @@ export default function CustomerSite() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
-                  {liveSignal.items.map((p: any) => {
+                  {liveSignal.items.map((p: any, idx: number) => {
                     const fallbackLogo = settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO;
                     const imgUrl = p.imageUrl || p.image || fallbackLogo;
                     return (
                       <button
-                        key={p.id || p.name}
+                        key={`live-${p.id || p.name}-${idx}`}
                         onClick={() => setSelectedProduct(p)}
                         className="group flex items-center gap-3.5 rounded-2xl border border-stone-200/40 bg-white p-3 text-right active:scale-[.98] hover:border-amber-300 hover:shadow-md transition-all duration-300"
                       >
@@ -3945,9 +3945,9 @@ export default function CustomerSite() {
                   </div>
                   {quickProductSearch.trim() ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                      {searchedProducts.slice(0, 60).map((product) => (
+                      {searchedProducts.slice(0, 60).map((product, idx) => (
                         <motion.div
-                          key={product.id}
+                          key={`search-${product.id}-${idx}`}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           className="h-full flex flex-col"
@@ -3990,9 +3990,9 @@ export default function CustomerSite() {
                                   className="overflow-hidden"
                                 >
                                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 p-4 pt-0">
-                                    {group.items.slice(0, 48).map((product) => (
+                                    {group.items.slice(0, 48).map((product, idx) => (
                                       <motion.div
-                                        key={product.id}
+                                        key={`product-${product.id}-${idx}`}
                                         initial={{ opacity: 0, y: 12 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className="h-full flex flex-col"
@@ -4715,9 +4715,9 @@ export default function CustomerSite() {
         </AnimatePresence>
 
         {/* Floating elements like flying plates */}
-        {flyingPlates.map((plate) => (
+        {flyingPlates.map((plate, idx) => (
           <FlyingPlate
-            key={plate.id}
+            key={`plate-${plate.id}-${idx}`}
             img={plate.img}
             startX={plate.startX}
             startY={plate.startY}
@@ -5203,7 +5203,7 @@ export default function CustomerSite() {
                 )}
                 <div className="space-y-3">
                   {qatyaAlertItems.map((n: any) => (
-                    <div key={n.id} className="relative group/item">
+                    <div key={`qatya-${n.sourceKind}-${n.id}-${n.meta?.orderId || 'no-order'}`} className="relative group/item">
                       <button
                         type="button"
                         onClick={() => handleOpenQatyaAlertItem(n)}
@@ -5671,7 +5671,7 @@ const RoyalLazySusan = ({
 
           return (
             <motion.div
-              key={product.id}
+              key={`wow-${product.id}-${i}`}
               className="best-seller-wow-card absolute w-[180px] h-[200px] cursor-grab active:cursor-grabbing"
               initial={false}
               animate={{

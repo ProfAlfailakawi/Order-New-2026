@@ -1048,8 +1048,8 @@ export default function OrderPage() {
                 const isOngoing = statusInfo.text.includes("توصيل");
                 return (
                   <motion.div
-                    layoutId={`order-${order.id}`}
-                    key={order.id}
+                    layoutId={`order-${order.id}-${index}`}
+                    key={`order-page-${order.id}-${index}`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
