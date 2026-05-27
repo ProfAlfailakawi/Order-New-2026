@@ -59,9 +59,9 @@ export function RouletteSplit({
   const errorMsg = React.useMemo(() => {
     const errorMsgs = [
       "ما انخصم شيء من حسابك، شكلها عين! جرب تدفع مرة ثانية 😂",
-      "الدفع ما اكتمل. جرّب بطاقة ثانية.",
+      "الرصيد زعلان ولا شسالفة؟ جرب مرة ثانية 💳",
       "البنك يقول لا.. بس إحنا نقول ماكو فكة، حاول مرة ثانية! 🏦",
-      "الاتصال انقطع. جرّب مرة ثانية.",
+      "شكلها الشبكة فصلت عليك، جرب مرة ثانية 📡",
       "فلوسك عزيزة عليك؟ ادفع مرة ثانية وخلصنا! 💸😆",
       "عمليتك ما مشت، لا تحاتي ما راح شيء.. طق مرة ثانية 🔄"
     ];
@@ -77,7 +77,7 @@ export function RouletteSplit({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, phone }),
       });
-      if (!res.ok) throw new Error('تعذر دخول اللعبة.');
+      if (!res.ok) throw new Error('ما قدرنا ندخلك لعبة وهق غيرك 🎰');
       setMySpinName(name);
       setMySpinPhone(phone);
       localStorage.setItem(`roulette_${order.id}`, name);
@@ -90,10 +90,10 @@ export function RouletteSplit({
           e.message.includes("Failed to fetch"))
       ) {
         alert(
-          "الخدمة تُحدّث الآن. جرّب بعد ثواني.",
+          "السيرفر قاعد يتحدث، نطر شوي وجرب مرة ثانية.",
         );
       } else {
-        alert("تعذر الدخول: " + (e?.message || "خلل غير متوقع"));
+        alert("ما قدرنا ندخلك: " + (e?.message || "صار خلل غير متوقع"));
       }
     }
   };
@@ -102,7 +102,7 @@ export function RouletteSplit({
     if (participants.length < 2) return alert("نحتاج شخصين عالأقل عشان نوهق واحد!");
     try {
       const res = await fetch(`/api/orders/${order.id}/spin-roulette`, { method: "POST" });
-      if (!res.ok) throw new Error('تعذر تشغيل اللعبة.');
+      if (!res.ok) throw new Error('ما قدرنا نشغل لعبة وهق غيرك 🎰');
     } catch (e: any) {
       if (
         e &&
@@ -111,10 +111,10 @@ export function RouletteSplit({
           e.message.includes("Failed to fetch"))
       ) {
         alert(
-          "الخدمة تُحدّث الآن. جرّب بعد ثواني.",
+          "السيرفر قاعد يتحدث، نطر شوي وجرب مرة ثانية.",
         );
       } else {
-        alert("تعذر السحب: " + (e?.message || "خلل غير متوقع"));
+        alert("ما ضبط السحب: " + (e?.message || "صار خلل غير متوقع"));
       }
     }
   };
@@ -533,7 +533,7 @@ export function RouletteSplit({
                           className="w-full bg-white text-violet-600 font-black py-4 rounded-xl mt-4 active:scale-95 transition-transform flex justify-center items-center gap-2 shadow-[0_0_25px_rgba(139,92,246,0.3)]"
                         >
                           <CreditCard className="w-5 h-5" />
-                          {paymentStatus === "failed" ? "جرّب مرة ثانية" : `ادفع الغرامة`}
+                          {paymentStatus === "failed" ? "جرب مرة ثانية 🔄" : `ادفع الغرامة`}
                         </button>
                       </div>
                     );

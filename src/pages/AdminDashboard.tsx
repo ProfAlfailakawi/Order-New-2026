@@ -579,8 +579,8 @@ export default function AdminDashboard() {
                           </td>
                         </tr>
                       ) : (
-                        filteredOrders.slice(0, 5).map((order, idx) => (
-                          <tr key={`order-${order.id}-${idx}`} className="group hover:bg-stone-50/50 transition-all duration-500">
+                        filteredOrders.slice(0, 5).map(order => (
+                          <tr key={order.id} className="group hover:bg-stone-50/50 transition-all duration-500">
                             <td className="p-10 font-mono text-[10px] text-stone-300 group-hover:text-brand">#{order.id.toUpperCase()}</td>
                             <td className="p-10">
                               <p className="font-extrabold text-brand text-lg">
@@ -684,10 +684,10 @@ export default function AdminDashboard() {
                     </motion.div>
                   </div>
                 ) : (
-                  filteredNewOrders.map((order, idx) => (
+                  filteredNewOrders.map(order => (
                     <motion.div 
-                      layoutId={`new-order-${order.id}-${idx}`}
-                      key={`new-order-${order.id}-${idx}`} 
+                      layoutId={order.id}
+                      key={order.id} 
                       className="bg-white p-10 rounded-[48px] border border-stone-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer group relative overflow-hidden"
                       onClick={() => setSelectedOrder(order)}
                     >
@@ -799,8 +799,8 @@ export default function AdminDashboard() {
                           </td>
                         </tr>
                       ) : (
-                        filteredInvoices.map((invoice, idx) => (
-                          <tr key={`invoice-${invoice.invoiceId}-${idx}`} className="hover:bg-stone-50/30 transition-all duration-300">
+                        filteredInvoices.map(invoice => (
+                          <tr key={invoice.invoiceId} className="hover:bg-stone-50/30 transition-all duration-300">
                             <td className="p-10 font-mono text-[10px] text-accent font-extrabold tracking-widest flex items-center gap-2">
                              {invoice.invoiceId}
                              <button

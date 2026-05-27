@@ -105,9 +105,9 @@ export default function SplitPayment() {
   const errorMsg = useMemo(() => {
     const errorMsgs = [
       "ما انخصم شيء من حسابك، شكلها عين! جرب تدفع مرة ثانية 😂",
-      "الدفع ما اكتمل. جرّب بطاقة ثانية.",
+      "الرصيد زعلان ولا شسالفة؟ جرب مرة ثانية 💳",
       "البنك يقول لا.. بس إحنا نقول ماكو فكة، حاول مرة ثانية! 🏦",
-      "الاتصال انقطع. جرّب مرة ثانية.",
+      "شكلها الشبكة فصلت عليك، جرب مرة ثانية 📡",
       "فلوسك عزيزة عليك؟ ادفع مرة ثانية وخلصنا! 💸😆",
       "عمليتك ما مشت، لا تحاتي ما راح شيء.. طق مرة ثانية 🔄"
     ];
@@ -306,7 +306,7 @@ export default function SplitPayment() {
         // ignore silently
       } else {
         console.error("SplitPayment: Fetch Exception", e);
-        if (!order) setError("تعذر تحميل الطلب.");
+        if (!order) setError("ما قدرنا نحمّل الطلب");
       }
     } finally {
       if (!isSilent) setLoading(false);
@@ -423,14 +423,14 @@ export default function SplitPayment() {
       } else {
         console.error("SplitPayment: Non-JSON response", resText);
         throw new Error(
-          `تعذر فهم رد الخدمة (${res.status}) - ${resText.substring(0, 50)}`,
+          `ما قدرنا نفهم رد السيرفر (${res.status}) - ${resText.substring(0, 50)}`,
         );
       }
 
       if (res.ok && data.paymentLink) {
         window.location.href = data.paymentLink;
       } else {
-        alert(data.error || "تعذر تجهيز رابط الدفع. جرّب مرة ثانية.");
+        alert(data.error || "ما قدرنا نجهز رابط الدفع، جرب مرة ثانية");
         setIsSubmitting(false);
       }
     } catch (e: any) {
@@ -442,10 +442,10 @@ export default function SplitPayment() {
           e.message.includes("Failed to fetch"))
       ) {
         alert(
-          "الخدمة تُحدّث الآن. جرّب بعد ثواني.",
+          "السيرفر قاعد يتحدث، نطر شوي وجرب مرة ثانية.",
         );
       } else {
-        alert("تعذر الاتصال: " + (e.message || "خلل غير متوقع"));
+        alert("ما قدرنا نوصل للسيرفر: " + (e.message || "صار خلل غير متوقع"));
       }
       setIsSubmitting(false);
     }
@@ -595,7 +595,7 @@ export default function SplitPayment() {
                   disabled={isSubmitting}
                   className="bg-white/20 hover:bg-white/30 disabled:opacity-50 text-white w-full py-3 rounded-xl font-bold transition-colors border border-white/30"
                 >
-                  {isSubmitting ? "نحوّلك..." : "جرّب مرة ثانية"}
+                  {isSubmitting ? "نحوّلك..." : "جرب مرة ثانية 🔄"}
                 </button>
               </div>
             </motion.div>

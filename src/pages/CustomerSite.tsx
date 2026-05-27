@@ -38,7 +38,6 @@ import {
 } from "lucide-react";
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
 import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegroundPush, type DiwaniyaPushState } from "../lib/diwaniyaPush";
 
 // Define the default product categories shown to customers.
@@ -88,70 +87,6 @@ const getKuwaitiLiveMenuSignal = (products: any[], cart: any[], squadInfo?: any)
   if (isWeekend && pick(groups.diwaniya).length) return { title: "يمعة الويكند الحلوة يبي لها هالذوق اللي يونس 🪵", subtitle: "", items: pick(groups.diwaniya), tone: "weekend" };
   if (hour >= 21 && pick(groups.light).length) return { title: "خفايف لطيفة تونس السهرة وتعدل الراس تالي الليل 🌙", subtitle: "", items: pick(groups.light), tone: "night" };
   return { title: "من اختياراتنا اللي نحبها وتلوق حق ذوقك ✨", subtitle: "", items: active.slice(0, 3), tone: "default" };
-};
-
-const categorizeProductByName = (name?: string, currentCategory?: string): string => {
-  const normalized = String(name || "").toLowerCase().trim();
-  if (currentCategory && currentCategory !== "عام" && currentCategory !== "") return currentCategory;
-  if (/ذبيحة|المفطح|قوزي/.test(normalized)) return "الولائم";
-  if (/لحم|موزات|بخاري/.test(normalized)) return "اللحوم";
-  if (/دجاج/.test(normalized)) return "الدجاج";
-  if (/سيباس|زبيدي|هامور|شعوم|نويبي|مربين|ربيان/.test(normalized)) return "البحري";
-  if (/ورق عنب|محاشي|جريش|هريس|خضار|بشاميل|مقبلات|سلطة|سلطات|روب|معبوج/.test(normalized)) return "المقبلات";
-  return "عام";
-};
-
-const processSharedProductsForCustomer = (rawProducts: any[] = []) => {
-  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-  return (rawProducts || [])
-    .filter((p: any) => p?.isActive !== false && p?.isHidden !== true && p?.hidden !== true && p?.visible !== false && p?.isVisible !== false)
-    .map((p: any) => {
-      let isNew = p?.isNewProduct === true || p?.isNew === true;
-      if (!isNew && (p?.createdAt || p?.dateAdded || p?.date)) {
-        let timestamp = 0;
-        if (p?.createdAt?.seconds) timestamp = p.createdAt.seconds * 1000;
-        else if (p?.createdAt?.toDate) timestamp = p.createdAt.toDate().getTime();
-        else if (p?.createdAt) timestamp = new Date(p.createdAt).getTime();
-        else if (p?.dateAdded) timestamp = new Date(p.dateAdded).getTime();
-        else if (p?.date) timestamp = new Date(p.date).getTime();
-        if (Number.isFinite(timestamp) && timestamp > thirtyDaysAgo) isNew = true;
-      }
-      const itemCat = categorizeProductByName(p?.name, p?.category || p?.productCategory);
-      return { ...p, isNewProduct: isNew, category: itemCat, productCategory: itemCat };
-    })
-    .sort((a: any, b: any) => String(a?.name || "").localeCompare(String(b?.name || ""), "ar"));
-};
-
-const buildTopProductsFromSharedData = (products: any[] = [], invoices: any[] = []) => {
-  const productStats: Record<string, { count: number; revenue: number }> = {};
-  (invoices || []).forEach((order: any) => {
-    (order?.items || []).forEach((item: any) => {
-      if (!item?.productId) return;
-      if (!productStats[item.productId]) productStats[item.productId] = { count: 0, revenue: 0 };
-      const quantity = Number(item.quantity) || 1;
-      const price = Number(item.priceAtTime || item.price || 0);
-      productStats[item.productId].count += quantity;
-      productStats[item.productId].revenue += price * quantity;
-    });
-  });
-  const mixedMap = new Map<string, any>();
-  [...products]
-    .filter((p: any) => (productStats[p.id]?.count || 0) > 0)
-    .sort((a: any, b: any) => (productStats[b.id]?.count || 0) - (productStats[a.id]?.count || 0))
-    .slice(0, 15)
-    .forEach((p: any) => mixedMap.set(p.id, p));
-  [...products]
-    .filter((p: any) => (productStats[p.id]?.revenue || 0) > 0)
-    .sort((a: any, b: any) => (productStats[b.id]?.revenue || 0) - (productStats[a.id]?.revenue || 0))
-    .slice(0, 15)
-    .forEach((p: any) => mixedMap.set(p.id, p));
-  const top = Array.from(mixedMap.values());
-  if (top.length < 6) {
-    products.filter((p: any) => !p?.isHidden && !p?.isOutOfStock).slice(0, 20).forEach((p: any) => {
-      if (!mixedMap.has(p.id)) { top.push(p); mixedMap.set(p.id, p); }
-    });
-  }
-  return top.sort(() => 0.5 - Math.random()).slice(0, 6);
 };
 
 const getSharedProductCategories = (source: any, productList: any[] = []) => {
@@ -742,7 +677,7 @@ export default function CustomerSite() {
   const [ownerJoinDecisionLoading, setOwnerJoinDecisionLoading] = useState<Record<string, boolean>>({});
   const [radarStatus, setRadarStatus] = useState<"idle" | "checking" | "ready" | "denied" | "weak" | "unsupported" | "empty">("idle");
   const [showRadarInstructionModal, setShowRadarInstructionModal] = useState(false);
-  const [radarStatusMsg, setRadarStatusMsg] = useState("شغّل مشاركة الموقع لعرض الدواوين القريبة.");
+  const [radarStatusMsg, setRadarStatusMsg] = useState("نطلب موقعك عشان الديوانية تعتمد على القرب الحقيقي.");
   const [radarAccuracy, setRadarAccuracy] = useState<number | null>(null);
   const radarStatusRef = useRef<typeof radarStatus>("idle");
   const locationPromptAttemptsRef = useRef(0);
@@ -817,19 +752,19 @@ export default function CustomerSite() {
   const refreshRadarOnce = useCallback(async () => {
       if (mockLocation) {
         setRadarStatus("ready");
-        setRadarStatusMsg("الموقع التجريبي مفعّل.");
+        setRadarStatusMsg("تم تفعيل الموقع التجريبي المحاكي بجانب ديوانية قريبة للتجربة 🧪");
         return;
       }
      if (!navigator.geolocation) {
        setRadarStatus("unsupported");
-       setRadarStatusMsg("الجهاز لا يدعم مشاركة الموقع.");
+       setRadarStatusMsg("جهازك أو المتصفح ما يدعم تحديد الموقع، لذلك الرادار ما يقدر يشتغل على هذا الجهاز.");
        return;
      }
 
      const permissionState = await readGeolocationPermissionState();
      if (permissionState === "denied") {
        setRadarStatus("denied");
-       setRadarStatusMsg("فعّل مشاركة الموقع من المتصفح.");
+       setRadarStatusMsg("فعّل الموقع من المتصفح، ثم جرّب.");
        setShowRadarInstructionModal(true);
        return;
      }
@@ -837,8 +772,8 @@ export default function CustomerSite() {
      setRadarStatus("checking");
      setRadarStatusMsg(
        permissionState === "granted"
-         ? "نحدّث موقعك الآن."
-         : "اختر سماح لتشغيل رادار الديوانية."
+         ? "الإذن ظاهر عندنا مسموح. نلتقط موقعك الآن ونحدّث الرادار فوراً."
+         : "راح يطلع طلب سماح الموقع من المتصفح. اختر سماح حتى يشتغل الرادار."
      );
      setRadarDismissedList([]);
      setIsNearbyRadarPanelCollapsed(false);
@@ -850,10 +785,10 @@ export default function CustomerSite() {
          setRadarAccuracy(Math.round(accuracy));
          if (accuracy > 600) {
            setRadarStatus("weak");
-           setRadarStatusMsg("الدقة ضعيفة. فعّل GPS أو الواي فاي.");
+           setRadarStatusMsg("اشتغل الموقع، لكن الدقة ضعيفة جداً. افتح GPS أو الواي فاي وجرّب تحديث الموقع حتى لا نحكم عليك بعيد بالغلط.");
          } else {
            setRadarStatus("ready");
-           setRadarStatusMsg("الرادار شغال.");
+           setRadarStatusMsg("تم التقاط موقعك بنجاح. الرادار شغال الآن، وإذا فيه ديوانية قريبة راح تظهر لك مباشرة.");
          }
        },
        (err) => {
@@ -861,8 +796,8 @@ export default function CustomerSite() {
          setRadarStatus(isDenied ? "denied" : "idle");
          setRadarStatusMsg(
            isDenied
-             ? "مشاركة الموقع مرفوضة. فعّلها من المتصفح."
-             : "تعذر تحديد الموقع. شغّل GPS والإنترنت."
+             ? "المتصفح رفض إعطاء الموقع. لا يوجد زر سحري يتجاوز الحظر؛ لازم تغيّر الإذن إلى سماح من إعدادات الموقع ثم تعيد المحاولة."
+             : "الرادار حاول فعلاً لكنه ما قدر يلتقط موقعك الآن. تأكد من تشغيل GPS والإنترنت ثم جرّب مرة ثانية."
          );
          if (isDenied) {
            setShowRadarInstructionModal(true);
@@ -887,8 +822,19 @@ export default function CustomerSite() {
      };
 
      const shouldTryAgain = async () => {
-       if (locationPromptAttemptsRef.current >= 4) return false;
-       if (["ready", "unsupported"].includes(radarStatusRef.current)) return false;
+       if (locationPromptAttemptsRef.current >= 3) return false;
+       if (["ready", "denied", "unsupported"].includes(radarStatusRef.current)) return false;
+       try {
+         if (navigator.permissions && (navigator as any).permissions?.query) {
+           const permission = await (navigator as any).permissions.query({ name: "geolocation" as PermissionName });
+           if (permission.state === "denied") {
+             setRadarStatus("denied");
+             setRadarStatusMsg("الموقع مقفّل من المتصفح. فعّله من إعدادات الموقع عشان الديوانية تعتمد عليك صح.");
+             setShowRadarInstructionModal(true);
+             return false;
+           }
+         }
+       } catch(e) {}
        return true;
      };
 
@@ -898,29 +844,18 @@ export default function CustomerSite() {
 
        locationPromptAttemptsRef.current += 1;
        const attempt = locationPromptAttemptsRef.current;
-       let permissionState: PermissionState | "unknown" = "unknown";
-       try {
-         permissionState = await readGeolocationPermissionState();
-       } catch(e) {}
        setRadarStatusMsg(
          attempt === 1
-           ? "اسمح بمشاركة موقعك لعرض الدواوين القريبة."
+           ? "نحتاج موقعك الآن عشان نربطك بالديوانية القريبة."
            : attempt === 2
-             ? "تذكير سريع: فعّل مشاركة الموقع."
-             : attempt === 3
-               ? "بدون مشاركة الموقع لن تظهر الديوانية القريبة."
-               : "آخر تذكير: فعّل مشاركة الموقع من المتصفح."
+             ? "نذكّرك مرة ثانية: فعّل اللوكيشن عشان تظهر لك ديوانيتك."
+             : "آخر تذكير للّوكيشن؛ الديوانية تعتمد على الموقع."
        );
-       if (permissionState === "denied" || radarStatusRef.current === "denied") {
-         setRadarStatus("denied");
-         setShowRadarInstructionModal(true);
-       } else {
-         refreshRadarOnce();
-       }
+       refreshRadarOnce();
 
-       if (attempt < 4) {
+       if (attempt < 3) {
          locationPromptTimerRef.current = window.setTimeout(async () => {
-           if (["ready", "unsupported"].includes(radarStatusRef.current)) return;
+           if (["ready", "denied", "unsupported"].includes(radarStatusRef.current)) return;
            await askForDiwaniyaLocation();
          }, 17000);
        }
@@ -929,7 +864,7 @@ export default function CustomerSite() {
      askForDiwaniyaLocation();
 
      const onVisibleOrFocus = () => {
-       if (document.visibilityState !== "hidden" && !["ready", "checking", "unsupported"].includes(radarStatusRef.current)) {
+       if (document.visibilityState !== "hidden" && !["ready", "checking", "denied", "unsupported"].includes(radarStatusRef.current)) {
          askForDiwaniyaLocation();
        }
      };
@@ -955,7 +890,7 @@ export default function CustomerSite() {
            const permission = await (navigator as any).permissions.query({ name: "geolocation" as PermissionName });
            if (permission.state === "granted" && radarStatus === "idle") {
              setRadarStatus("ready");
-             setRadarStatusMsg("الرادار جاهز.");
+             setRadarStatusMsg("الرادار جاهز. اضغط تحديث الموقع إذا تبي نطلع لك الدواوين القريبة.");
            }
          }
        } catch(e) {
@@ -1010,7 +945,7 @@ export default function CustomerSite() {
      setRadarDismissedList([]);
      setRadarSuccessMap({});
      setRadarStatus("idle");
-     setRadarStatusMsg("شغّل الرادار لعرض الدواوين القريبة.");
+     setRadarStatusMsg("سجل دخولك أو شغّل الرادار إذا تبي نطلع لك الدواوين القريبة.");
      try {
        localStorage.removeItem("customer_phone_track");
        localStorage.removeItem("squadId");
@@ -1042,7 +977,7 @@ export default function CustomerSite() {
   useEffect(() => {
      if (!navigator.geolocation) {
        setRadarStatus("unsupported");
-       setRadarStatusMsg("الجهاز لا يدعم مشاركة الموقع.");
+       setRadarStatusMsg("جهازك أو المتصفح ما يدعم تحديد الموقع.");
        return;
      }
      if (mockLocation) {
@@ -1051,7 +986,7 @@ export default function CustomerSite() {
           const userLng = mockLocation.lng;
           setRadarAccuracy(5);
           setRadarStatus("ready");
-          setRadarStatusMsg("الموقع التجريبي مفعّل.");
+          setRadarStatusMsg("الموقع التجريبي مفعّل بنجاح. نحن الحين جنب ديوانية قريبة 🧪");
 
           const nearby: any[] = [];
 
@@ -1089,7 +1024,7 @@ export default function CustomerSite() {
 
       if (activeSquads.length === 0) {
        setRadarStatus("empty");
-       setRadarStatusMsg("لا توجد دواوين قريبة حالياً.");
+       setRadarStatusMsg("ما فيه دواوين مفعلة بالرادار حالياً.");
        setRadarNearbySquads([]);
        return;
      }
@@ -1103,12 +1038,12 @@ export default function CustomerSite() {
        setRadarAccuracy(Math.round(accuracy));
        if (accuracy > 600) {
          setRadarStatus("weak");
-       setRadarStatusMsg("الدقة ضعيفة. جرّب GPS أو الواي فاي.");
+       setRadarStatusMsg("الموقع طالع تقريبي حيل، فما نبي نقول إنك بعيد أو قريب بالغلط.");
          setRadarNearbySquads([]);
          return;
        }
        setRadarStatus("ready");
-       setRadarStatusMsg("الرادار شغال.");
+       setRadarStatusMsg(`الرادار شغال. إذا كنت قريب من ديوانية، بنطلع لك بطاقة الدخول أو التبديل.`);
 
        const nearby: any[] = [];
 
@@ -1147,7 +1082,7 @@ export default function CustomerSite() {
        (err) => {
          console.warn("Geofence watchPosition error: ", err);
          setRadarStatus(err.code === 1 ? "denied" : "idle");
-       setRadarStatusMsg(err.code === 1 ? "مشاركة الموقع مرفوضة. فعّلها من المتصفح." : "تعذر تشغيل الرادار. جرّب مرة ثانية.");
+       setRadarStatusMsg(err.code === 1 ? "الموقع مقفّل من المتصفح. فعّله إذا تبي الرادار يطلع لك الدواوين القريبة." : "الرادار ما اشتغل الحين. اضغط تشغيل الرادار وجرب مرة ثانية.");
        },
        { enableHighAccuracy: true, timeout: 20050, maximumAge: 10000 }
      );
@@ -1223,10 +1158,10 @@ export default function CustomerSite() {
            setRadarNearbySquads(prev => prev.filter(s => String(s.id) !== String(targetSquad.id)));
          }, 3000);
        } else {
-         alert("تعذر إرسال الطلب. جرّب مرة ثانية.");
+         alert("ما قدرنا ندز طلبك للمعزب. جرّب مرة ثانية.");
        }
      } catch (e) {
-       alert("تعذر الاتصال. تأكد من الإنترنت.");
+       alert("ما قدرنا نوصل للسيرفر. جرّب بعد شوي.");
      }
      setRadarLoadingMap(prev => ({ ...prev, [targetSquad.id]: false }));
   };
@@ -1335,7 +1270,7 @@ export default function CustomerSite() {
       window.setTimeout(() => setCartMoment(null), 3600);
     } catch (error: any) {
       setDiwaniyaPushState("error");
-      setCartMoment(error?.message || "تعذر تفعيل تنبيهات الديوانية");
+      setCartMoment(error?.message || "ما قدرنا نفعّل تنبيهات الديوانية");
       window.setTimeout(() => setCartMoment(null), 3600);
     } finally {
       setIsEnablingDiwaniyaPush(false);
@@ -1355,10 +1290,10 @@ export default function CustomerSite() {
        if (res.ok) {
          await fetchSquadGamification();
        } else {
-         alert("تعذر تحديث طلب الدخول.");
+         alert("ما قدرنا نحدّث طلب الدخول.");
        }
      } catch(e) {
-       alert("تعذر الاتصال. حاول مرة ثانية.");
+       alert("الاتصال تعطل وقت تحديث طلب الدخول.");
      }
      setOwnerJoinDecisionLoading(prev => ({ ...prev, [targetPhone]: false }));
   };
@@ -1366,7 +1301,7 @@ export default function CustomerSite() {
   const handleCreateSquad = async () => {
     const cleanOwnerPhone = cleanPhoneForSquad(normalizeDigits(guestPhone || "")).slice(0, 8);
     if (!newSquadName.trim() || cleanOwnerPhone.length !== 8) {
-       alert("اكتب اسم الديوانية ورقمك 8 أرقام.");
+       alert("اكتب اسم الديوانية ورقم تلفونك 8 أرقام بالإنجليزي");
        setGuestPhone(cleanOwnerPhone);
        return;
     }
@@ -1421,7 +1356,7 @@ export default function CustomerSite() {
        if (res.ok) {
           const data = await res.json().catch(() => ({}));
           if (data?.pendingApproval) {
-            alert("وصل طلبك للمعزب.");
+            alert("دزينا طلبك للمعزب. إذا وافق تدش الديوانية على طول.");
             setIsJoiningSquad(false);
           } else {
             setCustomerPhone(guestPhone);
@@ -1833,7 +1768,7 @@ export default function CustomerSite() {
         setPromoError(data.error || "الكوبون مو صحيح");
       }
     } catch (e) {
-      setPromoError("تعذر فحص الكوبون");
+      setPromoError("ما قدرنا نتحقق من الكوبون");
     } finally {
       setIsValidatingPromo(false);
     }
@@ -2102,35 +2037,10 @@ export default function CustomerSite() {
 
     const loadData = async () => {
       try {
-        try {
-          const sharedSnap = await getDoc(doc(db, "appData", "shared_company_data"));
-          const sharedData = sharedSnap.exists() ? sharedSnap.data() : {};
-          const sharedProducts = processSharedProductsForCustomer([...(sharedData.products || []), ...(sharedData.supplierCopies || [])]);
-          const sharedTopProducts = buildTopProductsFromSharedData(sharedProducts, sharedData.invoices || []);
-          const sharedRegions = Array.isArray(sharedData.regions) ? [...sharedData.regions].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar")) : [];
-          const sharedSettings = sharedData.settings || sharedData.storeSettings || sharedData.businessSettings || {};
-
-          if (isMounted && sharedProducts.length > 0) {
-            setProducts(sharedProducts);
-            setTopProducts(sharedTopProducts);
-            if (sharedRegions.length > 0) setRegions(sharedRegions);
-            if (sharedSettings && Object.keys(sharedSettings).length > 0) setSettings(sharedSettings);
-            try {
-              localStorage.setItem("cached_products", JSON.stringify(sharedProducts));
-              localStorage.setItem("cached_top_products", JSON.stringify(sharedTopProducts));
-              if (sharedRegions.length > 0) localStorage.setItem("cached_regions", JSON.stringify(sharedRegions));
-              if (sharedSettings && Object.keys(sharedSettings).length > 0) localStorage.setItem("cached_settings", JSON.stringify(sharedSettings));
-            } catch (e) {}
-            setIsLoadingProducts(false);
-          }
-        } catch (firestoreErr) {
-          console.warn("Could not read shared_company_data directly, falling back to API", firestoreErr);
-        }
-
         await Promise.all([
           fetchWithRetry("/api/products").then((allProducts) => {
-            if (!isMounted || !Array.isArray(allProducts) || allProducts.length === 0) return;
-            const validProducts = allProducts;
+            if (!isMounted) return;
+            const validProducts = Array.isArray(allProducts) ? allProducts : [];
             setProducts(validProducts);
             try {
               localStorage.setItem("cached_products", JSON.stringify(validProducts));
@@ -2138,8 +2048,8 @@ export default function CustomerSite() {
             setIsLoadingProducts(false);
           }),
           fetchWithRetry("/api/top-products").then(d => { 
-            if (isMounted && Array.isArray(d) && d.length > 0) {
-              const list = d;
+            if (isMounted) {
+              const list = d || [];
               setTopProducts(list);
               try {
                 localStorage.setItem("cached_top_products", JSON.stringify(list));
@@ -2159,8 +2069,7 @@ export default function CustomerSite() {
              }
           }),
           fetchWithRetry("/api/regions").then(d => { 
-            if (!Array.isArray(d) || d.length === 0) return;
-            const sorted = [...d].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar"));
+            const sorted = [...(d || [])].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar"));
             if (isMounted) {
               setRegions(sorted);
               try {
@@ -2169,7 +2078,7 @@ export default function CustomerSite() {
             }
           }),
           fetchWithRetry("/api/settings").then(d => { 
-            if (isMounted && d && Object.keys(d).length > 0) {
+            if (isMounted && d) {
               setSettings(d);
               try {
                 localStorage.setItem("cached_settings", JSON.stringify(d));
@@ -2188,6 +2097,7 @@ export default function CustomerSite() {
         }
       }
     };
+
     loadData();
     // Customer brand splash appears on the initial page entrance only.
     // If we have cached content already, we can dismiss it very quickly (e.g. 250ms) to make it feel blazing fast!
@@ -2603,7 +2513,7 @@ export default function CustomerSite() {
         }
       }
     } catch (e) {
-      alert("تعذر التنفيذ. جرّب مرة ثانية.");
+      alert("ما ضبطت وياي الحين، جرّب مرة ثانية.");
     } finally {
       setIsZeroClickLoading(false);
     }
@@ -2896,7 +2806,7 @@ export default function CustomerSite() {
           errData = JSON.parse(text);
         } catch (e) {}
         setFormError(
-          errData?.error || "تعذر إرسال الطلب. جرّب مرة ثانية.",
+          errData?.error || "ما قدرنا ندز الطلب. جرّب مرة ثانية.",
         );
         setIsSubmitting(false);
         return;
@@ -2907,7 +2817,7 @@ export default function CustomerSite() {
       try {
         responseData = JSON.parse(responseDataText);
       } catch (e) {
-        setFormError("تعذر فهم رد الخدمة.");
+        setFormError("وصلنا رد مو مفهوم من السيرفر.");
         setIsSubmitting(false);
         return;
       }
@@ -3043,14 +2953,14 @@ export default function CustomerSite() {
         (error.message.includes("Load failed") ||
           error.message.includes("Failed to fetch"))
       ) {
-        // Silently handle Load failed to avoid noisy editor logs.
+        // Silently handle Load failed to avoid AI Studio log spam
         setFormError(
-          "الخدمة تُحدّث الآن. جرّب بعد ثواني.",
+          "ما قدرنا نوصل للسيرفر. شكله قاعد يتحدث، نطر 10 ثواني وجرب مرة ثانية.",
         );
       } else {
         console.error("Order error:", error);
         setFormError(
-          "تعذر الاتصال. تأكد من الإنترنت.",
+          "الاتصال تعطل. تأكد من النت وجرب مرة ثانية.",
         );
       }
     } finally {
@@ -3118,7 +3028,7 @@ export default function CustomerSite() {
             `/track?phone=${encodeURIComponent(cPhone)}&order_id=${orderId}`,
           );
       } else {
-        alert("تعذر تجهيز رابط الدفع.");
+        alert("ما قدرنا نجهز رابط الدفع");
       }
     } catch (e: any) {
       if (
@@ -3128,10 +3038,10 @@ export default function CustomerSite() {
           e.message.includes("Failed to fetch"))
       ) {
         alert(
-          "الخدمة تُحدّث الآن. جرّب بعد ثواني.",
+          "ما نقدر نوصل الحين. السيرفر قاعد يعيد التشغيل، نطر شوي وجرب.",
         );
       } else {
-        alert("تعذر الوصول لخدمة الدفع.");
+        alert("ما قدرنا نوصل لخدمة الدفع");
       }
     }
   };
@@ -3731,12 +3641,12 @@ export default function CustomerSite() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
-                  {liveSignal.items.map((p: any, idx: number) => {
+                  {liveSignal.items.map((p: any) => {
                     const fallbackLogo = settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO;
                     const imgUrl = p.imageUrl || p.image || fallbackLogo;
                     return (
                       <button
-                        key={`live-${p.id || p.name}-${idx}`}
+                        key={p.id || p.name}
                         onClick={() => setSelectedProduct(p)}
                         className="group flex items-center gap-3.5 rounded-2xl border border-stone-200/40 bg-white p-3 text-right active:scale-[.98] hover:border-amber-300 hover:shadow-md transition-all duration-300"
                       >
@@ -4035,9 +3945,9 @@ export default function CustomerSite() {
                   </div>
                   {quickProductSearch.trim() ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                      {searchedProducts.slice(0, 60).map((product, idx) => (
+                      {searchedProducts.slice(0, 60).map((product) => (
                         <motion.div
-                          key={`search-${product.id}-${idx}`}
+                          key={product.id}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           className="h-full flex flex-col"
@@ -4080,9 +3990,9 @@ export default function CustomerSite() {
                                   className="overflow-hidden"
                                 >
                                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 p-4 pt-0">
-                                    {group.items.slice(0, 48).map((product, idx) => (
+                                    {group.items.slice(0, 48).map((product) => (
                                       <motion.div
-                                        key={`product-${product.id}-${idx}`}
+                                        key={product.id}
                                         initial={{ opacity: 0, y: 12 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className="h-full flex flex-col"
@@ -4516,11 +4426,11 @@ export default function CustomerSite() {
                           </>
                        ) : fomoPurchases[fomoIndex]?.type === 'trend' ? (
                           <>
-                             <span className="font-bold text-brand">{fomoPurchases[fomoIndex]?.area}</span> يطلبون <span className="font-bold text-stone-800">{fomoPurchases[fomoIndex]?.productName}</span> اليوم.
+                             الكل في <span className="font-bold text-brand">{fomoPurchases[fomoIndex]?.area}</span> يطلب <span className="font-bold text-stone-800">{fomoPurchases[fomoIndex]?.productName}</span> اليوم.. لا تصير الوحيد اللي ما جربه!
                           </>
                        ) : fomoPurchases[fomoIndex]?.type === 'insight' ? (
                           <>
-                              <span className="font-bold text-accent">مؤشر اليوم:</span> طلبات <span className="font-bold text-stone-800">{fomoPurchases[fomoIndex]?.area}</span> مرتفعة.
+                              <span className="font-bold text-accent">🤔 هل لاحظت؟</span> طلبات <span className="font-bold text-stone-800">{fomoPurchases[fomoIndex]?.area}</span> زادت 15% اليوم، شكل عندهم احتفال كبير!
                           </>
                        ) : (
                           <>
@@ -4638,7 +4548,7 @@ export default function CustomerSite() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-end justify-center bg-brand/40 backdrop-blur-sm diwaniya-modal-shell"
+                className="fixed inset-0 z-[100] flex items-end justify-center bg-brand/40 backdrop-blur-sm"
                 onMouseDown={(e) => {
                   if (e.target === e.currentTarget) setShowSquadModal(false);
                 }}
@@ -4648,17 +4558,17 @@ export default function CustomerSite() {
                   animate={{ y: 0 }}
                   exit={{ y: "100%" }}
                   transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                  className="bg-stone-50 w-full max-w-md rounded-t-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh] diwaniya-modal-card"
+                  className="bg-stone-50 w-full max-w-md rounded-t-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
                   onClick={(e) => e.stopPropagation()}
                 >
-                   <div className="p-5 bg-white border-b border-stone-100 flex items-center justify-between shrink-0 diwaniya-modal-head">
+                   <div className="p-5 bg-white border-b border-stone-100 flex items-center justify-between shrink-0">
                       <div className="flex flex-col text-right">
                          <h3 className="font-black text-xl text-brand flex items-center gap-2">
                             <Crown className="w-5 h-5 text-accent" />
                             {squadInfo ? squadInfo.name : "تحدي الدواوين 🏆"}
                          </h3>
                          <p className="text-stone-500 text-xs font-bold mt-1">
-                           {squadInfo ? "ديوانيتك الحالية" : "انضم، ادخل كضيف، أو أسس ديوانية."}
+                           {squadInfo ? "ديوانيتك الحالية" : "سجل الحين وطور ديوانيتك!"}
                          </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -4695,7 +4605,7 @@ export default function CustomerSite() {
                       </div>
                    </div>
 
-                   <div className="flex-1 overflow-y-auto p-5 pb-8 custom-scrollbar relative z-0 diwaniya-modal-body">
+                   <div className="flex-1 overflow-y-auto p-5 pb-8 custom-scrollbar relative z-0">
 
                       <SquadModalContent 
                         activeSquadTab={activeSquadTab}
@@ -4805,9 +4715,9 @@ export default function CustomerSite() {
         </AnimatePresence>
 
         {/* Floating elements like flying plates */}
-        {flyingPlates.map((plate, idx) => (
+        {flyingPlates.map((plate) => (
           <FlyingPlate
-            key={`plate-${plate.id}-${idx}`}
+            key={plate.id}
             img={plate.img}
             startX={plate.startX}
             startY={plate.startY}
@@ -4819,7 +4729,7 @@ export default function CustomerSite() {
           />
         ))}
 
-        {/* حالة رادار الديوانية وتشغيل مشاركة الموقع بوضوح */}
+        {/* حالة رادار الديوانية وتشغيل اللوكيشن بوضوح */}
         <AnimatePresence>
           {!isCheckout && radarNearbySquads.length === 0 && radarStatus !== "idle" && radarStatus !== "empty" && radarStatus !== "ready" && (
             <motion.div
@@ -4827,7 +4737,7 @@ export default function CustomerSite() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 56, scale: 0.98 }}
               className={cn(
-                "customer-mobile-stable-alert customer-radar-mini-card fixed md:w-[310px] bg-white text-brand rounded-[20px] px-3 py-2.5 shadow-xl z-[85] border border-amber-100 text-right font-sans",
+                "customer-mobile-stable-alert fixed md:w-[330px] bg-white text-brand rounded-[22px] px-3.5 py-3 shadow-xl z-[85] border border-amber-100 text-right font-sans",
                 floatingAlertPanelSide,
                 floatingAlertBottom,
               )}
@@ -4836,17 +4746,17 @@ export default function CustomerSite() {
                 <button
                   onClick={() => radarStatus === "denied" ? setShowRadarInstructionModal(true) : refreshRadarOnce()}
                   disabled={radarStatus === "checking"}
-                  className="bg-brand text-white rounded-xl px-3.5 py-2 text-[10px] font-black active:scale-95 shrink-0 disabled:opacity-60"
+                  className="bg-brand text-white rounded-2xl px-4 py-2 text-[10px] font-black active:scale-95 shrink-0 disabled:opacity-60"
                 >
-                  {radarStatus === "checking" ? "نفحص" : radarStatus === "denied" ? "فعّل الموقع" : radarStatus === "weak" ? "حسّن الدقة" : "تشغيل"}
+                  {radarStatus === "checking" ? "جاري الفحص" : radarStatus === "denied" ? "طريقة التفعيل" : radarStatus === "weak" ? "تحسين الدقة" : "تشغيل الرادار"}
                 </button>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-end gap-1.5 text-[11px] font-black">
-                    <span>{radarStatus === "denied" ? "مشاركة الموقع متوقفة" : radarStatus === "weak" ? "الدقة ضعيفة" : "رادار الديوانية"}</span>
+                    <span>{radarStatus === "denied" ? "الموقع غير متاح" : radarStatus === "weak" ? "الموقع تقريبي" : "رادار الديوانية"}</span>
                     {radarStatus === "denied" && <MapPin className="w-3.5 h-3.5 text-amber-500" />}
                   </div>
                   <div className="text-[9px] font-bold text-stone-500 mt-0.5 leading-snug line-clamp-2">
-                    {radarStatus === "denied" ? "اسمح بالموقع من المتصفح." : radarStatusMsg}
+                    {radarStatus === "denied" ? "فعّله من المتصفح لتشغيل الرادار." : radarStatusMsg}
                   </div>
                   {radarAccuracy !== null && <div className="text-[8px] font-black text-stone-400 mt-0.5">الدقة: {radarAccuracy}م</div>}
                 </div>
@@ -4889,12 +4799,12 @@ export default function CustomerSite() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 150, scale: 0.9 }}
                 className={cn(
-                  "customer-mobile-stable-alert customer-nearby-radar-card fixed md:w-[360px] max-h-[min(360px,calc(100dvh-140px))] overflow-y-auto bg-slate-900 text-white rounded-[26px] p-4 shadow-2xl z-[85] border border-amber-500/20 text-right font-sans space-y-3",
+                  "customer-mobile-stable-alert fixed md:w-[400px] max-h-[min(420px,calc(100dvh-140px))] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-6 shadow-2xl z-[85] border-2 border-amber-500/20 text-right font-sans space-y-4",
                   floatingAlertPanelSide,
                   floatingAlertBottom,
                 )}
               >
-                <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-2.5">
+                <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-3">
                   <button
                     onClick={() => setIsNearbyRadarPanelCollapsed(true)}
                     className="w-8 h-8 rounded-full bg-white/10 text-slate-300 hover:text-white hover:bg-white/15 flex items-center justify-center transition-all shrink-0"
@@ -4903,8 +4813,10 @@ export default function CustomerSite() {
                     <X className="w-4 h-4" />
                   </button>
                   <div className="flex-1">
-                    <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-2.5 py-1 rounded-full border border-amber-500/20">قريب منك</span>
-                    <h4 className="font-black text-sm mt-1.5 text-amber-100">ديوانية قريبة</h4>
+                    <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار الديوانية 📡</span>
+                    <h4 className="font-black text-sm mt-2 text-amber-100">
+                      لقطنا دواوين قريبة منك 📍
+                    </h4>
                   </div>
                   <div className="relative flex h-3 w-3 mt-1.5 shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -4912,11 +4824,11 @@ export default function CustomerSite() {
                   </div>
                 </div>
 
-                <p className="text-[10px] font-bold text-slate-300 leading-normal">
-                  ادخل إذا أنت عضو، أو اطلب الانضمام.
+                <p className="text-[11px] font-bold text-slate-300 leading-normal">
+                  إذا هذي ديوانيتك بدّل لها، وإذا مو عضو دز طلب والمعزب يوافق عليك.
                 </p>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {radarNearbySquads.map((sq: any) => {
                     const isLoading = radarLoadingMap[sq.id];
                     const isSuccess = radarSuccessMap[sq.id];
@@ -4927,7 +4839,7 @@ export default function CustomerSite() {
                         className="p-3 bg-slate-800 rounded-2xl border border-slate-700/50 flex flex-col gap-2 transition-all hover:bg-slate-800/90"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-[9px] font-black text-amber-400 bg-amber-400/10 border border-amber-500/10 px-2 py-0.5 rounded-lg font-mono">
+                          <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-500/10 px-2 py-0.5 rounded-lg font-mono">
                             تبعد {normalizeDigits(String(sq.distance))}م
                           </span>
                           <span className="text-xs font-black text-white">ديوانية {sq.name}</span>
@@ -4935,7 +4847,7 @@ export default function CustomerSite() {
 
                         {isSuccess ? (
                           <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-1.5 px-3 rounded-xl text-[10px] font-black text-center animate-pulse">
-                            وصل الطلب للمعزب.
+                            دزينا طلبك للمعزب! ناطرين موافقته 📡
                           </div>
                         ) : (
                           <div className="flex gap-2 justify-end mt-1 flex-wrap">
@@ -4944,23 +4856,23 @@ export default function CustomerSite() {
                               className="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-[10px] py-1.5 px-3 rounded-xl transition-all inline-flex items-center gap-1"
                             >
                               <X className="w-3 h-3" />
-                              لاحقاً
+                              تصغير
                             </button>
                             
                             {sq.isAlreadyMember ? (
                               <button
                                 onClick={() => handleSwitchToNearbySquad(sq)}
-                                className="bg-emerald-400 hover:bg-emerald-500 text-slate-950 font-black text-[10px] py-2 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
+                                className="bg-emerald-400 hover:bg-emerald-500 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
                               >
-                                {sq.isOwnerOfNearby ? "فعّل ديوانيتك" : "ادخل الديوانية"}
+                                {sq.isOwnerOfNearby ? "فعّل ديوانيتك هنا 👑" : "أنا عضو هنا، خلّها الحالية ✅"}
                               </button>
                             ) : (
                               <button
                                 onClick={() => handleSendRadarRequest(sq)}
                                 disabled={isLoading}
-                                className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 text-slate-950 font-black text-[10px] py-2 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
+                                className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
                               >
-                                {isLoading ? "نرسل..." : "اطلب الانضمام"}
+                                {isLoading ? "ندز الطلب..." : "دز طلب للمعزب 📡"}
                               </button>
                             )}
                           </div>
@@ -4972,7 +4884,7 @@ export default function CustomerSite() {
 
                 {!customerPhone && (
                   <p className="text-[9px] font-bold text-amber-500/50 text-center pt-2">
-                    سجل رقمك ليصل الطلب باسمك.
+                    سجل رقمك عشان يوصل طلبك للمعزب باسمك ورقمك!
                   </p>
                 )}
               </motion.div>
@@ -5009,10 +4921,10 @@ export default function CustomerSite() {
                     <X className="w-4 h-4" />
                   </button>
                   <div>
-                    <p className="text-[10px] font-black text-amber-600">انضمام</p>
-                    <h3 className="text-lg font-black mt-1">بياناتك للمعزب</h3>
+                    <p className="text-[10px] font-black text-amber-600">طلب دخول ديوانية</p>
+                    <h3 className="text-lg font-black mt-1">رقمك للمعزب</h3>
                     <p className="text-xs font-bold text-stone-500 mt-1 leading-6">
-                      اكتب اسمك ورقمك. بعدها نرسل الطلب.
+                      اكتب رقم تلفونك 8 أرقام. الأرقام العربية تتحول تلقائياً، والحروف ما تنقبل.
                     </p>
                   </div>
                 </div>
@@ -5052,7 +4964,7 @@ export default function CustomerSite() {
                     }}
                     className="w-full rounded-2xl bg-amber-500 text-slate-950 px-4 py-4 text-sm font-black shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all disabled:opacity-45"
                   >
-                    إرسال الطلب
+                    أرسل الطلب للمعزب
                   </button>
                 </div>
               </motion.div>
@@ -5090,15 +5002,15 @@ export default function CustomerSite() {
                 </button>
 
                 <MapPin className="w-9 h-9 mx-auto text-amber-500 mb-3" />
-                <h3 className="text-lg font-black text-brand leading-tight">مشاركة الموقع غير مفعّلة</h3>
+                <h3 className="text-lg font-black text-brand leading-tight">الموقع غير متاح</h3>
                 <p className="mt-1.5 text-[11px] font-bold text-stone-500 leading-relaxed">
-                  فعّلها لعرض الدواوين القريبة.
+                  فعّله من المتصفح لتشغيل الرادار.
                 </p>
 
                 <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50/45 px-3 py-3 text-right">
                   <p className="text-[11px] font-black text-brand mb-1">الخطوات</p>
                   <ol className="space-y-1.5 text-[10px] font-bold text-stone-600 leading-relaxed list-decimal list-inside">
-                    <li>افتح إعدادات هذا الموقع من المتصفح.</li>
+                    <li>افتح إعدادات الموقع.</li>
                     <li>اختر سماح.</li>
                     <li>ارجع واضغط جرّب الآن.</li>
                   </ol>
@@ -5291,7 +5203,7 @@ export default function CustomerSite() {
                 )}
                 <div className="space-y-3">
                   {qatyaAlertItems.map((n: any) => (
-                    <div key={`qatya-${n.sourceKind}-${n.id}-${n.meta?.orderId || 'no-order'}`} className="relative group/item">
+                    <div key={n.id} className="relative group/item">
                       <button
                         type="button"
                         onClick={() => handleOpenQatyaAlertItem(n)}
@@ -5759,7 +5671,7 @@ const RoyalLazySusan = ({
 
           return (
             <motion.div
-              key={`wow-${product.id}-${i}`}
+              key={product.id}
               className="best-seller-wow-card absolute w-[180px] h-[200px] cursor-grab active:cursor-grabbing"
               initial={false}
               animate={{
