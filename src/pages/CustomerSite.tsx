@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegroundPush, type DiwaniyaPushState } from "../lib/diwaniyaPush";
 
 // Define the default product categories shown to customers.
@@ -87,6 +88,70 @@ const getKuwaitiLiveMenuSignal = (products: any[], cart: any[], squadInfo?: any)
   if (isWeekend && pick(groups.diwaniya).length) return { title: "يمعة الويكند الحلوة يبي لها هالذوق اللي يونس 🪵", subtitle: "", items: pick(groups.diwaniya), tone: "weekend" };
   if (hour >= 21 && pick(groups.light).length) return { title: "خفايف لطيفة تونس السهرة وتعدل الراس تالي الليل 🌙", subtitle: "", items: pick(groups.light), tone: "night" };
   return { title: "من اختياراتنا اللي نحبها وتلوق حق ذوقك ✨", subtitle: "", items: active.slice(0, 3), tone: "default" };
+};
+
+const categorizeProductByName = (name?: string, currentCategory?: string): string => {
+  const normalized = String(name || "").toLowerCase().trim();
+  if (currentCategory && currentCategory !== "عام" && currentCategory !== "") return currentCategory;
+  if (/ذبيحة|المفطح|قوزي/.test(normalized)) return "الولائم";
+  if (/لحم|موزات|بخاري/.test(normalized)) return "اللحوم";
+  if (/دجاج/.test(normalized)) return "الدجاج";
+  if (/سيباس|زبيدي|هامور|شعوم|نويبي|مربين|ربيان/.test(normalized)) return "البحري";
+  if (/ورق عنب|محاشي|جريش|هريس|خضار|بشاميل|مقبلات|سلطة|سلطات|روب|معبوج/.test(normalized)) return "المقبلات";
+  return "عام";
+};
+
+const processSharedProductsForCustomer = (rawProducts: any[] = []) => {
+  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  return (rawProducts || [])
+    .filter((p: any) => p?.isActive !== false && p?.isHidden !== true && p?.hidden !== true && p?.visible !== false && p?.isVisible !== false)
+    .map((p: any) => {
+      let isNew = p?.isNewProduct === true || p?.isNew === true;
+      if (!isNew && (p?.createdAt || p?.dateAdded || p?.date)) {
+        let timestamp = 0;
+        if (p?.createdAt?.seconds) timestamp = p.createdAt.seconds * 1000;
+        else if (p?.createdAt?.toDate) timestamp = p.createdAt.toDate().getTime();
+        else if (p?.createdAt) timestamp = new Date(p.createdAt).getTime();
+        else if (p?.dateAdded) timestamp = new Date(p.dateAdded).getTime();
+        else if (p?.date) timestamp = new Date(p.date).getTime();
+        if (Number.isFinite(timestamp) && timestamp > thirtyDaysAgo) isNew = true;
+      }
+      const itemCat = categorizeProductByName(p?.name, p?.category || p?.productCategory);
+      return { ...p, isNewProduct: isNew, category: itemCat, productCategory: itemCat };
+    })
+    .sort((a: any, b: any) => String(a?.name || "").localeCompare(String(b?.name || ""), "ar"));
+};
+
+const buildTopProductsFromSharedData = (products: any[] = [], invoices: any[] = []) => {
+  const productStats: Record<string, { count: number; revenue: number }> = {};
+  (invoices || []).forEach((order: any) => {
+    (order?.items || []).forEach((item: any) => {
+      if (!item?.productId) return;
+      if (!productStats[item.productId]) productStats[item.productId] = { count: 0, revenue: 0 };
+      const quantity = Number(item.quantity) || 1;
+      const price = Number(item.priceAtTime || item.price || 0);
+      productStats[item.productId].count += quantity;
+      productStats[item.productId].revenue += price * quantity;
+    });
+  });
+  const mixedMap = new Map<string, any>();
+  [...products]
+    .filter((p: any) => (productStats[p.id]?.count || 0) > 0)
+    .sort((a: any, b: any) => (productStats[b.id]?.count || 0) - (productStats[a.id]?.count || 0))
+    .slice(0, 15)
+    .forEach((p: any) => mixedMap.set(p.id, p));
+  [...products]
+    .filter((p: any) => (productStats[p.id]?.revenue || 0) > 0)
+    .sort((a: any, b: any) => (productStats[b.id]?.revenue || 0) - (productStats[a.id]?.revenue || 0))
+    .slice(0, 15)
+    .forEach((p: any) => mixedMap.set(p.id, p));
+  const top = Array.from(mixedMap.values());
+  if (top.length < 6) {
+    products.filter((p: any) => !p?.isHidden && !p?.isOutOfStock).slice(0, 20).forEach((p: any) => {
+      if (!mixedMap.has(p.id)) { top.push(p); mixedMap.set(p.id, p); }
+    });
+  }
+  return top.sort(() => 0.5 - Math.random()).slice(0, 6);
 };
 
 const getSharedProductCategories = (source: any, productList: any[] = []) => {
@@ -2037,10 +2102,35 @@ export default function CustomerSite() {
 
     const loadData = async () => {
       try {
+        try {
+          const sharedSnap = await getDoc(doc(db, "appData", "shared_company_data"));
+          const sharedData = sharedSnap.exists() ? sharedSnap.data() : {};
+          const sharedProducts = processSharedProductsForCustomer([...(sharedData.products || []), ...(sharedData.supplierCopies || [])]);
+          const sharedTopProducts = buildTopProductsFromSharedData(sharedProducts, sharedData.invoices || []);
+          const sharedRegions = Array.isArray(sharedData.regions) ? [...sharedData.regions].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar")) : [];
+          const sharedSettings = sharedData.settings || sharedData.storeSettings || sharedData.businessSettings || {};
+
+          if (isMounted && sharedProducts.length > 0) {
+            setProducts(sharedProducts);
+            setTopProducts(sharedTopProducts);
+            if (sharedRegions.length > 0) setRegions(sharedRegions);
+            if (sharedSettings && Object.keys(sharedSettings).length > 0) setSettings(sharedSettings);
+            try {
+              localStorage.setItem("cached_products", JSON.stringify(sharedProducts));
+              localStorage.setItem("cached_top_products", JSON.stringify(sharedTopProducts));
+              if (sharedRegions.length > 0) localStorage.setItem("cached_regions", JSON.stringify(sharedRegions));
+              if (sharedSettings && Object.keys(sharedSettings).length > 0) localStorage.setItem("cached_settings", JSON.stringify(sharedSettings));
+            } catch (e) {}
+            setIsLoadingProducts(false);
+          }
+        } catch (firestoreErr) {
+          console.warn("Could not read shared_company_data directly, falling back to API", firestoreErr);
+        }
+
         await Promise.all([
           fetchWithRetry("/api/products").then((allProducts) => {
-            if (!isMounted) return;
-            const validProducts = Array.isArray(allProducts) ? allProducts : [];
+            if (!isMounted || !Array.isArray(allProducts) || allProducts.length === 0) return;
+            const validProducts = allProducts;
             setProducts(validProducts);
             try {
               localStorage.setItem("cached_products", JSON.stringify(validProducts));
@@ -2048,8 +2138,8 @@ export default function CustomerSite() {
             setIsLoadingProducts(false);
           }),
           fetchWithRetry("/api/top-products").then(d => { 
-            if (isMounted) {
-              const list = d || [];
+            if (isMounted && Array.isArray(d) && d.length > 0) {
+              const list = d;
               setTopProducts(list);
               try {
                 localStorage.setItem("cached_top_products", JSON.stringify(list));
@@ -2069,7 +2159,8 @@ export default function CustomerSite() {
              }
           }),
           fetchWithRetry("/api/regions").then(d => { 
-            const sorted = [...(d || [])].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar"));
+            if (!Array.isArray(d) || d.length === 0) return;
+            const sorted = [...d].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar"));
             if (isMounted) {
               setRegions(sorted);
               try {
@@ -2078,7 +2169,7 @@ export default function CustomerSite() {
             }
           }),
           fetchWithRetry("/api/settings").then(d => { 
-            if (isMounted && d) {
+            if (isMounted && d && Object.keys(d).length > 0) {
               setSettings(d);
               try {
                 localStorage.setItem("cached_settings", JSON.stringify(d));
@@ -2097,7 +2188,6 @@ export default function CustomerSite() {
         }
       }
     };
-
     loadData();
     // Customer brand splash appears on the initial page entrance only.
     // If we have cached content already, we can dismiss it very quickly (e.g. 250ms) to make it feel blazing fast!
