@@ -89,27 +89,44 @@ try {
   console.warn("[DIWANIYA_PUSH] Firebase Admin messaging disabled:", error?.message || String(error));
 }
 
+function handleAdminDbError(error: any, contextMsg: string) {
+  const errMsg = String(error?.message || error || "");
+  const isPermissionDenied = errMsg.includes("PERMISSION_DENIED") || errMsg.includes("insufficient permissions") || String(error?.code) === "7";
+  if (isPermissionDenied) {
+    console.info(`[ADMIN_DB_INFO] Admin SDK lacks role permissions (${contextMsg}). Disabling Admin Firestore and using Client SDK for subsequent actions.`);
+    adminDb = null;
+  } else {
+    console.warn(`[ADMIN_DB_WARN] Admin database exception (${contextMsg}):`, error);
+  }
+}
+
 let _appDataCache: any = null;
 let _appDataCacheTime = 0;
 const CACHE_TTL = 0; // Disable cache to prevent concurrency issues and data loss during split payments
 
 async function loadSharedSquadsShard() {
-  try {
-    if (adminDb) {
+  if (adminDb) {
+    try {
       const shardSnap = await adminDb.collection("appData").doc("shared_company_data").collection("shards").doc("squads").get();
-      if (!shardSnap.exists) return [];
+      if (shardSnap.exists) {
+        const shardData = shardSnap.data() || {};
+        return Array.isArray(shardData.squads) ? shardData.squads : [];
+      }
+    } catch (error) {
+      handleAdminDbError(error, "loadSharedSquadsShard");
+    }
+  }
+
+  try {
+    const shardSnap = await getDoc(doc(db, "appData", "shared_company_data", "shards", "squads"));
+    if (shardSnap.exists()) {
       const shardData = shardSnap.data() || {};
       return Array.isArray(shardData.squads) ? shardData.squads : [];
     }
-
-    const shardSnap = await getDoc(doc(db, "appData", "shared_company_data", "shards", "squads"));
-    if (!shardSnap.exists()) return [];
-    const shardData = shardSnap.data() || {};
-    return Array.isArray(shardData.squads) ? shardData.squads : [];
   } catch (error) {
-    console.warn("[SQUADS_SHARD] Could not read shared squads shard", error);
-    return [];
+    console.warn("[CLIENT_DB] Shard read failed:", error);
   }
+  return [];
 }
 
 function mergeSquadsShardIfNeeded(rootData: any, shardSquads: any[]) {
@@ -119,37 +136,38 @@ function mergeSquadsShardIfNeeded(rootData: any, shardSquads: any[]) {
 }
 
 async function getAppData() {
-  console.log("getAppData called!");
   if (_appDataCache && Date.now() - _appDataCacheTime < CACHE_TTL) {
     return _appDataCache;
   }
-  try {
-    if (adminDb) {
+
+  if (adminDb) {
+    try {
       const d = await adminDb.collection("appData").doc("shared_company_data").get();
       if (d.exists) {
         const rootData = d.data() || {};
-        console.log("DB exists via Admin SDK, products length: ", rootData.products?.length);
         const shardSquads = await loadSharedSquadsShard();
         _appDataCache = mergeSquadsShardIfNeeded(rootData, shardSquads);
         _appDataCacheTime = Date.now();
         return _appDataCache;
       }
+    } catch (error) {
+      handleAdminDbError(error, "getAppData");
     }
+  }
 
+  try {
     const d = await getDoc(doc(db, "appData", "shared_company_data"));
     if (d.exists()) {
       const rootData = d.data();
-      console.log("DB exists via client SDK, products length: ", rootData.products?.length);
       const shardSquads = await loadSharedSquadsShard();
       _appDataCache = mergeSquadsShardIfNeeded(rootData, shardSquads);
       _appDataCacheTime = Date.now();
       return _appDataCache;
-    } else {
-      console.log("DB does NOT exist. Returning localFallbackDB. products length is: ", localFallbackDB.products?.length);
     }
   } catch (error) {
-    console.warn("Firebase read restricted or failed, using local in-memory fallback", error);
+    console.warn("[CLIENT_DB] Read failed or restricted", error);
   }
+
   return localFallbackDB;
 }
 
@@ -191,8 +209,8 @@ const removeUndefinedDeep = (value: any): any => {
 
 async function updateAppData(data: any) {
   const cleanedData = removeUndefinedDeep(data);
-  try {
-    if (adminDb) {
+  if (adminDb) {
+    try {
       const docRef = adminDb.collection("appData").doc("shared_company_data");
       await adminDb.runTransaction(async (transaction) => {
         transaction.set(docRef, cleanedData, { merge: true });
@@ -200,20 +218,22 @@ async function updateAppData(data: any) {
       _appDataCache = null;
       _appDataCacheTime = 0;
       return;
+    } catch (error) {
+      handleAdminDbError(error, "updateAppData");
     }
+  }
 
+  try {
     const docRef = doc(db, "appData", "shared_company_data");
     await setDoc(docRef, cleanedData, { merge: true });
     _appDataCache = null;
     _appDataCacheTime = 0;
   } catch (error) {
-    console.warn("Firebase write restricted or failed, updating local in-memory fallback", error);
+    console.warn("[CLIENT_DB] Write failed, updating local in-memory fallback", error);
     localFallbackDB = { ...localFallbackDB, ...data };
-    
-    // Save to disk to persist across dev server restarts
     try {
       fs.writeFileSync(path.join(__dirname, "app_data_fallback.json"), JSON.stringify(localFallbackDB, null, 2));
-    } catch(err) {
+    } catch (err) {
       console.warn("Could not save to disk:", err);
     }
   }
@@ -225,8 +245,8 @@ async function updateAppData(data: any) {
  * to prevent race conditions.
  */
 async function updateAppDataAtomically(updater: (currentData: any) => any) {
-  try {
-    if (adminDb) {
+  if (adminDb) {
+    try {
       const docRef = adminDb.collection("appData").doc("shared_company_data");
       await adminDb.runTransaction(async (transaction) => {
         const sDoc = await transaction.get(docRef);
@@ -262,35 +282,39 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
       _appDataCache = null;
       _appDataCacheTime = 0;
       return true;
+    } catch (error) {
+      handleAdminDbError(error, "updateAppDataAtomically");
     }
+  }
 
+  try {
     const docRef = doc(db, "appData", "shared_company_data");
     await runTransaction(db, async (transaction) => {
       const sDoc = await transaction.get(docRef);
-      
+
       let currentData: any = {};
       let isNew = false;
       if (!sDoc.exists()) {
-         isNew = true;
-         currentData = localFallbackDB;
+        isNew = true;
+        currentData = localFallbackDB;
       } else {
-         currentData = sDoc.data();
-         if (!Array.isArray(currentData?.squads) || currentData.squads.length === 0) {
-           const shardSnap = await transaction.get(doc(db, "appData", "shared_company_data", "shards", "squads"));
-           if (shardSnap.exists()) {
-             const shardSquads = shardSnap.data()?.squads;
-             currentData = mergeSquadsShardIfNeeded(currentData, Array.isArray(shardSquads) ? shardSquads : []);
-           }
-         }
+        currentData = sDoc.data();
+        if (!Array.isArray(currentData?.squads) || currentData.squads.length === 0) {
+          const shardSnap = await transaction.get(doc(db, "appData", "shared_company_data", "shards", "squads"));
+          if (shardSnap.exists()) {
+            const shardSquads = shardSnap.data()?.squads;
+            currentData = mergeSquadsShardIfNeeded(currentData, Array.isArray(shardSquads) ? shardSquads : []);
+          }
+        }
       }
-      
+
       const updates = removeUndefinedDeep(updater(currentData));
-      
+
       if (updates) {
         if (isNew) {
-           transaction.set(docRef, { ...currentData, ...updates }, { merge: true });
+          transaction.set(docRef, { ...currentData, ...updates }, { merge: true });
         } else {
-           transaction.update(docRef, updates);
+          transaction.update(docRef, updates);
         }
       } else if (isNew) {
         transaction.set(docRef, currentData);
@@ -300,7 +324,7 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
     _appDataCacheTime = 0;
     return true;
   } catch (err) {
-    console.error("[ATOMIC_UPDATE_ERROR]", err);
+    console.error("[CLIENT_DB] Atomic update failed", err);
     return false;
   }
 }
@@ -441,15 +465,9 @@ async function sendAdminPushDirectOnce(input: {
 
 async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: boolean, providerData: any) {
   console.log(`[PAYMENT_UPDATE] Processing Order:${orderId} Split:${splitId} Success:${isSuccess}`);
-  const docRef = doc(db, "appData", "shared_company_data");
   const directPushes: any[] = [];
   
-  try {
-    await runTransaction(db, async (transaction) => {
-      const sDoc = await transaction.get(docRef);
-      if (!sDoc.exists()) throw new Error("shared_company_data not found");
-      
-      const appData = sDoc.data();
+  const ok = await updateAppDataAtomically((appData) => {
       let orders = [...(appData.orders || [])];
       let invoices = [...(appData.invoices || [])];
       let customers = [...(appData.customers || [])];
@@ -615,10 +633,13 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
       });
 
       if (updated) {
-        transaction.update(docRef, { orders, invoices, customers });
+        return { orders, invoices, customers };
       }
-    });
-    for (const push of directPushes) {
+      return null;
+  });
+
+  if (ok) {
+     for (const push of directPushes) {
       try {
         const result = await sendAdminPushDirectOnce(push);
         console.log(`[PAYMENT_UPDATE] Direct admin push ${push.eventId}:`, JSON.stringify(result));
@@ -627,8 +648,8 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
       }
     }
     console.log(`[PAYMENT_UPDATE] Successfully processed Order:${orderId}`);
-  } catch (err) {
-    console.error(`[PAYMENT_UPDATE] Concurrency error or logical failure for Order:${orderId}:`, err);
+  } else {
+    console.error(`[PAYMENT_UPDATE] Concurrency error or logical failure for Order:${orderId}`);
   }
 }
 
