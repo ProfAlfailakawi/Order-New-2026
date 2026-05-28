@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Coffee, Flame, Volume2, VolumeX, Sparkles, HelpCircle, RefreshCw } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../utils";
 
 interface SaduMember {
@@ -150,6 +151,58 @@ export function SaduPresenceRug({
   const [isSubmittingWobble, setIsSubmittingWobble] = useState(false);
   const audioTriggerCache = useRef<Record<string, string>>({});
 
+  // Real-time Pour Coffee tactile microgame system states
+  const [isPouringCoffee, setIsPouringCoffee] = useState(false);
+  const [pouringSuccess, setPouringSuccess] = useState(false);
+
+  // Dynamic Sadu Points calculated for the Weave theme state
+  const squadPoints = useMemo(() => {
+    if (!squadInfo) return 0;
+    const value = squadInfo?.points ?? squadInfo?.totalPoints ?? squadInfo?.teamPoints ?? squadInfo?.score ?? squadInfo?.balance ?? squadInfo?.totalOrders ?? 0;
+    const n = Number(String(value).replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(n) ? n : 0;
+  }, [squadInfo]);
+
+  const isBronze = squadPoints < 100;
+  const isSilver = squadPoints >= 100 && squadPoints < 500;
+  const isGold = squadPoints >= 500 && squadPoints < 1500;
+  const isDiamond = squadPoints >= 1500;
+
+  // Sound sequence generator to simulate pouring & full cup clinking
+  const startCoffeePour = () => {
+    setIsPouringCoffee(true);
+    setPouringSuccess(false);
+
+    // Initial pour sound
+    playSynthSound("pour");
+    
+    // Middle pour sound
+    const pTimer = setTimeout(() => {
+      playSynthSound("pour");
+    }, 450);
+
+    // Dally filling clink
+    const cTimer = setTimeout(() => {
+      playSynthSound("clink");
+    }, 1100);
+
+    // Final broadcast and save
+    const fTimer = setTimeout(() => {
+      setIsPouringCoffee(false);
+      setPouringSuccess(true);
+      
+      if (onWobbleAction && selectedCupInfo) {
+        onWobbleAction(`صبّ فنجان قهوة ترحيبي دافئ ومقند لـ ${selectedCupInfo.name}! ☕✨`);
+      }
+    }, 1700);
+  };
+
+  const handleCupModalClose = () => {
+    setSelectedCupInfo(null);
+    setIsPouringCoffee(false);
+    setPouringSuccess(false);
+  };
+
   // Trigger audio on change detection (when friend wobbles)
   useEffect(() => {
     if (!soundEnabled) return;
@@ -244,16 +297,60 @@ export function SaduPresenceRug({
     (member) => cleanPhoneLocal(member.phone) !== cleanPhoneLocal(squadInfo?.phone),
   );
 
-  const displayEntities = [
-    ...seatedMembers.map((member, index) => ({ ...member, type: "member", index })),
-    ...pendingGeofenceRequests.map((req, index) => ({
-      phone: req.phone,
-      name: req.name,
-      type: "radar_guest",
-      distance: req.distance,
-      index: seatedMembers.length + index,
-    })),
-  ];
+  // Combine both present members, non-present squad members, and radar guests to make the rug incredibly lively and interactive!
+  const displayEntities = useMemo(() => {
+    const list: any[] = [];
+    const addedPhones = new Set<string>();
+
+    // 1. Add all present members (including the host-dallah if present)
+    presentMembers.forEach((member, index) => {
+      const isHost = cleanPhoneLocal(squadInfo?.phone) === cleanPhoneLocal(member.phone);
+      const cleaned = cleanPhoneLocal(member.phone);
+      if (cleaned) {
+        addedPhones.add(cleaned);
+      }
+      list.push({
+        ...member,
+        type: isHost ? "host" : "member",
+        isOnline: true,
+        index
+      });
+    });
+
+    // 2. Add roster members who are not currently checked in as "offline / resting" cups so the rug looks filled & beautiful at all times
+    const rosterList = squadInfo?.membersList || [];
+    rosterList.forEach((member: any) => {
+      const cleaned = cleanPhoneLocal(member.phone);
+      if (cleaned && !addedPhones.has(cleaned)) {
+        addedPhones.add(cleaned);
+        const isHost = cleanPhoneLocal(squadInfo?.phone) === cleaned;
+        list.push({
+          phone: member.phone,
+          name: member.name || "عضو الديوانية",
+          points: member.points || member.score || 0,
+          type: isHost ? "host" : "member",
+          isOnline: false,
+          index: list.length
+        });
+      }
+    });
+
+    // 3. (Mock fallback deleted to keep roster strictly clean as requested)
+
+    // 4. Add radar guests
+    pendingGeofenceRequests.forEach((req, index) => {
+      list.push({
+        phone: req.phone,
+        name: req.name,
+        type: "radar_guest",
+        distance: req.distance,
+        isOnline: true,
+        index: list.length
+      });
+    });
+
+    return list;
+  }, [presentMembers, pendingGeofenceRequests, squadInfo]);
 
   return (
     <div className="relative w-full overflow-hidden text-right select-none select-text-none">
@@ -300,7 +397,13 @@ export function SaduPresenceRug({
       `}</style>
 
       {/* THE COVETED TRADITIONAL KUWAITI SADU RUG */}
-      <div className="relative shadow-2xl rounded-3xl border border-stone-900/60 overflow-hidden bg-[#240405] w-full py-6 px-4 min-h-[330px] flex flex-col">
+      <div className={cn(
+        "relative shadow-2xl rounded-3xl overflow-hidden w-full py-6 px-1.5 sm:px-4 min-h-[310px] sm:min-h-[330px] flex flex-col transition-all duration-700 border",
+        isBronze && "bg-[#240405] border-stone-900/60",
+        isSilver && "bg-gradient-to-br from-[#160405] via-[#240405] to-[#1c1926] border-slate-500/40 shadow-xl shadow-slate-900/20",
+        isGold && "bg-gradient-to-br from-[#2a0204] via-[#0d0001] to-[#3f2208] border-amber-500/45 shadow-xl shadow-amber-950/40",
+        isDiamond && "bg-gradient-to-tr from-[#3b020c] via-[#05000d] to-[#281a4b] border-yellow-400 shadow-xl shadow-yellow-950/50 border-2"
+      )}>
         {/* Weave overlay for coarse fabric look */}
         <div 
           className="absolute inset-0 pointer-events-none opacity-[0.22]"
@@ -310,12 +413,12 @@ export function SaduPresenceRug({
           }}
         />
 
-        {/* Traditional Left Sadu Border Band */}
-        <div className="absolute left-0 top-0 bottom-0 w-8 flex flex-col justify-between overflow-hidden opacity-95">
+        {/* Traditional Left Sadu Border Band - Responsive width for mobile */}
+        <div className="absolute left-0 top-0 bottom-0 w-4 sm:w-8 flex flex-col justify-between overflow-hidden opacity-95">
           <div className="w-full h-full bg-gradient-to-r from-stone-950 via-[#a71d22] to-stone-950 border-r border-[#ff6b6b]/15 flex flex-col items-center py-2 gap-1 bg-[size:100%_40px]">
             {/* Native woven tribal glyphs replicated in CSS triangles/ribbons */}
             {Array.from({ length: 15 }).map((_, i) => (
-              <div key={i} className="flex flex-col gap-0.5 opacity-80 scale-75">
+              <div key={i} className="flex flex-col gap-0.5 opacity-80 scale-[0.45] sm:scale-75">
                 <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[9px] border-b-yellow-400" />
                 <div className="w-3 h-2 bg-stone-950 flex justify-between px-0.5">
                   <div className="w-0.5 h-full bg-white" />
@@ -327,11 +430,11 @@ export function SaduPresenceRug({
           </div>
         </div>
 
-        {/* Traditional Right Sadu Border Band */}
-        <div className="absolute right-0 top-0 bottom-0 w-8 flex flex-col justify-between overflow-hidden opacity-95">
+        {/* Traditional Right Sadu Border Band - Responsive width for mobile */}
+        <div className="absolute right-0 top-0 bottom-0 w-4 sm:w-8 flex flex-col justify-between overflow-hidden opacity-95">
           <div className="w-full h-full bg-gradient-to-l from-stone-950 via-[#a71d22] to-stone-950 border-l border-[#ff6b6b]/15 flex flex-col items-center py-2 gap-1 bg-[size:100%_40px]">
             {Array.from({ length: 15 }).map((_, i) => (
-              <div key={i} className="flex flex-col gap-0.5 opacity-80 scale-75">
+              <div key={i} className="flex flex-col gap-0.5 opacity-80 scale-[0.45] sm:scale-75">
                 <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[9px] border-b-yellow-400" />
                 <div className="w-3 h-2 bg-stone-950 flex justify-between px-0.5">
                   <div className="w-0.5 h-full bg-white" />
@@ -344,14 +447,14 @@ export function SaduPresenceRug({
         </div>
 
         {/* Traditional Woven Fringes at Top/Bottom of the Rug ("الهدب") to resemble a real piece */}
-        <div className="absolute top-0 left-8 right-8 h-1 bg-[#1a1a1a] flex justify-between pointer-events-none">
-          {Array.from({ length: 60 }).map((_, idx) => (
-            <div key={idx} className="w-[1.5px] h-3.5 bg-gradient-to-b from-[#fbf5e6] to-[#1a1a1a] opacity-60" />
+        <div className="absolute top-0 left-4 right-4 sm:left-8 sm:right-8 h-1 bg-[#1a1a1a] flex justify-between pointer-events-none">
+          {Array.from({ length: 45 }).map((_, idx) => (
+            <div key={idx} className="w-[1.5px] h-2 sm:h-3.5 bg-gradient-to-b from-[#fbf5e6] to-[#1a1a1a] opacity-60" />
           ))}
         </div>
-        <div className="absolute bottom-0 left-8 right-8 h-1 bg-[#1a1a1a] flex justify-between pointer-events-none">
-          {Array.from({ length: 60 }).map((_, idx) => (
-            <div key={idx} className="w-[1.5px] h-3.5 bg-gradient-to-t from-[#fbf5e6] to-[#1a1a1a] opacity-60" />
+        <div className="absolute bottom-0 left-4 right-4 sm:left-8 sm:right-8 h-1 bg-[#1a1a1a] flex justify-between pointer-events-none">
+          {Array.from({ length: 45 }).map((_, idx) => (
+            <div key={idx} className="w-[1.5px] h-2 sm:h-3.5 bg-gradient-to-t from-[#fbf5e6] to-[#1a1a1a] opacity-60" />
           ))}
         </div>
 
@@ -373,16 +476,16 @@ export function SaduPresenceRug({
         </div>
 
         {hostMember && (
-          <div className="relative z-20 mr-auto ml-3 mb-3 w-fit max-w-[62%] rounded-full border border-amber-400/25 bg-black/35 backdrop-blur-sm px-4 py-2 shadow-lg text-center">
+          <div className="relative z-20 mr-auto ml-5 sm:ml-9 mb-3 w-fit max-w-[70%] rounded-full border border-amber-400/25 bg-black/35 backdrop-blur-sm px-4 py-1.5 shadow-lg text-center">
             <div className="flex items-center justify-center gap-2">
-              <span className="text-lg">👑</span>
+              <span className="text-base sm:text-lg">👑</span>
               <div className="min-w-0 text-right">
-                <div className="text-[9px] font-black text-amber-300 leading-none">المعزب</div>
-                <div className="text-sm font-black text-[#faf0d9] truncate max-w-[180px]">{hostMember.name || "المعزب"}</div>
+                <div className="text-[8px] sm:text-[9px] font-black text-amber-300 leading-none">المعزب</div>
+                <div className="text-xs sm:text-sm font-black text-[#faf0d9] truncate max-w-[140px] sm:max-w-[180px]">{hostMember.name || "المعزب"}</div>
               </div>
             </div>
             {isCurrentlyWobbling(hostMember.wobbleAt) && (
-              <div className="mt-1 text-[8px] font-black text-amber-300 leading-snug truncate max-w-[220px]">
+              <div className="mt-1 text-[8px] font-black text-amber-300 leading-snug truncate max-w-[180px] sm:max-w-[220px]">
                 {hostMember.wobbleMsg || "حيالله الربع"}
               </div>
             )}
@@ -390,14 +493,20 @@ export function SaduPresenceRug({
         )}
 
         {/* Central visual piece: The Golden Dallah on visual hot embers inside a traditional burner */}
-        <div className="relative mx-auto mt-2 mb-3 flex flex-col items-center justify-center pointer-events-none z-10 scale-90 sm:scale-100 h-36">
+        <div className="relative mx-auto mt-1 mb-2 flex flex-col items-center justify-center pointer-events-none z-10 scale-[0.78] sm:scale-100 h-32 sm:h-36">
           <div className="relative group flex items-center justify-center">
             {/* Hot Embers Glow */}
-            <div className="absolute w-28 h-28 bg-[#d42d13] blur-2xl rounded-full opacity-45 mix-blend-screen animate-pulse" />
+            <div className={cn(
+              "absolute w-24 h-24 sm:w-28 sm:h-28 blur-2xl rounded-full opacity-45 mix-blend-screen animate-pulse",
+              isBronze && "bg-[#d42d13]",
+              isSilver && "bg-teal-500",
+              isGold && "bg-amber-500",
+              isDiamond && "bg-purple-600 scale-110"
+            )} />
             
             {/* Pulsing Concentric Circular Sadu Weaving Rays */}
-            <div className="absolute w-36 h-36 border-4 border-dashed border-yellow-500/25 rounded-full animate-[spin_40s_linear_infinite]" />
-            <div className="absolute w-28 h-28 border-[1.5px] border-amber-600/30 rounded-full animate-[spin_20s_linear_infinite_reverse]" />
+            <div className="absolute w-32 h-32 sm:w-36 sm:h-36 border-4 border-dashed border-yellow-500/25 rounded-full animate-[spin_40s_linear_infinite]" />
+            <div className="absolute w-24 h-24 sm:w-28 sm:h-28 border-[1.5px] border-amber-600/30 rounded-full animate-[spin_20s_linear_infinite_reverse]" />
             
             {/* Floating Smoke trails */}
             <div className="absolute -top-14 flex gap-1.5 justify-center">
@@ -413,7 +522,7 @@ export function SaduPresenceRug({
             </div>
 
             {/* Premium Gold Dallah / Mabkhara Vector Artwork rendering */}
-            <svg width="85" height="110" viewBox="0 0 100 125" fill="none" className="filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)]">
+            <svg width="75" height="100" viewBox="0 0 100 125" fill="none" className="w-[75px] h-[100px] sm:w-[85px] sm:h-[110px] filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)]">
               {/* Hot wood charcoal embers inside base */}
               <ellipse cx="50" cy="100" rx="32" ry="8" fill="#150a0a" stroke="#d44d15" strokeWidth="1.5" />
               <ellipse cx="50" cy="100" rx="16" ry="4" fill="#fa4a13" className="animate-pulse" />
@@ -458,45 +567,86 @@ export function SaduPresenceRug({
                 </linearGradient>
               </defs>
             </svg>
-            <span className="absolute bottom-1 bg-amber-500/90 text-stone-950 font-black text-[8px] px-1.5 py-0.5 rounded-full border border-yellow-300/30">
+            <span className="absolute bottom-0.5 bg-amber-500/95 text-stone-950 font-black text-[7.5px] sm:text-[8px] px-1.5 py-0.5 rounded-full border border-yellow-300/30">
               دلة الديوانية
             </span>
           </div>
         </div>
 
         {/* حضور الديوانية بشكل خفيف بدون إطارات كبيرة */}
-        <div className="relative z-20 mt-1 mb-2 px-6">
+        <div className="relative z-20 mt-1 mb-2 px-4 sm:px-8 max-w-full">
           {displayEntities.length > 0 ? (
-            <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar" dir="rtl">
+            <div className="grid grid-cols-2 min-[415px]:grid-cols-3 sm:flex sm:flex-row sm:flex-wrap sm:justify-center gap-2 pb-2" dir="rtl">
               {displayEntities.map((entity: any, i: number) => {
                 const isMe = cleanPhoneLocal(entity.phone) === cleanPhoneLocal(currentMemberPhone);
                 const parsedPoints = entity.points || entity.score || 0;
                 const isRadarGuest = entity.type === "radar_guest";
+                const isHost = cleanPhoneLocal(entity.phone) === cleanPhoneLocal(squadInfo?.phone);
                 const wobbling = isCurrentlyWobbling(entity.wobbleAt);
                 const displayName = entity.name || "أحد الربع";
+                const isOnline = entity.isOnline !== false;
+                
+                // Get the beautiful contextual cup details!
+                const cupMeta = getCupType(parsedPoints, isHost);
 
                 return (
-                  <button
+                  <motion.button
                     key={`${entity.phone}-${entity.index}`}
                     type="button"
                     onClick={() => handleCupClick(entity)}
+                    initial={{ y: -45, opacity: 0, scale: 0.8 }}
+                    animate={{ y: 0, opacity: isOnline ? 1 : 0.65, scale: 1 }}
+                    whileHover={{ scale: 1.05, y: -2, opacity: 1 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 260,
+                      damping: 15,
+                      delay: i * 0.04,
+                    }}
                     className={cn(
-                      "shrink-0 min-w-[112px] rounded-2xl px-3 py-2 text-right transition-all active:scale-95 backdrop-blur-sm border",
+                      "w-full sm:w-[130px] sm:shrink-0 rounded-2xl px-2.5 py-2 sm:px-3 sm:py-2.5 text-right transition-all backdrop-blur-md border",
+                      wobbling && "animate-sadu-wobble-active ring-2 ring-amber-500",
                       isMe
                         ? "bg-emerald-400/95 text-stone-950 border-emerald-200 shadow-lg"
                         : isRadarGuest
                           ? "bg-rose-950/45 text-stone-100 border-rose-500/25"
-                          : "bg-black/25 text-stone-100 border-white/5 hover:border-amber-400/20"
+                          : !isOnline
+                            ? "bg-black/40 text-stone-300 border-white/5 opacity-60 hover:opacity-100"
+                            : isHost
+                              ? "bg-amber-500/15 text-amber-100 border-amber-500/35 shadow-md shadow-amber-950/20 animate-pulse"
+                              : "bg-white/10 backdrop-blur-md text-stone-100 border-white/10 hover:border-amber-500/30 hover:bg-white/20"
                     )}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="w-7 h-7 shrink-0 rounded-full bg-white/10 flex items-center justify-center text-xs border border-white/10">
-                        {isMe ? "أنت" : isRadarGuest ? "📡" : parsedPoints >= 200 ? "👑" : "☕"}
+                    <div className="flex items-center justify-between gap-1.5 sm:gap-2.5">
+                      <span className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-full bg-stone-900/60 flex items-center justify-center text-base sm:text-lg border border-white/10 relative">
+                        {isRadarGuest ? "📡" : cupMeta.icon}
+                        {isMe && (
+                          <span className="absolute -top-1 -right-1 bg-emerald-500 text-stone-950 text-[6px] font-black px-1 rounded-full border border-stone-950">
+                            أنا
+                          </span>
+                        )}
+                        {isHost && !isMe && (
+                          <span className="absolute -top-1 -right-1 bg-amber-500 text-stone-950 text-[6px] font-black px-1 rounded-full border border-stone-100/10">
+                            تاج
+                          </span>
+                        )}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="text-[10px] font-black truncate">{displayName}</div>
-                        <div className={cn("text-[8px] font-bold mt-0.5 truncate", isMe ? "text-stone-800/70" : "text-stone-400")}>
-                          {isRadarGuest ? `قريب${entity.distance ? ` • ${entity.distance}م` : ""}` : `${parsedPoints} نقطة`}
+                        <div className={cn("text-[9.5px] sm:text-[10px] font-black truncate", isMe ? "text-stone-950" : "text-stone-100")}>
+                          {displayName}
+                        </div>
+                        <div className={cn(
+                          "text-[8px] font-bold mt-0.5 truncate", 
+                          isMe ? "text-stone-800/80" : "text-stone-400"
+                        )}>
+                          {isRadarGuest 
+                            ? `قريب${entity.distance ? ` • ${entity.distance}م` : ""}` 
+                            : !isOnline 
+                              ? "مستريح 💤" 
+                              : isMe 
+                                ? "متواجد 🟢" 
+                                : `${parsedPoints} نقطة`}
                         </div>
                       </div>
                     </div>
@@ -505,7 +655,7 @@ export function SaduPresenceRug({
                         {entity.wobbleMsg || "يا هلا والله بالربع!"}
                       </div>
                     )}
-                  </button>
+                  </motion.button>
                 );
               })}
             </div>
@@ -516,9 +666,9 @@ export function SaduPresenceRug({
           )}
         </div>
 
-        {/* Footer info showing total attendees */}
-        <div className="flex items-center justify-between mt-4 px-3 relative z-10 gap-3 flex-wrap">
-          <div className="flex gap-2 flex-wrap">
+        {/* Footer info showing total attendees - Flexible and stacked on mobile phones */}
+        <div className="flex flex-col sm:flex-row items-center sm:justify-between mt-4 px-4 sm:px-8 relative z-10 gap-3 text-center sm:text-right">
+          <div className="flex gap-1.5 flex-wrap justify-center sm:justify-start">
             <span className="text-[9px] font-black text-emerald-400 bg-emerald-950/45 px-2.5 py-1 rounded-full border border-emerald-900/35 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span>{presentMembers.length} حاضر بالديوانية</span>
@@ -528,8 +678,24 @@ export function SaduPresenceRug({
                 <span>{pendingGeofenceRequests.length} بانتظار الموافقة</span>
               </span>
             )}
+            {/* Dynamic Weave badges */}
+            {isSilver && (
+              <span className="text-[9px] font-black text-slate-300 bg-slate-950/70 px-2.5 py-1 rounded-full border border-slate-500/30 flex items-center gap-1 shadow-sm">
+                <span>نسيج فضي متطور ✨</span>
+              </span>
+            )}
+            {isGold && (
+              <span className="text-[9px] font-black text-amber-300 bg-amber-950/70 px-2.5 py-1 rounded-full border border-amber-500/40 flex items-center gap-1 shadow-sm">
+                <span>سدو مذهب فاخر 👑</span>
+              </span>
+            )}
+            {isDiamond && (
+              <span className="text-[9px] font-black text-yellow-300 bg-purple-950/70 px-2.5 py-1 rounded-full border border-yellow-400/50 flex items-center gap-1 animate-pulse shadow-sm">
+                <span>سدو كوني هولوجرامي 🌌🏆</span>
+              </span>
+            )}
           </div>
-          <div className="text-right">
+          <div className="text-center sm:text-right">
             <div className="text-[9.5px] font-bold text-[#faf0d9]/80">
               {squadInfo?.name ? `ديوانية ${squadInfo.name}` : "مجلس الربع الثقافي"} 🏠
             </div>
@@ -560,122 +726,201 @@ export function SaduPresenceRug({
       </div>
 
       {/* MODAL / DRAWER CONTROLS TO SEND A SPEECH/SHAKE ("انطق / صب شاي وبث صوت الفنجان للربع") */}
-      {wobbleInputOpen && (
-        <div className="fixed inset-0 bg-stone-950/80 backdrop-blur-sm z-[9999] p-4 flex items-center justify-center animate-fade-in text-right">
-          <div className="bg-stone-900 border border-stone-800 rounded-[35px] max-w-sm w-full p-6 shadow-2xl relative space-y-4">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => setWobbleInputOpen(false)}
-                className="text-stone-400 hover:text-white bg-stone-800/60 rounded-full w-8 h-8 flex items-center justify-center text-xs font-black"
-              >
-                ✕
-              </button>
-              <h3 className="text-base font-black text-amber-500">
-                هز فنجانك وخل ديوانيتك تهتز وتصوت للربع! ☕
-              </h3>
-            </div>
-
-            <p className="text-xs text-stone-300 font-bold leading-relaxed">
-              اختر عبارة ترحيب كويتية تقليدية أو اكتب عبارتك الخاصة بالديوانية، وفنجانك على سجادة السدو راح يهتز ويبث صوت رنة الفنجان على تليفونات ربعك المتواجدين حالياً!
-            </p>
-
-            {/* Quick Sadu Phrases List */}
-            <div className="grid grid-cols-1 gap-2">
-              {SADU_PHRASES.map((phrase, pi) => (
+      <AnimatePresence>
+        {wobbleInputOpen && (
+          <div className="fixed inset-0 bg-stone-950/85 backdrop-blur-sm z-[9999] p-3 sm:p-4 flex items-center justify-center text-right">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 18, stiffness: 220 }}
+              className="bg-stone-950/90 backdrop-blur-3xl border border-white/10 rounded-[24px] sm:rounded-[35px] max-w-sm w-full p-4 sm:p-6 shadow-2xl shadow-black/80 relative space-y-4 max-h-[94vh] overflow-y-auto custom-scrollbar"
+            >
+              <div className="flex items-center justify-between">
                 <button
-                  key={pi}
-                  onClick={() => triggerMyWobble(phrase)}
-                  disabled={isSubmittingWobble}
-                  className="w-full text-right p-3 rounded-2xl bg-stone-950/60 border border-stone-800/60 hover:border-amber-500/35 hover:bg-stone-950 text-xs font-black text-amber-100/90 active:scale-[0.98] transition-all"
+                  onClick={() => setWobbleInputOpen(false)}
+                  className="text-stone-400 hover:text-white bg-stone-800/60 rounded-full w-8 h-8 flex items-center justify-center text-xs font-black animate-pulse"
                 >
-                  {phrase}
+                  ✕
                 </button>
-              ))}
-            </div>
+                <h3 className="text-sm sm:text-base font-black text-amber-500">
+                  هز فنجانك وخل ديوانيتك تهتز وتصوت للربع! ☕
+                </h3>
+              </div>
 
-            {/* Custom input box */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => customMsg.trim() && triggerMyWobble(customMsg.trim())}
-                disabled={isSubmittingWobble || !customMsg.trim()}
-                className="bg-amber-500 text-stone-950 font-black px-4 rounded-xl text-xs active:scale-95 transition-all disabled:opacity-45 disabled:pointer-events-none"
-              >
-                بث الآن
-              </button>
-              <input
-                type="text"
-                value={customMsg}
-                onChange={(e) => setCustomMsg(e.target.value)}
-                maxLength={45}
-                placeholder="اكتب عبارة جديدة مخصوصة للربع... 🖊️"
-                className="flex-1 bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-right text-xs font-black text-white focus:outline-none focus:border-amber-500/50"
-              />
-            </div>
+              <p className="text-[10.5px] sm:text-xs text-stone-300 font-bold leading-relaxed">
+                اختر عبارة ترحيب كويتية تقليدية أو اكتب عبارتك الخاصة بالديوانية، وفنجانك على سجادة السدو راح يهتز ويبث صوت رنة الفنجان على تليفونات ربعك المتواجدين حالياً!
+              </p>
 
-            <div className="bg-stone-950/40 p-3 rounded-2xl text-[10px] text-stone-400 text-center font-bold">
-              كل جديد يوصل للحضور مباشرة، والديوانية دايمًا على اتصال. 📡
-            </div>
+              {/* Quick Sadu Phrases List - Restricted max-height on phones to prevent dialog cutoff */}
+              <div className="grid grid-cols-1 gap-1.5 max-h-[145px] sm:max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+                {SADU_PHRASES.map((phrase, pi) => (
+                  <button
+                    key={pi}
+                    onClick={() => triggerMyWobble(phrase)}
+                    disabled={isSubmittingWobble}
+                    className="w-full text-right p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-stone-950/60 border border-stone-800/60 hover:border-amber-500/35 hover:bg-stone-950 text-[11px] sm:text-xs font-black text-amber-100/90 active:scale-[0.98] transition-all"
+                  >
+                    {phrase}
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom input box */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => customMsg.trim() && triggerMyWobble(customMsg.trim())}
+                  disabled={isSubmittingWobble || !customMsg.trim()}
+                  className="bg-amber-500 text-stone-950 font-black px-4 rounded-xl text-xs active:scale-95 transition-all disabled:opacity-45 disabled:pointer-events-none"
+                >
+                  بث الآن
+                </button>
+                <input
+                  type="text"
+                  value={customMsg}
+                  onChange={(e) => setCustomMsg(e.target.value)}
+                  maxLength={45}
+                  placeholder="اكتب عبارة جديدة مخصوصة للربع... 🖊️"
+                  className="flex-1 bg-stone-950 border border-stone-800 rounded-xl px-3 py-2.5 text-right text-xs font-black text-white focus:outline-none focus:border-amber-500/50"
+                />
+              </div>
+
+              <div className="bg-stone-950/40 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl text-[9.5px] sm:text-[10px] text-stone-400 text-center font-bold">
+                كل جديد يوصل للحضور مباشرة، والديوانية دايمًا على اتصال. 📡
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* SELECTED MEMBER POPUP DETAILS DISPLAY */}
-      {selectedCupInfo && !selectedCupInfo.isMe && (
-        <div className="fixed inset-0 bg-stone-950/70 backdrop-blur-sm z-[9999] p-4 flex items-center justify-center animate-fade-in text-right">
-          <div className="bg-stone-900 border border-stone-800 rounded-[35px] max-w-sm w-full p-6 shadow-2xl relative space-y-4">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => setSelectedCupInfo(null)}
-                className="text-stone-400 hover:text-white bg-stone-800/60 rounded-full w-8 h-8 flex items-center justify-center text-xs font-black"
-              >
-                ✕
-              </button>
-              <span className="text-[10px] font-black bg-amber-950/80 text-amber-500 px-3 py-1 rounded-full uppercase">
-                {selectedCupInfo.cupMeta.label}
-              </span>
-            </div>
-
-            <div className="flex flex-col items-center justify-center text-center py-2">
-              {/* Grand render of their cup */}
-              <div className="relative w-20 h-20 bg-stone-950/50 rounded-full flex items-center justify-center border border-white/5 shadow-inner mb-3">
-                <span className="text-3xl animate-bounce">{selectedCupInfo.cupMeta.icon}</span>
+      <AnimatePresence>
+        {selectedCupInfo && !selectedCupInfo.isMe && (
+          <div className="fixed inset-0 bg-[#000]/75 backdrop-blur-md z-[9999] p-3 sm:p-4 flex items-center justify-center text-right">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 40 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              transition={{ type: "spring", damping: 18, stiffness: 220 }}
+              className="bg-stone-950/90 backdrop-blur-3xl border border-white/10 rounded-[24px] sm:rounded-[35px] max-w-sm w-full p-4 sm:p-6 shadow-2xl shadow-black/80 relative space-y-4 max-h-[94vh] overflow-y-auto custom-scrollbar"
+            >
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={handleCupModalClose}
+                  className="text-stone-400 hover:text-white bg-stone-800/60 rounded-full w-8 h-8 flex items-center justify-center text-xs font-black"
+                >
+                  ✕
+                </button>
+                <span className="text-[9.5px] sm:text-[10px] font-black bg-amber-950/80 text-amber-500 px-3 py-1 rounded-full uppercase">
+                  {selectedCupInfo.cupMeta.label}
+                </span>
               </div>
-              <h4 className="text-lg font-black text-stone-100">{selectedCupInfo.name}</h4>
-              <p className="text-xs text-stone-400 font-bold mt-1">
-                رصيد النقاط الشخصي: <strong className="text-amber-500">{selectedCupInfo.points} نقطة</strong>
-              </p>
-            </div>
 
-            <div className="bg-stone-950/60 p-4 rounded-2xl border border-stone-800 text-xs font-bold text-stone-300 space-y-2" dir="rtl">
-              <div className="grid grid-cols-[auto_1fr] items-center gap-3 text-right">
-                <span className="text-stone-500 shrink-0">المكانة بالديوانية:</span>
-                <span className="text-stone-400 min-w-0">{selectedCupInfo.cupMeta.desc}</span>
+              <div className="flex flex-col items-center justify-center text-center py-2 relative">
+                {/* Grand render of their cup */}
+                <div className="relative w-20 h-20 bg-stone-950/50 rounded-full flex items-center justify-center border border-white/5 shadow-inner mb-3">
+                  <span className="text-3xl animate-bounce">{selectedCupInfo.cupMeta.icon}</span>
+                  
+                  {/* Miniature cascading pour visual representation */}
+                  {isPouringCoffee && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-6 -right-6 text-3xl"
+                    >
+                      ☕
+                    </motion.div>
+                  )}
+                </div>
+                
+                <h4 className="text-lg font-black text-stone-100">{selectedCupInfo.name}</h4>
+                <p className="text-xs text-stone-400 font-bold mt-1">
+                  رصيد النقاط الشخصي: <strong className="text-amber-500">{selectedCupInfo.points} نقطة</strong>
+                </p>
               </div>
-              {selectedCupInfo.checkedInAt && (
-                <div className="grid grid-cols-[auto_1fr] items-center gap-3 text-right">
-                  <span className="text-stone-500 shrink-0">وقت الحضور:</span>
-                  <span className="text-stone-400 min-w-0">
-                    {new Date(selectedCupInfo.checkedInAt).toLocaleTimeString("ar-KW", { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+
+              {/* Real-time pouring game visuals */}
+              {isPouringCoffee && (
+                <div className="relative h-20 w-full overflow-hidden flex items-center justify-center bg-amber-950/20 rounded-2xl border border-amber-500/20">
+                  <div className="absolute inset-0 flex items-center justify-center opacity-60">
+                    <div className="w-12 h-12 rounded-full border-t border-amber-500/30 animate-spin" />
+                  </div>
+                  <div className="absolute top-1 flex flex-col items-center">
+                    <div className="flex flex-col gap-1 items-center mt-1">
+                      {[1, 2, 3, 4, 5].map((d) => (
+                        <motion.div
+                          key={d}
+                          initial={{ y: -10, opacity: 0, scale: 0.5 }}
+                          animate={{ y: [0, 45], opacity: [0, 1, 0], scale: [0.6, 1.2, 0.5] }}
+                          transition={{
+                            duration: 0.8,
+                            repeat: Infinity,
+                            delay: d * 0.15,
+                            ease: "easeIn"
+                          }}
+                          className="w-2.5 h-2.5 rounded-full bg-amber-600 border border-amber-400"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="absolute bottom-1 text-[9.5px] font-black text-amber-400">
+                    جاري صب فنجان الكرم للضيف... 🛰️💨
+                  </div>
                 </div>
               )}
-            </div>
 
-            <button
-              onClick={() => {
-                if (soundEnabled) {
-                  playSynthSound("clink");
-                }
-                alert(`بادرت بتحية الفناجين مع ${selectedCupInfo.name}! ☕🔔`);
-                setSelectedCupInfo(null);
-              }}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-stone-950 py-3 rounded-2xl text-xs font-black active:scale-95 transition-all text-center"
-            >
-              🤝 قهند راسك معه (صب تحية وتبادل رنة الفناجين)
-            </button>
+              {pouringSuccess && (
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="p-3 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl text-center"
+                >
+                  <span className="text-emerald-400 font-black text-xs block">
+                    تم صب فنجان الضيافة بنجاح! ✅☕
+                  </span>
+                  <span className="text-[9px] font-bold text-emerald-400/80 mt-1 block">
+                    وصل تنبيه الترحيب لصديقك بالثواني الحالية
+                  </span>
+                </motion.div>
+              )}
+
+              <div className="bg-stone-950/60 p-4 rounded-2xl border border-stone-800 text-xs font-bold text-stone-300 space-y-2" dir="rtl">
+                <div className="grid grid-cols-[auto_1fr] items-center gap-3 text-right">
+                  <span className="text-stone-500 shrink-0">المكانة بالديوانية:</span>
+                  <span className="text-stone-400 min-w-0">{selectedCupInfo.cupMeta.desc}</span>
+                </div>
+                {selectedCupInfo.checkedInAt && (
+                  <div className="grid grid-cols-[auto_1fr] items-center gap-3 text-right">
+                    <span className="text-stone-500 shrink-0">وقت الحضور:</span>
+                    <span className="text-stone-400 min-w-0">
+                      {new Date(selectedCupInfo.checkedInAt).toLocaleTimeString("ar-KW", { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {!isPouringCoffee && !pouringSuccess && (
+                <button
+                  type="button"
+                  onClick={startCoffeePour}
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-stone-950 py-3.5 rounded-2xl text-xs font-black active:scale-95 transition-all text-center flex items-center justify-center gap-2"
+                >
+                  <span>☕</span>
+                  <span>صب فنجان قهوة ترحيبي دافئ</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleCupModalClose}
+                className="w-full bg-stone-800 hover:bg-stone-700 text-stone-300 py-2.5 rounded-2xl text-[10px] font-bold active:scale-95 transition-all text-center"
+              >
+                إغلاق النافذة
+              </button>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }
