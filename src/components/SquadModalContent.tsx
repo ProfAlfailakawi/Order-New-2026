@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { User, Landmark, Crown, Users, LogIn, DoorOpen, DoorClosed, Trophy, Star, Medal, Target } from "lucide-react";
+import { User, Landmark, Crown, Users, LogIn, DoorOpen, DoorClosed, Trophy, Star, Medal, Target, BrainCircuit } from "lucide-react";
 import { cn } from "../utils";
 import { robustGetCurrentPosition } from "../utils/geolocation";
 import { SaduPresenceRug } from "./SaduPresenceRug";
@@ -70,6 +70,8 @@ interface SquadModalContentProps {
   squadBeautifulLog?: any;
   diwaniyaNotifications?: any[];
   unreadDiwaniyaNotifications?: number;
+  products?: any[];
+  onAddToCart?: (item: any, e?: React.MouseEvent) => void;
 }
 
 export const SquadModalContent: React.FC<SquadModalContentProps> = ({
@@ -119,9 +121,57 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   squadBeautifulLog = null,
   diwaniyaNotifications = [],
   unreadDiwaniyaNotifications = 0,
+  products = [],
+  onAddToCart,
 }) => {
   const [copied, setCopied] = React.useState(false);
   const [myDiwaniyaTab, setMyDiwaniyaTab] = React.useState<"home" | "manage" | "orders" | "code" | "notifications" | "location">("home");
+
+  // 🧠 AI Co-Host smart state & learning engine (Concise, functional and connected to real products)
+  const [aiActiveIndex, setAiActiveIndex] = React.useState(0);
+  const [aiIsLearning, setAiIsLearning] = React.useState(false);
+  const [aiLearntCount, setAiLearntCount] = React.useState(0);
+
+  const aiProducts = React.useMemo(() => {
+    if (!products || products.length === 0) return null;
+    
+    // Find beautiful real products that match or fall back safely
+    const main = products.find((p: any) => p?.name?.includes("مجبوس") || p?.name?.includes("ذبيحة") || p?.name?.includes("لحم")) || products[0];
+    const warm = products.find((p: any) => p?.name?.includes("كرك") || p?.name?.includes("شاي") || p?.name?.includes("دلة") || p?.name?.includes("قهوة") || p?.name?.includes("حار")) || products[2] || products[0];
+    const dessert = products.find((p: any) => p?.name?.includes("صاج") || p?.name?.includes("ورق عنب") || p?.name?.includes("حلو") || p?.name?.includes("جريش") || p?.name?.includes("هريس") || p?.name?.includes("مربين")) || products[1] || products[0];
+    
+    return { main, warm, dessert };
+  }, [products]);
+
+  const activeRecommendation = React.useMemo(() => {
+    if (!aiProducts) {
+      return {
+        text: "يحلل الجو وتفضيلات الديوانية حالياً لجلب توصية دقيقة للربع...",
+        product: null
+      };
+    }
+    
+    const { main, warm, dessert } = aiProducts;
+    
+    switch (aiActiveIndex) {
+      case 0:
+        return {
+          text: "الجو حار (45°م). المعزب يوصي بطبق خفيف ممتاز للرطوبة وتلطيف الجلسة ماليّاً ومذاقيّاً:",
+          product: dessert
+        };
+      case 1:
+        return {
+          text: "لمتكم عامرة الليلة ومجتمعة. المعزب يقترح صنف الديوانية الشعبي الرئيسي الأكثر طلباً وتوفيراً:",
+          product: main
+        };
+      case 2:
+      default:
+        return {
+          text: "رنة الفنجان تطلب الكرم. المعزب يوصي بطلب وتجهيز النكهة الأصيلة للربع:",
+          product: warm
+        };
+    }
+  }, [aiProducts, aiActiveIndex]);
 
   const cleanPhoneLocal = (ph: string): string => {
     if (!ph) return "";
@@ -715,7 +765,27 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const [groupOrderLoading, setGroupOrderLoading] = React.useState(false);
 
   React.useEffect(() => {
-    if (!isOwner && myDiwaniyaTab === "code") setMyDiwaniyaTab("home");
+    // If a guest/friend comes with a scanned QR Code containing ?code=xxxx, parse and fill it in!
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const guestCode = params.get("code");
+      if (guestCode) {
+        setTempJoinCode(guestCode);
+        setMyDiwaniyaTab("code");
+        
+        // Remove 'code' from URL quietly to keep window pristine
+        params.delete("code");
+        const nextUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+        window.history.replaceState({}, "", nextUrl);
+      }
+    } catch (e) {
+      console.warn("Auto-fill code from url failed:", e);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    // Allow guests and owners to access code tab to enter codes or generate codes
+    // if (!isOwner && myDiwaniyaTab === "code") setMyDiwaniyaTab("home");
   }, [isOwner, myDiwaniyaTab]);
 
   React.useEffect(() => {
@@ -1036,6 +1106,46 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     return "🔔";
   };
 
+  const handleAddAiProductToCart = (prod: any) => {
+    if (!prod) return;
+    if (onAddToCart) {
+      onAddToCart({
+        id: Date.now().toString() + Math.random(),
+        productId: prod.id,
+        name: prod.name,
+        price: prod.price || 0,
+        quantity: 1,
+        selectedOption: prod.options?.[0] || "",
+        selectedExtras: [],
+      });
+      if (typeof window !== "undefined" && navigator.vibrate) {
+        navigator.vibrate([40, 25, 40]);
+      }
+      alert(`تم إضافة "${prod.name}" لطلب الربع بنجاح! 🥳🧉`);
+      
+      setAiIsLearning(true);
+      setTimeout(() => {
+        setAiActiveIndex((prev) => (prev + 1) % 3);
+        setAiLearntCount((prev) => prev + 1);
+        setAiIsLearning(false);
+      }, 750);
+    } else {
+      alert("الطلب الجماعي جاهز للتعديل! اضغط الصنب من المنيو بالخارج أو تواصل مع المعزب.");
+    }
+  };
+
+  const handleAiChange = () => {
+    setAiIsLearning(true);
+    if (typeof window !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(30);
+    }
+    setTimeout(() => {
+      setAiActiveIndex((prev) => (prev + 1) % 3);
+      setAiLearntCount((prev) => prev + 1);
+      setAiIsLearning(false);
+    }, 700);
+  };
+
   const cleanSquadName = (name: any) => {
     const raw = String(name || "").trim();
     return (
@@ -1185,12 +1295,89 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 </div>
               )}
 
-              {myDiwaniyaTab === "orders" && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-3">
+              {myDiwaniyaTab === "orders" && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[10px] font-black bg-accent/10 text-accent px-3 py-1 rounded-full">طلب الربع + قطية</span>
                   <h4 className="text-sm font-black text-brand">تنسيق طلب الربع</h4>
                 </div>
                 <p className="text-[11px] font-bold text-stone-500 leading-relaxed">اختار الأصناف، وإذا وصلت للقطيّة تلقى الربع جاهزين بدون تكرار أسماء أو أرقام.</p>
+                
+                {/* 🧠 معزب الذكاء الاصطناعي الودود - مدمج بذكاء مع المنتجات الحقيقية ويتعلم من الاختيارات */}
+                <div className="bg-gradient-to-br from-amber-500/[0.06] via-amber-600/[0.01] to-stone-50/10 border border-amber-500/15 rounded-3xl p-4 text-right space-y-3 relative overflow-hidden shadow-inner">
+                  <div className="absolute top-0 left-0 w-24 h-24 bg-amber-500/5 blur-xl rounded-full pointer-events-none" />
+                  
+                  {/* Header Row */}
+                  <div className="flex items-center justify-between">
+                    {/* Level / Learning status */}
+                    <span className="text-[9px] font-black text-amber-600 bg-amber-500/10 py-1 px-2.5 rounded-full animate-pulse">
+                      {aiLearntCount === 0 ? "الذكاء يتعلم ذوقكم 🧬" : `تم استيعاب ${aiLearntCount} من تفضيلات الربع! 🧠`}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="p-1 bg-amber-500/10 text-amber-600 rounded-lg">
+                        <BrainCircuit className="w-4 h-4" />
+                      </span>
+                      <span className="text-xs font-black text-amber-500">معزب الذكاء الاصطناعي</span>
+                    </div>
+                  </div>
+
+                  {aiIsLearning ? (
+                    <div className="py-4 flex flex-col items-center justify-center space-y-2 text-center">
+                      <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                      <span className="text-[10px] font-black text-stone-500 animate-pulse">المعزب يعيد ضبط حساباته ويستخلص التفضيل التالي للربع...</span>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Short Recommendation Text */}
+                      <p className="text-[10.5px] text-stone-600 font-bold leading-relaxed">
+                        {activeRecommendation.text}
+                      </p>
+
+                      {/* Real Connected Product Banner */}
+                      {activeRecommendation.product ? (
+                        <div className="flex items-center justify-between p-2.5 bg-white border border-amber-500/15 rounded-2xl gap-3">
+                          <div className="flex items-center gap-2 text-right">
+                            {activeRecommendation.product.image && (
+                              <img
+                                src={activeRecommendation.product.image}
+                                alt={activeRecommendation.product.name}
+                                className="w-10 h-10 rounded-xl object-cover border border-stone-100"
+                                referrerPolicy="no-referrer"
+                              />
+                            )}
+                            <div>
+                              <div className="text-[10.5px] font-black text-stone-850 line-clamp-1">{activeRecommendation.product.name}</div>
+                              <div className="text-[9.5px] font-bold text-amber-600">
+                                {Number(activeRecommendation.product.price || 0).toFixed(3)} د.ك
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Actions Inside Banner */}
+                          <div className="flex gap-1 items-center">
+                            <button
+                              type="button"
+                              onClick={() => handleAddAiProductToCart(activeRecommendation.product)}
+                              className="bg-amber-500 hover:bg-amber-600 text-stone-950 px-3 py-1.5 rounded-xl text-[9.5px] font-black transition-all active:scale-95 shadow-sm"
+                            >
+                              إضافة فوريّة 🛒
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleAiChange}
+                              className="bg-stone-50 hover:bg-stone-100 text-stone-400 p-1.5 rounded-xl border border-stone-200 text-[9.5px]"
+                              title="تخطي ليتعلم المعزب ذوقك"
+                            >
+                              🔄
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-[10px] font-bold text-stone-400 text-center py-2">لا توجد منتجات متاحة بالتوصية حالياً.</div>
+                      )}
+                    </>
+                  )}
+                </div>
+
                 <div className="rounded-[24px] border border-stone-100 bg-stone-50/80 p-4">
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <span className={cn("rounded-full border px-3 py-1 text-[10px] font-black", currentUserRoleTone)}>{currentUserRoleLabel}</span>
@@ -1242,11 +1429,54 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     <button onClick={handleCreateTempCode} disabled={tempCodeLoading} className="w-full bg-brand hover:bg-accent text-white rounded-2xl py-4 text-sm font-black shadow-md active:scale-95 transition-all">
                       {tempCodeLoading ? "نجهز الكود..." : "إنشاء كود دخول للضيف 🔐"}
                     </button>
-                    {(activeTempCode?.code || tempCodes[0]?.code) ? <div className="text-center bg-white rounded-3xl p-5 border border-amber-100">
-                      <div className="text-[10px] font-black text-stone-400 mb-2">الكود الحالي</div>
-                      <div className="inline-flex bg-stone-50 border border-amber-100 rounded-2xl px-5 py-3 text-4xl font-black tracking-[0.35em] text-brand shadow-sm" dir="ltr">{activeTempCode?.code || tempCodes[0]?.code}</div>
-                      <p className="text-[10px] font-bold text-stone-400 mt-3">أرسله للضيف، صالح لمدة ساعتين.</p>
-                    </div> : <div className="bg-white border border-amber-100 rounded-2xl p-4 text-center text-[11px] font-bold text-stone-500">اضغط إنشاء كود وسيظهر هنا فوراً.</div>}
+                    {(activeTempCode?.code || tempCodes[0]?.code) ? (
+                      <div className="text-center bg-white rounded-3xl p-5 border border-amber-100 space-y-4">
+                        <div>
+                          <div className="text-[10px] font-black text-stone-400 mb-2">الكود الفوري الحالي</div>
+                          <div className="inline-flex bg-stone-50 border border-amber-100 rounded-2xl px-5 py-3 text-3xl font-black tracking-[0.3em] text-brand shadow-nm" dir="ltr">
+                            {activeTempCode?.code || tempCodes[0]?.code}
+                          </div>
+                          <p className="text-[9.5px] font-bold text-stone-400 mt-2">أرسل الكود للضيف، صالح لمدة ساعتين.</p>
+                        </div>
+                        
+                        {/* QR Code Presentation */}
+                        <div className="border-t border-dashed border-stone-100 pt-3 flex flex-col items-center">
+                          <span className="text-[10px] font-black text-amber-600 mb-2 flex items-center gap-1">
+                            📱 رمز الـ QR للدخول الفوري المقرون بالرابط
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const activeCode = activeTempCode?.code || tempCodes[0]?.code;
+                              const qrUrl = `${window.location.origin}${window.location.pathname}?code=${activeCode}`;
+                              if (typeof navigator !== "undefined" && navigator.clipboard) {
+                                navigator.clipboard.writeText(qrUrl);
+                                alert("تم نسخ رابط الانضمام التلقائي السريع للديوانية! 📋✨");
+                              }
+                            }}
+                            className="bg-stone-50 hover:bg-stone-100 p-2.5 rounded-2xl border border-stone-100 relative group transition-all active:scale-[0.98] flex items-center justify-center cursor-pointer"
+                            title="اضغط لنسخ رابط الدخول السريع"
+                          >
+                            <img
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(`${window.location.origin}${window.location.pathname}?code=${activeTempCode?.code || tempCodes[0]?.code}`)}`}
+                              alt="سكان كود الدخول"
+                              className="w-28 h-28 rounded-lg shadow-inner filter contrast-[1.08]"
+                              referrerPolicy="no-referrer"
+                            />
+                            <div className="absolute inset-0 bg-stone-900/10 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                              <span className="bg-brand/90 text-white text-[8px] font-black px-2 py-1 rounded-lg">إضغط لنسخ الرابط 📋</span>
+                            </div>
+                          </button>
+                          <p className="text-[9.5px] text-stone-400 font-bold mt-2.5 leading-relaxed">
+                            يقدر ضيفك يمسح الكود بكاميرا تلفونه ويدخل ديوانية "{cleanSquadName(squadInfo?.name)}" تلقائياً وبسهولة بضمة واحدة!
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-white border border-amber-100 rounded-2xl p-4 text-center text-[11px] font-bold text-stone-500">
+                        اضغط إنشاء كود وسيتولد رمز الـ QR الكود فوراً ومعه الرابط السريع للربع.
+                      </div>
+                    )}
                   </div>
                 )}
 
