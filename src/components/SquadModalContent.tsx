@@ -72,6 +72,8 @@ interface SquadModalContentProps {
   unreadDiwaniyaNotifications?: number;
   products?: any[];
   onAddToCart?: (item: any, e?: React.MouseEvent) => void;
+  initialCode?: string;
+  setInitialCode?: (v: string) => void;
 }
 
 export const SquadModalContent: React.FC<SquadModalContentProps> = ({
@@ -123,6 +125,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   unreadDiwaniyaNotifications = 0,
   products = [],
   onAddToCart,
+  initialCode = "",
+  setInitialCode,
 }) => {
   const [copied, setCopied] = React.useState(false);
   const [myDiwaniyaTab, setMyDiwaniyaTab] = React.useState<"home" | "manage" | "orders" | "code" | "notifications" | "location">("home");
@@ -255,7 +259,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         squadInfo?.diwaniyaGeofenceDistance ??
         squadInfo?.radarDistance ??
         squadInfo?.location?.geofenceDistance,
-      50,
+      100,
       1000
     );
   }, [
@@ -691,8 +695,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     const allowed = candidates
       .map((value: any) => Number(value))
       .filter((n: number) => Number.isFinite(n) && n > 0);
-    if (allowed.length > 0) return clampGeofenceDistance(Math.max(...allowed), 50, 1000);
-    return 50;
+    if (allowed.length > 0) return clampGeofenceDistance(Math.max(...allowed), 100, 1000);
+    return 100;
   }, [clampGeofenceDistance, settings]);
 
   React.useEffect(() => {
@@ -986,6 +990,25 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     } catch { alert("الاتصال تعطل وقت استخدام الكود."); }
     setTempCodeLoading(false);
   };
+
+  // Auto-handle initial code from QR scan
+  React.useEffect(() => {
+    if (initialCode && !squadInfo) {
+      setTempJoinCode(initialCode);
+      // If we have profile info, we can try to join automatically
+      const cleanPhone = (customerPhone || guestPhone || loginPhone || "").replace(/\D/g, "").slice(0, 8);
+      const name = (customerName || guestName || "").trim();
+      
+      if (cleanPhone.length === 8 && name) {
+        // We have enough info, try silent join
+        const timer = setTimeout(() => {
+           handleJoinWithTempCode();
+           if (setInitialCode) setInitialCode("");
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [initialCode, squadInfo, customerPhone, customerName, setInitialCode]);
 
   const handleOpenGroupOrder = async () => {
     if (!squadInfo?.id || !currentMemberPhone) return;

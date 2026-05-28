@@ -155,7 +155,7 @@ const cleanPhoneForSquad = (phone: any): string => {
 const clampSquadGeofenceDistance = (value: any, fallback = 100): number => {
   const n = Number(value);
   if (!Number.isFinite(n) || n <= 0) return fallback;
-  return Math.max(10, Math.min(100, Math.round(n)));
+  return Math.max(10, Math.min(1000, Math.round(n)));
 };
 
 const getSquadGeofenceDistance = (settings: any): number => {
@@ -623,6 +623,7 @@ export default function CustomerSite() {
   const [diwaniyaNotifications, setDiwaniyaNotifications] = useState<any[]>([]);
   const [unreadDiwaniyaNotifications, setUnreadDiwaniyaNotifications] = useState(0);
   const [showSquadModal, setShowSquadModal] = useState(false);
+  const [initialSquadCode, setInitialSquadCode] = useState("");
   const [activeSquadTab, setActiveSquadTab] = useState<"overview"|"orders"|"notifications"|"location"|"leaderboard"|"tiers">("overview");
   const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
   const squadSessionTokenRef = useRef(0);
@@ -1432,6 +1433,14 @@ export default function CustomerSite() {
     if (showSquads === "true") {
       setShowSquadModal(true);
       urlParams.delete("showSquads");
+      setSearchParams(urlParams, { replace: true });
+    }
+
+    const codeParam = urlParams.get("code");
+    if (codeParam) {
+      setInitialSquadCode(codeParam);
+      setShowSquadModal(true);
+      urlParams.delete("code");
       setSearchParams(urlParams, { replace: true });
     }
   }, []); // Run only once on mount
@@ -4761,6 +4770,8 @@ export default function CustomerSite() {
                        onPrepareQatya={handlePrepareQatyaFromDiwaniya}
                        products={products}
                        onAddToCart={addToCart}
+                       initialCode={initialSquadCode}
+                       setInitialCode={setInitialSquadCode}
                       />
                    </div>
                 </motion.div>
