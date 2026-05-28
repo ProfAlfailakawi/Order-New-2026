@@ -1576,10 +1576,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
             settings?.settings?.radarGeofenceDistance,
           ];
           const numericMaxDistances = maxDistanceCandidates.map((v: any) => Number(v)).filter((n: number) => Number.isFinite(n) && n > 0);
-          const maxAllowedDistance = Math.max(10, Math.round(numericMaxDistances.length ? Math.max(...numericMaxDistances) : 50));
-          const fallbackDistance = Number(squads[idx]?.geofenceDistance ?? squads[idx]?.location?.geofenceDistance ?? 50);
+          const maxAllowedDistance = Math.max(10, Math.round(numericMaxDistances.length ? Math.max(...numericMaxDistances) : 100));
+          const fallbackDistance = Number(squads[idx]?.geofenceDistance ?? squads[idx]?.location?.geofenceDistance ?? 100);
           const requestedDistance = Number(geofenceDistance ?? fallbackDistance);
-          const normalizedDistance = Math.max(10, Math.min(maxAllowedDistance, Math.round(Number.isFinite(requestedDistance) && requestedDistance > 0 ? requestedDistance : fallbackDistance || 50)));
+          const normalizedDistance = Math.max(10, Math.min(maxAllowedDistance, Math.round(Number.isFinite(requestedDistance) && requestedDistance > 0 ? requestedDistance : fallbackDistance || 100)));
           squads[idx] = {
             ...squads[idx],
             lat: Number(lat),
