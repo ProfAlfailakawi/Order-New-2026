@@ -175,9 +175,19 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
   const cleanPhoneLocal = (ph: string): string => {
     if (!ph) return "";
-    const cleaned = String(ph).replace(/[^0-9]/g, "");
+    let cleaned = String(ph).replace(/[^0-9]/g, "");
+    
+    // Remove leading zeros
+    cleaned = cleaned.replace(/^0+/, "");
+    
+    // If it starts with 965 and is longer than 8 digits, chop it off
     if (cleaned.startsWith("965") && cleaned.length > 8) {
-      return cleaned.slice(3);
+      cleaned = cleaned.slice(3);
+    }
+    
+    // Kuwait mobile numbers are 8 digits
+    if (cleaned.length >= 8) {
+      return cleaned.slice(-8);
     }
     return cleaned;
   };
@@ -801,35 +811,70 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   }, [squadInfo?.id, isOwner]);
 
   const handleLoginByPhone = async () => {
-    const cleanLoginPhone = normalizeDigits(loginPhone || guestPhone || "").replace(/[^0-9]/g, "").slice(0, 8);
-    if (!cleanLoginPhone || cleanLoginPhone.length < 8) {
-      alert("اكتب رقم التلفون 8 أرقام عشان نرجع دواوينك.");
+    const rawPhone = loginPhone || guestPhone || "";
+    if (!rawPhone || !rawPhone.trim()) {
+      alert("⚠️ يرجى كتابة رقم التلفون أولاً لتتمكن من الدخول إلى ديوانيتك.");
       return;
     }
+
+    // Comprehensive cleaning of the input phone number
+    let cleaned = normalizeDigits(rawPhone).replace(/[^0-9]/g, "");
+    
+    // Auto-strip country code +965 or 00965 or leading 965 if it makes it longer than 8 digits
+    if (cleaned.startsWith("00965") && cleaned.length > 8) {
+      cleaned = cleaned.slice(5);
+    } else if (cleaned.startsWith("965") && cleaned.length > 8) {
+      cleaned = cleaned.slice(3);
+    }
+    
+    // Strip leading zeros
+    cleaned = cleaned.replace(/^0+/, "");
+
+    if (cleaned.length < 8) {
+      alert(`⚠️ الرقم الذي أدخلته غير مكتمل أو غير صحيح (${rawPhone}).\n\nيرجى كتابة رقم تلفون كويتي صحيح مكون من 8 أرقام لنتمكن من البحث عن ديوانيتك.`);
+      return;
+    }
+
+    // Grab the actual 8 digits
+    const finalPhone = cleaned.slice(-8);
+
     try {
-      const res = await fetch(`/api/squad-gamification?phone=${encodeURIComponent(cleanLoginPhone)}`);
-      const data = res.ok ? await res.json() : null;
-      const foundSquads = Array.isArray(data?.userSquads) ? data.userSquads : [];
-      if (!foundSquads.length) {
-        setGuestPhone(cleanLoginPhone);
-        setLoginPhone(cleanLoginPhone);
-        alert("هذا الرقم غير مرتبط بأي ديوانية حالياً. تقدر تطلب دخول بكود أو تؤسس ديوانية جديدة.");
+      const res = await fetch(`/api/squad-gamification?phone=${encodeURIComponent(finalPhone)}`);
+      
+      if (!res.ok) {
+        alert("⚠️ حدث خطأ أثناء الاتصال بالخادم للتأكد من الموضع. يرجى المحاولة بعد قليل.");
         return;
       }
-      setCustomerPhone(cleanLoginPhone);
-      setGuestPhone(cleanLoginPhone);
+      
+      const data = await res.json();
+      const foundSquads = Array.isArray(data?.userSquads) ? data.userSquads : [];
+      
+      if (!foundSquads.length) {
+        setGuestPhone(finalPhone);
+        setLoginPhone(finalPhone);
+        alert(`❌ لم نجد أي ديوانية مسجلة للرقم (${finalPhone}) حالياً.\n\nتأكد من كتابة الرقم الصحيح أو:\n1. اطلب كود الدخول المؤقت من معزب ديوانيتك.\n2. أو أسس ديوانية جديدة للربع الآن بالخطوات في الأسفل!`);
+        return;
+      }
+      
+      setCustomerPhone(finalPhone);
+      setGuestPhone(finalPhone);
+      setLoginPhone(finalPhone);
+      
       const firstSquadId = String(foundSquads[0]?.id || "");
       setActiveSquadId(firstSquadId);
       if (setSquadInfo) setSquadInfo(null);
+      
       try {
-        localStorage.setItem("customer_phone_track", cleanLoginPhone);
+        localStorage.setItem("customer_phone_track", finalPhone);
         if (firstSquadId) localStorage.setItem("squadId", firstSquadId);
         else localStorage.removeItem("squadId");
         localStorage.removeItem("radar_dismissed_squads");
       } catch(e) {}
+      
       if (onRefresh) window.setTimeout(onRefresh, 80);
+      alert(`✅ تم الدخول بنجاح!\nمرحباً بك في ديوانية "${foundSquads[0].name}".`);
     } catch(e) {
-      alert("ما قدرنا نتأكد من الرقم الحين. جرّب مرة ثانية.");
+      alert("⚠️ تعذر الاتصال بالشبكة حالياً. تأكد من اتصالك بالإنترنت وحاول مجدداً.");
     }
   };
 
@@ -1508,10 +1553,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         className="w-full bg-stone-50 border border-stone-100 rounded-xl px-3 py-2 text-sm font-bold text-brand text-right"
                       />
                       <input
-                        inputMode="numeric"
+                        type="tel"
                         value={tempJoinPhone}
-                        onChange={(e)=>setTempJoinPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,8))}
-                        placeholder="رقم تلفونك 8 أرقام"
+                        onChange={(e) => {
+                          const v = normalizeDigits(e.target.value);
+                          const cleaned = v.replace(/[^0-9]/g, "").slice(0, 8);
+                          setTempJoinPhone(cleaned);
+                        }}
+                        placeholder="رقم تلفونك (٨ أرقام)"
+                        maxLength={8}
                         className="w-full bg-stone-50 border border-stone-100 rounded-xl px-3 py-2 text-sm font-bold text-brand text-right"
                       />
                     </div>
@@ -1663,13 +1713,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   <input
                     type="tel"
                     value={guestPhone}
-                    onChange={(e) =>
-                      setGuestPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8))
-                    }
-                    placeholder="رقم تلفونك بالإنجليزي - 8 أرقام"
+                    onChange={(e) => {
+                      const v = normalizeDigits(e.target.value);
+                      const cleaned = v.replace(/[^0-9]/g, "").slice(0, 8);
+                      setGuestPhone(cleaned);
+                    }}
+                    placeholder="رقم تلفونك (8 أرقام)"
                     maxLength={8}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
                     className="w-full bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
                   />
                 </div>
@@ -1994,17 +2044,31 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           type="text"
                           value={guestName}
                           onChange={(e) => setGuestName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleJoinSquad(String(squadInfo.id));
+                            }
+                          }}
                           placeholder="اسمك"
                           className="w-full bg-white border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
                         />
                         <input
                           type="tel"
                           value={guestPhone}
-                          onChange={(e) => setGuestPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8))}
-                          placeholder="رقم تلفونك 8 أرقام"
+                          onChange={(e) => {
+                            const v = normalizeDigits(e.target.value);
+                            const cleaned = v.replace(/[^0-9]/g, "").slice(0, 8);
+                            setGuestPhone(cleaned);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleJoinSquad(String(squadInfo.id));
+                            }
+                          }}
+                          placeholder="رقم تلفونك (8 أرقام)"
                           maxLength={8}
-                          inputMode="numeric"
-                          pattern="[0-9]*"
                           className="w-full bg-white border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
                         />
                         <button
@@ -2068,10 +2132,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               className="w-full bg-stone-50 border border-stone-100 rounded-xl px-3 py-2 text-sm font-bold text-brand text-right"
                             />
                             <input
-                              inputMode="numeric"
+                              type="tel"
                               value={tempJoinPhone}
-                              onChange={(e)=>setTempJoinPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,8))}
-                              placeholder="رقم تلفونك 8 أرقام"
+                              onChange={(e) => {
+                                const v = normalizeDigits(e.target.value);
+                                const cleaned = v.replace(/[^0-9]/g, "").slice(0, 8);
+                                setTempJoinPhone(cleaned);
+                              }}
+                              placeholder="رقم تلفونك (8 أرقام)"
+                              maxLength={8}
                               className="w-full bg-stone-50 border border-stone-100 rounded-xl px-3 py-2 text-sm font-bold text-brand text-right"
                             />
                           </div>
@@ -2114,11 +2183,18 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     type="tel"
                     value={loginPhone || guestPhone}
                     onChange={(e) => {
-                      const v = normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8);
-                      setLoginPhone(v);
-                      setGuestPhone(v);
+                      const v = normalizeDigits(e.target.value);
+                      const filtered = v.replace(/[^0-9]/g, "").slice(0, 8);
+                      setLoginPhone(filtered);
+                      setGuestPhone(filtered);
                     }}
-                    placeholder="8 أرقام"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleLoginByPhone();
+                      }
+                    }}
+                    placeholder="رقم تلفونك (8 أرقام)"
                     maxLength={8}
                     className="flex-1 bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
                   />
@@ -2143,6 +2219,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     inputMode="numeric"
                     value={tempJoinCode}
                     onChange={(e)=>setTempJoinCode(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,4))}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleJoinWithTempCode();
+                      }
+                    }}
                     placeholder="كود الديوانية"
                     className="flex-1 bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-black text-brand focus:border-accent focus:outline-none transition-all text-center"
                   />
@@ -2160,14 +2242,31 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     <input
                       value={tempJoinName}
                       onChange={(e)=>setTempJoinName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleJoinWithTempCode();
+                        }
+                      }}
                       placeholder="اسمك"
                       className="w-full bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand text-right"
                     />
                     <input
-                      inputMode="numeric"
+                      type="tel"
                       value={tempJoinPhone}
-                      onChange={(e)=>setTempJoinPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, '').slice(0,8))}
-                      placeholder="رقم تلفونك 8 أرقام"
+                      onChange={(e) => {
+                        const v = normalizeDigits(e.target.value);
+                        const cleaned = v.replace(/[^0-9]/g, "").slice(0, 8);
+                        setTempJoinPhone(cleaned);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleJoinWithTempCode();
+                        }
+                      }}
+                      placeholder="رقم تلفونك (8 أرقام)"
+                      maxLength={8}
                       className="w-full bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand text-right"
                     />
                   </div>

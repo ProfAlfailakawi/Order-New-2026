@@ -134,8 +134,22 @@ import { buildWhatsAppInvoiceText, buildWhatsAppPaymentLinkText } from "../utils
 
 
 const cleanPhoneForSquad = (phone: any): string => {
-  const cleaned = String(phone || "").replace(/[^0-9]/g, "");
-  return cleaned.startsWith("965") && cleaned.length > 8 ? cleaned.slice(3) : cleaned;
+  if (!phone) return "";
+  let cleaned = String(phone).replace(/\D/g, "");
+
+  // Remove leading zeros
+  cleaned = cleaned.replace(/^0+/, "");
+
+  // If it starts with 965 and is longer than 8 digits, it's a full country code
+  if (cleaned.startsWith("965") && cleaned.length > 8) {
+    cleaned = cleaned.slice(3);
+  }
+
+  // Kuwait numbers are 8 digits. Take the last 8 digits available to be safe.
+  if (cleaned.length >= 8) {
+    return cleaned.slice(-8);
+  }
+  return cleaned;
 };
 
 const clampSquadGeofenceDistance = (value: any, fallback = 100): number => {

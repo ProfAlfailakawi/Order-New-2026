@@ -1367,10 +1367,22 @@ app.get("/api/debug/order/:id", async (req, res) => {
       let userSquads: any[] = [];
 
       if (cleanQPhone) {
-         // Find all squads the user is a member of
-         userSquads = enrichedSquads.filter((sq: any) => 
-            (sq.membersList || []).some((m: any) => cleanPhone(m.phone) === cleanQPhone)
-         );
+         // Gather any customer records or settings that link this user
+         const myCustomerProfile = customers.find((c: any) => cleanPhone(c.phone) === cleanQPhone);
+         const customerSquadIds = new Set([
+           ...(myCustomerProfile?.squadIds || []).map(String),
+           myCustomerProfile?.squadId ? String(myCustomerProfile.squadId) : ""
+         ].filter(Boolean));
+
+         // Find all squads the user is linked to (as member, owner, or via customer profile)
+         userSquads = enrichedSquads.filter((sq: any) => {
+            const isMemberInList = (sq.membersList || []).some((m: any) => cleanPhone(m.phone) === cleanQPhone);
+            const isOwner = cleanPhone(sq.phone || "") === cleanQPhone || 
+                            cleanPhone(sq.ownerPhone || "") === cleanQPhone || 
+                            cleanPhone(sq.ownerPhoneLocal || "") === cleanQPhone;
+            const isCustomerMember = customerSquadIds.has(String(sq.id));
+            return isMemberInList || isOwner || isCustomerMember;
+         });
          
          // If a squadId was requested, check if it's valid
          if (joinedSquadId) {
@@ -1393,9 +1405,18 @@ app.get("/api/debug/order/:id", async (req, res) => {
             myMemberData = { ...mySquad.membersList[memberIndex], isMember: true };
             myRank = memberIndex + 1;
          } else {
-             // زائر من رابط دعوة: نعرض الديوانية مع نموذج انضمام واضح بدل اعتبارها عضوية مكتملة.
-             myMemberData = { phone: cleanQPhone, name: "أنت", orderCount: 0, points: 0, isMember: false };
-             myRank = mySquad.membersList.length + 1;
+             // Check if they are the owner!
+             const isOwnerOfSquad = cleanPhone(mySquad.phone || "") === cleanQPhone || 
+                                    cleanPhone(mySquad.ownerPhone || "") === cleanQPhone || 
+                                    cleanPhone(mySquad.ownerPhoneLocal || "") === cleanQPhone;
+             if (isOwnerOfSquad) {
+                myMemberData = { phone: cleanQPhone, name: mySquad.king || "أنت", orderCount: 0, points: 0, isMember: true };
+                myRank = 1;
+             } else {
+                // زائر من رابط دعوة: نعرض الديوانية مع نموذج انضمام واضح بدل اعتبارها عضوية مكتملة.
+                myMemberData = { phone: cleanQPhone, name: "أنت", orderCount: 0, points: 0, isMember: false };
+                myRank = mySquad.membersList.length + 1;
+             }
          }
       }
 
