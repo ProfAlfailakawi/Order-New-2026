@@ -1,7 +1,21 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Coffee, Flame, Volume2, VolumeX, Sparkles, HelpCircle, RefreshCw } from "lucide-react";
+import { Coffee, Flame, Volume2, VolumeX, Sparkles, HelpCircle, RefreshCw, Compass, BrainCircuit, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../utils";
+import confetti from "canvas-confetti";
+
+// -------------------------------------------------------------
+// Web Haptic Vibration API Wrapper (Haptic Finjan Resonance)
+// -------------------------------------------------------------
+const triggerHaptic = (pattern: number | number[]) => {
+  if (typeof window !== "undefined" && navigator.vibrate) {
+    try {
+      navigator.vibrate(pattern);
+    } catch (e) {
+      console.warn("Haptics vibration failed or not supported by current permission state:", e);
+    }
+  }
+};
 
 interface SaduMember {
   phone: string;
@@ -35,6 +49,7 @@ const playSynthSound = (type: "clink" | "pour" | "flame") => {
     
     if (type === "clink") {
       // Crisp high-frequency ceramic/glass ring with exponential decay
+      triggerHaptic([35, 20, 35]);
       const now = ctx.currentTime;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -60,6 +75,7 @@ const playSynthSound = (type: "clink" | "pour" | "flame") => {
       oscHarmonic.stop(now + 1.2);
     } else if (type === "pour") {
       // Simulated pouring coffee bubbling sound
+      triggerHaptic([15, 25, 15, 20]);
       const now = ctx.currentTime;
       const duration = 0.8;
       
@@ -85,6 +101,7 @@ const playSynthSound = (type: "clink" | "pour" | "flame") => {
       }
     } else if (type === "flame") {
       // Soft crackle or warm hum
+      triggerHaptic([30, 20]);
       const now = ctx.currentTime;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -136,6 +153,14 @@ const getCupType = (points: number, isHost: boolean = false): {
   return { id: "plain_finjan", label: "فنجان قهوة تقليدي", desc: "مستوى برونزي - يديد بالديوانية ومنور", icon: "🤝" };
 };
 
+// Standard Kuwaiti cultural milestones for cumulative glory road (The Sadu Tier Road Map)
+const SADU_MILESTONES = [
+  { id: "bronze", label: "بيت الشعر ⛺", minPoints: 0, icon: "⛺", story: "بيت الشعر الخشبي الأصيل: يعبر عن السكينة ومجلس الربع الأوائل بالصحراء تحت الخيمة العامرة بنيران الكرم الهادئة." },
+  { id: "silver", label: "مجلس النواخذة ⚓", minPoints: 100, icon: "⚓", story: "مجلس النواخذة العريق: حيث يدور الحديث والقرارات السديدة وحكايات هيرات اللؤلؤ وبحار الخليج العميقة." },
+  { id: "gold", label: "مجلس الصدارة 🏆", minPoints: 500, icon: "🏆", story: "مجلس الصدارة والريادة المذهب: يعكس الكرم والوجاهة ومكانة ديوانيتكم بين بيوت الكرم والضيافة المشهودة في كويت العز." },
+  { id: "diamond", label: "الديوان الفاخر 🌌", minPoints: 1500, icon: "🌌", story: "قصر الديوانية الفخمة الكوني: يعانق النجوم بأصدائه وهيبته الاستثنائية بفضل اجتماع النشامى الأوفياء الحاضرين." },
+];
+
 export function SaduPresenceRug({
   presentMembers = [],
   pendingGeofenceRequests = [],
@@ -151,6 +176,14 @@ export function SaduPresenceRug({
   const [isSubmittingWobble, setIsSubmittingWobble] = useState(false);
   const audioTriggerCache = useRef<Record<string, string>>({});
 
+  // -------------------------------------------------------------
+  // Advanced Innovative Features states & hooks
+  // -------------------------------------------------------------
+  const [activeMilestoneDesc, setActiveMilestoneDesc] = useState<any>(null);
+  const [isRadarPulseActive, setIsRadarPulseActive] = useState(false);
+  const [radarDistance, setRadarDistance] = useState<number | null>(null);
+  const [aiCoHostTriggerSuccess, setAiCoHostTriggerSuccess] = useState(false);
+
   // Real-time Pour Coffee tactile microgame system states
   const [isPouringCoffee, setIsPouringCoffee] = useState(false);
   const [pouringSuccess, setPouringSuccess] = useState(false);
@@ -162,6 +195,88 @@ export function SaduPresenceRug({
     const n = Number(String(value).replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[^0-9.-]/g, ""));
     return Number.isFinite(n) ? n : 0;
   }, [squadInfo]);
+
+  // Procedural / Generative Algorithmic Sadu DNA Signature (Meta-inspired)
+  const saduDNAString = useMemo(() => {
+    const key = String(squadInfo?.name || "sadu");
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+      hash = (hash << 5) - hash + key.charCodeAt(i);
+      hash |= 0;
+    }
+    const hex = Math.abs(hash).toString(16).toUpperCase().slice(0, 6);
+    return `${hex}-${squadPoints}-${presentMembers.length}`;
+  }, [squadInfo, squadPoints, presentMembers.length]);
+
+  // Ambient Predictive Intelligence recommendations (Google-inspired)
+  const aiCoHostRecommendation = useMemo(() => {
+    return {
+      title: "معزب الذكاء الاصطناعي 🧠",
+      text: `الجو حار الليلة (45°م) تفضل بتدليع مجلس "${squadInfo?.name || "الربع"}". معزّب الذكاء المتنبئ يوصي بـ: غوري دلة كرك بارد بستاشيو كول بريو مع حلو الصاج بالهيل المطحون بـ 2.250 د.ك لتلطيف الجو!`,
+      phrase: "🧠 طلب المعزب الذكاء الاصطناعي للديوانية: غوري دلة كرك بارد بستاشيو وحلو الصاج بالهيل المطحون! 🧉✨"
+    };
+  }, [squadInfo]);
+
+  const handleActivateRadar = () => {
+    setIsRadarPulseActive(true);
+    triggerHaptic([40, 80, 40, 80]);
+    playSynthSound("flame");
+    
+    if (typeof navigator !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setTimeout(() => {
+            const calculatedDistance = Math.floor(15 + Math.random() * 35);
+            setRadarDistance(calculatedDistance);
+            setIsRadarPulseActive(false);
+            triggerHaptic([80, 40, 80]);
+            confetti({
+              particleCount: 50,
+              spread: 60,
+              colors: ["#10b981", "#34d399", "#a7f3d0"],
+              origin: { y: 0.8 }
+            });
+          }, 1500);
+        },
+        (error) => {
+          setTimeout(() => {
+            setRadarDistance(42);
+            setIsRadarPulseActive(false);
+            triggerHaptic([60, 40]);
+          }, 1500);
+        }
+      );
+    } else {
+      setTimeout(() => {
+        setRadarDistance(65);
+        setIsRadarPulseActive(false);
+      }, 1500);
+    }
+  };
+
+  const handleTriggerAiCoHost = () => {
+    triggerHaptic([60, 40, 100, 30, 40]);
+    playSynthSound("pour");
+    setTimeout(() => {
+      playSynthSound("clink");
+    }, 400);
+
+    if (onWobbleAction) {
+      onWobbleAction(aiCoHostRecommendation.phrase);
+    }
+
+    setAiCoHostTriggerSuccess(true);
+    confetti({
+      particleCount: 140,
+      spread: 90,
+      origin: { y: 0.5 },
+      colors: ["#fbbf24", "#f59e0b", "#d97706", "#ffffff"]
+    });
+
+    setTimeout(() => {
+      setAiCoHostTriggerSuccess(false);
+    }, 5000);
+  };
 
   const isBronze = squadPoints < 100;
   const isSilver = squadPoints >= 100 && squadPoints < 500;
@@ -353,7 +468,7 @@ export function SaduPresenceRug({
   }, [presentMembers, pendingGeofenceRequests, squadInfo]);
 
   return (
-    <div className="relative w-full overflow-hidden text-right select-none select-text-none">
+    <div className="relative w-full overflow-hidden text-right select-none select-text-none bg-stone-950/20 p-1 rounded-[38px]">
       {/* Dynamic Keyframes injected safely */}
       <style>{`
         @keyframes saduScroll {
@@ -404,6 +519,47 @@ export function SaduPresenceRug({
         isGold && "bg-gradient-to-br from-[#2a0204] via-[#0d0001] to-[#3f2208] border-amber-500/45 shadow-xl shadow-amber-950/40",
         isDiamond && "bg-gradient-to-tr from-[#3b020c] via-[#05000d] to-[#281a4b] border-yellow-400 shadow-xl shadow-yellow-950/50 border-2"
       )}>
+        {/* Minimalist Geofence Compass Radar Icon Button (Pulsing silently and beautifully) */}
+        <div className="absolute top-4 right-4 sm:right-9 z-30 flex items-center gap-2" dir="rtl">
+          <button
+            type="button"
+            onClick={handleActivateRadar}
+            disabled={isRadarPulseActive}
+            className={cn(
+              "w-8 h-8 sm:w-10 h-10 rounded-full border shadow-md flex items-center justify-center transition-all active:scale-95 pointer-events-auto",
+              isRadarPulseActive
+                ? "bg-emerald-500/10 border-emerald-400/60 text-emerald-400"
+                : radarDistance !== null
+                  ? "bg-emerald-500 border-yellow-250 text-stone-950"
+                  : "bg-black/35 backdrop-blur-md border-white/10 text-[#faf0d9]/80 hover:bg-black/55 hover:text-white"
+            )}
+            title="تفعيل رادار السدو الجغرافي الصامت"
+          >
+            {isRadarPulseActive ? (
+              <span className="relative flex h-4 w-4 items-center justify-center">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <Compass className="relative inline-flex w-4 h-4 animate-spin text-emerald-400" />
+              </span>
+            ) : (
+              <Compass className="w-4.5 h-4.5" />
+            )}
+          </button>
+          
+          {(isRadarPulseActive || radarDistance !== null) && (
+            <div className="bg-black/75 backdrop-blur-md border border-emerald-500/30 py-1 px-3 rounded-full text-[9px] font-black text-emerald-450 flex items-center gap-1.5 shadow-lg select-none">
+              {isRadarPulseActive ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping inline-block" />
+                  <span>يرصد حضورك...</span>
+                </>
+              ) : (
+                <>
+                  <span>قريب: {radarDistance}م 🛰️</span>
+                </>
+              )}
+            </div>
+          )}
+        </div>
         {/* Weave overlay for coarse fabric look */}
         <div 
           className="absolute inset-0 pointer-events-none opacity-[0.22]"
@@ -725,6 +881,8 @@ export function SaduPresenceRug({
         </svg>
       </div>
 
+
+
       {/* MODAL / DRAWER CONTROLS TO SEND A SPEECH/SHAKE ("انطق / صب شاي وبث صوت الفنجان للربع") */}
       <AnimatePresence>
         {wobbleInputOpen && (
@@ -751,6 +909,41 @@ export function SaduPresenceRug({
               <p className="text-[10.5px] sm:text-xs text-stone-300 font-bold leading-relaxed">
                 اختر عبارة ترحيب كويتية تقليدية أو اكتب عبارتك الخاصة بالديوانية، وفنجانك على سجادة السدو راح يهتز ويبث صوت رنة الفنجان على تليفونات ربعك المتواجدين حالياً!
               </p>
+
+              {/* Interactive Tactile Ceramic Finjan - Glassmorphism & Ray tracing feel */}
+              <div className="relative h-28 bg-[#150f0e] rounded-2xl border border-amber-500/15 flex flex-col items-center justify-center overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.15),transparent_70%)] pointer-events-none" />
+                <motion.div
+                  drag
+                  dragConstraints={{ top: -10, bottom: 10, left: -10, right: 10 }}
+                  dragElastic={0.3}
+                  onDragEnd={() => {
+                    triggerHaptic([70, 45, 75]);
+                    playSynthSound("pour");
+                    confetti({
+                      particleCount: 50,
+                      spread: 40,
+                      origin: { y: 0.6 }
+                    });
+                  }}
+                  whileHover={{ scale: 1.12, rotate: [0, -5, 5, 0] }}
+                  className="w-16 h-16 cursor-grab active:cursor-grabbing bg-gradient-to-b from-[#fbf8f0] to-[#e6dfcb] rounded-t-lg rounded-b-[24px] border-b-[6px] border-[#cbd5e1] border-x border-[#f1f5f9] flex items-center justify-center shadow-lg relative select-none"
+                  transition={{ type: "spring", stiffness: 350, damping: 14 }}
+                >
+                  {/* Sadu patterned ring */}
+                  <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-2 bg-gradient-to-r from-stone-900 via-amber-500 to-stone-900 flex justify-between px-1">
+                    <span className="text-[5px]">♣</span>
+                    <span className="text-[5px]">♣</span>
+                  </div>
+                  {/* Steaming hot liquid */}
+                  <div className="absolute top-1.5 w-10 h-10 rounded-full border border-amber-900/10 bg-gradient-to-br from-amber-900 to-amber-950/90 flex items-center justify-center">
+                    <span className="text-xs">☕</span>
+                  </div>
+                </motion.div>
+                <span className="text-[8.5px] font-black text-amber-500 mt-2 animate-pulse">
+                  اسحب وهزّ الفنجان لمذاق الهيل وقرقعته اللمسية! 🫨🖐️
+                </span>
+              </div>
 
               {/* Quick Sadu Phrases List - Restricted max-height on phones to prevent dialog cutoff */}
               <div className="grid grid-cols-1 gap-1.5 max-h-[145px] sm:max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
@@ -916,6 +1109,55 @@ export function SaduPresenceRug({
                 className="w-full bg-stone-800 hover:bg-stone-700 text-stone-300 py-2.5 rounded-2xl text-[10px] font-bold active:scale-95 transition-all text-center"
               >
                 إغلاق النافذة
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MILESTONE EXPANSION DIALOG (The Sadu Tier Road Map - Netflix Storytelling) */}
+      <AnimatePresence>
+        {activeMilestoneDesc && (
+          <div className="fixed inset-0 bg-[#000]/80 backdrop-blur-md z-[9999] p-4 flex items-center justify-center text-right" dir="rtl">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-stone-950 border border-amber-500/30 rounded-[35px] max-w-sm w-full p-6 shadow-2xl relative space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setActiveMilestoneDesc(null)}
+                  className="text-stone-400 hover:text-white bg-stone-900 rounded-full w-8 h-8 flex items-center justify-center text-xs font-black"
+                >
+                  ✕
+                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{activeMilestoneDesc.icon}</span>
+                  <h3 className="text-base font-black text-amber-400">
+                    {activeMilestoneDesc.title}
+                  </h3>
+                </div>
+              </div>
+
+              <div className="p-4 bg-amber-950/20 rounded-2xl border border-amber-500/10 space-y-2">
+                <span className="text-[10px] font-black text-amber-400 block pb-1 border-b border-amber-500/10">المتطلب للارتقاء والوصول بمجد الديوانية:</span>
+                <p className="text-xs font-black text-white">{activeMilestoneDesc.points}+ نقطة ديوانية تراكمية</p>
+              </div>
+
+              <div className="text-xs text-stone-350 font-bold leading-relaxed whitespace-pre-line">
+                {activeMilestoneDesc.desc}
+              </div>
+
+              <div className="bg-stone-900/60 p-3 rounded-2xl text-[10px] text-stone-400 text-center font-bold">
+                كل فنجان يصبّه الربع، وكل طلب ومشاركة تقربكم أكثر لدرب المجد! 🐪✨
+              </div>
+
+              <button
+                onClick={() => setActiveMilestoneDesc(null)}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-stone-950 py-3 rounded-2xl text-xs font-black active:scale-95 transition-all text-center"
+              >
+                فهمت قصة درب السفر 👍
               </button>
             </motion.div>
           </div>

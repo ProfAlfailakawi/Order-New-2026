@@ -4745,6 +4745,8 @@ export default function CustomerSite() {
                        pendingGeofenceRequests={pendingGeofenceRequests}
                        onRefresh={fetchSquadGamification}
                        onPrepareQatya={handlePrepareQatyaFromDiwaniya}
+                       products={products}
+                       onAddToCart={addToCart}
                       />
                    </div>
                 </motion.div>
