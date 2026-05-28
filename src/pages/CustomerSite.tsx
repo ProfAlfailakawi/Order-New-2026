@@ -4617,7 +4617,7 @@ export default function CustomerSite() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] flex items-end justify-center bg-brand/40 backdrop-blur-sm"
+                className="fixed inset-0 z-[100] flex items-end justify-center bg-brand/40 backdrop-blur-sm overflow-x-hidden"
                 onMouseDown={(e) => {
                   if (e.target === e.currentTarget) setShowSquadModal(false);
                 }}
@@ -4630,13 +4630,13 @@ export default function CustomerSite() {
                   className="bg-stone-50 w-full max-w-md rounded-t-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
                   onClick={(e) => e.stopPropagation()}
                 >
-                   <div className="p-5 bg-white border-b border-stone-100 flex items-center justify-between shrink-0">
+                   <div className="p-4 sm:p-5 bg-white border-b border-stone-100 flex items-center justify-between shrink-0">
                       <div className="flex flex-col text-right">
-                         <h3 className="font-black text-xl text-brand flex items-center gap-2">
+                         <h3 className="font-black text-lg sm:text-xl text-brand flex items-center gap-2">
                             <Crown className="w-5 h-5 text-accent" />
                             {squadInfo ? squadInfo.name : "صدارة الدواوين 🏆"}
                          </h3>
-                         <p className="text-stone-500 text-xs font-bold mt-1">
+                         <p className="text-stone-500 text-[10px] sm:text-xs font-bold mt-1">
                            {squadInfo ? "ديوانيتك الحالية" : "سجل الحين وطور ديوانيتك!"}
                          </p>
                       </div>
@@ -4650,7 +4650,7 @@ export default function CustomerSite() {
                               e.stopPropagation();
                               clearSquadSessionOnThisDevice();
                             }}
-                            className="h-10 w-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 hover:bg-rose-100 transition-colors font-black text-lg active:scale-95"
+                            className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 hover:bg-rose-100 transition-colors font-black text-base sm:text-lg active:scale-95"
                             aria-label="تسجيل خروج من الديوانية"
                             title="تسجيل خروج"
                           >
@@ -4665,16 +4665,16 @@ export default function CustomerSite() {
                             e.stopPropagation();
                             setShowSquadModal(false);
                           }}
-                          className="h-10 w-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 hover:text-brand hover:bg-stone-200 transition-colors font-black text-xs active:scale-95"
+                          className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 hover:text-brand hover:bg-stone-200 transition-colors font-black text-xs active:scale-95"
                           aria-label="إغلاق صفحة الديوانية"
                           title="إغلاق"
                         >
-                          <X className="w-5 h-5" />
+                          <X className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
                       </div>
                    </div>
 
-                   <div className="flex-1 overflow-y-auto p-5 pb-8 custom-scrollbar relative z-0">
+                   <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 pb-8 custom-scrollbar relative z-0">
 
                       <div className="grid grid-cols-3 gap-2 mb-5" dir="rtl">
                         {[
