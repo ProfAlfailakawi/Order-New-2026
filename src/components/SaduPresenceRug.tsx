@@ -546,7 +546,7 @@ export function SaduPresenceRug({
           </button>
           
           {(isRadarPulseActive || radarDistance !== null) && (
-            <div className="bg-black/75 backdrop-blur-md border border-emerald-500/30 py-1 px-3 rounded-full text-[9px] font-black text-emerald-450 flex items-center gap-1.5 shadow-lg select-none">
+            <div className="bg-stone-950/95 backdrop-blur-md border border-emerald-400/50 py-1.5 px-3.5 rounded-full text-[10px] font-black text-emerald-300 flex items-center gap-1.5 shadow-xl select-none">
               {isRadarPulseActive ? (
                 <>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping inline-block" />
