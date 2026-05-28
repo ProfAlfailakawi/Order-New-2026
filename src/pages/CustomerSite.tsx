@@ -338,6 +338,12 @@ const normalizeSquadTierForCustomer = (tier: any, index: number, all: any[]) => 
     iconType,
     icon: tier?.icon || (iconType === "Trophy" ? "🏆" : iconType === "Crown" ? "👑" : iconType === "Star" ? "⭐" : iconType === "Medal" ? "🏅" : iconType === "Flame" ? "🔥" : iconType === "Swords" ? "⚔️" : iconType === "Diamond" ? "💎" : iconType === "Rocket" ? "🚀" : iconType === "Shield" ? "🛡️" : "🎯"),
     benefit: tier?.benefit || tier?.label || tier?.description || "",
+    description: tier?.description || tier?.label || tier?.benefit || "",
+    challenge: tier?.challenge || tier?.challengeText || tier?.mission || tier?.label || tier?.benefit || "",
+    challengeText: tier?.challengeText || tier?.challenge || tier?.mission || tier?.label || tier?.benefit || "",
+    imageUrl: tier?.imageUrl || tier?.image || tier?.logo || tier?.badgeImage || "",
+    image: tier?.image || tier?.imageUrl || tier?.logo || tier?.badgeImage || "",
+    logo: tier?.logo || tier?.imageUrl || tier?.image || tier?.badgeImage || "",
   };
 };
 

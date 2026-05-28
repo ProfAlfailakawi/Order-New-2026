@@ -93,6 +93,24 @@ let _appDataCache: any = null;
 let _appDataCacheTime = 0;
 const CACHE_TTL = 0; // Disable cache to prevent concurrency issues and data loss during split payments
 
+async function loadSharedSquadsShard() {
+  try {
+    const shardSnap = await getDoc(doc(db, "appData", "shared_company_data", "shards", "squads"));
+    if (!shardSnap.exists()) return [];
+    const shardData = shardSnap.data() || {};
+    return Array.isArray(shardData.squads) ? shardData.squads : [];
+  } catch (error) {
+    console.warn("[SQUADS_SHARD] Could not read shared squads shard", error);
+    return [];
+  }
+}
+
+function mergeSquadsShardIfNeeded(rootData: any, shardSquads: any[]) {
+  if (!Array.isArray(shardSquads) || shardSquads.length === 0) return rootData;
+  if (Array.isArray(rootData?.squads) && rootData.squads.length > 0) return rootData;
+  return { ...(rootData || {}), squads: shardSquads };
+}
+
 async function getAppData() {
   console.log("getAppData called!");
   if (_appDataCache && Date.now() - _appDataCacheTime < CACHE_TTL) {
@@ -101,8 +119,10 @@ async function getAppData() {
   try {
     const d = await getDoc(doc(db, "appData", "shared_company_data"));
     if (d.exists()) {
-      console.log("DB exists, products length: ", d.data().products?.length);
-      _appDataCache = d.data();
+      const rootData = d.data();
+      console.log("DB exists, products length: ", rootData.products?.length);
+      const shardSquads = await loadSharedSquadsShard();
+      _appDataCache = mergeSquadsShardIfNeeded(rootData, shardSquads);
       _appDataCacheTime = Date.now();
       return _appDataCache;
     } else {
@@ -188,6 +208,13 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
          currentData = localFallbackDB;
       } else {
          currentData = sDoc.data();
+         if (!Array.isArray(currentData?.squads) || currentData.squads.length === 0) {
+           const shardSnap = await transaction.get(doc(db, "appData", "shared_company_data", "shards", "squads"));
+           if (shardSnap.exists()) {
+             const shardSquads = shardSnap.data()?.squads;
+             currentData = mergeSquadsShardIfNeeded(currentData, Array.isArray(shardSquads) ? shardSquads : []);
+           }
+         }
       }
       
       const updates = updater(currentData);
@@ -1242,8 +1269,15 @@ app.get("/api/debug/order/:id", async (req, res) => {
         if (rootGeofenceDistance !== undefined && settings.squadGeofenceDistance === undefined) {
           settings.squadGeofenceDistance = rootGeofenceDistance;
         }
+        if (settings.squadGeofenceDistance !== undefined) {
+          settings.diwaniyaGeofenceDistance = settings.diwaniyaGeofenceDistance ?? settings.squadGeofenceDistance;
+          settings.geofenceDistance = settings.geofenceDistance ?? settings.squadGeofenceDistance;
+          settings.radarDistance = settings.radarDistance ?? settings.squadGeofenceDistance;
+          settings.radarGeofenceDistance = settings.radarGeofenceDistance ?? settings.squadGeofenceDistance;
+        }
         settings.loyaltyTiers = data.loyaltyTiers || [];
         settings.squadTiers = data.squadTiers || [];
+        settings.diwaniyaTiers = data.diwaniyaTiers || data.squadTiers || [];
         settings.loyaltySettings = data.loyaltySettings || {};
         settings.productCategories = data.productCategories || settings.productCategories || [];
         settings.menuCategories = data.menuCategories || settings.menuCategories || [];
