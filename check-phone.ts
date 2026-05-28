@@ -4,31 +4,32 @@ import firebaseConfig from './firebase-applet-config.json';
 import * as fs from 'fs';
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || '(default)');
 
 async function checkPhone() {
+    console.log("Database ID:", firebaseConfig.firestoreDatabaseId || '(default)');
     const d = await getDoc(doc(db, "appData", "shared_company_data"));
+    if (!d.exists()) {
+      console.log("Document shared_company_data does NOT exist in Firestore!");
+      return;
+    }
     const data = d.data() || {};
     const orders = data.orders || [];
+    const invoices = data.invoices || [];
+    const customers = data.customers || [];
+    
     console.log(`Total orders: ${orders.length}`);
-    const firstFew = orders.slice(0, 10).map((o: any) => ({
-      id: o.id,
-      customerPhone: o.customerPhone,
-      phone: o.phone,
-      status: o.status,
-      paymentStatus: o.paymentStatus,
-      amount: o.amount
-    }));
-    fs.writeFileSync('all_orders.json', JSON.stringify(firstFew, null, 2));
+    console.log(`Total invoices: ${invoices.length}`);
+    console.log(`Total customers: ${customers.length}`);
     
-    // check if it's anywhere in the string
-    const stringOrders = JSON.stringify(orders);
-    console.log('Includes 66665872:', stringOrders.includes('66665872'));
+    const query = '94493883';
     
-    if (stringOrders.includes('66665872')) {
-       const userOrders = orders.filter((o: any) => JSON.stringify(o).includes('66665872'));
-       console.log('Found orders containing the number:', userOrders.length);
-       fs.writeFileSync('user_orders.json', JSON.stringify(userOrders, null, 2));
-    }
+    const matchingCustomers = customers.filter((c: any) => JSON.stringify(c).includes(query));
+    const matchingInvoices = invoices.filter((i: any) => JSON.stringify(i).includes(query));
+    const matchingOrders = orders.filter((o: any) => JSON.stringify(o).includes(query));
+    
+    console.log(`Matching customers:`, matchingCustomers);
+    console.log(`Matching invoices:`, matchingInvoices);
+    console.log(`Matching orders:`, matchingOrders);
 }
 checkPhone();
