@@ -95,6 +95,13 @@ const CACHE_TTL = 0; // Disable cache to prevent concurrency issues and data los
 
 async function loadSharedSquadsShard() {
   try {
+    if (adminDb) {
+      const shardSnap = await adminDb.collection("appData").doc("shared_company_data").collection("shards").doc("squads").get();
+      if (!shardSnap.exists) return [];
+      const shardData = shardSnap.data() || {};
+      return Array.isArray(shardData.squads) ? shardData.squads : [];
+    }
+
     const shardSnap = await getDoc(doc(db, "appData", "shared_company_data", "shards", "squads"));
     if (!shardSnap.exists()) return [];
     const shardData = shardSnap.data() || {};
@@ -117,10 +124,22 @@ async function getAppData() {
     return _appDataCache;
   }
   try {
+    if (adminDb) {
+      const d = await adminDb.collection("appData").doc("shared_company_data").get();
+      if (d.exists) {
+        const rootData = d.data() || {};
+        console.log("DB exists via Admin SDK, products length: ", rootData.products?.length);
+        const shardSquads = await loadSharedSquadsShard();
+        _appDataCache = mergeSquadsShardIfNeeded(rootData, shardSquads);
+        _appDataCacheTime = Date.now();
+        return _appDataCache;
+      }
+    }
+
     const d = await getDoc(doc(db, "appData", "shared_company_data"));
     if (d.exists()) {
       const rootData = d.data();
-      console.log("DB exists, products length: ", rootData.products?.length);
+      console.log("DB exists via client SDK, products length: ", rootData.products?.length);
       const shardSquads = await loadSharedSquadsShard();
       _appDataCache = mergeSquadsShardIfNeeded(rootData, shardSquads);
       _appDataCacheTime = Date.now();
@@ -128,7 +147,6 @@ async function getAppData() {
     } else {
       console.log("DB does NOT exist. Returning localFallbackDB. products length is: ", localFallbackDB.products?.length);
     }
-    // If not found, fall out of the Try block to return localFallbackDB
   } catch (error) {
     console.warn("Firebase read restricted or failed, using local in-memory fallback", error);
   }
@@ -172,18 +190,27 @@ const removeUndefinedDeep = (value: any): any => {
 };
 
 async function updateAppData(data: any) {
+  const cleanedData = removeUndefinedDeep(data);
   try {
     if (adminDb) {
-      await adminDb.collection("appData").doc("shared_company_data").set(removeUndefinedDeep(data), { merge: true });
-    } else {
-      const docRef = doc(db, "appData", "shared_company_data");
-      await setDoc(docRef, removeUndefinedDeep(data), { merge: true });
+      const docRef = adminDb.collection("appData").doc("shared_company_data");
+      await adminDb.runTransaction(async (transaction) => {
+        transaction.set(docRef, cleanedData, { merge: true });
+      });
+      _appDataCache = null;
+      _appDataCacheTime = 0;
+      return;
     }
+
+    const docRef = doc(db, "appData", "shared_company_data");
+    await setDoc(docRef, cleanedData, { merge: true });
     _appDataCache = null;
     _appDataCacheTime = 0;
   } catch (error) {
     console.warn("Firebase write restricted or failed, updating local in-memory fallback", error);
     localFallbackDB = { ...localFallbackDB, ...data };
+    
+    // Save to disk to persist across dev server restarts
     try {
       fs.writeFileSync(path.join(__dirname, "app_data_fallback.json"), JSON.stringify(localFallbackDB, null, 2));
     } catch(err) {
@@ -198,21 +225,46 @@ async function updateAppData(data: any) {
  * to prevent race conditions.
  */
 async function updateAppDataAtomically(updater: (currentData: any) => any) {
-  const docRef = doc(db, "appData", "shared_company_data");
   try {
     if (adminDb) {
-      await adminDb.runTransaction(async (transaction: any) => {
-        const ref = adminDb!.collection("appData").doc("shared_company_data");
-        const snap = await transaction.get(ref);
-        let currentData = snap.exists ? (snap.data() || {}) : localFallbackDB;
-        const updates = updater(currentData);
-        if (updates) transaction.set(ref, removeUndefinedDeep({ ...updates }), { merge: true });
-        else if (!snap.exists) transaction.set(ref, removeUndefinedDeep(currentData), { merge: true });
+      const docRef = adminDb.collection("appData").doc("shared_company_data");
+      await adminDb.runTransaction(async (transaction) => {
+        const sDoc = await transaction.get(docRef);
+
+        let currentData: any = {};
+        let isNew = false;
+        if (!sDoc.exists) {
+          isNew = true;
+          currentData = localFallbackDB;
+        } else {
+          currentData = sDoc.data() || {};
+          if (!Array.isArray(currentData?.squads) || currentData.squads.length === 0) {
+            const shardSnap = await transaction.get(docRef.collection("shards").doc("squads"));
+            if (shardSnap.exists) {
+              const shardSquads = shardSnap.data()?.squads;
+              currentData = mergeSquadsShardIfNeeded(currentData, Array.isArray(shardSquads) ? shardSquads : []);
+            }
+          }
+        }
+
+        const updates = removeUndefinedDeep(updater(currentData));
+
+        if (updates) {
+          if (isNew) {
+            transaction.set(docRef, { ...currentData, ...updates }, { merge: true });
+          } else {
+            transaction.update(docRef, updates);
+          }
+        } else if (isNew) {
+          transaction.set(docRef, currentData);
+        }
       });
       _appDataCache = null;
       _appDataCacheTime = 0;
       return true;
     }
+
+    const docRef = doc(db, "appData", "shared_company_data");
     await runTransaction(db, async (transaction) => {
       const sDoc = await transaction.get(docRef);
       
@@ -232,7 +284,7 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
          }
       }
       
-      const updates = updater(currentData);
+      const updates = removeUndefinedDeep(updater(currentData));
       
       if (updates) {
         if (isNew) {
@@ -385,128 +437,6 @@ async function sendAdminPushDirectOnce(input: {
   }, { merge: true });
 
   return result;
-}
-
-
-function collectPaymentStrings(value: any, out = new Set<string>()): Set<string> {
-  if (value === null || value === undefined) return out;
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    const text = String(value).trim();
-    if (text) out.add(text);
-    return out;
-  }
-  if (Array.isArray(value)) {
-    value.forEach((item) => collectPaymentStrings(item, out));
-    return out;
-  }
-  if (typeof value === "object") {
-    Object.values(value).forEach((item) => collectPaymentStrings(item, out));
-  }
-  return out;
-}
-
-function paymentLooksSuccessful(payload: any): boolean {
-  const values = Array.from(collectPaymentStrings(payload)).map((v) => v.replace(/\+/g, " ").trim().toUpperCase());
-  return values.some((v) =>
-    ["SUCCESS", "CAPTURED", "PAID", "APPROVED", "SUCCESSFUL", "AUTHORIZED", "AUTHORISED", "COMPLETED", "HOSTED_SUCCESS", "1", "TRUE"].includes(v) ||
-    v.includes("CAPTURED") ||
-    v.includes("SUCCESS") ||
-    v.includes("APPROVED") ||
-    v.includes("PAID") ||
-    v.includes("AUTHORIZED")
-  ) && !values.some((v) => v.includes("NOT CAPTURED") || v.includes("NOTCAPTURED") || v.includes("FAILED") || v.includes("DECLINED") || v.includes("CANCELLED") || v.includes("CANCELED"));
-}
-
-function paymentLooksFailed(payload: any): boolean {
-  const values = Array.from(collectPaymentStrings(payload)).map((v) => v.replace(/\+/g, " ").trim().toUpperCase());
-  return values.some((v) => v.includes("NOT CAPTURED") || v.includes("NOTCAPTURED") || v.includes("FAILED") || v.includes("DECLINED") || v.includes("CANCELLED") || v.includes("CANCELED") || v.includes("ERROR"));
-}
-
-function collectPaymentIdentifiers(payload: any): string[] {
-  const ids = new Set<string>();
-  const visit = (value: any, key = "") => {
-    if (value === null || value === undefined) return;
-    if (typeof value === "object") {
-      if (Array.isArray(value)) return value.forEach((v) => visit(v, key));
-      for (const [k, v] of Object.entries(value)) visit(v, k);
-      return;
-    }
-    const lowerKey = String(key).toLowerCase().replace(/[^a-z0-9]/g, "");
-    if (["trackid", "paymentid", "paymentreference", "transactionid", "tranid", "chargeid", "sessionid", "orderid", "id"].includes(lowerKey)) {
-      const text = String(value).trim();
-      if (text) ids.add(text);
-    }
-  };
-  visit(payload);
-  return Array.from(ids);
-}
-
-async function rememberPaymentSession(session: any) {
-  const cleaned = removeUndefinedDeep({
-    ...session,
-    updatedAt: new Date().toISOString(),
-    createdAt: session?.createdAt || new Date().toISOString(),
-  });
-  try {
-    if (adminDb) {
-      const ids = [cleaned.orderId, cleaned.paymentId, cleaned.trackId, cleaned.splitId].filter(Boolean).map(String);
-      const docId = ids.join("__").replace(/[^A-Za-z0-9_.-]/g, "_").slice(0, 220) || `session_${Date.now()}`;
-      await adminDb.collection("paymentSessions").doc(docId).set(cleaned, { merge: true });
-    }
-  } catch (error: any) {
-    console.warn("[PAYMENT_SESSION] Could not persist session mapping:", error?.message || String(error));
-  }
-}
-
-async function resolvePaymentTarget(rawOrderId: string, rawSplitId: string, providerData: any): Promise<{ orderId: string; splitId: string }> {
-  let orderId = String(rawOrderId || "").trim();
-  let splitId = String(rawSplitId || "").trim();
-  const candidates = new Set<string>([orderId, splitId, ...collectPaymentIdentifiers(providerData)].filter(Boolean).map(String));
-
-  const normalize = (v: string) => String(v || "").trim().toUpperCase();
-  const directBase = normalize(orderId).includes("-S-") ? normalize(orderId).split("-S-")[0] : normalize(orderId);
-
-  try {
-    const data = await getAppData();
-    const allTargets = [...(Array.isArray(data.orders) ? data.orders : []), ...(Array.isArray(data.invoices) ? data.invoices : [])];
-    const candidateUpper = new Set(Array.from(candidates).map(normalize));
-
-    for (const item of allTargets) {
-      const itemId = normalize(item?.id);
-      if (!itemId) continue;
-      if (itemId === directBase || candidateUpper.has(itemId)) return { orderId: item.id, splitId };
-      const itemPaymentIds = [item?.paymentId, item?.payment_id, item?.transactionId, item?.trackId, item?.paymentTrackId, item?.upaymentsTrackId]
-        .filter(Boolean).map((x) => normalize(String(x)));
-      if (itemPaymentIds.some((id) => candidateUpper.has(id))) return { orderId: item.id, splitId };
-      const splits = Array.isArray(item?.splitPayments) ? item.splitPayments : [];
-      for (const sp of splits) {
-        const spIds = [sp?.id, sp?.paymentId, sp?.payment_id, sp?.transactionId, sp?.trackId]
-          .filter(Boolean).map((x) => normalize(String(x)));
-        if (spIds.some((id) => candidateUpper.has(id))) return { orderId: item.id, splitId: sp.id || splitId };
-      }
-    }
-  } catch (error: any) {
-    console.warn("[PAYMENT_SESSION] Local shared-data target resolution failed:", error?.message || String(error));
-  }
-
-  try {
-    if (adminDb) {
-      for (const candidate of Array.from(candidates).slice(0, 10)) {
-        const fields = ["orderId", "paymentId", "trackId", "splitId", "gatewayOrderId"];
-        for (const field of fields) {
-          const snap = await adminDb.collection("paymentSessions").where(field, "==", candidate).limit(1).get();
-          if (!snap.empty) {
-            const data = snap.docs[0].data() || {};
-            return { orderId: String(data.orderId || orderId || ""), splitId: String(data.splitId || splitId || "") };
-          }
-        }
-      }
-    }
-  } catch (error: any) {
-    console.warn("[PAYMENT_SESSION] Firestore target resolution failed:", error?.message || String(error));
-  }
-
-  return { orderId, splitId };
 }
 
 async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: boolean, providerData: any) {
@@ -3146,15 +3076,6 @@ app.get("/api/debug/order/:id", async (req, res) => {
         });
       }
 
-      await rememberPaymentSession({
-        orderId,
-        splitId,
-        paymentId: splitId,
-        trackId: splitId,
-        amount: numericAmount,
-        source: "create-split-payment",
-      });
-
       const upaymentsPayload = {
         returnUrl: generatedReturnUrl,
         cancelUrl: generatedCancelUrl,
@@ -3366,14 +3287,6 @@ app.get("/api/debug/order/:id", async (req, res) => {
         await updateAppData({ orders });
       }
 
-      await rememberPaymentSession({
-        orderId,
-        paymentId: knetTrackId,
-        trackId: knetTrackId,
-        amount: finalAmount,
-        source: "create-payment",
-      });
-
       // Check if amount is valid for UPayments (min 0.001 KWD)
       if (finalAmount < 0.001) {
         console.log(
@@ -3574,7 +3487,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   });
 
   // Payment Webhook
-  app.all(
+  app.post(
     ["/api/payment-webhook/:pathOrderId/:pathSplitId", "/api/payment-webhook/:pathOrderId", "/api/payment-webhook", "/api/webhook/upayments"],
     async (req, res) => {
       try {
@@ -3586,7 +3499,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const pathOrder = req.params?.pathOrderId as string;
         const pathSplit = req.params?.pathSplitId as string;
         const queryId =
-          (req.query.order_id as string) || (req.query.TrackID as string) || (req.query.track_id as string) || (req.query.payment_id as string);
+          (req.query.order_id as string) || (req.query.TrackID as string);
         let orderId = pathOrder || queryId;
         let splitId = pathSplit || "";
 
@@ -3603,26 +3516,33 @@ app.get("/api/debug/order/:id", async (req, res) => {
           orderId = parts[0];
         }
 
-        const providerPayload = { ...req.body, ...req.query };
-        const resolved = await resolvePaymentTarget(orderId, splitId, providerPayload);
-        orderId = resolved.orderId;
-        splitId = resolved.splitId;
-        console.log(`[PAYMENT] Processing webhook for orderId: ${orderId} splitId: ${splitId}`);
+        console.log(`[PAYMENT] Processing webhook for orderId: ${orderId}`);
 
-        const explicitFailed = paymentLooksFailed(providerPayload);
-        const status = !explicitFailed && paymentLooksSuccessful(providerPayload);
+        let statusStr = String(
+          req.body?.status ||
+            req.body?.result ||
+            req.body?.Result ||
+            req.query?.status ||
+            req.query?.result ||
+            req.query?.Result ||
+            "",
+        )
+          .toUpperCase()
+          .trim();
+        if (statusStr.includes("?")) statusStr = statusStr.split("?")[0];
+        const status =
+          ["SUCCESS", "CAPTURED", "PAID", "APPROVED", "SUCCESSFUL", "TRUE", "AUTHORIZED", "HOSTED_SUCCESS", "1"].includes(
+            statusStr,
+          ) ||
+          req.body?.status === true ||
+          req.body?.status === 1 ||
+          String(req.body?.status).toUpperCase() === "SUCCESS" ||
+          String(req.body?.result).toUpperCase() === "SUCCESS" ||
+          String(req.body?.Result).toUpperCase() === "SUCCESS" ||
+          String(req.body?.Status).toUpperCase() === "SUCCESS";
 
         if (orderId) {
-          await handlePaymentUpdate(orderId, splitId, status, providerPayload);
-          await rememberPaymentSession({
-            orderId,
-            splitId,
-            paymentStatus: status ? "paid" : (explicitFailed ? "failed" : "unknown"),
-            trackId: (req.body?.TrackID || req.body?.track_id || req.query?.TrackID || req.query?.track_id || ""),
-            paymentId: (req.body?.payment_id || req.body?.paymentId || req.query?.payment_id || req.query?.paymentId || ""),
-            gatewayOrderId: queryId || "",
-            source: "order-webhook",
-          });
+          await handlePaymentUpdate(orderId, splitId, status, req.body);
         }
         res.json({ success: true });
       } catch (e) {
