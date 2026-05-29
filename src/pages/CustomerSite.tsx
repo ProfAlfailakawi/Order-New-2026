@@ -1301,8 +1301,18 @@ export default function CustomerSite() {
         squadId: activeSquadId || squadInfo?.id || "",
       });
       setDiwaniyaPushState(result.state);
-      setCartMoment(result.message);
-      window.setTimeout(() => setCartMoment(null), 3600);
+      const welcomeSeenKey = "diwaniya_push_welcome_seen";
+      const shouldShowWelcome = result.state === "saved" && (() => {
+        try { return localStorage.getItem(welcomeSeenKey) !== "1"; } catch { return true; }
+      })();
+      if (shouldShowWelcome) {
+        try { localStorage.setItem(welcomeSeenKey, "1"); } catch {}
+        setCartMoment("يا هلا والله 🌿 تنبيهاتك تفعّلت… بنبلغك بالأمور المهمة أول بأول");
+        window.setTimeout(() => setCartMoment(null), 5200);
+      } else {
+        setCartMoment(result.message);
+        window.setTimeout(() => setCartMoment(null), 3600);
+      }
     } catch (error: any) {
       setDiwaniyaPushState("error");
       setCartMoment(error?.message || "ما قدرنا نفعّل تنبيهات الديوانية");
@@ -5322,12 +5332,12 @@ export default function CustomerSite() {
                     disabled={isEnablingDiwaniyaPush}
                     className="w-full rounded-2xl bg-white text-brand px-4 py-3 text-[11px] font-black shadow-sm active:scale-[0.98] transition-all disabled:opacity-60"
                   >
-                    {isEnablingDiwaniyaPush ? "نفعّلها..." : "فعّل تنبيهات القطيّة ووهق غيرك 🎰 المهمة"}
+                    {isEnablingDiwaniyaPush ? "نفعّلها..." : "فعّل تنبيهات القطيّة ووهق غيرك المهمة"}
                   </button>
                 )}
                 {diwaniyaPushState === "saved" && (
                   <div className="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-[11px] font-black text-emerald-100">
-                    تنبيهات القطيّة ووهق غيرك 🎰 مفعّلة على هالجهاز
+                    تنبيهات القطيّة ووهق غيرك مفعّلة على هالجهاز
                   </div>
                 )}
                 <div className="space-y-3">
@@ -7446,7 +7456,7 @@ function CheckoutOverlay({
                              <PartyPopper className="w-6 h-6 text-white" />
                            </div>
                            <div className="flex flex-col items-start gap-1">
-                             <span className="text-[17px]">وهّق غيرك 🎰</span>
+                             <span className="text-[17px]">وهّق غيرك</span>
                              <span className="text-[10px] font-medium opacity-90 tracking-wide">دخلوا أسماءكم… والنظام يختار من يتحمّل الطلب</span>
                            </div>
                         </div>
