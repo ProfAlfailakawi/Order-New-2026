@@ -558,6 +558,41 @@ async function sendAdminPushDirectOnce(input: {
   return result;
 }
 
+
+function normalizePaymentLookupId(value: any): string {
+  if (value === undefined || value === null) return "";
+  let text = String(value).trim();
+  if (!text) return "";
+  try { text = decodeURIComponent(text); } catch {}
+  if (text.includes("?")) text = text.split("?")[0];
+  return text.trim().toUpperCase();
+}
+
+function paymentRecordMatches(record: any, targetId: any): boolean {
+  const target = normalizePaymentLookupId(targetId);
+  if (!record || !target) return false;
+  const fields = [
+    record.id,
+    record.orderId,
+    record.order_id,
+    record.orderNumber,
+    record.invoiceId,
+    record.invoice_id,
+    record.invoiceNo,
+    record.invoiceNumber,
+    record.paymentId,
+    record.payment_id,
+    record.referenceId,
+    record.trackId,
+    record.TrackID,
+  ];
+  const candidates = fields.map(normalizePaymentLookupId).filter(Boolean);
+  return candidates.some((candidate) =>
+    candidate === target ||
+    candidate.replace(/[^A-Z0-9]/g, "") === target.replace(/[^A-Z0-9]/g, "")
+  );
+}
+
 async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: boolean, providerData: any) {
   console.log(`[PAYMENT_UPDATE] Processing Order:${orderId} Split:${splitId} Success:${isSuccess}`);
   const directPushes: any[] = [];
@@ -581,7 +616,7 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
       let updated = false;
 
       // Handle Orders
-      const oIdx = orders.findIndex(o => String(o.id).toUpperCase() === baseId);
+      const oIdx = orders.findIndex((o: any) => paymentRecordMatches(o, baseId));
       if (oIdx !== -1) {
         if (isSplit) {
           if (!orders[oIdx].splitPayments) orders[oIdx].splitPayments = [];
@@ -699,11 +734,13 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
 
       // Handle Invoices
       invoices.forEach((inv: any) => {
-        if (String(inv.id).toUpperCase() === baseId) {
+        if (paymentRecordMatches(inv, baseId)) {
           if (isSuccess && inv.paymentStatus !== "paid") {
             inv.status = "تم الدفع وجاري التوصيل";
             inv.paymentStatus = "paid";
             inv.paidAt = new Date().toISOString();
+            inv.paymentUpdatedAt = new Date().toISOString();
+            inv.transactionId = providerData?.reference?.id || providerData?.TrackID || providerData?.order_id || "upayments_auth";
             directPushes.push({
               eventId: `safe-worker-invoice-paid-${inv.id}`,
               title: "✅ تم دفع فاتورة",
@@ -715,6 +752,8 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
           } else if (!isSuccess && (inv.status === "جديد" || inv.status === "بانتظار الدفع")) {
             inv.status = "فشل في عملية الدفع";
             inv.paymentStatus = "failed";
+            inv.paymentUpdatedAt = new Date().toISOString();
+            inv.transactionId = providerData?.reference?.id || providerData?.TrackID || providerData?.order_id || "upayments_auth";
             directPushes.push({
               eventId: `safe-worker-invoice-failed-${inv.id}`,
               title: "❌ فشلت عملية الدفع",
@@ -3288,13 +3327,14 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const d = await getAppDataRef();
         const data = d.data() || {};
         const orders = data.orders || [];
-        const existingOrder = orders.find((o: any) => o.id === orderId);
+        const invoices = data.invoices || [];
+        const existingOrder = [...orders, ...invoices].find((o: any) => paymentRecordMatches(o, orderId));
         if (
           existingOrder &&
           (existingOrder.paymentStatus === "paid" ||
             (existingOrder.status || "").startsWith("تم الدفع"))
         ) {
-          return res.status(400).json({ error: "هذا الطلب مدفوع بالفعل" });
+          return res.status(400).json({ error: "هذا الطلب/الفاتورة مدفوع بالفعل" });
         }
       }
 
@@ -3392,7 +3432,9 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const d = await getAppDataRef();
       const data = d.data() || {};
       const orders = data.orders || [];
-      const index = orders.findIndex((o: any) => o.id === orderId);
+      const invoices = data.invoices || [];
+      const index = orders.findIndex((o: any) => paymentRecordMatches(o, orderId));
+      const invoiceIndex = invoices.findIndex((o: any) => paymentRecordMatches(o, orderId));
       
       const rawFinalAmount = parseFloat(amount).toFixed(3);
       const finalAmount = parseFloat(rawFinalAmount);
@@ -3401,6 +3443,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
         orders[index].paymentId = knetTrackId;
         orders[index].lastPaymentAmount = finalAmount;
         await updateAppData({ orders });
+      } else if (invoiceIndex !== -1) {
+        invoices[invoiceIndex].paymentId = knetTrackId;
+        invoices[invoiceIndex].lastPaymentAmount = finalAmount;
+        await updateAppData({ invoices });
       }
 
       // Check if amount is valid for UPayments (min 0.001 KWD)
