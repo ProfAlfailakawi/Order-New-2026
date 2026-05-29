@@ -187,6 +187,9 @@ export function SaduPresenceRug({
   // Real-time Pour Coffee tactile microgame system states
   const [isPouringCoffee, setIsPouringCoffee] = useState(false);
   const [pouringSuccess, setPouringSuccess] = useState(false);
+  const [showDallahMenu, setShowDallahMenu] = useState(false);
+  const [dallahVibeMode, setDallahVibeMode] = useState<"embers" | "incense" | "mystic">("embers");
+  const [spinningRoulette, setSpinningRoulette] = useState(false);
 
   // Dynamic Sadu Points calculated for the Weave theme state
   const squadPoints = useMemo(() => {
@@ -276,6 +279,52 @@ export function SaduPresenceRug({
     setTimeout(() => {
       setAiCoHostTriggerSuccess(false);
     }, 5000);
+  };
+
+  const handleDallahRoulette = () => {
+    setShowDallahMenu(false);
+    setSpinningRoulette(true);
+    playSynthSound("pour"); 
+    triggerHaptic([100, 50, 100, 50, 100]);
+    
+    // Simulate spin time
+    setTimeout(() => {
+      setSpinningRoulette(false);
+      const candidates = [...presentMembers];
+      let loser = candidates.length > 0 ? candidates[Math.floor(Math.random() * candidates.length)] : null;
+      if (loser) {
+        if (onWobbleAction) {
+          onWobbleAction(`🎯 طاحت القرعة على ${loser.name}! جهّز الكي نت واليوم حساب القهوة عليك! 💳💸`);
+        }
+        triggerHaptic([200, 100, 200]);
+        confetti({
+          particleCount: 80,
+          spread: 80,
+          origin: { y: 0.5 },
+          colors: ["#ef4444", "#fca5a5", "#b91c1c"] 
+        });
+      }
+    }, 2500);
+  };
+
+  const handleGeneralCoffeeCall = () => {
+    setShowDallahMenu(false);
+    playSynthSound("clink");
+    triggerHaptic([80, 80, 80]);
+    if (onWobbleAction) {
+      onWobbleAction("📢 القهوة زاهبة والمجلس عامر، حياكم تقهوو يا الربع! ☕✨");
+    }
+    confetti({
+      particleCount: 60,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ["#d97706", "#f59e0b", "#fcd34d"]
+    });
+  };
+
+  const handleToggleDallahVibe = () => {
+    setDallahVibeMode(prev => prev === "embers" ? "incense" : prev === "incense" ? "mystic" : "embers");
+    triggerHaptic([40]);
   };
 
   const isBronze = squadPoints < 100;
@@ -632,7 +681,7 @@ export function SaduPresenceRug({
         </div>
 
         {hostMember && (
-          <div className="relative z-20 mr-auto ml-5 sm:ml-9 mb-3 w-fit max-w-[70%] rounded-full border border-amber-400/25 bg-black/35 backdrop-blur-sm px-4 py-1.5 shadow-lg text-center">
+          <div className="relative z-20 mr-auto ml-5 sm:ml-9 mb-3 w-fit max-w-[85%] sm:max-w-[70%] rounded-[20px] border border-amber-400/25 bg-black/35 backdrop-blur-sm px-4 py-2 flex flex-col justify-center shadow-lg text-center">
             <div className="flex items-center justify-center gap-2">
               <span className="text-base sm:text-lg">👑</span>
               <div className="min-w-0 text-right">
@@ -641,7 +690,7 @@ export function SaduPresenceRug({
               </div>
             </div>
             {isCurrentlyWobbling(hostMember.wobbleAt) && (
-              <div className="mt-1 text-[8px] font-black text-amber-300 leading-snug truncate max-w-[180px] sm:max-w-[220px]">
+              <div className="mt-2 text-[10px] font-bold text-amber-300 leading-relaxed whitespace-normal break-words w-full px-1">
                 {hostMember.wobbleMsg || "حيالله الربع"}
               </div>
             )}
@@ -649,23 +698,23 @@ export function SaduPresenceRug({
         )}
 
         {/* Central visual piece: The Golden Dallah on visual hot embers inside a traditional burner */}
-        <div className="relative mx-auto mt-1 mb-2 flex flex-col items-center justify-center pointer-events-none z-10 scale-[0.78] sm:scale-100 h-32 sm:h-36">
+        <div className="relative mx-auto mt-1 mb-2 flex flex-col items-center justify-center z-20 scale-[0.78] sm:scale-100 h-32 sm:h-36">
           <div className="relative group flex items-center justify-center">
             {/* Hot Embers Glow */}
             <div className={cn(
-              "absolute w-24 h-24 sm:w-28 sm:h-28 blur-2xl rounded-full opacity-45 mix-blend-screen animate-pulse",
-              isBronze && "bg-[#d42d13]",
-              isSilver && "bg-teal-500",
-              isGold && "bg-amber-500",
+              "absolute w-24 h-24 sm:w-28 sm:h-28 blur-2xl rounded-full opacity-45 mix-blend-screen animate-pulse pointer-events-none",
+              isBronze && (dallahVibeMode === "embers" ? "bg-[#d42d13]" : dallahVibeMode === "incense" ? "bg-amber-600" : "bg-purple-800"),
+              isSilver && (dallahVibeMode === "embers" ? "bg-teal-500" : dallahVibeMode === "incense" ? "bg-amber-500" : "bg-purple-600"),
+              isGold && (dallahVibeMode === "embers" ? "bg-amber-500" : dallahVibeMode === "incense" ? "bg-stone-500" : "bg-indigo-500"),
               isDiamond && "bg-purple-600 scale-110"
             )} />
             
             {/* Pulsing Concentric Circular Sadu Weaving Rays */}
-            <div className="absolute w-32 h-32 sm:w-36 sm:h-36 border-4 border-dashed border-yellow-500/25 rounded-full animate-[spin_40s_linear_infinite]" />
-            <div className="absolute w-24 h-24 sm:w-28 sm:h-28 border-[1.5px] border-amber-600/30 rounded-full animate-[spin_20s_linear_infinite_reverse]" />
+            <div className="absolute w-32 h-32 sm:w-36 sm:h-36 border-4 border-dashed border-yellow-500/25 rounded-full animate-[spin_40s_linear_infinite] pointer-events-none" />
+            <div className="absolute w-24 h-24 sm:w-28 sm:h-28 border-[1.5px] border-amber-600/30 rounded-full animate-[spin_20s_linear_infinite_reverse] pointer-events-none" />
             
             {/* Floating Smoke trails */}
-            <div className="absolute -top-14 flex gap-1.5 justify-center">
+            <div className="absolute -top-14 flex gap-1.5 justify-center pointer-events-none">
               <span className="text-sm font-bold text-yellow-100/35 animate-sadu-steam block" style={{ animationDelay: "0s" }}>
                 🌿
               </span>
@@ -678,7 +727,18 @@ export function SaduPresenceRug({
             </div>
 
             {/* Premium Gold Dallah / Mabkhara Vector Artwork rendering */}
-            <svg width="75" height="100" viewBox="0 0 100 125" fill="none" className="w-[75px] h-[100px] sm:w-[85px] sm:h-[110px] filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)]">
+            <svg 
+              onClick={() => {
+                if (spinningRoulette) return;
+                setShowDallahMenu(!showDallahMenu);
+                triggerHaptic([30]);
+              }} 
+              width="75" height="100" viewBox="0 0 100 125" fill="none" 
+              className={cn(
+                "w-[75px] h-[100px] sm:w-[85px] sm:h-[110px] filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)] cursor-pointer transition-transform hover:scale-105 active:scale-95",
+                spinningRoulette && "animate-[spin_0.5s_linear_infinite]"
+              )}
+            >
               {/* Hot wood charcoal embers inside base */}
               <ellipse cx="50" cy="100" rx="32" ry="8" fill="#150a0a" stroke="#d44d15" strokeWidth="1.5" />
               <ellipse cx="50" cy="100" rx="16" ry="4" fill="#fa4a13" className="animate-pulse" />
@@ -723,9 +783,47 @@ export function SaduPresenceRug({
                 </linearGradient>
               </defs>
             </svg>
-            <span className="absolute bottom-0.5 bg-amber-500/95 text-stone-950 font-black text-[7.5px] sm:text-[8px] px-1.5 py-0.5 rounded-full border border-yellow-300/30">
+            <span className="absolute bottom-0.5 bg-amber-500/95 text-stone-950 font-black text-[7.5px] sm:text-[8px] px-1.5 py-0.5 rounded-full border border-yellow-300/30 pointer-events-none">
               دلة الديوانية
             </span>
+
+            <AnimatePresence>
+              {showDallahMenu && (
+                <>
+                  <motion.div 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm shadow-2xl"
+                    onClick={() => setShowDallahMenu(false)}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 20, x: "-50%", y: "-50%" }}
+                    animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
+                    exit={{ opacity: 0, scale: 0.9, y: 20, x: "-50%", y: "-50%" }}
+                    className="fixed top-1/2 left-1/2 w-[280px] bg-stone-900/95 backdrop-blur-md rounded-3xl border border-amber-900/50 shadow-2xl p-3 z-[110] flex flex-col gap-2"
+                  >
+                    <div className="text-center py-2 mb-1 border-b border-white/10">
+                      <h3 className="text-amber-400 font-bold text-sm">خيارات الدلة</h3>
+                    </div>
+                    <button
+                      onClick={handleDallahRoulette}
+                      className="w-full text-right px-4 py-4 hover:bg-amber-500/20 active:bg-amber-500/30 rounded-2xl transition-colors text-amber-50 text-[13.5px] font-bold flex items-center justify-between gap-3"
+                    >
+                      <span className="drop-shadow-sm flex-1 leading-snug">طاق طاق طاقية (القرعة)</span>
+                      <span className="text-2xl shrink-0">🎯</span>
+                    </button>
+                    <button
+                      onClick={handleGeneralCoffeeCall}
+                      className="w-full text-right px-4 py-4 hover:bg-amber-500/20 active:bg-amber-500/30 rounded-2xl transition-colors text-amber-50 text-[13.5px] font-bold flex items-center justify-between gap-3"
+                    >
+                      <span className="drop-shadow-sm flex-1 leading-snug">نداء القهوة العامة</span>
+                      <span className="text-2xl shrink-0">📢</span>
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
@@ -807,7 +905,7 @@ export function SaduPresenceRug({
                       </div>
                     </div>
                     {wobbling && (
-                      <div className={cn("mt-1 text-[8px] font-black rounded-lg px-2 py-1 leading-snug truncate", isMe ? "bg-white/35 text-stone-950" : "bg-amber-400/10 text-amber-300")}>
+                      <div className={cn("mt-1.5 text-[9.5px] font-bold rounded-[10px] px-2.5 py-1.5 leading-relaxed whitespace-normal break-words text-right w-full", isMe ? "bg-white/35 text-stone-950" : "bg-amber-400/10 text-amber-300")}>
                         {entity.wobbleMsg || "يا هلا والله بالربع!"}
                       </div>
                     )}

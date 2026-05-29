@@ -848,6 +848,7 @@ const IMPORTANT_DIWANIYA_PUSH_TYPES = new Set([
   "join_request",
   "presence_in",
   "qatya_request",
+  "wobble_alert",
   "roulette_result",
 ]);
 
@@ -2047,8 +2048,9 @@ app.get("/api/debug/order/:id", async (req, res) => {
         squad?.phone,
         ...(squad?.membersList || []).map((m: any) => m.phone)
       ].map(cleanPhone).filter((ph: any) => ph && ph !== cleanTarget))) as string[];
-      const diwaniyaNotifications = action === "in"
-        ? pushDiwaniyaNotifications(current.diwaniyaNotifications || [], recipients.map((toPhone: string) => ({
+      let diwaniyaNotifications = current.diwaniyaNotifications || [];
+      if (action === "in") {
+        diwaniyaNotifications = pushDiwaniyaNotifications(diwaniyaNotifications, recipients.map((toPhone: string) => ({
             type: "presence_in",
             squadId,
             squadName: squad?.name || "",
@@ -2057,12 +2059,23 @@ app.get("/api/debug/order/:id", async (req, res) => {
             fromName: name || "عضو",
             title: "واحد من الربع وصل",
             message: `${name || "أحد الربع"} موجود بديوانية ${squad?.name || "الربع"}.`
-          })))
-        : (current.diwaniyaNotifications || []);
+        })));
+      } else if (action === "wobble") {
+        diwaniyaNotifications = pushDiwaniyaNotifications(diwaniyaNotifications, recipients.map((toPhone: string) => ({
+            type: "wobble_alert",
+            squadId,
+            squadName: squad?.name || "",
+            toPhone,
+            fromPhone: phone,
+            fromName: name || "عضو",
+            title: `تنبيه ديوانية ${squad?.name || "الربع"}`,
+            message: message || `${name || "أحد الربع"} ينادي الربع.`
+        })));
+      }
       return { squadPresence: filtered, diwaniyaNotifications };
     });
     if (!ok) return res.status(500).json({ error: "Failed to update presence" });
-    if (action === "in") {
+    if (action === "in" || action === "wobble") {
       try {
         const current = await getAppData();
         const squad = (Array.isArray(current.squads) ? current.squads : []).find((s: any) => String(s.id) === String(squadId));
@@ -2071,14 +2084,25 @@ app.get("/api/debug/order/:id", async (req, res) => {
           ...(squad?.membersList || []).map((m: any) => m.phone)
         ].map(cleanPhone).filter((ph: any) => ph && ph !== cleanTarget)));
         if (recipients.length) {
-          void sendDiwaniyaExternalPush({
-            toPhones: recipients,
-            type: "presence_in",
-            title: "واحد من الربع وصل",
-            body: `${name || "أحد الربع"} دش ديوانية ${squad?.name || "الربع"}.`,
-            squadId: String(squadId),
-            url: "/?showSquads=true"
-          });
+          if (action === "in") {
+            void sendDiwaniyaExternalPush({
+              toPhones: recipients,
+              type: "presence_in",
+              title: "واحد من الربع وصل",
+              body: `${name || "أحد الربع"} دش ديوانية ${squad?.name || "الربع"}.`,
+              squadId: String(squadId),
+              url: "/?showSquads=true"
+            });
+          } else if (action === "wobble") {
+            void sendDiwaniyaExternalPush({
+              toPhones: recipients,
+              type: "wobble_alert",
+              title: `نداء من ديوانية ${squad?.name || "الربع"}`,
+              body: message || `${name || "أحد الربع"} ينادي الربع.`,
+              squadId: String(squadId),
+              url: "/?showSquads=true"
+            });
+          }
         }
       } catch {}
     }
