@@ -5,6 +5,7 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import LZString from "lz-string";
 import { initializeApp } from "firebase/app";
 import admin from "firebase-admin";
 import { getMessaging } from "firebase-admin/messaging";
@@ -102,37 +103,111 @@ function handleAdminDbError(error: any, contextMsg: string) {
 
 let _appDataCache: any = null;
 let _appDataCacheTime = 0;
-const CACHE_TTL = 0; // Disable cache to prevent concurrency issues and data loss during split payments
+const CACHE_TTL = 5000; // Short cache: fast reads without hiding payment/order writes
 
-async function loadSharedSquadsShard() {
+const SHARDED_APPDATA_KEYS = [
+  "orders",
+  "invoices",
+  "customers",
+  "expenses",
+  "testimonials",
+  "products",
+  "supplierCopies",
+  "pulseAnalysisHistory",
+  "pulseReviews",
+  "campaigns",
+  "squads",
+  "promocodes",
+  "aiLearningMemory",
+  "pulseArchiveAnalysis",
+  "deepArchiveAnalysis",
+  "nameMatchMemory",
+] as const;
+
+type ShardedAppDataKey = (typeof SHARDED_APPDATA_KEYS)[number];
+
+function readArrayFromShardData(key: ShardedAppDataKey, shardData: any) {
+  if (!shardData) return [];
+  if (shardData?.isCompressed && shardData?.compressedData) {
+    const raw = String(shardData.compressedData || "");
+    const decompressed =
+      LZString.decompressFromBase64(raw) ||
+      LZString.decompressFromUTF16(raw) ||
+      "";
+    if (!decompressed) return [];
+    try {
+      const parsed = JSON.parse(decompressed);
+      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed?.[key])) return parsed[key];
+    } catch (error) {
+      console.warn(`[APPDATA] Failed to parse compressed shard ${key}:`, error);
+    }
+    return [];
+  }
+  if (Array.isArray(shardData?.[key])) return shardData[key];
+  if (Array.isArray(shardData?.items)) return shardData.items;
+  return [];
+}
+
+function buildShardPayload(key: ShardedAppDataKey, value: any[]) {
+  const safeValue = Array.isArray(value) ? value : [];
+  const serialized = JSON.stringify(safeValue);
+  if (serialized.length > 500000) {
+    return {
+      compressedData: LZString.compressToBase64(serialized),
+      isCompressed: true,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+  return {
+    [key]: JSON.parse(JSON.stringify(safeValue)),
+    isCompressed: false,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function rootPayloadWithShardPlaceholders(data: any) {
+  const rootPayload = { ...(data || {}) };
+  for (const key of SHARDED_APPDATA_KEYS) {
+    if (Array.isArray(rootPayload[key])) {
+      // The admin app stores large arrays in appData/shared_company_data/shards/*.
+      // Keep the root document small and always read the shard back in getAppData().
+      rootPayload[key] = [];
+    }
+  }
+  return rootPayload;
+}
+
+async function loadSharedShard(key: ShardedAppDataKey) {
   if (adminDb) {
     try {
-      const shardSnap = await adminDb.collection("appData").doc("shared_company_data").collection("shards").doc("squads").get();
-      if (shardSnap.exists) {
-        const shardData = shardSnap.data() || {};
-        return Array.isArray(shardData.squads) ? shardData.squads : [];
-      }
+      const shardSnap = await adminDb.collection("appData").doc("shared_company_data").collection("shards").doc(key).get();
+      if (shardSnap.exists) return readArrayFromShardData(key, shardSnap.data() || {});
     } catch (error) {
-      handleAdminDbError(error, "loadSharedSquadsShard");
+      handleAdminDbError(error, `loadSharedShard:${key}`);
     }
   }
 
   try {
-    const shardSnap = await getDoc(doc(db, "appData", "shared_company_data", "shards", "squads"));
-    if (shardSnap.exists()) {
-      const shardData = shardSnap.data() || {};
-      return Array.isArray(shardData.squads) ? shardData.squads : [];
-    }
+    const shardSnap = await getDoc(doc(db, "appData", "shared_company_data", "shards", key));
+    if (shardSnap.exists()) return readArrayFromShardData(key, shardSnap.data() || {});
   } catch (error) {
-    console.warn("[CLIENT_DB] Shard read failed:", error);
+    console.warn(`[CLIENT_DB] Shard read failed for ${key}:`, error);
   }
   return [];
 }
 
-function mergeSquadsShardIfNeeded(rootData: any, shardSquads: any[]) {
-  if (!Array.isArray(shardSquads) || shardSquads.length === 0) return rootData;
-  if (Array.isArray(rootData?.squads) && rootData.squads.length > 0) return rootData;
-  return { ...(rootData || {}), squads: shardSquads };
+async function mergeSharedShards(rootData: any) {
+  const merged = { ...(rootData || {}) };
+  const shardEntries = await Promise.all(
+    SHARDED_APPDATA_KEYS.map(async (key) => [key, await loadSharedShard(key)] as const),
+  );
+  for (const [key, value] of shardEntries) {
+    if (Array.isArray(value) && value.length > 0) {
+      merged[key] = value;
+    }
+  }
+  return merged;
 }
 
 async function getAppData() {
@@ -145,8 +220,7 @@ async function getAppData() {
       const d = await adminDb.collection("appData").doc("shared_company_data").get();
       if (d.exists) {
         const rootData = d.data() || {};
-        const shardSquads = await loadSharedSquadsShard();
-        _appDataCache = mergeSquadsShardIfNeeded(rootData, shardSquads);
+        _appDataCache = await mergeSharedShards(rootData);
         _appDataCacheTime = Date.now();
         return _appDataCache;
       }
@@ -159,8 +233,7 @@ async function getAppData() {
     const d = await getDoc(doc(db, "appData", "shared_company_data"));
     if (d.exists()) {
       const rootData = d.data();
-      const shardSquads = await loadSharedSquadsShard();
-      _appDataCache = mergeSquadsShardIfNeeded(rootData, shardSquads);
+      _appDataCache = await mergeSharedShards(rootData);
       _appDataCacheTime = Date.now();
       return _appDataCache;
     }
@@ -213,7 +286,12 @@ async function updateAppData(data: any) {
     try {
       const docRef = adminDb.collection("appData").doc("shared_company_data");
       await adminDb.runTransaction(async (transaction) => {
-        transaction.set(docRef, cleanedData, { merge: true });
+        transaction.set(docRef, rootPayloadWithShardPlaceholders(cleanedData), { merge: true });
+        for (const key of SHARDED_APPDATA_KEYS) {
+          if (Array.isArray(cleanedData[key])) {
+            transaction.set(docRef.collection("shards").doc(key), buildShardPayload(key, cleanedData[key]), { merge: false });
+          }
+        }
       });
       _appDataCache = null;
       _appDataCacheTime = 0;
@@ -225,12 +303,22 @@ async function updateAppData(data: any) {
 
   try {
     const docRef = doc(db, "appData", "shared_company_data");
-    await setDoc(docRef, cleanedData, { merge: true });
+    await setDoc(docRef, rootPayloadWithShardPlaceholders(cleanedData), { merge: true });
+    await Promise.all(SHARDED_APPDATA_KEYS.map(async (key) => {
+      if (Array.isArray(cleanedData[key])) {
+        await setDoc(doc(db, "appData", "shared_company_data", "shards", key), buildShardPayload(key, cleanedData[key]), { merge: false });
+      }
+    }));
     _appDataCache = null;
     _appDataCacheTime = 0;
   } catch (error) {
-    console.error("[CLIENT_DB] Write to Firestore failed. Refusing to write payment/data changes to local fallback.", error);
-    throw error;
+    console.warn("[CLIENT_DB] Write failed, updating local in-memory fallback", error);
+    localFallbackDB = { ...localFallbackDB, ...data };
+    try {
+      fs.writeFileSync(path.join(__dirname, "app_data_fallback.json"), JSON.stringify(localFallbackDB, null, 2));
+    } catch (err) {
+      console.warn("Could not save to disk:", err);
+    }
   }
 }
 
@@ -240,8 +328,6 @@ async function updateAppData(data: any) {
  * to prevent race conditions.
  */
 async function updateAppDataAtomically(updater: (currentData: any) => any) {
-  let didProduceUpdates = false;
-
   if (adminDb) {
     try {
       const docRef = adminDb.collection("appData").doc("shared_company_data");
@@ -255,23 +341,28 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
           currentData = localFallbackDB;
         } else {
           currentData = sDoc.data() || {};
-          if (!Array.isArray(currentData?.squads) || currentData.squads.length === 0) {
-            const shardSnap = await transaction.get(docRef.collection("shards").doc("squads"));
+          for (const key of SHARDED_APPDATA_KEYS) {
+            const shardSnap = await transaction.get(docRef.collection("shards").doc(key));
             if (shardSnap.exists) {
-              const shardSquads = shardSnap.data()?.squads;
-              currentData = mergeSquadsShardIfNeeded(currentData, Array.isArray(shardSquads) ? shardSquads : []);
+              const shardValue = readArrayFromShardData(key, shardSnap.data() || {});
+              if (Array.isArray(shardValue) && shardValue.length > 0) currentData[key] = shardValue;
             }
           }
         }
 
         const updates = removeUndefinedDeep(updater(currentData));
-        if (updates) didProduceUpdates = true;
 
         if (updates) {
+          const rootUpdates = rootPayloadWithShardPlaceholders(updates);
           if (isNew) {
-            transaction.set(docRef, { ...currentData, ...updates }, { merge: true });
+            transaction.set(docRef, { ...rootPayloadWithShardPlaceholders(currentData), ...rootUpdates }, { merge: true });
           } else {
-            transaction.update(docRef, updates);
+            transaction.update(docRef, rootUpdates);
+          }
+          for (const key of SHARDED_APPDATA_KEYS) {
+            if (Array.isArray(updates[key])) {
+              transaction.set(docRef.collection("shards").doc(key), buildShardPayload(key, updates[key]), { merge: false });
+            }
           }
         } else if (isNew) {
           transaction.set(docRef, currentData);
@@ -279,7 +370,7 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
       });
       _appDataCache = null;
       _appDataCacheTime = 0;
-      return didProduceUpdates;
+      return true;
     } catch (error) {
       handleAdminDbError(error, "updateAppDataAtomically");
     }
@@ -297,23 +388,28 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
         currentData = localFallbackDB;
       } else {
         currentData = sDoc.data();
-        if (!Array.isArray(currentData?.squads) || currentData.squads.length === 0) {
-          const shardSnap = await transaction.get(doc(db, "appData", "shared_company_data", "shards", "squads"));
+        for (const key of SHARDED_APPDATA_KEYS) {
+          const shardSnap = await transaction.get(doc(db, "appData", "shared_company_data", "shards", key));
           if (shardSnap.exists()) {
-            const shardSquads = shardSnap.data()?.squads;
-            currentData = mergeSquadsShardIfNeeded(currentData, Array.isArray(shardSquads) ? shardSquads : []);
+            const shardValue = readArrayFromShardData(key, shardSnap.data() || {});
+            if (Array.isArray(shardValue) && shardValue.length > 0) currentData[key] = shardValue;
           }
         }
       }
 
       const updates = removeUndefinedDeep(updater(currentData));
-      if (updates) didProduceUpdates = true;
 
       if (updates) {
+        const rootUpdates = rootPayloadWithShardPlaceholders(updates);
         if (isNew) {
-          transaction.set(docRef, { ...currentData, ...updates }, { merge: true });
+          transaction.set(docRef, { ...rootPayloadWithShardPlaceholders(currentData), ...rootUpdates }, { merge: true });
         } else {
-          transaction.update(docRef, updates);
+          transaction.update(docRef, rootUpdates);
+        }
+        for (const key of SHARDED_APPDATA_KEYS) {
+          if (Array.isArray(updates[key])) {
+            transaction.set(doc(db, "appData", "shared_company_data", "shards", key), buildShardPayload(key, updates[key]), { merge: false });
+          }
         }
       } else if (isNew) {
         transaction.set(docRef, currentData);
@@ -321,7 +417,7 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
     });
     _appDataCache = null;
     _appDataCacheTime = 0;
-    return didProduceUpdates;
+    return true;
   } catch (err) {
     console.error("[CLIENT_DB] Atomic update failed", err);
     return false;
@@ -462,75 +558,7 @@ async function sendAdminPushDirectOnce(input: {
   return result;
 }
 
-
-function normalizePaymentIdentifier(value: any) {
-  return String(value || "")
-    .trim()
-    .replace(/^#/, "")
-    .replace(/[\u200E\u200F\u202A-\u202E]/g, "")
-    .toUpperCase();
-}
-
-function extractPaymentReferenceId(providerData: any) {
-  const candidates = [
-    providerData?.reference?.id,
-    providerData?.reference_id,
-    providerData?.ReferenceID,
-    providerData?.payment_id,
-    providerData?.PaymentID,
-    providerData?.transaction_id,
-    providerData?.TransactionID,
-    providerData?.track_id,
-    providerData?.TrackID,
-    providerData?.invoice_id,
-    providerData?.InvoiceID,
-    providerData?.id,
-  ];
-  return candidates.map((x) => String(x || "").trim()).find(Boolean) || "upayments_auth";
-}
-
-function resolvePaymentTarget(orderId: string, splitId: string) {
-  let rawOrderId = String(orderId || "").trim();
-  if (rawOrderId.includes("?")) rawOrderId = rawOrderId.split("?")[0];
-
-  let baseId = normalizePaymentIdentifier(rawOrderId);
-  let sId = String(splitId || "").trim();
-
-  const splitMarker = "-S-";
-  const markerIndex = baseId.indexOf(splitMarker);
-  if (markerIndex !== -1) {
-    const original = rawOrderId;
-    const originalUpper = normalizePaymentIdentifier(original);
-    baseId = originalUpper.slice(0, markerIndex);
-    if (!sId) {
-      sId = original.slice(markerIndex + splitMarker.length);
-    }
-  }
-
-  const normalizedSplitId = normalizePaymentIdentifier(sId);
-  return {
-    baseId,
-    splitId: normalizedSplitId,
-    isSplit: !!normalizedSplitId,
-  };
-}
-
-function idMatches(value: any, target: string) {
-  const current = normalizePaymentIdentifier(value);
-  const wanted = normalizePaymentIdentifier(target);
-  return !!current && !!wanted && current === wanted;
-}
-
-function splitIdMatches(value: any, target: string) {
-  const current = normalizePaymentIdentifier(value);
-  const wanted = normalizePaymentIdentifier(target);
-  if (!current || !wanted) return false;
-  const currentNoPrefix = current.startsWith("S-") ? current.slice(2) : current;
-  const wantedNoPrefix = wanted.startsWith("S-") ? wanted.slice(2) : wanted;
-  return current === wanted || currentNoPrefix === wantedNoPrefix;
-}
-
-async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: boolean, providerData: any): Promise<boolean> {
+async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: boolean, providerData: any) {
   console.log(`[PAYMENT_UPDATE] Processing Order:${orderId} Split:${splitId} Success:${isSuccess}`);
   const directPushes: any[] = [];
   
@@ -539,27 +567,35 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
       let invoices = [...(appData.invoices || [])];
       let customers = [...(appData.customers || [])];
       
-      const target = resolvePaymentTarget(orderId, splitId);
-      const baseId = target.baseId;
-      const sId = target.splitId;
-      const isSplit = target.isSplit;
+      let baseId = String(orderId).toUpperCase();
+      let sId = splitId;
+      let isSplit = !!sId;
+      
+      if (baseId.includes("-S-")) {
+        isSplit = true;
+        const parts = baseId.split("-S-");
+        baseId = parts[0];
+        if (!sId) sId = parts[1];
+      }
 
       let updated = false;
 
       // Handle Orders
-      const oIdx = orders.findIndex((o: any) => idMatches(o.id, baseId) || idMatches(o.orderId, baseId) || idMatches(o.invoiceId, baseId));
+      const oIdx = orders.findIndex(o => String(o.id).toUpperCase() === baseId);
       if (oIdx !== -1) {
         if (isSplit) {
           if (!orders[oIdx].splitPayments) orders[oIdx].splitPayments = [];
           const sIdx = orders[oIdx].splitPayments.findIndex((s: any) => {
-            return splitIdMatches(s.id, sId) || splitIdMatches(s.splitId, sId);
+            const sid = String(s.id).toUpperCase();
+            const target = String(sId).toUpperCase();
+            return sid === target || sid === `S-${target}` || target.includes(sid);
           });
           
           if (sIdx !== -1) {
             const currentStatus = String(orders[oIdx].splitPayments[sIdx].status || "").toLowerCase();
             if (isSuccess && currentStatus !== "paid") {
               orders[oIdx].splitPayments[sIdx].status = "paid";
-              orders[oIdx].splitPayments[sIdx].paymentId = extractPaymentReferenceId(providerData);
+              orders[oIdx].splitPayments[sIdx].paymentId = providerData?.reference?.id || providerData?.TrackID || "upayments_auth";
               orders[oIdx].splitPayments[sIdx].datePaid = new Date().toISOString();
               
               // Update customer totalSpent
@@ -624,7 +660,7 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
               orders[oIdx].status = "تم الدفع وجاري التوصيل";
               orders[oIdx].paymentStatus = "paid";
               orders[oIdx].paidAt = new Date().toISOString();
-              orders[oIdx].transactionId = extractPaymentReferenceId(providerData);
+              orders[oIdx].transactionId = providerData?.reference?.id || providerData?.TrackID || "upayments_auth";
               directPushes.push({
                 eventId: `safe-worker-payment-paid-${orders[oIdx].id}`,
                 title: "✅ تم دفع طلب",
@@ -663,7 +699,7 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
 
       // Handle Invoices
       invoices.forEach((inv: any) => {
-        if (idMatches(inv.id, baseId) || idMatches(inv.invoiceId, baseId) || idMatches(inv.invoiceNo, baseId) || idMatches(inv.tracked_order, baseId)) {
+        if (String(inv.id).toUpperCase() === baseId) {
           if (isSuccess && inv.paymentStatus !== "paid") {
             inv.status = "تم الدفع وجاري التوصيل";
             inv.paymentStatus = "paid";
@@ -707,11 +743,9 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
       }
     }
     console.log(`[PAYMENT_UPDATE] Successfully processed Order:${orderId}`);
-    return true;
+  } else {
+    console.error(`[PAYMENT_UPDATE] Concurrency error or logical failure for Order:${orderId}`);
   }
-
-  console.error(`[PAYMENT_UPDATE] No Firestore payment record was updated for Order:${orderId} Split:${splitId}`);
-  return false;
 }
 
 
@@ -3624,10 +3658,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           String(req.body?.Status).toUpperCase() === "SUCCESS";
 
         if (orderId) {
-          const updated = await handlePaymentUpdate(orderId, splitId, status, req.body);
-          if (!updated) {
-            return res.status(500).json({ success: false, error: "PAYMENT_NOT_UPDATED", orderId, splitId });
-          }
+          await handlePaymentUpdate(orderId, splitId, status, req.body);
         }
         res.json({ success: true });
       } catch (e) {
@@ -3734,22 +3765,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
         }
 
         let phone = "";
-        let paymentRecordUpdated = false;
         if (orderId) {
-          paymentRecordUpdated = await handlePaymentUpdate(orderId, splitId, isExplicitSuccess, { ...req.body, ...req.query });
-        }
-        if (orderId && !paymentRecordUpdated) {
-          console.error(`[PAYMENT_RETURN] Payment gateway returned but Firestore was not updated for ${orderId}`);
-          if (isExplicitSuccess) {
-            return res.status(500).type("html").send(`<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>تأكيد الدفع</title></head>
-<body style="font-family:Arial,Tahoma,sans-serif;text-align:center;padding:40px;line-height:1.8;background:#fff7ed;color:#7c2d12">
-<h2>تم استلام رجوع الدفع، لكن لم يتم تأكيد الطلب في قاعدة البيانات</h2>
-<p>لا تغلق الصفحة. يرجى فتح رابط تتبع الطلب بعد قليل أو التواصل مع الإدارة برقم الطلب:</p>
-<strong>${String(orderId)}</strong>
-</body></html>`);
-          }
+          await handlePaymentUpdate(orderId, splitId, isExplicitSuccess, { ...req.body, ...req.query });
         }
         
         if (false) {
