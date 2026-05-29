@@ -229,13 +229,8 @@ async function updateAppData(data: any) {
     _appDataCache = null;
     _appDataCacheTime = 0;
   } catch (error) {
-    console.warn("[CLIENT_DB] Write failed, updating local in-memory fallback", error);
-    localFallbackDB = { ...localFallbackDB, ...data };
-    try {
-      fs.writeFileSync(path.join(__dirname, "app_data_fallback.json"), JSON.stringify(localFallbackDB, null, 2));
-    } catch (err) {
-      console.warn("Could not save to disk:", err);
-    }
+    console.error("[CLIENT_DB] Write to Firestore failed. Refusing to write payment/data changes to local fallback.", error);
+    throw error;
   }
 }
 
@@ -245,6 +240,8 @@ async function updateAppData(data: any) {
  * to prevent race conditions.
  */
 async function updateAppDataAtomically(updater: (currentData: any) => any) {
+  let didProduceUpdates = false;
+
   if (adminDb) {
     try {
       const docRef = adminDb.collection("appData").doc("shared_company_data");
@@ -268,6 +265,7 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
         }
 
         const updates = removeUndefinedDeep(updater(currentData));
+        if (updates) didProduceUpdates = true;
 
         if (updates) {
           if (isNew) {
@@ -281,7 +279,7 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
       });
       _appDataCache = null;
       _appDataCacheTime = 0;
-      return true;
+      return didProduceUpdates;
     } catch (error) {
       handleAdminDbError(error, "updateAppDataAtomically");
     }
@@ -309,6 +307,7 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
       }
 
       const updates = removeUndefinedDeep(updater(currentData));
+      if (updates) didProduceUpdates = true;
 
       if (updates) {
         if (isNew) {
@@ -322,7 +321,7 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
     });
     _appDataCache = null;
     _appDataCacheTime = 0;
-    return true;
+    return didProduceUpdates;
   } catch (err) {
     console.error("[CLIENT_DB] Atomic update failed", err);
     return false;
@@ -463,7 +462,75 @@ async function sendAdminPushDirectOnce(input: {
   return result;
 }
 
-async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: boolean, providerData: any) {
+
+function normalizePaymentIdentifier(value: any) {
+  return String(value || "")
+    .trim()
+    .replace(/^#/, "")
+    .replace(/[\u200E\u200F\u202A-\u202E]/g, "")
+    .toUpperCase();
+}
+
+function extractPaymentReferenceId(providerData: any) {
+  const candidates = [
+    providerData?.reference?.id,
+    providerData?.reference_id,
+    providerData?.ReferenceID,
+    providerData?.payment_id,
+    providerData?.PaymentID,
+    providerData?.transaction_id,
+    providerData?.TransactionID,
+    providerData?.track_id,
+    providerData?.TrackID,
+    providerData?.invoice_id,
+    providerData?.InvoiceID,
+    providerData?.id,
+  ];
+  return candidates.map((x) => String(x || "").trim()).find(Boolean) || "upayments_auth";
+}
+
+function resolvePaymentTarget(orderId: string, splitId: string) {
+  let rawOrderId = String(orderId || "").trim();
+  if (rawOrderId.includes("?")) rawOrderId = rawOrderId.split("?")[0];
+
+  let baseId = normalizePaymentIdentifier(rawOrderId);
+  let sId = String(splitId || "").trim();
+
+  const splitMarker = "-S-";
+  const markerIndex = baseId.indexOf(splitMarker);
+  if (markerIndex !== -1) {
+    const original = rawOrderId;
+    const originalUpper = normalizePaymentIdentifier(original);
+    baseId = originalUpper.slice(0, markerIndex);
+    if (!sId) {
+      sId = original.slice(markerIndex + splitMarker.length);
+    }
+  }
+
+  const normalizedSplitId = normalizePaymentIdentifier(sId);
+  return {
+    baseId,
+    splitId: normalizedSplitId,
+    isSplit: !!normalizedSplitId,
+  };
+}
+
+function idMatches(value: any, target: string) {
+  const current = normalizePaymentIdentifier(value);
+  const wanted = normalizePaymentIdentifier(target);
+  return !!current && !!wanted && current === wanted;
+}
+
+function splitIdMatches(value: any, target: string) {
+  const current = normalizePaymentIdentifier(value);
+  const wanted = normalizePaymentIdentifier(target);
+  if (!current || !wanted) return false;
+  const currentNoPrefix = current.startsWith("S-") ? current.slice(2) : current;
+  const wantedNoPrefix = wanted.startsWith("S-") ? wanted.slice(2) : wanted;
+  return current === wanted || currentNoPrefix === wantedNoPrefix;
+}
+
+async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: boolean, providerData: any): Promise<boolean> {
   console.log(`[PAYMENT_UPDATE] Processing Order:${orderId} Split:${splitId} Success:${isSuccess}`);
   const directPushes: any[] = [];
   
@@ -472,35 +539,27 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
       let invoices = [...(appData.invoices || [])];
       let customers = [...(appData.customers || [])];
       
-      let baseId = String(orderId).toUpperCase();
-      let sId = splitId;
-      let isSplit = !!sId;
-      
-      if (baseId.includes("-S-")) {
-        isSplit = true;
-        const parts = baseId.split("-S-");
-        baseId = parts[0];
-        if (!sId) sId = parts[1];
-      }
+      const target = resolvePaymentTarget(orderId, splitId);
+      const baseId = target.baseId;
+      const sId = target.splitId;
+      const isSplit = target.isSplit;
 
       let updated = false;
 
       // Handle Orders
-      const oIdx = orders.findIndex(o => String(o.id).toUpperCase() === baseId);
+      const oIdx = orders.findIndex((o: any) => idMatches(o.id, baseId) || idMatches(o.orderId, baseId) || idMatches(o.invoiceId, baseId));
       if (oIdx !== -1) {
         if (isSplit) {
           if (!orders[oIdx].splitPayments) orders[oIdx].splitPayments = [];
           const sIdx = orders[oIdx].splitPayments.findIndex((s: any) => {
-            const sid = String(s.id).toUpperCase();
-            const target = String(sId).toUpperCase();
-            return sid === target || sid === `S-${target}` || target.includes(sid);
+            return splitIdMatches(s.id, sId) || splitIdMatches(s.splitId, sId);
           });
           
           if (sIdx !== -1) {
             const currentStatus = String(orders[oIdx].splitPayments[sIdx].status || "").toLowerCase();
             if (isSuccess && currentStatus !== "paid") {
               orders[oIdx].splitPayments[sIdx].status = "paid";
-              orders[oIdx].splitPayments[sIdx].paymentId = providerData?.reference?.id || providerData?.TrackID || "upayments_auth";
+              orders[oIdx].splitPayments[sIdx].paymentId = extractPaymentReferenceId(providerData);
               orders[oIdx].splitPayments[sIdx].datePaid = new Date().toISOString();
               
               // Update customer totalSpent
@@ -565,7 +624,7 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
               orders[oIdx].status = "تم الدفع وجاري التوصيل";
               orders[oIdx].paymentStatus = "paid";
               orders[oIdx].paidAt = new Date().toISOString();
-              orders[oIdx].transactionId = providerData?.reference?.id || providerData?.TrackID || "upayments_auth";
+              orders[oIdx].transactionId = extractPaymentReferenceId(providerData);
               directPushes.push({
                 eventId: `safe-worker-payment-paid-${orders[oIdx].id}`,
                 title: "✅ تم دفع طلب",
@@ -604,7 +663,7 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
 
       // Handle Invoices
       invoices.forEach((inv: any) => {
-        if (String(inv.id).toUpperCase() === baseId) {
+        if (idMatches(inv.id, baseId) || idMatches(inv.invoiceId, baseId) || idMatches(inv.invoiceNo, baseId) || idMatches(inv.tracked_order, baseId)) {
           if (isSuccess && inv.paymentStatus !== "paid") {
             inv.status = "تم الدفع وجاري التوصيل";
             inv.paymentStatus = "paid";
@@ -648,9 +707,11 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
       }
     }
     console.log(`[PAYMENT_UPDATE] Successfully processed Order:${orderId}`);
-  } else {
-    console.error(`[PAYMENT_UPDATE] Concurrency error or logical failure for Order:${orderId}`);
+    return true;
   }
+
+  console.error(`[PAYMENT_UPDATE] No Firestore payment record was updated for Order:${orderId} Split:${splitId}`);
+  return false;
 }
 
 
@@ -3563,7 +3624,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
           String(req.body?.Status).toUpperCase() === "SUCCESS";
 
         if (orderId) {
-          await handlePaymentUpdate(orderId, splitId, status, req.body);
+          const updated = await handlePaymentUpdate(orderId, splitId, status, req.body);
+          if (!updated) {
+            return res.status(500).json({ success: false, error: "PAYMENT_NOT_UPDATED", orderId, splitId });
+          }
         }
         res.json({ success: true });
       } catch (e) {
@@ -3670,8 +3734,22 @@ app.get("/api/debug/order/:id", async (req, res) => {
         }
 
         let phone = "";
+        let paymentRecordUpdated = false;
         if (orderId) {
-          await handlePaymentUpdate(orderId, splitId, isExplicitSuccess, { ...req.body, ...req.query });
+          paymentRecordUpdated = await handlePaymentUpdate(orderId, splitId, isExplicitSuccess, { ...req.body, ...req.query });
+        }
+        if (orderId && !paymentRecordUpdated) {
+          console.error(`[PAYMENT_RETURN] Payment gateway returned but Firestore was not updated for ${orderId}`);
+          if (isExplicitSuccess) {
+            return res.status(500).type("html").send(`<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>تأكيد الدفع</title></head>
+<body style="font-family:Arial,Tahoma,sans-serif;text-align:center;padding:40px;line-height:1.8;background:#fff7ed;color:#7c2d12">
+<h2>تم استلام رجوع الدفع، لكن لم يتم تأكيد الطلب في قاعدة البيانات</h2>
+<p>لا تغلق الصفحة. يرجى فتح رابط تتبع الطلب بعد قليل أو التواصل مع الإدارة برقم الطلب:</p>
+<strong>${String(orderId)}</strong>
+</body></html>`);
+          }
         }
         
         if (false) {
