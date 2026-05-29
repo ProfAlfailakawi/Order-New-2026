@@ -786,13 +786,28 @@ export default function CustomerSite() {
       .slice(0, 5);
   }, [diwaniyaNotifications, activeQatyaOrders]);
 
+  const wobbleNotifications = useMemo(() => {
+    return (diwaniyaNotifications || [])
+      .filter((n: any) => String(n.type || "") === "wobble_alert" && !n.readAt)
+      .slice(0, 3);
+  }, [diwaniyaNotifications]);
+
+  const [isWobbleAlertCollapsed, setIsWobbleAlertCollapsed] = useState(false);
+
   useEffect(() => {
     if (qatyaNotifications.length > 0) {
       setIsQatyaAlertCollapsed(true);
       setIsNearbyRadarPanelCollapsed(true);
       setIsOwnerJoinAlertCollapsed(true);
+      setIsWobbleAlertCollapsed(true);
     }
   }, [qatyaNotifications.length]);
+
+  useEffect(() => {
+    if (wobbleNotifications.length > 0 && !qatyaNotifications.length) {
+      setIsWobbleAlertCollapsed(true);
+    }
+  }, [wobbleNotifications.length, qatyaNotifications.length]);
 
   const refreshRadarOnce = useCallback(async () => {
       if (mockLocation) {
@@ -1240,6 +1255,14 @@ export default function CustomerSite() {
     }
   });
 
+  const [dismissedWobbles, setDismissedWobbles] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("dismissed_wobbles") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
   const dismissQatya = useCallback((id: string) => {
     setDismissedQatyas((prev) => {
       const fresh = [...prev, String(id)];
@@ -1249,6 +1272,33 @@ export default function CustomerSite() {
       return fresh;
     });
   }, []);
+
+  const dismissWobble = useCallback((id: string) => {
+    setDismissedWobbles((prev) => {
+      const fresh = [...prev, String(id)];
+      try {
+        localStorage.setItem("dismissed_wobbles", JSON.stringify(fresh));
+      } catch (e) {}
+      return fresh;
+    });
+  }, []);
+
+  const handleOpenWobbleItem = useCallback(async (n: any) => {
+    const phone = cleanPhoneForSquad(customerPhone || "").slice(-8);
+    try {
+      if (phone && n?.id && n?.sourceKind === "notification") {
+        await fetch("/api/diwaniya-notifications/read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, notificationId: n.id })
+        });
+      }
+    } catch(e) {}
+    setShowSquadModal(true);
+    setActiveSquadId(n.squadId || "");
+    setActiveSquadTab("overview");
+    dismissWobble(n.id);
+  }, [customerPhone, dismissWobble]);
 
   const qatyaAlertItems = useMemo(() => {
     const notificationItems = (qatyaNotifications || [])
@@ -1274,6 +1324,12 @@ export default function CustomerSite() {
       }));
     return [...notificationItems, ...orderItems].slice(0, 5);
   }, [qatyaNotifications, activeQatyaOrders, squadInfo?.name, dismissedQatyas]);
+
+  const wobbleAlertItems = useMemo(() => {
+    return (wobbleNotifications || [])
+      .map((n: any) => ({ ...n, sourceKind: "notification" }))
+      .filter((n: any) => !dismissedWobbles.includes(String(n.id)));
+  }, [wobbleNotifications, dismissedWobbles]);
 
   const hasCustomerCartDock = cart.length > 0 && !isCheckout && !orderSuccess && !selectedProduct;
   const floatingAlertBottom = hasCustomerCartDock ? "bottom-[96px] sm:bottom-[104px]" : "bottom-6";
@@ -5361,6 +5417,98 @@ export default function CustomerSite() {
                           if (n.meta?.orderId) {
                             dismissQatya(n.meta.orderId);
                           }
+                        }}
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/20 hover:bg-rose-500/30 text-white hover:text-rose-200 flex items-center justify-center transition-all shadow-sm z-10"
+                        title="إخفاء التنبيه"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )
+          )}
+        </AnimatePresence>
+
+        {/* Wobble Alerts (نداء الدلة) */}
+        <AnimatePresence>
+          {customerPhone && wobbleAlertItems.length > 0 && (
+            isWobbleAlertCollapsed ? (
+              <motion.button
+                key="wobble-alert-collapsed"
+                initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: 20 }}
+                onClick={() => {
+                  setIsWobbleAlertCollapsed(false);
+                  setIsQatyaAlertCollapsed(true);
+                  setIsNearbyRadarPanelCollapsed(true);
+                  setIsOwnerJoinAlertCollapsed(true);
+                }}
+                className={cn(
+                  "customer-soft-alert-bubble customer-mobile-stable-alert-bubble is-amber fixed rounded-full bg-stone-900 text-white border border-amber-500/30 shadow-2xl z-[86] flex items-center justify-center backdrop-blur-md left-20", // offset left to not overlap with qatya initially
+                  floatingAlertBottomHigh,
+                )}
+                title="نداء الديوانية"
+              >
+                <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+                </span>
+                <span className="text-xl">☕</span>
+                <span className="customer-soft-alert-count bg-amber-500">{wobbleAlertItems.length}</span>
+              </motion.button>
+            ) : (
+              <motion.div
+                key="wobble-alert-expanded"
+                initial={{ opacity: 0, y: 120, scale: 0.92 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 120, scale: 0.92 }}
+                className={cn(
+                  "customer-mobile-stable-alert fixed md:w-[390px] max-h-[min(360px,calc(100dvh-160px))] overflow-y-auto bg-stone-900 border border-amber-500/40 text-white rounded-[32px] p-5 shadow-2xl z-[86] text-right font-sans space-y-4",
+                  floatingAlertPanelSide,
+                  floatingAlertBottom,
+                )}
+              >
+                <div className="flex items-start justify-between gap-3 border-b border-stone-800 pb-3">
+                  <button
+                    onClick={() => setIsWobbleAlertCollapsed(true)}
+                    className="w-8 h-8 rounded-full bg-white/5 text-white/80 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all shrink-0"
+                    title="تصغير إشعار النداء"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <div className="flex-1">
+                    <span className="text-[10px] font-black bg-amber-500/20 text-amber-300 px-3 py-1 rounded-full border border-amber-500/30 shadow-sm animate-pulse">فنجان لك ☕</span>
+                    <h4 className="font-black text-sm mt-2 text-white">نداء من الربع</h4>
+                    <p className="text-[10px] font-bold text-white/70 mt-1">أحد شباب الديوانية قاعد ينادي.</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  {wobbleAlertItems.map((n: any) => (
+                    <div key={n.id} className="relative group/item">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenWobbleItem(n)}
+                        className="w-full relative overflow-hidden p-3 pl-12 bg-amber-950/20 hover:bg-amber-900/30 rounded-2xl border border-amber-500/10 text-right active:scale-[0.98] transition-all"
+                      >
+                        <div className="absolute top-1 left-1 opacity-10 text-4xl pointer-events-none">🔊</div>
+                        <div className="text-[10px] font-black text-amber-400 mb-1">{n.squadName ? `ديوانية ${n.squadName}` : "ديوانية الربع"}</div>
+                        <div className="text-sm font-black text-white leading-relaxed whitespace-pre-wrap">{n.message || "ينادي الربع"}</div>
+                        <div className="text-[10px] font-bold text-white/50 mt-1.5 flex gap-1 items-center justify-end">
+                          <span>من {n.fromName || "عضو"}</span>
+                          <span className="text-amber-500">•</span>
+                          <span>الآن</span>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          dismissWobble(n.id);
                         }}
                         className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/20 hover:bg-rose-500/30 text-white hover:text-rose-200 flex items-center justify-center transition-all shadow-sm z-10"
                         title="إخفاء التنبيه"

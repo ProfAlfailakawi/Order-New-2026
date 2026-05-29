@@ -798,27 +798,34 @@ export function SaduPresenceRug({
                     onClick={() => setShowDallahMenu(false)}
                   />
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 20, x: "-50%", y: "-50%" }}
-                    animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
-                    exit={{ opacity: 0, scale: 0.9, y: 20, x: "-50%", y: "-50%" }}
-                    className="fixed top-1/2 left-1/2 w-[280px] bg-stone-900/95 backdrop-blur-md rounded-3xl border border-amber-900/50 shadow-2xl p-3 z-[110] flex flex-col gap-2"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    style={{ x: "-50%", y: "-50%" }}
+                    className="fixed top-[50%] left-[50%] w-[85vw] max-w-[320px] bg-stone-900/95 backdrop-blur-xl rounded-[28px] border border-amber-500/20 shadow-2xl p-4 z-[110] flex flex-col gap-3"
                   >
-                    <div className="text-center py-2 mb-1 border-b border-white/10">
-                      <h3 className="text-amber-400 font-bold text-sm">خيارات الدلة</h3>
+                    <div className="text-center pb-2 mb-1 border-b border-white/5">
+                      <h3 className="text-amber-400 font-black text-sm drop-shadow-sm">شخدمتك يا يبا؟ ☕</h3>
                     </div>
                     <button
                       onClick={handleDallahRoulette}
-                      className="w-full text-right px-4 py-4 hover:bg-amber-500/20 active:bg-amber-500/30 rounded-2xl transition-colors text-amber-50 text-[13.5px] font-bold flex items-center justify-between gap-3"
+                      className="w-full text-right px-5 py-4 bg-white/5 hover:bg-amber-500/20 active:bg-amber-500/30 rounded-2xl transition-all text-white text-[14px] font-bold flex items-center justify-between gap-4 border border-white/5"
                     >
                       <span className="drop-shadow-sm flex-1 leading-snug">طاق طاق طاقية (القرعة)</span>
-                      <span className="text-2xl shrink-0">🎯</span>
+                      <span className="text-2xl shrink-0 p-2 bg-white/5 rounded-xl">🎯</span>
                     </button>
                     <button
                       onClick={handleGeneralCoffeeCall}
-                      className="w-full text-right px-4 py-4 hover:bg-amber-500/20 active:bg-amber-500/30 rounded-2xl transition-colors text-amber-50 text-[13.5px] font-bold flex items-center justify-between gap-3"
+                      className="w-full text-right px-5 py-4 bg-white/5 hover:bg-amber-500/20 active:bg-amber-500/30 rounded-2xl transition-all text-white text-[14px] font-bold flex items-center justify-between gap-4 border border-white/5"
                     >
-                      <span className="drop-shadow-sm flex-1 leading-snug">نداء القهوة العامة</span>
-                      <span className="text-2xl shrink-0">📢</span>
+                      <span className="drop-shadow-sm flex-1 leading-snug">نداء القهوة العامة للربع</span>
+                      <span className="text-2xl shrink-0 p-2 bg-white/5 rounded-xl">📢</span>
+                    </button>
+                    <button
+                      onClick={() => setShowDallahMenu(false)}
+                      className="w-full text-center px-4 py-3 mt-1 text-white/50 hover:text-white transition-colors text-[13px] font-bold"
+                    >
+                      إلغاء
                     </button>
                   </motion.div>
                 </>
