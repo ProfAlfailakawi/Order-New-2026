@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion } from "motion/react";
 import { X, Phone, User, Landmark, MapPin, Hash, Home, Layers, DollarSign, AlertCircle } from "lucide-react";
 import { Region } from "../types";
+import { heritageMotion } from "../lib/heritageMotion";
 import { normalizeDigits } from "../utils";
 
 export function NewInvoiceModal({ 
@@ -75,13 +76,12 @@ export function NewInvoiceModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-brand/40 backdrop-blur-sm p-4"
+      className="customer-sheet-backdrop fixed inset-0 z-[100] flex items-center justify-center bg-brand/40 backdrop-blur-sm p-4"
       dir="rtl"
     >
       <motion.div
-        initial={{ scale: 0.95, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="bg-[#fafaf9] rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+        {...heritageMotion.customerSheet}
+        className="customer-motion-sheet bg-[#fafaf9] rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
       >
         <div className="new-invoice-soft-head p-6 border-b border-stone-100 flex justify-between items-center bg-white shrink-0 relative">
           <button

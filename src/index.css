@@ -2673,3 +2673,20 @@ html, body, #root {
 }
 
 /* No extra mobile jitter hacks needed here. Fixed via Framer Motion x/y props directly. */
+
+
+/* Heritage Motion Physics tokens - العميل */
+:root{
+  --heritage-motion-fast: 160ms;
+  --heritage-motion-soft: 240ms;
+  --heritage-motion-slow: 420ms;
+  --heritage-ease-natural: cubic-bezier(.22,1,.36,1);
+}
+button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natural)!important;}
+.heritage-breathing-wait{animation:heritageBreath 1.45s ease-in-out infinite;}
+@keyframes heritageBreath{0%,100%{opacity:.58;transform:scale(.985)}50%{opacity:1;transform:scale(1.015)}}
+
+@media(max-width:720px){
+  .customer-sheet-backdrop{align-items:flex-end!important;padding:10px!important;}
+  .customer-motion-sheet{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important;max-height:92vh!important;}
+}
