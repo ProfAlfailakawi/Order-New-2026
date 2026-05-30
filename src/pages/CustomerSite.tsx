@@ -73,15 +73,32 @@ const normalizeCustomerProductKey = (product: any) => {
   return `${normalizedCategory}::${normalizedName}`;
 };
 
+const mergeCustomerFeaturedState = (base: any, extra: any) => {
+  if (!base || !extra) return base || extra;
+  const baseFeatured = isAdminMenuFeatured(base);
+  const extraFeatured = isAdminMenuFeatured(extra);
+  if (!baseFeatured && !extraFeatured) return base;
+  const bestRank = Math.min(getMenuFeaturedRank(base), getMenuFeaturedRank(extra));
+  return {
+    ...base,
+    isMenuFeatured: baseFeatured || extraFeatured,
+    featuredInMenu: base?.featuredInMenu === true || extra?.featuredInMenu === true,
+    isFeatured: base?.isFeatured === true || extra?.isFeatured === true,
+    featured: base?.featured === true || extra?.featured === true,
+    featuredRank: Number.isFinite(bestRank) ? bestRank : 99,
+  };
+};
+
 const preferCustomerDisplayProduct = (current: any, candidate: any) => {
   if (!current) return candidate;
   const currentHasImage = Boolean(current?.imageUrl || current?.image);
   const candidateHasImage = Boolean(candidate?.imageUrl || candidate?.image);
-  if (!currentHasImage && candidateHasImage) return candidate;
+  let preferred = current;
+  if (!currentHasImage && candidateHasImage) preferred = candidate;
   const currentActive = current?.isActive !== false && !current?.isOutOfStock;
   const candidateActive = candidate?.isActive !== false && !candidate?.isOutOfStock;
-  if (!currentActive && candidateActive) return candidate;
-  return current;
+  if (!currentActive && candidateActive) preferred = candidate;
+  return mergeCustomerFeaturedState(preferred, preferred === current ? candidate : current);
 };
 
 const getCustomerVisibleProducts = (list: any[] = []) => {
@@ -95,11 +112,47 @@ const getCustomerVisibleProducts = (list: any[] = []) => {
   return Array.from(grouped.values());
 };
 
+const isAdminMenuFeatured = (product: any) =>
+  product?.isMenuFeatured === true || product?.featuredInMenu === true || product?.isFeatured === true || product?.featured === true;
+
+const getMenuFeaturedRank = (product: any) => {
+  const rank = Number(product?.featuredRank ?? product?.featuredOrder ?? product?.featuredPriority ?? 99);
+  return Number.isFinite(rank) && rank > 0 ? rank : 99;
+};
+
+const getProductIdentityKey = (product: any) => {
+  const normalizedName = normalizeProductSearchText(product?.name || product?.productName || product?.nameAr || "");
+  const normalizedCategory = normalizeProductSearchText(product?.category || "");
+  return `${normalizedCategory}::${normalizedName}`;
+};
+
+const uniqueMenuSignalProducts = (items: any[] = []) => {
+  const seen = new Set<string>();
+  return (Array.isArray(items) ? items : []).filter((product: any) => {
+    const key = getProductIdentityKey(product);
+    if (!key || key === "::" || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
+const getAutoMenuSignalTitle = (tone: string) => {
+  switch (tone) {
+    case "diwaniya": return "أصناف نرشحها حق الديوانية وتلوق ليمعة الربع ☕";
+    case "cart": return "اختيارات تكمل طلبك بدون زحمة 👌";
+    case "morning": return "اختيارات تفتح النفس بهالصبحيات 🌅";
+    case "lunch": return "اختيارات غداها حاضر وطعمها في محله 🍛";
+    case "weekend": return "يمعة الويكند يبي لها هالذوق 🪵";
+    case "night": return "خفايف لطيفة تكمّل السهرة 🌙";
+    default: return "اختيارات منتقاة بعناية لذوقك ✨";
+  }
+};
+
 const getKuwaitiLiveMenuSignal = (products: any[], cart: any[], squadInfo?: any) => {
   const hour = new Date().getHours();
   const day = new Date().getDay();
   const isWeekend = day === 4 || day === 5 || day === 6;
-  const active = (products || []).filter((p: any) => p?.isActive !== false && !p?.isOutOfStock);
+  const active = uniqueMenuSignalProducts((products || []).filter((p: any) => p?.isActive !== false && !p?.isOutOfStock && Number(p?.price || 0) > 0));
   const text = (p: any) => `${p?.name || ""} ${p?.category || ""} ${p?.description || ""}`.toLowerCase();
   const groups = {
     breakfast: active.filter((p: any) => /ريوق|فطور|خبز|جبن|بيض|كبدة|نخي/.test(text(p))),
@@ -108,18 +161,25 @@ const getKuwaitiLiveMenuSignal = (products: any[], cart: any[], squadInfo?: any)
     light: active.filter((p: any) => /خفيف|شورب|سلط|روب|مرق|هريس|جريش/.test(text(p))),
     sweet: active.filter((p: any) => /حلو|كيك|تمر|رهش|لقيمات|كاكاو/.test(text(p))),
   };
-  const pick = (list: any[]) => list.filter(Boolean).slice(0, 3);
-  if (squadInfo?.id && pick(groups.diwaniya).length) return { title: "أصناف تحشم الربع وتنزل بمحلها بالديوانية ☕", subtitle: "", items: pick(groups.diwaniya), tone: "diwaniya" };
+  const adminFeatured = active
+    .filter(isAdminMenuFeatured)
+    .sort((a: any, b: any) => getMenuFeaturedRank(a) - getMenuFeaturedRank(b));
+  const mergePicks = (primary: any[], fallback: any[]) => uniqueMenuSignalProducts([...(primary || []), ...(fallback || [])]).slice(0, 3);
+  const pick = (list: any[]) => mergePicks(adminFeatured, list.filter(Boolean));
+
+  if (squadInfo?.id && pick(groups.diwaniya).length) return { title: getAutoMenuSignalTitle("diwaniya"), subtitle: "", items: pick(groups.diwaniya), tone: "diwaniya" };
   if (cart?.length && active.length) {
     const cartCategories = new Set(cart.map((i: any) => normalizeCategoryName(i.category)));
-    const complement = active.filter((p: any) => !cartCategories.has(normalizeCategoryName(p.category))).slice(0, 3);
-    if (complement.length) return { title: "أصناف تلوق وتكمّل سلتك 👌", subtitle: "", items: complement, tone: "cart" };
+    const complement = active.filter((p: any) => !cartCategories.has(normalizeCategoryName(p.category)));
+    const items = mergePicks(adminFeatured, complement);
+    if (items.length) return { title: getAutoMenuSignalTitle("cart"), subtitle: "", items, tone: "cart" };
   }
-  if (hour < 11 && pick(groups.breakfast).length) return { title: "ريوق طيِّب يفتّح النفس بهالصبحيات 🌅", subtitle: "", items: pick(groups.breakfast), tone: "morning" };
-  if (hour >= 11 && hour < 17 && pick(groups.lunch).length) return { title: "عساه مداخيل العافية وغدا يبرد الجبد يالغالين 🍛", subtitle: "", items: pick(groups.lunch), tone: "lunch" };
-  if (isWeekend && pick(groups.diwaniya).length) return { title: "يمعة الويكند الحلوة يبي لها هالذوق اللي يونس 🪵", subtitle: "", items: pick(groups.diwaniya), tone: "weekend" };
-  if (hour >= 21 && pick(groups.light).length) return { title: "خفايف لطيفة تونس السهرة وتعدل الراس تالي الليل 🌙", subtitle: "", items: pick(groups.light), tone: "night" };
-  return { title: "من اختياراتنا اللي نحبها وتلوق حق ذوقك ✨", subtitle: "", items: active.slice(0, 3), tone: "default" };
+  if (hour < 11 && pick(groups.breakfast).length) return { title: getAutoMenuSignalTitle("morning"), subtitle: "", items: pick(groups.breakfast), tone: "morning" };
+  if (hour >= 11 && hour < 17 && pick(groups.lunch).length) return { title: getAutoMenuSignalTitle("lunch"), subtitle: "", items: pick(groups.lunch), tone: "lunch" };
+  if (isWeekend && pick(groups.diwaniya).length) return { title: getAutoMenuSignalTitle("weekend"), subtitle: "", items: pick(groups.diwaniya), tone: "weekend" };
+  if (hour >= 21 && pick(groups.light).length) return { title: getAutoMenuSignalTitle("night"), subtitle: "", items: pick(groups.light), tone: "night" };
+  const defaultItems = mergePicks(adminFeatured, active);
+  return { title: getAutoMenuSignalTitle("default"), subtitle: "", items: defaultItems, tone: "default" };
 };
 
 const getSharedProductCategories = (source: any, productList: any[] = []) => {
@@ -3982,9 +4042,9 @@ export default function CustomerSite() {
                       <button
                         key={p.id || p.name}
                         onClick={() => setSelectedProduct(p)}
-                        className="group flex items-center gap-3.5 rounded-2xl border border-stone-200/40 bg-white p-3 text-right active:scale-[.98] hover:border-amber-300 hover:shadow-md transition-all duration-300"
+                        className="group flex items-center gap-3.5 rounded-2xl border border-stone-200/40 bg-white p-3 text-right active:scale-[.98] hover:border-amber-300 hover:shadow-md transition-all duration-300 min-h-[92px]"
                       >
-                        <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-stone-50 border border-stone-100 shadow-sm">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden shrink-0 bg-stone-50 border border-stone-100 shadow-sm">
                           <img
                             src={imgUrl}
                             alt={p.name}
@@ -3997,7 +4057,7 @@ export default function CustomerSite() {
                           />
                         </div>
                         <div className="min-w-0 flex-1 space-y-1">
-                          <div className="text-xs sm:text-sm font-extrabold text-brand line-clamp-1 group-hover:text-amber-950 transition-colors duration-200">{p.name}</div>
+                          <div className="text-xs sm:text-sm font-extrabold text-brand line-clamp-2 leading-snug break-words group-hover:text-amber-950 transition-colors duration-200">{p.name}</div>
                           <div className="inline-flex items-center text-[11px] font-black text-amber-800 bg-amber-50/50 px-2 py-0.5 rounded-md">{Number(p.price || 0).toFixed(3)} د.ك</div>
                         </div>
                       </button>

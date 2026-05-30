@@ -2534,15 +2534,40 @@ app.get("/api/debug/order/:id", async (req, res) => {
     return `${category}::${name}`;
   };
 
+  const isCustomerMenuFeatured = (product: any) =>
+    product?.isMenuFeatured === true || product?.featuredInMenu === true || product?.isFeatured === true || product?.featured === true;
+
+  const getCustomerFeaturedRank = (product: any) => {
+    const rank = Number(product?.featuredRank ?? product?.featuredOrder ?? product?.featuredPriority ?? 99);
+    return Number.isFinite(rank) && rank > 0 ? rank : 99;
+  };
+
+  const mergeCustomerFeaturedState = (base: any, extra: any) => {
+    if (!base || !extra) return base || extra;
+    const baseFeatured = isCustomerMenuFeatured(base);
+    const extraFeatured = isCustomerMenuFeatured(extra);
+    if (!baseFeatured && !extraFeatured) return base;
+    const bestRank = Math.min(getCustomerFeaturedRank(base), getCustomerFeaturedRank(extra));
+    return {
+      ...base,
+      isMenuFeatured: baseFeatured || extraFeatured,
+      featuredInMenu: base?.featuredInMenu === true || extra?.featuredInMenu === true,
+      isFeatured: base?.isFeatured === true || extra?.isFeatured === true,
+      featured: base?.featured === true || extra?.featured === true,
+      featuredRank: Number.isFinite(bestRank) ? bestRank : 99,
+    };
+  };
+
   const preferCustomerDisplayProduct = (current: any, candidate: any) => {
     if (!current) return candidate;
     const currentHasImage = Boolean(current?.imageUrl || current?.image);
     const candidateHasImage = Boolean(candidate?.imageUrl || candidate?.image);
-    if (!currentHasImage && candidateHasImage) return candidate;
+    let preferred = current;
+    if (!currentHasImage && candidateHasImage) preferred = candidate;
     const currentActive = current?.isActive !== false && !current?.isOutOfStock;
     const candidateActive = candidate?.isActive !== false && !candidate?.isOutOfStock;
-    if (!currentActive && candidateActive) return candidate;
-    return current;
+    if (!currentActive && candidateActive) preferred = candidate;
+    return mergeCustomerFeaturedState(preferred, preferred === current ? candidate : current);
   };
 
   const getCustomerVisibleProducts = (products: any[] = []) => {

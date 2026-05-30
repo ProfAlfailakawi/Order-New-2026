@@ -30,6 +30,8 @@ export interface Product {
   extras: { name: string; price: number }[];
   addons?: ProductAddon[];
   preparationInstructions?: string;
+  isMenuFeatured?: boolean;
+  featuredRank?: number;
 }
 
 export interface OrderItemAddon {
