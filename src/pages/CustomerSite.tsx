@@ -6335,6 +6335,46 @@ function ProductModal({
     return true;
   };
 
+  const normalizeForSmartRecommendation = (value: any) =>
+    String(value || "")
+      .toLowerCase()
+      .replace(/[\u064B-\u065F\u0670]/g, "")
+      .replace(/[أإآ]/g, "ا")
+      .replace(/ة/g, "ه")
+      .replace(/ى/g, "ي")
+      .replace(/[^\u0600-\u06FFa-z0-9]+/g, " ")
+      .trim();
+
+  const isSmartRecommendationAddon = (addon: any) => {
+    const key = getAddonKey(addon);
+    const limits = getQuantityRuleLimits(addon, quantity);
+    if (!limits.available || selectedAddonsIds.includes(key)) return false;
+    if (isAddonRequired(addon) || addon.quantityRule?.mode === 'auto' || addon.quantityRule?.mode === 'required') return false;
+    if (addon.calculationType === 'per_x_items' || addon.quantityRule?.enabled) return false;
+
+    const addonName = normalizeForSmartRecommendation(addon.name);
+    const productName = normalizeForSmartRecommendation(product.name);
+    if (!addonName) return false;
+    if (productName && (productName.includes(addonName) || addonName.includes(productName))) return false;
+
+    const blockedWords = [
+      'صينيه', 'صينية', 'طبق', 'اطباق', 'وجبه', 'وجبة', 'نفر', 'نفرين', 'نفرين',
+      'حجم', 'مقاس', 'كيلو', 'نصف', 'ربع', 'بوكس', 'بوكسات', 'علبه', 'علبة',
+      'حبه', 'حبة', 'باكج', 'باقة', 'سيت', 'كرتون', 'درزن', 'خروف', 'ذبيحه', 'ذبيحة'
+    ].map(normalizeForSmartRecommendation);
+    if (blockedWords.some((word) => addonName === word || addonName.includes(word))) return false;
+
+    const preferredWords = [
+      'صوص', 'صلصه', 'صلصة', 'دقوس', 'روب', 'لبن', 'سلطه', 'سلطة', 'مشروب',
+      'بيبسي', 'سفن', 'ماء', 'بطاط', 'مقبلات', 'مخلل', 'ليمون', 'مكسرات',
+      'كاجو', 'لوز', 'زبيب', 'بصل', 'شطة', 'شطة', 'حار', 'مرق'
+    ].map(normalizeForSmartRecommendation);
+
+    return preferredWords.some((word) => addonName.includes(word));
+  };
+
+  const smartRecommendedAddons = productAddons.filter(isSmartRecommendationAddon).slice(0, 1);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -6532,7 +6572,7 @@ function ProductModal({
 
           {productAddons.length > 0 && (
             <div className="space-y-4">
-              {productAddons.filter((a: any) => getQuantityRuleLimits(a, quantity).available && !selectedAddonsIds.includes(getAddonKey(a))).slice(0, 1).map((recommendedAddon: any) => {
+              {smartRecommendedAddons.map((recommendedAddon: any) => {
                 const creativeMessages = [
                   // عبارات تشويقية
                   `أضف لمسة سحرية لطلبك مع "${recommendedAddon.name}" ✨`,
@@ -6556,13 +6596,13 @@ function ProductModal({
                   `خلي الطعم يتكلم! أضف "${recommendedAddon.name}" واستمتع 🤤`,
                   `السعادة تكتمل بهالإضافة: "${recommendedAddon.name}" ❤️`
                 ];
-                const charSum = (recommendedAddon.id + product.id).split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+                const charSum = (getAddonKey(recommendedAddon) + product.id).split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
                 const message = creativeMessages[charSum % creativeMessages.length];
                 
                 return (
                 <div 
-                  key={`ai-rec-${recommendedAddon.id}`}
-                  onClick={() => toggleAddon(recommendedAddon.id)}
+                  key={`ai-rec-${getAddonKey(recommendedAddon)}`}
+                  onClick={() => toggleAddon(getAddonKey(recommendedAddon))}
                   className="bg-indigo-50/50 border border-indigo-100 p-3 sm:p-4 rounded-xl flex gap-3 items-start cursor-pointer transition-all hover:bg-indigo-50"
                 >
                   <div className="text-xl">💡</div>
@@ -6583,7 +6623,7 @@ function ProductModal({
                 <label className="text-xs font-bold text-stone-500 block">
                   إضافات للمنتج
                 </label>
-              <div className="product-addons-luxury grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="product-addons-luxury grid grid-cols-1 gap-3 sm:gap-4">
                 {productAddons.map((addon: any) => {
                   const addonKey = getAddonKey(addon);
                   const isSelected = selectedAddonsIds.includes(addonKey);
@@ -6596,7 +6636,7 @@ function ProductModal({
                       key={addonKey}
                       onClick={() => toggleAddon(addonKey)}
                       className={cn(
-                        "addon-lux-card flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer",
+                        "addon-lux-card flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer",
                         !limits.available
                           ? "border-stone-100 bg-stone-50/70 opacity-60 cursor-not-allowed"
                           : effectiveSelected
@@ -6604,7 +6644,7 @@ function ProductModal({
                           : "border-stone-50 bg-stone-50/30 hover:border-stone-100",
                       )}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="addon-lux-title flex items-center gap-3 min-w-0">
                         <div
                           className={cn(
                             "w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all",
@@ -6627,7 +6667,7 @@ function ProductModal({
                         </span>
                       </div>
                       
-                      <div className="flex items-center gap-2">
+                      <div className="addon-lux-meta flex items-center gap-2">
                         {effectiveSelected && (
                            <div className="addon-lux-qty flex items-center gap-2 bg-white rounded-md border border-stone-200" onClick={e => e.stopPropagation()}>
                               <button disabled={!limits.available || currentAddonQty <= limits.min} className="px-2 text-stone-400 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addonKey, -1)}>-</button>
