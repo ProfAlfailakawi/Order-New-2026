@@ -2690,3 +2690,68 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   .customer-sheet-backdrop{align-items:flex-end!important;padding:10px!important;}
   .customer-motion-sheet{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important;max-height:92vh!important;}
 }
+
+/* Customer product modal: keep addon cards readable on desktop and mobile */
+.product-addons-luxury{
+  grid-template-columns:1fr!important;
+}
+.addon-lux-card{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  gap:12px!important;
+}
+.addon-lux-title{
+  width:100%!important;
+  min-width:0!important;
+}
+.addon-lux-title span{
+  white-space:normal!important;
+  word-break:normal!important;
+  overflow-wrap:break-word!important;
+  line-height:1.55!important;
+  text-align:right!important;
+}
+.addon-lux-meta{
+  width:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  flex-wrap:wrap!important;
+  gap:8px!important;
+  min-width:0!important;
+}
+.addon-lux-meta > span{
+  white-space:normal!important;
+  word-break:normal!important;
+  overflow-wrap:break-word!important;
+  line-height:1.35!important;
+  text-align:center!important;
+}
+.addon-lux-qty{
+  flex:0 0 auto!important;
+}
+@media(min-width:640px){
+  .addon-lux-card{
+    flex-direction:row!important;
+    align-items:center!important;
+  }
+  .addon-lux-title{
+    width:auto!important;
+    flex:1 1 48%!important;
+  }
+  .addon-lux-meta{
+    width:auto!important;
+    flex:1 1 48%!important;
+    justify-content:flex-end!important;
+  }
+}
+@media(max-width:520px){
+  .addon-lux-card{
+    padding:14px!important;
+    border-radius:22px!important;
+  }
+  .addon-lux-meta{
+    justify-content:flex-start!important;
+  }
+}

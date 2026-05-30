@@ -1674,3 +1674,68 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
 @media(max-width:640px){.qatya-tabs{top:6px;border-radius:20px}.qatya-tabs button{font-size:12px;padding:10px 4px}.qatya-v14-main{gap:18px!important}.qatya-v14-orb{width:136px!important;height:136px!important}.qatya-ledger-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}.qatya-ledger-tile{padding:14px 8px!important;border-radius:20px!important}.qatya-ledger-tile strong{font-size:19px!important}}
 .order-scroll-cue{display:flex;align-items:center;justify-content:center;gap:8px;margin:-8px auto 14px;color:#7c2d12;font-weight:900;font-size:12px;opacity:.85;animation:orserCue 1.5s ease-in-out infinite;}
 @keyframes orserCue{50%{transform:translateY(4px);opacity:.55}}
+
+/* Customer product modal: keep addon cards readable on desktop and mobile */
+.product-addons-luxury{
+  grid-template-columns:1fr!important;
+}
+.addon-lux-card{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  gap:12px!important;
+}
+.addon-lux-title{
+  width:100%!important;
+  min-width:0!important;
+}
+.addon-lux-title span{
+  white-space:normal!important;
+  word-break:normal!important;
+  overflow-wrap:break-word!important;
+  line-height:1.55!important;
+  text-align:right!important;
+}
+.addon-lux-meta{
+  width:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  flex-wrap:wrap!important;
+  gap:8px!important;
+  min-width:0!important;
+}
+.addon-lux-meta > span{
+  white-space:normal!important;
+  word-break:normal!important;
+  overflow-wrap:break-word!important;
+  line-height:1.35!important;
+  text-align:center!important;
+}
+.addon-lux-qty{
+  flex:0 0 auto!important;
+}
+@media(min-width:640px){
+  .addon-lux-card{
+    flex-direction:row!important;
+    align-items:center!important;
+  }
+  .addon-lux-title{
+    width:auto!important;
+    flex:1 1 48%!important;
+  }
+  .addon-lux-meta{
+    width:auto!important;
+    flex:1 1 48%!important;
+    justify-content:flex-end!important;
+  }
+}
+@media(max-width:520px){
+  .addon-lux-card{
+    padding:14px!important;
+    border-radius:22px!important;
+  }
+  .addon-lux-meta{
+    justify-content:flex-start!important;
+  }
+}
