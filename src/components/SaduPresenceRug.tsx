@@ -866,8 +866,9 @@ export function SaduPresenceRug({
                       delay: i * 0.04,
                     }}
                     className={cn(
-                      "w-full sm:w-[130px] sm:shrink-0 rounded-2xl px-2.5 py-2 sm:px-3 sm:py-2.5 text-right transition-all backdrop-blur-md border",
+                      "w-full sm:w-[130px] sm:shrink-0 rounded-2xl px-2.5 py-2 sm:px-3 sm:py-2.5 text-right transition-all backdrop-blur-md border relative overflow-hidden",
                       wobbling && "animate-sadu-wobble-active ring-2 ring-amber-500",
+                      entity.isAuto && isOnline && "ring-2 ring-orange-500/50 shadow-[0_0_15px_rgba(239,68,68,0.35)]",
                       isMe
                         ? "bg-emerald-400/95 text-stone-950 border-emerald-200 shadow-lg"
                         : isRadarGuest
@@ -879,6 +880,14 @@ export function SaduPresenceRug({
                               : "bg-white/10 backdrop-blur-md text-stone-100 border-white/10 hover:border-amber-500/30 hover:bg-white/20"
                     )}
                   >
+                    {entity.isAuto && isOnline && (
+                      <div className="absolute inset-x-0 bottom-0 h-4 bg-gradient-to-t from-red-650/40 via-orange-500/15 to-transparent pointer-events-none z-0 overflow-hidden">
+                        <div className="absolute inset-0 bg-red-600/30 animate-pulse blur-xs" />
+                        <span className="absolute bottom-0.5 left-1.5 text-[6.5px] font-black text-amber-350 tracking-wide animate-pulse">
+                          جمر 🔥
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between gap-1.5 sm:gap-2.5">
                       <span className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-full bg-stone-900/60 flex items-center justify-center text-base sm:text-lg border border-white/10 relative">
                         {isRadarGuest ? "📡" : cupMeta.icon}

@@ -722,6 +722,7 @@ export default function CustomerSite() {
   }, [fetchSquadGamificationFor]);
 
   // Geofencing background states
+  const [zeroClickWelcome, setZeroClickWelcome] = useState<{ squadName: string; name: string } | null>(null);
   const [mockLocation, setMockLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [hideMockOption, setHideMockOption] = useState(false);
   const [radarNearbySquads, setRadarNearbySquads] = useState<any[]>([]);
@@ -1035,6 +1036,48 @@ export default function CustomerSite() {
           const userLat = mockLocation.lat;
           const userLng = mockLocation.lng;
           setRadarAccuracy(5);
+
+          // Zero-Click Proximity Presence check for viewed squad
+          (() => {
+            const currentPhone = customerPhone || "";
+            if (currentPhone && currentPhone.length >= 8 && activeSquadId && squadInfo) {
+              const sLat = squadInfo.lat ?? squadInfo.location?.lat;
+              const sLng = squadInfo.lng ?? squadInfo.location?.lng;
+              if (sLat !== undefined && sLng !== undefined) {
+                const dist = calculateDistance(userLat, userLng, Number(sLat), Number(sLng));
+                const limit = getSquadSpecificGeofenceDistance(squadInfo, settings);
+                if (dist < limit) {
+                  const cleanCurrent = cleanPhoneForSquad(currentPhone).slice(-8);
+                  const isPresent = squadPresence.some((p: any) => cleanPhoneForSquad(p.phone).slice(-8) === cleanCurrent);
+                  if (!isPresent) {
+                    const lastAutoTimeVal = parseFloat(sessionStorage.getItem(`last_auto_check_${activeSquadId}`) || "0");
+                    if (Date.now() - lastAutoTimeVal > 45000) {
+                      sessionStorage.setItem(`last_auto_check_${activeSquadId}`, String(Date.now()));
+                      fetch("/api/squad-presence", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          squadId: activeSquadId,
+                          phone: currentPhone,
+                          name: customerName || "عضو",
+                          action: "in",
+                          isAuto: true
+                        })
+                      }).then(res => {
+                        if (res.ok) {
+                          fetchSquadGamification();
+                          setZeroClickWelcome({
+                            squadName: squadInfo.name,
+                            name: customerName || "أحد الربع"
+                          });
+                        }
+                      }).catch(e => console.error(e));
+                    }
+                  }
+                }
+              }
+            }
+          })();
           setRadarStatus("ready");
           setRadarStatusMsg("الموقع التجريبي مفعّل بنجاح. نحن الحين جنب ديوانية قريبة 🧪");
 
@@ -1095,6 +1138,48 @@ export default function CustomerSite() {
        setRadarStatus("ready");
        setRadarStatusMsg(`الرادار شغال. إذا كنت قريب من ديوانية، بنطلع لك بطاقة الدخول أو التبديل.`);
 
+       // Zero-Click Proximity Presence check for viewed squad
+       (() => {
+         const currentPhone = customerPhone || "";
+         if (currentPhone && currentPhone.length >= 8 && activeSquadId && squadInfo) {
+           const sLat = squadInfo.lat ?? squadInfo.location?.lat;
+           const sLng = squadInfo.lng ?? squadInfo.location?.lng;
+           if (sLat !== undefined && sLng !== undefined) {
+             const dist = calculateDistance(userLat, userLng, Number(sLat), Number(sLng));
+             const limit = getSquadSpecificGeofenceDistance(squadInfo, settings);
+             if (dist < limit) {
+               const cleanCurrent = cleanPhoneForSquad(currentPhone).slice(-8);
+               const isPresent = squadPresence.some((p: any) => cleanPhoneForSquad(p.phone).slice(-8) === cleanCurrent);
+               if (!isPresent) {
+                 const lastAutoTimeVal = parseFloat(sessionStorage.getItem(`last_auto_check_${activeSquadId}`) || "0");
+                 if (Date.now() - lastAutoTimeVal > 45000) {
+                   sessionStorage.setItem(`last_auto_check_${activeSquadId}`, String(Date.now()));
+                   fetch("/api/squad-presence", {
+                     method: "POST",
+                     headers: { "Content-Type": "application/json" },
+                     body: JSON.stringify({
+                       squadId: activeSquadId,
+                       phone: currentPhone,
+                       name: customerName || "عضو",
+                       action: "in",
+                       isAuto: true
+                     })
+                   }).then(res => {
+                     if (res.ok) {
+                       fetchSquadGamification();
+                       setZeroClickWelcome({
+                         squadName: squadInfo.name,
+                         name: customerName || "أحد الربع"
+                       });
+                     }
+                   }).catch(e => console.error(e));
+                 }
+               }
+             }
+           }
+         }
+       })();
+
        const nearby: any[] = [];
 
        activeSquads.forEach((sq: any) => {
@@ -1141,6 +1226,23 @@ export default function CustomerSite() {
        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
      };
   }, [activeSquads, activeSquadId, radarDismissedList, myGeofenceRequests, settings, userSquads, mockLocation]);
+
+  // Listen for simulated automatic welcome events
+  useEffect(() => {
+    const handleAutoWelcome = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) {
+        setZeroClickWelcome({
+          squadName: detail.squadName,
+          name: detail.name
+        });
+      }
+    };
+    window.addEventListener("squad_auto_welcome", handleAutoWelcome);
+    return () => {
+      window.removeEventListener("squad_auto_welcome", handleAutoWelcome);
+    };
+  }, []);
 
   // Polling for approved geofence requests
   useEffect(() => {
@@ -3398,6 +3500,45 @@ export default function CustomerSite() {
       </AnimatePresence>
 
       <DynamicEnvironment />
+
+      {/* listen for simulated auto check in events */}
+      <AnimatePresence>
+        {zeroClickWelcome && (
+          <motion.div
+            initial={{ opacity: 0, y: -100, scale: 0.9, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+            exit={{ opacity: 0, y: -60, scale: 0.9, x: "-50%" }}
+            className="fixed top-6 left-1/2 -translate-x-1/2 w-[92%] sm:w-[480px] bg-slate-950/95 border-2 border-orange-500/50 backdrop-blur-md text-right rounded-[24px] p-5 shadow-2xl z-[9999] text-white overflow-hidden shadow-orange-950/40"
+          >
+            {/* Pulsing Ember Background Glow */}
+            <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-orange-600/25 rounded-full blur-2xl animate-pulse pointer-events-none" />
+            
+            <div className="flex items-start justify-between gap-4 relative z-10">
+              <button
+                onClick={() => setZeroClickWelcome(null)}
+                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/15 text-stone-300 hover:text-white flex items-center justify-center transition-all mt-0.5"
+                type="button"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              
+              <div className="flex-1 text-right">
+                <span className="text-[10px] font-black bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full border border-orange-500/25 tracking-wide">
+                  رادار الحضور التلقائي المأهول (Zero-Click) 📡🔥
+                </span>
+                
+                <h4 className="font-sans font-black text-sm text-amber-100 mt-2.5">
+                  يا هلا بالربع! تم الدخول تلقائياً
+                </h4>
+                
+                <p className="font-sans font-bold text-xs text-stone-300 leading-relaxed mt-1.5 animate-pulse">
+                  حياك الله يا <span className="text-orange-400 font-black">{zeroClickWelcome.name}</span> في ديوانية <span className="text-amber-100 font-black">{zeroClickWelcome.squadName}</span>! رادارنا لقط حضورك وتم الترحيب بك على السجادة، واشتعل الجمر الافتراضي الدافي 🔥 تحت الدلة إيذاناً ببدء السهرة المقندة ☕✨.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <motion.div
         initial={{ opacity: 0 }}

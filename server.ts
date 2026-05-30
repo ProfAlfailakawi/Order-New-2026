@@ -2021,7 +2021,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const squad = squads.find((s: any) => String(s.id) === String(squadId));
       const filtered = all.filter((p: any) => !(String(p.squadId) === String(squadId) && cleanPhone(p.phone) === cleanTarget));
       if (action === "in") {
-        filtered.push({ squadId: String(squadId), phone: cleanTarget, name: name || "عضو", checkedInAt: now, lastSeenAt: now });
+        filtered.push({ squadId: String(squadId), phone: cleanTarget, name: name || "عضو", checkedInAt: now, lastSeenAt: now, isAuto: !!req.body.isAuto });
       } else if (action === "wobble") {
         const existing = all.find((p: any) => String(p.squadId) === String(squadId) && cleanPhone(p.phone) === cleanTarget);
         if (existing) {
