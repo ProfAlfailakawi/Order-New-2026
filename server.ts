@@ -1866,42 +1866,91 @@ app.get("/api/debug/order/:id", async (req, res) => {
     }
     try {
       const cleanQPhone = cleanPhone(phone);
+      let isAutoApproved = false;
+      let squadOwnerPhone = "";
+      
       const ok = await updateAppDataAtomically((current: any) => {
         const reqs = Array.isArray(current.geofenceJoinRequests) ? [...current.geofenceJoinRequests] : [];
-        const squads = Array.isArray(current.squads) ? current.squads : [];
-        const squad = squads.find((s: any) => String(s.id) === String(squadId));
+        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
+        const squadIdx = squads.findIndex((s: any) => String(s.id) === String(squadId));
+        if (squadIdx === -1) return null;
+        
+        const squad = { ...squads[squadIdx] };
+        squad.membersList = Array.isArray(squad.membersList) ? [...squad.membersList] : [];
+        const ownerPhone = cleanPhone(squad.phone || "");
+        squadOwnerPhone = ownerPhone;
+        const isOwner = ownerPhone === cleanQPhone;
+        const isMember = squad.membersList.some((m: any) => cleanPhone(m.phone) === cleanQPhone);
         
         // Remove existing pending/rejected from same user for same squad to overwrite nicely
         const filtered = reqs.filter((r: any) => !(cleanPhone(r.phone) === cleanQPhone && String(r.squadId) === String(squadId)));
         
-        filtered.push({
-          phone,
-          name: name || "عضو قريب",
-          squadId: String(squadId),
-          distance: Number(distance || 0),
-          timestamp: new Date().toISOString(),
-          status: "pending"
-        });
-        const diwaniyaNotifications = pushDiwaniyaNotification(current.diwaniyaNotifications || [], {
-          type: "join_request",
-          squadId,
-          squadName: squad?.name || "",
-          toPhone: squad?.phone || "",
-          fromPhone: phone,
-          fromName: name || "عضو قريب",
-          title: "واحد قريب من ديوانيتكم",
-          message: `${name || "أحد الربع"} ناطر موافقة المعزب.`,
-          meta: { distance: Number(distance || 0) }
-        });
-        return { geofenceJoinRequests: filtered, diwaniyaNotifications };
+        if (isOwner || isMember) {
+          isAutoApproved = true;
+          // Add as member if owner and not yet in membersList
+          if (isOwner && !isMember) {
+            squad.membersList.push({
+              phone,
+              name: name || "المعزب",
+              points: 0,
+              joinedAt: new Date().toISOString()
+            });
+            squad.members = squad.membersList.length;
+            squads[squadIdx] = squad;
+          }
+          
+          filtered.push({
+            phone,
+            name: name || (isOwner ? "المعزب" : "عضو قريب"),
+            squadId: String(squadId),
+            distance: Number(distance || 0),
+            timestamp: new Date().toISOString(),
+            status: "approved"
+          });
+          
+          const diwaniyaNotifications = pushDiwaniyaNotification(current.diwaniyaNotifications || [], {
+            type: "join_approved",
+            squadId,
+            squadName: squad?.name || "",
+            toPhone: phone,
+            fromPhone: ownerPhone,
+            fromName: "الديوانية",
+            title: "تم تفريش السجادة 🎉",
+            message: isOwner ? "تم تفعيل موقعك الافتراضي ونزولك على سجادة ديوانيتك يا معزب!" : "أهلاً بك مجدداً في ديوانيتك! تم رصد وجودك ودخولك تلقائياً.",
+            meta: { distance: Number(distance || 0) }
+          });
+          
+          return { geofenceJoinRequests: filtered, squads, diwaniyaNotifications };
+        } else {
+          filtered.push({
+            phone,
+            name: name || "عضو قريب",
+            squadId: String(squadId),
+            distance: Number(distance || 0),
+            timestamp: new Date().toISOString(),
+            status: "pending"
+          });
+          
+          const diwaniyaNotifications = pushDiwaniyaNotification(current.diwaniyaNotifications || [], {
+            type: "join_request",
+            squadId,
+            squadName: squad?.name || "",
+            toPhone: ownerPhone,
+            fromPhone: phone,
+            fromName: name || "عضو قريب",
+            title: "واحد قريب من ديوانيتكم",
+            message: `${name || "أحد الربع"} ناطر موافقة المعزب.`,
+            meta: { distance: Number(distance || 0) }
+          });
+          
+          return { geofenceJoinRequests: filtered, diwaniyaNotifications };
+        }
       });
       if (!ok) throw new Error("Failed to save geofence request");
-      const ownerPhone = await getAppData()
-        .then((current: any) => (Array.isArray(current.squads) ? current.squads : []).find((s: any) => String(s.id) === String(squadId))?.phone || "")
-        .catch(() => "");
-      if (ownerPhone) {
+      
+      if (!isAutoApproved && squadOwnerPhone) {
         void sendDiwaniyaExternalPush({
-          toPhones: [ownerPhone],
+          toPhones: [squadOwnerPhone],
           type: "join_request",
           title: "طلب دخول قريب",
           body: `${name || "أحد الربع"} عند الديوانية وناطر موافقتك.`,
@@ -1909,7 +1958,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           url: "/?showSquads=true"
         });
       }
-      res.json({ success: true });
+      res.json({ success: true, autoApproved: isAutoApproved });
     } catch(e) {
       res.status(500).json({ error: String(e) });
     }
