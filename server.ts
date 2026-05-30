@@ -2535,7 +2535,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   };
 
   const isCustomerMenuFeatured = (product: any) =>
-    product?.isMenuFeatured === true || product?.featuredInMenu === true || product?.isFeatured === true || product?.featured === true;
+    product?.isMenuFeatured === true || product?.featuredInMenu === true;
 
   const getCustomerFeaturedRank = (product: any) => {
     const rank = Number(product?.featuredRank ?? product?.featuredOrder ?? product?.featuredPriority ?? 99);
