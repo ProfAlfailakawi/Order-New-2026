@@ -2516,6 +2516,45 @@ app.get("/api/debug/order/:id", async (req, res) => {
     return products;
   };
 
+
+  const normalizeCustomerProductText = (value: any) =>
+    String(value || "")
+      .toLowerCase()
+      .replace(/[إأآا]/g, "ا")
+      .replace(/[ة]/g, "ه")
+      .replace(/[ى]/g, "ي")
+      .replace(/[ؤ]/g, "و")
+      .replace(/[ئ]/g, "ي")
+      .replace(/[ًٌٍَُِّْـ]/g, "")
+      .trim();
+
+  const getCustomerProductKey = (product: any) => {
+    const name = normalizeCustomerProductText(product?.name || product?.productName || product?.nameAr || "");
+    const category = normalizeCustomerProductText(product?.category || "");
+    return `${category}::${name}`;
+  };
+
+  const preferCustomerDisplayProduct = (current: any, candidate: any) => {
+    if (!current) return candidate;
+    const currentHasImage = Boolean(current?.imageUrl || current?.image);
+    const candidateHasImage = Boolean(candidate?.imageUrl || candidate?.image);
+    if (!currentHasImage && candidateHasImage) return candidate;
+    const currentActive = current?.isActive !== false && !current?.isOutOfStock;
+    const candidateActive = candidate?.isActive !== false && !candidate?.isOutOfStock;
+    if (!currentActive && candidateActive) return candidate;
+    return current;
+  };
+
+  const getCustomerVisibleProducts = (products: any[] = []) => {
+    const grouped = new Map<string, any>();
+    (Array.isArray(products) ? products : []).forEach((product: any) => {
+      const key = getCustomerProductKey(product);
+      if (!key || key === "::") return;
+      grouped.set(key, preferCustomerDisplayProduct(grouped.get(key), product));
+    });
+    return Array.from(grouped.values());
+  };
+
   // 5. Top Products
   app.get("/api/top-products", async (req, res) => {
     try {
@@ -2523,7 +2562,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const data = d.data() || {};
       const allProducts = [...(data.products || []), ...(data.supplierCopies || [])];
 
-      let products = processProducts(allProducts);
+      let products = getCustomerVisibleProducts(processProducts(allProducts));
       const allInvoices = data.invoices || [];
 
       const productStats: any = {};
@@ -2695,7 +2734,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const d = await getAppDataRef();
       const data = d.data() || {};
       const allProducts = [...(data.products || []), ...(data.supplierCopies || [])];
-      let products = processProducts(allProducts);
+      let products = getCustomerVisibleProducts(processProducts(allProducts));
 
       // Sort alphabetically
       products.sort((a: any, b: any) =>

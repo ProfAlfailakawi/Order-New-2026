@@ -66,6 +66,35 @@ const normalizeProductSearchText = (value?: string) =>
     .trim();
 
 
+
+const normalizeCustomerProductKey = (product: any) => {
+  const normalizedName = normalizeProductSearchText(product?.name || product?.productName || product?.nameAr || "");
+  const normalizedCategory = normalizeProductSearchText(product?.category || "");
+  return `${normalizedCategory}::${normalizedName}`;
+};
+
+const preferCustomerDisplayProduct = (current: any, candidate: any) => {
+  if (!current) return candidate;
+  const currentHasImage = Boolean(current?.imageUrl || current?.image);
+  const candidateHasImage = Boolean(candidate?.imageUrl || candidate?.image);
+  if (!currentHasImage && candidateHasImage) return candidate;
+  const currentActive = current?.isActive !== false && !current?.isOutOfStock;
+  const candidateActive = candidate?.isActive !== false && !candidate?.isOutOfStock;
+  if (!currentActive && candidateActive) return candidate;
+  return current;
+};
+
+const getCustomerVisibleProducts = (list: any[] = []) => {
+  const grouped = new Map<string, any>();
+  (Array.isArray(list) ? list : []).forEach((product: any) => {
+    const key = normalizeCustomerProductKey(product);
+    if (!key || key === "::") return;
+    const current = grouped.get(key);
+    grouped.set(key, preferCustomerDisplayProduct(current, product));
+  });
+  return Array.from(grouped.values());
+};
+
 const getKuwaitiLiveMenuSignal = (products: any[], cart: any[], squadInfo?: any) => {
   const hour = new Date().getHours();
   const day = new Date().getDay();
@@ -524,7 +553,7 @@ export default function CustomerSite() {
   const [products, setProducts] = useState<Product[]>(() => {
     try {
       const cached = localStorage.getItem("cached_products");
-      return cached ? JSON.parse(cached) : [];
+      return cached ? getCustomerVisibleProducts(JSON.parse(cached)) : [];
     } catch (e) {
       return [];
     }
@@ -539,7 +568,7 @@ export default function CustomerSite() {
   const [topProducts, setTopProducts] = useState<Product[]>(() => {
     try {
       const cached = localStorage.getItem("cached_top_products");
-      return cached ? JSON.parse(cached) : [];
+      return cached ? getCustomerVisibleProducts(JSON.parse(cached)) : [];
     } catch (e) {
       return [];
     }
@@ -2260,7 +2289,7 @@ export default function CustomerSite() {
         await Promise.all([
           fetchWithRetry("/api/products").then((allProducts) => {
             if (!isMounted) return;
-            const validProducts = Array.isArray(allProducts) ? allProducts : [];
+            const validProducts = getCustomerVisibleProducts(Array.isArray(allProducts) ? allProducts : []);
             setProducts(validProducts);
             try {
               localStorage.setItem("cached_products", JSON.stringify(validProducts));
@@ -2269,7 +2298,7 @@ export default function CustomerSite() {
           }),
           fetchWithRetry("/api/top-products").then(d => { 
             if (isMounted) {
-              const list = d || [];
+              const list = getCustomerVisibleProducts(Array.isArray(d) ? d : []);
               setTopProducts(list);
               try {
                 localStorage.setItem("cached_top_products", JSON.stringify(list));
@@ -6689,6 +6718,8 @@ function ProductModal({
                   {
                     id: "",
                     productId: product.id,
+                    supplierId: (product as any).supplierId,
+                    supplierName: (product as any).supplierName || (product as any).supplier,
                     name: product.name,
                     image:
                       (product as any).imageUrl ||
