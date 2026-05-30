@@ -113,7 +113,7 @@ const getCustomerVisibleProducts = (list: any[] = []) => {
 };
 
 const isAdminMenuFeatured = (product: any) =>
-  product?.isMenuFeatured === true || product?.featuredInMenu === true || product?.isFeatured === true || product?.featured === true;
+  product?.isMenuFeatured === true || product?.featuredInMenu === true;
 
 const getMenuFeaturedRank = (product: any) => {
   const rank = Number(product?.featuredRank ?? product?.featuredOrder ?? product?.featuredPriority ?? 99);
@@ -452,6 +452,22 @@ const normalizeProductForAddons = (product: any) => {
 
 const getAddonKey = (addon: any) =>
   String(addon?.id || addon?.addonId || addon?.name || "");
+
+const cleanCustomerAddonLabel = (value: any): string => {
+  const original = String(value || "").trim();
+  if (!original) return "";
+
+  const cleaned = original
+    .replace(/\s*[\(\[\{]?\s*المقترح\s*[0-9٠-٩۰-۹]+\s*[\)\]\}]?/g, " ")
+    .replace(/\s*[\(\[\{]?\s*كل\s*[0-9٠-٩۰-۹]+\s*أ?طباق?\s*تحسب\s*مر[ةه]\s*[\)\]\}]?/g, " ")
+    .replace(/\s*[\(\[\{]?\s*تحسب\s*مر[ةه]\s*[\)\]\}]?/g, " ")
+    .replace(/\s*[-–—|•:،,]+\s*$/g, "")
+    .replace(/^\s*[-–—|•:،,]+\s*/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  return cleaned || original;
+};
 
 export default function CustomerSite() {
   const [isPhoneLayout, setIsPhoneLayout] = useState(false);
@@ -6633,28 +6649,29 @@ function ProductModal({
           {productAddons.length > 0 && (
             <div className="space-y-4">
               {smartRecommendedAddons.map((recommendedAddon: any) => {
+                const recommendedAddonName = cleanCustomerAddonLabel(recommendedAddon.name);
                 const creativeMessages = [
                   // عبارات تشويقية
-                  `أضف لمسة سحرية لطلبك مع "${recommendedAddon.name}" ✨`,
-                  `السر في التفاصيل! جرب إضافة "${recommendedAddon.name}" لتجربة لا تُنسى 😋`,
-                  `تخيل الطعم مع "${recommendedAddon.name}"... مزيج لا يقاوم! 🔥`,
-                  `اختيار الذواقة الأول: إضافة "${recommendedAddon.name}" مع هذا الطبق 🌟`,
-                  `لا تفوت التجربة المتكاملة مع "${recommendedAddon.name}" 🤌`,
-                  `مزيج مذهل! الكثير يفضلون إضافة "${recommendedAddon.name}" لتعزيز النكهة 😋`,
+                  `أضف لمسة سحرية لطلبك مع "${recommendedAddonName}" ✨`,
+                  `السر في التفاصيل! جرب إضافة "${recommendedAddonName}" لتجربة لا تُنسى 😋`,
+                  `تخيل الطعم مع "${recommendedAddonName}"... مزيج لا يقاوم! 🔥`,
+                  `اختيار الذواقة الأول: إضافة "${recommendedAddonName}" مع هذا الطبق 🌟`,
+                  `لا تفوت التجربة المتكاملة مع "${recommendedAddonName}" 🤌`,
+                  `مزيج مذهل! الكثير يفضلون إضافة "${recommendedAddonName}" لتعزيز النكهة 😋`,
                   // عبارات فيها تفاعل
-                  `ناقصك شيء واحد عشان يكمل الطلب.. "${recommendedAddon.name}"! 😉`,
-                  `وش رأيك تكملها وتضيف "${recommendedAddon.name}"؟ ماراح تندم 😍`,
-                  `الأغلبية يطلبون "${recommendedAddon.name}" مع هذا الطلب.. جربه! 👍`,
+                  `ناقصك شيء واحد عشان يكمل الطلب.. "${recommendedAddonName}"! 😉`,
+                  `وش رأيك تكملها وتضيف "${recommendedAddonName}"؟ ماراح تندم 😍`,
+                  `الأغلبية يطلبون "${recommendedAddonName}" مع هذا الطلب.. جربه! 👍`,
                   // عبارات وصفية ومغرية
-                  `غوص في بحر النكهات المتناغمة مع "${recommendedAddon.name}" 🌊`,
-                  `خلي طلبك غير مع إضافة "${recommendedAddon.name}" المذهلة 💯`,
-                  `الطعم الأصلي يحلى أكثر مع "${recommendedAddon.name}" 👑`,
-                  `إضافة صغيرة تصنع فرق كبير: "${recommendedAddon.name}" ✨`,
+                  `غوص في بحر النكهات المتناغمة مع "${recommendedAddonName}" 🌊`,
+                  `خلي طلبك غير مع إضافة "${recommendedAddonName}" المذهلة 💯`,
+                  `الطعم الأصلي يحلى أكثر مع "${recommendedAddonName}" 👑`,
+                  `إضافة صغيرة تصنع فرق كبير: "${recommendedAddonName}" ✨`,
                   // عبارات سريعة ومرحة
-                  `تدلع نفسك؟ ضيف "${recommendedAddon.name}" وما عليك 😎`,
-                  `ليش تاكله عادي في حين ممكن تخليه أسطوري مع "${recommendedAddon.name}"؟ 🚀`,
-                  `خلي الطعم يتكلم! أضف "${recommendedAddon.name}" واستمتع 🤤`,
-                  `السعادة تكتمل بهالإضافة: "${recommendedAddon.name}" ❤️`
+                  `تدلع نفسك؟ ضيف "${recommendedAddonName}" وما عليك 😎`,
+                  `ليش تاكله عادي في حين ممكن تخليه أسطوري مع "${recommendedAddonName}"؟ 🚀`,
+                  `خلي الطعم يتكلم! أضف "${recommendedAddonName}" واستمتع 🤤`,
+                  `السعادة تكتمل بهالإضافة: "${recommendedAddonName}" ❤️`
                 ];
                 const charSum = (getAddonKey(recommendedAddon) + product.id).split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
                 const message = creativeMessages[charSum % creativeMessages.length];
@@ -6686,6 +6703,7 @@ function ProductModal({
               <div className="product-addons-luxury grid grid-cols-1 gap-3 sm:gap-4">
                 {productAddons.map((addon: any) => {
                   const addonKey = getAddonKey(addon);
+                  const addonDisplayName = cleanCustomerAddonLabel(addon.name);
                   const isSelected = selectedAddonsIds.includes(addonKey);
                   const limits = getQuantityRuleLimits(addon, quantity);
                   const isMandatory = isAddonRequired(addon) || addon.quantityRule?.mode === 'auto';
@@ -6723,7 +6741,7 @@ function ProductModal({
                             effectiveSelected ? "text-brand" : "text-stone-500",
                           )}
                         >
-                          {addon.name}
+                          {addonDisplayName}
                         </span>
                       </div>
                       
@@ -6749,14 +6767,8 @@ function ProductModal({
                         {isMandatory && (
                             <span className="text-[9px] font-bold text-red-500 mr-2 border border-red-200 bg-red-50 px-1 rounded block sm:inline whitespace-nowrap">إلزامي</span>
                         )}
-                        {addon.calculationType === 'per_x_items' && (
-                            <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1 rounded block sm:inline whitespace-nowrap">كل {addon.xItemsThreshold || 1} أطباق تحسب مرة</span>
-                        )}
                         {!limits.available && (
                             <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1 rounded block sm:inline whitespace-nowrap">متاحة من كمية {limits.minProductQty}+</span>
-                        )}
-                        {limits.available && addon.quantityRule?.enabled && (
-                            <span className="text-[9px] font-bold text-stone-500 bg-stone-50 border border-stone-100 px-1 rounded block sm:inline whitespace-nowrap">المقترح {limits.suggested}</span>
                         )}
                       </div>
                     </div>
@@ -7205,7 +7217,7 @@ function CheckoutOverlay({
                                 key={`addon-${addon.addonId}-${idx}`}
                                 className="text-[9px] font-bold bg-accent/5 text-accent px-2 py-1 rounded-md border border-accent/10"
                               >
-                                +{addon.quantity} {addon.name} {(addon.payableQuantity === 0 || addon.price === 0) && !addon.isHiddenPrice ? '(مجاني)' : addon.price > 0 && !addon.isHiddenPrice ? `(${addon.price} د.ك)` : ''}
+                                +{addon.quantity} {cleanCustomerAddonLabel(addon.name)} {(addon.payableQuantity === 0 || addon.price === 0) && !addon.isHiddenPrice ? '(مجاني)' : addon.price > 0 && !addon.isHiddenPrice ? `(${addon.price} د.ك)` : ''}
                               </span>
                             ),
                           )}
