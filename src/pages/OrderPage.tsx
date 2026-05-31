@@ -975,24 +975,89 @@ export default function OrderPage() {
               animate={{ opacity: 1 }}
               className="space-y-4 pb-20"
             >
-              <div className="order-detail-card bg-white rounded-3xl p-5 border border-stone-100 shadow-sm flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] text-stone-400 font-extrabold uppercase mb-1 tracking-widest">
-                    معلومات العميل
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-extrabold text-brand text-lg">
-                      {orders[0].customerName}
-                    </h3>
-                    <span className="text-stone-300">•</span>
-                    <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-100 shadow-sm">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span className="font-extrabold text-xs">
-                        {(orders[0] as any).customerPoints || 0} نقطة
+              {/* Elegant VIP Premium Customer Profile */}
+              <div className="relative overflow-hidden bg-gradient-to-br from-[#183326] via-[#10241a] to-[#0a1811] text-white rounded-[40px] p-6 sm:p-8 border border-[#1e3d2e] shadow-[0_24px_60px_rgba(24,51,38,0.2)]">
+                {/* Visual accents */}
+                <div className="absolute -top-12 -left-12 w-48 h-48 bg-accent/10 rounded-full blur-[64px] pointer-events-none" />
+                <div className="absolute -bottom-16 -right-16 w-64 h-64 bg-[#183326]/40 rounded-full blur-[96px] pointer-events-none" />
+                
+                <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  {/* Left: Avatar & Name details */}
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="w-16 h-16 rounded-[24px] bg-gradient-to-tr from-accent to-[#fbbf24] flex items-center justify-center shadow-lg shadow-accent/25 border border-white/20">
+                        <Crown className="w-8 h-8 text-white drop-shadow-sm animate-pulse" />
+                      </div>
+                      <span className="absolute -bottom-1 -right-1 bg-emerald-500 w-4.5 h-4.5 rounded-full border-[3px] border-brand flex items-center justify-center">
+                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-accent font-black tracking-widest uppercase flex items-center gap-1">
+                        <Crown className="w-3 h-3 fill-accent" /> صالة الأعضاء الكرام • VIP
+                      </span>
+                      <h3 className="text-2xl font-black tracking-tight text-white leading-none">
+                        {orders[0].customerName}
+                      </h3>
+                      <p className="text-emerald-300/80 text-xs font-bold font-mono tracking-wider">
+                        {phone}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right: VIP Membership Tier Banner */}
+                  <div className="shrink-0">
+                    <div className="bg-white/5 backdrop-blur-md px-4 py-2.5 rounded-[20px] border border-white/10 shadow-sm text-center">
+                      <span className="block text-[8px] text-stone-400 font-extrabold uppercase tracking-widest mb-0.5">مستوى العضوية</span>
+                      <span className="text-xs font-black text-[#fde68a] drop-shadow-sm flex items-center gap-1.5 justify-center">
+                        {orders.length >= 10 ? "💎 العضوية الماسية" : orders.length >= 4 ? "🏆 العضوية الذهبية" : "🌟 العضوية الفضية"}
                       </span>
                     </div>
                   </div>
                 </div>
+
+                {/* Bento Statistics Grid */}
+                <div className="grid grid-cols-3 gap-3.5 mt-8 pt-6 border-t border-white/10 relative z-10">
+                  {/* Stat 1: Total Orders */}
+                  <div className="bg-white/5 border border-white/5 rounded-[22px] p-3 text-center flex flex-col justify-between min-h-[76px]">
+                    <span className="block text-[9px] text-stone-400 font-extrabold uppercase leading-snug">إجمالي الزيارات</span>
+                    <span className="text-lg font-black text-white italic">
+                      {orders.length} <span className="text-[10px] text-accent not-italic">طلبات</span>
+                    </span>
+                  </div>
+
+                  {/* Stat 2: Reward points balance */}
+                  <div className="bg-white/5 border border-white/5 rounded-[22px] p-3 text-center flex flex-col justify-between min-h-[76px]">
+                    <span className="block text-[9px] text-stone-400 font-extrabold uppercase leading-snug">رصيد النقاط</span>
+                    <span className="text-lg font-black text-[#fbbf24] flex items-center justify-center gap-0.5 leading-none">
+                      <Star className="w-4 h-4 fill-[#fbbf24] text-[#fbbf24] shrink-0" />
+                      {(orders[0] as any).customerPoints || (orders.length * 15)}
+                    </span>
+                  </div>
+
+                  {/* Stat 3: Total Spent estimate */}
+                  <div className="bg-white/5 border border-white/5 rounded-[22px] p-3 text-center flex flex-col justify-between min-h-[76px]">
+                    <span className="block text-[9px] text-stone-400 font-extrabold uppercase leading-snug">تقدير الإنفاق</span>
+                    <span className="text-lg font-black text-emerald-400 italic">
+                      {orders.reduce((acc, o) => acc + Number(getDisplayTotal(o) || 0), 0).toFixed(3)}{" "}
+                      <span className="text-[9px] text-white/50 not-italic">د.ك</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Squad banner details */}
+                {squadInfo && (
+                  <div className="mt-4 p-3 rounded-[20px] bg-white/5 border border-white/5 flex items-center justify-between text-xs font-bold text-white/90">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-accent shrink-0" />
+                      <span>عضو في ديوانية "{squadInfo.name}"</span>
+                    </div>
+                    <span className="bg-accent/20 text-[#fde68a] px-2.5 py-1 rounded-xl border border-accent/15 text-[10px] font-black">
+                      {squadInfo.rank ? `المركز 🏅 ${squadInfo.rank}` : squadInfo.tier}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {lastReorderableOrder && (
@@ -1346,7 +1411,13 @@ export default function OrderPage() {
                                 ? "#ef4444"
                                 : "#fff",
                             }}
-                            className="h-full"
+                            transition={{
+                              type: "spring",
+                              stiffness: 55,
+                              damping: 18,
+                              mass: 0.8
+                            }}
+                            className="h-full shadow-[0_0_15px_rgba(255,255,255,0.9)]"
                           />
                         </div>
                       );

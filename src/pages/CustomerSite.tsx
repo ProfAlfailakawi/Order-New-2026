@@ -6039,22 +6039,22 @@ const ChefWhisperCard = ({
                 />
               </div>
               <div className="flex flex-col flex-grow text-center overflow-hidden relative z-10">
-                <h3 className="font-black text-lg text-brand leading-tight tracking-tight mt-1" style={{ wordBreak: "break-word" }}>
+                <h3 className="font-extrabold text-sm text-brand leading-tight tracking-tight mt-1 line-clamp-2 min-h-[2.5em] flex items-center justify-center" style={{ wordBreak: "break-word" }}>
                   {product.name}
                 </h3>
                 {product.preparationInstructions && (
-                  <div className="mt-2 flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-100/50 rounded-lg shadow-sm">
-                    <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
-                    <p className="text-[10px] text-red-600 font-extrabold leading-snug line-clamp-2">
+                  <div className="mt-1 flex items-center justify-center gap-1 py-0.5 px-2 bg-rose-50/40 border border-rose-100/20 rounded-full mx-auto w-max max-w-[95%] shadow-[0_1px_2px_rgba(244,63,94,0.01)] event-none select-none">
+                    <AlertTriangle className="w-2.5 h-2.5 text-rose-500 shrink-0" />
+                    <span className="text-[8px] sm:text-[9.5px] text-rose-600 font-bold leading-none text-center truncate max-w-[130px]" title={product.preparationInstructions}>
                       {product.preparationInstructions}
-                    </p>
+                    </span>
                   </div>
                 )}
-                <p className="text-brand text-lg font-black mt-2">
+                <p className="text-brand text-sm font-black mt-1.5">
                   {calculateItemBasePriceWithHiddenAddons({
                     id: "", productId: product.id, name: product.name, quantity: 1, price: product.price, selectedExtras: [], product: normalizeProductForAddons(product)
                   })}{" "}
-                  <span className="text-[10px] text-accent font-bold">د.ك</span>
+                  <span className="text-[9px] text-accent font-bold">د.ك</span>
                 </p>
               </div>
             </>
@@ -6112,11 +6112,11 @@ const ChefWhisperCard = ({
 
                 {/* 4. Notes */}
                 {product.preparationInstructions && (
-                  <div className="product-notes-soft mt-5 flex items-center gap-1.5 px-4 py-1.5 bg-red-50 border border-red-100/50 rounded-full shadow-[0_2px_10px_rgba(239,68,68,0.05)] w-max max-w-full z-10">
-                    <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                    <p className="text-[11px] text-red-600 font-extrabold truncate">
+                  <div className="product-notes-soft mt-2.5 flex items-center justify-center gap-1 px-2.5 py-0.5 bg-rose-50/40 border border-rose-100/20 rounded-full mx-auto w-max max-w-[95%] z-10 text-center shadow-[0_1px_2px_rgba(244,63,94,0.01)] event-none select-none">
+                    <AlertTriangle className="w-2.5 h-2.5 text-rose-500 shrink-0" />
+                    <span className="text-[8px] sm:text-[9.5px] text-rose-600 font-bold leading-none text-center truncate max-w-[130px]" title={product.preparationInstructions}>
                       {product.preparationInstructions}
-                    </p>
+                    </span>
                   </div>
                 )}
               </div>
@@ -6556,9 +6556,9 @@ function ProductModal({
               <span className="text-sm text-accent">د.ك</span>
             </p>
             {product.preparationInstructions && (
-              <div className="mt-3 text-[11px] text-red-600 font-extrabold flex items-center justify-center sm:justify-start gap-1.5 p-2 bg-red-50 border border-red-100/50 rounded-xl shadow-sm">
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />{" "}
-                <span className="leading-relaxed">
+              <div className="mt-2 text-[9px] sm:text-[10.5px] text-rose-600 font-bold flex items-center justify-center sm:justify-start gap-1 py-0.5 px-2 bg-rose-50/40 border border-rose-100/20 rounded-full max-w-max">
+                <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0" />{" "}
+                <span className="leading-none">
                   {product.preparationInstructions}
                 </span>
               </div>
@@ -7725,10 +7725,10 @@ function CheckoutOverlay({
             )}
 
             {step !== "payment" && cart.some((item) => item.preparationInstructions) && (
-              <div className="mt-3 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-red-600 text-xs font-bold animate-pulse shadow-sm">
-                <AlertTriangle className="w-5 h-5 shrink-0" />
+              <div className="mt-2.5 p-2 bg-rose-50/40 border border-rose-100/20 rounded-xl flex items-center gap-1.5 text-rose-600 text-[10px] sm:text-xs font-semibold shadow-[0_1px_2px_rgba(244,63,94,0.01)] animate-pulse">
+                <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
                 <span>
-                  ⚠️ تنبيه: الطلب يحتوي على أصناف تتطلب وقتاً طويلاً للتجهيز.
+                  تنبيه لطيف: الطلب يحتوي على أصناف تتطلب وقتاً إضافياً للتجهيز.
                 </span>
               </div>
             )}

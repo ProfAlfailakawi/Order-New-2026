@@ -1899,41 +1899,48 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
             <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-[0.2em] block mb-8 px-2 text-right">مكونات الطلب</label>
             <div className="grid grid-cols-1 gap-5">
               {(order as any).notes || (order as any).generalNotes ? (
-                 <div className="bg-orange-50/50 p-6 rounded-[32px] border border-orange-100 flex gap-4 text-orange-800 text-sm mb-4">
-                    <MessageCircle className="w-5 h-5 shrink-0" />
-                    <div>
-                      <p className="font-bold text-xs uppercase tracking-widest mb-1 opacity-70">ملاحظات عامة</p>
-                      <p>{(order as any).notes || (order as any).generalNotes}</p>
-                    </div>
-                 </div>
+                 <div className="bg-amber-50/40 p-3.5 sm:p-5 rounded-[20px] sm:rounded-[28px] border border-amber-100/30 flex gap-2.5 text-amber-900 text-xs sm:text-sm mb-3">
+                     <MessageCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                     <div className="text-right w-full">
+                       <p className="font-extrabold text-[9px] sm:text-[10px] uppercase tracking-wider mb-0.5 text-amber-700/80">ملاحظات عامة</p>
+                       <p className="font-medium leading-relaxed text-[11px] sm:text-[13px]">{(order as any).notes || (order as any).generalNotes}</p>
+                     </div>
+                  </div>
               ) : null}
 
               {(order.items || []).map((item: any, idx: number) => (
-                <div key={idx} className={`bg-white p-6 rounded-[32px] flex justify-between items-center border shadow-sm transition-all group ${item.preparationInstructions ? 'border-red-200 bg-red-50/10' : 'border-stone-100'}`}>
-                  <div className="flex-grow text-right">
-                    <div className="flex items-center gap-6 justify-end">
-                      <div>
-                        <h5 className="font-extrabold text-xl text-brand flex items-center justify-end gap-2">
+                <div key={idx} className={`bg-white p-3 sm:p-5 rounded-[16px] sm:rounded-[24px] flex flex-col sm:flex-row justify-between sm:items-center border gap-3 sm:gap-6 shadow-sm transition-all group ${item.preparationInstructions ? 'border-red-50 bg-red-50/5' : 'border-stone-50'}`}>
+                  <div className="flex-grow text-right order-2 sm:order-1 w-full">
+                    <div className="flex items-center gap-3 sm:gap-6 justify-end">
+                      <div className="text-right">
+                        <h5 className="font-extrabold text-xs sm:text-base text-brand flex items-center justify-end gap-1 leading-tight">
                            {item.name || item.productName}
-                           {item.preparationInstructions && <AlertTriangle className="w-5 h-5 text-red-500 animate-pulse" />}
+                           {item.preparationInstructions && <AlertTriangle className="w-3 h-3 text-red-500 animate-pulse shrink-0" />}
                         </h5>
-                        <div className="mt-2 flex flex-wrap gap-2 justify-end">
-                          {item.selectedOption && <span className="text-[9px] font-extrabold uppercase bg-stone-50 text-stone-400 px-3 py-1 rounded-lg border border-stone-100">{item.selectedOption}</span>}
-                          {(item.selectedExtras || []).map((e: any, eIdx: number) => (<span key={eIdx} className="text-[9px] font-extrabold uppercase bg-accent/5 text-accent px-3 py-1 rounded-lg border border-accent/10">+{e.name}</span>))}
-                          {(item.addons || []).map((a: any, aIdx: number) => (<span key={`addon-${aIdx}`} className="text-[9px] font-extrabold uppercase bg-accent/5 text-accent px-3 py-1 rounded-lg border border-accent/10">+{a.quantity} {a.name} {(a.payableQuantity === 0 || a.price === 0) && !a.isHiddenPrice ? '(مجاني)' : ''}</span>))}
+                        <div className="mt-1 flex flex-wrap gap-1 justify-end">
+                          {item.selectedOption && <span className="text-[8px] sm:text-[9px] font-extrabold uppercase bg-stone-50 text-stone-400 px-2 py-0.5 rounded-md border border-stone-100">{item.selectedOption}</span>}
+                          {(item.selectedExtras || []).map((e: any, eIdx: number) => (<span key={eIdx} className="text-[8px] sm:text-[9px] font-extrabold uppercase bg-accent/5 text-accent px-2 py-0.5 rounded-md border border-accent/10">+{e.name}</span>))}
+                          {(item.addons || []).map((a: any, aIdx: number) => (<span key={`addon-${aIdx}`} className="text-[8px] sm:text-[9px] font-extrabold uppercase bg-accent/5 text-accent px-2 py-0.5 rounded-md border border-accent/10">+{a.quantity} {a.name} {(a.payableQuantity === 0 || a.price === 0) && !a.isHiddenPrice ? '(مجاني)' : ''}</span>))}
                         </div>
                       </div>
-                      <div className="w-14 h-14 rounded-2xl bg-stone-50 flex items-center justify-center font-extrabold text-accent text-xl border border-stone-100">{item.quantity}</div>
+                      <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg bg-stone-50 flex items-center justify-center font-extrabold text-accent text-xs sm:text-base border border-stone-100 shrink-0">{item.quantity}</div>
                     </div>
                     {item.preparationInstructions && (
-                      <div className="mt-4 p-3 bg-red-50 rounded-2xl text-[11px] text-red-600 font-bold border border-red-100 flex items-center justify-end gap-2 text-right">
+                      <div className="mt-1.5 p-1 px-2.5 bg-rose-50/30 border border-rose-100/20 rounded-full text-[8.5px] sm:text-[9.5px] text-rose-600 font-bold flex items-center justify-end gap-1 w-max ms-auto">
                         <span>{item.preparationInstructions}</span>
-                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        <AlertTriangle className="w-2.5 h-2.5 text-rose-500 shrink-0" />
                       </div>
                     )}
-                    {(item.itemNotes || item.note) && <div className="mt-3 p-5 bg-stone-50/50 rounded-2xl text-[11px] text-stone-400 italic border-r-2 border-stone-100 font-medium leading-relaxed">"{(item.itemNotes || item.note)}"</div>}
+                    {(item.itemNotes || item.note) && (
+                      <div className="mt-1.5 p-2 bg-stone-50/50 rounded-lg text-[8.5px] sm:text-[10px] text-stone-500 italic border-r-2 border-stone-200/50 font-medium leading-relaxed text-right w-full">
+                        "{item.itemNotes || item.note}"
+                      </div>
+                    )}
                   </div>
-                  <div className="text-left text-2xl font-light text-brand italic shrink-0 mr-8">{calculateItemTotalWithAddons(item).toFixed(2)} <span className="text-xs text-stone-400">د.ك</span></div>
+                  <div className="text-right sm:text-left text-xs sm:text-base font-bold text-brand italic shrink-0 order-1 sm:order-2 border-b sm:border-0 pb-1.5 sm:pb-0 border-stone-100/30 flex justify-between items-center sm:block w-full sm:w-auto">
+                    <span className="sm:hidden text-stone-400 text-[9px] not-italic font-extrabold uppercase tracking-wider">السعر الإجمالي</span>
+                    <span>{calculateItemTotalWithAddons(item).toFixed(2)} <span className="text-[9px] sm:text-xs text-stone-400 font-bold not-italic">د.ك</span></span>
+                  </div>
                 </div>
               ))}
             </div>
