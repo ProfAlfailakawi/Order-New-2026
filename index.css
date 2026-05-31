@@ -954,7 +954,7 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
 
 /* Product Card Deluxe */
 .menu-product-shell{filter:drop-shadow(0 10px 24px rgba(24,51,38,.06));}
-.menu-product-card{background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(255,250,242,.86))!important;border:1px solid rgba(200,148,47,.16)!important;border-radius:28px!important;box-shadow:0 18px 48px rgba(24,51,38,.065),inset 0 1px 0 rgba(255,255,255,.9)!important;overflow:hidden!important}
+.menu-product-card{background:linear-gradient(135deg,rgba(255,255,255,0.58),rgba(255,250,242,0.38))!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;border:1.5px solid rgba(255,255,255,0.45)!important;border-radius:28px!important;box-shadow:0 18px 48px rgba(24,51,38,.045),inset 0 1px 1px rgba(255,255,255,0.7),inset 0 -1px 1px rgba(255,255,255,0.25)!important;overflow:hidden!important}
 .menu-product-card:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 8% 0%,rgba(200,148,47,.16),transparent 34%),linear-gradient(115deg,transparent 36%,rgba(255,255,255,.46),transparent 64%);opacity:.0;transform:translateX(16%);transition:opacity .24s ease,transform .45s ease;pointer-events:none;z-index:1}
 .menu-product-card:hover:before,.menu-product-card:active:before{opacity:1;transform:translateX(-16%)}
 .menu-product-card:hover{transform:translateY(-5px)!important;box-shadow:0 28px 70px rgba(24,51,38,.12),inset 0 1px 0 rgba(255,255,255,.95)!important;border-color:rgba(200,148,47,.28)!important}
@@ -963,10 +963,10 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
 .menu-product-card p.text-brand.text-lg{display:inline-flex!important;align-items:center;justify-content:center;gap:3px;align-self:flex-start;background:#fff7ed;border:1px solid rgba(200,148,47,.18);border-radius:999px;padding:6px 10px;line-height:1;margin-top:10px!important;white-space:nowrap}
 .menu-product-card-horizontal p.text-brand.text-lg{align-self:center!important;margin-top:auto!important}
 
-/* Best seller / Trend today: larger, no covered price */
-.best-seller-wow-carousel{height:235px!important;padding:18px 0!important;overflow:visible!important;background:linear-gradient(180deg,rgba(255,250,242,.82),rgba(255,255,255,.42))!important}
-.best-seller-wow-card{width:176px!important;height:214px!important}
-.best-seller-wow-card .menu-product-card{min-height:210px!important;padding:14px 12px 13px!important;display:flex!important;gap:8px!important}
+/* Best seller / Trend today: larger, no covered price, with elegant notes support */
+.best-seller-wow-carousel{height:250px!important;padding:14px 0!important;overflow:visible!important;background:linear-gradient(180deg,rgba(255,250,242,.82),rgba(255,255,255,.42))!important}
+.best-seller-wow-card{width:180px!important;height:232px!important}
+.best-seller-wow-card .menu-product-card{min-height:228px!important;padding:14px 12px 13px!important;display:flex!important;gap:8px!important}
 .best-seller-wow-card .menu-product-image{width:86px!important;height:86px!important;margin-bottom:6px!important}
 .best-seller-wow-card h3{font-size:1rem!important;line-height:1.25!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;min-height:2.5em!important;margin-top:4px!important}
 .best-seller-wow-card .menu-product-card p.text-brand.text-lg{font-size:15px!important;padding:7px 12px!important;margin-top:9px!important;max-width:100%!important}
@@ -996,7 +996,7 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
 /* Global skeleton shimmer */
 .animate-pulse,.skeleton-card,.products-skeleton{position:relative;overflow:hidden!important}.animate-pulse:after,.skeleton-card:after,.products-skeleton:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.64),transparent);animation:alShimmer 1.65s ease-in-out infinite;pointer-events:none}@keyframes alShimmer{0%{transform:translateX(120%)}100%{transform:translateX(-120%)}}@keyframes alTinyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes alDockPop{from{opacity:0;transform:translateX(-50%) translateY(26px) scale(.96)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 
-@media(max-width:640px){.best-seller-wow-carousel{height:220px!important;padding:14px 0!important}.best-seller-wow-card{width:164px!important;height:204px!important}.best-seller-wow-card .menu-product-card{min-height:200px!important}.best-seller-wow-card .menu-product-image{width:80px!important;height:80px!important}.al-cart-bar{bottom:12px!important;border-radius:24px!important;padding:10px!important}.al-cart-actions button:first-child{display:none!important}.al-cart-actions .al-cart-checkout{min-width:118px!important;padding:13px 14px!important}.cart-moment-toast{bottom:92px!important;width:max-content;max-width:calc(100vw - 32px)}}
+@media(max-width:640px){.best-seller-wow-carousel{height:245px!important;padding:14px 0!important}.best-seller-wow-card{width:168px!important;height:226px!important}.best-seller-wow-card .menu-product-card{min-height:222px!important}.best-seller-wow-card .menu-product-image{width:80px!important;height:80px!important}.al-cart-bar{bottom:12px!important;border-radius:24px!important;padding:10px!important}.al-cart-actions button:first-child{display:none!important}.al-cart-actions .al-cart-checkout{min-width:118px!important;padding:13px 14px!important}.cart-moment-toast{bottom:92px!important;width:max-content;max-width:calc(100vw - 32px)}}
 
 
 /* Final mobile cart refinement: compact pulse + one clear action */
