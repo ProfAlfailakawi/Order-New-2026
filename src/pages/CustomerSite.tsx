@@ -408,6 +408,27 @@ const renderAdminSquadTierBadge = (tier: any, sizeClass = "w-9 h-9") => {
   return <span className={`${sizeClass} rounded-full flex items-center justify-center text-white bg-gradient-to-br ${gradient} shrink-0 shadow-sm`}>{content}</span>;
 };
 
+
+const normalizeLoyaltyTierForCustomer = (tier: any, index: number, all: any[]) => {
+  const sortedMins = all.map((t: any) => parseAdminPoints(t?.minPoints ?? t?.points ?? t?.requiredPoints ?? 0)).sort((a, b) => a - b);
+  const minPoints = parseAdminPoints(tier?.minPoints ?? tier?.points ?? tier?.requiredPoints ?? 0);
+  const nextMin = sortedMins.find((v) => v > minPoints);
+  const iconType = String(tier?.iconType || tier?.icon || "");
+  return {
+    ...tier,
+    id: String(tier?.id ?? tier?.name ?? tier?.title ?? index),
+    name: tier?.name || tier?.title || "",
+    minPoints,
+    maxPoints: parseAdminPoints(tier?.maxPoints ?? (nextMin ? nextMin - 1 : 999999999)),
+    color: String(tier?.color || "").startsWith("text-") ? tier.color : ["text-amber-700", "text-slate-600", "text-yellow-600", "text-sky-600"][index] || "text-brand",
+    bg: String(tier?.bg || "").startsWith("bg-") ? tier.bg : ["bg-amber-50", "bg-slate-100", "bg-yellow-50", "bg-sky-50"][index] || "bg-stone-50",
+    iconType,
+    icon: tier?.icon || (iconType === "Crown" ? "👑" : iconType === "Diamond" ? "💎" : iconType === "Star" ? "⭐" : iconType === "Shield" ? "🛡️" : "🤝"),
+    benefit: tier?.benefit || tier?.label || tier?.description || "",
+    description: tier?.description || tier?.label || tier?.benefit || "",
+  };
+};
+
 const normalizeSquadTierForCustomer = (tier: any, index: number, all: any[]) => {
   const sortedMins = all.map((t: any) => parseAdminPoints(t?.minPoints ?? t?.points ?? t?.requiredPoints ?? 0)).sort((a, b) => a - b);
   const minPoints = parseAdminPoints(tier?.minPoints ?? tier?.points ?? tier?.requiredPoints ?? 0);
@@ -492,7 +513,11 @@ export default function CustomerSite() {
   
   const LOYALTY_TIERS = useMemo(() => {
     const tiers = normalizeAdminArray(settings.loyaltyTiers ?? settings.loyaltyLevels ?? settings.loyaltySettings?.tiers);
-    return tiers.length > 0 ? tiers : INITIAL_LOYALTY_TIERS;
+    const source = tiers.length > 0 ? tiers : INITIAL_LOYALTY_TIERS;
+    return [...source]
+      .map((tier, index, all) => normalizeLoyaltyTierForCustomer(tier, index, all))
+      .filter((tier: any) => Boolean(String(tier?.name || "").trim()))
+      .sort((a, b) => Number(a.minPoints || 0) - Number(b.minPoints || 0));
   }, [settings.loyaltyTiers, settings.loyaltyLevels, settings.loyaltySettings]);
 
   const SQUAD_TIERS = useMemo(() => {
@@ -505,7 +530,8 @@ export default function CustomerSite() {
   }, [settings.squadTiers, settings.squadLevels, settings.diwaniyaTiers, settings.diwaniyaLevels, settings.squadSettings]);
 
   const getLoyaltyTier = useCallback((points: number) => {
-    return LOYALTY_TIERS.find((t: any) => points >= t.minPoints && points <= t.maxPoints) || LOYALTY_TIERS[0];
+    const value = parseAdminPoints(points);
+    return LOYALTY_TIERS.find((t: any) => value >= Number(t.minPoints || 0) && value <= Number(t.maxPoints ?? 999999999)) || [...LOYALTY_TIERS].reverse().find((t: any) => value >= Number(t.minPoints || 0)) || LOYALTY_TIERS[0];
   }, [LOYALTY_TIERS]);
 
   const getSquadTier = useCallback((points: number) => {
@@ -2238,7 +2264,7 @@ export default function CustomerSite() {
             if (!customerData.name && !customerData.customerName && fetchedLastOrder && fetchedLastOrder.customerName) {
               setCustomerName(fetchedLastOrder.customerName || "");
             }
-            setCustomerPoints(Math.round(customerData.loyaltyPoints || 0));
+            setCustomerPoints(Math.floor(parseAdminPoints(customerData.loyaltyPoints ?? customerData.points ?? 0)));
             setIsLocked(true);
             foundCustomer = true;
           }

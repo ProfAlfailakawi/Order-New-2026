@@ -2462,29 +2462,38 @@ app.get("/api/debug/order/:id", async (req, res) => {
         return ps === 'paid' || s === 'paid' || s.includes('تم الدفع') || s.includes('تم التوصيل') || s === 'delivered' || s === 'completed' || s.includes('جاهز للتوصيل');
       };
 
-      // Calculate active order & invoice totals to ensure correct points matching Admin Dashboard
-      const activeOrders = orders.filter((o: any) => {
-        const ph = cleanPhone(o.customerPhone || o.phone || "");
-        return ph === cleanQueryPhone && isPaid(o.status, o.paymentStatus);
-      });
-      const ordersTotal = activeOrders.reduce((sum: number, o: any) => sum + (Number(o.total || o.totalAmount || 0)), 0);
-
+      // Match Admin CustomerPage source: customer loyalty points are derived from paid, non-deleted invoices linked to the customer profile.
+      // Do not add order totals here, because converted/paid orders can duplicate invoice totals and show a different balance in Order.
+      const cancelledOrderInvoiceIds = new Set(
+        orders
+          .filter((o: any) => o.status === 'cancelled' && o.isConvertedToInvoice && o.linkedInvoiceId)
+          .map((o: any) => String(o.linkedInvoiceId))
+      );
       const activeInvoices = invoices.filter((inv: any) => {
-        const ph = cleanPhone(inv.customerPhone || inv.phone || "");
-        return ph === cleanQueryPhone && isPaid(inv.status, inv.paymentStatus);
+        if (inv?.isDeleted) return false;
+        if (cancelledOrderInvoiceIds.has(String(inv?.id || ''))) return false;
+        return isPaid(inv.status, inv.paymentStatus) || inv.paymentStatus === undefined;
       });
-      const invoicesTotal = activeInvoices.reduce((sum: number, inv: any) => sum + (Number(inv.total || inv.totalAmount || inv.amount || 0)), 0);
-
-      const computedPoints = Math.round(ordersTotal + invoicesTotal);
+      const getInvoiceTotal = (inv: any) => Number(inv?.totalAmount ?? inv?.total ?? inv?.amount ?? 0) || 0;
+      const buildCustomerStats = (customer: any) => {
+        const customerInvoices = activeInvoices.filter((inv: any) => String(inv.customerId || '') === String(customer.id || ''));
+        const totalSpent = customerInvoices.reduce((sum: number, inv: any) => sum + getInvoiceTotal(inv), 0);
+        return {
+          totalOrders: customerInvoices.length,
+          totalSpent: Math.round(totalSpent * 1000) / 1000,
+          loyaltyPoints: Math.floor(totalSpent),
+        };
+      };
 
       let matchedCustomers: any[] = [];
       customers.forEach((customer: any) => {
         const phoneField = customer.phone;
         if (phoneField && cleanPhone(phoneField) === cleanQueryPhone) {
-          const stored = customer.loyaltyPoints !== undefined ? customer.loyaltyPoints : (customer.points || 0);
+          const stats = buildCustomerStats(customer);
           matchedCustomers.push({
             ...customer,
-            loyaltyPoints: computedPoints,
+            ...stats,
+            points: stats.loyaltyPoints,
           });
         }
       });
@@ -2501,7 +2510,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
             name: recentInvoice.customerName || recentInvoice.name || "",
             phone: phone,
             address: recentInvoice.address || null,
-            loyaltyPoints: computedPoints,
+            loyaltyPoints: Math.floor(activeInvoices.filter((inv: any) => cleanPhone(inv.customerPhone || inv.phone || "") === cleanQueryPhone).reduce((sum: number, inv: any) => sum + getInvoiceTotal(inv), 0)),
           });
         }
       }
@@ -2517,7 +2526,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
             name: recentOrder.customerName || recentOrder.name || "",
             phone: phone,
             address: recentOrder.address || null,
-            loyaltyPoints: computedPoints,
+            loyaltyPoints: Math.floor(activeInvoices.filter((inv: any) => cleanPhone(inv.customerPhone || inv.phone || "") === cleanQueryPhone).reduce((sum: number, inv: any) => sum + getInvoiceTotal(inv), 0)),
           });
         }
       }
