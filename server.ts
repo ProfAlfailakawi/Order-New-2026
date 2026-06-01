@@ -1184,7 +1184,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         });
         const invoicesTotal = activeInvoicesForPoints.reduce((sum: number, inv: any) => sum + (Number(inv.total || inv.totalAmount || inv.amount || 0)), 0);
 
-        points = Math.round(Math.max(storedPoints, ordersTotal, invoicesTotal));
+        points = Math.round(Math.max(storedPoints, ordersTotal + invoicesTotal));
       }
 
       // Sort by date descending
@@ -2475,7 +2475,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       });
       const invoicesTotal = activeInvoices.reduce((sum: number, inv: any) => sum + (Number(inv.total || inv.totalAmount || inv.amount || 0)), 0);
 
-      const computedPoints = Math.round(Math.max(ordersTotal, invoicesTotal));
+      const computedPoints = Math.round(ordersTotal + invoicesTotal);
 
       let matchedCustomers: any[] = [];
       customers.forEach((customer: any) => {

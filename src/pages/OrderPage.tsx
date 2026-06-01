@@ -1046,7 +1046,13 @@ export default function OrderPage() {
                     <div className="bg-white/5 backdrop-blur-md px-4 py-2.5 rounded-[20px] border border-white/10 shadow-sm text-center">
                       <span className="block text-[8px] text-stone-400 font-extrabold uppercase tracking-widest mb-0.5">مستوى العضوية</span>
                       <span className="text-xs font-black text-[#fde68a] drop-shadow-sm flex items-center gap-1.5 justify-center">
-                        {orders.length >= 10 ? "💎 العضوية الماسية" : orders.length >= 4 ? "🏆 العضوية الذهبية" : "🌟 العضوية الفضية"}
+                        {(() => {
+                           const pts = customerPoints !== null ? Math.round(customerPoints) : (((orders[0] as any)?.customerPoints) !== undefined ? Math.round((orders[0] as any).customerPoints) : 0);
+                           if (pts >= 2000) return "💎 الماسية";
+                           if (pts >= 500) return "🥇 الذهبية";
+                           if (pts >= 100) return "🥈 الفضية";
+                           return "🥉 البرونزية";
+                        })()}
                       </span>
                     </div>
                   </div>
