@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { cn, normalizePhone, normalizeDigits } from "../utils";
+import { cn, normalizePhone, normalizeDigits, formatKuwaitiDate } from "../utils";
 import { redirectToPayment } from "../utils/redirect";
 
 interface TrackedOrder {
@@ -79,7 +79,14 @@ const formatOrderWords = (count: number) => {
 
 const getFirstName = (name?: string) => {
   const clean = String(name || "").trim();
-  return clean ? clean.split(/\s+/)[0] : "";
+  if (!clean) return "";
+  const parts = clean.split(/\s+/);
+  const prefix = parts[0];
+  const prefixes = ["أم", "ام", "أبو", "ابو", "بنت", "ابن", "سيد", "سيدة", "شيخ", "شيخة", "د.", "دكتور", "دكتورة"];
+  if (prefixes.includes(prefix) && parts.length > 1) {
+    return parts[0] + " " + parts[1];
+  }
+  return parts[0];
 };
 
 const getOrderReference = (order: any) => {
@@ -219,6 +226,7 @@ export default function OrderPage() {
   const [searched, setSearched] = useState(false);
   const autoOpenedTargetRef = useRef<string | null>(null);
   const [squadInfo, setSquadInfo] = useState<any>(null);
+  const [customerPoints, setCustomerPoints] = useState<number | null>(null);
   const [sessionSuccessOrders, setSessionSuccessOrders] = useState<string[]>([]);
 
   useEffect(() => {
@@ -256,15 +264,42 @@ export default function OrderPage() {
         fetch(`/api/squad-gamification?phone=${encodeURIComponent(phone)}`)
           .then(res => res.json())
           .then(data => {
-             if (data.mySquad) {
+             if (data && data.mySquad) {
                 setSquadInfo({
                    ...data.mySquad,
                    rank: data.myRank,
                    memberData: data.myMemberData
                 });
+             } else {
+                setSquadInfo(null);
              }
           })
-          .catch(() => {});
+          .catch(() => {
+             setSquadInfo(null);
+          });
+
+        fetch(`/api/customers?phone=${encodeURIComponent(phone)}`)
+          .then(res => res.json())
+          .then(data => {
+             if (Array.isArray(data) && data.length > 0) {
+                 const bestProfile = [...data].sort((a: any, b: any) => {
+                     const aTime = a.lastUpdated || "";
+                     const bTime = b.lastUpdated || "";
+                     return bTime.localeCompare(aTime);
+                 })[0];
+                 const pts = bestProfile.loyaltyPoints !== undefined ? bestProfile.loyaltyPoints : (bestProfile.points || 0);
+                 setCustomerPoints(Math.round(pts));
+             } else {
+                 setCustomerPoints(0);
+             }
+          })
+          .catch(() => {
+              setCustomerPoints(0);
+          });
+
+     } else {
+        setSquadInfo(null);
+        setCustomerPoints(null);
      }
   }, [phone]);
 
@@ -1021,9 +1056,9 @@ export default function OrderPage() {
                 <div className="grid grid-cols-3 gap-3.5 mt-8 pt-6 border-t border-white/10 relative z-10">
                   {/* Stat 1: Total Orders */}
                   <div className="bg-white/5 border border-white/5 rounded-[22px] p-3 text-center flex flex-col justify-between min-h-[76px]">
-                    <span className="block text-[9px] text-stone-400 font-extrabold uppercase leading-snug">إجمالي الزيارات</span>
+                    <span className="block text-[9px] text-stone-400 font-extrabold uppercase leading-snug">إجمالي الطلبات</span>
                     <span className="text-lg font-black text-white italic">
-                      {orders.length} <span className="text-[10px] text-accent not-italic">طلبات</span>
+                      {orders.length}
                     </span>
                   </div>
 
@@ -1032,7 +1067,7 @@ export default function OrderPage() {
                     <span className="block text-[9px] text-stone-400 font-extrabold uppercase leading-snug">رصيد النقاط</span>
                     <span className="text-lg font-black text-[#fbbf24] flex items-center justify-center gap-0.5 leading-none">
                       <Star className="w-4 h-4 fill-[#fbbf24] text-[#fbbf24] shrink-0" />
-                      {(orders[0] as any).customerPoints || (orders.length * 15)}
+                      {customerPoints !== null ? Math.round(customerPoints) : (((orders[0] as any)?.customerPoints) !== undefined ? Math.round((orders[0] as any).customerPoints) : 0)}
                     </span>
                   </div>
 
@@ -1047,15 +1082,28 @@ export default function OrderPage() {
                 </div>
 
                 {/* Squad banner details */}
-                {squadInfo && (
+                {squadInfo ? (
                   <div className="mt-4 p-3 rounded-[20px] bg-white/5 border border-white/5 flex items-center justify-between text-xs font-bold text-white/90">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 text-right">
                       <Users className="w-4 h-4 text-accent shrink-0" />
                       <span>عضو في ديوانية "{squadInfo.name}"</span>
                     </div>
                     <span className="bg-accent/20 text-[#fde68a] px-2.5 py-1 rounded-xl border border-accent/15 text-[10px] font-black">
                       {squadInfo.rank ? `المركز 🏅 ${squadInfo.rank}` : squadInfo.tier}
                     </span>
+                  </div>
+                ) : (
+                  <div className="mt-4 p-3.5 rounded-[22px] bg-white/5 border border-dashed border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/80">
+                    <div className="flex items-center gap-2 text-right">
+                      <Users className="w-4 h-4 text-accent shrink-0" />
+                      <span>مو مسجل بديوانية للحين؟ جمّع نقاط مع ربعك وتنافسوا على الصدارة!</span>
+                    </div>
+                    <Link
+                      to="/?showSquads=true"
+                      className="text-[10px] font-black text-white bg-accent hover:bg-accent/90 transition-all px-3.5 py-1.5 rounded-xl flex items-center gap-1 shrink-0"
+                    >
+                      أسس ديوانيتك أو شارك ديوانية ربعك ☕
+                    </Link>
                   </div>
                 )}
               </div>
@@ -1158,9 +1206,7 @@ export default function OrderPage() {
                         </div>
                         <p className="text-[10px] text-stone-300 font-medium">
                           {order.createdAt || order.date
-                            ? new Date(
-                                order.createdAt || order.date,
-                              ).toLocaleString("en-US")
+                            ? `${formatKuwaitiDate(order.createdAt || order.date).date} | ${formatKuwaitiDate(order.createdAt || order.date).time}`
                             : "تاريخ غير معروف"}
                         </p>
                       </div>
@@ -2025,7 +2071,7 @@ export default function OrderPage() {
                       </div>
                       
                       {/* Squad Bragging Rights */}
-                      {((selectedOrder as any).squadName || (squadInfo && squadInfo.name)) && (
+                      {((selectedOrder as any).squadName || (squadInfo && squadInfo.name)) ? (
                         <motion.div
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
@@ -2039,6 +2085,24 @@ export default function OrderPage() {
                            <p className="text-[#D97706] text-xs font-bold leading-tight">
                              {squadInfo?.rank ? `المركز ${squadInfo.rank === 1 ? "الأول" : squadInfo.rank === 2 ? "الثاني" : squadInfo.rank === 3 ? "الثالث" : squadInfo.rank} ${squadInfo.rank === 1 ? '🥇' : squadInfo.rank === 2 ? '🥈' : squadInfo.rank === 3 ? '🥉' : ''}` : `تصنيف: ${((selectedOrder as any).squadTier || squadInfo?.tier || "غير محدد")}`}
                            </p>
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 1 }}
+                          className="mt-6 bg-stone-50 rounded-2xl p-4 border border-stone-150 flex flex-col items-center justify-center gap-2 text-center text-stone-500"
+                        >
+                           <Users className="w-5 h-5 text-stone-400" />
+                           <p className="text-xs font-extrabold text-stone-600">
+                             مو مشترك بديوانية للحين؟ ☕
+                           </p>
+                           <Link
+                             to="/?showSquads=true"
+                             className="text-[10px] font-black text-accent bg-accent/5 px-3 py-1.5 rounded-xl border border-accent/10 hover:bg-accent/10 transition-colors"
+                           >
+                             أسس ديوانيتك أو شارك ديوانية ربعك! 🤝
+                           </Link>
                         </motion.div>
                       )}
                     </div>

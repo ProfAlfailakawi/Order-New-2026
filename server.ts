@@ -1160,9 +1160,32 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
       const finalOrders = allMatched;
 
-      // Get customer points from shared data customers list
-      const matchedCust = customers.find((c: any) => cleanPhone(c.phone) === cleanQueryPhone);
-      let points = matchedCust?.loyaltyPoints !== undefined ? matchedCust.loyaltyPoints : (matchedCust?.points || 0);
+      // Calculate points dynamically from both matching active orders and matching active invoices
+      let points = 0;
+      if (cleanQueryPhone) {
+        const matchedCust = customers.find((c: any) => cleanPhone(c.phone) === cleanQueryPhone);
+        const storedPoints = matchedCust?.loyaltyPoints !== undefined ? matchedCust.loyaltyPoints : (matchedCust?.points || 0);
+
+        const activeOrdersForPoints = allOrdersOriginal.filter((o: any) => {
+          const ph = cleanPhone(o.customerPhone || o.phone || "");
+          if (ph !== cleanQueryPhone) return false;
+          const s = String(o.status || "").toLowerCase();
+          const ps = String(o.paymentStatus || "").toLowerCase();
+          return !(s.includes("cancel") || s.includes("ملغي") || s.includes("fail") || s.includes("فشل") || ps === "failed");
+        });
+        const ordersTotal = activeOrdersForPoints.reduce((sum: number, o: any) => sum + (Number(o.total || o.totalAmount || 0)), 0);
+
+        const activeInvoicesForPoints = allInvoices.filter((inv: any) => {
+          const ph = cleanPhone(inv.customerPhone || inv.phone || "");
+          if (ph !== cleanQueryPhone) return false;
+          const s = String(inv.status || "").toLowerCase();
+          const ps = String(inv.paymentStatus || "").toLowerCase();
+          return !(s.includes("cancel") || s.includes("ملغي") || s.includes("fail") || s.includes("فشل") || ps === "failed");
+        });
+        const invoicesTotal = activeInvoicesForPoints.reduce((sum: number, inv: any) => sum + (Number(inv.total || inv.totalAmount || inv.amount || 0)), 0);
+
+        points = Math.round(Math.max(storedPoints, ordersTotal, invoicesTotal));
+      }
 
       // Sort by date descending
       finalOrders.sort((a: any, b: any) => {
@@ -2431,14 +2454,37 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const data = d.data() || {};
       const customers = data.customers || [];
       const invoices = data.invoices || [];
+      const orders = data.orders || [];
+
+      // Calculate active order & invoice totals to ensure correct points matching Admin Dashboard
+      const activeOrders = orders.filter((o: any) => {
+        const ph = cleanPhone(o.customerPhone || o.phone || "");
+        if (ph !== cleanQueryPhone) return false;
+        const s = String(o.status || "").toLowerCase();
+        const ps = String(o.paymentStatus || "").toLowerCase();
+        return !(s.includes("cancel") || s.includes("ملغي") || s.includes("fail") || s.includes("فشل") || ps === "failed");
+      });
+      const ordersTotal = activeOrders.reduce((sum: number, o: any) => sum + (Number(o.total || o.totalAmount || 0)), 0);
+
+      const activeInvoices = invoices.filter((inv: any) => {
+        const ph = cleanPhone(inv.customerPhone || inv.phone || "");
+        if (ph !== cleanQueryPhone) return false;
+        const s = String(inv.status || "").toLowerCase();
+        const ps = String(inv.paymentStatus || "").toLowerCase();
+        return !(s.includes("cancel") || s.includes("ملغي") || s.includes("fail") || s.includes("فشل") || ps === "failed");
+      });
+      const invoicesTotal = activeInvoices.reduce((sum: number, inv: any) => sum + (Number(inv.total || inv.totalAmount || inv.amount || 0)), 0);
+
+      const computedPoints = Math.round(Math.max(ordersTotal, invoicesTotal));
 
       let matchedCustomers: any[] = [];
       customers.forEach((customer: any) => {
         const phoneField = customer.phone;
         if (phoneField && cleanPhone(phoneField) === cleanQueryPhone) {
+          const stored = customer.loyaltyPoints !== undefined ? customer.loyaltyPoints : (customer.points || 0);
           matchedCustomers.push({
             ...customer,
-            loyaltyPoints: customer.loyaltyPoints !== undefined ? customer.loyaltyPoints : (customer.points || 0),
+            loyaltyPoints: Math.round(Math.max(stored, computedPoints)),
           });
         }
       });
@@ -2455,14 +2501,13 @@ app.get("/api/debug/order/:id", async (req, res) => {
             name: recentInvoice.customerName || recentInvoice.name || "",
             phone: phone,
             address: recentInvoice.address || null,
-            loyaltyPoints: 0,
+            loyaltyPoints: computedPoints,
           });
         }
       }
 
       // If still nothing, try from orders
       if (matchedCustomers.length === 0) {
-        const orders = data.orders || [];
         const recentOrder = [...orders].reverse().find((o: any) => {
           return cleanPhone(o.customerPhone || o.phone || "") === cleanQueryPhone;
         });
@@ -2472,7 +2517,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
             name: recentOrder.customerName || recentOrder.name || "",
             phone: phone,
             address: recentOrder.address || null,
-            loyaltyPoints: 0,
+            loyaltyPoints: computedPoints,
           });
         }
       }

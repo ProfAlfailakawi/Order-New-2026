@@ -154,3 +154,29 @@ export function checkStoreStatus(storeStatus: any) {
 
   return { isOpen: true, message: "" };
 }
+
+export const formatKuwaitiDate = (dateVal: any): { date: string; time: string; full: string } => {
+  if (!dateVal) return { date: "", time: "", full: "" };
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return { date: "", time: "", full: "" };
+
+  const day = d.getDate();
+  const month = d.getMonth() + 1;
+  const year = d.getFullYear();
+
+  let hours = d.getHours();
+  const minutes = d.getMinutes();
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const minutesStr = minutes < 10 ? "0" + minutes : minutes;
+
+  const dateStr = `${day}/${month}/${year}`;
+  const timeStr = `${hours}.${minutesStr} ${ampm}`;
+
+  return {
+    date: dateStr,
+    time: timeStr,
+    full: `${dateStr} ${timeStr}`
+  };
+};
