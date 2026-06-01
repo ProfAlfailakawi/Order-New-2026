@@ -1145,7 +1145,8 @@ export default function CustomerSite() {
           // Zero-Click Proximity Presence check for viewed squad
           (() => {
             const currentPhone = customerPhone || "";
-            if (currentPhone && currentPhone.length >= 8 && activeSquadId && squadInfo) {
+            const isAlreadyMember = userSquads.some((us: any) => String(us.id) === String(activeSquadId));
+            if (currentPhone && currentPhone.length >= 8 && activeSquadId && squadInfo && isAlreadyMember) {
               const sLat = squadInfo.lat ?? squadInfo.location?.lat;
               const sLng = squadInfo.lng ?? squadInfo.location?.lng;
               if (sLat !== undefined && sLng !== undefined) {
@@ -1246,7 +1247,7 @@ export default function CustomerSite() {
        // Zero-Click Proximity Presence check for viewed squad
        (() => {
          const currentPhone = customerPhone || "";
-         if (currentPhone && currentPhone.length >= 8 && activeSquadId && squadInfo) {
+         if (currentPhone && currentPhone.length >= 8 && activeSquadId && squadInfo && userSquads.some((us: any) => String(us.id) === String(activeSquadId))) {
            const sLat = squadInfo.lat ?? squadInfo.location?.lat;
            const sLng = squadInfo.lng ?? squadInfo.location?.lng;
            if (sLat !== undefined && sLng !== undefined) {
@@ -2237,7 +2238,7 @@ export default function CustomerSite() {
             if (!customerData.name && !customerData.customerName && fetchedLastOrder && fetchedLastOrder.customerName) {
               setCustomerName(fetchedLastOrder.customerName || "");
             }
-            setCustomerPoints(customerData.loyaltyPoints || 0);
+            setCustomerPoints(Math.round(customerData.loyaltyPoints || 0));
             setIsLocked(true);
             foundCustomer = true;
           }
