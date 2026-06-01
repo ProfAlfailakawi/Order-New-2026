@@ -120,11 +120,28 @@ export default function AdminDashboard() {
   const getCustomerPoints = (phone?: string) => {
     if (!phone) return 0;
     const cleanQuery = cleanPhone(phone);
-    const totalPoints = invoices.filter(inv => {
+    
+    const validInvoices = invoices.filter(inv => {
       const invPhone = cleanPhone(inv.customerPhone || inv.phone || "");
-      return invPhone === cleanQuery;
+      const s = String(inv.status || "").toLowerCase();
+      const ps = String(inv.paymentStatus || "").toLowerCase();
+      const isFailed = s.includes("cancel") || s.includes("ملغي") || s.includes("fail") || s.includes("فشل") || ps === "failed";
+      return invPhone === cleanQuery && !isFailed;
     }).reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
-    return Math.floor(totalPoints);
+
+    const allOrders = Object.values(ordersByStatus).flat();
+    const validOrders = allOrders.filter((o: any) => {
+      const oPhone = cleanPhone(o.customerPhone || o.phone || "");
+      const s = String(o.status || "").toLowerCase();
+      const ps = String(o.paymentStatus || "").toLowerCase();
+      const isFailed = s.includes("cancel") || s.includes("ملغي") || s.includes("fail") || s.includes("فشل") || ps === "failed";
+      return oPhone === cleanQuery && !isFailed;
+    }).reduce((sum, o: any) => sum + (Number(o.total) || 0), 0);
+
+    const matchCust = customers.find(c => cleanPhone(c.phone) === cleanQuery);
+    const storedPts = matchCust ? Number(matchCust.loyaltyPoints !== undefined ? matchCust.loyaltyPoints : matchCust.points || 0) : 0;
+    
+    return Math.floor(Math.max(storedPts, validInvoices + validOrders));
   };
 
   useEffect(() => {
