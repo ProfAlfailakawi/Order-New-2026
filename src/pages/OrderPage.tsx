@@ -1045,13 +1045,13 @@ export default function OrderPage() {
                   <div className="shrink-0">
                     <div className="bg-white/5 backdrop-blur-md px-4 py-2.5 rounded-[20px] border border-white/10 shadow-sm text-center">
                       <span className="block text-[8px] text-stone-400 font-extrabold uppercase tracking-widest mb-0.5">مستوى العضوية</span>
-                      <span className="text-xs font-black text-[#fde68a] drop-shadow-sm flex items-center gap-1.5 justify-center">
+                      <span className="text-xs font-black drop-shadow-sm flex items-center gap-1.5 justify-center">
                         {(() => {
-                           const pts = customerPoints !== null ? Math.round(customerPoints) : (((orders[0] as any)?.customerPoints) !== undefined ? Math.round((orders[0] as any).customerPoints) : 0);
-                           if (pts >= 2000) return "💎 الماسية";
-                           if (pts >= 500) return "🥇 الذهبية";
-                           if (pts >= 100) return "🥈 الفضية";
-                           return "🥉 البرونزية";
+                           const pts = Math.round(orders.reduce((acc, o) => acc + Number(getDisplayTotal(o) || 0), 0));
+                           if (pts >= 2000) return <span className="text-cyan-300">💎 الماسية</span>;
+                           if (pts >= 500) return <span className="text-amber-300">🥇 الذهبية</span>;
+                           if (pts >= 100) return <span className="text-slate-300">🥈 الفضية</span>;
+                           return <span className="text-orange-300">🥉 البرونزية</span>;
                         })()}
                       </span>
                     </div>
@@ -1073,7 +1073,7 @@ export default function OrderPage() {
                     <span className="block text-[9px] text-stone-400 font-extrabold uppercase leading-snug">رصيد النقاط</span>
                     <span className="text-lg font-black text-[#fbbf24] flex items-center justify-center gap-0.5 leading-none">
                       <Star className="w-4 h-4 fill-[#fbbf24] text-[#fbbf24] shrink-0" />
-                      {customerPoints !== null ? Math.round(customerPoints) : (((orders[0] as any)?.customerPoints) !== undefined ? Math.round((orders[0] as any).customerPoints) : 0)}
+                      {Math.round(orders.reduce((acc, o) => acc + Number(getDisplayTotal(o) || 0), 0))}
                     </span>
                   </div>
 

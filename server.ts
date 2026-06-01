@@ -1166,25 +1166,25 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const matchedCust = customers.find((c: any) => cleanPhone(c.phone) === cleanQueryPhone);
         const storedPoints = matchedCust?.loyaltyPoints !== undefined ? matchedCust.loyaltyPoints : (matchedCust?.points || 0);
 
+        const isPaid = (status?: string, paymentStatus?: string) => {
+          const s = String(status || "").toLowerCase();
+          const ps = String(paymentStatus || "").toLowerCase();
+          return ps === 'paid' || s === 'paid' || s.includes('تم الدفع') || s.includes('تم التوصيل') || s === 'delivered' || s === 'completed' || s.includes('جاهز للتوصيل');
+        };
+
         const activeOrdersForPoints = allOrdersOriginal.filter((o: any) => {
           const ph = cleanPhone(o.customerPhone || o.phone || "");
-          if (ph !== cleanQueryPhone) return false;
-          const s = String(o.status || "").toLowerCase();
-          const ps = String(o.paymentStatus || "").toLowerCase();
-          return !(s.includes("cancel") || s.includes("ملغي") || s.includes("fail") || s.includes("فشل") || ps === "failed");
+          return ph === cleanQueryPhone && isPaid(o.status, o.paymentStatus);
         });
         const ordersTotal = activeOrdersForPoints.reduce((sum: number, o: any) => sum + (Number(o.total || o.totalAmount || 0)), 0);
 
         const activeInvoicesForPoints = allInvoices.filter((inv: any) => {
           const ph = cleanPhone(inv.customerPhone || inv.phone || "");
-          if (ph !== cleanQueryPhone) return false;
-          const s = String(inv.status || "").toLowerCase();
-          const ps = String(inv.paymentStatus || "").toLowerCase();
-          return !(s.includes("cancel") || s.includes("ملغي") || s.includes("fail") || s.includes("فشل") || ps === "failed");
+          return ph === cleanQueryPhone && isPaid(inv.status, inv.paymentStatus);
         });
         const invoicesTotal = activeInvoicesForPoints.reduce((sum: number, inv: any) => sum + (Number(inv.total || inv.totalAmount || inv.amount || 0)), 0);
 
-        points = Math.round(Math.max(storedPoints, ordersTotal + invoicesTotal));
+        points = Math.round(ordersTotal + invoicesTotal);
       }
 
       // Sort by date descending
@@ -2456,22 +2456,22 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const invoices = data.invoices || [];
       const orders = data.orders || [];
 
+      const isPaid = (status?: string, paymentStatus?: string) => {
+        const s = String(status || "").toLowerCase();
+        const ps = String(paymentStatus || "").toLowerCase();
+        return ps === 'paid' || s === 'paid' || s.includes('تم الدفع') || s.includes('تم التوصيل') || s === 'delivered' || s === 'completed' || s.includes('جاهز للتوصيل');
+      };
+
       // Calculate active order & invoice totals to ensure correct points matching Admin Dashboard
       const activeOrders = orders.filter((o: any) => {
         const ph = cleanPhone(o.customerPhone || o.phone || "");
-        if (ph !== cleanQueryPhone) return false;
-        const s = String(o.status || "").toLowerCase();
-        const ps = String(o.paymentStatus || "").toLowerCase();
-        return !(s.includes("cancel") || s.includes("ملغي") || s.includes("fail") || s.includes("فشل") || ps === "failed");
+        return ph === cleanQueryPhone && isPaid(o.status, o.paymentStatus);
       });
       const ordersTotal = activeOrders.reduce((sum: number, o: any) => sum + (Number(o.total || o.totalAmount || 0)), 0);
 
       const activeInvoices = invoices.filter((inv: any) => {
         const ph = cleanPhone(inv.customerPhone || inv.phone || "");
-        if (ph !== cleanQueryPhone) return false;
-        const s = String(inv.status || "").toLowerCase();
-        const ps = String(inv.paymentStatus || "").toLowerCase();
-        return !(s.includes("cancel") || s.includes("ملغي") || s.includes("fail") || s.includes("فشل") || ps === "failed");
+        return ph === cleanQueryPhone && isPaid(inv.status, inv.paymentStatus);
       });
       const invoicesTotal = activeInvoices.reduce((sum: number, inv: any) => sum + (Number(inv.total || inv.totalAmount || inv.amount || 0)), 0);
 
@@ -2484,7 +2484,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           const stored = customer.loyaltyPoints !== undefined ? customer.loyaltyPoints : (customer.points || 0);
           matchedCustomers.push({
             ...customer,
-            loyaltyPoints: Math.round(Math.max(stored, computedPoints)),
+            loyaltyPoints: computedPoints,
           });
         }
       });
