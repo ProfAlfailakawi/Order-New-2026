@@ -121,27 +121,23 @@ export default function AdminDashboard() {
     if (!phone) return 0;
     const cleanQuery = cleanPhone(phone);
     
+    const isPaid = (status?: string, paymentStatus?: string) => {
+      const s = String(status || "").toLowerCase();
+      const ps = String(paymentStatus || "").toLowerCase();
+      return ps === 'paid' || s === 'paid' || s.includes('تم الدفع') || s.includes('تم التوصيل') || s === 'delivered' || s === 'completed' || s.includes('جاهز للتوصيل');
+    };
+
     const validInvoices = invoices.filter(inv => {
       const invPhone = cleanPhone(inv.customerPhone || inv.phone || "");
-      const s = String(inv.status || "").toLowerCase();
-      const ps = String(inv.paymentStatus || "").toLowerCase();
-      const isFailed = s.includes("cancel") || s.includes("ملغي") || s.includes("fail") || s.includes("فشل") || ps === "failed";
-      return invPhone === cleanQuery && !isFailed;
+      return invPhone === cleanQuery && isPaid(inv.status, inv.paymentStatus);
     }).reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
 
-    const allOrders = Object.values(ordersByStatus).flat();
-    const validOrders = allOrders.filter((o: any) => {
+    const validOrders = orders.filter((o: any) => {
       const oPhone = cleanPhone(o.customerPhone || o.phone || "");
-      const s = String(o.status || "").toLowerCase();
-      const ps = String(o.paymentStatus || "").toLowerCase();
-      const isFailed = s.includes("cancel") || s.includes("ملغي") || s.includes("fail") || s.includes("فشل") || ps === "failed";
-      return oPhone === cleanQuery && !isFailed;
+      return oPhone === cleanQuery && isPaid(o.status, o.paymentStatus);
     }).reduce((sum, o: any) => sum + (Number(o.total) || 0), 0);
 
-    const matchCust = customers.find(c => cleanPhone(c.phone) === cleanQuery);
-    const storedPts = matchCust ? Number(matchCust.loyaltyPoints !== undefined ? matchCust.loyaltyPoints : matchCust.points || 0) : 0;
-    
-    return Math.floor(Math.max(storedPts, validInvoices + validOrders));
+    return Math.floor(validInvoices + validOrders);
   };
 
   useEffect(() => {
@@ -1259,9 +1255,9 @@ export default function AdminDashboard() {
                           ) : (
                             customers
                             .filter(c => !searchTerm || c.phone?.includes(searchTerm) || c.name?.includes(searchTerm))
-                            .sort((a, b) => (b.totalSpent || 0) - (a.totalSpent || 0))
+                            .sort((a, b) => getCustomerPoints(b.phone) - getCustomerPoints(a.phone))
                             .map((customer, idx) => {
-                              const points = customer.totalSpent || 0;
+                              const points = getCustomerPoints(customer.phone);
                               const tier = getLoyaltyTier(points);
                               return (
                                 <tr key={customer.id || idx} className="hover:bg-stone-50/50 transition-all group">
