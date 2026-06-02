@@ -570,6 +570,7 @@ export default function OrderPage() {
     if (
       s === "تم الدفع" ||
       s === "تم الدفع بنجاح" ||
+      (s.includes("تم الدفع") && s.includes("جاري")) ||
       s === "paid" ||
       s === "مدفوعة" ||
       s === "مدفوع"
@@ -599,7 +600,7 @@ export default function OrderPage() {
         color: "text-green-600 bg-green-50",
         icon: <CheckCircle2 className="w-4 h-4" />,
       };
-    if (s.includes("paid") || s.includes("processed") || s.includes("مدفوع"))
+    if (s.includes("paid") || s.includes("processed") || s.includes("مدفوع") || s.includes("تم الدفع") || s.includes("جاري التوصيل") || s.includes("توصيل"))
       return {
         text: "تم الدفع بنجاح",
         color: "text-green-600 bg-green-50",
@@ -612,6 +613,13 @@ export default function OrderPage() {
       icon: <Truck className="w-4 h-4" />,
     };
   };
+
+  const isPaidVisualStatus = (text: string) =>
+    text.includes("توصيل") ||
+    (text.includes("دفع") &&
+      !text.includes("بانتظار") &&
+      !text.includes("فشل") &&
+      !text.includes("لم يدفع"));
 
   const calculateItemsTotal = (items: any[]) => {
     return (items || []).reduce((sum: number, i: any) => {
@@ -1456,7 +1464,7 @@ export default function OrderPage() {
 
               {orders.map((order, index) => {
                 const statusInfo = getStatusDisplay(order);
-                const isOngoing = statusInfo.text.includes("توصيل");
+                const isOngoing = isPaidVisualStatus(statusInfo.text);
                 return (
                   <motion.div
                     layoutId={`order-${order.id}`}
@@ -1483,7 +1491,7 @@ export default function OrderPage() {
                           </span>
                           {(order.paymentStatus === "paid" ||
                             (order.status || "").startsWith("تم الدفع") ||
-                            statusInfo.text.includes("توصيل") ||
+                            isPaidVisualStatus(statusInfo.text) ||
                             statusInfo.text.includes("مكتمل")) &&
                             !statusInfo.text.includes("فشل") &&
                             !statusInfo.text.includes("بانتظار") &&
@@ -1588,9 +1596,7 @@ export default function OrderPage() {
                         تفاصيل الطلب
                         {(selectedOrder.paymentStatus === "paid" ||
                           (selectedOrder.status || "").startsWith("تم الدفع") ||
-                          getStatusDisplay(selectedOrder).text.includes(
-                            "توصيل",
-                          ) ||
+                          isPaidVisualStatus(getStatusDisplay(selectedOrder).text) ||
                           getStatusDisplay(selectedOrder).text.includes(
                             "مكتمل",
                           )) &&
@@ -1691,9 +1697,7 @@ export default function OrderPage() {
                             "radial-gradient(circle at 50% 50%, #450a0a 0%, #1c1917 100%)",
                             "radial-gradient(circle at 50% 50%, #7f1d1d 0%, #1c1917 100%)",
                           ]
-                        : getStatusDisplay(selectedOrder).text.includes(
-                        "توصيل",
-                      )
+                        : (isPaidVisualStatus(getStatusDisplay(selectedOrder).text))
                         ? [
                             "radial-gradient(circle at 50% 50%, #0d9488 0%, #1c1917 100%)",
                             "radial-gradient(circle at 50% 50%, #115e59 0%, #1c1917 100%)",
@@ -1724,7 +1728,7 @@ export default function OrderPage() {
                       let progress = 0;
 
                       if (
-                        currentStep.includes("توصيل") ||
+                        isPaidVisualStatus(currentStep) ||
                         currentStep.includes("مكتمل")
                       ) {
                         progress = 100;
@@ -1771,7 +1775,7 @@ export default function OrderPage() {
                   {/* The Magical Compass */}
                   <div className="relative z-10 w-48 h-48 sm:w-56 sm:h-56">
                     {/* Ghost car effect for delivery */}
-                    {getStatusDisplay(selectedOrder).text.includes("توصيل") && (
+                    {isPaidVisualStatus(getStatusDisplay(selectedOrder).text) && (
                       <motion.div
                         animate={{ x: ["150%", "-150%"] }}
                         transition={{
@@ -1920,9 +1924,7 @@ export default function OrderPage() {
                       animate={{
                         rotate: getStatusDisplay(selectedOrder).text.includes("ملغي")
                           ? 180
-                          : getStatusDisplay(selectedOrder).text.includes(
-                          "توصيل",
-                        )
+                          : isPaidVisualStatus(getStatusDisplay(selectedOrder).text)
                           ? 45
                           : getStatusDisplay(selectedOrder).text.includes(
                                 "تجهيز",
@@ -1942,9 +1944,7 @@ export default function OrderPage() {
                       transition={{
                         type:
                           getStatusDisplay(selectedOrder).text.includes("ملغي") ||
-                          getStatusDisplay(selectedOrder).text.includes(
-                            "توصيل",
-                          ) ||
+                          isPaidVisualStatus(getStatusDisplay(selectedOrder).text) ||
                           getStatusDisplay(selectedOrder).text.includes(
                             "تجهيز",
                           ) ||
@@ -1962,9 +1962,7 @@ export default function OrderPage() {
                         damping: 12,
                         stiffness: 60,
                         duration:
-                          getStatusDisplay(selectedOrder).text.includes(
-                            "توصيل",
-                          ) ||
+                          isPaidVisualStatus(getStatusDisplay(selectedOrder).text) ||
                           getStatusDisplay(selectedOrder).text.includes(
                             "تجهيز",
                           ) ||
@@ -1980,9 +1978,7 @@ export default function OrderPage() {
                             ? undefined
                             : 2.5,
                         repeat:
-                          getStatusDisplay(selectedOrder).text.includes(
-                            "توصيل",
-                          ) ||
+                          isPaidVisualStatus(getStatusDisplay(selectedOrder).text) ||
                           getStatusDisplay(selectedOrder).text.includes(
                             "تجهيز",
                           ) ||
@@ -2004,7 +2000,7 @@ export default function OrderPage() {
                     </motion.div>
 
                     {/* Speed lines for delivery */}
-                    {getStatusDisplay(selectedOrder).text.includes("توصيل") &&
+                    {isPaidVisualStatus(getStatusDisplay(selectedOrder).text) &&
                       [...Array(8)].map((_, i) => (
                         <motion.div
                           key={`speedline-${i}`}
@@ -2034,7 +2030,7 @@ export default function OrderPage() {
                         ? "تم إلغاء الطلب"
                         : getStatusDisplay(selectedOrder).text.includes("فشل")
                         ? "فشل الدفع"
-                        : getStatusDisplay(selectedOrder).text.includes("توصيل")
+                        : isPaidVisualStatus(getStatusDisplay(selectedOrder).text)
                           ? "تم الدفع بنجاح"
                           : getStatusDisplay(selectedOrder).text.includes(
                                 "تجهيز",
@@ -2061,7 +2057,7 @@ export default function OrderPage() {
                         ? "المعذرة، الفاتورة ملغية أو انتهى وقت القطية وما اكتمل المبلغ. للاستفسار تواصل معانا."
                         : getStatusDisplay(selectedOrder).text.includes("فشل")
                         ? "محاولة الدفع ما ضبطت. جرّب مرة ثانية."
-                        : getStatusDisplay(selectedOrder).text.includes("توصيل")
+                        : isPaidVisualStatus(getStatusDisplay(selectedOrder).text)
                           ? "تبي المندوب ينتبه حق شي معين بالطريج أو الموقع؟ تواصل ويانا بالواتساب وبلغنا."
                           : getStatusDisplay(selectedOrder).text.includes(
                                 "تجهيز",
