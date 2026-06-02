@@ -3718,52 +3718,6 @@ export default function CustomerSite() {
           </div>
         )}
 
-        {/* Strongest 5 Diwaniyas - visible challenge board */}
-        {!isCheckout && (
-          <div className="px-4 sm:px-6 py-3 bg-stone-50/80 border-b border-stone-100" dir="rtl">
-            <button
-              type="button"
-              onClick={() => { setActiveSquadTab("leaderboard"); setShowSquadModal(true); }}
-              className="w-full text-right rounded-[24px] bg-white border border-amber-100 shadow-sm p-4 active:scale-[0.99] transition-all"
-            >
-              <div className="flex items-center justify-between gap-3 mb-3">
-                <div>
-                  <p className="text-[10px] font-black text-amber-600">تحدي الديوانيات</p>
-                  <h3 className="text-base font-black text-brand mt-0.5">صدارة الدواوين</h3>
-                </div>
-                <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-xl shrink-0">🏆</div>
-              </div>
-
-              {strongestFiveSquads.length > 0 ? (
-                <div className="space-y-2">
-                  {strongestFiveSquads.map((sq: any, idx: number) => (
-                    <div
-                      key={sq.id || idx}
-                      className={cn(
-                        "flex items-center justify-between gap-3 rounded-2xl border px-3 py-2",
-                        idx === 0 ? "bg-amber-50 border-amber-100" : "bg-stone-50 border-stone-100"
-                      )}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className={cn(
-                          "w-7 h-7 rounded-xl flex items-center justify-center text-xs font-black shrink-0",
-                          idx === 0 ? "bg-amber-500 text-white" : "bg-white text-stone-500 border border-stone-100"
-                        )}>{idx + 1}</span>
-                        <span className="text-xs font-black text-brand truncate">{sq.name || "ديوانية بدون اسم"}</span>
-                      </div>
-                      <span className="text-xs font-black text-amber-700 shrink-0">{Number(sq.displayPoints || 0).toLocaleString("en-US")} نقطة</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-2xl bg-stone-50 border border-stone-100 p-3 text-center text-[11px] font-black text-stone-400">
-                  ماكو ترتيب ظاهر حالياً. أول ديوانية تجمع نقاط راح تظهر هنا تلقائياً.
-                </div>
-              )}
-            </button>
-          </div>
-        )}
-
         {/* Interactive Stories Filter */}
         {false && !isCheckout && (
           <div className="bg-stone-50/50 py-4 px-6 overflow-x-auto no-scrollbar border-b border-stone-100 flex gap-5">
