@@ -205,6 +205,7 @@ import {
   normalizeDigits,
   isValidPhone,
   checkStoreStatus,
+  formatKuwaitiDate,
 } from "../utils";
 import {
   calculateItemAddons,
@@ -2152,7 +2153,7 @@ export default function CustomerSite() {
                 let rawStatus = o.status;
                 if (!rawStatus) {
                   if (o.paymentStatus === "paid")
-                    rawStatus = "تم الدفع وجاري التوصيل";
+                    rawStatus = "تم الدفع بنجاح";
                   else if (o.paymentStatus === "failed")
                     rawStatus = "فشل في عملية الدفع";
                   else rawStatus = "جديد";
@@ -6966,7 +6967,7 @@ function CheckoutOverlay({
     .map((order: any) => ({
       id: order?.id || order?.invoiceId || order?.linkedInvoiceId || 'طلب',
       points: Math.max(0, Math.floor(Number(order?.total || order?.totalAmount || order?.amount || 0))),
-      date: getOrderTime(order) ? new Date(getOrderTime(order)).toLocaleDateString('ar-KW') : 'حديثاً',
+      date: getOrderTime(order) ? formatKuwaitiDate(getOrderTime(order)).date : 'حديثاً',
     }));
   const frequentOrders = Array.from(cleanHistory.reduce((map: Map<string, any>, order: any) => {
     const items = Array.isArray(order?.items) ? order.items : [];

@@ -517,7 +517,7 @@ export default function OrderPage() {
     if (label.includes("قيد تجميع القطية")) return { title: "قيد تجميع القطية", desc: "اللمة ماشية، وكل دفعة تقرب الطلب من الاكتمال." };
     if (label.includes("بانتظار")) return { title: "بانتظار الدفع", desc: "كمل الدفع عشان نعتمد الطلب ونمشيه لك." };
     if (label.includes("فشل")) return { title: "فشلت عملية الدفع", desc: "ما عليه، جرب مرة ثانية أو اختار طريقة أنسب." };
-    if (label.includes("تم الدفع") || label.includes("توصيل")) return { title: "تم الدفع وجاري التوصيل", desc: "طلبك معتمد وجاري توصيله بهدوء." };
+    if (label.includes("تم الدفع") || label.includes("توصيل")) return { title: "تم الدفع بنجاح", desc: "طلبك معتمد وجاري توصيله بهدوء." };
     return { title: "تم إنشاء الطلب", desc: "وصلنا طلبك، وبانتظار الخطوة التالية." };
   };
 
@@ -529,7 +529,7 @@ export default function OrderPage() {
     // to prevent flickering before the backend update propagates.
     if (sessionSuccessOrders.includes(oId)) {
       return {
-        text: "تم الدفع وجاري التوصيل",
+        text: "تم الدفع بنجاح",
         color: "text-green-600 bg-green-50",
         icon: <Truck className="w-4 h-4" />,
       };
@@ -540,7 +540,7 @@ export default function OrderPage() {
     }
     
     if (!rawStatus) {
-      if (order?.paymentStatus === "paid") rawStatus = "تم الدفع وجاري التوصيل";
+      if (order?.paymentStatus === "paid") rawStatus = "تم الدفع بنجاح";
       else if (order?.paymentStatus === "failed")
         rawStatus = "فشل في عملية الدفع";
       else rawStatus = "جديد";
@@ -569,13 +569,13 @@ export default function OrderPage() {
       };
     if (
       s === "تم الدفع" ||
-      s === "تم الدفع وجاري التوصيل" ||
+      s === "تم الدفع بنجاح" ||
       s === "paid" ||
       s === "مدفوعة" ||
       s === "مدفوع"
     )
       return {
-        text: "تم الدفع وجاري التوصيل",
+        text: "تم الدفع بنجاح",
         color: "text-green-600 bg-green-50",
         icon: <Truck className="w-4 h-4" />,
       };
@@ -601,7 +601,7 @@ export default function OrderPage() {
       };
     if (s.includes("paid") || s.includes("processed") || s.includes("مدفوع"))
       return {
-        text: "تم الدفع وجاري التوصيل",
+        text: "تم الدفع بنجاح",
         color: "text-green-600 bg-green-50",
         icon: <Truck className="w-4 h-4" />,
       };
@@ -1718,7 +1718,7 @@ export default function OrderPage() {
 
                   {/* Progress indicators like Instagram stories (top layer) */}
                   <div className="absolute top-4 left-4 right-4 flex gap-1 z-20">
-                    {["تم إنشاء الطلب", getStatusDisplay(selectedOrder).text.includes("فشل") ? "فشلت عملية الدفع" : "بانتظار الدفع", "تم الدفع وجاري التوصيل"].map((step, i) => {
+                    {["تم إنشاء الطلب", getStatusDisplay(selectedOrder).text.includes("فشل") ? "فشلت عملية الدفع" : "بانتظار الدفع", "تم الدفع بنجاح"].map((step, i) => {
                       const currentStep = getStatusDisplay(selectedOrder).text;
                       const isFailed = currentStep.includes("فشل");
                       let progress = 0;
@@ -2035,7 +2035,7 @@ export default function OrderPage() {
                         : getStatusDisplay(selectedOrder).text.includes("فشل")
                         ? "فشل الدفع"
                         : getStatusDisplay(selectedOrder).text.includes("توصيل")
-                          ? "تم الدفع وجاري التوصيل إليك!"
+                          ? "تم الدفع بنجاح"
                           : getStatusDisplay(selectedOrder).text.includes(
                                 "تجهيز",
                               ) ||
@@ -2075,7 +2075,7 @@ export default function OrderPage() {
                                 !getStatusDisplay(selectedOrder).text.includes(
                                   "فشل",
                                 ))
-                            ? "دقائق ويكون تم الدفع وجاري التوصيل إليك."
+                            ? "تم الدفع بنجاح"
                             : getStatusDisplay(selectedOrder).text.includes("قطية")
                             ? "القطيّة شغالة والربع قاعدين يدفعون، الفاتورة ما تتأكد لين يكمل المبلغ!"
                             : "استلمنا طلبك، بانتظار الدفع عشان نبلش التجهيز."}
@@ -2305,11 +2305,7 @@ export default function OrderPage() {
                         delay={0.3}
                       />
                       <TypewriterText
-                        text={new Date().toLocaleTimeString("en-US", {
-                          hour12: false,
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        text={formatKuwaitiDate(new Date()).time}
                         delay={0.6}
                       />
                     </motion.div>

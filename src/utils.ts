@@ -160,19 +160,19 @@ export const formatKuwaitiDate = (dateVal: any): { date: string; time: string; f
   const d = new Date(dateVal);
   if (isNaN(d.getTime())) return { date: "", time: "", full: "" };
 
-  const day = d.getDate();
-  const month = d.getMonth() + 1;
-  const year = d.getFullYear();
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kuwait",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  }).formatToParts(d);
 
-  let hours = d.getHours();
-  const minutes = d.getMinutes();
-  const ampm = hours >= 12 ? "PM" : "AM";
-  hours = hours % 12;
-  hours = hours ? hours : 12;
-  const minutesStr = minutes < 10 ? "0" + minutes : minutes;
-
-  const dateStr = `${day}/${month}/${year}`;
-  const timeStr = `${hours}.${minutesStr} ${ampm}`;
+  const getPart = (type: string) => parts.find((part) => part.type === type)?.value || "";
+  const dateStr = `${getPart("day")}/${getPart("month")}/${getPart("year")}`;
+  const timeStr = `${getPart("hour")}.${getPart("minute")}${getPart("dayPeriod").toUpperCase()}`;
 
   return {
     date: dateStr,

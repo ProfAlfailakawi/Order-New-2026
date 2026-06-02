@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Coffee, Flame, Volume2, VolumeX, Sparkles, HelpCircle, RefreshCw, Compass, BrainCircuit, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { cn } from "../utils";
+import { cn, formatKuwaitiDate } from "../utils";
 import confetti from "canvas-confetti";
 
 // -------------------------------------------------------------
@@ -1200,7 +1200,7 @@ export function SaduPresenceRug({
                   <div className="grid grid-cols-[auto_1fr] items-center gap-3 text-right">
                     <span className="text-stone-500 shrink-0">وقت الحضور:</span>
                     <span className="text-stone-400 min-w-0">
-                      {new Date(selectedCupInfo.checkedInAt).toLocaleTimeString("ar-KW", { hour: '2-digit', minute: '2-digit' })}
+                      {formatKuwaitiDate(selectedCupInfo.checkedInAt).time}
                     </span>
                   </div>
                 )}
