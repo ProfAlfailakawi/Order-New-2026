@@ -17,7 +17,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { Order } from "../types";
-import { cn, normalizePhone, normalizeDigits, getSaduAvatar } from "../utils";
+import { cn, normalizePhone, normalizeDigits, getSaduAvatar, formatKuwaitiDate } from "../utils";
 import confetti from "canvas-confetti";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
@@ -1111,10 +1111,7 @@ export default function SplitPayment() {
                           </span>
                           <span className="text-[8px] text-stone-400 font-bold uppercase">
                             {p.date
-                              ? new Date(p.date).toLocaleTimeString("en-US", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
+                              ? formatKuwaitiDate(p.date).time
                               : "الآن"}
                           </span>
                         </div>

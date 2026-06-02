@@ -658,13 +658,13 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
               orders[oIdx].remainingAmount = splitSummary.remainingAmount;
 
               if (splitSummary.isFullyPaid) {
-                orders[oIdx].status = "تم الدفع وجاري التوصيل";
+                orders[oIdx].status = "تم الدفع بنجاح";
                 orders[oIdx].paymentStatus = "paid";
                 orders[oIdx].paidAt = new Date().toISOString();
                 directPushes.push({
                   eventId: `safe-worker-qatia-completed-${orders[oIdx].id}`,
                   title: "✅ اكتملت القطية",
-                  body: `اكتملت القطية للطلب ${orders[oIdx].id} — تم الدفع وجاري التوصيل${Number(orders[oIdx].total) ? ` — القيمة ${Number(orders[oIdx].total).toFixed(3)} د.ك` : ""}`,
+                  body: `اكتملت القطية للطلب ${orders[oIdx].id} — تم الدفع بنجاح${Number(orders[oIdx].total) ? ` — القيمة ${Number(orders[oIdx].total).toFixed(3)} د.ك` : ""}`,
                   alertType: "qatia_completed",
                   orderId: orders[oIdx].id,
                 });
@@ -692,7 +692,7 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
           const currentStatus = orders[oIdx].status;
           if (isSuccess) {
             if (orders[oIdx].paymentStatus !== "paid") {
-              orders[oIdx].status = "تم الدفع وجاري التوصيل";
+              orders[oIdx].status = "تم الدفع بنجاح";
               orders[oIdx].paymentStatus = "paid";
               orders[oIdx].paidAt = new Date().toISOString();
               orders[oIdx].transactionId = providerData?.reference?.id || providerData?.TrackID || "upayments_auth";
@@ -736,7 +736,7 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
       invoices.forEach((inv: any) => {
         if (paymentRecordMatches(inv, baseId)) {
           if (isSuccess && inv.paymentStatus !== "paid") {
-            inv.status = "تم الدفع وجاري التوصيل";
+            inv.status = "تم الدفع بنجاح";
             inv.paymentStatus = "paid";
             inv.paidAt = new Date().toISOString();
             inv.paymentUpdatedAt = new Date().toISOString();
@@ -1201,7 +1201,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         // Healing Logic: If paymentStatus is paid but status is stuck in split/roulette mode, auto-fix it
         if ((o.paymentStatus === 'paid' || o.status === 'paid' || (o.splitPayments && o.splitPayments.filter((sp:any) => sp.status === 'paid').reduce((sum:number, sp:any) => sum + (Number(sp.amount) || 0), 0) >= (Number(o.total) || 0) - 0.005)) && 
             (o.status === "قيد تجميع القطية" || o.status === "بانتظار الدفع" || o.status === "جديد")) {
-          o.status = "تم الدفع وجاري التوصيل";
+          o.status = "تم الدفع بنجاح";
           o.paymentStatus = "paid";
           needsPersistence = true;
           
@@ -2721,7 +2721,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
               data.status === "تم الدفع" ||
               data.status === "pending" ||
               data.status === "قيد الانتظار" ||
-              data.status === "تم الدفع وجاري التوصيل") &&
+              data.status === "تم الدفع بنجاح") &&
             recentOrders.length < 50
           ) {
             const items = data.items || [];
@@ -2920,7 +2920,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       deliveryType: deliveryType || (isFreeDelivery ? "free" : null),
       total,
       regionId: regionId || null,
-      status: status || (total < 0.001 ? "تم الدفع وجاري التوصيل" : "جديد"),
+      status: status || (total < 0.001 ? "تم الدفع بنجاح" : "جديد"),
       paymentStatus: paymentStatus || (total < 0.001 ? "paid" : "pending"),
       createdAt: new Date().toISOString(),
       source: "customer_website",
@@ -4044,7 +4044,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
                     const orderTotalFils = Math.round((Number(orders[orderIndex].total) || 0) * 1000);
 
                     if (totalPaidFils >= orderTotalFils - 5) {
-                      orders[orderIndex].status = "تم الدفع وجاري التوصيل";
+                      orders[orderIndex].status = "تم الدفع بنجاح";
                       orders[orderIndex].paymentStatus = "paid";
                       orders[orderIndex].paidAt = new Date().toISOString();
                       
@@ -4086,7 +4086,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
                 );
               } else if (isExplicitSuccess) {
                 if (orders[orderIndex].paymentStatus !== "paid" && !orders[orderIndex].status.startsWith("تم الدفع")) {
-	                  orders[orderIndex].status = "تم الدفع وجاري التوصيل";
+	                  orders[orderIndex].status = "تم الدفع بنجاح";
 	                  orders[orderIndex].paymentStatus = "paid";
 	                  orders[orderIndex].paidAt = new Date().toISOString();
 	                  orders[orderIndex].paymentUpdatedAt = new Date().toISOString();
@@ -4148,7 +4148,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
             const normalizedInvoiceId = String(orderId).toUpperCase();
             const invoiceIndexes = invoices.map((inv: any, idx: number) => String(inv.id).toUpperCase() === normalizedInvoiceId ? idx : -1).filter((idx: number) => idx !== -1);
 
-            if (currentStatus === "جديد" || currentStatus === "بانتظار الدفع" || currentStatus === "تم الدفع وجاري التوصيل") {
+            if (currentStatus === "جديد" || currentStatus === "بانتظار الدفع" || currentStatus === "تم الدفع بنجاح") {
               const transactionId = req.body?.reference?.id || req.body?.TrackID || req.query?.TrackID || "upayments_auth";
 	              if (isExplicitFailure) {
 	                invoiceIndexes.forEach((idx: number) => {
@@ -4161,7 +4161,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
 	                updated = true;
 	              } else if (isExplicitSuccess) {
 	                invoiceIndexes.forEach((idx: number) => {
-	                  invoices[idx].status = "تم الدفع وجاري التوصيل";
+	                  invoices[idx].status = "تم الدفع بنجاح";
 	                  invoices[idx].paymentStatus = "paid";
 	                  invoices[idx].paidAt = new Date().toISOString();
 	                  invoices[idx].paymentUpdatedAt = new Date().toISOString();
@@ -4399,7 +4399,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           id: orderData.id,
           invoiceId: orderData.id,
           paymentStatus: "paid",
-          status: "تم الدفع وجاري التوصيل",
+          status: "تم الدفع بنجاح",
           completedAt: new Date().toISOString(),
         };
 

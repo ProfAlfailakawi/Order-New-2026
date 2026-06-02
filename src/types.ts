@@ -83,7 +83,7 @@ export interface Order {
   deliveryFee: number;
   isFreeDelivery?: boolean; // Add property
   total: number;
-  status: "جديد" | "بانتظار الدفع" | "قيد تجميع القطية" | "تم الدفع وجاري التوصيل" | "ملغي" | "فشل في عملية الدفع";
+  status: "جديد" | "بانتظار الدفع" | "قيد تجميع القطية" | "تم الدفع بنجاح" | "ملغي" | "فشل في عملية الدفع";
   createdAt: string;
   discountAmount?: number;
   promoCode?: string;

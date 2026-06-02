@@ -34,11 +34,8 @@ import {
 import { Order, Analytics, Region } from "../types";
 import { db } from "../lib/firebase";
 import { collection, onSnapshot, doc, setDoc, getDoc, query, orderBy } from "firebase/firestore";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
-
 import { DEFAULT_GLOBAL_LOGO } from "../constants";
-import { cn, calculateItemsTotal, getDisplayTotal, normalizeDigits } from "../utils";
+import { cn, calculateItemsTotal, getDisplayTotal, normalizeDigits, formatKuwaitiDate } from "../utils";
 import { calculateItemTotalWithAddons } from "../utils/priceCalculation";
 import { NewInvoiceModal } from "../components/NewInvoiceModal";
 
@@ -278,7 +275,7 @@ export default function AdminDashboard() {
 
   const checkAdminVisibility = (o: Order) => {
       // Don't show completed/cancelled ones here
-      return o.status === "جديد" || o.status === "تم الدفع وجاري التوصيل" || o.status === "فشل في عملية الدفع" || o.status === "قيد تجميع القطية";
+      return o.status === "جديد" || o.status === "تم الدفع بنجاح" || o.status === "فشل في عملية الدفع" || o.status === "قيد تجميع القطية";
   };
   const filteredNewOrders = filteredOrders.filter(checkAdminVisibility);
 
@@ -515,7 +512,7 @@ export default function AdminDashboard() {
                   <p className="text-stone-400 text-sm mt-4 font-medium uppercase tracking-[0.3em]">تحليل العمليات الفورية</p>
                 </div>
                 <div className="px-6 py-3 bg-white border border-stone-100 rounded-[20px] text-xs font-extrabold text-stone-500 shadow-sm">
-                  {format(new Date(), "EEEE, do MMMM", { locale: enUS })}
+                  {formatKuwaitiDate(new Date()).date}
                 </div>
               </div>
               
@@ -752,7 +749,7 @@ export default function AdminDashboard() {
                       <div className="mt-4 flex items-center justify-end gap-3 text-stone-400 text-sm">
                          <span className="font-bold">{order.address?.region || "—"}</span>
                          <span className="w-1 h-1 bg-stone-200 rounded-full" />
-                         <span>{format(new Date(order.createdAt || order.date || Date.now()), "HH:mm")}</span>
+                         <span>{formatKuwaitiDate(order.createdAt || order.date || Date.now()).time}</span>
                       </div>
                     </div>
 
@@ -857,7 +854,7 @@ export default function AdminDashboard() {
                             <p className="text-xs text-stone-400 mt-1 font-medium">{invoice.customerPhone}</p>
                           </td>
                           <td className="p-10 text-sm text-stone-500 font-bold">
-                            {format(new Date(invoice.completedAt || invoice.createdAt || invoice.date || 0), "PPP", { locale: enUS })}
+                            {formatKuwaitiDate(invoice.completedAt || invoice.createdAt || invoice.date || 0).date}
                           </td>
                           <td className="p-10 text-2xl font-light text-brand italic">{getDisplayTotal(invoice).toFixed(3)} <span className="text-xs text-accent">د.ك</span></td>
                           <td className="p-10">
@@ -1830,7 +1827,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
               </div>
             </div>
             <div className="space-y-8">
-              <div className="text-right"><label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-[0.2em] block mb-3">التوقيت</label><h4 className="text-xl font-extrabold text-brand">{format(new Date(order.createdAt || order.date || Date.now()), "PPP p", { locale: enUS })}</h4><p className="text-stone-400 font-extrabold uppercase text-[10px] mt-2 tracking-widest italic">المصدر: {order.source === "customer_website" ? "الموقع الإلكتروني" : "نظام الإدارة"}</p></div>
+              <div className="text-right"><label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-[0.2em] block mb-3">التوقيت</label><h4 className="text-xl font-extrabold text-brand">{formatKuwaitiDate(order.createdAt || order.date || Date.now()).full}</h4><p className="text-stone-400 font-extrabold uppercase text-[10px] mt-2 tracking-widest italic">المصدر: {order.source === "customer_website" ? "الموقع الإلكتروني" : "نظام الإدارة"}</p></div>
               
               <div className="p-8 border-2 border-stone-100 rounded-[40px] space-y-6">
                  <div className="flex justify-between items-center text-xs font-bold text-stone-400 uppercase tracking-widest">
