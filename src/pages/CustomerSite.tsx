@@ -408,27 +408,6 @@ const renderAdminSquadTierBadge = (tier: any, sizeClass = "w-9 h-9") => {
   return <span className={`${sizeClass} rounded-full flex items-center justify-center text-white bg-gradient-to-br ${gradient} shrink-0 shadow-sm`}>{content}</span>;
 };
 
-
-const normalizeLoyaltyTierForCustomer = (tier: any, index: number, all: any[]) => {
-  const sortedMins = all.map((t: any) => parseAdminPoints(t?.minPoints ?? t?.points ?? t?.requiredPoints ?? 0)).sort((a, b) => a - b);
-  const minPoints = parseAdminPoints(tier?.minPoints ?? tier?.points ?? tier?.requiredPoints ?? 0);
-  const nextMin = sortedMins.find((v) => v > minPoints);
-  const iconType = String(tier?.iconType || tier?.icon || "");
-  return {
-    ...tier,
-    id: String(tier?.id ?? tier?.name ?? tier?.title ?? index),
-    name: tier?.name || tier?.title || "",
-    minPoints,
-    maxPoints: parseAdminPoints(tier?.maxPoints ?? (nextMin ? nextMin - 1 : 999999999)),
-    color: String(tier?.color || "").startsWith("text-") ? tier.color : ["text-amber-700", "text-slate-600", "text-yellow-600", "text-sky-600"][index] || "text-brand",
-    bg: String(tier?.bg || "").startsWith("bg-") ? tier.bg : ["bg-amber-50", "bg-slate-100", "bg-yellow-50", "bg-sky-50"][index] || "bg-stone-50",
-    iconType,
-    icon: tier?.icon || (iconType === "Crown" ? "👑" : iconType === "Diamond" ? "💎" : iconType === "Star" ? "⭐" : iconType === "Shield" ? "🛡️" : "🤝"),
-    benefit: tier?.benefit || tier?.label || tier?.description || "",
-    description: tier?.description || tier?.label || tier?.benefit || "",
-  };
-};
-
 const normalizeSquadTierForCustomer = (tier: any, index: number, all: any[]) => {
   const sortedMins = all.map((t: any) => parseAdminPoints(t?.minPoints ?? t?.points ?? t?.requiredPoints ?? 0)).sort((a, b) => a - b);
   const minPoints = parseAdminPoints(tier?.minPoints ?? tier?.points ?? tier?.requiredPoints ?? 0);
@@ -513,11 +492,7 @@ export default function CustomerSite() {
   
   const LOYALTY_TIERS = useMemo(() => {
     const tiers = normalizeAdminArray(settings.loyaltyTiers ?? settings.loyaltyLevels ?? settings.loyaltySettings?.tiers);
-    const source = tiers.length > 0 ? tiers : INITIAL_LOYALTY_TIERS;
-    return [...source]
-      .map((tier, index, all) => normalizeLoyaltyTierForCustomer(tier, index, all))
-      .filter((tier: any) => Boolean(String(tier?.name || "").trim()))
-      .sort((a, b) => Number(a.minPoints || 0) - Number(b.minPoints || 0));
+    return tiers.length > 0 ? tiers : INITIAL_LOYALTY_TIERS;
   }, [settings.loyaltyTiers, settings.loyaltyLevels, settings.loyaltySettings]);
 
   const SQUAD_TIERS = useMemo(() => {
@@ -530,8 +505,7 @@ export default function CustomerSite() {
   }, [settings.squadTiers, settings.squadLevels, settings.diwaniyaTiers, settings.diwaniyaLevels, settings.squadSettings]);
 
   const getLoyaltyTier = useCallback((points: number) => {
-    const value = parseAdminPoints(points);
-    return LOYALTY_TIERS.find((t: any) => value >= Number(t.minPoints || 0) && value <= Number(t.maxPoints ?? 999999999)) || [...LOYALTY_TIERS].reverse().find((t: any) => value >= Number(t.minPoints || 0)) || LOYALTY_TIERS[0];
+    return LOYALTY_TIERS.find((t: any) => points >= t.minPoints && points <= t.maxPoints) || LOYALTY_TIERS[0];
   }, [LOYALTY_TIERS]);
 
   const getSquadTier = useCallback((points: number) => {
@@ -705,6 +679,7 @@ export default function CustomerSite() {
   const [orderPaymentLink, setOrderPaymentLink] = useState("");
 
   const [lastOrderInfo, setLastOrderInfo] = useState<any>(null);
+  const [customerOrderHistory, setCustomerOrderHistory] = useState<any[]>([]);
   const [customerHistoricalOrdersCount, setCustomerHistoricalOrdersCount] = useState(0);
   const [isZeroClickLoading, setIsZeroClickLoading] = useState(false);
 
@@ -2151,6 +2126,7 @@ export default function CustomerSite() {
       if (customerPhone.length < 8) {
         setCustomerPoints(0);
         setLastOrderInfo(null);
+        setCustomerOrderHistory([]);
         setCustomerHistoricalOrdersCount(0);
         return;
       }
@@ -2169,7 +2145,9 @@ export default function CustomerSite() {
             const txt = await trackRes.text();
             const orders = JSON.parse(txt);
             if (orders && orders.length > 0) {
-              setCustomerHistoricalOrdersCount(orders.length);
+              const normalizedOrders = Array.isArray(orders) ? orders : [];
+              setCustomerOrderHistory(normalizedOrders);
+              setCustomerHistoricalOrdersCount(normalizedOrders.length);
               const successfulOrder = orders.find((o: any) => {
                 let rawStatus = o.status;
                 if (!rawStatus) {
@@ -2203,6 +2181,7 @@ export default function CustomerSite() {
                 setLastOrderInfo(null);
               }
             } else {
+              setCustomerOrderHistory([]);
               setCustomerHistoricalOrdersCount(0);
             }
           }
@@ -2264,7 +2243,7 @@ export default function CustomerSite() {
             if (!customerData.name && !customerData.customerName && fetchedLastOrder && fetchedLastOrder.customerName) {
               setCustomerName(fetchedLastOrder.customerName || "");
             }
-            setCustomerPoints(Math.floor(parseAdminPoints(customerData.loyaltyPoints ?? customerData.points ?? 0)));
+            setCustomerPoints(Math.round(customerData.loyaltyPoints || 0));
             setIsLocked(true);
             foundCustomer = true;
           }
@@ -5170,7 +5149,9 @@ export default function CustomerSite() {
               setShowSquadModal={setShowSquadModal}
               getLoyaltyTier={getLoyaltyTier}
               lastOrderInfo={lastOrderInfo}
+              customerOrderHistory={customerOrderHistory}
               customerHistoricalOrdersCount={customerHistoricalOrdersCount}
+              loyaltyTiers={LOYALTY_TIERS}
               isZeroClickLoading={isZeroClickLoading}
               handleZeroClickOrder={handleZeroClickOrder}
             />
@@ -6945,7 +6926,9 @@ function CheckoutOverlay({
   setShowSquadModal,
   getLoyaltyTier,
   lastOrderInfo,
+  customerOrderHistory = [],
   customerHistoricalOrdersCount = 0,
+  loyaltyTiers = [],
   isZeroClickLoading,
   handleZeroClickOrder,
 }: any) {
@@ -6954,6 +6937,69 @@ function CheckoutOverlay({
   const [step, setStep] = useState<"cart" | "delivery" | "payment">(initialStep);
   const lastOrderItemsCount = Array.isArray(lastOrderInfo?.items) ? lastOrderInfo.items.length : 0;
   const lastOrderTotal = Number(lastOrderInfo?.total || lastOrderInfo?.amount || 0);
+  const cleanHistory = Array.isArray(customerOrderHistory) ? customerOrderHistory : [];
+  const normalizedLoyaltyTiers = Array.isArray(loyaltyTiers) ? loyaltyTiers : [];
+  const currentTier = getLoyaltyTier(customerPoints || 0);
+  const currentTierIndex = normalizedLoyaltyTiers.findIndex((tier: any) => String(tier?.id ?? tier?.name) === String(currentTier?.id ?? currentTier?.name));
+  const nextTier = currentTierIndex >= 0 ? normalizedLoyaltyTiers[currentTierIndex + 1] : null;
+  const expectedPoints = Math.max(0, Math.floor(Number(itemsTotal || 0)));
+  const pointsAfterOrder = Number(customerPoints || 0) + expectedPoints;
+  const upcomingTier = nextTier && pointsAfterOrder >= Number(nextTier?.minPoints || 0) ? nextTier : null;
+  const pointsNeeded = nextTier ? Math.max(0, Number(nextTier.minPoints || 0) - Number(customerPoints || 0)) : 0;
+  const profileChecks = [
+    Boolean(String(customerName || '').trim()),
+    String(customerPhone || '').replace(/[^0-9]/g, '').length >= 8,
+    Boolean(address?.region),
+    Boolean(address?.block && address?.street && address?.building),
+    Boolean(String(generalNotes || '').trim()),
+  ];
+  const profileCompletion = Math.round((profileChecks.filter(Boolean).length / profileChecks.length) * 100);
+  const getOrderTime = (order: any) => new Date(order?.createdAt || order?.paidAt || order?.date || order?.timestamp || 0).getTime() || 0;
+  const loyaltyActivity = cleanHistory
+    .filter((order: any) => {
+      const status = String(order?.status || '').toLowerCase();
+      const paymentStatus = String(order?.paymentStatus || '').toLowerCase();
+      return paymentStatus === 'paid' || status.includes('تم الدفع') || status.includes('تم التوصيل') || status.includes('delivered') || status.includes('completed');
+    })
+    .sort((a: any, b: any) => getOrderTime(b) - getOrderTime(a))
+    .slice(0, 3)
+    .map((order: any) => ({
+      id: order?.id || order?.invoiceId || order?.linkedInvoiceId || 'طلب',
+      points: Math.max(0, Math.floor(Number(order?.total || order?.totalAmount || order?.amount || 0))),
+      date: getOrderTime(order) ? new Date(getOrderTime(order)).toLocaleDateString('ar-KW') : 'حديثاً',
+    }));
+  const frequentOrders = Array.from(cleanHistory.reduce((map: Map<string, any>, order: any) => {
+    const items = Array.isArray(order?.items) ? order.items : [];
+    if (!items.length) return map;
+    const label = items.slice(0, 2).map((item: any) => item?.name).filter(Boolean).join(' + ') || 'طلب سابق';
+    const key = items.map((item: any) => `${item?.id || item?.name}:${item?.quantity || 1}`).sort().join('|') || label;
+    const current = map.get(key) || { label, count: 0, total: 0 };
+    current.count += 1;
+    current.total += Number(order?.total || order?.totalAmount || order?.amount || 0);
+    map.set(key, current);
+    return map;
+  }, new Map<string, any>()).values()).sort((a: any, b: any) => b.count - a.count || b.total - a.total).slice(0, 3);
+  const addressBook = Array.from(cleanHistory.reduce((map: Map<string, any>, order: any) => {
+    const orderAddress = typeof order?.address === 'object' && order.address ? order.address : {};
+    const region = orderAddress.region || order?.region || order?.deliveryInfo?.region || order?.deliveryInfo?.zoneName || '';
+    const block = orderAddress.block || '';
+    const street = orderAddress.street || '';
+    const building = orderAddress.building || '';
+    const label = [region, block && `ق${block}`, street, building && `م${building}`].filter(Boolean).join(' - ');
+    if (!label) return map;
+    const current = map.get(label) || { label, count: 0 };
+    current.count += 1;
+    map.set(label, current);
+    return map;
+  }, new Map<string, any>()).values()).sort((a: any, b: any) => b.count - a.count).slice(0, 3);
+  const favoriteItem = (() => {
+    const counts = new Map<string, number>();
+    cleanHistory.forEach((order: any) => (Array.isArray(order?.items) ? order.items : []).forEach((item: any) => {
+      const name = String(item?.name || '').trim();
+      if (name) counts.set(name, (counts.get(name) || 0) + Number(item?.quantity || 1));
+    }));
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+  })();
 
   useEffect(() => {
     setStep(initialStep);

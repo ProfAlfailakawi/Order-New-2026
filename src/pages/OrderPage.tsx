@@ -227,6 +227,12 @@ export default function OrderPage() {
   const autoOpenedTargetRef = useRef<string | null>(null);
   const [squadInfo, setSquadInfo] = useState<any>(null);
   const [customerPoints, setCustomerPoints] = useState<number | null>(null);
+  const [loyaltyTiers, setLoyaltyTiers] = useState<any[]>([]);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profileTab, setProfileTab] = useState<"membership" | "orders" | "addresses" | null>(null);
+  const [showAllProfileOrders, setShowAllProfileOrders] = useState(false);
+  const [showAllProfileAddresses, setShowAllProfileAddresses] = useState(false);
+  const [showProfileBenefits, setShowProfileBenefits] = useState(false);
   const [sessionSuccessOrders, setSessionSuccessOrders] = useState<string[]>([]);
 
   useEffect(() => {
@@ -258,6 +264,21 @@ export default function OrderPage() {
       });
     }
   }, [urlPayment, urlOrderId]);
+
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((settings) => {
+        const rawTiers =
+          settings?.loyaltyTiers ||
+          settings?.loyaltyLevels ||
+          settings?.loyaltySettings?.tiers ||
+          [];
+        setLoyaltyTiers(Array.isArray(rawTiers) ? rawTiers : []);
+      })
+      .catch(() => setLoyaltyTiers([]));
+  }, []);
 
   useEffect(() => {
      if (phone && phone.length >= 8) {
@@ -1010,109 +1031,380 @@ export default function OrderPage() {
               animate={{ opacity: 1 }}
               className="space-y-4 pb-20"
             >
-              {/* Elegant VIP Premium Customer Profile */}
-              <div className="relative overflow-hidden bg-gradient-to-br from-[#183326] via-[#10241a] to-[#0a1811] text-white rounded-[40px] p-6 sm:p-8 border border-[#1e3d2e] shadow-[0_24px_60px_rgba(24,51,38,0.2)]">
-                {/* Visual accents */}
-                <div className="absolute -top-12 -left-12 w-48 h-48 bg-accent/10 rounded-full blur-[64px] pointer-events-none" />
-                <div className="absolute -bottom-16 -right-16 w-64 h-64 bg-[#183326]/40 rounded-full blur-[96px] pointer-events-none" />
-                
-                <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  {/* Left: Avatar & Name details */}
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="w-16 h-16 rounded-[24px] bg-gradient-to-tr from-accent to-[#fbbf24] flex items-center justify-center shadow-lg shadow-accent/25 border border-white/20">
-                        <Crown className="w-8 h-8 text-white drop-shadow-sm animate-pulse" />
-                      </div>
-                      <span className="absolute -bottom-1 -right-1 bg-emerald-500 w-4.5 h-4.5 rounded-full border-[3px] border-brand flex items-center justify-center">
-                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
-                      </span>
-                    </div>
-                    
-                    <div className="space-y-1">
-                      <span className="text-[10px] text-accent font-black tracking-widest uppercase flex items-center gap-1">
-                        <Crown className="w-3 h-3 fill-accent" /> صالة الأعضاء الكرام • VIP
-                      </span>
-                      <h3 className="text-2xl font-black tracking-tight text-white leading-none">
-                        {orders[0].customerName}
-                      </h3>
-                      <p className="text-emerald-300/80 text-xs font-bold font-mono tracking-wider">
-                        {phone}
-                      </p>
-                    </div>
-                  </div>
+              {/* Refined customer membership profile */}
+              {(() => {
+                const sharedCustomerOrders = Array.isArray(orders) ? orders : [];
+                const totalOrdersValue = sharedCustomerOrders.reduce((acc, o) => acc + Number(getDisplayTotal(o) || 0), 0);
+                const points = Math.max(0, Math.round(customerPoints ?? totalOrdersValue));
+                const fallbackTiers = [
+                  { name: "البرونزية", minPoints: 0 },
+                  { name: "الفضية", minPoints: 100 },
+                  { name: "الذهبية", minPoints: 500 },
+                  { name: "الماسية", minPoints: 2000 },
+                ];
+                const normalizedTiers = (loyaltyTiers.length ? loyaltyTiers : fallbackTiers)
+                  .map((tier: any, index: number) => ({
+                    ...tier,
+                    name: String(tier?.name || tier?.title || `المستوى ${index + 1}`),
+                    minPoints: Number(tier?.minPoints ?? tier?.points ?? tier?.from ?? 0),
+                    benefit: tier?.benefit || tier?.description || tier?.features || tier?.reward || "",
+                  }))
+                  .sort((a: any, b: any) => a.minPoints - b.minPoints);
+                const currentTier = [...normalizedTiers].reverse().find((tier: any) => points >= tier.minPoints) || normalizedTiers[0];
+                const nextTier = normalizedTiers.find((tier: any) => tier.minPoints > points);
+                const previousTier = [...normalizedTiers].reverse().find((tier: any) => tier.minPoints <= points) || normalizedTiers[0];
+                const basePoints = Number(previousTier?.minPoints || 0);
+                const nextPoints = Number(nextTier?.minPoints || Math.max(points, basePoints + 1));
+                const pointsToNext = nextTier ? Math.max(0, Number(nextTier.minPoints || 0) - points) : 0;
+                const progress = nextTier ? Math.min(100, Math.max(0, ((points - basePoints) / Math.max(1, nextPoints - basePoints)) * 100)) : 100;
+                const getTierAccent = (tierName?: string) => {
+                  const name = String(tierName || "");
+                  if (name.includes("ذهب") || name.toLowerCase().includes("gold")) return "text-amber-600 bg-amber-50 border-amber-200";
+                  if (name.includes("فض") || name.toLowerCase().includes("silver")) return "text-slate-500 bg-slate-50 border-slate-200";
+                  if (name.includes("ماس") || name.toLowerCase().includes("diamond")) return "text-sky-600 bg-sky-50 border-sky-200";
+                  if (name.includes("برون") || name.toLowerCase().includes("bronze")) return "text-orange-700 bg-orange-50 border-orange-200";
+                  return "text-brand bg-brand/5 border-brand/10";
+                };
+                const getOrderItemsFromSharedOrder = (order: any) => {
+                  const candidates = [
+                    order?.items,
+                    order?.orderItems,
+                    order?.products,
+                    order?.invoice?.items,
+                    order?.invoiceItems,
+                    order?.cart?.items,
+                  ];
+                  return candidates.find((list) => Array.isArray(list)) || [];
+                };
+                const buildSharedOrderItems = (order: any) => {
+                  return getOrderItemsFromSharedOrder(order)
+                    .map((item: any) => {
+                      const name = String(item?.name || item?.title || item?.productName || item?.product?.name || item?.menuItemName || "").trim();
+                      const qty = Math.max(1, Number(item?.quantity || item?.qty || 1));
+                      return name ? { name, qty } : null;
+                    })
+                    .filter(Boolean) as { name: string; qty: number }[];
+                };
+                const repeatedOrdersMap = new Map<string, { label: string; count: number; lastOrder: any; itemsCount: number }>();
+                sharedCustomerOrders.forEach((order: any) => {
+                  const items = buildSharedOrderItems(order);
+                  if (!items.length) return;
+                  const signature = items
+                    .map((item) => `${item.name}x${item.qty}`)
+                    .sort((a, b) => a.localeCompare(b, "ar"))
+                    .join("|");
+                  const label = items
+                    .slice(0, 3)
+                    .map((item) => item.qty > 1 ? `${item.name} ×${item.qty}` : item.name)
+                    .join("، ") + (items.length > 3 ? ` +${items.length - 3}` : "");
+                  const existing = repeatedOrdersMap.get(signature);
+                  if (existing) {
+                    repeatedOrdersMap.set(signature, { ...existing, count: existing.count + 1 });
+                  } else {
+                    repeatedOrdersMap.set(signature, { label, count: 1, lastOrder: order, itemsCount: items.length });
+                  }
+                });
+                const frequentOrders = Array.from(repeatedOrdersMap.values())
+                  .filter((item) => item.count > 1)
+                  .sort((a, b) => b.count - a.count)
+                  .slice(0, 50);
+                const addressLabels = Array.from(new Set(sharedCustomerOrders.map((order: any) => {
+                  const address = order?.address || order?.deliveryAddress || order?.customerAddress || {};
+                  const raw = typeof address === "string" ? address : [address?.region, address?.area, address?.block, address?.street, address?.house || address?.building]
+                    .filter(Boolean)
+                    .join("، ");
+                  return String(raw || "").trim();
+                }).filter(Boolean))).slice(0, 50);
+                const lastOrder = sharedCustomerOrders[0];
+                const recentOrderChoices = sharedCustomerOrders
+                  .map((order: any) => {
+                    const items = buildSharedOrderItems(order);
+                    const label = items.length
+                      ? items.slice(0, 3).map((item) => item.qty > 1 ? `${item.name} ×${item.qty}` : item.name).join("، ") + (items.length > 3 ? ` +${items.length - 3}` : "")
+                      : getOrderReference(order);
+                    return { label, order, total: Number(getDisplayTotal(order) || 0) };
+                  })
+                  .filter((item) => String(item.label || "").trim())
+                  .slice(0, 50);
+                const visibleOrders = showAllProfileOrders ? recentOrderChoices.slice(0, 20) : recentOrderChoices.slice(0, 3);
+                const visibleAddresses = showAllProfileAddresses ? addressLabels.slice(0, 20) : addressLabels.slice(0, 3);
+                const customerFullName = String(sharedCustomerOrders[0]?.customerName || "").trim() || "عميلنا الكريم";
+                const selectProfileTab = (section: "membership" | "orders" | "addresses") => {
+                  setShowAllProfileOrders(false);
+                  setShowAllProfileAddresses(false);
+                  setShowProfileBenefits(false);
+                  setProfileTab((current) => current === section ? null : section);
+                };
+                const activeProfileTab = profileTab;
+                const tabButtonClass = (section: "membership" | "orders" | "addresses") => cn(
+                  "flex-1 rounded-[18px] px-3 py-3 text-xs font-black transition-all border",
+                  activeProfileTab === section
+                    ? "bg-brand text-white border-brand shadow-lg shadow-brand/10"
+                    : "bg-white text-stone-500 border-stone-100 hover:text-brand"
+                );
 
-                  {/* Right: VIP Membership Tier Banner */}
-                  <div className="shrink-0">
-                    <div className="bg-white/5 backdrop-blur-md px-4 py-2.5 rounded-[20px] border border-white/10 shadow-sm text-center">
-                      <span className="block text-[8px] text-stone-400 font-extrabold uppercase tracking-widest mb-0.5">مستوى العضوية</span>
-                      <span className="text-xs font-black drop-shadow-sm flex items-center gap-1.5 justify-center">
-                        {(() => {
-                           const pts = Math.round(orders.reduce((acc, o) => acc + Number(getDisplayTotal(o) || 0), 0));
-                           if (pts >= 2000) return <span className="text-cyan-300">💎 الماسية</span>;
-                           if (pts >= 500) return <span className="text-amber-300">🥇 الذهبية</span>;
-                           if (pts >= 100) return <span className="text-slate-300">🥈 الفضية</span>;
-                           return <span className="text-orange-300">🥉 البرونزية</span>;
-                        })()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bento Statistics Grid */}
-                <div className="grid grid-cols-3 gap-3.5 mt-8 pt-6 border-t border-white/10 relative z-10">
-                  {/* Stat 1: Total Orders */}
-                  <div className="bg-white/5 border border-white/5 rounded-[22px] p-3 text-center flex flex-col justify-between min-h-[76px]">
-                    <span className="block text-[9px] text-stone-400 font-extrabold uppercase leading-snug">إجمالي الطلبات</span>
-                    <span className="text-lg font-black text-white italic">
-                      {orders.length}
-                    </span>
-                  </div>
-
-                  {/* Stat 2: Reward points balance */}
-                  <div className="bg-white/5 border border-white/5 rounded-[22px] p-3 text-center flex flex-col justify-between min-h-[76px]">
-                    <span className="block text-[9px] text-stone-400 font-extrabold uppercase leading-snug">رصيد النقاط</span>
-                    <span className="text-lg font-black text-[#fbbf24] flex items-center justify-center gap-0.5 leading-none">
-                      <Star className="w-4 h-4 fill-[#fbbf24] text-[#fbbf24] shrink-0" />
-                      {Math.round(orders.reduce((acc, o) => acc + Number(getDisplayTotal(o) || 0), 0))}
-                    </span>
-                  </div>
-
-                  {/* Stat 3: Total Spent estimate */}
-                  <div className="bg-white/5 border border-white/5 rounded-[22px] p-3 text-center flex flex-col justify-between min-h-[76px]">
-                    <span className="block text-[9px] text-stone-400 font-extrabold uppercase leading-snug">تقدير الإنفاق</span>
-                    <span className="text-lg font-black text-emerald-400 italic">
-                      {orders.reduce((acc, o) => acc + Number(getDisplayTotal(o) || 0), 0).toFixed(3)}{" "}
-                      <span className="text-[9px] text-white/50 not-italic">د.ك</span>
-                    </span>
-                  </div>
-                </div>
-
-                {/* Squad banner details */}
-                {squadInfo ? (
-                  <div className="mt-4 p-3 rounded-[20px] bg-white/5 border border-white/5 flex items-center justify-between text-xs font-bold text-white/90">
-                    <div className="flex items-center gap-2 text-right">
-                      <Users className="w-4 h-4 text-accent shrink-0" />
-                      <span>عضو في ديوانية "{squadInfo.name}"</span>
-                    </div>
-                    <span className="bg-accent/20 text-[#fde68a] px-2.5 py-1 rounded-xl border border-accent/15 text-[10px] font-black">
-                      {squadInfo.rank ? `المركز 🏅 ${squadInfo.rank}` : squadInfo.tier}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="mt-4 p-3.5 rounded-[22px] bg-white/5 border border-dashed border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/80">
-                    <div className="flex items-center gap-2 text-right">
-                      <Users className="w-4 h-4 text-accent shrink-0" />
-                      <span>مو مسجل بديوانية للحين؟ جمّع نقاط مع ربعك وتنافسوا على الصدارة!</span>
-                    </div>
-                    <Link
-                      to="/?showSquads=true"
-                      className="text-[10px] font-black text-white bg-accent hover:bg-accent/90 transition-all px-3.5 py-1.5 rounded-xl flex items-center gap-1 shrink-0"
+                return (
+                  <div className="rounded-[34px] border border-stone-100 bg-white/95 shadow-[0_18px_60px_rgba(68,64,60,0.10)] overflow-hidden" dir="rtl">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsProfileOpen((v) => {
+                          const next = !v;
+                          setProfileTab(null);
+                          return next;
+                        });
+                        setShowAllProfileOrders(false);
+                        setShowAllProfileAddresses(false);
+                        setShowProfileBenefits(false);
+                      }}
+                      className="relative w-full p-5 sm:p-6 text-right overflow-hidden"
+                      aria-expanded={isProfileOpen}
                     >
-                      أسس ديوانيتك أو شارك ديوانية ربعك ☕
-                    </Link>
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(212,175,55,0.16),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.98),rgba(249,248,245,0.95))]" />
+                      <div className="relative flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 min-w-0">
+                          <div className="w-14 h-14 rounded-[24px] bg-brand text-white flex items-center justify-center shadow-lg shadow-brand/15 shrink-0">
+                            <Crown className="w-6 h-6" />
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="text-lg sm:text-xl font-black text-brand truncate">{customerFullName}</h3>
+                            <div className="mt-2 flex items-center gap-2 min-w-0">
+                              <span className={cn("shrink-0 rounded-full border px-3 py-1 text-[11px] font-black", getTierAccent(currentTier?.name))}>
+                                {currentTier?.name || "عضوية"}
+                              </span>
+                              <span className="text-xs font-black text-stone-400">{points} نقطة</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2 shrink-0">
+                          <span className={cn("w-10 h-10 rounded-full bg-white/85 border border-white flex items-center justify-center text-brand shadow-sm transition-transform", isProfileOpen && "rotate-90")}>
+                            <ChevronLeft className="w-4 h-4" />
+                          </span>
+                          <span className="text-[10px] font-black text-stone-400">{isProfileOpen ? "إغلاق" : "الملف"}</span>
+                        </div>
+                      </div>
+
+                      <div className="relative mt-5 space-y-2">
+                        <div className="flex items-center justify-between gap-3 text-[11px] font-black">
+                          <span className="text-brand">
+                            {nextTier ? (
+                              <>
+                                باقي {pointsToNext} نقطة على <span className={cn("rounded-full border px-2 py-0.5", getTierAccent(nextTier.name))}>{nextTier.name}</span>
+                              </>
+                            ) : "أعلى مستوى"}
+                          </span>
+                          <span className="text-stone-400">{Math.round(progress)}%</span>
+                        </div>
+                        <div className="h-2.5 rounded-full bg-white/80 border border-white overflow-hidden shadow-inner">
+                          <div className="h-full rounded-full bg-gradient-to-l from-accent to-brand transition-all" style={{ width: `${progress}%` }} />
+                        </div>
+                      </div>
+                    </button>
+
+                    {!squadInfo && (
+                      <div className="px-5 sm:px-6 pb-5 -mt-1">
+                        <Link
+                          to="/?showSquads=true"
+                          className="group flex items-center justify-between gap-3 rounded-[24px] border border-amber-200/70 bg-gradient-to-l from-amber-50/90 via-white to-white px-4 py-3 shadow-[0_12px_32px_rgba(120,53,15,0.07)] transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_38px_rgba(120,53,15,0.11)]"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="w-10 h-10 rounded-[18px] bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 shadow-inner">
+                              <Users className="w-4 h-4" />
+                            </span>
+                            <span className="min-w-0 text-right">
+                              <span className="block text-sm font-black text-brand leading-tight">انضم لديوانية</span>
+                              <span className="block mt-0.5 text-[11px] font-medium text-stone-400 leading-tight">أو أسس ديوانيتك</span>
+                            </span>
+                          </div>
+                          <ChevronLeft className="w-4 h-4 text-amber-700 transition-transform group-hover:-translate-x-1 shrink-0" />
+                        </Link>
+                      </div>
+                    )}
+
+                    <AnimatePresence initial={false}>
+                      {isProfileOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: "easeOut" }}
+                          className="overflow-hidden border-t border-stone-100"
+                        >
+                          <div className="p-4 sm:p-5 bg-[#FBFAF7]">
+                            <div className="grid grid-cols-3 gap-2 rounded-[24px] bg-white/75 border border-stone-100 p-1.5 shadow-sm">
+                              <button type="button" onClick={() => selectProfileTab("membership")} className={tabButtonClass("membership")}>العضوية</button>
+                              <button type="button" onClick={() => selectProfileTab("orders")} className={tabButtonClass("orders")}>اختياراتي</button>
+                              <button type="button" onClick={() => selectProfileTab("addresses")} className={tabButtonClass("addresses")}>عناويني</button>
+                            </div>
+
+                            <div className="mt-4">
+                              <AnimatePresence mode="wait" initial={false}>
+                                {!activeProfileTab && (
+                                  <motion.div
+                                    key="profile-empty"
+                                    initial={{ opacity: 0, y: 6 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -6 }}
+                                    transition={{ duration: 0.18 }}
+                                    className="rounded-[24px] bg-white/80 border border-stone-100 p-4 text-center text-xs font-black text-stone-400"
+                                  >
+                                    اختر قسمًا لعرض التفاصيل
+                                  </motion.div>
+                                )}
+                                {activeProfileTab === "membership" && (
+                                  <motion.div
+                                    key="membership"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -8 }}
+                                    transition={{ duration: 0.18 }}
+                                    className="space-y-3"
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowProfileBenefits((v) => !v)}
+                                      className="w-full rounded-[26px] bg-white border border-stone-100 p-4 shadow-sm flex items-center justify-between gap-3 text-right"
+                                      aria-expanded={showProfileBenefits}
+                                    >
+                                      <div className="min-w-0">
+                                        <span className="block text-sm font-black text-brand">مزايا العضوية</span>
+                                        <span className="block mt-1 text-[10px] font-bold text-stone-400">{normalizedTiers.length} مستويات</span>
+                                      </div>
+                                      <span className={cn("w-9 h-9 rounded-full bg-stone-50 border border-stone-100 flex items-center justify-center text-brand transition-transform shrink-0", showProfileBenefits && "rotate-90")}>
+                                        <ChevronLeft className="w-4 h-4" />
+                                      </span>
+                                    </button>
+
+                                    <AnimatePresence initial={false}>
+                                      {showProfileBenefits && (
+                                        <motion.div
+                                          initial={{ height: 0, opacity: 0 }}
+                                          animate={{ height: "auto", opacity: 1 }}
+                                          exit={{ height: 0, opacity: 0 }}
+                                          transition={{ duration: 0.22, ease: "easeOut" }}
+                                          className="overflow-hidden"
+                                        >
+                                          <div className="rounded-[26px] bg-white border border-stone-100 shadow-sm p-3 space-y-2 max-h-[320px] overflow-y-auto">
+                                            {normalizedTiers.map((tier: any) => {
+                                              const active = tier.name === currentTier?.name;
+                                              return (
+                                                <div key={`${tier.name}-${tier.minPoints}`} className={cn("rounded-[20px] border p-3 flex items-start justify-between gap-3", active ? "bg-brand text-white border-brand" : "bg-white text-brand border-stone-100 shadow-sm")}>
+                                                  <div className="min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                      <strong className={cn("block text-sm font-black truncate rounded-full border px-2.5 py-1", active ? "border-white/20 text-white" : getTierAccent(tier.name))}>{tier.name}</strong>
+                                                      {active && <span className="rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-black">الحالي</span>}
+                                                    </div>
+                                                    {tier.benefit && (
+                                                      <p className={cn("mt-2 text-[11px] font-bold leading-relaxed", active ? "text-white/75" : "text-stone-500")}>{String(tier.benefit)}</p>
+                                                    )}
+                                                  </div>
+                                                  <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black", active ? "bg-white/15 text-white" : "bg-stone-50 text-stone-500")}>{tier.minPoints}</span>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </motion.div>
+                                )}
+
+                                {activeProfileTab === "orders" && (
+                                  <motion.div
+                                    key="orders"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -8 }}
+                                    transition={{ duration: 0.18 }}
+                                    className="space-y-3"
+                                  >
+                                    <div className="rounded-[26px] bg-white border border-stone-100 shadow-sm overflow-hidden">
+                                      <div className="p-4 flex items-center justify-between gap-3">
+                                        <div>
+                                          <span className="block text-sm font-black text-brand">طلباتك الأخيرة</span>
+                                          <span className="block mt-1 text-[10px] font-bold text-stone-400">من سجل طلباتك</span>
+                                        </div>
+                                        <span className="rounded-full bg-stone-50 px-3 py-1 text-[10px] font-black text-stone-500">{recentOrderChoices.length}</span>
+                                      </div>
+                                      <div className="px-4 pb-4 space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                                        {visibleOrders.length > 0 ? visibleOrders.map((item) => (
+                                          <div key={`${item.label}-${getOrderReference(item.order)}`} className="rounded-[18px] bg-stone-50 border border-stone-100 p-3 flex items-center justify-between gap-3">
+                                            <strong className="text-sm font-black text-brand truncate">{item.label}</strong>
+                                            <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-stone-500">{getOrderReference(item.order)}</span>
+                                          </div>
+                                        )) : (
+                                          <div className="rounded-[18px] bg-stone-50 border border-stone-100 p-4 text-center text-xs font-bold text-stone-400">تظهر طلباتك بعد أول طلب</div>
+                                        )}
+                                        {recentOrderChoices.length > 3 && (
+                                          <button type="button" onClick={() => setShowAllProfileOrders((v) => !v)} className="w-full rounded-[18px] bg-white border border-stone-100 py-3 text-xs font-black text-brand">
+                                            {showAllProfileOrders ? "عرض أقل" : `عرض المزيد (${recentOrderChoices.length - 3})`}
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {lastOrder && (
+                                      <div className="rounded-[24px] bg-white border border-stone-100 p-4 flex items-center justify-between gap-3 text-sm font-bold text-stone-500 shadow-sm">
+                                        <span className="truncate">آخر طلب: {getOrderReference(lastOrder)}</span>
+                                        <span className="text-emerald-600 shrink-0">{Math.round(Number(getDisplayTotal(lastOrder) || 0))} د.ك</span>
+                                      </div>
+                                    )}
+                                  </motion.div>
+                                )}
+
+                                {activeProfileTab === "addresses" && (
+                                  <motion.div
+                                    key="addresses"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -8 }}
+                                    transition={{ duration: 0.18 }}
+                                    className="space-y-3"
+                                  >
+                                    <div className="rounded-[26px] bg-white border border-stone-100 shadow-sm overflow-hidden">
+                                      <div className="p-4 flex items-center justify-between gap-3">
+                                        <span className="text-sm font-black text-brand">العناوين المستخدمة</span>
+                                        <span className="text-[10px] font-black text-stone-400">{addressLabels.length} عنوان</span>
+                                      </div>
+                                      <div className="px-4 pb-4 space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                                        {visibleAddresses.length > 0 ? visibleAddresses.map((label) => (
+                                          <div key={label} className="rounded-[18px] bg-stone-50 border border-stone-100 p-3 flex items-center gap-2 text-sm font-bold text-brand">
+                                            <MapPin className="w-4 h-4 text-accent shrink-0" />
+                                            <span className="truncate">{label}</span>
+                                          </div>
+                                        )) : (
+                                          <div className="rounded-[18px] bg-stone-50 border border-stone-100 p-4 text-center text-xs font-bold text-stone-400">تظهر عناوينك بعد أول طلب مكتمل</div>
+                                        )}
+                                        {addressLabels.length > 3 && (
+                                          <button type="button" onClick={() => setShowAllProfileAddresses((v) => !v)} className="w-full rounded-[18px] bg-white border border-stone-100 py-3 text-xs font-black text-brand">
+                                            {showAllProfileAddresses ? "عرض أقل" : `عرض المزيد (${addressLabels.length - 3})`}
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {squadInfo ? (
+                                      <div className="rounded-[24px] bg-white border border-stone-100 p-4 flex items-center justify-between gap-3 text-sm font-bold text-brand shadow-sm">
+                                        <span className="truncate">ديوانيتك: {squadInfo.name}</span>
+                                        <span className="shrink-0 text-accent">{squadInfo.rank ? `#${squadInfo.rank}` : squadInfo.tier}</span>
+                                      </div>
+                                    ) : (
+                                      <div className="rounded-[24px] bg-white border border-stone-100 p-4 flex items-center gap-3 text-sm font-bold text-stone-500 shadow-sm">
+                                        <Users className="w-4 h-4 text-amber-600 shrink-0" />
+                                        <span>الديوانيات متاحة من البطاقة الرئيسية</span>
+                                      </div>
+                                    )}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                )}
-              </div>
+                );
+              })()}
 
               {lastReorderableOrder && (
                 <motion.button
