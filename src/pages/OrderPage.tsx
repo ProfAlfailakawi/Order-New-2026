@@ -645,7 +645,6 @@ export default function OrderPage() {
       if (hasExplicitQty && qty <= 0) return null;
       if (addon?.selected === false || addon?.isSelected === false || addon?.enabled === false) return null;
       const total = Number((addon?.total ?? addon?.amount ?? addon?.totalPrice ?? (Number(addon?.price || 0) * Math.max(1, qty))) || 0);
-      if (total <= 0) return null;
       const key = `${name}__${qty}__${total}`;
       if (seen.has(key)) return null;
       seen.add(key);
@@ -2315,7 +2314,7 @@ export default function OrderPage() {
                   <div className="pt-8 px-4 sm:px-8 pb-8 space-y-8">
                     <div className="track-v15-details-head">
                       <div className="min-w-0">
-                        <h3>الفاتورة والتوصيل</h3>
+                        <h3>رقم وبيانات الطلب</h3>
                       </div>
                       <div className="track-v15-invoice-chip">
                         {getOrderReference(selectedOrder)}

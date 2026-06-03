@@ -31,7 +31,27 @@ const loadLeaflet = () => {
 
 const normalizeDigits = (value: number) => Number(value.toFixed(6));
 
+
 const cleanAddressPart = (value: any) => String(value ?? '').trim();
+
+const stripAddressFieldLabel = (value: any, type?: 'block' | 'street' | 'building') => {
+  let text = cleanAddressPart(value);
+  if (!text) return '';
+  const stripOnce = (input: string) => input
+    .replace(/^[\s\u200e\u200f]*(?:قطعة|قطعه|ق\.?|block)\s*[:：#\-–—،,]?\s*/i, '')
+    .replace(/^[\s\u200e\u200f]*(?:شارع|ش\.?|street|road|طريق)\s*[:：#\-–—،,]?\s*/i, '')
+    .replace(/^[\s\u200e\u200f]*(?:منزل|بيت|مبنى|مبني|بناية|عمارة|building|house|home)\s*[:：#\-–—،,]?\s*/i, '')
+    .trim();
+  let previous = '';
+  while (previous !== text) {
+    previous = text;
+    text = stripOnce(text);
+  }
+  if (type === 'block') text = text.replace(/^[\s\u200e\u200f]*(?:ق\.?|قطعة|قطعه|block)\s*[:：#\-–—،,]?\s*/i, '').trim();
+  if (type === 'street') text = text.replace(/^[\s\u200e\u200f]*(?:ش\.?|شارع|street|road|طريق)\s*[:：#\-–—،,]?\s*/i, '').trim();
+  if (type === 'building') text = text.replace(/^[\s\u200e\u200f]*(?:م\.?|منزل|بيت|مبنى|مبني|بناية|عمارة|building|house|home)\s*[:：#\-–—،,]?\s*/i, '').trim();
+  return text;
+};
 
 const extractBlock = (address: any) => {
   const candidates = [
@@ -44,7 +64,7 @@ const extractBlock = (address: any) => {
   ].map(cleanAddressPart).filter(Boolean);
   for (const part of candidates) {
     const match = part.match(/(?:block|قطعة|قطعه)\s*([0-9٠-٩۰-۹A-Za-zأ-ي-]+)/i);
-    if (match?.[1]) return match[1];
+    if (match?.[1]) return stripAddressFieldLabel(match[1], 'block');
   }
   return '';
 };
@@ -52,9 +72,9 @@ const extractBlock = (address: any) => {
 const normalizeReverseAddress = (payload: any) => {
   const a = payload?.address || {};
   const region = cleanAddressPart(a.suburb || a.neighbourhood || a.quarter || a.city_district || a.town || a.city || a.village || a.state_district || a.state);
-  const block = extractBlock(a);
-  const street = cleanAddressPart(a.road || a.pedestrian || a.footway || a.residential);
-  const building = cleanAddressPart(a.house_number || a.house_name || a.building);
+  const block = stripAddressFieldLabel(extractBlock(a), 'block');
+  const street = stripAddressFieldLabel(a.road || a.pedestrian || a.footway || a.residential, 'street');
+  const building = stripAddressFieldLabel(a.house_number || a.house_name || a.building, 'building');
   const extraDetails = cleanAddressPart(payload?.display_name);
   return { region, block, street, building, extraDetails };
 };
