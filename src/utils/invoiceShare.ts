@@ -195,7 +195,7 @@ const buildInvoiceHTML = (order: any, products: any[] = []) => {
       const addonName = clean(addon?.name || addon?.title || addon?.label);
       const addonQty = getAddonQty(addon, qty);
       const addonTotal = getAddonTotal(addon, qty);
-      if (!addonName || addonQty <= 0 || addonTotal <= 0) return '';
+      if (!addonName || addonQty <= 0) return '';
       addonsSubtotal += addonTotal;
       return `
         <div class="addon-line">

@@ -126,3 +126,12 @@ export interface Analytics {
   orderCount: number;
   completedCount: number;
 }
+
+export interface AppState {
+  customers?: any[];
+  products?: any[];
+  orders?: any[];
+  [key: string]: any;
+}
+
+export type Invoice = any;
