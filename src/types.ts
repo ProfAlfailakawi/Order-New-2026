@@ -72,6 +72,10 @@ export interface Address {
   floor?: string;
   apartment?: string;
   deliveryNotes?: string;
+  lat?: number;
+  lng?: number;
+  location?: { lat: number; lng: number; accuracy?: number; source?: string };
+  mapProvider?: string;
 }
 
 export interface Order {

@@ -43,6 +43,8 @@ import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
 import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegroundPush, type DiwaniyaPushState } from "../lib/diwaniyaPush";
 import { robustGetCurrentPosition } from "../utils/geolocation";
+import LeafletLocationPicker from "../components/LeafletLocationPicker";
+import LeafletKuwaitMap from "../components/LeafletKuwaitMap";
 
 // Define the default product categories shown to customers.
 // Removed "المشويات" و "المشروبات" per latest requirements.  If these
@@ -5227,6 +5229,24 @@ export default function CustomerSite() {
                   إذا هذي ديوانيتك بدّل لها، وإذا مو عضو دز طلب والمعزب يوافق عليك.
                 </p>
 
+                <LeafletKuwaitMap
+                  markers={radarNearbySquads.filter((sq: any) => sq.lat !== undefined && sq.lng !== undefined).map((sq: any) => ({
+                    id: String(sq.id),
+                    name: `ديوانية ${sq.name}`,
+                    lat: Number(sq.lat),
+                    lng: Number(sq.lng),
+                    subtitle: `تبعد ${normalizeDigits(String(sq.distance))}م`,
+                    color: sq.isAlreadyMember ? '#10b981' : '#f59e0b',
+                    radiusMeters: Number(sq.geofenceDistance || 80),
+                    size: 28,
+                  }))}
+                  center={radarNearbySquads[0]?.lat && radarNearbySquads[0]?.lng ? { lat: Number(radarNearbySquads[0].lat), lng: Number(radarNearbySquads[0].lng) } : { lat: 29.3375, lng: 47.9774 }}
+                  zoom={15}
+                  dark
+                  showRange
+                  heightClassName="h-[220px]"
+                />
+
                 <div className="space-y-3">
                   {radarNearbySquads.map((sq: any) => {
                     const isLoading = radarLoadingMap[sq.id];
@@ -7408,6 +7428,28 @@ function CheckoutOverlay({
                       )}
                     </div>
                   </div>
+
+                  <LeafletLocationPicker
+                    value={(address as any)?.location || ((address as any)?.lat && (address as any)?.lng ? { lat: (address as any).lat, lng: (address as any).lng } : null)}
+                    onChange={(location) => setAddress((prev: any) => ({
+                      ...(prev || address || {}),
+                      location,
+                      lat: location.lat,
+                      lng: location.lng,
+                      mapProvider: 'leaflet-openstreetmap',
+                    }) as any)}
+                    onAddressGuess={(guess) => setAddress((prev: any) => {
+                      const current = prev || address || {};
+                      return {
+                        ...current,
+                        region: guess.region || current.region || '',
+                        block: guess.block || current.block || '',
+                        street: guess.street || current.street || '',
+                        building: guess.building || current.building || '',
+                        extraDetails: current.extraDetails || guess.extraDetails || '',
+                      } as any;
+                    })}
+                  />
 
                   {/* Address Grid */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">

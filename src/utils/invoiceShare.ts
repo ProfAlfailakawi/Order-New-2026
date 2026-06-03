@@ -63,23 +63,15 @@ const normalizeOrderAddons = (item: any) => {
 };
 
 const getAddonQty = (addon: any, itemQty: number) => {
-  let qty = Number(addon?.quantity ?? addon?.qty ?? addon?.count ?? 0);
-  if (!qty) {
-    if (addon?.calculationType === 'fixed') qty = 1;
-    else if (addon?.calculationType === 'per_x_items') qty = Math.floor(itemQty / Math.max(1, Number(addon?.xItemsThreshold || 1)));
-    else qty = itemQty;
-  }
-  const min = Number(addon?.isRequired ? Math.max(1, Number(addon?.minQuantity || 1)) : addon?.minQuantity || 0);
-  const max = Number(addon?.maxQuantity || qty || 0);
-  if (min) qty = Math.max(min, qty);
-  if (max) qty = Math.min(max, qty);
-  return Math.max(0, qty);
+  const explicitQty = addon?.quantity ?? addon?.qty ?? addon?.count;
+  if (explicitQty !== undefined && explicitQty !== null && explicitQty !== '') return Math.max(0, Number(explicitQty || 0));
+  return 1;
 };
 
 const getAddonTotal = (addon: any, itemQty: number) => {
   const qty = getAddonQty(addon, itemQty);
-  const payableQty = addon?.payableQuantity !== undefined ? Number(addon.payableQuantity || 0) : Math.max(0, qty - Number(addon?.freeQuantity || 0));
-  return Number((addon?.total ?? addon?.amount ?? addon?.totalPrice ?? (Number(addon?.price || 0) * payableQty)) || 0);
+  if (qty <= 0 || addon?.selected === false || addon?.isSelected === false || addon?.enabled === false) return 0;
+  return Number((addon?.total ?? addon?.amount ?? addon?.totalPrice ?? (Number(addon?.price || 0) * qty)) || 0);
 };
 
 const getInvoiceStatus = (order: any) => order?.paymentStatus || order?.status || 'paid';
@@ -200,16 +192,17 @@ const buildInvoiceHTML = (order: any, products: any[] = []) => {
 
     const addons = normalizeOrderAddons(item);
     const addonsHtml = addons.map((addon: any) => {
-      const addonName = clean(addon?.name || addon?.title || addon?.label) || 'إضافة';
+      const addonName = clean(addon?.name || addon?.title || addon?.label);
       const addonQty = getAddonQty(addon, qty);
       const addonTotal = getAddonTotal(addon, qty);
+      if (!addonName || addonQty <= 0 || addonTotal <= 0) return '';
       addonsSubtotal += addonTotal;
       return `
         <div class="addon-line">
           <span><b>•</b> ${addonName}${addonQty > 1 ? ` × ${addonQty}` : ''}</span>
           <span class="addon-price">${formatKwd(addonTotal)}</span>
         </div>`;
-    }).join('');
+    }).filter(Boolean).join('');
 
     return `
       <tr class="item-row">
