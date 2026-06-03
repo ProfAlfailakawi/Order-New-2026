@@ -621,6 +621,38 @@ export default function OrderPage() {
       !text.includes("فشل") &&
       !text.includes("لم يدفع"));
 
+
+  const getActualItemAddons = (item: any) => {
+    const sources: any[] = [];
+    const pushList = (list: any) => {
+      if (Array.isArray(list)) sources.push(...list.filter(Boolean));
+      else if (list && typeof list === "object") sources.push(...Object.values(list).filter(Boolean));
+    };
+
+    pushList(item?.selectedExtras);
+    pushList(item?.addons);
+    pushList(item?.selectedAddons);
+    pushList(item?.addOns);
+    pushList(item?.extras);
+
+    const seen = new Set<string>();
+    return sources.map((addon: any) => {
+      const name = String(addon?.name || addon?.title || addon?.label || "").trim();
+      if (!name) return null;
+      const explicitQty = addon?.quantity ?? addon?.qty ?? addon?.count;
+      const hasExplicitQty = explicitQty !== undefined && explicitQty !== null && explicitQty !== "";
+      const qty = hasExplicitQty ? Number(explicitQty || 0) : 1;
+      if (hasExplicitQty && qty <= 0) return null;
+      if (addon?.selected === false || addon?.isSelected === false || addon?.enabled === false) return null;
+      const total = Number((addon?.total ?? addon?.amount ?? addon?.totalPrice ?? (Number(addon?.price || 0) * Math.max(1, qty))) || 0);
+      if (total <= 0) return null;
+      const key = `${name}__${qty}__${total}`;
+      if (seen.has(key)) return null;
+      seen.add(key);
+      return { name, qty: Math.max(1, qty), total };
+    }).filter(Boolean) as { name: string; qty: number; total: number }[];
+  };
+
   const calculateItemsTotal = (items: any[]) => {
     return (items || []).reduce((sum: number, i: any) => {
       return sum + calculateItemTotalWithAddons(i);
@@ -2283,8 +2315,7 @@ export default function OrderPage() {
                   <div className="pt-8 px-4 sm:px-8 pb-8 space-y-8">
                     <div className="track-v15-details-head">
                       <div className="min-w-0">
-                        <span>تفاصيل الطلب</span>
-                        <h3>ملخص واضح للفاتورة والتوصيل</h3>
+                        <h3>الفاتورة والتوصيل</h3>
                       </div>
                       <div className="track-v15-invoice-chip">
                         {getOrderReference(selectedOrder)}
@@ -2341,6 +2372,16 @@ export default function OrderPage() {
                                     />
                                   </span>
                                 )}
+                                {getActualItemAddons(item).length > 0 && (
+                                  <div className="mt-2 space-y-1" dir="rtl">
+                                    {getActualItemAddons(item).map((addon, addonIndex) => (
+                                      <div key={`${addon.name}-${addonIndex}`} className="flex items-center gap-2 text-[10px] font-extrabold text-amber-700 bg-amber-50/70 border border-amber-100 rounded-xl px-2 py-1 w-fit">
+                                        <span>+ {addon.name}{addon.qty > 1 ? ` × ${addon.qty}` : ""}</span>
+                                        <span className="text-amber-900">{addon.total.toFixed(3)} د.ك</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
                             <motion.span
@@ -2349,7 +2390,7 @@ export default function OrderPage() {
                               transition={{ delay: 1 + i * 0.15 }}
                               className="text-sm font-bold text-stone-600 shrink-0"
                             >
-                              {Number(item.price * item.quantity || 0).toFixed(
+                              {Number(calculateItemTotalWithAddons(item) || 0).toFixed(
                                 3,
                               )}{" "}
                               <span className="text-[10px] text-stone-400">
