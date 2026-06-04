@@ -371,8 +371,23 @@ export default function OrderPage() {
             sessionStorage.setItem("post_payment_open_order_id", data.orderId);
           } catch (e) {}
 
+          if (["success", "paid"].includes(String(data.payment || "").toLowerCase())) {
+            const paidOrderId = String(data.orderId).toUpperCase();
+            setSessionSuccessOrders(prev => {
+              if (prev.includes(paidOrderId)) return prev;
+              const next = [...prev, paidOrderId];
+              try {
+                localStorage.setItem("temp_success_orders", JSON.stringify(next));
+              } catch (e) {}
+              return next;
+            });
+          }
+
           // Directly trigger search instead of hard reload
           handleSearch(undefined, phoneToKeep, data.orderId);
+          [350, 1100, 2200].forEach((delay) => {
+            window.setTimeout(() => fetchOrders(phoneToKeep, data.orderId, true), delay);
+          });
         }
       } catch (e) {}
     };
@@ -431,7 +446,9 @@ export default function OrderPage() {
       if (currentPhone) urlParams.append("phone", currentPhone);
       if (handoffOrderId) urlParams.append("order_id", handoffOrderId);
 
-      const res = await fetch(`/api/track-orders?${urlParams.toString()}`);
+      const res = await fetch(`/api/track-orders?${urlParams.toString()}`, {
+        cache: "no-store",
+      });
       const resText = await res.text();
       let data;
       try {
@@ -498,18 +515,31 @@ export default function OrderPage() {
   };
 
   useEffect(() => {
+    const paymentState = String(urlPayment || "").toLowerCase();
+    const targetOrderId = searchOrderIdInput || urlOrderId;
+    if (!searched || !targetOrderId || !["success", "paid"].includes(paymentState)) return;
+
+    const timers = [250, 900, 1800, 3200].map((delay) =>
+      window.setTimeout(() => fetchOrders(phone, targetOrderId, true), delay),
+    );
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [searched, phone, searchOrderIdInput, urlOrderId, urlPayment]);
+
+  useEffect(() => {
     let interval: NodeJS.Timeout;
     if (
       searched &&
       ((phone && phone.length >= 8) || searchOrderIdInput || urlOrderId)
     ) {
+      const paymentState = String(urlPayment || "").toLowerCase();
+      const refreshMs = ["success", "paid"].includes(paymentState) ? 900 : 3000;
       interval = setInterval(
         () => fetchOrders(phone, searchOrderIdInput || urlOrderId, true),
-        3000,
+        refreshMs,
       );
     }
     return () => clearInterval(interval);
-  }, [searched, phone, searchOrderIdInput, urlOrderId, selectedOrder]);
+  }, [searched, phone, searchOrderIdInput, urlOrderId, selectedOrder, urlPayment]);
 
   const getStatusStory = (order: any) => {
     const label = getStatusDisplay(order).text;

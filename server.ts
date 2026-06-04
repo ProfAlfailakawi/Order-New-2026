@@ -103,7 +103,7 @@ function handleAdminDbError(error: any, contextMsg: string) {
 
 let _appDataCache: any = null;
 let _appDataCacheTime = 0;
-const CACHE_TTL = 5000; // Short cache: fast reads without hiding payment/order writes
+const CACHE_TTL = 900; // Keep app reads quick without hiding fresh payment/order writes
 
 const SHARDED_APPDATA_KEYS = [
   "orders",
@@ -327,7 +327,10 @@ async function updateAppData(data: any) {
  * Use this for any update that involves arrays (orders, invoices, customers)
  * to prevent race conditions.
  */
-async function updateAppDataAtomically(updater: (currentData: any) => any) {
+async function updateAppDataAtomically(
+  updater: (currentData: any) => any,
+  keysToLoad: readonly ShardedAppDataKey[] = SHARDED_APPDATA_KEYS,
+) {
   if (adminDb) {
     try {
       const docRef = adminDb.collection("appData").doc("shared_company_data");
@@ -341,7 +344,7 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
           currentData = localFallbackDB;
         } else {
           currentData = sDoc.data() || {};
-          for (const key of SHARDED_APPDATA_KEYS) {
+          for (const key of keysToLoad) {
             const shardSnap = await transaction.get(docRef.collection("shards").doc(key));
             if (shardSnap.exists) {
               const shardValue = readArrayFromShardData(key, shardSnap.data() || {});
@@ -388,7 +391,7 @@ async function updateAppDataAtomically(updater: (currentData: any) => any) {
         currentData = localFallbackDB;
       } else {
         currentData = sDoc.data();
-        for (const key of SHARDED_APPDATA_KEYS) {
+        for (const key of keysToLoad) {
           const shardSnap = await transaction.get(doc(db, "appData", "shared_company_data", "shards", key));
           if (shardSnap.exists()) {
             const shardValue = readArrayFromShardData(key, shardSnap.data() || {});
@@ -770,16 +773,20 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
         return { orders, invoices, customers };
       }
       return null;
-  });
+  }, ["orders", "invoices", "customers"]);
 
   if (ok) {
-     for (const push of directPushes) {
-      try {
-        const result = await sendAdminPushDirectOnce(push);
-        console.log(`[PAYMENT_UPDATE] Direct admin push ${push.eventId}:`, JSON.stringify(result));
-      } catch (pushError: any) {
-        console.warn(`[PAYMENT_UPDATE] Direct admin push failed ${push.eventId}:`, pushError?.message || String(pushError));
-      }
+    if (directPushes.length > 0) {
+      void Promise.allSettled(
+        directPushes.map(async (push) => {
+          try {
+            const result = await sendAdminPushDirectOnce(push);
+            console.log(`[PAYMENT_UPDATE] Direct admin push ${push.eventId}:`, JSON.stringify(result));
+          } catch (pushError: any) {
+            console.warn(`[PAYMENT_UPDATE] Direct admin push failed ${push.eventId}:`, pushError?.message || String(pushError));
+          }
+        }),
+      );
     }
     console.log(`[PAYMENT_UPDATE] Successfully processed Order:${orderId}`);
   } else {
@@ -950,6 +957,13 @@ async function startServer() {
   console.log(`[STARTUP] DEFAULT_APP_PORT: ${process.env.DEFAULT_APP_PORT}`);
 
   app.use(express.json());
+  app.use("/api", (_req, res, next) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    res.setHeader("Surrogate-Control", "no-store");
+    next();
+  });
 
   app.post("/api/diwaniya-push/register", async (req, res) => {
     try {
@@ -4191,8 +4205,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
             ? "success"
             : "pending";
 
-        // Double check against real database status since webhooks often arrive faster or browsers can misreport
-        if (orderId) {
+        // Double check only for unclear gateway statuses; explicit success/failure was already written above.
+        if (orderId && !isExplicitSuccess && !isExplicitFailure) {
            try {
               const d = await getAppDataRef();
               const reqData = d.data() || {};
