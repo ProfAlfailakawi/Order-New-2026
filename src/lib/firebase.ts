@@ -10,7 +10,7 @@ console.log("Firebase initialized with Database ID:", dbId);
 // Silence verbose connection cancellation warnings from Firestore SDK
 setLogLevel('silent');
 
-export const db = initializeFirestore(app, { experimentalForceLongPolling: true }, dbId);
+export const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true }, dbId);
 export const auth = getAuth();
 
 // Connection test removed to avoid unnecessary permission errors

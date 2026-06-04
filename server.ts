@@ -74,7 +74,7 @@ const appClient = initializeApp(firebaseConfig);
 setLogLevel("silent");
 const db = initializeFirestore(
   appClient,
-  { experimentalForceLongPolling: true },
+  { experimentalAutoDetectLongPolling: true },
   firebaseConfig.firestoreDatabaseId || "(default)",
 );
 
@@ -103,6 +103,7 @@ function handleAdminDbError(error: any, contextMsg: string) {
 
 let _appDataCache: any = null;
 let _appDataCacheTime = 0;
+const _appDataKeyedCache = new Map<string, { time: number; data: any }>();
 const CACHE_TTL = 900; // Keep app reads quick without hiding fresh payment/order writes
 
 const SHARDED_APPDATA_KEYS = [
@@ -210,6 +211,44 @@ async function mergeSharedShards(rootData: any) {
   return merged;
 }
 
+
+async function getAppDataForKeys(keysToLoad: readonly ShardedAppDataKey[] = []) {
+  const uniqueKeys = Array.from(new Set(keysToLoad)).filter((key): key is ShardedAppDataKey =>
+    (SHARDED_APPDATA_KEYS as readonly string[]).includes(key)
+  ).sort();
+  const cacheKey = uniqueKeys.join("|") || "root";
+  const cached = _appDataKeyedCache.get(cacheKey);
+  if (cached && Date.now() - cached.time < CACHE_TTL) return cached.data;
+
+  let rootData: any = null;
+  if (adminDb) {
+    try {
+      const d = await adminDb.collection("appData").doc("shared_company_data").get();
+      if (d.exists) rootData = d.data() || {};
+    } catch (error) {
+      handleAdminDbError(error, `getAppDataForKeys:${cacheKey}`);
+    }
+  }
+
+  if (!rootData) {
+    try {
+      const d = await getDoc(doc(db, "appData", "shared_company_data"));
+      if (d.exists()) rootData = d.data() || {};
+    } catch (error) {
+      console.warn(`[CLIENT_DB] Light read failed for ${cacheKey}`, error);
+    }
+  }
+
+  if (!rootData) rootData = localFallbackDB;
+  const data = { ...(rootData || {}) };
+  await Promise.all(uniqueKeys.map(async (key) => {
+    const value = await loadSharedShard(key);
+    if (Array.isArray(value) && value.length > 0) data[key] = value;
+  }));
+  _appDataKeyedCache.set(cacheKey, { time: Date.now(), data });
+  return data;
+}
+
 async function getAppData() {
   if (_appDataCache && Date.now() - _appDataCacheTime < CACHE_TTL) {
     return _appDataCache;
@@ -295,6 +334,7 @@ async function updateAppData(data: any) {
       });
       _appDataCache = null;
       _appDataCacheTime = 0;
+      _appDataKeyedCache.clear();
       return;
     } catch (error) {
       handleAdminDbError(error, "updateAppData");
@@ -311,6 +351,7 @@ async function updateAppData(data: any) {
     }));
     _appDataCache = null;
     _appDataCacheTime = 0;
+    _appDataKeyedCache.clear();
   } catch (error) {
     console.warn("[CLIENT_DB] Write failed, updating local in-memory fallback", error);
     localFallbackDB = { ...localFallbackDB, ...data };
@@ -373,6 +414,7 @@ async function updateAppDataAtomically(
       });
       _appDataCache = null;
       _appDataCacheTime = 0;
+      _appDataKeyedCache.clear();
       return true;
     } catch (error) {
       handleAdminDbError(error, "updateAppDataAtomically");
@@ -420,6 +462,7 @@ async function updateAppDataAtomically(
     });
     _appDataCache = null;
     _appDataCacheTime = 0;
+    _appDataKeyedCache.clear();
     return true;
   } catch (err) {
     console.error("[CLIENT_DB] Atomic update failed", err);
@@ -776,6 +819,9 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
   }, ["orders", "invoices", "customers"]);
 
   if (ok) {
+    _appDataCache = null;
+    _appDataCacheTime = 0;
+    _appDataKeyedCache.clear();
     if (directPushes.length > 0) {
       void Promise.allSettled(
         directPushes.map(async (push) => {
@@ -1069,8 +1115,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     try {
       const cleanQueryPhone = phone ? cleanPhone(phone) : null;
 
-      const d = await getAppDataRef();
-      const appData = d.data() || {};
+      const appData = await getAppDataForKeys(["orders", "invoices", "customers", "products", "supplierCopies"]);
 
       const allOrdersOriginal = appData.orders || [];
       const now = Date.now();
@@ -1368,8 +1413,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   // 2. Regions
   app.get("/api/regions", async (req, res) => {
     try {
-      const d = await getAppDataRef();
-      const data = d.data() || {};
+      const data = await getAppDataForKeys([]);
       res.json(data.zones || []);
     } catch (error) {
       console.error("Error fetching regions:", error);
@@ -1507,9 +1551,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
   app.get("/api/settings", async (req, res) => {
     try {
       let settings: any = {};
-      const d = await getAppDataRef();
-      if (d.exists()) {
-        const data = d.data();
+      const data = await getAppDataForKeys([]);
+      if (data) {
         settings = data.settings || {};
         const rootGeofenceDistance =
           data.squadGeofenceDistance ??
@@ -2627,8 +2670,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   // 5. Top Products
   app.get("/api/top-products", async (req, res) => {
     try {
-      const d = await getAppDataRef();
-      const data = d.data() || {};
+      const data = await getAppDataForKeys(["products", "supplierCopies", "invoices"]);
       const allProducts = [...(data.products || []), ...(data.supplierCopies || [])];
 
       let products = getCustomerVisibleProducts(processProducts(allProducts));
@@ -2701,17 +2743,17 @@ app.get("/api/debug/order/:id", async (req, res) => {
   app.get("/api/recent-fomo", async (req, res) => {
     try {
       // First, get all active products from the shared database
-      const activeProductsSnap = await getAppDataRef();
+      const fomoData = await getAppDataForKeys(["products", "orders", "invoices"]);
       const activeProducts =
-        activeProductsSnap.data()?.products?.filter((p: any) => !p.isHidden) ||
+        fomoData.products?.filter((p: any) => !p.isHidden) ||
         [];
       const activeProductNames = new Set(
         activeProducts.map((p: any) => p.name),
       );
 
       // Get the most recent 150 orders to find valid recent purchases
-      const allOrders = activeProductsSnap.data()?.orders || [];
-      const allInvoices = activeProductsSnap.data()?.invoices || [];
+      const allOrders = fomoData.orders || [];
+      const allInvoices = fomoData.invoices || [];
       const combinedOrders = [...allOrders, ...allInvoices].sort((a: any, b: any) => {
         const dateA = new Date(a.createdAt || a.date || 0).getTime();
         const dateB = new Date(b.createdAt || b.date || 0).getTime();
@@ -2800,8 +2842,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
   app.get("/api/products", async (req, res) => {
     try {
-      const d = await getAppDataRef();
-      const data = d.data() || {};
+      const data = await getAppDataForKeys(["products", "supplierCopies"]);
       const allProducts = [...(data.products || []), ...(data.supplierCopies || [])];
       let products = getCustomerVisibleProducts(processProducts(allProducts));
 
