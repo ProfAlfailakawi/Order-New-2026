@@ -3279,7 +3279,7 @@ export default function CustomerSite() {
         navigate(
           `/track?phone=${encodeURIComponent(p)}&order_id=${newOrderId}`,
         );
-      }, 3500);
+      }, 600);
     } catch (error: any) {
       if (
         error &&
