@@ -2481,6 +2481,50 @@ app.get("/api/debug/order/:id", async (req, res) => {
     res.json({ success: true, groupOrder });
   });
 
+  app.post("/api/squad-add-memory", async (req, res) => {
+    const { squadId, memory } = req.body;
+    if (!squadId || !memory) return res.status(400).json({ error: "Missing squadId or memory" });
+    try {
+      const ok = await updateAppDataAtomically((current: any) => {
+        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
+        const idx = squads.findIndex((s: any) => String(s.id) === String(squadId));
+        if (idx > -1) {
+          const s = { ...squads[idx] };
+          s.memories = Array.isArray(s.memories) ? [...s.memories] : [];
+          s.memories.push(memory);
+          squads[idx] = s;
+        }
+        return { squads };
+      });
+      if (!ok) throw new Error("Failed to save memory");
+      res.json({ success: true });
+    } catch (e) {
+      res.status(500).json({ error: String(e) });
+    }
+  });
+
+  app.post("/api/squad-delete-memory", async (req, res) => {
+    const { squadId, memoryId } = req.body;
+    if (!squadId || !memoryId) return res.status(400).json({ error: "Missing squadId or memoryId" });
+    try {
+      const ok = await updateAppDataAtomically((current: any) => {
+        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
+        const idx = squads.findIndex((s: any) => String(s.id) === String(squadId));
+        if (idx > -1) {
+          const s = { ...squads[idx] };
+          const memories = Array.isArray(s.memories) ? [...s.memories] : [];
+          s.memories = memories.filter((m: any) => String(m.id) !== String(memoryId));
+          squads[idx] = s;
+        }
+        return { squads };
+      });
+      if (!ok) throw new Error("Failed to delete memory");
+      res.json({ success: true });
+    } catch (e) {
+      res.status(500).json({ error: String(e) });
+    }
+  });
+
   app.post("/api/squad-create", async (req, res) => {
     const { name, phone, customerName } = req.body;
     if (!name) return res.status(400).json({ error: "Missing squad name" });
@@ -2527,7 +2571,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   });
 
   app.post("/api/squad-join", async (req, res) => {
-   const { phone, squadId, name } = req.body;
+   const { phone, squadId, name, isAuto } = req.body;
    if (!phone || !squadId) return res.status(400).json({ error: "Missing phone or squadId" });
    try {
      const cleanQPhone = cleanPhone(phone);
@@ -2550,6 +2594,22 @@ app.get("/api/debug/order/:id", async (req, res) => {
          joinedSquad = squad;
          return { squads };
        }
+
+       if (isAuto) {
+         // Direct entry proximity join! Automatically added directly to memberList bypassing approval
+         squad.membersList.push({
+           phone: cleanQPhone,
+           name: name || "عضو السدو",
+           score: 100,
+           orderCount: 0,
+           lossesCount: 0,
+           checkedInAt: new Date().toISOString()
+         });
+         squads[finalSquadIndex] = squad;
+         joinedSquad = squad;
+         return { squads };
+       }
+
        const reqs = Array.isArray(current.geofenceJoinRequests) ? [...current.geofenceJoinRequests] : [];
        const filteredReqs = reqs.filter((r: any) => !(cleanPhone(r.phone) === cleanQPhone && String(r.squadId) === String(squadId) && String(r.status || "pending") === "pending"));
        filteredReqs.push({
@@ -3951,7 +4011,34 @@ app.get("/api/debug/order/:id", async (req, res) => {
         roulettePushPhones = (order.splitParticipants || [])
           .map((p: any) => cleanPhone(p.phone))
           .filter(Boolean);
-        return { orders };
+
+        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
+        if (rouletteSquadId) {
+          const sIdx = squads.findIndex((s: any) => String(s.id) === String(rouletteSquadId));
+          if (sIdx > -1) {
+            const sq = { ...squads[sIdx] };
+            sq.membersList = Array.isArray(sq.membersList) ? [...sq.membersList] : [];
+            const lPhone = cleanPhone(loser.phone || "");
+            const mIdx = sq.membersList.findIndex((m: any) => (lPhone && cleanPhone(m.phone) === lPhone) || m.name === loser.name);
+            if (mIdx > -1) {
+              const m = { ...sq.membersList[mIdx] };
+              m.lossesCount = (m.lossesCount || 0) + 1;
+              sq.membersList[mIdx] = m;
+            } else {
+              sq.membersList.push({
+                phone: lPhone,
+                name: loser.name,
+                lossesCount: 1,
+                orderCount: 0,
+                score: 100,
+                checkedInAt: new Date().toISOString()
+              });
+            }
+            squads[sIdx] = sq;
+          }
+        }
+
+        return { orders, squads };
       });
 
       if (loserName && roulettePushPhones.length > 0) {

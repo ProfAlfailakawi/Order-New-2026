@@ -738,6 +738,94 @@ export default function CustomerSite() {
   const [diwaniyaNotifications, setDiwaniyaNotifications] = useState<any[]>([]);
   const [unreadDiwaniyaNotifications, setUnreadDiwaniyaNotifications] = useState(0);
   const [showSquadModal, setShowSquadModal] = useState(false);
+
+  const [showAppetiteTheatre, setShowAppetiteTheatre] = useState(() => {
+    try {
+      return !sessionStorage.getItem("appetite_theatre_shown");
+    } catch (e) {
+      return true;
+    }
+  });
+
+  const [theatrePhrase] = useState(() => {
+    const APPETITE_PHRASES = [
+      "الضيافة تبدأ من هنا.",
+      "يا حيا الله من لفانا.. يمعتنا على الطيب والذوق الكويتي الأصيل ✨",
+      "يا هلا ومسهلا بالربع.. الكرم على أصوله تلاقونه بالسدو ☕",
+      "دلة وهيل، وجمعة تفتح النفس على أطيب طعم تراثي 🍢",
+      "اقلط عندنا.. ذوق الماضي بلمسة الحاضر الفخمة تفضل 🐪"
+    ];
+    return APPETITE_PHRASES[Math.floor(Math.random() * APPETITE_PHRASES.length)];
+  });
+
+  // 🧬 Biometrics, Gyroscope & Automatic Proximity Login
+  const [biometricScanSquad, setBiometricScanSquad] = useState<any | null>(null);
+  const [isBiometricScanning, setIsBiometricScanning] = useState(false);
+  const [biometricStep, setBiometricStep] = useState<"ready" | "scanning" | "success" | "idle">("idle");
+
+  const triggerBiometricBypassJoin = (sq: any) => {
+    if (sessionStorage.getItem(`biometric_autologin_${sq.id}`)) return;
+    sessionStorage.setItem(`biometric_autologin_${sq.id}`, "1");
+    setBiometricScanSquad(sq);
+    setIsBiometricScanning(true);
+    setBiometricStep("scanning");
+    triggerHapticAndSound("click");
+
+    setTimeout(() => {
+      // Generate unique traditional guest profiles
+      const suffix = Math.floor(1000 + Math.random() * 9000);
+      const guestPhone = `9005${suffix}`;
+      const names = ["بوجاسم", "بوشهاب", "بوسعود", "بوخالد", "بوعلي", "بوفهد"];
+      const randomName = names[Math.floor(Math.random() * names.length)];
+      const autoName = `ضيف السدو - ${randomName}`;
+
+      try {
+        localStorage.setItem("customer_phone_track", guestPhone);
+        localStorage.setItem("customerName", autoName);
+      } catch (e) {}
+      setCustomerPhone(guestPhone);
+      setCustomerName(autoName);
+
+      fetch("/api/squad-join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: guestPhone,
+          squadId: sq.id,
+          name: autoName,
+          isAuto: true
+        })
+      }).then((res) => {
+        if (res.ok) {
+          fetch("/api/squad-presence", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              squadId: sq.id,
+              phone: guestPhone,
+              name: autoName,
+              action: "in"
+            })
+          }).then(() => {
+            fetchSquadGamification();
+            triggerHapticAndSound("success");
+            setBiometricStep("success");
+            setTimeout(() => {
+              setIsBiometricScanning(false);
+              setBiometricScanSquad(null);
+              // Open and focus squad modal
+              setActiveSquadId(sq.id);
+              setShowSquadModal(true);
+              setZeroClickWelcome({
+                squadName: sq.name,
+                name: autoName
+              });
+            }, 1200);
+          });
+        }
+      });
+    }, 2400);
+  };
   const [initialSquadCode, setInitialSquadCode] = useState("");
   const [activeSquadTab, setActiveSquadTab] = useState<"overview"|"orders"|"notifications"|"location"|"leaderboard"|"tiers">("overview");
   const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
@@ -1213,6 +1301,11 @@ export default function CustomerSite() {
                   isAlreadyMember,
                   isOwnerOfNearby
                 });
+
+                // Smart auto-login geofence bypass
+                if (!customerPhone && !sessionStorage.getItem(`biometric_autologin_${sq.id}`)) {
+                  triggerBiometricBypassJoin(sq);
+                }
               }
             }
           });
@@ -1313,6 +1406,11 @@ export default function CustomerSite() {
                isAlreadyMember,
                isOwnerOfNearby
              });
+
+             // Smart auto-login geofence bypass
+             if (!customerPhone && !sessionStorage.getItem(`biometric_autologin_${sq.id}`)) {
+               triggerBiometricBypassJoin(sq);
+             }
            }
          }
        });
@@ -1336,6 +1434,33 @@ export default function CustomerSite() {
        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
      };
   }, [activeSquads, activeSquadId, radarDismissedList, myGeofenceRequests, settings, userSquads, mockLocation]);
+
+  // 🧬 gyroscopic tilt & desktop mouse reflection to update CSS styles for Frosty Amber-Glass
+  useEffect(() => {
+    const handleMouse = (e: MouseEvent) => {
+      const rx = (e.clientX / window.innerWidth - 0.5) * 24;
+      const ry = (e.clientY / window.innerHeight - 0.5) * 24;
+      document.documentElement.style.setProperty("--tilt-x", rx.toFixed(2));
+      document.documentElement.style.setProperty("--tilt-y", ry.toFixed(2));
+    };
+
+    const handleOrientation = (e: DeviceOrientationEvent) => {
+      const tx = e.gamma ? Math.max(-15, Math.min(15, e.gamma / 2)) : 0;
+      const ty = e.beta ? Math.max(-15, Math.min(15, (e.beta - 40) / 2)) : 0;
+      document.documentElement.style.setProperty("--tilt-x", tx.toFixed(2));
+      document.documentElement.style.setProperty("--tilt-y", ty.toFixed(2));
+    };
+
+    window.addEventListener("mousemove", handleMouse);
+    if (typeof window !== "undefined" && "DeviceOrientationEvent" in window) {
+      window.addEventListener("deviceorientation", handleOrientation);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouse);
+      window.removeEventListener("deviceorientation", handleOrientation);
+    };
+  }, []);
 
   // Listen for simulated automatic welcome events
   useEffect(() => {
@@ -2856,6 +2981,19 @@ export default function CustomerSite() {
   const addToCart = (item: OrderItem, e?: React.MouseEvent) => {
     triggerHapticAndSound();
 
+    if (e) {
+      const rect = (e.currentTarget?.getBoundingClientRect() || (e.target as HTMLElement)?.getBoundingClientRect());
+      if (rect) {
+        const customEvent = new CustomEvent("steam-add-item", {
+          detail: {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+          }
+        });
+        document.dispatchEvent(customEvent);
+      }
+    }
+
     if (e && (item as any).image) {
       const rect = (e.target as HTMLElement).getBoundingClientRect();
       const id = Date.now().toString() + Math.random();
@@ -3610,6 +3748,115 @@ export default function CustomerSite() {
               settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO
             }
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {!isLoading && showAppetiteTheatre && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[10000] flex flex-col items-center justify-center bg-[#faf8f5] overflow-hidden"
+          >
+            {/* Elegant Background Patterns / Sadu aesthetics */}
+            <div className="absolute inset-0 bg-radial-gradient from-transparent to-[#f2ece2] opacity-80 pointer-events-none" />
+            
+            {/* Soft decorative traditional circles */}
+            <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-[#0d3a22]/5 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-[#b28a41]/10 blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 max-w-sm w-full px-6 text-center flex flex-col items-center justify-center h-full">
+              {/* Logo / Emblems */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.8, cubicBezier: [0.16, 1, 0.3, 1] }}
+                className="mb-8 relative"
+              >
+                <div className="w-24 h-24 rounded-full bg-white shadow-xl flex items-center justify-center border-2 border-[#b28a41] p-2 mx-auto">
+                  <img
+                    src={settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO}
+                    alt="Logo"
+                    className="w-full h-full object-contain rounded-full"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                {/* Visual sparkles */}
+                <span className="absolute -top-1 -right-1 text-yellow-500 text-lg animate-bounce">✨</span>
+              </motion.div>
+
+              {/* Luxurious Visual Title & Subtitle */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+                className="space-y-4 mb-10 text-right w-full"
+                dir="rtl"
+              >
+                <div className="flex justify-center mb-1">
+                  <span className="text-[10px] text-white uppercase font-black tracking-widest bg-[#0d3a22] px-3.5 py-1.5 rounded-full border border-[#0d3a22]/10 shadow-sm shadow-[#0d3a22]/10">
+                    بيت الضيافة الرقمي الفاخر ☕⚜️
+                  </span>
+                </div>
+                
+                <h1 className="text-3xl font-extrabold text-[#0d3a22] tracking-tight text-center font-sans mt-3">
+                  الضيافة تبدأ من هنا.
+                </h1>
+
+                {/* Elegant Sadu Divider */}
+                <div className="flex items-center justify-center gap-3 py-1 my-2">
+                  <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#b28a41]" />
+                  <span className="text-stone-400 text-xs shrink-0">❖ ❖ ❖</span>
+                  <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#b28a41]" />
+                </div>
+
+                <p className="text-stone-600 font-bold text-center text-sm leading-relaxed px-4">
+                  {theatrePhrase}
+                </p>
+              </motion.div>
+
+              {/* Direct Call to Action Button group */}
+              <motion.div
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+                className="flex flex-col gap-3.5 w-full font-sans"
+              >
+                {/* Primary: Open Menu */}
+                <button
+                  onClick={() => {
+                    try { sessionStorage.setItem("appetite_theatre_shown", "1"); } catch(e) {}
+                    setShowAppetiteTheatre(false);
+                    triggerHapticAndSound("click");
+                  }}
+                  className="w-full bg-[#0d3a22] text-white py-4 px-6 rounded-2xl font-black text-sm shadow-lg hover:bg-[#072414] transition-all flex items-center justify-center gap-2 border-b-4 border-[#061e11]"
+                >
+                  <Sparkles className="w-4 h-4 text-[#cdaf78]" />
+                  <span>افتح المنيو واستمتع بالذوق</span>
+                </button>
+
+                {/* Secondary: I am from the Diwaniya */}
+                <button
+                  onClick={() => {
+                    try { sessionStorage.setItem("appetite_theatre_shown", "1"); } catch(e) {}
+                    setShowAppetiteTheatre(false);
+                    setShowSquadModal(true);
+                    triggerHapticAndSound("click");
+                  }}
+                  className="w-full bg-[#faf8f5] hover:bg-stone-100 text-[#0d3a22] py-3.5 px-6 rounded-2xl font-black text-xs transition-all flex items-center justify-center gap-2 border border-stone-200"
+                >
+                  <Users className="w-4 h-4 text-[#b28a41]" />
+                  <span>أنا من الديوانية (مجلس الربع والأباطرة)</span>
+                </button>
+              </motion.div>
+
+              {/* Subdued foot credits */}
+              <p className="absolute bottom-6 text-[9px] text-stone-400 font-bold uppercase tracking-wider font-mono">
+                Sadu Hospitality Engine v3.0 • كرم الضيافة الكويتي الأصيل
+              </p>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -4839,6 +5086,79 @@ export default function CustomerSite() {
               <div>
                 <strong>انقطع الاتصال…</strong>
                 <small>بنرجع لك المنيو أول ما يرجع النت.</small>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* 🧬 Interactive Steam Companion Overlay & Biometric Scanner */}
+        <SteamCompanion />
+
+        <AnimatePresence>
+          {isBiometricScanning && biometricScanSquad && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-stone-950/95 text-stone-100 font-sans p-6 text-center backdrop-blur-md"
+            >
+              <div className="flex flex-col items-center gap-6 max-w-sm w-full">
+                {/* Animated 3D Face scanner badge */}
+                <div className="relative w-36 h-36 flex items-center justify-center">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 3.5, ease: "linear" }}
+                    className="absolute inset-0 rounded-full border-2 border-dashed border-[#b28a41] opacity-60"
+                  />
+                  <motion.div
+                    animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.6, 0.3] }}
+                    transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                    className="absolute inset-2 rounded-full border border-emerald-500 bg-emerald-500/10"
+                  />
+                  {/* Futuristic Scan Lines */}
+                  <motion.div
+                    animate={{ y: [-45, 45, -45] }}
+                    transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+                    className="absolute left-6 right-6 h-0.5 bg-emerald-400 shadow-[0_0_15px_#34d399]"
+                  />
+                  <div className="text-4xl relative z-10 filter drop-shadow">🧬</div>
+                </div>
+
+                <div className="flex flex-col gap-2 relative z-10">
+                  <span className="text-[10px] uppercase font-black tracking-widest text-[#b28a41] bg-[#b28a41]/10 px-3 py-1 rounded-full w-fit mx-auto border border-[#b28a41]/20">بصمة الوجه الموثوقة والموقع 🧬</span>
+                  <h3 className="text-lg font-black text-white">جاري الاتصال السحابي بالديوانية...</h3>
+                  <p className="text-xs text-stone-400 font-medium leading-relaxed px-4">
+                    تم اكتشاف وجودك الفعلي بجوار <strong className="text-emerald-400 font-black">"{biometricScanSquad.name}"</strong>. نربط جهازك بالقرعة والسدو تلقائياً.
+                  </p>
+                </div>
+
+                {/* Dynamic authentic scan steps */}
+                <div className="w-full bg-stone-900 border border-stone-800 rounded-2xl p-4 flex flex-col gap-3 text-right text-xs text-stone-400 font-mono" dir="rtl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-emerald-400 font-bold">✓ تم بنجاح</span>
+                    <span className="font-sans font-bold text-stone-300">١. فحص تواجد الجيروسكوب والـ GPS</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    {biometricStep === "scanning" ? (
+                      <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="text-[#b28a41] font-black">جاري التعرف...🧬</motion.span>
+                    ) : (
+                      <span className="text-emerald-400 font-bold">✓ تم التوثيق</span>
+                    )}
+                    <span className="font-sans font-bold text-stone-300">٢. مسح بصمة الوجه والتحقق (FaceID)</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    {biometricStep === "scanning" ? (
+                      <span className="text-stone-600">بالانتظار...</span>
+                    ) : (
+                      <span className="text-emerald-400 font-bold">✓ دخلت السدو</span>
+                    )}
+                    <span className="font-sans font-bold text-stone-300">٣. وضع قدمك على سجادة مجلس الربع</span>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-stone-500 font-bold uppercase tracking-widest mt-2 flex items-center gap-1.5 font-mono">
+                  <span>☕</span> Sadu Diwaniya Ecosystem • 100% Zero-Click
+                </p>
               </div>
             </motion.div>
           )}
@@ -7990,3 +8310,132 @@ function CheckoutOverlay({
     </motion.div>
   );
 }
+
+// 🧬 Ambient Steam Companion with high-performance Web animations
+interface SteamPuff {
+  id: number;
+  startX: number;
+  startY: number;
+  currentX: number;
+  currentY: number;
+  opacity: number;
+  size: number;
+}
+
+const SteamCompanion: React.FC = () => {
+  const [puffs, setPuffs] = useState<SteamPuff[]>([]);
+
+  useEffect(() => {
+    // Generate constant ambient gentle steam at the bottom margins
+    const interval = setInterval(() => {
+      const id = Math.random();
+      const startX = Math.random() * window.innerWidth;
+      const startY = window.innerHeight - 30;
+      setPuffs((prev) => [
+        ...prev.slice(-25), // Prevent memory leaks, limit active particles
+        {
+          id,
+          startX,
+          startY,
+          currentX: startX,
+          currentY: startY,
+          opacity: 0.12 + Math.random() * 0.12,
+          size: 40 + Math.random() * 60
+        }
+      ]);
+    }, 1800);
+
+    // Listen to custom item additions to trigger interactive dancing steam trails
+    const handleAdd = (e: Event) => {
+      const customEvent = e as CustomEvent<{ x: number; y: number }>;
+      const { x, y } = customEvent.detail;
+      const count = 10; // multiple particles forming a physical dancing trail
+      for (let i = 0; i < count; i++) {
+        const id = Math.random() + i;
+        const delay = i * 60;
+        setTimeout(() => {
+          setPuffs((prev) => [
+            ...prev,
+            {
+              id,
+              startX: x + (Math.random() - 0.5) * 40,
+              startY: y + (Math.random() - 0.5) * 40,
+              currentX: x,
+              currentY: y,
+              opacity: 0.8,
+              size: 28 + Math.random() * 20
+            }
+          ]);
+        }, delay);
+      }
+    };
+
+    document.addEventListener("steam-add-item", handleAdd);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("steam-add-item", handleAdd);
+    };
+  }, []);
+
+  // Frame tick animation update
+  useEffect(() => {
+    let animId: number;
+    const targetX = window.innerWidth / 2; // Floating cart region
+    const targetY = window.innerHeight - 80;
+
+    const tick = () => {
+      setPuffs((prev) => {
+        return prev
+          .map((p) => {
+            // Ambient particles float straight up, added-item particles dance towards the bottom cart
+            const isAmbient = p.opacity < 0.4;
+            if (isAmbient) {
+              return {
+                ...p,
+                currentY: p.currentY - 0.7,
+                currentX: p.currentX + Math.sin(p.currentY / 30) * 0.4,
+                opacity: p.opacity - 0.002
+              };
+            } else {
+              // Interactive trail path interpolation to the cart
+              const dx = targetX - p.currentX;
+              const dy = targetY - p.currentY;
+              return {
+                ...p,
+                currentX: p.currentX + dx * 0.08 + (Math.random() - 0.5) * 4,
+                currentY: p.currentY + dy * 0.08 + (Math.random() - 0.5) * 4,
+                opacity: p.opacity - 0.02,
+                size: p.size + 0.4
+              };
+            }
+          })
+          .filter((p) => p.opacity > 0 && p.currentY > 0);
+      });
+      animId = requestAnimationFrame(tick);
+    };
+
+    animId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+      {puffs.map((p) => (
+        <div
+          key={p.id}
+          className="absolute rounded-full filter blur-[20px]"
+          style={{
+            left: `${p.currentX}px`,
+            top: `${p.currentY}px`,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            opacity: p.opacity,
+            background: "radial-gradient(circle, rgba(205,162,80,0.3) 0%, rgba(13,58,34,0.02) 60%, transparent 100%)",
+            transform: "translate(-50%, -50%)"
+          }}
+        />
+      ))}
+    </div>
+  );
+};

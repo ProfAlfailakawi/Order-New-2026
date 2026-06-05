@@ -129,12 +129,58 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   setInitialCode,
 }) => {
   const [copied, setCopied] = React.useState(false);
-  const [myDiwaniyaTab, setMyDiwaniyaTab] = React.useState<"home" | "manage" | "orders" | "code" | "notifications" | "location">("home");
+  const [myDiwaniyaTab, setMyDiwaniyaTab] = React.useState<"home" | "manage" | "orders" | "code" | "notifications" | "location" | "trophies">("home");
 
   // 🧠 AI Co-Host smart state & learning engine (Concise, functional and connected to real products)
   const [aiActiveIndex, setAiActiveIndex] = React.useState(0);
   const [aiIsLearning, setAiIsLearning] = React.useState(false);
   const [aiLearntCount, setAiLearntCount] = React.useState(0);
+
+  // 📸 Heritage photo memories with local persistence
+  const [selectedMemory, setSelectedMemory] = React.useState<any | null>(null);
+  const [isAddingMemory, setIsAddingMemory] = React.useState(false);
+  const [newMemoryTitle, setNewMemoryTitle] = React.useState("");
+  const [newMemoryStory, setNewMemoryStory] = React.useState("");
+  const [newMemoryIcon, setNewMemoryIcon] = React.useState("🍲");
+  
+  const heritageMemories = React.useMemo(() => {
+    return Array.isArray(squadInfo?.memories) ? squadInfo.memories : [];
+  }, [squadInfo]);
+
+  const handleAddMemory = async () => {
+    if (!newMemoryTitle.trim() || !newMemoryStory.trim() || !squadInfo?.id) return;
+    const bgList = [
+      "from-amber-100/60 to-amber-50",
+      "from-yellow-100/50 to-[#faf8f5]",
+      "from-stone-100 to-stone-50",
+      "from-emerald-100/40 to-emerald-50/20"
+    ];
+    const today = new Date();
+    const formattedDate = today.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    const newMem = {
+      id: String(Date.now()),
+      title: newMemoryTitle,
+      desc: newMemoryStory,
+      date: formattedDate,
+      icon: newMemoryIcon,
+      bg: bgList[Math.floor(Math.random() * bgList.length)]
+    };
+    try {
+      const res = await fetch("/api/squad-add-memory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ squadId: squadInfo.id, memory: newMem })
+      });
+      if (res.ok) {
+        if (onRefresh) onRefresh();
+      }
+    } catch (e) {
+      console.error("Failed to save memory to DB:", e);
+    }
+    setNewMemoryTitle("");
+    setNewMemoryStory("");
+    setIsAddingMemory(false);
+  };
 
   const aiProducts = React.useMemo(() => {
     if (!products || products.length === 0) return null;
@@ -1230,11 +1276,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         <div className="flex flex-col gap-6 animate-in fade-in duration-500">
           {squadInfo && isCurrentMember && (
             <div className="squad-stable-tabs bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm relative z-10 backdrop-blur-xl">
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center" dir="rtl">
+              <div className="flex sm:grid sm:grid-cols-7 gap-1 overflow-x-auto scrollbar-none text-center py-0.5" dir="rtl">
                 {[
                   { id: "home", label: "الرئيسية", icon: "🏠" },
                   { id: "manage", label: "دواويني", icon: "🛖" },
                   { id: "orders", label: "الطلبات", icon: "🍽️" },
+                  { id: "trophies", label: "لوحة الشرف", icon: "🏆" },
                   ...(isOwner ? [{ id: "code", label: "الكود", icon: "🔐" }] : []),
                   { id: "location", label: "الموقع", icon: "📍" },
                   { id: "notifications", label: "تنبيهات", icon: "🔔", badge: unreadDiwaniyaNotifications },
@@ -1244,16 +1291,16 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     type="button"
                     onClick={() => setMyDiwaniyaTab(tab.id)}
                     className={cn(
-                      "relative rounded-2xl px-2 py-2.5 text-[10px] font-black transition-all leading-tight min-h-[58px]",
+                      "relative rounded-xl px-2 py-2 text-[10px] sm:text-[9px] font-black transition-all leading-tight min-h-[56px] flex-1 min-w-[72px] sm:min-w-0 sm:px-1 shrink-0",
                       myDiwaniyaTab === tab.id
-                        ? "bg-brand text-white shadow-md scale-[1.02]"
+                        ? "bg-[#0d3a22] text-white shadow-md scale-[1.01]"
                         : "bg-stone-50 text-stone-500 border border-stone-100"
                     )}
                   >
-                    <span className="block text-base mb-0.5">{tab.icon}</span>
-                    <span>{tab.label}</span>
+                    <span className="block text-sm mb-0.5">{tab.icon}</span>
+                    <span className="truncate block max-w-full">{tab.label}</span>
                     {tab.badge > 0 && (
-                      <span className="absolute -top-1 -left-1 min-w-5 h-5 px-1 rounded-full bg-amber-500 text-white text-[9px] flex items-center justify-center">
+                      <span className="absolute -top-1 -left-1 min-w-4 h-4 px-0.5 rounded-full bg-amber-500 text-white text-[8px] flex items-center justify-center">
                         {formatEnglishNumber(tab.badge)}
                       </span>
                     )}
@@ -1811,50 +1858,368 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
               return (
                 <div key="overview-content" className="flex flex-col gap-6">
                   {myDiwaniyaTab === "home" && (
-                  <div className="flex flex-col gap-3">
-                    <h4 className="font-black text-brand text-lg flex items-center gap-2 text-right">
-                      <User className="w-5 h-5 text-accent" /> ترتيب الأعضاء
-                    </h4>
-                    <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden flex flex-col">
-                      {squadInfo.membersList
-                        ?.sort(
-                          (a: any, b: any) =>
-                            (b.orderCount || 0) - (a.orderCount || 0),
-                        )
-                        .map((mem: any, idx: number) => (
-                          <div
-                            key={idx}
-                            className={cn(
-                              "flex items-center justify-between p-4 border-b border-stone-50 last:border-0",
-                              mem.phone === squadInfo.memberData?.phone
-                                ? "bg-accent/5 font-bold"
-                                : "",
-                            )}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-stone-50 flex items-center justify-center font-black text-stone-400 text-sm shrink-0">
-                                {idx === 0 ? "👑" : idx + 1}
+                    <div className="flex flex-col gap-3">
+                      <h4 className="font-black text-brand text-lg flex items-center gap-2 text-right justify-end">
+                        <User className="w-5 h-5 text-accent" /> ترتيب الأعضاء
+                      </h4>
+                      <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden flex flex-col">
+                        {squadInfo.membersList
+                          ?.sort(
+                            (a: any, b: any) =>
+                              (b.orderCount || 0) - (a.orderCount || 0),
+                          )
+                          .map((mem: any, idx: number) => (
+                            <div
+                              key={idx}
+                              className={cn(
+                                "flex items-center justify-between p-4 border-b border-stone-50 last:border-0",
+                                mem.phone === squadInfo.memberData?.phone
+                                  ? "bg-accent/5 font-bold"
+                                  : "",
+                              )}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className="text-sm shrink-0">
+                                  {idx === 0 ? "👑" : idx + 1}
+                                </span>
+                                <span
+                                  className={cn(
+                                    "text-sm",
+                                    mem.phone === squadInfo.memberData?.phone
+                                      ? "text-brand font-black"
+                                      : "text-stone-700 font-bold",
+                                  )}
+                                >
+                                  {mem.name || "عضو"}{" "}
+                                  {mem.phone === squadInfo.memberData?.phone &&
+                                    "(أنت)"}
+                                </span>
                               </div>
-                              <span
-                                className={cn(
-                                  "text-sm",
-                                  mem.phone === squadInfo.memberData?.phone
-                                    ? "text-brand font-black"
-                                    : "text-stone-700 font-bold",
-                                )}
-                              >
-                                {mem.name || "عضو"}{" "}
-                                {mem.phone === squadInfo.memberData?.phone &&
-                                  "(أنت)"}
+                              <div className="bg-stone-50 px-3 py-1 rounded-full text-xs font-bold text-stone-600 border border-stone-100 font-mono">
+                                {formatEnglishNumber(mem.orderCount || 0)}
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {myDiwaniyaTab === "trophies" && (
+                    <div className="flex flex-col gap-5 animate-in fade-in duration-300">
+                      {/* Trophy Header */}
+                      <div className="rounded-[28px] bg-gradient-to-br from-[#fbf9f4] to-[#f4f1ea] border border-[#b28a41]/20 p-6 text-right flex flex-col gap-2 relative shadow-sm">
+                        <div className="absolute top-5 left-5 text-3xl opacity-20">🏆</div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[#b28a41] bg-[#b28a41]/10 self-start px-2.5 py-1 rounded-full border border-[#b28a41]/20">مجلس الصدارة والتوهيقات</span>
+                        <h4 className="font-extrabold text-[#0d3a22] text-sm flex items-center gap-1.5 self-start">
+                          صدارتنا وحكايات وهقات الربع 🏆
+                        </h4>
+                        <p className="text-[11px] text-[#4a3f35] font-bold leading-relaxed mt-1">
+                          هني نسجّل وهقات دوانيتنا التاريخية بالقرعة، ومعازيب الشرف اللي ما يقصرون، مع ألبوم يمعات الربع اللي يجمعنا دايماً على الطيب!
+                        </p>
+                      </div>
+
+                      {/* Flex grid for Loser and Generosity General */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* 1. The Legendary Loser */}
+                        <div className="bg-white border border-stone-100 shadow-sm rounded-[28px] p-5 flex flex-col gap-4">
+                          <div className="flex items-center justify-between border-b border-stone-50 pb-3 font-sans">
+                            <span className="text-[10px] bg-red-50 text-red-600 border border-red-100 px-2.5 py-1 rounded-full font-black">وهقات الربع 💸</span>
+                            <h5 className="font-black text-brand text-xs flex items-center gap-1.5 leading-none">
+                              <span>💔</span> ملك التوهيقات الأكبر
+                            </h5>
+                          </div>
+
+                          <div className="flex flex-col gap-2.5 font-sans">
+                            {(() => {
+                              const membersWithLosses = (squadInfo.membersList || []).filter((m: any) => m.lossesCount > 0);
+                              
+                              if (membersWithLosses.length === 0) {
+                                return (
+                                  <div className="p-6 text-center text-stone-400 font-bold text-xs flex flex-col items-center justify-center gap-2">
+                                    <span className="text-2xl">😎</span>
+                                    <span>ماكو أحد توهق بالقرعة لي الحين! ديوانيتنا سالمة وربعنا مستانسين دايماً</span>
+                                  </div>
+                                );
+                              }
+
+                              return [...membersWithLosses]
+                                .sort((a, b) => (b.lossesCount || 0) - (a.lossesCount || 0))
+                                .map((mem: any, idx) => (
+                                  <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-stone-50 border border-stone-100/30">
+                                    <div className="flex items-center gap-2.5">
+                                      <span className="text-sm shrink-0">
+                                        {idx === 0 ? "👑" : idx === 1 ? "🥈" : "🥉"}
+                                      </span>
+                                      <div className="flex flex-col">
+                                        <span className="text-xs font-black text-brand">{mem.name || "عضو الربع"}</span>
+                                        <span className="text-[9px] font-bold text-stone-400">
+                                          {idx === 0 ? "امبراطور الوهقة الأبدي 👑" : "ضحية القرعة المعتمدة"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 font-mono">
+                                      <span className="text-[10px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100/50 flex items-center">
+                                        {formatEnglishNumber(mem.lossesCount)} وهقة
+                                      </span>
+                                    </div>
+                                  </div>
+                                ));
+                            })()}
+                          </div>
+                        </div>
+
+                        {/* 2. Generosity General */}
+                        <div className="bg-white border border-stone-100 shadow-sm rounded-[28px] p-5 flex flex-col gap-4 font-sans">
+                          <div className="flex items-center justify-between border-b border-stone-50 pb-3">
+                            <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-100 px-2.5 py-1 rounded-full font-black">معزب اليمعة ☕</span>
+                            <h5 className="font-black text-brand text-xs flex items-center gap-1.5 leading-none">
+                              <span>👑</span> معزب دوانيتنا الأسطوري
+                            </h5>
+                          </div>
+
+                          <div className="flex flex-col gap-2.5">
+                            {[...(squadInfo.membersList || [])]
+                              .sort((a, b) => (b.score || b.points || b.orderCount || 0) - (a.score || a.points || a.orderCount || 0))
+                              .slice(0, 3)
+                              .map((mem: any, idx: number) => (
+                                <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-stone-50 border border-stone-100/30">
+                                  <div className="flex items-center gap-2.5">
+                                    <span className="text-sm shrink-0">
+                                      {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
+                                    </span>
+                                    <div className="flex flex-col">
+                                      <span className="text-xs font-black text-brand">{mem.name || "عضو الربع"}</span>
+                                      <span className="text-[9px] font-bold text-stone-400">
+                                        {idx === 0 ? "أمير معازيب الدوانية 👑" : "عشرة عمر وراعي كرم"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 font-mono">
+                                    <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                      {formatEnglishNumber(mem.score || mem.points || (mem.orderCount * 125) || 120)} نقطة
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3. Heritage Photo Album */}
+                      <div className="bg-white border border-stone-100 shadow-sm rounded-[28px] p-5 flex flex-col gap-4 font-sans">
+                        <div className="border-b border-stone-100 pb-3" dir="rtl">
+                          <div className="flex flex-col gap-3">
+                            {/* Top Title Row with simple Badge */}
+                            <div className="flex items-center justify-between gap-2">
+                              <h5 className="font-black text-brand text-xs sm:text-sm flex items-center gap-1.5 leading-none">
+                                <span>📷</span> ذكريات لقطات الربع المعتقة
+                              </h5>
+                              <span className="text-[9px] sm:text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-100/60 px-2.5 py-1 rounded-full font-black shrink-0">
+                                ألبوم اليمعة 📸
                               </span>
                             </div>
-                            <div className="bg-stone-50 px-3 py-1 rounded-full text-xs font-bold text-stone-600 border border-stone-100 font-mono">
-                              {formatEnglishNumber(mem.orderCount || 0)}
+                            
+                            {/* Bottom Subtitle/Button Row */}
+                            <div className="flex items-center justify-between gap-2 pt-1 border-t border-stone-50">
+                              <span className="text-[10px] text-stone-400 font-bold">
+                                كل لحظة وجمعة في ديوانيتنا الكريمة
+                              </span>
+                              <button
+                                onClick={() => setIsAddingMemory(!isAddingMemory)}
+                                className="text-[10px] bg-[#0d3a22] text-white hover:bg-[#072414] px-3.5 py-1.5 rounded-full font-black transition-all flex items-center gap-1.5 shadow-sm shrink-0"
+                              >
+                                {isAddingMemory ? "إلغاء ✕" : "＋ سجّل ذكرى يديدة"}
+                              </button>
                             </div>
                           </div>
-                        ))}
+                        </div>
+
+                        <p className="text-[11px] font-bold text-stone-500 leading-relaxed -mt-1 text-right">
+                          لقطات يمعاتنا، الحلو والمالح، مربوطة بطلباتنا التراثية القديمة من السدو عشان تظل سوالف دوانيتنا حية بكل زاوية!
+                        </p>
+
+                        {/* Inline Adding memory Form */}
+                        {isAddingMemory && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-[#faf8f5] border border-stone-200/60 rounded-2xl p-4 flex flex-col gap-3.5 text-right font-sans"
+                            dir="rtl"
+                          >
+                            <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+                              <span className="text-xs font-black text-[#0d3a22]">تخليد لحظة يديدة للربع 📸</span>
+                              <button 
+                                onClick={() => setIsAddingMemory(false)}
+                                className="text-stone-400 hover:text-stone-600 text-[10px] font-bold"
+                              >
+                                إلغاء
+                              </button>
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-black text-stone-500">اسم اليمعة / المناسبة *</label>
+                              <input
+                                type="text"
+                                value={newMemoryTitle}
+                                onChange={(e) => setNewMemoryTitle(e.target.value)}
+                                placeholder="مثال: قط قطية كوت بوستة العودة"
+                                className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs text-brand font-bold focus:outline-none focus:border-[#b28a41]"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-black text-stone-500">حكاية اليمقة / السالفة (الوهقة أو الضحك) *</label>
+                              <textarea
+                                value={newMemoryStory}
+                                onChange={(e) => setNewMemoryStory(e.target.value)}
+                                placeholder="اكتب سالفة هاليوم والبلعة والتحديات..."
+                                rows={2}
+                                className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs text-brand font-bold focus:outline-none focus:border-[#b28a41]"
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex-1 space-y-1">
+                                <label className="text-[10px] font-black text-stone-500">رمز الوجبة لليمعة</label>
+                                <div className="flex gap-2 flex-wrap">
+                                  {["🍖", "☕", "🎲", "🍲", "🐏", "🍢", "🍰"].map((emoji) => (
+                                    <button
+                                      key={emoji}
+                                      type="button"
+                                      onClick={() => setNewMemoryIcon(emoji)}
+                                      className={cn(
+                                        "w-8 h-8 rounded-lg flex items-center justify-center text-sm border transition-all",
+                                        newMemoryIcon === emoji 
+                                          ? "bg-[#0d3a22] text-white border-[#0d3a22] scale-110 shadow-sm" 
+                                          : "bg-white text-stone-600 border-stone-200 hover:bg-stone-50"
+                                      )}
+                                    >
+                                      {emoji}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={handleAddMemory}
+                                disabled={!newMemoryTitle.trim() || !newMemoryStory.trim()}
+                                className="px-5 py-2.5 bg-[#0d3a22] text-white rounded-xl text-xs font-black hover:bg-[#072414] disabled:opacity-40 transition-all self-end"
+                              >
+                                سجّل ذكرى اليمعة 📸
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {/* Selected Memory Detail Modal overlay inside the card frame */}
+                        {selectedMemory && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-[#faf8f5] border-2 border-[#b28a41]/30 rounded-3xl p-5 flex flex-col gap-4 text-right shadow-lg font-sans relative overflow-hidden"
+                            dir="rtl"
+                          >
+                            <div className="absolute top-3 left-3 flex gap-2">
+                              <button
+                                onClick={async () => {
+                                  if (!squadInfo?.id) return;
+                                  try {
+                                    const res = await fetch("/api/squad-delete-memory", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ squadId: squadInfo.id, memoryId: selectedMemory.id })
+                                    });
+                                    if (res.ok) {
+                                      setSelectedMemory(null);
+                                      if (onRefresh) onRefresh();
+                                    }
+                                  } catch (e) {
+                                    console.error("Failed to delete memory from DB:", e);
+                                  }
+                                }}
+                                className="w-6 h-6 rounded-full bg-red-50 text-red-600 border border-red-100 flex items-center justify-center text-[10px] hover:bg-red-100 transition-all font-bold"
+                                title="حذف الذكرى"
+                              >
+                                ✕
+                              </button>
+                              <button
+                                onClick={() => setSelectedMemory(null)}
+                                className="px-3 py-1 bg-stone-100 text-stone-600 border border-stone-200 rounded-full text-[10px] font-black hover:bg-stone-200 transition-all"
+                              >
+                                إغلاق الذكرى
+                              </button>
+                            </div>
+
+                            <div className="flex items-start gap-4 mt-2">
+                              <div className="w-16 h-16 rounded-2xl bg-white border border-stone-200 flex items-center justify-center text-4xl shadow-inner shrink-0">
+                                {selectedMemory.icon}
+                              </div>
+                              <div className="flex-1 space-y-1">
+                                <span className="text-[9px] font-black uppercase tracking-wider text-[#b28a41]">{selectedMemory.date}</span>
+                                <h4 className="text-sm font-black text-brand">{selectedMemory.title}</h4>
+                                <p className="text-xs text-stone-600 font-bold leading-relaxed">{selectedMemory.desc}</p>
+                              </div>
+                            </div>
+
+                            <div className="border-t border-stone-200/60 pt-3 flex items-center justify-between gap-4 bg-white/50 -mx-5 -mb-5 p-4 rounded-b-3xl">
+                              <span className="text-[9px] font-black text-[#0d3a22] bg-[#0d3a22]/5 px-2.5 py-1 rounded-full">
+                                ❖ حكاية حية ومجربة للربع
+                              </span>
+                              
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    // Let them copy the story to WhatsApp to laugh with the group!
+                                    const link = `https://${window.location.host}/?squadId=${squadInfo?.id || ""}`;
+                                    const shareText = `📸 من ذكريات دوانيتنا بالفندق التراثي القديم:\n\n*${selectedMemory.title}*\n"${selectedMemory.desc}"\n🗓️ تاريخ اليمعة: ${selectedMemory.date}\n\nشوف باقي ذكريات دوانيتنا وشاركنا بالقرعة هني:\n${link}`;
+                                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, "_blank");
+                                  }}
+                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black flex items-center gap-1 transition-all"
+                                >
+                                  <span>شاركها بالواتساب 💬</span>
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {heritageMemories.length === 0 ? (
+                          <div className="bg-stone-50 border border-stone-100/30 rounded-2xl p-8 text-center flex flex-col items-center justify-center gap-2.5">
+                            <span className="text-3xl">📸</span>
+                            <span className="text-xs font-black text-stone-500">ماكو ذكريات مسجلة للحين بالديوانية...</span>
+                            <span className="text-[10px] font-bold text-stone-400">سجلوا يمعتكم الياية هني بالطيب! ✨</span>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1" dir="rtl">
+                            {heritageMemories.map((album, idx) => (
+                              <div 
+                                key={album.id || idx}
+                                onClick={() => {
+                                  setSelectedMemory(album);
+                                }}
+                                className={cn(
+                                  "bg-white border-2 p-3 rounded-xl hover:-translate-y-1 transition-all flex flex-col gap-3 group relative cursor-pointer shadow-md",
+                                  selectedMemory?.id === album.id ? "border-[#b28a41] shadow-[#b28a41]/10 bg-stone-50" : "border-stone-100"
+                                )}
+                              >
+                                <div className={cn("aspect-square rounded-lg flex flex-col items-center justify-center text-4xl bg-gradient-to-br border border-stone-100 group-hover:scale-[1.03] transition-transform relative overflow-hidden", album.bg)}>
+                                  <span className="transform group-hover:scale-125 transition-transform duration-500">{album.icon}</span>
+                                  <div className="absolute inset-0 bg-yellow-900/5 mix-blend-color-burn pointer-events-none" />
+                                  <div className="absolute top-2 left-2 text-[10px] bg-white/40 px-1.5 py-0.5 rounded font-mono text-stone-500">
+                                    ذكريات #{formatEnglishNumber(idx + 1)}
+                                  </div>
+                                </div>
+                                <div className="flex flex-col gap-1 text-center font-sans">
+                                  <h6 className="text-[11px] font-extrabold text-brand truncate">{album.title}</h6>
+                                  <p className="text-[9px] font-bold text-stone-400 line-clamp-1">{album.desc}</p>
+                                  <span className="text-[8px] font-black text-[#b28a41] mt-1.5 font-mono">{album.date}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
                   )}
 
                   {/* رادار تحديد الموقع الجغرافي للديوانية - للقائد */}
