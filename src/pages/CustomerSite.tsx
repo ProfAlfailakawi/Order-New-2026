@@ -749,8 +749,7 @@ export default function CustomerSite() {
 
   const [theatrePhrase] = useState(() => {
     const APPETITE_PHRASES = [
-      "الضيافة تبدأ من هنا.",
-      "يا حيا الله من لفانا.. يمعتنا على الطيب والذوق الكويتي الأصيل ✨",
+      "نقدم لكم أفخم طعم مع خدمة تليق بمقامكم الكريم 🤝☕",
       "يا هلا ومسهلا بالربع.. الكرم على أصوله تلاقونه بالسدو ☕",
       "دلة وهيل، وجمعة تفتح النفس على أطيب طعم تراثي 🍢",
       "اقلط عندنا.. ذوق الماضي بلمسة الحاضر الفخمة تفضل 🐪"
@@ -3800,8 +3799,8 @@ export default function CustomerSite() {
                   </span>
                 </div>
                 
-                <h1 className="text-3xl font-extrabold text-[#0d3a22] tracking-tight text-center font-sans mt-3">
-                  الضيافة تبدأ من هنا.
+                <h1 className="text-xl sm:text-2xl font-extrabold text-[#0d3a22] leading-snug text-center font-sans mt-3 px-2">
+                  يا حيا الله من لفانا.. يمعتنا على الطيب والذوق الكويتي الأصيل ✨
                 </h1>
 
                 {/* Elegant Sadu Divider */}
@@ -3811,7 +3810,7 @@ export default function CustomerSite() {
                   <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#b28a41]" />
                 </div>
 
-                <p className="text-stone-600 font-bold text-center text-sm leading-relaxed px-4">
+                <p className="text-stone-600 font-bold text-center text-xs sm:text-sm leading-relaxed px-4">
                   {theatrePhrase}
                 </p>
               </motion.div>
@@ -3844,16 +3843,19 @@ export default function CustomerSite() {
                     setShowSquadModal(true);
                     triggerHapticAndSound("click");
                   }}
-                  className="w-full bg-[#faf8f5] hover:bg-stone-100 text-[#0d3a22] py-3.5 px-6 rounded-2xl font-black text-xs transition-all flex items-center justify-center gap-2 border border-stone-200"
+                  className="w-full bg-[#faf8f5] hover:bg-stone-100 text-[#0d3a22] py-3.5 px-6 rounded-2xl font-black text-xs transition-all flex flex-col items-center justify-center gap-1 border border-stone-200"
                 >
-                  <Users className="w-4 h-4 text-[#b28a41]" />
-                  <span>أنا من الديوانية (مجلس الربع والأباطرة)</span>
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-[#b28a41]" />
+                    <span>دخول الربع (أعضاء مجلس الديوانية) 👥</span>
+                  </div>
+                  <span className="text-[10px] text-[#b28a41] opacity-90 font-bold">ملتقى الربع واليمعات</span>
                 </button>
               </motion.div>
 
               {/* Subdued foot credits */}
-              <p className="absolute bottom-6 text-[9px] text-stone-400 font-bold uppercase tracking-wider font-mono">
-                Sadu Hospitality Engine v3.0 • كرم الضيافة الكويتي الأصيل
+              <p className="absolute bottom-6 text-[10px] text-stone-400 font-bold tracking-wider font-sans">
+                كرم الضيافة الكويتي الأصيل
               </p>
             </div>
           </motion.div>
