@@ -50,6 +50,7 @@ export function RouletteSplit({
     () => localStorage.getItem(`roulette_phone_${order.id}`) || "",
   );
   const [activeIndex, setActiveIndex] = useState(0);
+  const [replayNonce, setReplayNonce] = useState(0);
   useEffect(() => {
     if (paymentStatus === "success") {
       setLocalSuccess(true);
@@ -139,7 +140,14 @@ export function RouletteSplit({
         }, 60);
       }
     }
-  }, [spun, participants.length, order.id, isSpinning]);
+  }, [spun, participants.length, order.id, isSpinning, replayNonce]);
+
+  const replayVisualResult = () => {
+    if (!spun || participants.length === 0 || isSpinning) return;
+    sessionStorage.removeItem(`spun_${order.id}`);
+    setActiveIndex(0);
+    setReplayNonce((value) => value + 1);
+  };
 
   const loserIndex = React.useMemo(() => {
     if (!loser || participants.length === 0) return 0;
@@ -518,6 +526,14 @@ export function RouletteSplit({
                         <p className="font-bold text-violet-200">
                           {resultContent.desc}
                         </p>
+                        <button
+                          type="button"
+                          onClick={replayVisualResult}
+                          disabled={isSpinning}
+                          className="w-full rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-xs font-black text-white hover:bg-white/15 disabled:opacity-50 transition"
+                        >
+                          أعد مشهد الوهقة
+                        </button>
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/10 text-sm">
                            <p className="mb-2 opacity-80">الفاتورة الإجمالية:</p>
                            <p className="text-2xl font-black text-white">{order.total.toFixed(3)} د.ك</p>
@@ -546,6 +562,14 @@ export function RouletteSplit({
                       <p className="font-bold text-fuchsia-200">
                         {resultContent.desc}
                       </p>
+                      <button
+                        type="button"
+                        onClick={replayVisualResult}
+                        disabled={isSpinning}
+                        className="w-full rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-xs font-black text-white hover:bg-white/15 disabled:opacity-50 transition"
+                      >
+                        أعد مشهد الوهقة
+                      </button>
                       <div className="pt-4 border-t border-fuchsia-500/30">
                         <p className="text-sm opacity-80">تسكرت الحسبة حق هالطلب وننطر يدفع {loser}</p>
                       </div>

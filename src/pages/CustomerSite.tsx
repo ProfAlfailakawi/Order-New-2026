@@ -5930,6 +5930,11 @@ export default function CustomerSite() {
                     <span className="text-[10px] font-black bg-white/10 text-emerald-100 px-3 py-1 rounded-full border border-white/10">قطية الديوانية 💳</span>
                     <h4 className="font-black text-sm mt-2 text-white">عندك قطية من الربع</h4>
                     <p className="text-[10px] font-bold text-white/70 mt-1">الشباب بالديوانية ناطرينك تشارك بقطية الحساب.</p>
+                    <div className="qatya-command-ribbon mt-3">
+                      <span>{qatyaAlertItems.length} قطيّة نشطة</span>
+                      <span>ديوانية متصلة</span>
+                      <span>دخول مباشر</span>
+                    </div>
                   </div>
                 </div>
                 {canUseDiwaniyaPush && diwaniyaPushState !== "saved" && (
@@ -8211,6 +8216,12 @@ function CheckoutOverlay({
                 </div>
               ) : (
                 <>
+                {(squadInfo?.id || (typeof window !== "undefined" && localStorage.getItem("squadId"))) && (
+                  <div className="diwaniya-checkout-strip" dir="rtl">
+                    <strong>الديوانية جاهزة</strong>
+                    <span>القطيّة ووهق غيرك يشتغلون مع ربعك بدون إعادة إدخال الأسماء إذا كانت الديوانية متصلة.</span>
+                  </div>
+                )}
                 <div className="payment-choice-hint" dir="rtl">
                   <strong>اختر طريقة الدفع المناسبة</strong>
                   <span>اسحب أو انزل شوي: الدفع الكامل، القطيّة، ووهق غيرك كلها متاحة هنا.</span>
