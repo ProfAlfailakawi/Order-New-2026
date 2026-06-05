@@ -385,7 +385,7 @@ export default function OrderPage() {
 
           // Directly trigger search instead of hard reload
           handleSearch(undefined, phoneToKeep, data.orderId);
-          [350, 1100, 2200].forEach((delay) => {
+          [80, 250, 700, 1500].forEach((delay) => {
             window.setTimeout(() => fetchOrders(phoneToKeep, data.orderId, true), delay);
           });
         }
@@ -519,7 +519,7 @@ export default function OrderPage() {
     const targetOrderId = searchOrderIdInput || urlOrderId;
     if (!searched || !targetOrderId || !["success", "paid"].includes(paymentState)) return;
 
-    const timers = [250, 900, 1800, 3200].map((delay) =>
+    const timers = [80, 250, 700, 1500, 2800].map((delay) =>
       window.setTimeout(() => fetchOrders(phone, targetOrderId, true), delay),
     );
     return () => timers.forEach((timer) => window.clearTimeout(timer));
@@ -532,7 +532,7 @@ export default function OrderPage() {
       ((phone && phone.length >= 8) || searchOrderIdInput || urlOrderId)
     ) {
       const paymentState = String(urlPayment || "").toLowerCase();
-      const refreshMs = ["success", "paid"].includes(paymentState) ? 900 : 3000;
+      const refreshMs = ["success", "paid"].includes(paymentState) ? 500 : 3000;
       interval = setInterval(
         () => fetchOrders(phone, searchOrderIdInput || urlOrderId, true),
         refreshMs,
@@ -864,78 +864,23 @@ export default function OrderPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[200] flex items-center justify-center bg-stone-900/80 backdrop-blur-md pointer-events-auto"
+              className="fixed inset-0 z-[200] flex items-center justify-center bg-brand/70 backdrop-blur-md pointer-events-auto px-5"
               onClick={clearPaymentStatus}
             >
-              <div className="relative flex flex-col items-center justify-center">
-                {/* Cylinder falling */}
+              <div className="payment-cinema-card" onClick={(e) => e.stopPropagation()}>
                 <motion.div
-                  initial={{ y: -500, scale: 2, rotateX: 45 }}
-                  animate={{ y: 0, scale: 1, rotateX: 0 }}
-                  transition={{
-                    type: "spring",
-                    damping: 8,
-                    stiffness: 100,
-                    duration: 0.8,
-                  }}
-                  className="w-32 h-32 md:w-48 md:h-48 relative z-20 flex items-center justify-center rounded-full"
+                  initial={{ scale: 0.86, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 140, damping: 18 }}
+                  className="payment-cinema-mark"
                 >
-                  {/* The stamp face */}
-                  <div className="absolute inset-0 bg-red-700 rounded-full border-[6px] border-red-900 shadow-[inset_0_10px_20px_rgba(0,0,0,0.5),0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
-                    <div className="w-[85%] h-[85%] rounded-full border-[4px] border-dashed border-red-900/50 flex flex-col items-center justify-center text-red-900">
-                      <CheckCircle2 className="w-10 h-10 md:w-14 md:h-14 opacity-80 mb-1" />
-                      <span className="font-extrabold text-lg md:text-2xl drop-shadow-md">
-                        خالص
-                      </span>
-                      <span className="font-extrabold text-sm md:text-lg drop-shadow-md">
-                        مدفوع
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Sparks explosion */}
-                  {[...Array(24)].map((_, i) => (
-                    <motion.div
-                      key={`spark-${i}`}
-                      initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
-                      animate={{
-                        opacity: [1, 1, 0],
-                        x:
-                          Math.cos((i * (360 / 24) * Math.PI) / 180) *
-                          (300 + Math.random() * 100),
-                        y:
-                          Math.sin((i * (360 / 24) * Math.PI) / 180) *
-                          (300 + Math.random() * 100),
-                        scale: [0, Math.random() > 0.5 ? 2 : 1, 0],
-                      }}
-                      transition={{
-                        duration: 1 + Math.random(),
-                        delay: 0.4,
-                        ease: "easeOut",
-                      }}
-                      className="absolute w-2 h-2 rounded-full"
-                      style={{
-                        backgroundColor: i % 2 === 0 ? "#ffb703" : "#fb8500",
-                        boxShadow: "0 0 10px #ffb703",
-                      }}
-                    />
-                  ))}
+                  <CheckCircle2 className="w-10 h-10" />
                 </motion.div>
-                {/* Background impact wave */}
-                <motion.div
-                  initial={{ scale: 0, opacity: 1 }}
-                  animate={{ scale: [0, 4, 6], opacity: [1, 0.5, 0] }}
-                  transition={{ duration: 1.5, delay: 0.3 }}
-                  className="absolute inset-0 bg-red-600 rounded-full blur-xl z-10"
-                />
-                <motion.p
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1 }}
-                  className="text-white/60 font-medium text-sm mt-12 text-center"
-                >
-                  سيتم تجهيز طلبك بأسرع وقت (اضغط للإغلاق)
-                </motion.p>
+                <span>تم اعتماد الدفع</span>
+                <h2>طلبك صار مؤكد</h2>
+                <p>ثبتنا حالة الدفع، والتفاصيل تحت جاهزة للمتابعة بهدوء.</p>
+                <div className="payment-cinema-ref">{urlOrderId || searchOrderIdInput || "تم الدفع"}</div>
+                <button type="button" onClick={clearPaymentStatus}>عرض الطلب</button>
               </div>
             </motion.div>
           )}
