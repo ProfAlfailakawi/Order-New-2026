@@ -1281,7 +1281,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   { id: "home", label: "الرئيسية", icon: "🏠" },
                   { id: "manage", label: "دواويني", icon: "🛖" },
                   { id: "orders", label: "الطلبات", icon: "🍽️" },
-                  { id: "trophies", label: "لوحة الشرف", icon: "🏆" },
+                  { id: "trophies", label: "لوحة\nالشرف", icon: "🏆" },
                   ...(isOwner ? [{ id: "code", label: "الكود", icon: "🔐" }] : []),
                   { id: "location", label: "الموقع", icon: "📍" },
                   { id: "notifications", label: "تنبيهات", icon: "🔔", badge: unreadDiwaniyaNotifications },
@@ -1291,14 +1291,14 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     type="button"
                     onClick={() => setMyDiwaniyaTab(tab.id)}
                     className={cn(
-                      "relative rounded-xl px-2 py-2 text-[10px] sm:text-[9px] font-black transition-all leading-tight min-h-[56px] flex-1 min-w-[72px] sm:min-w-0 sm:px-1 shrink-0",
+                      "relative rounded-xl px-2 py-2 text-[9.5px] sm:text-[9px] font-black transition-all leading-tight min-h-[56px] flex-1 min-w-[78px] sm:min-w-0 sm:px-1 shrink-0",
                       myDiwaniyaTab === tab.id
                         ? "bg-[#0d3a22] text-white shadow-md scale-[1.01]"
                         : "bg-stone-50 text-stone-500 border border-stone-100"
                     )}
                   >
                     <span className="block text-sm mb-0.5">{tab.icon}</span>
-                    <span className="truncate block max-w-full">{tab.label}</span>
+                    <span className="whitespace-pre-line block max-w-full leading-[1.1]">{tab.label}</span>
                     {tab.badge > 0 && (
                       <span className="absolute -top-1 -left-1 min-w-4 h-4 px-0.5 rounded-full bg-amber-500 text-white text-[8px] flex items-center justify-center">
                         {formatEnglishNumber(tab.badge)}
