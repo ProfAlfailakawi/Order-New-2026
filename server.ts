@@ -104,7 +104,7 @@ function handleAdminDbError(error: any, contextMsg: string) {
 let _appDataCache: any = null;
 let _appDataCacheTime = 0;
 const _appDataKeyedCache = new Map<string, { time: number; data: any }>();
-const CACHE_TTL = 900; // Keep app reads quick without hiding fresh payment/order writes
+const CACHE_TTL = 250; // Keep app reads quick without hiding fresh payment/order writes
 
 const SHARDED_APPDATA_KEYS = [
   "orders",
@@ -521,8 +521,8 @@ async function sendAdminPushDirectOnce(input: {
       : `https://admin.alturathkw.shop/?order=${encodeURIComponent(input.orderId || "")}`
   );
 
-  const response = await adminMessaging.sendEachForMulticast({
-    tokens: tokens.slice(0, 500),
+  const isPaymentAlert = String(input.alertType || "").toLowerCase().includes("payment") || String(input.alertType || "").toLowerCase().includes("invoice") || String(input.alertType || "").toLowerCase().includes("paid");
+  const baseMessage = {
     notification: {
       title: input.title,
       body: input.body,
@@ -542,7 +542,7 @@ async function sendAdminPushDirectOnce(input: {
     webpush: {
       headers: {
         Urgency: "high",
-        TTL: "1800",
+        TTL: isPaymentAlert ? "300" : "900",
       },
       fcmOptions: {
         link: url,
@@ -563,28 +563,46 @@ async function sendAdminPushDirectOnce(input: {
         },
       },
     },
-  });
+  };
+
+  const tokenBatches: string[][] = [];
+  for (let i = 0; i < tokens.length; i += 500) tokenBatches.push(tokens.slice(i, i + 500));
+  const batchResponses = await Promise.all(
+    tokenBatches.map(async (batchTokens) => ({
+      tokens: batchTokens,
+      response: await adminMessaging.sendEachForMulticast({ ...baseMessage, tokens: batchTokens }),
+    }))
+  );
+  const response = {
+    successCount: batchResponses.reduce((sum, item) => sum + item.response.successCount, 0),
+    failureCount: batchResponses.reduce((sum, item) => sum + item.response.failureCount, 0),
+    responses: batchResponses.flatMap((item) => item.response.responses),
+  };
 
   if (response.failureCount > 0) {
     const batch = adminDb.batch();
     let changed = 0;
-    response.responses.forEach((resp: any, idx: number) => {
-      if (!resp.success) {
-        const code = resp.error?.code;
-        if (
-          code === "messaging/registration-token-not-registered" ||
-          code === "messaging/invalid-registration-token" ||
-          code === "messaging/invalid-argument"
-        ) {
-          batch.update(adminDb!.collection("pushTokens").doc(tokens[idx]), {
-            active: false,
-            disabledAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
-          changed += 1;
+    batchResponses.forEach(({ tokens: batchTokens, response: batchResponse }) => {
+      batchResponse.responses.forEach((resp: any, idx: number) => {
+        if (!resp.success) {
+          const code = resp.error?.code;
+          if (
+            code === "messaging/registration-token-not-registered" ||
+            code === "messaging/invalid-registration-token" ||
+            code === "messaging/invalid-argument"
+          ) {
+            batch.update(adminDb!.collection("pushTokens").doc(batchTokens[idx]), {
+              active: false,
+              disabledAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            changed += 1;
+          }
         }
-      }
+      });
     });
-    if (changed > 0) await batch.commit();
+    if (changed > 0) {
+      void batch.commit().catch((cleanupError: any) => console.warn("[ORDER PUSH CLEANUP]", cleanupError?.message || cleanupError));
+    }
   }
 
   const result = {
@@ -639,9 +657,76 @@ function paymentRecordMatches(record: any, targetId: any): boolean {
   );
 }
 
+async function syncRootPaymentDocsFast(orderId: string, isSuccess: boolean, providerData: any) {
+  if (!adminDb || !orderId) return;
+  const cleanId = normalizePaymentLookupId(orderId);
+  if (!cleanId) return;
+
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const patch: any = isSuccess
+    ? {
+        status: "تم الدفع بنجاح",
+        paymentStatus: "paid",
+        payment_status: "paid",
+        paid: true,
+        failed: false,
+        canPay: false,
+        paidAt: now,
+        paymentUpdatedAt: now,
+        updatedAt: now,
+      }
+    : {
+        status: "فشل في عملية الدفع",
+        paymentStatus: "failed",
+        payment_status: "failed",
+        failed: true,
+        paid: false,
+        canPay: true,
+        failedAt: now,
+        paymentUpdatedAt: now,
+        updatedAt: now,
+      };
+
+  const transactionId = providerData?.reference?.id || providerData?.TrackID || providerData?.order_id || providerData?.track_id || "";
+  if (transactionId) {
+    patch.transactionId = transactionId;
+    patch.paymentId = transactionId;
+    patch.payment_id = transactionId;
+  }
+
+  const updateIfExists = async (ref: any) => {
+    const snap = await ref.get();
+    if (!snap.exists) return;
+    const current = snap.data() || {};
+    if (!isSuccess && (current.paymentStatus === "paid" || String(current.status || "").includes("تم الدفع"))) return;
+    await ref.set(patch, { merge: true });
+  };
+
+  try {
+    await Promise.all([
+      updateIfExists(adminDb.collection("orders").doc(cleanId)),
+      updateIfExists(adminDb.collection("invoices").doc(cleanId)),
+      adminDb.collection("orders").where("linkedInvoiceId", "==", cleanId).limit(20).get().then((snap: any) =>
+        Promise.all(snap.docs.map((docSnap: any) => updateIfExists(docSnap.ref)))
+      ),
+      adminDb.collection("invoices").where("linkedOrderId", "==", cleanId).limit(20).get().then((snap: any) =>
+        Promise.all(snap.docs.map((docSnap: any) => updateIfExists(docSnap.ref)))
+      ),
+    ]);
+  } catch (error: any) {
+    console.warn("[PAYMENT_UPDATE] Fast root payment sync skipped:", error?.message || String(error));
+  }
+}
+
 async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: boolean, providerData: any) {
   console.log(`[PAYMENT_UPDATE] Processing Order:${orderId} Split:${splitId} Success:${isSuccess}`);
   const directPushes: any[] = [];
+  const fastOrderId = String(orderId || "").includes("-S-")
+    ? String(orderId || "").split("-S-")[0]
+    : String(orderId || "");
+  if (!splitId && !String(orderId || "").includes("-S-")) {
+    void syncRootPaymentDocsFast(fastOrderId, isSuccess, providerData);
+  }
   
   const ok = await updateAppDataAtomically((appData) => {
       let orders = [...(appData.orders || [])];
@@ -945,21 +1030,25 @@ async function sendDiwaniyaExternalPush(input: {
     const uniqueTokens = [...new Set(tokens.map((item: any) => String(item.token)).filter(Boolean))] as string[];
     if (!uniqueTokens.length) return { success: false, skipped: true, reason: "no-active-tokens" };
 
-    const response = await adminMessaging.sendEachForMulticast({
-      tokens: uniqueTokens.slice(0, 500),
+    const pushUrl = normalizePushUrl(input.url);
+    const baseMessage = {
       notification: {
         title: input.title,
         body: input.body,
       },
       data: {
         type: String(input.type || "diwaniya"),
-        url: normalizePushUrl(input.url),
+        url: pushUrl,
         orderId: String(input.orderId || ""),
         squadId: String(input.squadId || ""),
       },
       webpush: {
+        headers: {
+          Urgency: input.type === "presence_in" ? "normal" : "high",
+          TTL: input.type === "presence_in" ? "120" : "600",
+        },
         fcmOptions: {
-          link: normalizePushUrl(input.url),
+          link: pushUrl,
         },
         notification: {
           icon: "/icon-192.png",
@@ -970,11 +1059,25 @@ async function sendDiwaniyaExternalPush(input: {
           silent: input.type === "presence_in",
         },
       },
-    });
+    };
 
-    const failedTokens = response.responses
-      .map((r, idx) => (!r.success ? uniqueTokens[idx] : ""))
-      .filter(Boolean);
+    const tokenBatches: string[][] = [];
+    for (let i = 0; i < uniqueTokens.length; i += 500) tokenBatches.push(uniqueTokens.slice(i, i + 500));
+    const batchResponses = await Promise.all(
+      tokenBatches.map(async (batchTokens) => ({
+        tokens: batchTokens,
+        response: await adminMessaging.sendEachForMulticast({ ...baseMessage, tokens: batchTokens }),
+      }))
+    );
+    const response = {
+      successCount: batchResponses.reduce((sum, item) => sum + item.response.successCount, 0),
+      failureCount: batchResponses.reduce((sum, item) => sum + item.response.failureCount, 0),
+      responses: batchResponses.flatMap((item) => item.response.responses),
+    };
+
+    const failedTokens = batchResponses.flatMap(({ tokens: batchTokens, response: batchResponse }) =>
+      batchResponse.responses.map((r, idx) => (!r.success ? batchTokens[idx] : "")).filter(Boolean)
+    );
     if (failedTokens.length > 0) {
       await updateAppDataAtomically((current) => {
         const bad = new Set(failedTokens);
@@ -3650,26 +3753,25 @@ app.get("/api/debug/order/:id", async (req, res) => {
         `[PAYMENT] URLs generated - Return: ${finalReturnUrl}, Notify: ${finalNotificationUrl}`,
       );
 
-      // Save payment ID to order before creating link
-      const d = await getAppDataRef();
-      const data = d.data() || {};
-      const orders = data.orders || [];
-      const invoices = data.invoices || [];
-      const index = orders.findIndex((o: any) => paymentRecordMatches(o, orderId));
-      const invoiceIndex = invoices.findIndex((o: any) => paymentRecordMatches(o, orderId));
-      
       const rawFinalAmount = parseFloat(amount).toFixed(3);
       const finalAmount = parseFloat(rawFinalAmount);
 
-      if (index !== -1) {
-        orders[index].paymentId = knetTrackId;
-        orders[index].lastPaymentAmount = finalAmount;
-        await updateAppData({ orders });
-      } else if (invoiceIndex !== -1) {
-        invoices[invoiceIndex].paymentId = knetTrackId;
-        invoices[invoiceIndex].lastPaymentAmount = finalAmount;
-        await updateAppData({ invoices });
-      }
+      // Save payment ID with a narrow shard update so payment-link creation does not wait for full app data.
+      await updateAppDataAtomically((current) => {
+        const orders = [...(current.orders || [])];
+        const invoices = [...(current.invoices || [])];
+        const index = orders.findIndex((o: any) => paymentRecordMatches(o, orderId));
+        const invoiceIndex = invoices.findIndex((o: any) => paymentRecordMatches(o, orderId));
+        if (index !== -1) {
+          orders[index] = { ...orders[index], paymentId: knetTrackId, lastPaymentAmount: finalAmount };
+          return { orders };
+        }
+        if (invoiceIndex !== -1) {
+          invoices[invoiceIndex] = { ...invoices[invoiceIndex], paymentId: knetTrackId, lastPaymentAmount: finalAmount };
+          return { invoices };
+        }
+        return null;
+      }, ["orders", "invoices"]);
 
       // Check if amount is valid for UPayments (min 0.001 KWD)
       if (finalAmount < 0.001) {
@@ -4034,7 +4136,13 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
         let phone = "";
         if (orderId) {
-          await handlePaymentUpdate(orderId, splitId, isExplicitSuccess, { ...req.body, ...req.query });
+          const callbackPayload = { ...req.body, ...req.query };
+          if (!isSplit && (isExplicitSuccess || isExplicitFailure)) {
+            await syncRootPaymentDocsFast(baseOrderId, isExplicitSuccess, callbackPayload);
+            void handlePaymentUpdate(orderId, splitId, isExplicitSuccess, callbackPayload);
+          } else {
+            await handlePaymentUpdate(orderId, splitId, isExplicitSuccess, callbackPayload);
+          }
         }
         
         if (false) {
