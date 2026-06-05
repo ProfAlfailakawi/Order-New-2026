@@ -7421,6 +7421,24 @@ function CheckoutOverlay({
             <div className="animate-in slide-in-from-right-4 fade-in duration-300">
               <div className="space-y-4">
                 {squadInfo && (
+                  <div className="relative overflow-hidden rounded-[1.75rem] border border-amber-200/70 bg-gradient-to-br from-[#1b1207] via-[#2f1e0a] to-[#0d3a22] p-4 text-white shadow-xl">
+                    <div className="absolute -top-10 -left-10 h-28 w-28 rounded-full bg-amber-300/20 blur-3xl" />
+                    <div className="relative z-10 flex items-start justify-between gap-3">
+                      <div>
+                        <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10px] font-black text-amber-100">لحظة سينمائية مباشرة</div>
+                        <h3 className="mt-2 text-lg font-black">الحضور اشتغل… والسفرة داخلة المشهد</h3>
+                        <p className="mt-1 text-xs font-bold leading-6 text-white/70">{squadInfo.name} · {squadPresence?.length || 1} حاضر · {cart.length} صنف في السحب</p>
+                      </div>
+                      <div className="grid h-14 w-14 place-items-center rounded-2xl bg-amber-300 text-2xl shadow-lg">🎬</div>
+                    </div>
+                    <div className="relative z-10 mt-4 grid grid-cols-3 gap-2 text-center">
+                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">{squadPresence?.length || 1}</b><span className="text-[10px] font-bold text-white/55">الحضور</span></div>
+                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">{cart.reduce((s: number, i: any) => s + Number(i.quantity || 0), 0)}</b><span className="text-[10px] font-bold text-white/55">السحب</span></div>
+                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">لايف</b><span className="text-[10px] font-bold text-white/55">النتيجة</span></div>
+                    </div>
+                  </div>
+                )}
+                {squadInfo && (
                   <div className="bg-gradient-to-r from-accent/10 to-transparent border border-accent/20 rounded-2xl p-4 shadow-sm flex flex-col gap-3 relative overflow-hidden">
                      <div className="absolute top-0 right-0 w-32 h-32 bg-accent opacity-5 blur-3xl rounded-full translate-x-10 -translate-y-10"></div>
                      <div className="flex items-center gap-3">
