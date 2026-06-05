@@ -41,11 +41,27 @@ export const enableDiwaniyaImportantPush = async ({ phone, squadId }: { phone: s
   }
 
   const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+  try {
+    await registration.update();
+  } catch (error) {
+    console.warn('[DiwaniyaPush] Service Worker update skipped:', error);
+  }
+  await navigator.serviceWorker.ready;
   const messaging = getMessaging(getApp());
-  const token = await getToken(messaging, {
-    vapidKey: VAPID_KEY,
-    serviceWorkerRegistration: registration,
-  });
+  let token = '';
+  try {
+    token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: registration,
+    });
+  } catch (firstError) {
+    console.warn('[DiwaniyaPush] First token attempt failed, retrying:', firstError);
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: registration,
+    });
+  }
 
   if (!token) return { state: 'error' as DiwaniyaPushState, message: 'ما قدرنا نجهز رمز الإشعار' };
 

@@ -2816,3 +2816,133 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
     justify-content:flex-start!important;
   }
 }
+
+/* Final nuclear polish: diwaniya, qatya, and roulette. UI only. */
+.qatya-command-ribbon{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:6px;
+}
+.qatya-command-ribbon span{
+  min-width:0;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.10);
+  color:rgba(236,253,245,.94);
+  padding:7px 6px;
+  font-size:9px;
+  font-weight:950;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+}
+.diwaniya-checkout-strip{
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+  padding:12px 14px;
+  border-radius:24px;
+  border:1px solid rgba(15,81,48,.12);
+  background:
+    linear-gradient(135deg,rgba(15,81,48,.08),rgba(255,255,255,.94)),
+    repeating-linear-gradient(135deg,rgba(200,148,47,.09) 0 1px,transparent 1px 9px);
+  box-shadow:0 16px 42px rgba(20,53,38,.08);
+}
+.diwaniya-checkout-strip strong{
+  flex:none;
+  color:#0f5130;
+  font-size:13px;
+  font-weight:950;
+}
+.diwaniya-checkout-strip span{
+  color:#6b5b3e;
+  font-size:10px;
+  font-weight:850;
+  line-height:1.7;
+  text-align:left;
+}
+.customer-mobile-stable-alert{
+  box-shadow:0 24px 90px rgba(15,81,48,.28), inset 0 1px 0 rgba(255,255,255,.12)!important;
+}
+.customer-mobile-stable-alert:before{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  background:
+    linear-gradient(90deg,transparent,rgba(255,255,255,.10),transparent),
+    repeating-linear-gradient(135deg,rgba(255,255,255,.06) 0 1px,transparent 1px 10px);
+  opacity:.72;
+}
+.payment-method-wow-grid .payment-method-card{
+  position:relative;
+  overflow:hidden;
+  border-radius:26px!important;
+}
+.payment-method-wow-grid .payment-method-card:after{
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(110deg,transparent 0 36%,rgba(255,255,255,.22) 48%,transparent 60% 100%);
+  transform:translateX(120%);
+  animation:diwaniyaChoiceSheen 5.2s ease-in-out infinite;
+}
+.payment-method-card-qatya{
+  background:
+    linear-gradient(135deg,#fffaf0,#ffffff)!important;
+  border-color:rgba(200,148,47,.22)!important;
+  box-shadow:0 18px 54px rgba(120,53,15,.08)!important;
+}
+.payment-method-card-wahag{
+  background:
+    radial-gradient(circle at 18% 0%,rgba(255,255,255,.22),transparent 32%),
+    linear-gradient(135deg,#7c3aed,#d946ef)!important;
+  box-shadow:0 24px 70px rgba(217,70,239,.24)!important;
+}
+@keyframes diwaniyaChoiceSheen{
+  0%,58%{transform:translateX(120%)}
+  76%,100%{transform:translateX(-120%)}
+}
+.wahag-wow-shell{
+  background:
+    radial-gradient(circle at 50% -10%,rgba(217,70,239,.24),transparent 35%),
+    linear-gradient(180deg,#12081d,#1c1028 48%,#090711)!important;
+}
+.roulette-v14-marquee{
+  filter:drop-shadow(0 14px 30px rgba(0,0,0,.18));
+}
+.wahag-pulse-core{
+  --pulse-size:min(88vw,390px);
+  box-shadow:
+    0 0 0 12px rgba(255,255,255,.025),
+    0 36px 130px rgba(0,0,0,.48),
+    0 0 150px rgba(217,70,239,.30),
+    inset 0 1px 0 rgba(255,255,255,.16),
+    inset 0 -42px 90px rgba(0,0,0,.34)!important;
+}
+.wahag-pulse-orbit-card.is-active{
+  box-shadow:0 14px 34px rgba(217,70,239,.30), inset 0 1px 0 rgba(255,255,255,.16)!important;
+}
+.roulette-v14-result{
+  backdrop-filter:blur(18px);
+  box-shadow:0 28px 90px rgba(0,0,0,.28)!important;
+}
+.squad-modal-shell,.squad-masterpiece-shell,.diwaniya-modal-shell{
+  background:
+    radial-gradient(circle at 50% 0%,rgba(200,148,47,.14),transparent 34%),
+    linear-gradient(180deg,#fffaf2,#ffffff)!important;
+}
+@media(max-width:520px){
+  .qatya-command-ribbon{grid-template-columns:1fr}
+  .diwaniya-checkout-strip{align-items:flex-start;flex-direction:column}
+  .diwaniya-checkout-strip span{text-align:right}
+  .wahag-pulse-core{--pulse-size:min(88vw,330px)}
+}
