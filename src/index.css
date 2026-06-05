@@ -3,8 +3,9 @@
 
 @theme {
   --font-sans: "Tajawal", ui-sans-serif, system-ui, sans-serif;
-  --color-brand: #16241a; /* slightly softer rich dark green */
-  --color-accent: #c26115; /* slightly more vibrant terracotta */
+  --color-brand: #0d3a22; /* Ancient Kuwaiti Palm Green */
+  --color-accent: #b28a41; /* Oxidized Brass Dallah Gold */
+  --color-sadu-red: #ab2b2c; /* Nostalgic natural Sadu red */
   --color-background: #fafaf9; /* elegant warm off-white (stone-50) */
   
   --shadow-sm: 0 4px 14px 0 rgba(0, 0, 0, 0.02);
@@ -19,6 +20,62 @@
   --radius-xl: 1.25rem;    /* 20px */
   --radius-2xl: 1.5rem;    /* 24px */
   --radius-3xl: 2rem;      /* 32px */
+}
+
+/* HIGH-FIDELITY BIOMETRIC & PHYSICAL STYLES */
+
+.frosty-amber-glass-card {
+  background: rgba(22, 36, 26, 0.05); /* Translucent brass/charcoal */
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1.5px solid rgba(178, 138, 65, 0.24); /* Oxidized Brass border */
+  box-shadow: 
+    0 8px 25px rgba(15, 12, 5, 0.04),
+    inset calc(var(--tilt-x, 0) * 1px) calc(var(--tilt-y, 0) * 1px) 15px rgba(178, 138, 65, 0.12); /* Tilt-reflective sheer glow */
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s cubic-bezier(0.1, 0.8, 0.3, 1), transform 0.2s ease;
+}
+
+.frosty-amber-glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at calc(50% + var(--tilt-x, 0) * 2px) calc(50% + var(--tilt-y, 0) * 2px),
+    rgba(253, 224, 71, 0.08) 0%,
+    transparent 75%
+  );
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+@keyframes gentle-boil {
+  0% { transform: translateY(0) scale(1); filter: brightness(1); }
+  25% { transform: translateY(-1.5px) scale(1.01) skewX(0.5deg); }
+  50% { transform: translateY(0) scale(1) skewX(-0.5deg); filter: brightness(1.04); }
+  75% { transform: translateY(-1px) scale(1.005) skewX(0.2deg); }
+  100% { transform: translateY(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes steam-puff-ambient {
+  0% { transform: translateY(0) scale(0.8) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.24; }
+  50% { transform: translateY(-30px) scale(1.2) rotate(45deg); opacity: 0.15; }
+  85% { opacity: 0.03; }
+  100% { transform: translateY(-70px) scale(1.5) rotate(90deg); opacity: 0; }
+}
+
+.gentle-boil-btn {
+  animation: gentle-boil 1.2s ease-in-out infinite;
+  box-shadow: 
+    0 0 25px rgba(205, 162, 80, 0.35),
+    inset 0 0 10px rgba(253, 224, 71, 0.2) !important;
+  background: linear-gradient(135deg, #b28a41, #ab2b2c) !important; /* Oxidized Brass & Sadu Red pulsing gradient */
+}
+
+.ambient-steam-particle {
+  animation: steam-puff-ambient 4.5s ease-out infinite;
 }
 
 @layer base {
