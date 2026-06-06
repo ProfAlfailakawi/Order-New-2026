@@ -84,13 +84,8 @@ export function calculateItemAddons(item: OrderItem): OrderItemAddon[] {
         quantity = 1;
       } else if (addon.calculationType === 'per_x_items') {
         const threshold = addon.xItemsThreshold || 1;
-        /*
-         * When calculating addon quantity for per_x_items, only count full
-         * groups of the threshold. Using Math.floor prevents extra charges
-         * for partial groups. For example, with threshold=3 and quantity=5
-         * the addon applies only once.
-         */
-        quantity = Math.floor(item.quantity / threshold);
+        const rounder = addon.roundingMode === 'ceil' ? Math.ceil : Math.floor;
+        quantity = rounder((item.quantity || 1) / threshold);
       } else {
         quantity = item.quantity;
       }
