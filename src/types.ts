@@ -3,9 +3,10 @@ export interface ProductAddon {
   name: string;
   price: number;
   cost: number;
-  calculationType: 'per_item' | 'per_x_items' | 'fixed';
+  calculationType: 'per_item' | 'per_x_items' | 'fixed' | 'coverage';
   xItemsThreshold?: number;
   roundingMode?: 'floor' | 'ceil';
+  perXMode?: 'groups' | 'coverage_range';
   minQuantity?: number;
   maxQuantity?: number;
   freeQuantity?: number;

@@ -26,6 +26,18 @@ export function normalizeAddons(raw: any): any[] {
 const getAddonKey = (addon: any) =>
   String(addon?.id || addon?.addonId || addon?.name || "");
 
+export const isCoverageRangeAddon = (addon: any): boolean => addon?.calculationType === 'coverage' || (addon?.calculationType === 'per_x_items' && addon?.perXMode === 'coverage_range');
+
+const getCoverageUnits = (addon: any, productQty: number): number => {
+  const rule = addon?.quantityRule || {};
+  const minProductQty = Math.max(1, Number(rule.minProductQty || addon?.minProductQty || 1));
+  const coverToQty = Math.max(minProductQty, Number(rule.maxProductQtyPerAddon || addon?.maxProductQtyPerAddon || addon?.xItemsThreshold || minProductQty));
+  const qty = Math.max(0, Number(productQty || 0));
+  if (qty < minProductQty) return 0;
+  const span = Math.max(1, coverToQty - minProductQty + 1);
+  return Math.max(1, Math.ceil((qty - minProductQty + 1) / span));
+};
+
 export function getQuantityRuleLimits(addon: any, productQty: number) {
   const rule = addon?.quantityRule || {};
   const baseMin = addon?.isRequired ? Math.max(1, Number(addon?.minQuantity || 1)) : Number(addon?.minQuantity || 0);
@@ -42,12 +54,17 @@ export function getQuantityRuleLimits(addon: any, productQty: number) {
     return { available: false, min: 0, max: 0, suggested: 0, minProductQty, message: `متاحة عند طلب ${minProductQty} أو أكثر` };
   }
 
-  const suggestedRaw = Math.max(1, Math.ceil(Number(productQty || 0) / perAddon));
-  const min = rule.mode === 'required' ? Math.max(baseMin, suggestedRaw) : baseMin;
-  const max = Math.max(min, baseMax);
+  const isCoverage = isCoverageRangeAddon(addon);
+  const suggestedRaw = isCoverage
+    ? getCoverageUnits(addon, Number(productQty || 0))
+    : Math.max(1, Math.ceil(Number(productQty || 0) / perAddon));
+  const min = isCoverage
+    ? suggestedRaw
+    : (rule.mode === 'required' ? Math.max(baseMin, suggestedRaw) : baseMin);
+  const max = isCoverage ? suggestedRaw : Math.max(min, baseMax);
   const suggested = Math.min(max, Math.max(min, suggestedRaw));
 
-  return { available: true, min, max, suggested, minProductQty, message: `كل إضافة تغطي حتى ${perAddon}` };
+  return { available: true, min, max, suggested, minProductQty, message: isCoverage ? `التغطية: من ${minProductQty} إلى ${perAddon} = مرة، وبعدها تتكرر بنفس المدى` : `كل إضافة تغطي حتى ${perAddon}` };
 }
 
 export function calculateItemAddons(item: OrderItem): OrderItemAddon[] {
@@ -82,6 +99,8 @@ export function calculateItemAddons(item: OrderItem): OrderItemAddon[] {
         quantity = limits.suggested;
       } else if (addon.calculationType === 'fixed') {
         quantity = 1;
+      } else if (isCoverageRangeAddon(addon)) {
+        quantity = limits.suggested;
       } else if (addon.calculationType === 'per_x_items') {
         const threshold = addon.xItemsThreshold || 1;
         const rounder = addon.roundingMode === 'ceil' ? Math.ceil : Math.floor;

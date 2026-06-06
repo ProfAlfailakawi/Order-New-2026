@@ -217,6 +217,7 @@ import {
   normalizeAddons,
   isAddonRequired,
   getQuantityRuleLimits,
+  isCoverageRangeAddon,
 } from "../utils/priceCalculation";
 import { ZenSplashScreen } from "../components/ZenSplashScreen";
 import { DynamicEnvironment } from "../components/DynamicEnvironment";
@@ -6646,7 +6647,9 @@ function ProductModal({
           const desired = a.quantityRule?.mode === 'auto' ? limits.suggested : Math.max(limits.min, next[key] ?? 1);
           next[key] = Math.max(limits.min, Math.min(limits.max, desired));
         } else if (next[key] !== undefined) {
-          next[key] = Math.max(limits.min, Math.min(limits.max, next[key]));
+          next[key] = isCoverageRangeAddon(a)
+            ? limits.suggested
+            : Math.max(limits.min, Math.min(limits.max, next[key]));
         }
       });
       return next;
@@ -6693,7 +6696,8 @@ function ProductModal({
       setAddonQuantities(newQs);
     } else {
       setSelectedAddonsIds([...selectedAddonsIds, addonId]);
-      setAddonQuantities({ ...addonQuantities, [addonId]: Math.max(limits.min, addon.quantityRule?.mode === 'auto' ? limits.suggested : 1) });
+      const initialQty = isCoverageRangeAddon(addon) || addon.quantityRule?.mode === 'auto' ? limits.suggested : 1;
+      setAddonQuantities({ ...addonQuantities, [addonId]: Math.max(limits.min, initialQty) });
     }
   };
 
