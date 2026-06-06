@@ -2006,8 +2006,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       </div>
 
                       {/* 3. Heritage Photo Album */}
-                      <div className="bg-white border border-stone-100 shadow-sm rounded-[28px] p-5 flex flex-col gap-4 font-sans">
-                        <div className="border-b border-stone-100 pb-3" dir="rtl">
+                      <div className="diwaniya-memories-card bg-white border border-stone-100 shadow-sm rounded-[28px] p-5 flex flex-col gap-4 font-sans">
+                        <div className="diwaniya-memories-head border-b border-stone-100 pb-3" dir="rtl">
                           <div className="flex flex-col gap-3">
                             {/* Top Title Row with simple Badge */}
                             <div className="flex items-center justify-between gap-2">
@@ -2034,7 +2034,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           </div>
                         </div>
 
-                        <p className="text-[11px] font-bold text-stone-500 leading-relaxed -mt-1 text-right">
+                        <p className="diwaniya-memories-desc text-[11px] font-bold text-stone-500 leading-relaxed -mt-1 text-right">
                           لقطات يمعاتنا، الحلو والمالح، مربوطة بطلباتنا التراثية القديمة من السدو عشان تظل سوالف دوانيتنا حية بكل زاوية!
                         </p>
 
@@ -2190,7 +2190,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             <span className="text-[10px] font-bold text-stone-400">سجلوا يمعتكم الياية هني بالطيب! ✨</span>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1" dir="rtl">
+                          <div className="diwaniya-memories-grid grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1" dir="rtl">
                             {heritageMemories.map((album, idx) => (
                               <div 
                                 key={album.id || idx}
@@ -2198,11 +2198,11 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                   setSelectedMemory(album);
                                 }}
                                 className={cn(
-                                  "bg-white border-2 p-3 rounded-xl hover:-translate-y-1 transition-all flex flex-col gap-3 group relative cursor-pointer shadow-md",
+                                  "diwaniya-memory-card bg-white border-2 p-3 rounded-xl hover:-translate-y-1 transition-all flex flex-col gap-3 group relative cursor-pointer shadow-md",
                                   selectedMemory?.id === album.id ? "border-[#b28a41] shadow-[#b28a41]/10 bg-stone-50" : "border-stone-100"
                                 )}
                               >
-                                <div className={cn("aspect-square rounded-lg flex flex-col items-center justify-center text-4xl bg-gradient-to-br border border-stone-100 group-hover:scale-[1.03] transition-transform relative overflow-hidden", album.bg)}>
+                                <div className={cn("diwaniya-memory-frame aspect-square rounded-lg flex flex-col items-center justify-center text-4xl bg-gradient-to-br border border-stone-100 group-hover:scale-[1.03] transition-transform relative overflow-hidden", album.bg)}>
                                   <span className="transform group-hover:scale-125 transition-transform duration-500">{album.icon}</span>
                                   <div className="absolute inset-0 bg-yellow-900/5 mix-blend-color-burn pointer-events-none" />
                                   <div className="absolute top-2 left-2 text-[10px] bg-white/40 px-1.5 py-0.5 rounded font-mono text-stone-500">
