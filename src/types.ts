@@ -5,6 +5,7 @@ export interface ProductAddon {
   cost: number;
   calculationType: 'per_item' | 'per_x_items' | 'fixed';
   xItemsThreshold?: number;
+  roundingMode?: 'floor' | 'ceil';
   minQuantity?: number;
   maxQuantity?: number;
   freeQuantity?: number;
