@@ -61,10 +61,10 @@ export function getQuantityRuleLimits(addon: any, productQty: number) {
   const min = isCoverage
     ? suggestedRaw
     : (rule.mode === 'required' ? Math.max(baseMin, suggestedRaw) : baseMin);
-  const max = isCoverage ? suggestedRaw : Math.max(min, baseMax);
+  const max = isCoverage ? Math.max(suggestedRaw, baseMax) : Math.max(min, baseMax);
   const suggested = Math.min(max, Math.max(min, suggestedRaw));
 
-  return { available: true, min, max, suggested, minProductQty, message: isCoverage ? `التغطية: من ${minProductQty} إلى ${perAddon} = مرة، وبعدها تتكرر بنفس المدى` : `كل إضافة تغطي حتى ${perAddon}` };
+  return { available: true, min, max, suggested, minProductQty, message: isCoverage ? `الحد الأدنى ${suggestedRaw}، ويمكن زيادة الكمية اختيارياً` : `كل إضافة تغطي حتى ${perAddon}` };
 }
 
 export function calculateItemAddons(item: OrderItem): OrderItemAddon[] {
@@ -93,8 +93,13 @@ export function calculateItemAddons(item: OrderItem): OrderItemAddon[] {
       const addonKey = getAddonKey(addon);
       const customQty = item.addonQuantities && item.addonQuantities[addonKey] !== undefined ? Number(item.addonQuantities[addonKey]) : null;
 
+      const forcedAddon = addon.isRequired || addon.quantityRule?.mode === 'auto' || addon.quantityRule?.mode === 'required';
       if (customQty !== null) {
-        quantity = customQty;
+        if (customQty <= 0 && !forcedAddon) {
+          quantity = 0;
+        } else {
+          quantity = customQty;
+        }
       } else if (addon.quantityRule?.mode === 'auto' || addon.quantityRule?.mode === 'required') {
         quantity = limits.suggested;
       } else if (addon.calculationType === 'fixed') {
@@ -109,7 +114,11 @@ export function calculateItemAddons(item: OrderItem): OrderItemAddon[] {
         quantity = item.quantity;
       }
 
-      quantity = Math.max(limits.min, Math.min(limits.max, quantity));
+      if (quantity <= 0 && !forcedAddon) {
+        quantity = 0;
+      } else {
+        quantity = Math.max(limits.min, Math.min(limits.max, quantity));
+      }
 
       let payableQuantity = quantity;
       if (addon.freeQuantity !== undefined && addon.freeQuantity > 0) {

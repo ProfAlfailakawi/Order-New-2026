@@ -6647,9 +6647,7 @@ function ProductModal({
           const desired = a.quantityRule?.mode === 'auto' ? limits.suggested : Math.max(limits.min, next[key] ?? 1);
           next[key] = Math.max(limits.min, Math.min(limits.max, desired));
         } else if (next[key] !== undefined) {
-          next[key] = isCoverageRangeAddon(a)
-            ? limits.suggested
-            : Math.max(limits.min, Math.min(limits.max, next[key]));
+          next[key] = Math.max(limits.min, Math.min(limits.max, next[key]));
         }
       });
       return next;
@@ -6706,8 +6704,19 @@ function ProductModal({
     if (!addon) return;
     const limits = getQuantityRuleLimits(addon, quantity);
     if (!limits.available) return;
+    const isForcedAddon = isAddonRequired(addon) || addon.quantityRule?.mode === 'auto' || addon.quantityRule?.mode === 'required';
     const current = addonQuantities[addonId] ?? Math.max(limits.min, 1);
-    const next = Math.max(limits.min, Math.min(limits.max, current + delta));
+    let next = Math.max(limits.min, Math.min(limits.max, current + delta));
+    if (!isForcedAddon && delta < 0 && current <= limits.min) {
+      next = 0;
+    }
+    if (!isForcedAddon && next <= 0) {
+      setSelectedAddonsIds(selectedAddonsIds.filter((id) => id !== addonId));
+      const newQs = { ...addonQuantities };
+      delete newQs[addonId];
+      setAddonQuantities(newQs);
+      return;
+    }
     setAddonQuantities({ ...addonQuantities, [addonId]: next });
   };
 
@@ -7062,7 +7071,7 @@ function ProductModal({
                       <div className="addon-lux-meta flex items-center gap-2">
                         {effectiveSelected && (
                            <div className="addon-lux-qty flex items-center gap-2 bg-white rounded-md border border-stone-200" onClick={e => e.stopPropagation()}>
-                              <button disabled={!limits.available || currentAddonQty <= limits.min} className="px-2 text-stone-400 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addonKey, -1)}>-</button>
+                              <button disabled={!limits.available || currentAddonQty <= 0 || (isMandatory && currentAddonQty <= limits.min)} className="px-2 text-stone-400 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addonKey, -1)}>-</button>
                               <span className="addon-lux-qty-value text-xs font-bold w-4 text-center text-brand">{currentAddonQty}</span>
                               <button disabled={!limits.available || currentAddonQty >= limits.max} className="px-2 text-stone-400 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addonKey, 1)}>+</button>
                            </div>
