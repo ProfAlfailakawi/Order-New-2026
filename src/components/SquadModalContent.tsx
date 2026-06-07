@@ -142,9 +142,49 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const [newMemoryTitle, setNewMemoryTitle] = React.useState("");
   const [newMemoryStory, setNewMemoryStory] = React.useState("");
   const [newMemoryIcon, setNewMemoryIcon] = React.useState("🍲");
+  const [isCuring, setIsCuring] = React.useState(false);
+
+  React.useEffect(() => {
+    if (selectedMemory) {
+      setIsCuring(true);
+      const timer = setTimeout(() => {
+        setIsCuring(false);
+      }, 1800);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedMemory]);
   
   const heritageMemories = React.useMemo(() => {
-    return Array.isArray(squadInfo?.memories) ? squadInfo.memories : [];
+    const list = Array.isArray(squadInfo?.memories) ? squadInfo.memories : [];
+    if (list.length === 0) {
+      return [
+        {
+          id: "default-1",
+          title: "يمعة الربع الأولى بدوانيتنا",
+          desc: "أول ليلة جمعتنا بالشرق القديم، تبادلنا السوالف والضحك وصبينا دلة القهوة بالهيل الطيبة.",
+          date: "14 May 2026",
+          icon: "☕",
+          bg: "from-amber-100/60 to-amber-50"
+        },
+        {
+          id: "default-2",
+          title: "عشاء سحور الربع العامر",
+          desc: "طلبنا مجبوس لحم حاشي ومرق هامور معتبر، وكان بوفيه متكامل تم بالقطية الطيبة والذوق.",
+          date: "28 May 2026",
+          icon: "🍛",
+          bg: "from-emerald-100/40 to-[#0d3a22]/5"
+        },
+        {
+          id: "default-3",
+          title: "فوز بوعلي بقرعة المعزب",
+          desc: "أقوى حماس لما دارت القرعة ووقفت على بوعلي، وكان هو معزب الليلة بالرضا والسرور والضحكة الي ما تفارقنا.",
+          date: "3 June 2026",
+          icon: "🎲",
+          bg: "from-yellow-100/50 to-[#faf8f5]"
+        }
+      ];
+    }
+    return list;
   }, [squadInfo]);
 
   const handleAddMemory = async () => {
@@ -1921,23 +1961,26 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       {/* Flex grid for Loser and Generosity General */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* 1. The Legendary Loser */}
-                        <div className="bg-white border border-stone-100 shadow-sm rounded-[28px] p-5 flex flex-col gap-4">
-                          <div className="flex items-center justify-between border-b border-stone-50 pb-3 font-sans">
-                            <span className="text-[10px] bg-red-50 text-red-600 border border-red-100 px-2.5 py-1 rounded-full font-black">وهقات الربع 💸</span>
-                            <h5 className="font-black text-brand text-xs flex items-center gap-1.5 leading-none">
+                        <div className="bg-gradient-to-br from-[#1a120b] via-[#352014] to-[#120a06] border-2 border-red-900/60 shadow-xl shadow-stone-950/30 rounded-[28px] p-5 flex flex-col gap-4 relative overflow-hidden group">
+                          {/* Reflective light leak glare */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[1.5s] ease-out pointer-events-none" />
+
+                          <div className="flex items-center justify-between border-b border-red-950 pb-3 font-sans relative z-10">
+                            <span className="text-[10px] bg-red-950/80 text-red-400 border border-red-500/30 px-2.5 py-1 rounded-full font-black">وهقات الربع 💸</span>
+                            <h5 className="font-black text-rose-305 text-xs flex items-center gap-1.5 leading-none text-[#faf0d9]">
                               <span>💔</span> ملك التوهيقات الأكبر
                             </h5>
                           </div>
 
-                          <div className="flex flex-col gap-2.5 font-sans">
+                          <div className="flex flex-col gap-2.5 font-sans relative z-10">
                             {(() => {
                               const membersWithLosses = (squadInfo.membersList || []).filter((m: any) => m.lossesCount > 0);
                               
                               if (membersWithLosses.length === 0) {
                                 return (
-                                  <div className="p-6 text-center text-stone-400 font-bold text-xs flex flex-col items-center justify-center gap-2">
+                                  <div className="p-6 text-center text-stone-500 font-bold text-xs flex flex-col items-center justify-center gap-2">
                                     <span className="text-2xl">😎</span>
-                                    <span>ماكو أحد توهق بالقرعة لي الحين! ديوانيتنا سالمة وربعنا مستانسين دايماً</span>
+                                    <span className="text-stone-300">ماكو أحد توهق بالقرعة لي الحين! ديوانيتنا سالمة وربعنا مستانسين دايماً</span>
                                   </div>
                                 );
                               }
@@ -1945,20 +1988,20 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               return [...membersWithLosses]
                                 .sort((a, b) => (b.lossesCount || 0) - (a.lossesCount || 0))
                                 .map((mem: any, idx) => (
-                                  <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-stone-50 border border-stone-100/30">
+                                  <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-black/45 border border-red-900/30 shadow-inner group/item hover:border-red-500/30 transition-colors">
                                     <div className="flex items-center gap-2.5">
                                       <span className="text-sm shrink-0">
                                         {idx === 0 ? "👑" : idx === 1 ? "🥈" : "🥉"}
                                       </span>
-                                      <div className="flex flex-col">
-                                        <span className="text-xs font-black text-brand">{mem.name || "عضو الربع"}</span>
+                                      <div className="flex flex-col text-right">
+                                        <span className="text-xs font-black text-[#faf0d9] group-hover/item:text-red-300 transition-colors">{mem.name || "عضو الربع"}</span>
                                         <span className="text-[9px] font-bold text-stone-400">
                                           {idx === 0 ? "امبراطور الوهقة الأبدي 👑" : "ضحية القرعة المعتمدة"}
                                         </span>
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-1.5 font-mono">
-                                      <span className="text-[10px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100/50 flex items-center">
+                                      <span className="text-[10px] font-black text-rose-400 bg-rose-950/60 px-2.5 py-1 rounded-full border border-red-500/25 flex items-center shadow-md">
                                         {formatEnglishNumber(mem.lossesCount)} وهقة
                                       </span>
                                     </div>
@@ -1969,33 +2012,36 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         </div>
 
                         {/* 2. Generosity General */}
-                        <div className="bg-white border border-stone-100 shadow-sm rounded-[28px] p-5 flex flex-col gap-4 font-sans">
-                          <div className="flex items-center justify-between border-b border-stone-50 pb-3">
-                            <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-100 px-2.5 py-1 rounded-full font-black">معزب اليمعة ☕</span>
-                            <h5 className="font-black text-brand text-xs flex items-center gap-1.5 leading-none">
+                        <div className="bg-gradient-to-br from-[#1c1810] via-[#433116] to-[#14110b] border-2 border-amber-600/40 shadow-xl shadow-stone-950/30 rounded-[28px] p-5 flex flex-col gap-4 relative overflow-hidden group">
+                          {/* Reflective light leak glare */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[1.5s] ease-out pointer-events-none" />
+
+                          <div className="flex items-center justify-between border-b border-amber-950 pb-3 font-sans relative z-10">
+                            <span className="text-[10px] bg-amber-950/80 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-full font-black">معزب اليمعة ☕</span>
+                            <h5 className="font-black text-amber-305 text-xs flex items-center gap-1.5 leading-none text-[#faf0d9]">
                               <span>👑</span> معزب دوانيتنا الأسطوري
                             </h5>
                           </div>
 
-                          <div className="flex flex-col gap-2.5">
+                          <div className="flex flex-col gap-2.5 font-sans relative z-10">
                             {[...(squadInfo.membersList || [])]
                               .sort((a, b) => (b.score || b.points || b.orderCount || 0) - (a.score || a.points || a.orderCount || 0))
                               .slice(0, 3)
                               .map((mem: any, idx: number) => (
-                                <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-stone-50 border border-stone-100/30">
+                                <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-black/45 border border-amber-600/20 shadow-inner group/item hover:border-amber-400/30 transition-colors">
                                   <div className="flex items-center gap-2.5">
                                     <span className="text-sm shrink-0">
                                       {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
                                     </span>
-                                    <div className="flex flex-col">
-                                      <span className="text-xs font-black text-brand">{mem.name || "عضو الربع"}</span>
+                                    <div className="flex flex-col text-right">
+                                      <span className="text-xs font-black text-[#faf0d9] group-hover/item:text-amber-300 transition-colors">{mem.name || "عضو الربع"}</span>
                                       <span className="text-[9px] font-bold text-stone-400">
                                         {idx === 0 ? "أمير معازيب الدوانية 👑" : "عشرة عمر وراعي كرم"}
                                       </span>
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-1.5 font-mono">
-                                    <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                    <span className="text-[10px] font-black text-amber-400 bg-amber-950/60 px-2.5 py-1 rounded-full border border-amber-500/25 flex items-center shadow-md">
                                       {formatEnglishNumber(mem.score || mem.points || (mem.orderCount * 125) || 120)} نقطة
                                     </span>
                                   </div>
@@ -2116,10 +2162,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="bg-[#faf8f5] border-2 border-[#b28a41]/30 rounded-3xl p-5 flex flex-col gap-4 text-right shadow-lg font-sans relative overflow-hidden"
+                            className="bg-white border-4 border-[#b28a41]/45 rounded-3xl p-6 flex flex-col gap-4 text-right shadow-2xl font-sans relative overflow-hidden"
                             dir="rtl"
                           >
-                            <div className="absolute top-3 left-3 flex gap-2">
+                            {/* Decorative background paper texture */}
+                            <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] bg-[size:16px_16px]" />
+
+                            <div className="absolute top-4 left-4 flex gap-2 z-10">
                               <button
                                 onClick={async () => {
                                   if (!squadInfo?.id) return;
@@ -2144,26 +2193,43 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               </button>
                               <button
                                 onClick={() => setSelectedMemory(null)}
-                                className="px-3 py-1 bg-stone-100 text-stone-600 border border-stone-200 rounded-full text-[10px] font-black hover:bg-stone-200 transition-all"
+                                className="px-3.5 py-1 bg-stone-100 text-stone-700 border border-stone-200 rounded-full text-[10px] font-black hover:bg-stone-200 transition-all"
                               >
                                 إغلاق الذكرى
                               </button>
                             </div>
 
-                            <div className="flex items-start gap-4 mt-2">
-                              <div className="w-16 h-16 rounded-2xl bg-white border border-stone-200 flex items-center justify-center text-4xl shadow-inner shrink-0">
-                                {selectedMemory.icon}
+                            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mt-2 relative z-10">
+                              {/* Chemical polaroid developer image frame */}
+                              <div className="relative shrink-0 w-24 h-24 bg-stone-100 border-[8px] border-b-[20px] border-stone-50 shadow-md flex flex-col items-center justify-center overflow-hidden">
+                                <span className={cn(
+                                  "text-5xl select-none transition-all duration-[1.8s] ease-out",
+                                  isCuring ? "scale-90 rotate-6 blur-md grayscale sepia saturate-50 opacity-40" : "scale-100 rotate-0 blur-0 grayscale-0 sepia-0 saturate-100 opacity-100"
+                                )}>
+                                  {selectedMemory.icon}
+                                </span>
+                                
+                                {isCuring && (
+                                  <div className="absolute inset-0 bg-[#0d3a22]/5 mix-blend-color animate-pulse pointer-events-none" />
+                                )}
                               </div>
-                              <div className="flex-1 space-y-1">
-                                <span className="text-[9px] font-black uppercase tracking-wider text-[#b28a41]">{selectedMemory.date}</span>
-                                <h4 className="text-sm font-black text-brand">{selectedMemory.title}</h4>
+
+                              <div className="flex-1 space-y-1.5 text-center sm:text-right">
+                                <span className="text-[9px] font-black uppercase tracking-wider text-[#b28a41] bg-[#b28a41]/10 px-2.5 py-0.5 rounded-full inline-block">
+                                  {selectedMemory.date}
+                                </span>
+                                <h4 className="text-base font-black text-brand">{selectedMemory.title}</h4>
                                 <p className="text-xs text-stone-600 font-bold leading-relaxed">{selectedMemory.desc}</p>
                               </div>
                             </div>
 
-                            <div className="border-t border-stone-200/60 pt-3 flex items-center justify-between gap-4 bg-white/50 -mx-5 -mb-5 p-4 rounded-b-3xl">
-                              <span className="text-[9px] font-black text-[#0d3a22] bg-[#0d3a22]/5 px-2.5 py-1 rounded-full">
-                                ❖ حكاية حية ومجربة للربع
+                            <div className="border-t border-stone-100 pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 bg-stone-50/50 -mx-6 -mb-6 p-4 rounded-b-2xl relative z-10">
+                              <span className={cn(
+                                "text-[9px] font-black px-2.5 py-1 rounded-full transition-colors flex items-center gap-1.5",
+                                isCuring ? "text-amber-700 bg-amber-50 animate-pulse border border-amber-200/50" : "text-emerald-700 bg-emerald-50 border border-emerald-200/50"
+                              )}>
+                                <span>{isCuring ? "🧪" : "❖"}</span>
+                                <span>{isCuring ? "جاري استخلاص كيمياء الصورة المعتقة..." : "مُعتقّة كليّاً بنقاء السدو التراثي 🌾"}</span>
                               </span>
                               
                               <div className="flex gap-2">
@@ -2174,7 +2240,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                     const shareText = `📸 من ذكريات دوانيتنا بالفندق التراثي القديم:\n\n*${selectedMemory.title}*\n"${selectedMemory.desc}"\n🗓️ تاريخ اليمعة: ${selectedMemory.date}\n\nشوف باقي ذكريات دوانيتنا وشاركنا بالقرعة هني:\n${link}`;
                                     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, "_blank");
                                   }}
-                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black flex items-center gap-1 transition-all"
+                                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black flex items-center gap-1 transition-all shadow-sm shrink-0"
                                 >
                                   <span>شاركها بالواتساب 💬</span>
                                 </button>
@@ -2190,32 +2256,37 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             <span className="text-[10px] font-bold text-stone-400">سجلوا يمعتكم الياية هني بالطيب! ✨</span>
                           </div>
                         ) : (
-                          <div className="diwaniya-memories-grid grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1" dir="rtl">
-                            {heritageMemories.map((album, idx) => (
-                              <div 
-                                key={album.id || idx}
-                                onClick={() => {
-                                  setSelectedMemory(album);
-                                }}
-                                className={cn(
-                                  "diwaniya-memory-card bg-white border-2 p-3 rounded-xl hover:-translate-y-1 transition-all flex flex-col gap-3 group relative cursor-pointer shadow-md",
-                                  selectedMemory?.id === album.id ? "border-[#b28a41] shadow-[#b28a41]/10 bg-stone-50" : "border-stone-100"
-                                )}
-                              >
-                                <div className={cn("diwaniya-memory-frame aspect-square rounded-lg flex flex-col items-center justify-center text-4xl bg-gradient-to-br border border-stone-100 group-hover:scale-[1.03] transition-transform relative overflow-hidden", album.bg)}>
-                                  <span className="transform group-hover:scale-125 transition-transform duration-500">{album.icon}</span>
-                                  <div className="absolute inset-0 bg-yellow-900/5 mix-blend-color-burn pointer-events-none" />
-                                  <div className="absolute top-2 left-2 text-[10px] bg-white/40 px-1.5 py-0.5 rounded font-mono text-stone-500">
-                                    ذكريات #{formatEnglishNumber(idx + 1)}
+                          <div className="diwaniya-memories-grid grid grid-cols-2 sm:grid-cols-3 gap-6 pt-1" dir="rtl">
+                            {heritageMemories.map((album, idx) => {
+                              // Realistic slight random slant angles for 3D polaroid scatter layout
+                              const slantAngle = idx % 3 === 0 ? "-3deg" : idx % 3 === 1 ? "2.5deg" : "-1.5deg";
+                              return (
+                                <motion.div 
+                                  key={album.id || idx}
+                                  onClick={() => {
+                                    setSelectedMemory(album);
+                                  }}
+                                  whileHover={{ scale: 1.05, rotate: "0deg", zIndex: 10 }}
+                                  style={{ rotate: slantAngle }}
+                                  className={cn(
+                                    "diwaniya-memory-card bg-[#fcfcfa] border-[10px] border-b-[26px] border-stone-50 rounded-none shadow-md hover:shadow-xl transition-all flex flex-col gap-2.5 cursor-pointer relative",
+                                    selectedMemory?.id === album.id ? "ring-2 ring-[#b28a41] shadow-[#b28a41]/10 bg-stone-50" : "border-stone-100"
+                                  )}
+                                >
+                                  <div className={cn("diwaniya-memory-frame aspect-square flex flex-col items-center justify-center text-3xl bg-gradient-to-br border border-stone-100 relative overflow-hidden shadow-inner", album.bg)}>
+                                    <span className="filter drop-shadow-sm select-none">{album.icon}</span>
+                                    <div className="absolute inset-0 bg-yellow-900/5 mix-blend-color-burn pointer-events-none" />
+                                    <div className="absolute top-1.5 left-1.5 text-[8px] bg-white/70 px-1 rounded font-mono text-stone-500">
+                                      #{formatEnglishNumber(idx + 1)}
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="flex flex-col gap-1 text-center font-sans">
-                                  <h6 className="text-[11px] font-extrabold text-brand truncate">{album.title}</h6>
-                                  <p className="text-[9px] font-bold text-stone-400 line-clamp-1">{album.desc}</p>
-                                  <span className="text-[8px] font-black text-[#b28a41] mt-1.5 font-mono">{album.date}</span>
-                                </div>
-                              </div>
-                            ))}
+                                  <div className="flex flex-col gap-0.5 text-center font-sans">
+                                    <h6 className="text-[10.5px] font-black text-brand truncate pr-0.5 leading-tight">{album.title}</h6>
+                                    <span className="text-[7.5px] font-extrabold text-[#b28a41] font-mono leading-none">{album.date}</span>
+                                  </div>
+                                </motion.div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>

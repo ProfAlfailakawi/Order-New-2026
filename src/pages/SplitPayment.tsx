@@ -76,6 +76,95 @@ export default function SplitPayment() {
   const isDev =
     searchParams.get("dev") === "true" || searchParams.get("2dev") === "true";
 
+  // Digital Token Dropping physical coin/finjan simulation engine
+  const [tokenDrops, setTokenDrops] = useState<Array<{ id: number; x: number; delay: number; emoji: string; rot: number; size: number }>>([]);
+  const dropCounter = useRef(0);
+
+  const triggerCoinsDroppingAndRing = () => {
+    // Web Audio Synthesizer: Metallic copper resonance & bubble coffee pour
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        const audioCtx = new AudioCtx();
+        
+        // 1. Pouring bubble hiss
+        const dryDuration = 0.5;
+        const bufferSize = audioCtx.sampleRate * dryDuration;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(1600, audioCtx.currentTime + 0.4);
+        
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+        
+        whiteNoise.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(audioCtx.destination);
+        whiteNoise.start();
+
+        // 2. High metallic ring clinks (Simulating gold coins colliding with copper bowl)
+        const clinksCount = 5;
+        for (let c = 0; c < clinksCount; c++) {
+          const startTime = audioCtx.currentTime + c * 0.12;
+          const osc1 = audioCtx.createOscillator();
+          const osc2 = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+
+          osc1.type = "sine";
+          osc1.frequency.setValueAtTime(1800 + c * 100 + Math.random() * 200, startTime);
+          
+          osc2.type = "triangle";
+          osc2.frequency.setValueAtTime(2850 - c * 50, startTime);
+
+          gainNode.gain.setValueAtTime(0.12, startTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
+
+          osc1.connect(gainNode);
+          osc2.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+
+          osc1.start(startTime);
+          osc2.start(startTime);
+          osc1.stop(startTime + 0.38);
+          osc2.stop(startTime + 0.38);
+        }
+      }
+    } catch (e) {
+      console.log("Audio simulation error in Web Audio API:", e);
+    }
+
+    // Add drops to state
+    const newDrops: any[] = [];
+    const emojis = ["🪙", "☕", "🪙", "🏆", "✨", "🪙"];
+    for (let i = 0; i < 12; i++) {
+      dropCounter.current += 1;
+      newDrops.push({
+        id: dropCounter.current,
+        x: 10 + Math.random() * 80, // percentage horizontal placement
+        delay: i * 0.1,
+        emoji: emojis[i % emojis.length],
+        rot: Math.random() * 360,
+        size: 24 + Math.random() * 16
+      });
+    }
+
+    setTokenDrops((prev) => [...prev, ...newDrops]);
+
+    // Clear old drops after a while
+    setTimeout(() => {
+      setTokenDrops((prev) => prev.slice(12));
+    }, 4000);
+  };
+
   // Calculate generic paid amount
   const calculatePaid = () => {
     return getSafeSplitPayments(order)
@@ -183,6 +272,7 @@ export default function SplitPayment() {
               prevPaidCountRef.current !== 0
             ) {
               triggerFeedback();
+              triggerCoinsDroppingAndRing();
             }
             prevPaidCountRef.current = paidCount;
 
@@ -512,6 +602,36 @@ export default function SplitPayment() {
       className="min-h-screen qatya-ultra-shell qatya-wow-shell pb-24 font-sans text-stone-800 selection:bg-brand/20"
       dir="rtl"
     >
+      {/* Floating Token Drop Canvas Container */}
+      <div className="fixed inset-0 pointer-events-none z-[999] overflow-hidden">
+        <AnimatePresence>
+          {tokenDrops.map((drop) => (
+            <motion.div
+              key={drop.id}
+              initial={{ y: -50, x: `${drop.x}vw`, opacity: 0, rotate: drop.rot, scale: 0.5 }}
+              animate={{ 
+                y: ["0vh", "85vh", "80vh", "85vh"],
+                opacity: [1, 1, 1, 0],
+                scale: [1, 1, 0.95, 0.8]
+              }}
+              exit={{ opacity: 0 }}
+              transition={{ 
+                duration: 2.2, 
+                times: [0, 0.7, 0.85, 1],
+                ease: "easeIn"
+              }}
+              style={{
+                position: "absolute",
+                fontSize: drop.size,
+                textShadow: "0 4px 10px rgba(0,0,0,0.35)",
+              }}
+            >
+              {drop.emoji}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
       <button
         type="button"
         onClick={() => navigate("/?checkout=payment")}
@@ -687,27 +807,120 @@ export default function SplitPayment() {
               </div>
             </div>
 
-            <div className="w-full mt-6 relative z-10">
-              <div className="flex justify-between text-xs font-black mb-2">
-                <span className="text-brand">اكتمل {Math.min(progressPercent, 100).toFixed(0)}%</span>
-                <span className="text-stone-400">يتحدث تلقائيًا</span>
+            <div className="w-full mt-6 relative z-10 bg-amber-500/[0.04] p-5 rounded-[28px] border border-amber-500/10 shadow-inner flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-sans">
+                  <span className="w-2 h-2 rounded-full bg-[#128C7E] animate-ping" />
+                  <span className="text-xs font-black text-brand">عداد الامتلاء المتوهج (Liquid Sadu progress)</span>
+                </div>
+                <span className="text-xs font-black text-amber-600 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/15">
+                  أنجزنا: {Math.min(progressPercent, 100).toFixed(0)}%
+                </span>
               </div>
-              <div className="qatya-progress-track qatya-v14-progress h-4 bg-stone-100 rounded-full overflow-hidden shrink-0 w-full flex relative">
-                <motion.div
-                  className="qatya-progress-fill h-full bg-gradient-to-l from-[#25D366] to-[#128C7E]"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progressPercent}%` }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                />
-                {progressPercent >= 100 && (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.8 }}
-                    className="absolute inset-0 bg-white/20 animate-pulse" 
-                  />
-                )}
+
+              <div className="flex items-center gap-4">
+                {/* 1. Sadu Thread Weaving Progress Bar */}
+                <div className="flex-1">
+                  <div className="relative h-7 w-full bg-stone-100 rounded-2xl border border-stone-200/60 overflow-hidden flex items-center shadow-inner">
+                    {/* Sadu Woven Line pattern static design background */}
+                    <div 
+                      className="absolute inset-0 opacity-15 pointer-events-none"
+                      style={{
+                        backgroundImage: "linear-gradient(45deg, #a71d22 25%, transparent 25%, transparent 50%, #a71d22 50%, #a71d22 75%, transparent 75%, transparent)",
+                        backgroundSize: "20px 20px"
+                      }}
+                    />
+                    
+                    {/* Active filling progress (Sadu pattern styled inside) */}
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-[#ca8a04] via-[#a71d22] to-[#b45309] relative shadow-lg"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercent}%` }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                    >
+                      <div className="absolute inset-0 bg-white/20 animate-pulse pointer-events-none" style={{ backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.15) 10px, rgba(255,255,255,0.15) 20px)" }} />
+                    </motion.div>
+
+                    {/* Sadu Decorative Center diamonds overlay inside progress */}
+                    <div className="absolute inset-0 flex items-center justify-around pointer-events-none opacity-40">
+                      {[1, 2, 3, 4, 5].map((x) => (
+                        <div key={x} className="w-2.5 h-2.5 bg-yellow-400 rotate-45 border border-red-700 scale-75 shadow-xs" />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Beautiful Coffee Dallah filling up dynamically with golden coffee */}
+                <div className="relative shrink-0 flex items-center justify-center">
+                  {/* Glowing halo when 100% completed */}
+                  {progressPercent >= 100 && (
+                    <div className="absolute -top-3 w-16 h-16 bg-amber-400/25 blur-xl rounded-full animate-pulse" />
+                  )}
+
+                  {/* Dallah vector graphic inside */}
+                  <svg width="45" height="55" viewBox="0 0 100 120" className="drop-shadow-md">
+                    {/* Outer frame */}
+                    <path d="M35,110 L65,110 L70,118 L30,118 Z" fill="#b45309" />
+                    {/* Liquid fill bounding box that fills based on progress height */}
+                    <mask id="dallahMask">
+                      <path d="M35,35 L65,35 L60,110 L40,110 Z" fill="white" />
+                    </mask>
+
+                    {/* Masked coffee inside */}
+                    <g mask="url(#dallahMask)">
+                      <rect x="20" y="30" width="60" height="90" fill="#3e2723" />
+                      {/* Dynamic golden wave liquid filling up */}
+                      <motion.rect 
+                        x="20" 
+                        y="30" 
+                        width="60" 
+                        height="90" 
+                        fill="url(#goldCoffee)"
+                        animate={{ y: 90 - (progressPercent / 100) * 90 }}
+                        transition={{ duration: 0.8 }}
+                      />
+                    </g>
+
+                    {/* Dallah metallic overlay border to keep shape */}
+                    <path d="M35,35 L65,35 L60,110 L40,110 Z" fill="none" stroke="#ca8a04" strokeWidth="4" />
+                    {/* Spout */}
+                    <path d="M32,45 C22,40 10,25 10,25 C10,25 22,50 32,55 Z" fill="#eab308" />
+                    {/* Spout aroma bubbles when complete */}
+                    {progressPercent >= 100 && (
+                      <motion.g animate={{ y: -8, opacity: [0.3, 1, 0] }} transition={{ repeat: Infinity, duration: 2 }}>
+                        <text x="5" y="15" fontSize="12">♨️</text>
+                      </motion.g>
+                    )}
+
+                    <defs>
+                      <linearGradient id="goldCoffee" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#facc15" />
+                        <stop offset="50%" stopColor="#d97706" />
+                        <stop offset="100%" stopColor="#150a0a" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+
+                  {/* Aromatic Steam bubbles when 100% complete ("تفوح الدلة بنور ساطع") */}
+                  {progressPercent >= 100 && (
+                    <div className="absolute -top-10 flex flex-col items-center pointer-events-none">
+                      <span className="text-xs animate-bounce">♨️</span>
+                      <span className="text-[7px] font-black text-amber-500 bg-amber-100/95 px-1 py-0.5 rounded-full mt-1 animate-pulse border border-amber-300 shadow-xs">تفوح! ☕🔥</span>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Simulation triggers to allow tasting the drop physics! */}
+              <button
+                type="button"
+                onClick={triggerCoinsDroppingAndRing}
+                className="w-full bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500/20 text-[#a16207] text-[10.5px] font-extrabold py-2 px-3 rounded-2xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
+              >
+                <span>🪙</span>
+                <span>استعرض رنّة الفنجان وسقوط العملات التراثية الحية</span>
+                <span>☕</span>
+              </button>
             </div>
 
             <div className="mt-5 rounded-[24px] bg-stone-50 border border-stone-100 p-4" dir="rtl">

@@ -875,11 +875,18 @@ export function SaduPresenceRug({
                           ? "bg-rose-950/45 text-stone-100 border-rose-500/25"
                           : !isOnline
                             ? "bg-black/40 text-stone-300 border-white/5 opacity-60 hover:opacity-100"
-                            : isHost
-                              ? "bg-amber-500/15 text-amber-100 border-amber-500/35 shadow-md shadow-amber-950/20 animate-pulse"
-                              : "bg-white/10 backdrop-blur-md text-stone-100 border-white/10 hover:border-amber-500/30 hover:bg-white/20"
+                            : (parsedPoints >= 200)
+                              ? "bg-gradient-to-br from-[#2c1d0b] via-[#4d3a1c] to-[#1c140a] text-amber-100 border-amber-500/60 shadow-[0_4px_12px_rgba(245,158,11,0.25)] hover:border-amber-400"
+                              : isHost
+                                ? "bg-amber-500/15 text-amber-100 border-amber-500/35 shadow-md shadow-amber-950/20 animate-pulse"
+                                : "bg-white/10 backdrop-blur-md text-stone-100 border-[#white/10] hover:border-amber-500/30 hover:bg-white/20"
                     )}
                   >
+                    {(parsedPoints >= 200) && isOnline && !isMe && !isHost && (
+                      <div className="absolute top-0 left-0 bg-amber-500 text-stone-950 text-[6.5px] font-black px-1 py-0.5 rounded-br-lg border-r border-b border-amber-300/35">
+                        مركاز 👑
+                      </div>
+                    )}
                     {entity.isAuto && isOnline && (
                       <div className="absolute inset-x-0 bottom-0 h-4 bg-gradient-to-t from-red-650/40 via-orange-500/15 to-transparent pointer-events-none z-0 overflow-hidden">
                         <div className="absolute inset-0 bg-red-600/30 animate-pulse blur-xs" />
