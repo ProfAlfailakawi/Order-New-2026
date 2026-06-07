@@ -3444,7 +3444,7 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   }
 
   .best-seller-wow-card:has(.pointer-events-none){
-    visibility:hidden!important;
+    visibility:visible!important;
     pointer-events:none!important;
   }
 

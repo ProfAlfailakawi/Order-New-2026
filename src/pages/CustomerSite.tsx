@@ -3881,10 +3881,10 @@ export default function CustomerSite() {
       <AnimatePresence>
         {zeroClickWelcome && (
           <motion.div
-            initial={{ opacity: 0, y: -100, scale: 0.9, x: "-50%" }}
-            animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
-            exit={{ opacity: 0, y: -60, scale: 0.9, x: "-50%" }}
-            className="fixed top-6 left-1/2 -translate-x-1/2 w-[92%] sm:w-[480px] bg-slate-950/95 border-2 border-orange-500/50 backdrop-blur-md text-right rounded-[24px] p-5 shadow-2xl z-[9999] text-white overflow-hidden shadow-orange-950/40"
+            initial={{ opacity: 0, y: -40, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -30, scale: 0.96 }}
+            className="fixed top-4 inset-x-3 sm:left-1/2 sm:right-auto sm:w-[420px] sm:-translate-x-1/2 bg-slate-950/95 border border-orange-500/40 backdrop-blur-md text-right rounded-[22px] p-4 shadow-2xl z-[9999] text-white overflow-hidden shadow-orange-950/30"
           >
             {/* Pulsing Ember Background Glow */}
             <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-orange-600/25 rounded-full blur-2xl animate-pulse pointer-events-none" />
@@ -3900,15 +3900,15 @@ export default function CustomerSite() {
               
               <div className="flex-1 text-right">
                 <span className="text-[10px] font-black bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full border border-orange-500/25 tracking-wide">
-                  رادار الحضور التلقائي المأهول (Zero-Click) 📡🔥
+                  رادار الديوانية 📡
                 </span>
                 
                 <h4 className="font-sans font-black text-sm text-amber-100 mt-2.5">
-                  يا هلا بالربع! تم الدخول تلقائياً
+                  حياك الله يا <span className="text-orange-400">{zeroClickWelcome.name}</span>
                 </h4>
                 
-                <p className="font-sans font-bold text-xs text-stone-300 leading-relaxed mt-1.5 animate-pulse">
-                  حياك الله يا <span className="text-orange-400 font-black">{zeroClickWelcome.name}</span> في ديوانية <span className="text-amber-100 font-black">{zeroClickWelcome.squadName}</span>! رادارنا لقط حضورك وتم الترحيب بك على السجادة، واشتعل الجمر الافتراضي الدافي 🔥 تحت الدلة إيذاناً ببدء السهرة المقندة ☕✨.
+                <p className="font-sans font-bold text-xs text-stone-300 leading-relaxed mt-1.5">
+                  تم تسجيل حضورك في ديوانية <span className="text-amber-100 font-black">{zeroClickWelcome.squadName}</span>.
                 </p>
               </div>
             </div>
@@ -6395,10 +6395,16 @@ const ChefWhisperCard = ({
                   </div>
                 )}
                 <p className="text-brand text-sm font-black mt-1.5">
-                  {calculateItemBasePriceWithHiddenAddons({
-                    id: "", productId: product.id, name: product.name, quantity: 1, price: product.price, selectedExtras: [], product: normalizeProductForAddons(product)
-                  })}{" "}
-                  <span className="text-[9px] text-accent font-bold">د.ك</span>
+                  {product.price > 0 ? (
+                    <>
+                      {Number(calculateItemBasePriceWithHiddenAddons({
+                        id: "", productId: product.id, name: product.name, quantity: 1, price: product.price, selectedExtras: [], product: normalizeProductForAddons(product)
+                      }) || 0).toFixed(3)}{" "}
+                      <span className="text-[9px] text-accent font-bold">د.ك</span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-accent font-black">حسب سعر السوق</span>
+                  )}
                 </p>
               </div>
             </>
@@ -6445,12 +6451,18 @@ const ChefWhisperCard = ({
 
                   {/* 3. Price (floating under the image, not attached to a frame) */}
                   <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-white/80 shadow-[0_8px_22px_rgba(26,46,34,0.08)] px-4 py-1 rounded-full flex items-center justify-center z-20 whitespace-nowrap">
-                    <span className="text-brand font-black text-sm">
-                      {calculateItemBasePriceWithHiddenAddons({
-                        id: "", productId: product.id, name: product.name, quantity: 1, price: product.price, selectedExtras: [], product: normalizeProductForAddons(product)
-                      })}
-                    </span>
-                    <span className="text-[11px] text-accent font-bold mx-1">د.ك</span>
+                    {product.price > 0 ? (
+                      <>
+                        <span className="text-brand font-black text-sm">
+                          {Number(calculateItemBasePriceWithHiddenAddons({
+                            id: "", productId: product.id, name: product.name, quantity: 1, price: product.price, selectedExtras: [], product: normalizeProductForAddons(product)
+                          }) || 0).toFixed(3)}
+                        </span>
+                        <span className="text-[11px] text-accent font-bold mx-1">د.ك</span>
+                      </>
+                    ) : (
+                      <span className="text-[11px] text-[#0d3a22] font-extrabold mx-2">حسب سعر السوق</span>
+                    )}
                   </div>
                 </div>
 
@@ -6519,10 +6531,26 @@ const RoyalLazySusan = ({
 
   if (!products || products.length === 0) return null;
 
-  const isCompactScreen = typeof window !== "undefined" && window.innerWidth < 430;
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const xOffsetMultiplier = isMobile ? 116 : 150;
+  const zOffsetBase = isMobile ? -50 : -80;
+  const zOffsetMultiplier = isMobile ? 22 : 40;
+  const rotateYAngle = isMobile ? 18 : 25;
+  const sideOpacity = isMobile ? 0.72 : 0.6;
+  const sideScale = isMobile ? 0.82 : 0.85;
 
   return (
-    <div className="best-seller-wow-carousel relative w-full h-[265px] sm:h-[245px] flex items-center justify-center overflow-visible perspective-[1200px] select-none touch-pan-y py-4 -mx-4 px-4">
+    <div className="best-seller-wow-carousel relative w-full h-[245px] flex items-center justify-center overflow-visible perspective-[1200px] select-none touch-pan-y py-4 -mx-4 px-4">
       <AnimatePresence initial={false}>
         {products.map((product, i) => {
           const rawOffset = i - currentIndex;
@@ -6538,29 +6566,17 @@ const RoyalLazySusan = ({
 
           const isCenter = offset === 0;
           const distance = Math.abs(offset);
-          // On phones the carousel used to hide the side cards because the cards were
-          // too close to the center card and pushed back strongly in 3D space.
-          // Keep the center prominent, but pull the neighboring cards outward so their
-          // edges are clearly visible on both sides like the desktop view.
-          const xOffset = offset * (isCompactScreen ? 172 : 150);
-          const zOffset = isCenter ? 0 : isCompactScreen ? -18 * distance : -80 - distance * 40;
-          const rotateY = isCompactScreen ? -offset * 8 : -offset * 25;
-          const opacity = isCenter
-            ? 1
-            : isCompactScreen
-              ? distance === 1 ? 0.72 : 0.28
-              : Math.max(0, 1 - distance * 0.4);
-          const scale = isCenter
-            ? 1
-            : isCompactScreen
-              ? distance === 1 ? 0.82 : 0.68
-              : Math.max(0.7, 1 - distance * 0.15);
+          const xOffset = offset * xOffsetMultiplier;
+          const zOffset = isCenter ? 0 : zOffsetBase - distance * zOffsetMultiplier;
+          const rotateY = -offset * rotateYAngle;
+          const opacity = isCenter ? 1 : Math.max(0, 1 - distance * (1 - sideOpacity));
+          const scale = isCenter ? 1 : Math.max(0.7, 1 - distance * (1 - sideScale));
           const zIndex = 100 - distance;
 
           return (
             <motion.div
               key={product.id}
-              className="best-seller-wow-card absolute w-[148px] min-h-[224px] sm:w-[180px] sm:min-h-[220px] cursor-grab active:cursor-grabbing"
+              className="best-seller-wow-card absolute w-[180px] min-h-[220px] cursor-grab active:cursor-grabbing"
               initial={false}
               animate={{
                 x: xOffset,
@@ -6912,18 +6928,24 @@ function ProductModal({
             <p className="text-xs text-stone-400 font-medium mb-3">
               {product.nameEn}
             </p>
-            <p className="text-2xl font-medium text-brand">
-              {calculateItemBasePriceWithHiddenAddons({
-                id: "",
-                productId: product.id,
-                name: product.name,
-                quantity: quantity || 1,
-                price: product.price,
-                selectedExtras: selectedExtras,
-                selectedAddonsIds: selectedAddonsIds,
-                product: normalizeProductForAddons(product),
-              })}{" "}
-              <span className="text-sm text-accent">د.ك</span>
+            <p className="text-2xl font-black text-brand">
+              {product.price > 0 ? (
+                <>
+                  {Number(calculateItemBasePriceWithHiddenAddons({
+                    id: "",
+                    productId: product.id,
+                    name: product.name,
+                    quantity: quantity || 1,
+                    price: product.price,
+                    selectedExtras: selectedExtras,
+                    selectedAddonsIds: selectedAddonsIds,
+                    product: normalizeProductForAddons(product),
+                  }) || 0).toFixed(3)}{" "}
+                  <span className="text-sm text-accent font-black">د.ك</span>
+                </>
+              ) : (
+                <span className="text-lg text-accent font-black">حسب سعر السوق</span>
+              )}
             </p>
             {product.preparationInstructions && (
               <div className="mt-2 text-[9px] sm:text-[10.5px] text-rose-600 font-bold flex items-center justify-center sm:justify-start gap-1 py-0.5 px-2 bg-rose-50/40 border border-rose-100/20 rounded-full max-w-max">
