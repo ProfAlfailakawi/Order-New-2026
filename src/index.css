@@ -3356,8 +3356,6 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   overflow:visible!important;
 }
 
-.menu-product-card h3,
-.menu-product-card p,
 .product-detail-layer h2,
 .track-v15-item-name,
 .payment-method-card span,
@@ -3366,7 +3364,6 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   white-space:normal!important;
 }
 
-.menu-product-card :is(.truncate,.line-clamp-1,.line-clamp-2),
 .product-detail-layer :is(.truncate,.line-clamp-1,.line-clamp-2){
   word-break:normal;
   overflow-wrap:anywhere;

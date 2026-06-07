@@ -6388,8 +6388,8 @@ const ChefWhisperCard = ({
                   className="menu-product-img orser-product-img w-full h-full object-cover bg-transparent relative z-0"
                 />
               </div>
-              <div className="flex flex-col flex-grow text-center overflow-hidden relative z-10">
-                <h3 className="font-extrabold text-sm text-brand leading-tight tracking-tight mt-1 line-clamp-2 min-h-[2.5em] flex items-center justify-center" style={{ wordBreak: "break-word" }}>
+              <div className="flex flex-col flex-grow text-center relative z-10">
+                <h3 className="font-extrabold text-sm text-brand leading-tight tracking-tight mt-1 min-h-[2em] flex items-center justify-center" style={{ wordBreak: "break-word" }}>
                   {product.name}
                 </h3>
                 {product.preparationInstructions && (
@@ -6555,7 +6555,7 @@ const RoyalLazySusan = ({
           return (
             <motion.div
               key={product.id}
-              className="best-seller-wow-card absolute w-[180px] h-[200px] cursor-grab active:cursor-grabbing"
+              className="best-seller-wow-card absolute w-[180px] min-h-[220px] cursor-grab active:cursor-grabbing"
               initial={false}
               animate={{
                 x: xOffset,
