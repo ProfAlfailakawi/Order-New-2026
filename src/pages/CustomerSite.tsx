@@ -715,30 +715,6 @@ export default function CustomerSite() {
   const [fomoPurchases, setFomoPurchases] = useState<any[]>([]);
   const [fomoIndex, setFomoIndex] = useState(0);
   const [showFomo, setShowFomo] = useState(false);
-
-  useEffect(() => {
-    let motionTimer: number | undefined;
-
-    const applyMobileGlassDockState = () => {
-      const shouldCondense = window.scrollY > 28;
-      document.body.classList.toggle("al-mobile-ui-condensed", shouldCondense);
-      document.body.classList.add("al-mobile-ui-moving");
-
-      if (motionTimer) window.clearTimeout(motionTimer);
-      motionTimer = window.setTimeout(() => {
-        document.body.classList.remove("al-mobile-ui-moving");
-      }, 260);
-    };
-
-    applyMobileGlassDockState();
-    window.addEventListener("scroll", applyMobileGlassDockState, { passive: true });
-
-    return () => {
-      if (motionTimer) window.clearTimeout(motionTimer);
-      window.removeEventListener("scroll", applyMobileGlassDockState);
-      document.body.classList.remove("al-mobile-ui-condensed", "al-mobile-ui-moving");
-    };
-  }, []);
   
   // Gamification & Squads
   const [squadInfo, setSquadInfo] = useState<any>(null);
