@@ -3353,8 +3353,7 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
 }
 
 .best-seller-wow-carousel{
-  overflow:hidden!important;
-  contain:paint;
+  overflow:visible!important;
 }
 
 .menu-product-card h3,
@@ -3435,14 +3434,16 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   }
 
   .best-seller-wow-carousel{
-    height:188px!important;
+    height:auto!important;
+    min-height:235px!important;
     margin-inline:auto!important;
     padding-inline:0!important;
   }
 
   .best-seller-wow-card{
     width:156px!important;
-    height:184px!important;
+    height:auto!important;
+    min-height:220px!important;
   }
 
   .best-seller-wow-card:has(.pointer-events-none){
@@ -3630,7 +3631,8 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
 
   .best-seller-wow-card{
     width:144px!important;
-    height:178px!important;
+    height:auto!important;
+    min-height:210px!important;
   }
 
   .menu-product-card h3,
