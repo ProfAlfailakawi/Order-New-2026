@@ -715,6 +715,21 @@ export default function CustomerSite() {
   const [fomoPurchases, setFomoPurchases] = useState<any[]>([]);
   const [fomoIndex, setFomoIndex] = useState(0);
   const [showFomo, setShowFomo] = useState(false);
+
+  useEffect(() => {
+    const applyMobileGlassDockState = () => {
+      const shouldCondense = window.scrollY > 28;
+      document.body.classList.toggle("al-mobile-ui-condensed", shouldCondense);
+    };
+
+    applyMobileGlassDockState();
+    window.addEventListener("scroll", applyMobileGlassDockState, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", applyMobileGlassDockState);
+      document.body.classList.remove("al-mobile-ui-condensed");
+    };
+  }, []);
   
   // Gamification & Squads
   const [squadInfo, setSquadInfo] = useState<any>(null);
