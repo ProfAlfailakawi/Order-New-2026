@@ -46,6 +46,41 @@ import { robustGetCurrentPosition } from "../utils/geolocation";
 import LeafletLocationPicker from "../components/LeafletLocationPicker";
 import LeafletKuwaitMap from "../components/LeafletKuwaitMap";
 
+// --- The Golden Zari Bisht Gate (بوابة الزري الملكي) ---
+function ZariBishtGate() {
+  return (
+    <div className="absolute inset-0 z-50 pointer-events-none flex overflow-hidden rounded-[inherit]">
+      {/* Right Flap (RTL: right side) */}
+      <motion.div
+        className="h-full w-1/2 bg-[#0a0a0a] border-l-[4px] border-[#daaa3f] relative z-10 flex flex-col items-start shadow-[-10px_0_20px_rgba(0,0,0,0.6)] box-border"
+        initial={{ x: "0%" }}
+        animate={{ x: "100%", opacity: [1, 1, 0.8, 0] }}
+        transition={{ duration: 0.95, ease: [0.85, 0, 0.15, 1], delay: 0.15 }}
+      >
+        <div className="h-full w-[8px] bg-[repeating-linear-gradient(45deg,#b28329,#b28329_3px,#d8b056_3px,#d8b056_5px)] border-l border-[#825c13] shadow-[0_0_15px_rgba(216,176,86,0.3)] animate-pulse" />
+      </motion.div>
+      
+      {/* Left Flap (RTL: left side) */}
+      <motion.div
+        className="h-full w-1/2 bg-[#0a0a0a] border-r-[4px] border-[#daaa3f] relative z-10 flex flex-col items-end shadow-[10px_0_20px_rgba(0,0,0,0.6)] box-border"
+        initial={{ x: "0%" }}
+        animate={{ x: "-100%", opacity: [1, 1, 0.8, 0] }}
+        transition={{ duration: 0.95, ease: [0.85, 0, 0.15, 1], delay: 0.15 }}
+      >
+        <div className="h-full w-[8px] bg-[repeating-linear-gradient(-45deg,#b28329,#b28329_3px,#d8b056_3px,#d8b056_5px)] border-r border-[#825c13] shadow-[0_0_15px_rgba(216,176,86,0.3)] animate-pulse" />
+      </motion.div>
+      
+      {/* Center opening glow effect before it parts */}
+      <motion.div 
+        className="absolute inset-x-0 top-0 bottom-0 m-auto w-[2px] bg-[#ffda6a] shadow-[0_0_30px_5px_rgba(255,218,106,0.8)] z-20 pointer-events-none"
+        initial={{ opacity: 0, scaleY: 0 }}
+        animate={{ opacity: [0, 1, 0], scaleY: [0, 1, 1] }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+      />
+    </div>
+  );
+}
+
 // Define the default product categories shown to customers.
 // Removed "المشويات" و "المشروبات" per latest requirements.  If these
 // categories are needed in the future they can be added via the admin UI.
@@ -5250,14 +5285,17 @@ export default function CustomerSite() {
                 }}
               >
                 <motion.div
-                  initial={{ y: "100%" }}
-                  animate={{ y: 0 }}
-                  exit={{ y: "100%" }}
-                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                  className="bg-stone-50 w-full max-w-md rounded-t-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0, y: "20px" }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="bg-stone-50 w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh] relative mt-auto sm:mt-0"
                   onClick={(e) => e.stopPropagation()}
                 >
-                   <div className="p-4 sm:p-5 bg-white border-b border-stone-100 flex items-center justify-between shrink-0">
+                   {/* Zari Bisht Gate Entrance */}
+                   <ZariBishtGate />
+
+                   <div className="p-4 sm:p-5 bg-white border-b border-stone-100 flex items-center justify-between shrink-0 relative z-10">
                       <div className="flex flex-col text-right">
                          <h3 className="font-black text-lg sm:text-xl text-brand flex items-center gap-2">
                             <Crown className="w-5 h-5 text-accent" />
@@ -6784,13 +6822,16 @@ function ProductModal({
       onClick={onClose}
     >
       <motion.div
-        initial={{ y: "100%" }}
-        animate={{ y: 0 }}
-        exit={{ y: "100%" }}
-        transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="product-detail-layer bg-gradient-to-b from-[#fffaf2] via-white to-white w-full max-w-lg rounded-t-[32px] p-6 sm:p-8 max-h-[92vh] overflow-y-auto no-scrollbar shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.1)] relative"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0, translateY: "20px" }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="product-detail-layer bg-gradient-to-b from-[#fffaf2] via-white to-white w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] p-6 sm:p-8 max-h-[92vh] overflow-y-auto no-scrollbar shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.1)] relative mt-auto sm:mt-0"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Zari Bisht Gate Entrance */}
+        <ZariBishtGate />
+
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-44 opacity-20 blur-3xl"
           style={{
@@ -7391,13 +7432,16 @@ function CheckoutOverlay({
       onClick={onClose}
     >
       <motion.div
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 30, stiffness: 200 }}
-        className="checkout-wow-panel bg-[#fafaf9] w-full sm:max-w-[680px] lg:max-w-[820px] h-[100dvh] overflow-hidden shadow-2xl flex flex-col sm:rounded-l-3xl border-l border-stone-100/50"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0, x: "100%" }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="checkout-wow-panel bg-[#fafaf9] w-full sm:max-w-[680px] lg:max-w-[820px] h-[100dvh] overflow-hidden shadow-2xl flex flex-col sm:rounded-l-3xl border-l border-stone-100/50 relative ml-auto"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Zari Bisht Gate Entrance */}
+        <ZariBishtGate />
+
         <div className="checkout-wow-header p-6 pt-[max(env(safe-area-inset-top,0px),1.5rem)] border-b border-stone-50 flex items-center justify-between bg-white shrink-0 shadow-[0_8px_30px_rgb(0,0,0,0.02)] z-10 rounded-b-3xl">
           <div className="flex items-center gap-4">
             <button
