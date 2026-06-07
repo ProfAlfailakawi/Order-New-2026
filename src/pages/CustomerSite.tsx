@@ -5387,6 +5387,7 @@ export default function CustomerSite() {
         <AnimatePresence>
           {isCheckout && !orderSuccess && (
             <CheckoutOverlay
+              squadPresence={squadPresence}
               initialStep={checkoutInitialStep}
               cart={cart}
               setCart={setCart}
@@ -7201,6 +7202,7 @@ function ProductModal({
 }
 
 function CheckoutOverlay({
+  squadPresence,
   initialStep = "cart",
   cart,
   total,
