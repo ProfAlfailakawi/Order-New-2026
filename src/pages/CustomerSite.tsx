@@ -6522,7 +6522,7 @@ const RoyalLazySusan = ({
   const isCompactScreen = typeof window !== "undefined" && window.innerWidth < 430;
 
   return (
-    <div className="best-seller-wow-carousel relative w-full h-[250px] sm:h-[245px] flex items-center justify-center overflow-visible perspective-[1200px] select-none touch-pan-y py-3">
+    <div className="best-seller-wow-carousel relative w-full h-[265px] sm:h-[245px] flex items-center justify-center overflow-visible perspective-[1200px] select-none touch-pan-y py-4 -mx-4 px-4">
       <AnimatePresence initial={false}>
         {products.map((product, i) => {
           const rawOffset = i - currentIndex;
@@ -6537,21 +6537,30 @@ const RoyalLazySusan = ({
           if (Math.abs(offset) > 2) return null;
 
           const isCenter = offset === 0;
-          const xOffset = offset * (isCompactScreen ? 118 : 150); // spacing
-          const zOffset = isCenter ? 0 : -80 - Math.abs(offset) * 40;
-          const rotateY = -offset * 25; // tilt towards center
+          const distance = Math.abs(offset);
+          // On phones the carousel used to hide the side cards because the cards were
+          // too close to the center card and pushed back strongly in 3D space.
+          // Keep the center prominent, but pull the neighboring cards outward so their
+          // edges are clearly visible on both sides like the desktop view.
+          const xOffset = offset * (isCompactScreen ? 172 : 150);
+          const zOffset = isCenter ? 0 : isCompactScreen ? -18 * distance : -80 - distance * 40;
+          const rotateY = isCompactScreen ? -offset * 8 : -offset * 25;
           const opacity = isCenter
             ? 1
-            : Math.max(0, 1 - Math.abs(offset) * 0.4);
+            : isCompactScreen
+              ? distance === 1 ? 0.72 : 0.28
+              : Math.max(0, 1 - distance * 0.4);
           const scale = isCenter
             ? 1
-            : Math.max(0.7, 1 - Math.abs(offset) * 0.15);
-          const zIndex = 100 - Math.abs(offset);
+            : isCompactScreen
+              ? distance === 1 ? 0.82 : 0.68
+              : Math.max(0.7, 1 - distance * 0.15);
+          const zIndex = 100 - distance;
 
           return (
             <motion.div
               key={product.id}
-              className="best-seller-wow-card absolute w-[150px] min-h-[214px] sm:w-[180px] sm:min-h-[220px] cursor-grab active:cursor-grabbing"
+              className="best-seller-wow-card absolute w-[148px] min-h-[224px] sm:w-[180px] sm:min-h-[220px] cursor-grab active:cursor-grabbing"
               initial={false}
               animate={{
                 x: xOffset,
