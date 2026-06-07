@@ -131,6 +131,16 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const [copied, setCopied] = React.useState(false);
   const [myDiwaniyaTab, setMyDiwaniyaTab] = React.useState<"home" | "manage" | "orders" | "code" | "notifications" | "location" | "trophies">("home");
 
+  React.useEffect(() => {
+    const goHome = () => {
+      setIsCreatingSquad(false);
+      setIsJoiningSquad(false);
+      setMyDiwaniyaTab("home");
+    };
+    window.addEventListener("alturath:diwaniya-home", goHome);
+    return () => window.removeEventListener("alturath:diwaniya-home", goHome);
+  }, [setIsCreatingSquad, setIsJoiningSquad]);
+
   // 🧠 AI Co-Host smart state & learning engine (Concise, functional and connected to real products)
   const [aiActiveIndex, setAiActiveIndex] = React.useState(0);
   const [aiIsLearning, setAiIsLearning] = React.useState(false);
@@ -1316,9 +1326,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         <div className="flex flex-col gap-6 animate-in fade-in duration-500">
           {squadInfo && isCurrentMember && (
             <div className="squad-stable-tabs bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm relative z-10 backdrop-blur-xl">
-              <div className="flex sm:grid sm:grid-cols-7 gap-1 overflow-x-auto scrollbar-none text-center py-0.5" dir="rtl">
+              <div className="grid grid-cols-3 gap-1.5 text-center" dir="rtl">
                 {[
-                  { id: "home", label: "الرئيسية", icon: "🏠" },
                   { id: "manage", label: "دواويني", icon: "🛖" },
                   { id: "orders", label: "الطلبات", icon: "🍽️" },
                   { id: "trophies", label: "لوحة\nالشرف", icon: "🏆" },
@@ -1331,14 +1340,14 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     type="button"
                     onClick={() => setMyDiwaniyaTab(tab.id)}
                     className={cn(
-                      "relative rounded-xl px-2 py-2 text-[9.5px] sm:text-[9px] font-black transition-all leading-tight min-h-[56px] flex-1 min-w-[78px] sm:min-w-0 sm:px-1 shrink-0",
+                      "relative rounded-2xl px-2 py-2.5 text-[10px] sm:text-[10.5px] font-black transition-all leading-tight min-h-[64px] flex flex-col items-center justify-center border active:scale-[0.98]",
                       myDiwaniyaTab === tab.id
-                        ? "bg-[#0d3a22] text-white shadow-md scale-[1.01]"
-                        : "bg-stone-50 text-stone-500 border border-stone-100"
+                        ? "bg-[#0d3a22] text-white border-[#0d3a22] shadow-md shadow-brand/10"
+                        : "bg-stone-50/80 text-stone-500 border-stone-100 hover:bg-white"
                     )}
                   >
-                    <span className="block text-sm mb-0.5">{tab.icon}</span>
-                    <span className="whitespace-pre-line block max-w-full leading-[1.1]">{tab.label}</span>
+                    <span className="block text-lg mb-1 leading-none">{tab.icon}</span>
+                    <span className="whitespace-pre-line block max-w-full leading-[1.15]">{tab.label}</span>
                     {tab.badge > 0 && (
                       <span className="absolute -top-1 -left-1 min-w-4 h-4 px-0.5 rounded-full bg-amber-500 text-white text-[8px] flex items-center justify-center">
                         {formatEnglishNumber(tab.badge)}

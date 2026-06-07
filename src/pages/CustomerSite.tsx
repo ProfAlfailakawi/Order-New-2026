@@ -46,38 +46,15 @@ import { robustGetCurrentPosition } from "../utils/geolocation";
 import LeafletLocationPicker from "../components/LeafletLocationPicker";
 import LeafletKuwaitMap from "../components/LeafletKuwaitMap";
 
-// --- The Golden Zari Bisht Gate (بوابة الزري الملكي) ---
+// --- Soft entrance accent without the old curtain effect ---
 function ZariBishtGate() {
   return (
-    <div className="absolute inset-0 z-50 pointer-events-none flex overflow-hidden rounded-[inherit]">
-      {/* Right Flap (RTL: right side) */}
-      <motion.div
-        className="h-full w-1/2 bg-[#0a0a0a] border-l-[4px] border-[#daaa3f] relative z-10 flex flex-col items-start shadow-[-10px_0_20px_rgba(0,0,0,0.6)] box-border"
-        initial={{ x: "0%" }}
-        animate={{ x: "100%", opacity: [1, 1, 0.8, 0] }}
-        transition={{ duration: 0.95, ease: [0.85, 0, 0.15, 1], delay: 0.15 }}
-      >
-        <div className="h-full w-[8px] bg-[repeating-linear-gradient(45deg,#b28329,#b28329_3px,#d8b056_3px,#d8b056_5px)] border-l border-[#825c13] shadow-[0_0_15px_rgba(216,176,86,0.3)] animate-pulse" />
-      </motion.div>
-      
-      {/* Left Flap (RTL: left side) */}
-      <motion.div
-        className="h-full w-1/2 bg-[#0a0a0a] border-r-[4px] border-[#daaa3f] relative z-10 flex flex-col items-end shadow-[10px_0_20px_rgba(0,0,0,0.6)] box-border"
-        initial={{ x: "0%" }}
-        animate={{ x: "-100%", opacity: [1, 1, 0.8, 0] }}
-        transition={{ duration: 0.95, ease: [0.85, 0, 0.15, 1], delay: 0.15 }}
-      >
-        <div className="h-full w-[8px] bg-[repeating-linear-gradient(-45deg,#b28329,#b28329_3px,#d8b056_3px,#d8b056_5px)] border-r border-[#825c13] shadow-[0_0_15px_rgba(216,176,86,0.3)] animate-pulse" />
-      </motion.div>
-      
-      {/* Center opening glow effect before it parts */}
-      <motion.div 
-        className="absolute inset-x-0 top-0 bottom-0 m-auto w-[2px] bg-[#ffda6a] shadow-[0_0_30px_5px_rgba(255,218,106,0.8)] z-20 pointer-events-none"
-        initial={{ opacity: 0, scaleY: 0 }}
-        animate={{ opacity: [0, 1, 0], scaleY: [0, 1, 1] }}
-        transition={{ duration: 0.6, ease: "easeInOut" }}
-      />
-    </div>
+    <motion.div
+      className="absolute inset-0 z-50 pointer-events-none rounded-[inherit] bg-gradient-to-b from-amber-200/18 via-transparent to-transparent"
+      initial={{ opacity: 0.35 }}
+      animate={{ opacity: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+    />
   );
 }
 
@@ -5313,6 +5290,23 @@ export default function CustomerSite() {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
+                              setActiveSquadTab("overview");
+                              window.dispatchEvent(new CustomEvent("alturath:diwaniya-home"));
+                            }}
+                            className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-[#0d3a22] text-white flex items-center justify-center hover:bg-[#072414] transition-colors font-black text-base sm:text-lg active:scale-95 shadow-sm"
+                            aria-label="العودة للرئيسية داخل الديوانية"
+                            title="الرئيسية"
+                          >
+                            🏠
+                          </button>
+                        )}
+                        {customerPhone && (
+                          <button
+                            type="button"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               clearSquadSessionOnThisDevice();
                             }}
                             className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 hover:bg-rose-100 transition-colors font-black text-base sm:text-lg active:scale-95"
@@ -6525,8 +6519,10 @@ const RoyalLazySusan = ({
 
   if (!products || products.length === 0) return null;
 
+  const isCompactScreen = typeof window !== "undefined" && window.innerWidth < 430;
+
   return (
-    <div className="best-seller-wow-carousel relative w-full h-[200px] flex items-center justify-center overflow-x-hidden perspective-[1200px] select-none touch-pan-y">
+    <div className="best-seller-wow-carousel relative w-full h-[250px] sm:h-[245px] flex items-center justify-center overflow-visible perspective-[1200px] select-none touch-pan-y py-3">
       <AnimatePresence initial={false}>
         {products.map((product, i) => {
           const rawOffset = i - currentIndex;
@@ -6541,8 +6537,8 @@ const RoyalLazySusan = ({
           if (Math.abs(offset) > 2) return null;
 
           const isCenter = offset === 0;
-          const xOffset = offset * 150; // spacing
-          const zOffset = isCenter ? 0 : -100 - Math.abs(offset) * 50;
+          const xOffset = offset * (isCompactScreen ? 118 : 150); // spacing
+          const zOffset = isCenter ? 0 : -80 - Math.abs(offset) * 40;
           const rotateY = -offset * 25; // tilt towards center
           const opacity = isCenter
             ? 1
@@ -6555,7 +6551,7 @@ const RoyalLazySusan = ({
           return (
             <motion.div
               key={product.id}
-              className="best-seller-wow-card absolute w-[180px] min-h-[220px] cursor-grab active:cursor-grabbing"
+              className="best-seller-wow-card absolute w-[150px] min-h-[214px] sm:w-[180px] sm:min-h-[220px] cursor-grab active:cursor-grabbing"
               initial={false}
               animate={{
                 x: xOffset,
