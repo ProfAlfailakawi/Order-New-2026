@@ -1594,19 +1594,52 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       {tempCodeLoading ? "نجهز الكود..." : "إنشاء كود دخول للضيف 🔐"}
                     </button>
                     {(activeTempCode?.code || tempCodes[0]?.code) ? (
-                      <div className="text-center bg-white rounded-3xl p-5 border border-amber-100 space-y-4">
-                        <div>
-                          <div className="text-[10px] font-black text-stone-400 mb-2">الكود الفوري الحالي</div>
-                          <div className="inline-flex bg-stone-50 border border-amber-100 rounded-2xl px-5 py-3 text-3xl font-black tracking-[0.3em] text-brand shadow-nm" dir="ltr">
+                      <div className="relative text-center overflow-hidden rounded-[32px] p-6 text-white bg-gradient-to-br from-[#4a2211] via-[#331407] to-[#1f0a02] border-2 border-[#d4af37]/35 shadow-[0_20px_50px_rgba(31,10,2,0.4)] transition-all duration-300 hover:shadow-[0_25px_60px_rgba(31,10,2,0.55)] group">
+                        {/* Leather tooling border/stitching */}
+                        <div className="absolute inset-1.5 rounded-[26px] border-2 border-[#d4af37]/25 border-dashed pointer-events-none" />
+                        <div className="absolute inset-2.5 rounded-[24px] border border-stone-900/40 pointer-events-none" />
+                        
+                        {/* Subtle leather grain overlay */}
+                        <div className="absolute inset-0 opacity-[0.14] mix-blend-overlay bg-[radial-gradient(#fff_1px,transparent_1px)] bg-[size:10px_10px] pointer-events-none" />
+                        
+                        {/* Gold carved corner accents */}
+                        <div className="absolute top-3 right-3 w-5 h-5 border-t-2 border-r-2 border-[#d4af37]/40 rounded-tr-[8px] pointer-events-none" />
+                        <div className="absolute top-3 left-3 w-5 h-5 border-t-2 border-l-2 border-[#d4af37]/40 rounded-tl-[8px] pointer-events-none" />
+                        <div className="absolute bottom-3 right-3 w-5 h-5 border-b-2 border-r-2 border-[#d4af37]/40 rounded-br-[8px] pointer-events-none" />
+                        <div className="absolute bottom-3 left-3 w-5 h-5 border-b-2 border-l-2 border-[#d4af37]/40 rounded-bl-[8px] pointer-events-none" />
+
+                        {/* Interactive Wax Seal Component */}
+                        <div className="absolute top-4 right-4 z-30">
+                          {/* Wax Seal Container */}
+                          <div className="relative w-12 h-12 rounded-full cursor-pointer select-none filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)] transform hover:scale-110 active:scale-95 transition-all duration-300">
+                            {/* Outer molten organic wax ring */}
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#9c1c1c] via-[#7d1212] to-[#4c0505] border border-[#d4af37]/15 shadow-inner" />
+                            {/* Inner stamped layer */}
+                            <div className="absolute inset-1.5 rounded-full bg-gradient-to-tr from-[#690b0b] to-[#9e1c1c] flex items-center justify-center border border-[#7d1212] shadow-sm">
+                              {/* Logo / Emblem inside wax seal */}
+                              <span className="text-stone-100 font-extrabold text-[15px] select-none scale-100 filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
+                                🕌
+                              </span>
+                            </div>
+                            {/* 3D Glowing golden reflection highlight overlay on hover */}
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-[#d4af37]/0 to-[#d4af37]/0 group-hover:via-[#d4af37]/30 group-hover:to-white/20 transition-all duration-500 opacity-0 group-hover:opacity-100 mix-blend-overlay pointer-events-none" />
+                            <div className="absolute inset-[3px] rounded-full border border-dashed border-[#d4af37]/15 pointer-events-none" />
+                          </div>
+                        </div>
+
+                        <div className="relative z-10 pt-2 pb-4">
+                          <div className="text-[10px] font-black tracking-wider text-[#ecc94b] mb-3.5 uppercase">رقم تذكرة الدخول الملكية 🗝️</div>
+                          <div className="inline-flex relative overflow-hidden bg-gradient-to-b from-[#1c0802] to-[#2c0f05] border border-[#d4af37]/30 rounded-2xl px-6 py-3.5 text-3xl font-black tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-[#ffe494] via-[#f3c25a] to-[#ffe494] shadow-[inset_0_2px_8px_rgba(0,0,0,0.7),0_1px_0_rgba(255,255,255,0.08)] filter drop-shadow-[0_2px_2px_rgba(0,0,0,0.6)]" dir="ltr">
+                            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none animate-pulse" />
                             {activeTempCode?.code || tempCodes[0]?.code}
                           </div>
-                          <p className="text-[9.5px] font-bold text-stone-400 mt-2">أرسل الكود للضيف، صالح لمدة ساعتين.</p>
+                          <p className="text-[10px] font-bold text-stone-300 mt-3">أرسل الكود للضيف، وهو صالح لمدة ساعتين.</p>
                         </div>
                         
                         {/* QR Code Presentation */}
-                        <div className="border-t border-dashed border-stone-100 pt-3 flex flex-col items-center">
-                          <span className="text-[10px] font-black text-amber-600 mb-2 flex items-center gap-1">
-                            📱 رمز الـ QR للدخول الفوري المقرون بالرابط
+                        <div className="border-t border-dashed border-[#d4af37]/20 pt-4 flex flex-col items-center relative z-10">
+                          <span className="text-[10px] font-black text-[#f3c25a] mb-2.5 flex items-center gap-1">
+                            🔱 رمز الـ QR الملكي للدخول السريع
                           </span>
                           <button
                             type="button"
@@ -1618,26 +1651,26 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                 alert("تم نسخ رابط الانضمام التلقائي السريع للديوانية! 📋✨");
                               }
                             }}
-                            className="bg-stone-50 hover:bg-stone-100 p-2.5 rounded-2xl border border-stone-100 relative group transition-all active:scale-[0.98] flex items-center justify-center cursor-pointer"
+                            className="bg-stone-100 hover:bg-white p-3 rounded-[24px] border-2 border-[#d4af37]/30 shadow-2xl relative group/qr transition-all active:scale-[0.98] flex items-center justify-center cursor-pointer"
                             title="اضغط لنسخ رابط الدخول السريع"
                           >
                             <img
                               src={`https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(`${window.location.origin}${window.location.pathname}?code=${activeTempCode?.code || tempCodes[0]?.code}`)}`}
                               alt="سكان كود الدخول"
-                              className="w-28 h-28 rounded-lg shadow-inner filter contrast-[1.08]"
+                              className="w-28 h-28 rounded-[14px] shadow-inner filter contrast-[1.15]"
                               referrerPolicy="no-referrer"
                             />
-                            <div className="absolute inset-0 bg-stone-900/10 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                              <span className="bg-brand/90 text-white text-[8px] font-black px-2 py-1 rounded-lg">إضغط لنسخ الرابط 📋</span>
+                            <div className="absolute inset-0 bg-stone-900/40 rounded-[22px] opacity-0 group-hover/qr:opacity-100 flex items-center justify-center transition-all">
+                              <span className="bg-[#800020] border border-[#d4af37]/40 text-white text-[9px] font-black px-2.5 py-1.5 rounded-xl shadow-lg">إضغط لنسخ الرابط 📋</span>
                             </div>
                           </button>
-                          <p className="text-[9.5px] text-stone-400 font-bold mt-2.5 leading-relaxed">
-                            يقدر ضيفك يمسح الكود بكاميرا تلفونه ويدخل ديوانية "{cleanSquadName(squadInfo?.name)}" تلقائياً وبسهولة بضمة واحدة!
+                          <p className="text-[10px] text-stone-300 font-bold mt-3 leading-relaxed max-w-[260px] mx-auto">
+                            يقدر ضيفك يمسح الكود بكاميرا تلفونه ويدخل ديوانية "{cleanSquadName(squadInfo?.name)}" تلقائياً وبكرم من المعزب!
                           </p>
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-white border border-amber-100 rounded-2xl p-4 text-center text-[11px] font-bold text-stone-500">
+                      <div className="bg-amber-50/25 border-2 border-dashed border-amber-200/50 rounded-[24px] p-5 text-center text-[11px] font-bold text-amber-900/70">
                         اضغط إنشاء كود وسيتولد رمز الـ QR الكود فوراً ومعه الرابط السريع للربع.
                       </div>
                     )}
@@ -2168,94 +2201,101 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                         {/* Selected Memory Detail Modal overlay inside the card frame */}
                         {selectedMemory && (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="bg-white border-4 border-[#b28a41]/45 rounded-3xl p-6 flex flex-col gap-4 text-right shadow-2xl font-sans relative overflow-hidden"
-                            dir="rtl"
-                          >
-                            {/* Decorative background paper texture */}
-                            <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] bg-[size:16px_16px]" />
+                          <div className="fixed inset-0 bg-stone-900/50 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in" onClick={() => setSelectedMemory(null)}>
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.7, rotate: -5 }}
+                              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                              exit={{ opacity: 0, scale: 0.8 }}
+                              transition={{ type: "spring", damping: 25, stiffness: 180 }}
+                              className="bg-[#fafaf6] border-[12px] border-b-[48px] border-white shadow-[0_35px_90px_rgba(0,0,0,0.38)] rounded-sm p-4 flex flex-col gap-4 text-right font-sans relative overflow-hidden max-w-sm w-full mx-auto"
+                              dir="rtl"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {/* Decorative transparent paper tape at top of zoom container */}
+                              <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-8 bg-white/40 backdrop-blur-[1px] border-x border-dashed border-stone-400/30 rotate-1 shadow-sm opacity-90 mix-blend-multiply pointer-events-none z-10" />
 
-                            <div className="absolute top-4 left-4 flex gap-2 z-10">
+                              {/* Close button on the Polaroid top-left margin */}
                               <button
-                                onClick={async () => {
-                                  if (!squadInfo?.id) return;
-                                  try {
-                                    const res = await fetch("/api/squad-delete-memory", {
-                                      method: "POST",
-                                      headers: { "Content-Type": "application/json" },
-                                      body: JSON.stringify({ squadId: squadInfo.id, memoryId: selectedMemory.id })
-                                    });
-                                    if (res.ok) {
-                                      setSelectedMemory(null);
-                                      if (onRefresh) onRefresh();
-                                    }
-                                  } catch (e) {
-                                    console.error("Failed to delete memory from DB:", e);
-                                  }
-                                }}
-                                className="w-6 h-6 rounded-full bg-red-50 text-red-600 border border-red-100 flex items-center justify-center text-[10px] hover:bg-red-100 transition-all font-bold"
-                                title="حذف الذكرى"
+                                onClick={() => setSelectedMemory(null)}
+                                className="absolute top-2 left-2 w-7 h-7 rounded-full bg-white/90 text-stone-700 shadow-md flex items-center justify-center text-xs hover:bg-rose-50 hover:text-rose-500 transition-all font-black z-30"
                               >
                                 ✕
                               </button>
-                              <button
-                                onClick={() => setSelectedMemory(null)}
-                                className="px-3.5 py-1 bg-stone-100 text-stone-700 border border-stone-200 rounded-full text-[10px] font-black hover:bg-stone-200 transition-all"
-                              >
-                                إغلاق الذكرى
-                              </button>
-                            </div>
 
-                            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mt-2 relative z-10">
-                              {/* Chemical polaroid developer image frame */}
-                              <div className="relative shrink-0 w-24 h-24 bg-stone-100 border-[8px] border-b-[20px] border-stone-50 shadow-md flex flex-col items-center justify-center overflow-hidden">
+                              {/* Selected photo / icon */}
+                              <div className={cn("aspect-square w-full rounded-xs border border-stone-200/80 shadow-inner flex flex-col items-center justify-center text-7xl select-none relative overflow-hidden", selectedMemory.bg)}>
                                 <span className={cn(
-                                  "text-5xl select-none transition-all duration-[1.8s] ease-out",
-                                  isCuring ? "scale-90 rotate-6 blur-md grayscale sepia saturate-50 opacity-40" : "scale-100 rotate-0 blur-0 grayscale-0 sepia-0 saturate-100 opacity-100"
+                                  "filter drop-shadow-md select-none transition-all duration-700",
+                                  isCuring ? "scale-90 rotate-6 blur-md grayscale sepia saturate-50 opacity-40 animate-pulse" : "scale-100 rotate-0 blur-0 grayscale-0 sepia-0 saturate-100 opacity-100"
                                 )}>
                                   {selectedMemory.icon}
                                 </span>
-                                
                                 {isCuring && (
-                                  <div className="absolute inset-0 bg-[#0d3a22]/5 mix-blend-color animate-pulse pointer-events-none" />
+                                  <div className="absolute inset-0 bg-[#0d3a22]/5 mix-blend-color pointer-events-none" />
                                 )}
                               </div>
 
-                              <div className="flex-1 space-y-1.5 text-center sm:text-right">
-                                <span className="text-[9px] font-black uppercase tracking-wider text-[#b28a41] bg-[#b28a41]/10 px-2.5 py-0.5 rounded-full inline-block">
-                                  {selectedMemory.date}
-                                </span>
-                                <h4 className="text-base font-black text-brand">{selectedMemory.title}</h4>
-                                <p className="text-xs text-stone-600 font-bold leading-relaxed">{selectedMemory.desc}</p>
+                              {/* Contents in the bottom white margin of the Polaroid */}
+                              <div className="space-y-1.5 mt-1 text-stone-800">
+                                <div className="flex items-center justify-between border-b border-stone-100 pb-1">
+                                  <span className="text-[8.5px] font-black uppercase tracking-wider text-[#b28a41] bg-amber-50 border border-amber-200/60 px-2 rounded-full inline-block">
+                                    {selectedMemory.date}
+                                  </span>
+                                  <span className="text-[8px] font-mono text-stone-400 font-bold">ذكريات اليمعة المعتقة</span>
+                                </div>
+                                <h4 className="text-sm font-black text-brand leading-snug">{selectedMemory.title}</h4>
+                                <p className="text-[11px] text-stone-600 font-medium leading-relaxed">{selectedMemory.desc}</p>
                               </div>
-                            </div>
 
-                            <div className="border-t border-stone-100 pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 bg-stone-50/50 -mx-6 -mb-6 p-4 rounded-b-2xl relative z-10">
-                              <span className={cn(
-                                "text-[9px] font-black px-2.5 py-1 rounded-full transition-colors flex items-center gap-1.5",
-                                isCuring ? "text-amber-700 bg-amber-50 animate-pulse border border-amber-200/50" : "text-emerald-700 bg-emerald-50 border border-emerald-200/50"
-                              )}>
-                                <span>{isCuring ? "🧪" : "❖"}</span>
-                                <span>{isCuring ? "جاري استخلاص كيمياء الصورة المعتقة..." : "مُعتقّة كليّاً بنقاء السدو التراثي 🌾"}</span>
-                              </span>
-                              
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => {
-                                    // Let them copy the story to WhatsApp to laugh with the group!
-                                    const link = `https://${window.location.host}/?squadId=${squadInfo?.id || ""}`;
-                                    const shareText = `📸 من ذكريات دوانيتنا بالفندق التراثي القديم:\n\n*${selectedMemory.title}*\n"${selectedMemory.desc}"\n🗓️ تاريخ اليمعة: ${selectedMemory.date}\n\nشوف باقي ذكريات دوانيتنا وشاركنا بالقرعة هني:\n${link}`;
-                                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, "_blank");
-                                  }}
-                                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black flex items-center gap-1 transition-all shadow-sm shrink-0"
-                                >
-                                  <span>شاركها بالواتساب 💬</span>
-                                </button>
+                              <div className="border-t border-dashed border-stone-200 pt-3 flex items-center justify-between gap-3 mt-1">
+                                <span className={cn(
+                                  "text-[8px] font-black px-2 py-0.5 rounded-full transition-colors flex items-center gap-1",
+                                  isCuring ? "text-amber-700 bg-amber-50 animate-pulse border border-amber-200/50" : "text-emerald-700 bg-emerald-50 border border-emerald-200/50"
+                                )}>
+                                  <span>{isCuring ? "🧪" : "❖"}</span>
+                                  <span>{isCuring ? "جاري تظهير الصورة..." : "مُعتقّة بذكار السدو 🌾"}</span>
+                                </span>
+
+                                <div className="flex gap-1.5">
+                                  {isOwner && (
+                                    <button
+                                      onClick={async () => {
+                                        if(!squadInfo?.id) return;
+                                        if(!confirm("هل تبي تحذف هالذكرى نهائياً؟")) return;
+                                        try {
+                                          const res = await fetch("/api/squad-delete-memory", {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ squadId: squadInfo.id, memoryId: selectedMemory.id })
+                                          });
+                                          if (res.ok) {
+                                            setSelectedMemory(null);
+                                            if (onRefresh) onRefresh();
+                                          }
+                                        } catch (e) {
+                                          console.error("Failed to delete memory:", e);
+                                        }
+                                      }}
+                                      className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 rounded-lg text-[8.5px] font-black transition-all"
+                                      title="حذف الذكرى"
+                                    >
+                                      حذف 🗑️
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => {
+                                      const link = `https://${window.location.host}/?squadId=${squadInfo?.id || ""}`;
+                                      const shareText = `📸 من ذكريات دوانيتنا بالفندق التراثي القديم:\n\n*${selectedMemory.title}*\n"${selectedMemory.desc}"\n🗓️ تاريخ اليمعة: ${selectedMemory.date}\n\nشوف باقي ذكريات دوانيتنا وشاركنا بالقرعة هني:\n${link}`;
+                                      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, "_blank");
+                                    }}
+                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[8.5px] font-black flex items-center gap-0.5 transition-all shadow-sm"
+                                  >
+                                    <span>واتساب 💬</span>
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          </motion.div>
+                            </motion.div>
+                          </div>
                         )}
 
                         {heritageMemories.length === 0 ? (
@@ -2265,32 +2305,37 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             <span className="text-[10px] font-bold text-stone-400">سجلوا يمعتكم الياية هني بالطيب! ✨</span>
                           </div>
                         ) : (
-                          <div className="diwaniya-memories-grid grid grid-cols-2 sm:grid-cols-3 gap-6 pt-1" dir="rtl">
+                          <div className="diwaniya-memories-grid grid grid-cols-2 sm:grid-cols-3 gap-6 pt-4 pb-2" dir="rtl">
                             {heritageMemories.map((album, idx) => {
-                              // Realistic slight random slant angles for 3D polaroid scatter layout
-                              const slantAngle = idx % 3 === 0 ? "-3deg" : idx % 3 === 1 ? "2.5deg" : "-1.5deg";
+                              // Scattered angles between -4 and 4 degrees
+                              const tiltAngles = ["-3.5deg", "2deg", "-1.8deg", "3.2deg", "-2.5deg", "1.5deg", "-4deg", "4deg"];
+                              const slantAngle = tiltAngles[idx % tiltAngles.length];
                               return (
                                 <motion.div 
                                   key={album.id || idx}
                                   onClick={() => {
                                     setSelectedMemory(album);
                                   }}
-                                  whileHover={{ scale: 1.05, rotate: "0deg", zIndex: 10 }}
+                                  whileHover={{ scale: 1.08, rotate: "0deg", zIndex: 15, y: -4 }}
                                   style={{ rotate: slantAngle }}
                                   className={cn(
-                                    "diwaniya-memory-card bg-[#fcfcfa] border-[10px] border-b-[26px] border-stone-50 rounded-none shadow-md hover:shadow-xl transition-all flex flex-col gap-2.5 cursor-pointer relative",
-                                    selectedMemory?.id === album.id ? "ring-2 ring-[#b28a41] shadow-[#b28a41]/10 bg-stone-50" : "border-stone-100"
+                                    "diwaniya-memory-card bg-[#fafaf7] p-2.5 pb-6 border border-stone-200/80 shadow-md hover:shadow-2xl transition-all flex flex-col gap-2 cursor-pointer relative rounded-sm select-none",
+                                    selectedMemory?.id === album.id ? "ring-2 ring-[#b28a41] shadow-[#b28a41]/20 bg-amber-50/20" : ""
                                   )}
                                 >
-                                  <div className={cn("diwaniya-memory-frame aspect-square flex flex-col items-center justify-center text-3xl bg-gradient-to-br border border-stone-100 relative overflow-hidden shadow-inner", album.bg)}>
-                                    <span className="filter drop-shadow-sm select-none">{album.icon}</span>
-                                    <div className="absolute inset-0 bg-yellow-900/5 mix-blend-color-burn pointer-events-none" />
-                                    <div className="absolute top-1.5 left-1.5 text-[8px] bg-white/70 px-1 rounded font-mono text-stone-500">
+                                  {/* Paper tape element sticking at the top of Polaroid */}
+                                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-12 h-5 bg-white/40 backdrop-blur-[1px] border-x border-dashed border-stone-400/25 rotate-1 shadow-sm opacity-85 mix-blend-multiply pointer-events-none z-10" />
+
+                                  <div className={cn("diwaniya-memory-frame aspect-square w-full flex flex-col items-center justify-center text-3xl bg-gradient-to-br border border-stone-200/60 relative overflow-hidden shadow-inner rounded-xs", album.bg)}>
+                                    <span className="filter drop-shadow-sm select-none transform hover:scale-110 transition-transform duration-500">{album.icon}</span>
+                                    <div className="absolute inset-0 bg-yellow-900/[0.03] mix-blend-color-burn pointer-events-none" />
+                                    <div className="absolute top-1.5 left-1.5 text-[8px] bg-white/80 border border-stone-100 px-1 rounded font-mono text-stone-500">
                                       #{formatEnglishNumber(idx + 1)}
                                     </div>
                                   </div>
-                                  <div className="flex flex-col gap-0.5 text-center font-sans">
-                                    <h6 className="text-[10.5px] font-black text-brand truncate pr-0.5 leading-tight">{album.title}</h6>
+                                  
+                                  <div className="flex flex-col gap-0.5 text-center font-sans mt-0.5">
+                                    <h6 className="text-[10px] sm:text-[11px] font-black text-brand truncate pr-0.5 leading-tight">{album.title}</h6>
                                     <span className="text-[7.5px] font-extrabold text-[#b28a41] font-mono leading-none">{album.date}</span>
                                   </div>
                                 </motion.div>
