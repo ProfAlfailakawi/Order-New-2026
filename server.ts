@@ -10,6 +10,18 @@ import { initializeApp } from "firebase/app";
 import admin from "firebase-admin";
 import { getMessaging } from "firebase-admin/messaging";
 import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
+import { GoogleGenAI, Type } from "@google/genai";
+
+// Initialize Gemini SDK with User-Agent telemetry
+const aiClient = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+  httpOptions: {
+    headers: {
+      "User-Agent": "aistudio-build",
+    },
+  },
+});
+
 import {
   initializeFirestore,
   setLogLevel,
@@ -3023,6 +3035,95 @@ app.get("/api/debug/order/:id", async (req, res) => {
       });
     }
   });
+
+  app.post("/api/smart-search", async (req, res) => {
+    try {
+      const { query: searchQuery } = req.body;
+      if (!searchQuery || !String(searchQuery).trim()) {
+        return res.json({ matchingIds: [], message: "" });
+      }
+
+      // Fetch active menu products
+      const data = await getAppDataForKeys(["products", "supplierCopies"]);
+      const allProducts = [...(data.products || []), ...(data.supplierCopies || [])];
+      const products = getCustomerVisibleProducts(processProducts(allProducts));
+
+      // Simplify product catalog for Gemini to keep token counts small and focused
+      const catalog = products.map((p: any) => ({
+        id: p.id || p.productId,
+        name: p.name,
+        nameEn: p.nameEn,
+        category: p.category,
+        price: p.price,
+        description: p.preparationInstructions || ""
+      }));
+
+      const systemInstruction = `أنت المساعد الذكي جداً والمستشار الغذائي الخبير في مطبخ التراث الكويتي.
+مهمتك هي تحليل استعلام البحث الذي يكتبه المستخدم باللغة العربية بلهجات متعددة (خاصة اللهجة الكويتية والخليجية العامية والفصحى) بدقة فائقة وفهمه واختيار وتلمس الوجبات والمنتجات المناسبة له من قائمة طعامنا، وكتابة تلميح أو تعليق كويتي دافئ وحبّي وحنون جداً يخاطب العميل بشكل شخصي ومباشر بقمة العاطفة والذكاء الكويتي الأصيل.
+
+تعليمات هامة:
+1. العميل قد يبحث عن:
+- حميات أو قيود صحية: مثلاً (بدون عيش، كيتو، دايت، خفيف، بدون بصل، نباتي، بروتين عالي).
+- حالات مزاجية أو صحية: مثلاً (مريض، منشول، مصخن، تعبان، يوعان يوع مو طبيعي، مشتهر، ولهان على طبخ أمي).
+- مناسبات وتجمعات: مثلاً (ديوانية، يمعه ربع، عشاء عائلي، زوارة، صواني كبار).
+- أوقات خاصة: مثلاً (سهران، جوع آخر الليل، ريوق خفيف، تحلية بعد الغدا).
+- رغبة في نوع طعام محدد جداً حتى بمرادفاته الشعبية: مثلاً (عقيل، مجبوس، لحم ذبيحة، حلو، مرق، مرقة، شوربة، هيل، دارسين).
+
+2. طريقة فهم الوجبات وصحّتها:
+- إذا العميل طلب "بدون عيش": يجب استبعاد أي مجبوس أو برياني يحتوي عيش بشكل تلقائي أو اختيار الوجبات التي تتوفر كلحوم أو إيدامات أو يمكن تعديلها، أو شوربات وسلطات، أو صواني مشاوي.
+- إذا العميل قال "مريض" أو "مصخن": الأولوية المطلقة للشوربات الدافئة (مثال شوربة لسان عصفور، شوربة خضار، شوربة عدس) والمرقات الخفيفة، والمشروبات الدافئة إن وجدت. واكتب له دعاء بالشفاء بلهجة كويتية رحيمة ("أجر وعافية يالغالي وما تشوف شر...").
+- إذا العميل قال "سفر" أو "راجع من السفر": دلّه على الصواني السريعة والمشبعة الفورية التي تسد جوعه وجوع عائلته فوراً بعد وعثاء السفر.
+- إذا العميل قال "حلو" أو "تحلية" أو "أبي شي بارد": رتّب له الحلويات المتوفرة لدينا مثل (قرص عقيلي، لقيمات، كيكة، حلوى، إلخ).
+
+3. الرد الكويتي (message):
+- يجب أن يكون رداً دافئاً جداً جالب للحنين، يفيض ترحيباً ("يا بعد قلبي"، "يا أخوي الغالي"، "يا أختي الغالية"، "من عيوني"، "يا بعد طوايف أهلي")، ومفصّلاً تماماً بناءً على الكلمات المفتاحية والحالة التي كتبها المستخدم.
+- اشرح له بذكاء شديد لماذا اخترت له هذه الوجبات بالذات (مثال: "بما أنك مسوي دايت وتبيه بدون عيش، اخترت لك هالمشاوي اللذيذة والشوربة الخفيفة اللي تترس بطنك بدون ما تخرب رجيمك...").
+
+4. أرجع النتيجة في صيغة JSON مطابقة تماماً للمواصفات التالية:
+{
+  "matchingIds": ["id1", "id2", ...], // مصفوفة تحتوي على معرفات المنتجات المطابقة مرتبة حسب الأولوية القصوى للمطابقة (الأكثر شبهاً وملاءمةً بالأعلى).
+  "message": "نص الرسالة الكويتية الدافئة والذكية جداً هنا"
+}`;
+
+      const userContent = `استعلام البحث للعميل: "${searchQuery}"\n\nكتالوج المنتجات المتاح لدينا:\n${JSON.stringify(catalog, null, 2)}`;
+
+      const response = await aiClient.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: userContent,
+        config: {
+          systemInstruction,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              matchingIds: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: "List of matching product IDs sorted by relevance"
+              },
+              message: {
+                type: Type.STRING,
+                description: "A friendly, warm, highly personalized Kuwaiti explanation matching the user's query"
+              }
+            },
+            required: ["matchingIds", "message"]
+          }
+        }
+      });
+
+      const resultText = response.text || "{}";
+      const parsed = JSON.parse(resultText);
+
+      res.json({
+        matchingIds: Array.isArray(parsed?.matchingIds) ? parsed.matchingIds : [],
+        message: parsed?.message || "أبشر! جرب هالوجبات الطيبة لطلبك."
+      });
+    } catch (error) {
+      console.error("[SMART_SEARCH_ERROR]:", error);
+      res.status(500).json({ matchingIds: [], message: "حصل التباس بسيط بالسرش الذكي الذكاء الاصطناعي موجه!" });
+    }
+  });
+
 
   // Function to generate a unified, completely unique ID
   function generateUnifiedId(prefix = "ORD") {

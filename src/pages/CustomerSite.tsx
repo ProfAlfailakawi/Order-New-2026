@@ -1036,6 +1036,8 @@ export default function CustomerSite() {
   const [moodQuery, setMoodQuery] = useState("");
   const [moodMessage, setMoodMessage] = useState<string | null>(null);
   const [moodFilter, setMoodFilter] = useState("الكل");
+  const [aiSearchLoading, setAiSearchLoading] = useState(false);
+  const [aiMatchingIds, setAiMatchingIds] = useState<string[] | null>(null);
 
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
@@ -2491,6 +2493,8 @@ export default function CustomerSite() {
     if (!moodQuery.trim()) {
       setMoodMessage(null);
       setMoodFilter("الكل");
+      setAiMatchingIds(null);
+      setAiSearchLoading(false);
       return;
     }
 
@@ -2506,12 +2510,37 @@ export default function CustomerSite() {
       "بحث": moodResponses.general,
     };
 
-    const timer = setTimeout(() => {
-      setMoodMessage(getDeterministicMsg(responseMap[filter] || moodResponses.general));
-      setMoodFilter(filter);
-    }, 500);
+    // Set immediate local fallback values
+    setMoodMessage(getDeterministicMsg(responseMap[filter] || moodResponses.general));
+    setMoodFilter(filter);
+    setAiSearchLoading(true);
 
-    return () => clearTimeout(timer);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/smart-search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: moodQuery }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.matchingIds)) {
+            setAiMatchingIds(data.matchingIds);
+          }
+          if (data.message) {
+            setMoodMessage(data.message);
+          }
+        }
+      } catch (err) {
+        console.warn("Gemini smart search failed, keeping local-state search", err);
+      } finally {
+        setAiSearchLoading(false);
+      }
+    }, 700);
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, [moodQuery, moodResponses]);
 
   const validatePromo = async () => {
@@ -4518,7 +4547,11 @@ export default function CustomerSite() {
           <div className="px-4 sm:px-6 mb-2">
             <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-2 flex flex-col gap-2 relative z-20">
               <div className="flex items-center bg-stone-50/80 backdrop-blur-sm rounded-2xl px-4 py-3">
-                <Search className="w-5 h-5 text-accent mr-2" />
+                {aiSearchLoading ? (
+                  <Sparkles className="w-5 h-5 text-amber-500 animate-[spin_3s_linear_infinite]" />
+                ) : (
+                  <Search className="w-5 h-5 text-accent mr-2" />
+                )}
                 <motion.input
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -4530,6 +4563,13 @@ export default function CustomerSite() {
                   dir="rtl" className="orser-search-input bg-transparent w-full outline-none text-sm font-bold text-brand placeholder:text-stone-400 placeholder:font-medium"
                 />
               </div>
+
+              {aiSearchLoading && (
+                <div className="flex items-center justify-center gap-1.5 text-[#a88241] text-xs font-extrabold py-0.5 animate-pulse select-none">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>المستشار الذكي يحلل طريقتك ويختار أنسب الوجبات... 🧠✨</span>
+                </div>
+              )}
               
               <AnimatePresence>
                 {moodQuery.trim() && moodMessage && (
@@ -4540,7 +4580,10 @@ export default function CustomerSite() {
                     className="px-2 pb-2 text-center"
                   >
                     <div className="bg-gradient-to-r from-brand/5 via-brand/10 to-brand/5 rounded-xl p-3 inline-block">
-                      <p className="text-sm font-bold text-brand leading-relaxed">{moodMessage}</p>
+                      <p className="text-sm font-bold text-brand leading-relaxed flex items-center justify-center gap-2">
+                        <span>{moodMessage}</span>
+                        {!aiSearchLoading && <Sparkles className="w-3.5 h-3.5 text-accent shrink-0" />}
+                      </p>
                     </div>
                   </motion.div>
                 )}
@@ -4691,7 +4734,22 @@ export default function CustomerSite() {
                     });
               
               if (moodQuery.trim()) {
-                displayProducts = getSmartProductMatches(displayProducts, moodQuery, 60);
+                if (aiMatchingIds && aiMatchingIds.length > 0) {
+                  const matched: any[] = [];
+                  aiMatchingIds.forEach((id: string) => {
+                    const found = displayProducts.find((p: any) => p.id === id || p.productId === id);
+                    if (found) {
+                      matched.push(found);
+                    }
+                  });
+                  if (matched.length > 0) {
+                    displayProducts = matched;
+                  } else {
+                    displayProducts = getSmartProductMatches(displayProducts, moodQuery, 60);
+                  }
+                } else {
+                  displayProducts = getSmartProductMatches(displayProducts, moodQuery, 60);
+                }
               }
 
               const allCategories = getSharedProductCategories(settings, displayProducts);
