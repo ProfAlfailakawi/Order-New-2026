@@ -81,6 +81,172 @@ const normalizeProductSearchText = (value?: string) =>
 
 
 
+const normalizeKuwaitiSearchText = (value?: string) =>
+  normalizeProductSearchText(value)
+    .replace(/[گ]/g, "ك")
+    .replace(/[چ]/g, "ج")
+    .replace(/[پ]/g, "ب")
+    .replace(/[\u{1F000}-\u{1FAFF}]/gu, " ")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const splitSmartSearchTokens = (value?: string) =>
+  normalizeKuwaitiSearchText(value)
+    .split(" ")
+    .map((token) => token.trim())
+    .filter((token) => token.length > 1);
+
+const getProductSmartSearchText = (product: any) =>
+  normalizeKuwaitiSearchText([
+    product?.name,
+    product?.productName,
+    product?.nameAr,
+    product?.nameEn,
+    product?.category,
+    product?.description,
+    product?.shortDescription,
+    product?.details,
+    product?.ingredients,
+    product?.preparationInstructions,
+    ...(Array.isArray(product?.tags) ? product.tags : []),
+    ...(Array.isArray(product?.keywords) ? product.keywords : []),
+  ].filter(Boolean).join(" "));
+
+const SMART_PRODUCT_INTENTS: any[] = [
+  {
+    id: "gathering",
+    filter: "صواني",
+    queryTerms: ["ضيف", "ضيوف", "عزيمه", "عزايم", "ديوانيه", "زواره", "يمعه", "جمعه", "ربع", "اهل", "ناس", "متوهق", "ابيض", "وجه", "كبير", "كبيره", "بوفيه", "وليمه", "ولائم"],
+    productTerms: ["صينيه", "صواني", "وليمه", "ولائم", "مجبوس", "مندي", "قوزي", "ذبيحه", "لحم", "دجاج", "برياني", "مفطح", "محاشي", "طباخ"],
+  },
+  {
+    id: "sick",
+    filter: "مريض",
+    queryTerms: ["مريض", "مريضه", "تعبان", "تعبانه", "تعب", "برد", "زكام", "كحه", "كح", "حراره", "سخونه", "صدر", "حلق", "معده", "خفيف", "دافي", "يدفي", "شوربه", "اجروعافيه", "اجر", "عافيه"],
+    productTerms: ["شوربه", "مرق", "هريس", "جريش", "تشريب", "دافي", "خفيف", "خضار", "دجاج", "عيش مشخول", "نخي", "روب"],
+  },
+  {
+    id: "travel",
+    filter: "سفر",
+    queryTerms: ["سفر", "مسافر", "راد", "راده", "راجع", "راجعين", "طريق", "درب", "مطار", "البيت", "فاضي", "واصل", "توصل", "يوعانين", "جوعانين", "ميتين", "تعبانين"],
+    productTerms: ["صينيه", "صواني", "مجبوس", "برياني", "قوزي", "مندي", "ولائم", "لحم", "دجاج", "عيش", "مشخول", "مشوي", "بشاميل"],
+  },
+  {
+    id: "sweet",
+    filter: "حلو",
+    queryTerms: ["حلو", "حلى", "كاكاو", "كيك", "سكر", "مزاج", "زعلان", "متضايق", "ضايق", "نكد", "دلع", "قهوه", "قهوة"],
+    productTerms: ["حلو", "حلى", "كاكاو", "كيك", "تمر", "رهش", "لقيمات", "كنافه", "بقلاوه", "بودينغ", "تشيز", "قهوه", "قهوة"],
+  },
+  {
+    id: "light",
+    filter: "خفيف",
+    queryTerms: ["خفيف", "خفيفه", "موثقيل", "مو ثقيل", "سناك", "تصبيره", "لقمه", "لقيمه", "دايت", "صحي", "سلطه", "ما ابي اثقل", "ابي شي خفيف"],
+    productTerms: ["خفيف", "سلطه", "سلطة", "شوربه", "نخي", "روب", "ورق عنب", "مقبلات", "جانبي", "تشريب", "هريس", "جريش"],
+    avoidTerms: ["ذبيحه", "مفطح", "قوزي", "وليمه", "ولائم"],
+  },
+  {
+    id: "hungry",
+    filter: "سهران",
+    queryTerms: ["يوع", "يوعان", "يوعانه", "جوع", "جوعان", "جوعانه", "اشبع", "يشبع", "مشبع", "محتار", "اختار", "اختيار", "عطني", "عطيني", "ضبطني", "اضبطني", "ابي شي قوي", "شي قوي", "غدا", "عشا", "عشاء", "ريوق", "فطور"],
+    productTerms: ["مجبوس", "برياني", "مندي", "قوزي", "لحم", "دجاج", "سمج", "روبيان", "عيش", "مشخول", "صينيه", "وجبه", "بوكس", "مشبع", "مربين", "مطبق", "مموش"],
+  },
+  {
+    id: "seafood",
+    filter: "بحث",
+    queryTerms: ["بحري", "سمج", "سمك", "روبيان", "ربيان", "زبيدي", "هامور"],
+    productTerms: ["بحري", "سمج", "سمك", "روبيان", "ربيان", "زبيدي", "هامور", "مربين"],
+  },
+];
+
+const getSmartQueryIntentMatches = (query: string) => {
+  const normalizedQuery = normalizeKuwaitiSearchText(query);
+  const compactQuery = normalizedQuery.replace(/\s+/g, "");
+  return SMART_PRODUCT_INTENTS
+    .map((intent) => {
+      const score = intent.queryTerms.reduce((total, term) => {
+        const normalizedTerm = normalizeKuwaitiSearchText(term);
+        if (!normalizedTerm) return total;
+        const compactTerm = normalizedTerm.replace(/\s+/g, "");
+        if (normalizedQuery.includes(normalizedTerm) || compactQuery.includes(compactTerm)) {
+          return total + Math.max(3, normalizedTerm.length);
+        }
+        return total;
+      }, 0);
+      return { ...intent, score };
+    })
+    .filter((intent) => intent.score > 0)
+    .sort((a, b) => b.score - a.score);
+};
+
+const detectSmartMoodFilter = (query: string) => getSmartQueryIntentMatches(query)[0]?.filter || "بحث";
+
+const scoreProductForSmartSearch = (product: any, query: string) => {
+  if (!product || product?.isActive === false || product?.isOutOfStock) return -1;
+  const productText = getProductSmartSearchText(product);
+  if (!productText) return -1;
+
+  const normalizedQuery = normalizeKuwaitiSearchText(query);
+  const queryTokens = splitSmartSearchTokens(query);
+  const intents = getSmartQueryIntentMatches(query);
+  let score = 0;
+
+  if (normalizedQuery && productText.includes(normalizedQuery)) score += 80;
+
+  queryTokens.forEach((token) => {
+    if (productText.includes(token)) score += token.length >= 4 ? 16 : 9;
+  });
+
+  intents.forEach((intent, index) => {
+    const intentWeight = Math.max(10, 32 - index * 5);
+    let matchedIntentTerms = 0;
+    intent.productTerms.forEach((term) => {
+      const normalizedTerm = normalizeKuwaitiSearchText(term);
+      if (normalizedTerm && productText.includes(normalizedTerm)) {
+        matchedIntentTerms += 1;
+        score += intentWeight;
+      }
+    });
+    (intent.avoidTerms || []).forEach((term) => {
+      const normalizedTerm = normalizeKuwaitiSearchText(term);
+      if (normalizedTerm && productText.includes(normalizedTerm)) score -= 24;
+    });
+    if (matchedIntentTerms > 1) score += matchedIntentTerms * 8;
+  });
+
+  const category = normalizeKuwaitiSearchText(product?.category || "");
+  const name = normalizeKuwaitiSearchText(product?.name || product?.productName || product?.nameAr || "");
+  if (queryTokens.some((token) => name.includes(token))) score += 25;
+  if (queryTokens.some((token) => category.includes(token))) score += 18;
+  if (product?.isTopSeller || product?.isBestSeller || product?.isMenuFeatured || product?.featuredInMenu || product?.isFeatured) score += 10;
+  if (Number(product?.price || product?.basePrice || 0) > 0) score += 2;
+
+  return score;
+};
+
+const getSmartProductMatches = (products: any[] = [], query: string, limit = 60) => {
+  const activeProducts = (Array.isArray(products) ? products : []).filter((product: any) => product?.isActive !== false && !product?.isOutOfStock);
+  const scored = activeProducts
+    .map((product: any, index: number) => ({ product, index, score: scoreProductForSmartSearch(product, query) }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((item) => item.product);
+
+  if (scored.length > 0) return scored.slice(0, limit);
+
+  const normalizedQuery = normalizeKuwaitiSearchText(query);
+  if (!normalizedQuery) return activeProducts.slice(0, limit);
+
+  return activeProducts
+    .slice()
+    .sort((a: any, b: any) => {
+      const aFeatured = a?.isTopSeller || a?.isBestSeller || a?.isMenuFeatured || a?.featuredInMenu || a?.isFeatured ? 1 : 0;
+      const bFeatured = b?.isTopSeller || b?.isBestSeller || b?.isMenuFeatured || b?.featuredInMenu || b?.isFeatured ? 1 : 0;
+      return bFeatured - aFeatured;
+    })
+    .slice(0, Math.min(limit, 12));
+};
+
 const normalizeCustomerProductKey = (product: any) => {
   const normalizedName = normalizeProductSearchText(product?.name || product?.productName || product?.nameAr || "");
   const normalizedCategory = normalizeProductSearchText(product?.category || "");
@@ -2177,41 +2343,21 @@ export default function CustomerSite() {
       return;
     }
 
-    const q = moodQuery.toLowerCase();
-    
-    // We use the length of the query to deterministically pick a response
-    // so it doesn't flicker on every keystroke, but it seems randomly selected
     const getDeterministicMsg = (arr: string[]) => arr[moodQuery.length % arr.length];
+    const filter = detectSmartMoodFilter(moodQuery);
+    const responseMap: Record<string, string[]> = {
+      "مريض": moodResponses.sick,
+      "سفر": moodResponses.travel,
+      "صواني": moodResponses.gathering,
+      "حلو": moodResponses.sad,
+      "خفيف": moodResponses.general,
+      "سهران": moodResponses.late,
+      "بحث": moodResponses.general,
+    };
 
-    let msg = "";
-    let filter = "الكل";
-
-    if (q.includes("مريض") || q.includes("تعب") || q.includes("برد") || q.includes("زكام") || q.includes("معدت") || q.includes("بنتي") || q.includes("ولد") || q.includes("سخون") || q.includes("كح") || q.includes("شفا") || q.includes("حرار") || q.includes("يدفي") || q.includes("صدر") || q.includes("مريضه") || q.includes("تعبان")) {
-      msg = getDeterministicMsg(moodResponses.sick);
-      filter = "مريض";
-    } else if (q.includes("سفر") || q.includes("راد") || q.includes("راجع") || q.includes("فاضي") || q.includes("طريق") || q.includes("المطار") || q.includes("الدرب") || q.includes("سافر") || (q.includes("يوع") && q.includes("بيت")) || (q.includes("جوع") && q.includes("بيت")) || q.includes("يوعانين") || q.includes("جوعانين") || q.includes("ميتين")) {
-      msg = getDeterministicMsg(moodResponses.travel);
-      filter = "سفر";
-    } else if (q.includes("ضيف") || q.includes("عزيم") || q.includes("متوهق") || q.includes("ربع") || q.includes("ديواني")) {
-      msg = getDeterministicMsg(moodResponses.gathering);
-      filter = "صواني";
-    } else if (q.includes("زعلان") || q.includes("متضايق") || q.includes("حلو") || q.includes("كاكاو") || q.includes("ضيق")) {
-      msg = getDeterministicMsg(moodResponses.sad);
-      filter = "حلو";
-    } else if (q.includes("سهران") || q.includes("يوع") || q.includes("جوع") || q.includes("ليل")) {
-      msg = getDeterministicMsg(moodResponses.late);
-      filter = "سهران";
-    }
-
-    // Debounce feeling
     const timer = setTimeout(() => {
-      if (msg) {
-        setMoodMessage(msg);
-        setMoodFilter(filter);
-      } else {
-        setMoodMessage(getDeterministicMsg(moodResponses.general));
-        setMoodFilter("بحث");
-      }
+      setMoodMessage(getDeterministicMsg(responseMap[filter] || moodResponses.general));
+      setMoodFilter(filter);
     }, 500);
 
     return () => clearTimeout(timer);
@@ -4395,133 +4541,13 @@ export default function CustomerSite() {
                     });
               
               if (moodQuery.trim()) {
-                 if (moodFilter === "مريض") {
-                    // Traditional Healing soups mixed with aromatic vegetables stacked at the top!
-                    const sickCustomSoups = [
-                      {
-                        id: "emotional_soup_1",
-                        name: "شوربة الشفاء بالخضار العطرة 🍲",
-                        nameEn: "Healing Soup with Aromatic Vegetables",
-                        price: 1.5,
-                        category: "شوربات الشفاء العريقة",
-                        description: "شوربة دافئة غنية بقطع الدجاج والخضار الطازجة مع الكرفس والبقدونس والهيل، تدفئ الصدر والبلعوم وتعيد العافية بإذن الله.",
-                        imageUrl: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80",
-                        options: [],
-                        extras: [],
-                        addons: [],
-                        isNewProduct: true,
-                        supplierId: "we27tunga",
-                        isActive: true
-                      },
-                      {
-                        id: "emotional_soup_2",
-                        name: "شوربة لسان عصفور تراثية بالهيل 🥣",
-                        nameEn: "Traditional Orzo Soup with Cardamom",
-                        price: 1.25,
-                        category: "شوربات الشفاء العريقة",
-                        description: "شوربة دافئة خفيفة من القمح المحمر، مطبوخة بمرق الدجاج الهادئ والبهارات الناعمة لتسكين التعب وزيادة المناعة.",
-                        imageUrl: "https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?auto=format&fit=crop&w=600&q=80",
-                        options: [],
-                        extras: [],
-                        addons: [],
-                        isNewProduct: true,
-                        supplierId: "we27tunga",
-                        isActive: true
-                      }
-                    ];
-                    
-                    const existingComforts = products.filter(p => {
-                      const n = p.name?.toLowerCase() || "";
-                      const c = p.category?.toLowerCase() || "";
-                      return n.includes("جريش") || n.includes("هريس") || n.includes("مرق") || n.includes("شورب") || c.includes("شورب") || n.includes("مشخول") || n.includes("عيش مشغول");
-                    });
-                    
-                    displayProducts = existingComforts.length ? existingComforts : products.filter((p) => p?.isActive !== false && !p?.isOutOfStock).slice(0, 5);
-                 } else if (moodFilter === "سفر") {
-                    // Fast, comforting, satisfying trays that solve starving-after-travel
-                    const travelCustomTrays = [
-                      {
-                        id: "emotional_travel_1",
-                        name: "صينية مجبوس لحم سريعة (نعيمي) 🥘",
-                        nameEn: "Express Family Naemi Machboos Tray",
-                        price: 38,
-                        category: "صواني الولائم الفورية",
-                        description: "صينية دسمة وحارة ومحفوفة تكفي من ٣ إلى ٥ أشخاص، تجهز فوراً لتنسيكم تعب السفر وتملأ البيت برائحة الهيل والزعفران الكويتي الأصيل.",
-                        imageUrl: "https://images.unsplash.com/photo-1545093149-618ce3bcf49d?auto=format&fit=crop&w=600&q=80",
-                        options: [],
-                        extras: [],
-                        addons: [],
-                        isNewProduct: true,
-                        supplierId: "we27tunga",
-                        isActive: true
-                      },
-                      {
-                        id: "emotional_travel_2",
-                        name: "صينية برياني دجاج مشبعة فورية 🍗",
-                        nameEn: "Express Chicken Biryani Tray",
-                        price: 12,
-                        category: "صواني الولائم الفورية",
-                        description: "صينية غنية بقطع الدجاج والبهارات الفاخرة، مع عيش حار ومكسرات وبصل محمر، تسد أشد الجوع في دقائق للراجعين من السفر والدرب.",
-                        imageUrl: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
-                        options: [],
-                        extras: [],
-                        addons: [],
-                        isNewProduct: true,
-                        supplierId: "we27tunga",
-                        isActive: true
-                      }
-                    ];
-                    
-                    const existingTrays = products.filter(p => {
-                      const n = p.name?.toLowerCase() || "";
-                      const c = p.category?.toLowerCase() || "";
-                      return n.includes("صينية") || n.includes("صيني") || n.includes("مجبوس") || n.includes("برياني") || n.includes("قوزي") || n.includes("ذبيح") || c.includes("الولائم") || n.includes("بشاميل");
-                    });
-                    
-                    displayProducts = existingTrays.length ? existingTrays : products.filter((p) => p?.isActive !== false && !p?.isOutOfStock).slice(0, 5);
-                 } else if (moodFilter === "صواني") {
-                    displayProducts = displayProducts.filter(p => p.name?.includes("صيني") || p.name?.includes("صينية") || p.category?.includes("صواني") || p.name?.includes("مجبوس") || p.name?.includes("طباخ"));
-                 } else if (moodFilter === "خفيف") {
-                    displayProducts = displayProducts.filter(p => {
-                      const n = p.name?.toLowerCase() || "";
-                      const c = p.category?.toLowerCase() || "";
-                      const isHeavy = n.includes("مجبوس") || n.includes("برياني") || n.includes("مقلوب") || n.includes("برية") || n.includes("محاشي") || n.includes("صيني") || n.includes("قوزي") || n.includes("ذبيح") || n.includes("دجاج 65") || n.includes("مفطح") || n.includes("مطبق") || n.includes("مربين") || n.includes("مموش") || n.includes("بشاميل") || n.includes("ملفوف") || c.includes("ذبيح");
-                      const isLight = c.includes("شورب") || n.includes("شورب") || n.includes("خفيف") || n.includes("سلط") || n.includes("هريس") || n.includes("جريش") || n.includes("مرق") || n.includes("روب") || n.includes("عيش مشخول") || n.includes("عيش مشغول") || n.includes("نخي") || n.includes("تشريب") || n.includes("ورق عنب");
-                      return !isHeavy && isLight;
-                    });
-                 } else if (moodFilter === "حلو") {
-                    displayProducts = displayProducts.filter(p => p.category?.includes("حلو") || p.name?.includes("حلو") || p.name?.includes("كاكاو"));
-                 } else if (moodFilter === "سهران") {
-                    displayProducts = displayProducts.filter(p => p.category?.includes("ساندوتش") || p.category?.includes("جانبي") || p.name?.includes("بوكس") || p.name?.includes("خفيف"));
-                 } else {
-                    // Normal search filtering if no specific mood matches, or if it matches "بحث"
-                    displayProducts = displayProducts.filter(p => p.name?.toLowerCase().includes(moodQuery.toLowerCase()) || p.category?.toLowerCase().includes(moodQuery.toLowerCase()));
-                 }
-                 // if nothing found with mood filter but products exist, fallback to all (or best sellers) to not show an empty screen
-                 if (displayProducts.length === 0) {
-                    if (moodFilter === "خفيف") {
-                        displayProducts = products.filter(p => {
-                           const n = p.name?.toLowerCase() || "";
-                           const c = p.category?.toLowerCase() || "";
-                           const isHeavy = n.includes("مجبوس") || n.includes("برياني") || n.includes("مقلوب") || n.includes("برية") || n.includes("محاشي") || n.includes("صيني") || n.includes("قوزي") || n.includes("ذبيح") || n.includes("دجاج 65") || n.includes("مفطح") || n.includes("مطبق") || n.includes("مربين") || n.includes("مموش") || n.includes("بشاميل") || n.includes("ملفوف") || c.includes("ذبيح");
-                           return !isHeavy;
-                        }).slice(0, 5);
-                    } else if (moodFilter === "حلو") {
-                        displayProducts = products.filter(p => p.category?.includes("حلو") || p.name?.includes("حلو") || p.name?.includes("كاكاو") || p.name?.includes("كيك")).slice(0, 5);
-                        if (displayProducts.length === 0) displayProducts = products.filter(p => (p.price || 0) < 15).slice(0, 5);
-                    } else {
-                        displayProducts = products.filter(p => (p.price || 0) < 15).slice(0, 5); // Fallback to affordable stuff
-                    }
-                 }
+                displayProducts = getSmartProductMatches(displayProducts, moodQuery, 60);
               }
 
               const allCategories = getSharedProductCategories(settings, displayProducts);
               const query = quickProductSearch.trim();
               const searchedProducts = query
-                ? displayProducts.filter((product: any) => {
-                    const haystack = `${product?.name || ""} ${product?.nameEn || ""} ${product?.category || ""}`;
-                    return normalizeProductSearchText(haystack).includes(normalizeProductSearchText(query));
-                  })
+                ? getSmartProductMatches(displayProducts, query, 60)
                 : displayProducts;
               const groupedProducts = allCategories
                 .map((category) => ({
