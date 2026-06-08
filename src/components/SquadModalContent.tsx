@@ -1618,7 +1618,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             <div className="absolute inset-1.5 rounded-full bg-gradient-to-tr from-[#690b0b] to-[#9e1c1c] flex items-center justify-center border border-[#7d1212] shadow-sm">
                               {/* Logo / Emblem inside wax seal */}
                               <span className="text-stone-100 font-extrabold text-[15px] select-none scale-100 filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
-                                🕌
+                                ⚜️
                               </span>
                             </div>
                             {/* 3D Glowing golden reflection highlight overlay on hover */}
@@ -1639,7 +1639,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         {/* QR Code Presentation */}
                         <div className="border-t border-dashed border-[#d4af37]/20 pt-4 flex flex-col items-center relative z-10">
                           <span className="text-[10px] font-black text-[#f3c25a] mb-2.5 flex items-center gap-1">
-                            🔱 رمز الـ QR الملكي للدخول السريع
+                            🎫 رمز الـ QR الملكي للدخول السريع
                           </span>
                           <button
                             type="button"
