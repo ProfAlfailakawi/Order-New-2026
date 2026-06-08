@@ -97,6 +97,135 @@ const splitSmartSearchTokens = (value?: string) =>
     .map((token) => token.trim())
     .filter((token) => token.length > 1);
 
+const SMART_SEARCH_SYNONYMS: Record<string, string[]> = {
+  ابي: ["ابغى", "بغيت", "ودي", "اشتهي", "عطني", "عطيني", "ابيلي", "ابيله", "ابي شي", "ودي بشي", "خاطري"],
+  جوعان: ["يوعان", "يوع", "جوع", "ميت يوع", "مشتهي"],
+  خفيف: ["خفيفه", "مو ثقيل", "تصبيره", "سناك", "لقمه"],
+  عشاء: ["عشا", "ليل", "سهره", "سهران"],
+  غداء: ["غدا", "غدى", "ظهر"],
+  فطور: ["ريوق", "افطار", "صبح"],
+  ديوانيه: ["ديوانية", "ربع", "يمعه", "جمعه", "زواره", "ضيوف", "عزيمه"],
+  سمك: ["سمج", "بحري", "زبيدي", "هامور", "روبيان", "ربيان"],
+  دجاج: ["فراخ", "جاج"],
+  لحم: ["لحم", "لحوم", "حاشي", "غنم", "غنمي", "نعيمي", "ذبيحه", "ذبيحة", "مفطح", "مشوي"],
+  حلو: ["حلى", "حلويات", "كاكاو", "كيك", "سكر"],
+  حار: ["سبايسي", "حر", "بهار"],
+};
+
+const SMART_SEARCH_NEGATION_WORDS = [
+  "ما احب",
+  "مااحب",
+  "ما ابي",
+  "ماابي",
+  "مو ابي",
+  "مابي",
+  "ابي بدون",
+  "ابيه بدون",
+  "بدون",
+  "من غير",
+  "غير",
+  "مو",
+  "لا",
+  "ما فيه",
+  "مافيه",
+  "ما اكل",
+  "مااكل",
+  "استثني",
+  "شيل",
+  "شيله",
+  "بعيد عن",
+  "ابتعد عن",
+];
+
+const SMART_SEARCH_AVOID_GROUPS: Record<string, string[]> = {
+  لحم: ["لحم", "لحوم", "حاشي", "غنم", "غنمي", "نعيمي", "ذبيحه", "ذبيحة", "مفطح", "خروف"],
+  دجاج: ["دجاج", "دياي", "جاج", "فراخ"],
+  سمك: ["سمك", "سمج", "بحري", "زبيدي", "هامور", "روبيان", "ربيان", "مربين"],
+  حار: ["حار", "حر", "سبايسي", "شطة", "بهار", "بهارات"],
+  حلو: ["حلو", "حلى", "حلويات", "كاكاو", "كيك", "سكر"],
+  عيش: ["عيش", "رز", "ارز", "مجبوس", "برياني", "مندي", "مربين", "مطبق"],
+  روب: ["روب", "لبن", "حليب", "كريمه", "جبن"],
+  بصل: ["بصل"],
+};
+
+const hasSmartNegativePreference = (query: string, term: string) => {
+  const normalizedQuery = normalizeKuwaitiSearchText(query);
+  const compactQuery = normalizedQuery.replace(/\s+/g, "");
+  const normalizedTerm = normalizeKuwaitiSearchText(term);
+  const compactTerm = normalizedTerm.replace(/\s+/g, "");
+  if (!normalizedQuery || !normalizedTerm) return false;
+
+  return SMART_SEARCH_NEGATION_WORDS.some((negativeWord) => {
+    const normalizedNegative = normalizeKuwaitiSearchText(negativeWord);
+    const compactNegative = normalizedNegative.replace(/\s+/g, "");
+    return (
+      normalizedQuery.includes(`${normalizedNegative} ${normalizedTerm}`) ||
+      normalizedQuery.includes(`${normalizedNegative} ال${normalizedTerm}`) ||
+      compactQuery.includes(`${compactNegative}${compactTerm}`) ||
+      compactQuery.includes(`${compactNegative}ال${compactTerm}`)
+    );
+  });
+};
+
+const getSmartSearchAvoidTerms = (query: string) => {
+  const avoid = new Set<string>();
+  Object.values(SMART_SEARCH_AVOID_GROUPS).forEach((terms) => {
+    const isAvoided = terms.some((term) => hasSmartNegativePreference(query, term));
+    if (isAvoided) {
+      terms.forEach((term) => splitSmartSearchTokens(term).forEach((token) => avoid.add(token)));
+    }
+  });
+  return Array.from(avoid).filter((token) => token.length > 1);
+};
+
+const productHasAnySmartAvoidTerm = (productText: string, avoidTerms: string[]) =>
+  avoidTerms.some((term) => productText.includes(term));
+
+const expandSmartSearchTokens = (value?: string) => {
+  const baseTokens = splitSmartSearchTokens(value);
+  const expanded = new Set<string>(baseTokens);
+  const normalizedValue = normalizeKuwaitiSearchText(value);
+
+  Object.entries(SMART_SEARCH_SYNONYMS).forEach(([key, aliases]) => {
+    const normalizedKey = normalizeKuwaitiSearchText(key);
+    const normalizedAliases = aliases.map((alias) => normalizeKuwaitiSearchText(alias)).filter(Boolean);
+    const matched = [normalizedKey, ...normalizedAliases].some((term) =>
+      term && (normalizedValue.includes(term) || baseTokens.includes(term))
+    );
+    if (matched) {
+      [normalizedKey, ...normalizedAliases].forEach((term) => {
+        splitSmartSearchTokens(term).forEach((token) => expanded.add(token));
+      });
+    }
+  });
+
+  return Array.from(expanded).filter((token) => token.length > 1);
+};
+
+const getSmartTextSimilarity = (a: string, b: string) => {
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if (a.includes(b) || b.includes(a)) return Math.min(a.length, b.length) / Math.max(a.length, b.length);
+
+  const maxLen = Math.max(a.length, b.length);
+  if (maxLen > 18) return 0;
+
+  const previous = Array.from({ length: b.length + 1 }, (_, i) => i);
+  const current = Array(b.length + 1).fill(0);
+  for (let i = 1; i <= a.length; i += 1) {
+    current[0] = i;
+    for (let j = 1; j <= b.length; j += 1) {
+      current[j] = Math.min(
+        previous[j] + 1,
+        current[j - 1] + 1,
+        previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+    for (let j = 0; j <= b.length; j += 1) previous[j] = current[j];
+  }
+  return 1 - previous[b.length] / maxLen;
+};
+
 const getProductSmartSearchText = (product: any) =>
   normalizeKuwaitiSearchText([
     product?.name,
@@ -112,6 +241,9 @@ const getProductSmartSearchText = (product: any) =>
     ...(Array.isArray(product?.tags) ? product.tags : []),
     ...(Array.isArray(product?.keywords) ? product.keywords : []),
   ].filter(Boolean).join(" "));
+
+const getProductSmartSearchWords = (product: any) =>
+  Array.from(new Set(splitSmartSearchTokens(getProductSmartSearchText(product))));
 
 const SMART_PRODUCT_INTENTS: any[] = [
   {
@@ -187,18 +319,31 @@ const scoreProductForSmartSearch = (product: any, query: string) => {
   if (!productText) return -1;
 
   const normalizedQuery = normalizeKuwaitiSearchText(query);
-  const queryTokens = splitSmartSearchTokens(query);
+  const avoidTerms = getSmartSearchAvoidTerms(query);
+  if (avoidTerms.length && productHasAnySmartAvoidTerm(productText, avoidTerms)) return -1;
+  const queryTokens = expandSmartSearchTokens(query).filter((token) => !avoidTerms.includes(token));
+  const directTokens = splitSmartSearchTokens(query).filter((token) => !avoidTerms.includes(token));
+  const productWords = getProductSmartSearchWords(product);
   const intents = getSmartQueryIntentMatches(query);
   let score = 0;
 
-  if (normalizedQuery && productText.includes(normalizedQuery)) score += 80;
+  if (normalizedQuery && productText.includes(normalizedQuery)) score += 120;
 
   queryTokens.forEach((token) => {
-    if (productText.includes(token)) score += token.length >= 4 ? 16 : 9;
+    if (productText.includes(token)) {
+      score += token.length >= 4 ? 20 : 11;
+      if (directTokens.includes(token)) score += 10;
+      return;
+    }
+
+    const closeWord = productWords.find((word) =>
+      word.length > 2 && token.length > 2 && (word.startsWith(token) || token.startsWith(word) || getSmartTextSimilarity(word, token) >= 0.72)
+    );
+    if (closeWord) score += token.length >= 4 ? 12 : 7;
   });
 
   intents.forEach((intent, index) => {
-    const intentWeight = Math.max(10, 32 - index * 5);
+    const intentWeight = Math.max(12, 38 - index * 5);
     let matchedIntentTerms = 0;
     intent.productTerms.forEach((term) => {
       const normalizedTerm = normalizeKuwaitiSearchText(term);
@@ -209,15 +354,17 @@ const scoreProductForSmartSearch = (product: any, query: string) => {
     });
     (intent.avoidTerms || []).forEach((term) => {
       const normalizedTerm = normalizeKuwaitiSearchText(term);
-      if (normalizedTerm && productText.includes(normalizedTerm)) score -= 24;
+      if (normalizedTerm && productText.includes(normalizedTerm)) score -= 28;
     });
-    if (matchedIntentTerms > 1) score += matchedIntentTerms * 8;
+    if (matchedIntentTerms > 1) score += matchedIntentTerms * 10;
   });
 
   const category = normalizeKuwaitiSearchText(product?.category || "");
   const name = normalizeKuwaitiSearchText(product?.name || product?.productName || product?.nameAr || "");
-  if (queryTokens.some((token) => name.includes(token))) score += 25;
-  if (queryTokens.some((token) => category.includes(token))) score += 18;
+  const nameWords = splitSmartSearchTokens(name);
+  if (queryTokens.some((token) => name.includes(token))) score += 32;
+  if (queryTokens.some((token) => category.includes(token))) score += 22;
+  if (directTokens.some((token) => nameWords.some((word) => getSmartTextSimilarity(word, token) >= 0.76))) score += 18;
   if (product?.isTopSeller || product?.isBestSeller || product?.isMenuFeatured || product?.featuredInMenu || product?.isFeatured) score += 10;
   if (Number(product?.price || product?.basePrice || 0) > 0) score += 2;
 
@@ -236,8 +383,12 @@ const getSmartProductMatches = (products: any[] = [], query: string, limit = 60)
 
   const normalizedQuery = normalizeKuwaitiSearchText(query);
   if (!normalizedQuery) return activeProducts.slice(0, limit);
+  const avoidTerms = getSmartSearchAvoidTerms(query);
+  const fallbackProducts = avoidTerms.length
+    ? activeProducts.filter((product: any) => !productHasAnySmartAvoidTerm(getProductSmartSearchText(product), avoidTerms))
+    : activeProducts;
 
-  return activeProducts
+  return fallbackProducts
     .slice()
     .sort((a: any, b: any) => {
       const aFeatured = a?.isTopSeller || a?.isBestSeller || a?.isMenuFeatured || a?.featuredInMenu || a?.isFeatured ? 1 : 0;
@@ -2311,7 +2462,7 @@ export default function CustomerSite() {
     ],
     sick: [
       "يا بعد عيني وعسى ربي يشافي بنيتج الغالية ويبعد عنها كل مكروه.. هبيتلج وسويت لج شوربة الشفاء بالخضار العطرة تراثية دافية تدفي صدرها وترد عافيتها، أجر وعافية يا رب 🤍🍲",
-      "سلامات وما تدش الشر الغالية 🌿.. أجر وعافية يا بعد قلبي.. الشيف طبخ لج شوربة لسان عصفور بالهيل دافية وخفيفة تدفي الصدر وتبرّي العظام وتتمنى لها الشفاء العاجل 🥣🤍",
+      "سلامات يا بعد عمري، خطاك السوء 🌿.. أجر وعافية يا الغالية.. الشيف طبخ لج شوربة لسان عصفور بالهيل دافية وخفيفة تدفي الصدر وترد العافية 🥣🤍",
       "أجر وعافية يا بعد طوايف أهلي.. هذي شورباتنا العريقة المطبوخة على نار هادئة وممزوجة بالخضار العطرة، رصيناها لج بالقمة عشان تدفي الصدر وتنعش الروح، عساها بالشفاء التام يا بنيتي 🍵✨"
     ],
     travel: [
@@ -4369,7 +4520,6 @@ export default function CustomerSite() {
               <div className="flex items-center bg-stone-50/80 backdrop-blur-sm rounded-2xl px-4 py-3">
                 <Search className="w-5 h-5 text-accent mr-2" />
                 <motion.input
-                  key={currentPlaceholder}
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
@@ -5359,7 +5509,7 @@ export default function CustomerSite() {
                       </div>
                    </div>
 
-                   <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 pb-8 custom-scrollbar relative z-0">
+                   <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 pb-8 custom-scrollbar relative">
 
                       <div className="grid grid-cols-3 gap-2 mb-5" dir="rtl">
                         {[
