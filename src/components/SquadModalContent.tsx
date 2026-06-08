@@ -2201,13 +2201,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                         {/* Selected Memory Detail Modal overlay inside the card frame */}
                         {selectedMemory && (
-                          <div className="fixed inset-0 bg-stone-900/50 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in" onClick={() => setSelectedMemory(null)}>
+                          <div className="diwaniya-memory-detail-overlay fixed inset-0 bg-stone-900/50 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in" onClick={() => setSelectedMemory(null)}>
                             <motion.div
                               initial={{ opacity: 0, scale: 0.7, rotate: -5 }}
                               animate={{ opacity: 1, scale: 1, rotate: 0 }}
                               exit={{ opacity: 0, scale: 0.8 }}
                               transition={{ type: "spring", damping: 25, stiffness: 180 }}
-                              className="bg-[#fafaf6] border-[12px] border-b-[48px] border-white shadow-[0_35px_90px_rgba(0,0,0,0.38)] rounded-sm p-4 flex flex-col gap-4 text-right font-sans relative overflow-hidden max-w-sm w-full mx-auto"
+                              className="diwaniya-memory-detail-modal bg-[#fafaf6] border-[12px] border-b-[48px] border-white shadow-[0_35px_90px_rgba(0,0,0,0.38)] rounded-sm p-4 flex flex-col gap-4 text-right font-sans relative overflow-hidden max-w-sm w-full mx-auto"
                               dir="rtl"
                               onClick={(e) => e.stopPropagation()}
                             >
@@ -2223,7 +2223,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               </button>
 
                               {/* Selected photo / icon */}
-                              <div className={cn("aspect-square w-full rounded-xs border border-stone-200/80 shadow-inner flex flex-col items-center justify-center text-7xl select-none relative overflow-hidden", selectedMemory.bg)}>
+                              <div className={cn("diwaniya-memory-detail-frame aspect-square w-full rounded-xs border border-stone-200/80 shadow-inner flex flex-col items-center justify-center text-7xl select-none relative overflow-hidden", selectedMemory.bg)}>
                                 <span className={cn(
                                   "filter drop-shadow-md select-none transition-all duration-700",
                                   isCuring ? "scale-90 rotate-6 blur-md grayscale sepia saturate-50 opacity-40 animate-pulse" : "scale-100 rotate-0 blur-0 grayscale-0 sepia-0 saturate-100 opacity-100"
@@ -2247,7 +2247,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                 <p className="text-[11px] text-stone-600 font-medium leading-relaxed">{selectedMemory.desc}</p>
                               </div>
 
-                              <div className="border-t border-dashed border-stone-200 pt-3 flex items-center justify-between gap-3 mt-1">
+                              <div className="diwaniya-memory-detail-actions border-t border-dashed border-stone-200 pt-3 flex items-center justify-between gap-3 mt-1">
                                 <span className={cn(
                                   "text-[8px] font-black px-2 py-0.5 rounded-full transition-colors flex items-center gap-1",
                                   isCuring ? "text-amber-700 bg-amber-50 animate-pulse border border-amber-200/50" : "text-emerald-700 bg-emerald-50 border border-emerald-200/50"

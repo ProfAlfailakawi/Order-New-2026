@@ -995,7 +995,8 @@ export default function OrderPage() {
                 placeholder="رقم الطلب (اختياري)"
                 value={searchOrderIdInput}
                 onChange={(e) => setSearchOrderIdInput(normalizeDigits(e.target.value))}
-                className="w-full py-6 pr-16 pl-6 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-xl font-extrabold text-brand placeholder:text-stone-300 text-center tracking-[0.2em] uppercase"
+                dir="rtl"
+                className="order-id-track-input w-full py-6 pr-16 pl-6 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-xl font-extrabold text-brand placeholder:text-stone-300 text-center uppercase"
               />
             </div>
 
