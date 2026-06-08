@@ -98,18 +98,19 @@ const splitSmartSearchTokens = (value?: string) =>
     .filter((token) => token.length > 1);
 
 const SMART_SEARCH_SYNONYMS: Record<string, string[]> = {
-  ابي: ["ابغى", "بغيت", "ودي", "اشتهي", "عطني", "عطيني", "ابيلي", "ابيله", "ابي شي", "ودي بشي", "خاطري"],
-  جوعان: ["يوعان", "يوع", "جوع", "ميت يوع", "مشتهي"],
-  خفيف: ["خفيفه", "مو ثقيل", "تصبيره", "سناك", "لقمه"],
+  ابي: ["ابغى", "بغيت", "ودي", "اشتهي", "عطني", "عطيني", "ابيلي", "ابيله", "ابي شي", "ودي بشي", "خاطري", "اقترح", "اختار", "رشح"],
+  جوعان: ["يوعان", "يوع", "جوع", "ميت يوع", "مشتهي", "بطني", "ابي اكل"],
+  خفيف: ["خفيفه", "مو ثقيل", "تصبيره", "سناك", "لقمه", "ما يثقل", "صحي", "دايت"],
   عشاء: ["عشا", "ليل", "سهره", "سهران"],
   غداء: ["غدا", "غدى", "ظهر"],
-  فطور: ["ريوق", "افطار", "صبح"],
-  ديوانيه: ["ديوانية", "ربع", "يمعه", "جمعه", "زواره", "ضيوف", "عزيمه"],
-  سمك: ["سمج", "بحري", "زبيدي", "هامور", "روبيان", "ربيان"],
-  دجاج: ["فراخ", "جاج"],
+  فطور: ["ريوق", "افطار", "صبح", "صباح"],
+  ديوانيه: ["ديوانية", "ربع", "يمعه", "جمعه", "زواره", "ضيوف", "عزيمه", "عزايم", "ناس", "اهل"],
+  سمك: ["سمج", "بحري", "زبيدي", "هامور", "روبيان", "ربيان", "مربين"],
+  دجاج: ["دياي", "فراخ", "جاج"],
   لحم: ["لحم", "لحوم", "حاشي", "غنم", "غنمي", "نعيمي", "ذبيحه", "ذبيحة", "مفطح", "مشوي"],
-  حلو: ["حلى", "حلويات", "كاكاو", "كيك", "سكر"],
-  حار: ["سبايسي", "حر", "بهار"],
+  حلو: ["حلى", "حلويات", "كاكاو", "كيك", "سكر", "تحليه", "تحلية"],
+  حار: ["سبايسي", "حر", "بهار", "شطة"],
+  مريض: ["تعبان", "تعبانه", "مرض", "مصخن", "مصخنه", "زكام", "كحه", "كحة", "برد", "حراره", "سخونه", "حلق", "معده", "اجر وعافيه"],
 };
 
 const SMART_SEARCH_NEGATION_WORDS = [
@@ -178,8 +179,29 @@ const getSmartSearchAvoidTerms = (query: string) => {
   return Array.from(avoid).filter((token) => token.length > 1);
 };
 
+const SMART_SEARCH_GENERIC_TOKENS = new Set([
+  "ابي", "ابغى", "بغيت", "ودي", "اشتهي", "عطني", "عطيني", "اختار", "اختيار", "اقترح", "رشح", "شي", "شيء", "طلب", "طلبات",
+  "حق", "لي", "لنا", "لهم", "اليوم", "الحين", "الان", "ممكن", "تكفى", "تكفين", "ولد", "ولدي", "بنتي", "عيالي", "طفل", "اطفال"
+]);
+
+const SMART_SEARCH_HEAVY_PRODUCT_TERMS = [
+  "وليمه", "ولائم", "صينيه", "صينية", "صواني", "ذبيحه", "ذبيحة", "مفطح", "قوزي", "مندي", "مجبوس", "برياني", "مربين", "مطبق", "مشخول", "عيش", "رز", "ارز", "حاشي", "خروف", "نعيمي", "غنم", "لحم"
+];
+
+const SMART_SEARCH_COMFORT_PRODUCT_TERMS = [
+  "شوربه", "شوربة", "مرق", "مرقه", "مرقة", "هريس", "جريش", "تشريب", "عدس", "خضار", "دافي", "خفيف", "روب", "لبن", "نخي", "سلطه", "سلطة"
+];
+
+const SMART_SEARCH_GATHERING_QUERY_TERMS = ["ضيوف", "ديوانيه", "ديوانية", "يمعه", "جمعه", "زواره", "عزيمه", "عزايم", "ناس", "ربع", "اهل", "وليمه", "ولائم", "صواني", "صينيه", "صينية"];
+
 const productHasAnySmartAvoidTerm = (productText: string, avoidTerms: string[]) =>
   avoidTerms.some((term) => productText.includes(term));
+
+const productHasAnySmartTerm = (productText: string, terms: string[]) =>
+  terms.some((term) => {
+    const normalizedTerm = normalizeKuwaitiSearchText(term);
+    return normalizedTerm && productText.includes(normalizedTerm);
+  });
 
 const expandSmartSearchTokens = (value?: string) => {
   const baseTokens = splitSmartSearchTokens(value);
@@ -255,8 +277,10 @@ const SMART_PRODUCT_INTENTS: any[] = [
   {
     id: "sick",
     filter: "مريض",
-    queryTerms: ["مريض", "مريضه", "تعبان", "تعبانه", "تعب", "برد", "زكام", "كحه", "كح", "حراره", "سخونه", "صدر", "حلق", "معده", "خفيف", "دافي", "يدفي", "شوربه", "اجروعافيه", "اجر", "عافيه"],
-    productTerms: ["شوربه", "مرق", "هريس", "جريش", "تشريب", "دافي", "خفيف", "خضار", "دجاج", "عيش مشخول", "نخي", "روب"],
+    queryTerms: ["مريض", "مريضه", "تعبان", "تعبانه", "تعب", "برد", "زكام", "كحه", "كحة", "كح", "حراره", "سخونه", "مصخن", "مصخنه", "صدر", "حلق", "معده", "معدة", "خفيف", "دافي", "يدفي", "شوربه", "شوربة", "اجروعافيه", "اجر", "عافيه", "ولدي مريض", "بنتي مريضه"],
+    productTerms: ["شوربه", "شوربة", "مرق", "مرقه", "مرقة", "هريس", "جريش", "تشريب", "دافي", "خفيف", "خضار", "عدس", "نخي", "روب", "لبن"],
+    avoidTerms: SMART_SEARCH_HEAVY_PRODUCT_TERMS,
+    strictComfort: true,
   },
   {
     id: "travel",
@@ -319,56 +343,98 @@ const scoreProductForSmartSearch = (product: any, query: string) => {
   if (!productText) return -1;
 
   const normalizedQuery = normalizeKuwaitiSearchText(query);
+  const compactQuery = normalizedQuery.replace(/\s+/g, "");
   const avoidTerms = getSmartSearchAvoidTerms(query);
   if (avoidTerms.length && productHasAnySmartAvoidTerm(productText, avoidTerms)) return -1;
-  const queryTokens = expandSmartSearchTokens(query).filter((token) => !avoidTerms.includes(token));
-  const directTokens = splitSmartSearchTokens(query).filter((token) => !avoidTerms.includes(token));
+
+  const queryTokens = expandSmartSearchTokens(query).filter((token) => !avoidTerms.includes(token) && !SMART_SEARCH_GENERIC_TOKENS.has(token));
+  const directTokens = splitSmartSearchTokens(query).filter((token) => !avoidTerms.includes(token) && !SMART_SEARCH_GENERIC_TOKENS.has(token));
   const productWords = getProductSmartSearchWords(product);
   const intents = getSmartQueryIntentMatches(query);
+  const primaryIntent = intents[0];
+  const hasGatheringRequest = SMART_SEARCH_GATHERING_QUERY_TERMS.some((term) => {
+    const normalizedTerm = normalizeKuwaitiSearchText(term);
+    return normalizedTerm && (normalizedQuery.includes(normalizedTerm) || compactQuery.includes(normalizedTerm.replace(/\s+/g, "")));
+  });
+  const isHeavyProduct = productHasAnySmartTerm(productText, SMART_SEARCH_HEAVY_PRODUCT_TERMS);
+  const isComfortProduct = productHasAnySmartTerm(productText, SMART_SEARCH_COMFORT_PRODUCT_TERMS);
+
+  // Health/child comfort searches must never drift into feasts, trays, rice-heavy or large-party items.
+  if (primaryIntent?.id === "sick" && isHeavyProduct && !hasGatheringRequest) return -1;
+
   let score = 0;
 
   if (normalizedQuery && productText.includes(normalizedQuery)) score += 120;
 
   queryTokens.forEach((token) => {
     if (productText.includes(token)) {
-      score += token.length >= 4 ? 20 : 11;
-      if (directTokens.includes(token)) score += 10;
+      score += token.length >= 4 ? 22 : 12;
+      if (directTokens.includes(token)) score += 12;
       return;
     }
 
     const closeWord = productWords.find((word) =>
-      word.length > 2 && token.length > 2 && (word.startsWith(token) || token.startsWith(word) || getSmartTextSimilarity(word, token) >= 0.72)
+      word.length > 2 && token.length > 2 && (word.startsWith(token) || token.startsWith(word) || getSmartTextSimilarity(word, token) >= 0.74)
     );
-    if (closeWord) score += token.length >= 4 ? 12 : 7;
+    if (closeWord) score += token.length >= 4 ? 13 : 7;
   });
 
   intents.forEach((intent, index) => {
-    const intentWeight = Math.max(12, 38 - index * 5);
+    const intentWeight = Math.max(14, 42 - index * 7);
     let matchedIntentTerms = 0;
-    intent.productTerms.forEach((term) => {
+    intent.productTerms.forEach((term: string) => {
       const normalizedTerm = normalizeKuwaitiSearchText(term);
       if (normalizedTerm && productText.includes(normalizedTerm)) {
         matchedIntentTerms += 1;
         score += intentWeight;
       }
     });
-    (intent.avoidTerms || []).forEach((term) => {
+    (intent.avoidTerms || []).forEach((term: string) => {
       const normalizedTerm = normalizeKuwaitiSearchText(term);
-      if (normalizedTerm && productText.includes(normalizedTerm)) score -= 28;
+      if (normalizedTerm && productText.includes(normalizedTerm)) score -= primaryIntent?.id === intent.id ? 90 : 36;
     });
-    if (matchedIntentTerms > 1) score += matchedIntentTerms * 10;
+    if (matchedIntentTerms > 1) score += matchedIntentTerms * 12;
+    if (intent.strictComfort && isComfortProduct) score += 85;
+    if (intent.strictComfort && !isComfortProduct) score -= 65;
   });
 
   const category = normalizeKuwaitiSearchText(product?.category || "");
   const name = normalizeKuwaitiSearchText(product?.name || product?.productName || product?.nameAr || "");
   const nameWords = splitSmartSearchTokens(name);
-  if (queryTokens.some((token) => name.includes(token))) score += 32;
-  if (queryTokens.some((token) => category.includes(token))) score += 22;
-  if (directTokens.some((token) => nameWords.some((word) => getSmartTextSimilarity(word, token) >= 0.76))) score += 18;
-  if (product?.isTopSeller || product?.isBestSeller || product?.isMenuFeatured || product?.featuredInMenu || product?.isFeatured) score += 10;
+  if (queryTokens.some((token) => name.includes(token))) score += 34;
+  if (queryTokens.some((token) => category.includes(token))) score += 24;
+  if (directTokens.some((token) => nameWords.some((word) => getSmartTextSimilarity(word, token) >= 0.78))) score += 18;
+
+  if (primaryIntent?.id === "sick") {
+    if (isComfortProduct) score += 80;
+    if (isHeavyProduct) score -= 140;
+  } else if (!hasGatheringRequest && isHeavyProduct && directTokens.length === 0 && intents.length > 0) {
+    score -= 30;
+  }
+
+  if (product?.isTopSeller || product?.isBestSeller || product?.isMenuFeatured || product?.featuredInMenu || product?.isFeatured) score += 6;
   if (Number(product?.price || product?.basePrice || 0) > 0) score += 2;
 
   return score;
+};
+
+const getSmartValidatedAiMatches = (products: any[] = [], aiMatchingIds: string[] = [], query: string, limit = 60) => {
+  if (!Array.isArray(aiMatchingIds) || aiMatchingIds.length === 0) return [];
+  const uniqueIds = Array.from(new Set(aiMatchingIds.map((id) => String(id))));
+  const byId = new Map<string, any>();
+  products.forEach((product: any) => {
+    [product?.id, product?.productId].filter(Boolean).forEach((id) => byId.set(String(id), product));
+  });
+
+  return uniqueIds
+    .map((id, index) => {
+      const product = byId.get(id);
+      return product ? { product, index, score: scoreProductForSmartSearch(product, query) } : null;
+    })
+    .filter((item): item is { product: any; index: number; score: number } => Boolean(item && item.score > 0))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .slice(0, limit)
+    .map((item) => item.product);
 };
 
 const getSmartProductMatches = (products: any[] = [], query: string, limit = 60) => {
@@ -4734,21 +4800,19 @@ export default function CustomerSite() {
                     });
               
               if (moodQuery.trim()) {
+                const localSmartMatches = getSmartProductMatches(displayProducts, moodQuery, 60);
                 if (aiMatchingIds && aiMatchingIds.length > 0) {
-                  const matched: any[] = [];
-                  aiMatchingIds.forEach((id: string) => {
-                    const found = displayProducts.find((p: any) => p.id === id || p.productId === id);
-                    if (found) {
-                      matched.push(found);
+                  const validatedAiMatches = getSmartValidatedAiMatches(displayProducts, aiMatchingIds, moodQuery, 60);
+                  const mergedMatches: any[] = [];
+                  [...validatedAiMatches, ...localSmartMatches].forEach((product: any) => {
+                    const key = product?.id || product?.productId || normalizeCustomerProductKey(product);
+                    if (!mergedMatches.some((existing: any) => (existing?.id || existing?.productId || normalizeCustomerProductKey(existing)) === key)) {
+                      mergedMatches.push(product);
                     }
                   });
-                  if (matched.length > 0) {
-                    displayProducts = matched;
-                  } else {
-                    displayProducts = getSmartProductMatches(displayProducts, moodQuery, 60);
-                  }
+                  displayProducts = mergedMatches.length > 0 ? mergedMatches.slice(0, 60) : localSmartMatches;
                 } else {
-                  displayProducts = getSmartProductMatches(displayProducts, moodQuery, 60);
+                  displayProducts = localSmartMatches;
                 }
               }
 
