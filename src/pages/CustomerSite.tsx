@@ -98,8 +98,8 @@ const splitSmartSearchTokens = (value?: string) =>
     .filter((token) => token.length > 1);
 
 const SMART_SEARCH_SYNONYMS: Record<string, string[]> = {
-  ابي: ["ابغى", "بغيت", "ودي", "اشتهي", "عطني", "عطيني", "ابيلي", "ابيله", "ابي شي", "ودي بشي", "خاطري", "اقترح", "اختار", "رشح"],
-  جوعان: ["يوعان", "يوع", "جوع", "ميت يوع", "مشتهي", "بطني", "ابي اكل"],
+  ابي: ["ابغى", "بغيت", "ودي", "اشتهي", "مشتهي", "عطني", "عطيني", "ابيلي", "ابيله", "ابي شي", "ودي بشي", "خاطري", "اقترح", "اختار", "رشح"],
+  جوعان: ["يوعان", "يوع", "جوع", "ميت يوع", "بطني", "ابي اكل"],
   خفيف: ["خفيفه", "مو ثقيل", "تصبيره", "سناك", "لقمه", "ما يثقل", "صحي", "دايت"],
   عشاء: ["عشا", "ليل", "سهره", "سهران"],
   غداء: ["غدا", "غدى", "ظهر"],
@@ -180,7 +180,7 @@ const getSmartSearchAvoidTerms = (query: string) => {
 };
 
 const SMART_SEARCH_GENERIC_TOKENS = new Set([
-  "ابي", "ابغى", "بغيت", "ودي", "اشتهي", "عطني", "عطيني", "اختار", "اختيار", "اقترح", "رشح", "شي", "شيء", "طلب", "طلبات",
+  "ابي", "ابغى", "بغيت", "ودي", "اشتهي", "مشتهي", "عطني", "عطيني", "اختار", "اختيار", "اقترح", "رشح", "شي", "شيء", "طلب", "طلبات",
   "حق", "لي", "لنا", "لهم", "اليوم", "الحين", "الان", "ممكن", "تكفى", "تكفين", "ولد", "ولدي", "بنتي", "عيالي", "طفل", "اطفال"
 ]);
 
@@ -188,11 +188,36 @@ const SMART_SEARCH_HEAVY_PRODUCT_TERMS = [
   "وليمه", "ولائم", "صينيه", "صينية", "صواني", "ذبيحه", "ذبيحة", "مفطح", "قوزي", "مندي", "مجبوس", "برياني", "مربين", "مطبق", "مشخول", "عيش", "رز", "ارز", "حاشي", "خروف", "نعيمي", "غنم", "لحم"
 ];
 
+const SMART_SEARCH_SEAFOOD_TERMS = ["بحري", "سمج", "سمك", "روبيان", "ربيان", "زبيدي", "هامور", "مربين", "مطبق سمك", "مطبق زبيدي"];
+const SMART_SEARCH_MEAT_TERMS = ["لحم", "لحوم", "حاشي", "غنم", "غنمي", "نعيمي", "ذبيحه", "ذبيحة", "مفطح", "خروف"];
+const SMART_SEARCH_CHICKEN_TERMS = ["دجاج", "دياي", "جاج", "فراخ"];
+const SMART_SEARCH_EXPLICIT_FOOD_GROUPS = [
+  { id: "seafood", terms: SMART_SEARCH_SEAFOOD_TERMS, excludeTerms: [...SMART_SEARCH_MEAT_TERMS, ...SMART_SEARCH_CHICKEN_TERMS] },
+  { id: "meat", terms: SMART_SEARCH_MEAT_TERMS, excludeTerms: [...SMART_SEARCH_SEAFOOD_TERMS, ...SMART_SEARCH_CHICKEN_TERMS] },
+  { id: "chicken", terms: SMART_SEARCH_CHICKEN_TERMS, excludeTerms: [...SMART_SEARCH_SEAFOOD_TERMS, ...SMART_SEARCH_MEAT_TERMS] },
+];
+
 const SMART_SEARCH_COMFORT_PRODUCT_TERMS = [
   "شوربه", "شوربة", "مرق", "مرقه", "مرقة", "هريس", "جريش", "تشريب", "عدس", "خضار", "دافي", "خفيف", "روب", "لبن", "نخي", "سلطه", "سلطة"
 ];
 
 const SMART_SEARCH_GATHERING_QUERY_TERMS = ["ضيوف", "ديوانيه", "ديوانية", "يمعه", "جمعه", "زواره", "عزيمه", "عزايم", "ناس", "ربع", "اهل", "وليمه", "ولائم", "صواني", "صينيه", "صينية"];
+
+
+const getExplicitSmartFoodGroup = (query: string) => {
+  const normalizedQuery = normalizeKuwaitiSearchText(query);
+  const compactQuery = normalizedQuery.replace(/\s+/g, "");
+  if (!normalizedQuery) return null;
+
+  return SMART_SEARCH_EXPLICIT_FOOD_GROUPS.find((group) =>
+    group.terms.some((term) => {
+      if (hasSmartNegativePreference(query, term)) return false;
+      const normalizedTerm = normalizeKuwaitiSearchText(term);
+      const compactTerm = normalizedTerm.replace(/\s+/g, "");
+      return normalizedTerm && (normalizedQuery.includes(normalizedTerm) || compactQuery.includes(compactTerm));
+    })
+  ) || null;
+};
 
 const productHasAnySmartAvoidTerm = (productText: string, avoidTerms: string[]) =>
   avoidTerms.some((term) => productText.includes(term));
@@ -358,6 +383,14 @@ const scoreProductForSmartSearch = (product: any, query: string) => {
   });
   const isHeavyProduct = productHasAnySmartTerm(productText, SMART_SEARCH_HEAVY_PRODUCT_TERMS);
   const isComfortProduct = productHasAnySmartTerm(productText, SMART_SEARCH_COMFORT_PRODUCT_TERMS);
+  const explicitFoodGroup = getExplicitSmartFoodGroup(query);
+
+  // If the customer clearly asks for a food family like "بحري", never mix in meat/chicken or unrelated products.
+  if (explicitFoodGroup) {
+    const matchesRequestedGroup = productHasAnySmartTerm(productText, explicitFoodGroup.terms);
+    const matchesExcludedGroup = productHasAnySmartTerm(productText, explicitFoodGroup.excludeTerms);
+    if (!matchesRequestedGroup || matchesExcludedGroup) return -1;
+  }
 
   // Health/child comfort searches must never drift into feasts, trays, rice-heavy or large-party items.
   if (primaryIntent?.id === "sick" && isHeavyProduct && !hasGatheringRequest) return -1;
@@ -380,7 +413,7 @@ const scoreProductForSmartSearch = (product: any, query: string) => {
   });
 
   intents.forEach((intent, index) => {
-    const intentWeight = Math.max(14, 42 - index * 7);
+    const intentWeight = Math.max(14, 42 - index * 7) + (explicitFoodGroup?.id === intent.id ? 36 : 0);
     let matchedIntentTerms = 0;
     intent.productTerms.forEach((term: string) => {
       const normalizedTerm = normalizeKuwaitiSearchText(term);
@@ -1155,73 +1188,15 @@ export default function CustomerSite() {
     return APPETITE_PHRASES[Math.floor(Math.random() * APPETITE_PHRASES.length)];
   });
 
-  // 🧬 Biometrics, Gyroscope & Automatic Proximity Login
+  // 🧬 Biometrics, Gyroscope & Proximity Radar UI
   const [biometricScanSquad, setBiometricScanSquad] = useState<any | null>(null);
   const [isBiometricScanning, setIsBiometricScanning] = useState(false);
   const [biometricStep, setBiometricStep] = useState<"ready" | "scanning" | "success" | "idle">("idle");
 
-  const triggerBiometricBypassJoin = (sq: any) => {
-    if (sessionStorage.getItem(`biometric_autologin_${sq.id}`)) return;
-    sessionStorage.setItem(`biometric_autologin_${sq.id}`, "1");
-    setBiometricScanSquad(sq);
-    setIsBiometricScanning(true);
-    setBiometricStep("scanning");
-    triggerHapticAndSound("click");
-
-    setTimeout(() => {
-      // Generate unique traditional guest profiles
-      const suffix = Math.floor(1000 + Math.random() * 9000);
-      const guestPhone = `9005${suffix}`;
-      const names = ["بوجاسم", "بوشهاب", "بوسعود", "بوخالد", "بوعلي", "بوفهد"];
-      const randomName = names[Math.floor(Math.random() * names.length)];
-      const autoName = `ضيف السدو - ${randomName}`;
-
-      try {
-        localStorage.setItem("customer_phone_track", guestPhone);
-        localStorage.setItem("customerName", autoName);
-      } catch (e) {}
-      setCustomerPhone(guestPhone);
-      setCustomerName(autoName);
-
-      fetch("/api/squad-join", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone: guestPhone,
-          squadId: sq.id,
-          name: autoName,
-          isAuto: true
-        })
-      }).then((res) => {
-        if (res.ok) {
-          fetch("/api/squad-presence", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              squadId: sq.id,
-              phone: guestPhone,
-              name: autoName,
-              action: "in"
-            })
-          }).then(() => {
-            fetchSquadGamification();
-            triggerHapticAndSound("success");
-            setBiometricStep("success");
-            setTimeout(() => {
-              setIsBiometricScanning(false);
-              setBiometricScanSquad(null);
-              // Open and focus squad modal
-              setActiveSquadId(sq.id);
-              setShowSquadModal(true);
-              setZeroClickWelcome({
-                squadName: sq.name,
-                name: autoName
-              });
-            }, 1200);
-          });
-        }
-      });
-    }, 2400);
+  const triggerBiometricBypassJoin = (_sq: any) => {
+    // Safety guard: the radar must never auto-create a guest, auto-join a diwaniya,
+    // auto-check presence, or open a squad without explicit user action and owner approval.
+    return;
   };
   const [initialSquadCode, setInitialSquadCode] = useState("");
   const [activeSquadTab, setActiveSquadTab] = useState<"overview"|"orders"|"notifications"|"location"|"leaderboard"|"tiers">("overview");
@@ -1699,10 +1674,7 @@ export default function CustomerSite() {
                   isOwnerOfNearby
                 });
 
-                // Smart auto-login geofence bypass
-                if (!customerPhone && !sessionStorage.getItem(`biometric_autologin_${sq.id}`)) {
-                  triggerBiometricBypassJoin(sq);
-                }
+                // Nearby non-members are shown a request button only; no automatic joining.
               }
             }
           });
@@ -1804,10 +1776,7 @@ export default function CustomerSite() {
                isOwnerOfNearby
              });
 
-             // Smart auto-login geofence bypass
-             if (!customerPhone && !sessionStorage.getItem(`biometric_autologin_${sq.id}`)) {
-               triggerBiometricBypassJoin(sq);
-             }
+             // Nearby non-members are shown a request button only; no automatic joining.
            }
          }
        });
