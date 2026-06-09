@@ -97,20 +97,196 @@ const splitSmartSearchTokens = (value?: string) =>
     .map((token) => token.trim())
     .filter((token) => token.length > 1);
 
+const SMART_SEARCH_ENGLISH_ARABIC_HINTS: Record<string, string[]> = {
+  seafood: ["بحري", "سمك", "سمج", "روبيان", "زبيدي", "هامور"],
+  fish: ["سمك", "سمج", "بحري", "زبيدي", "هامور"],
+  shrimp: ["روبيان", "ربيان", "بحري"],
+  meat: ["لحم", "لحوم", "غنم", "حاشي", "مفطح"],
+  chicken: ["دجاج", "دياي", "فراخ"],
+  rice: ["رز", "عيش", "مجبوس", "برياني", "مندي"],
+  breakfast: ["فطور", "ريوق", "بيض", "جبن"],
+  sweet: ["حلو", "حلى", "كيك", "كاكاو"],
+  dessert: ["حلو", "حلى", "حلويات", "كيك"],
+  soup: ["شوربه", "شوربة", "مرق", "دافي"],
+  healthy: ["صحي", "خفيف", "سلطه", "شوربه"],
+  cheap: ["اقتصادي", "رخيص", "سعره زين"],
+  premium: ["فخم", "فاخر", "ضيافه", "وليمه"],
+  diwaniya: ["ديوانيه", "ضيوف", "يمعه", "صواني"],
+};
+
 const SMART_SEARCH_SYNONYMS: Record<string, string[]> = {
-  ابي: ["ابغى", "بغيت", "ودي", "اشتهي", "مشتهي", "عطني", "عطيني", "ابيلي", "ابيله", "ابي شي", "ودي بشي", "خاطري", "اقترح", "اختار", "رشح"],
-  جوعان: ["يوعان", "يوع", "جوع", "ميت يوع", "بطني", "ابي اكل"],
-  خفيف: ["خفيفه", "مو ثقيل", "تصبيره", "سناك", "لقمه", "ما يثقل", "صحي", "دايت"],
-  عشاء: ["عشا", "ليل", "سهره", "سهران"],
-  غداء: ["غدا", "غدى", "ظهر"],
-  فطور: ["ريوق", "افطار", "صبح", "صباح"],
-  ديوانيه: ["ديوانية", "ربع", "يمعه", "جمعه", "زواره", "ضيوف", "عزيمه", "عزايم", "ناس", "اهل"],
-  سمك: ["سمج", "بحري", "زبيدي", "هامور", "روبيان", "ربيان", "مربين"],
-  دجاج: ["دياي", "فراخ", "جاج"],
-  لحم: ["لحم", "لحوم", "حاشي", "غنم", "غنمي", "نعيمي", "ذبيحه", "ذبيحة", "مفطح", "مشوي"],
-  حلو: ["حلى", "حلويات", "كاكاو", "كيك", "سكر", "تحليه", "تحلية"],
-  حار: ["سبايسي", "حر", "بهار", "شطة"],
-  مريض: ["تعبان", "تعبانه", "مرض", "مصخن", "مصخنه", "زكام", "كحه", "كحة", "برد", "حراره", "سخونه", "حلق", "معده", "اجر وعافيه"],
+  ابي: ["ابغى", "بغيت", "ودي", "اشتهي", "مشتهي", "خاطري", "مشتهيه", "نشتهي", "نبي", "نبغى", "عطني", "عطيني", "ابيلي", "ابيله", "ابي شي", "ودي بشي", "اقترح", "اختار", "رشح", "دلني", "شنو اطلب", "شرايك", "ابي شي يضبط"],
+  جوعان: ["يوعان", "يوعانه", "يوع", "جوع", "جوعان", "جوعانه", "ميت يوع", "ميتين يوع", "بطني", "ابي اكل", "ابي اكل الحين", "ابي اتعشى", "ابي اتغدى", "ابي اتريق", "يشبع", "مشبع", "سد جوع", "اكل يشبع", "شي يسد", "ما ابي احتار", "قرر عني"],
+  خفيف: ["خفيفه", "مو ثقيل", "موثقيل", "تصبيره", "سناك", "لقمه", "لقيمه", "ما يثقل", "صحي", "دايت", "خفافي", "على السريع", "شي بسيط", "بدون عيش", "بدون رز"],
+  عشاء: ["عشا", "ليل", "سهره", "سهران", "سحور", "اخر الليل", "بعد المغرب", "بعد الدوام"],
+  غداء: ["غدا", "غدى", "ظهر", "الظهر", "الغدا", "غدانا", "غداكم"],
+  فطور: ["ريوق", "افطار", "صبح", "صباح", "الصبح", "فطورنا", "ريوقنا"],
+  ديوانيه: ["ديوانية", "ديوان", "ربع", "شباب", "يمعه", "جمعه", "لمة", "لمه", "زواره", "ضيوف", "عزيمه", "عزايم", "ناس", "اهل", "بيت", "استقبال", "مناسبه", "بوفيه", "ملجه", "استراحه", "مخيم", "شاليه", "طلعه", "ربعنا", "الاهل"],
+  سمك: ["سمج", "بحري", "ماكولات بحريه", "مأكولات بحرية", "زبيدي", "هامور", "روبيان", "ربيان", "مربين", "مطبق سمك", "مطبق زبيدي", "صيد", "بحر", "سيفود", "سي فود"],
+  دجاج: ["دياي", "دجاجه", "فراخ", "جاج", "بروست", "مشوي دجاج", "مجبوس دجاج", "برياني دجاج"],
+  لحم: ["لحم", "لحوم", "حاشي", "غنم", "غنمي", "نعيمي", "ذبيحه", "ذبيحة", "مفطح", "خروف", "ريش", "كباب", "مشوي", "مجبوس لحم", "برياني لحم"],
+  حلو: ["حلى", "حلويات", "كاكاو", "كيك", "سكر", "تحليه", "تحلية", "قهوه", "قهوة", "تمر", "رهش", "لقيمات", "كنافه", "بقلاوه"],
+  حار: ["سبايسي", "spicy", "حر", "بهار", "شطة", "فلفل", "حراق", "حاره", "حار شوي"],
+  مريض: ["تعبان", "تعبانه", "مرض", "مصخن", "مصخنه", "زكام", "كحه", "كحة", "برد", "حراره", "سخونه", "حلق", "معده", "معدة", "اجر وعافيه", "أجر وعافية", "شوربه", "شوربة", "يدفي", "دافي"],
+  مقبلات: ["مقبل", "مقبلات", "جانبي", "سلطه", "سلطة", "حمص", "متبل", "ورق عنب", "محشي", "تبوله", "فتوش"],
+  رز: ["عيش", "ارز", "أرز", "مجبوس", "برياني", "مندي", "مطبق", "مربين", "مشخول", "مموش"],
+  اقتصادي: ["رخيص", "اقتصادي", "سعره زين", "مو غالي", "على القد", "ميزانيه", "ميزانية", "ارخص", "وفر", "توفير", "بسعر حلو", "حق اخر الشهر"],
+  فخم: ["فاخر", "كشخه", "ضيافه", "ضيافة", "يرفع الراس", "يبيض الوجه", "يعجب الضيوف", "راقي", "vip", "مميز", "شي محترم", "لا يفشل", "يشرّف"],
+  اطفال: ["طفل", "اطفال", "عيال", "عيالي", "ولد", "بنت", "مدرسه", "لانش", "خفيف", "بدون حار"],
+  مكتب: ["دوام", "مكتب", "اجتماع", "موظفين", "استراحة", "غدا دوام", "سريع", "بوكس"],
+};
+
+
+const SMART_SEARCH_LOCAL_MEMORY_KEY = "orser_customer_smart_search_learning_v1";
+const SMART_SEARCH_LOCAL_MEMORY_LIMIT = 80;
+
+type SmartSearchLocalMemory = {
+  version: number;
+  updatedAt: number;
+  queries: Record<string, number>;
+  tokens: Record<string, number>;
+  categories: Record<string, number>;
+  products: Record<string, number>;
+  suggestions: string[];
+};
+
+const createEmptySmartSearchLocalMemory = (): SmartSearchLocalMemory => ({
+  version: 1,
+  updatedAt: Date.now(),
+  queries: {},
+  tokens: {},
+  categories: {},
+  products: {},
+  suggestions: [],
+});
+
+const trimSmartSearchMemoryMap = (map: Record<string, number>, limit = SMART_SEARCH_LOCAL_MEMORY_LIMIT) =>
+  Object.fromEntries(
+    Object.entries(map || {})
+      .filter(([key]) => Boolean(key))
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+  );
+
+const readSmartSearchLocalMemory = (): SmartSearchLocalMemory => {
+  if (typeof window === "undefined") return createEmptySmartSearchLocalMemory();
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(SMART_SEARCH_LOCAL_MEMORY_KEY) || "null");
+    if (!parsed || typeof parsed !== "object") return createEmptySmartSearchLocalMemory();
+    return {
+      version: 1,
+      updatedAt: Number(parsed.updatedAt || Date.now()),
+      queries: trimSmartSearchMemoryMap(parsed.queries || {}),
+      tokens: trimSmartSearchMemoryMap(parsed.tokens || {}),
+      categories: trimSmartSearchMemoryMap(parsed.categories || {}, 40),
+      products: trimSmartSearchMemoryMap(parsed.products || {}),
+      suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions.filter(Boolean).slice(0, 25) : [],
+    };
+  } catch {
+    return createEmptySmartSearchLocalMemory();
+  }
+};
+
+const writeSmartSearchLocalMemory = (memory: SmartSearchLocalMemory) => {
+  if (typeof window === "undefined") return;
+  try {
+    const cleanMemory: SmartSearchLocalMemory = {
+      version: 1,
+      updatedAt: Date.now(),
+      queries: trimSmartSearchMemoryMap(memory.queries),
+      tokens: trimSmartSearchMemoryMap(memory.tokens),
+      categories: trimSmartSearchMemoryMap(memory.categories, 40),
+      products: trimSmartSearchMemoryMap(memory.products),
+      suggestions: Array.from(new Set((memory.suggestions || []).map((item) => item.trim()).filter(Boolean))).slice(0, 25),
+    };
+    window.localStorage.setItem(SMART_SEARCH_LOCAL_MEMORY_KEY, JSON.stringify(cleanMemory));
+  } catch {
+    // Keep smart search fully non-blocking if local storage is unavailable.
+  }
+};
+
+const getSmartProductMemoryKey = (product: any) => String(product?.id || product?.productId || normalizeCustomerProductKey(product));
+
+const recordSmartSearchLocalLearning = (query: string, matchedProducts: any[] = []) => {
+  const normalizedQuery = normalizeKuwaitiSearchText(query);
+  if (!hasSmartMeaningfulQuery(normalizedQuery)) return;
+  const memory = readSmartSearchLocalMemory();
+  memory.queries[normalizedQuery] = (memory.queries[normalizedQuery] || 0) + 1;
+  splitSmartSearchTokens(normalizedQuery)
+    .filter((token) => !SMART_SEARCH_GENERIC_TOKENS.has(token))
+    .forEach((token) => {
+      memory.tokens[token] = (memory.tokens[token] || 0) + 1;
+    });
+  matchedProducts.slice(0, 8).forEach((product: any, index: number) => {
+    const weight = Math.max(1, 8 - index);
+    const category = normalizeCategoryName(product?.category);
+    const productKey = getSmartProductMemoryKey(product);
+    if (category) memory.categories[category] = (memory.categories[category] || 0) + weight;
+    if (productKey) memory.products[productKey] = (memory.products[productKey] || 0) + weight;
+  });
+  memory.suggestions = [query.trim(), ...memory.suggestions.filter((item) => normalizeKuwaitiSearchText(item) !== normalizedQuery)].slice(0, 25);
+  writeSmartSearchLocalMemory(memory);
+};
+
+const refreshSmartSearchLocalLearning = () => {
+  const memory = readSmartSearchLocalMemory();
+  const now = Date.now();
+  if (now - Number(memory.updatedAt || 0) < 55_000) return;
+  const decayMap = (map: Record<string, number>) => {
+    Object.keys(map || {}).forEach((key) => {
+      map[key] = Math.max(1, Math.round(Number(map[key] || 0) * 0.985));
+    });
+    return trimSmartSearchMemoryMap(map);
+  };
+  memory.queries = decayMap(memory.queries);
+  memory.tokens = decayMap(memory.tokens);
+  memory.categories = trimSmartSearchMemoryMap(memory.categories, 40);
+  memory.products = decayMap(memory.products);
+  writeSmartSearchLocalMemory(memory);
+};
+
+const getSmartSearchLearningBoost = (product: any, query: string, memory: SmartSearchLocalMemory) => {
+  if (!product || !memory) return 0;
+  const productKey = getSmartProductMemoryKey(product);
+  const category = normalizeCategoryName(product?.category);
+  const productText = getProductSmartSearchText(product);
+  const queryTokens = splitSmartSearchTokens(query).filter((token) => !SMART_SEARCH_GENERIC_TOKENS.has(token));
+  let boost = 0;
+  if (productKey && memory.products[productKey]) boost += Math.min(26, memory.products[productKey] * 2);
+  if (category && memory.categories[category]) boost += Math.min(14, memory.categories[category]);
+  queryTokens.forEach((token) => {
+    if (productText.includes(token) && memory.tokens[token]) boost += Math.min(10, memory.tokens[token]);
+  });
+  return boost;
+};
+
+const SMART_SEARCH_LIVE_SUGGESTIONS_BASE = [
+  "مشتهي بحري", "حق الديوانية", "حق ٦ أشخاص", "شي خفيف", "شي دافي لمريض", "ريوق خفيف", "عشا يشبع", "مقبلات مع الطلب", "رز وعيش", "شي اقتصادي", "شي فخم للضيوف", "بدون حار", "للعيال", "حق الدوام", "seafood", "shrimp", "fish", "chicken", "meat"
+];
+
+const getSmartSearchLiveSuggestions = (products: any[] = [], query = "", limit = 7) => {
+  const normalizedQuery = normalizeKuwaitiSearchText(query);
+  const memory = readSmartSearchLocalMemory();
+  const productNames = (Array.isArray(products) ? products : [])
+    .filter((product: any) => product?.isActive !== false && !product?.isOutOfStock)
+    .map((product: any) => product?.name || product?.productName || product?.nameAr || "")
+    .filter(Boolean)
+    .slice(0, 80);
+  const candidates = Array.from(new Set([
+    ...memory.suggestions,
+    ...Object.keys(memory.queries || {}).sort((a, b) => (memory.queries[b] || 0) - (memory.queries[a] || 0)),
+    ...SMART_SEARCH_LIVE_SUGGESTIONS_BASE,
+    ...productNames,
+  ])).filter(Boolean);
+
+  const filtered = normalizedQuery
+    ? candidates.filter((candidate) => {
+        const normalizedCandidate = normalizeKuwaitiSearchText(candidate);
+        return normalizedCandidate.includes(normalizedQuery) || normalizedQuery.includes(normalizedCandidate) || splitSmartSearchTokens(normalizedQuery).some((token) => normalizedCandidate.includes(token));
+      })
+    : candidates;
+
+  return filtered.slice(0, limit);
 };
 
 const SMART_SEARCH_NEGATION_WORDS = [
@@ -181,14 +357,14 @@ const getSmartSearchAvoidTerms = (query: string) => {
 
 const SMART_SEARCH_GENERIC_TOKENS = new Set([
   "ابي", "ابغى", "بغيت", "ودي", "اشتهي", "مشتهي", "عطني", "عطيني", "اختار", "اختيار", "اقترح", "رشح", "شي", "شيء", "طلب", "طلبات",
-  "حق", "لي", "لنا", "لهم", "اليوم", "الحين", "الان", "ممكن", "تكفى", "تكفين", "ولد", "ولدي", "بنتي", "عيالي", "طفل", "اطفال"
+  "حق", "لي", "لنا", "لهم", "عندي", "عندنا", "اليوم", "باجر", "الحين", "الان", "ممكن", "تكفى", "تكفين", "ولد", "ولدي", "بنتي", "عيالي", "طفل", "اطفال", "شنو", "اي", "اكو", "في", "على", "من", "مع", "او", "بس"
 ]);
 
 const SMART_SEARCH_HEAVY_PRODUCT_TERMS = [
   "وليمه", "ولائم", "صينيه", "صينية", "صواني", "ذبيحه", "ذبيحة", "مفطح", "قوزي", "مندي", "مجبوس", "برياني", "مربين", "مطبق", "مشخول", "عيش", "رز", "ارز", "حاشي", "خروف", "نعيمي", "غنم", "لحم"
 ];
 
-const SMART_SEARCH_SEAFOOD_TERMS = ["بحري", "سمج", "سمك", "روبيان", "ربيان", "زبيدي", "هامور", "مربين", "مطبق سمك", "مطبق زبيدي"];
+const SMART_SEARCH_SEAFOOD_TERMS = ["بحري", "سمج", "سمك", "روبيان", "ربيان", "زبيدي", "هامور", "مربين", "مطبق سمك", "مطبق زبيدي", "ماكولات بحريه", "مأكولات بحرية", "صيد", "بحر", "سيفود", "سي فود"];
 const SMART_SEARCH_MEAT_TERMS = ["لحم", "لحوم", "حاشي", "غنم", "غنمي", "نعيمي", "ذبيحه", "ذبيحة", "مفطح", "خروف"];
 const SMART_SEARCH_CHICKEN_TERMS = ["دجاج", "دياي", "جاج", "فراخ"];
 const SMART_SEARCH_EXPLICIT_FOOD_GROUPS = [
@@ -202,6 +378,21 @@ const SMART_SEARCH_COMFORT_PRODUCT_TERMS = [
 ];
 
 const SMART_SEARCH_GATHERING_QUERY_TERMS = ["ضيوف", "ديوانيه", "ديوانية", "يمعه", "جمعه", "زواره", "عزيمه", "عزايم", "ناس", "ربع", "اهل", "وليمه", "ولائم", "صواني", "صينيه", "صينية"];
+const SMART_SEARCH_MEANINGFUL_NEED_TOKENS = [
+  "جوع", "يوع", "جوعان", "يوعان", "اشبع", "مشبع", "خفيف", "ثقيل", "صحي", "حلو", "حار", "بارد", "دافي", "مريض", "تعبان", "برد", "زكام", "كحه", "سفر", "مسافر", "ضيوف", "ديوانيه", "عزيمه", "فطور", "ريوق", "غدا", "غداء", "عشا", "عشاء", "سهره", "سهران", "قهوه", "قهوة", "اقتصادي", "رخيص", "فخم", "كشخه", "بحري", "سمك", "سمج", "دجاج", "لحم", "رز", "عيش", "مقبلات"
+];
+
+const hasSmartMeaningfulQuery = (query: string) => {
+  const normalizedQuery = normalizeKuwaitiSearchText(query);
+  if (!normalizedQuery) return false;
+  const tokens = splitSmartSearchTokens(normalizedQuery).filter((token) => !SMART_SEARCH_GENERIC_TOKENS.has(token));
+  if (tokens.length > 0) return true;
+  const compactQuery = normalizedQuery.replace(/\s+/g, "");
+  return SMART_SEARCH_MEANINGFUL_NEED_TOKENS.some((term) => {
+    const normalizedTerm = normalizeKuwaitiSearchText(term);
+    return normalizedTerm && (normalizedQuery.includes(normalizedTerm) || compactQuery.includes(normalizedTerm.replace(/\s+/g, "")));
+  });
+};
 
 
 const getExplicitSmartFoodGroup = (query: string) => {
@@ -246,6 +437,13 @@ const expandSmartSearchTokens = (value?: string) => {
     }
   });
 
+  Object.entries(SMART_SEARCH_ENGLISH_ARABIC_HINTS).forEach(([english, arabicHints]) => {
+    const normalizedEnglish = normalizeKuwaitiSearchText(english);
+    if (baseTokens.some((token) => token === normalizedEnglish || normalizedEnglish.startsWith(token) || token.startsWith(normalizedEnglish))) {
+      arabicHints.forEach((hint) => splitSmartSearchTokens(hint).forEach((token) => expanded.add(token)));
+    }
+  });
+
   return Array.from(expanded).filter((token) => token.length > 1);
 };
 
@@ -273,6 +471,19 @@ const getSmartTextSimilarity = (a: string, b: string) => {
   return 1 - previous[b.length] / maxLen;
 };
 
+const collectSmartNestedSearchText = (value: any, depth = 0): string[] => {
+  if (!value || depth > 2) return [];
+  if (["string", "number", "boolean"].includes(typeof value)) return [String(value)];
+  if (Array.isArray(value)) return value.flatMap((item) => collectSmartNestedSearchText(item, depth + 1));
+  if (typeof value === "object") {
+    return [
+      value.name, value.title, value.label, value.text, value.value, value.ar, value.en,
+      value.nameAr, value.nameEn, value.description, value.category, value.keyword, value.keywords,
+    ].flatMap((item) => collectSmartNestedSearchText(item, depth + 1));
+  }
+  return [];
+};
+
 const getProductSmartSearchText = (product: any) =>
   normalizeKuwaitiSearchText([
     product?.name,
@@ -285,12 +496,29 @@ const getProductSmartSearchText = (product: any) =>
     product?.details,
     product?.ingredients,
     product?.preparationInstructions,
+    product?.servingSize,
+    product?.servings,
+    product?.calories,
+    product?.spiceLevel,
     ...(Array.isArray(product?.tags) ? product.tags : []),
     ...(Array.isArray(product?.keywords) ? product.keywords : []),
+    ...collectSmartNestedSearchText(product?.variants),
+    ...collectSmartNestedSearchText(product?.options),
+    ...collectSmartNestedSearchText(product?.addons),
+    ...collectSmartNestedSearchText(product?.sizes),
   ].filter(Boolean).join(" "));
 
 const getProductSmartSearchWords = (product: any) =>
   Array.from(new Set(splitSmartSearchTokens(getProductSmartSearchText(product))));
+
+const getSmartProductCatalogTerms = (product: any) => {
+  const categoryTokens = splitSmartSearchTokens(product?.category || "");
+  const tagTokens = [
+    ...(Array.isArray(product?.tags) ? product.tags : []),
+    ...(Array.isArray(product?.keywords) ? product.keywords : []),
+  ].flatMap((value: any) => splitSmartSearchTokens(String(value || "")));
+  return Array.from(new Set([...categoryTokens, ...tagTokens]));
+};
 
 const SMART_PRODUCT_INTENTS: any[] = [
   {
@@ -333,27 +561,93 @@ const SMART_PRODUCT_INTENTS: any[] = [
     productTerms: ["مجبوس", "برياني", "مندي", "قوزي", "لحم", "دجاج", "سمج", "روبيان", "عيش", "مشخول", "صينيه", "وجبه", "بوكس", "مشبع", "مربين", "مطبق", "مموش"],
   },
   {
+    id: "breakfast",
+    filter: "بحث",
+    queryTerms: ["فطور", "ريوق", "افطار", "صبح", "صباح", "اتريق"],
+    productTerms: ["فطور", "ريوق", "بيض", "جبن", "خبز", "نخي", "باجلا", "كبدة", "كبدة", "شاي", "قهوه", "قهوة"],
+  },
+  {
+    id: "appetizers",
+    filter: "بحث",
+    queryTerms: ["مقبلات", "مقبل", "جانبي", "سلطه", "سلطة", "مع الطلب", "خفافي"],
+    productTerms: ["مقبلات", "جانبي", "سلطه", "سلطة", "حمص", "متبل", "ورق عنب", "محشي", "تبوله", "فتوش", "روب"],
+  },
+  {
+    id: "rice",
+    filter: "بحث",
+    queryTerms: ["رز", "ارز", "عيش", "مجبوس", "برياني", "مندي", "مطبق", "مربين", "مشخول"],
+    productTerms: ["رز", "ارز", "عيش", "مجبوس", "برياني", "مندي", "مطبق", "مربين", "مشخول", "مموش"],
+  },
+  {
+    id: "budget",
+    filter: "بحث",
+    queryTerms: ["رخيص", "اقتصادي", "سعره زين", "مو غالي", "على القد", "ميزانيه", "ميزانية"],
+    productTerms: ["وجبه", "وجبة", "بوكس", "نفر", "خفيف", "تصبيره", "مقبلات"],
+  },
+  {
+    id: "premium",
+    filter: "صواني",
+    queryTerms: ["فخم", "فاخر", "كشخه", "ضيافه", "ضيافة", "يرفع الراس", "يبيض الوجه", "يعجب الضيوف"],
+    productTerms: ["وليمه", "ولائم", "صينيه", "صواني", "ذبيحه", "مفطح", "قوزي", "نعيمي", "حاشي", "مشخول"],
+  },
+
+  {
+    id: "kids",
+    filter: "خفيف",
+    queryTerms: ["اطفال", "طفل", "عيال", "عيالي", "ولد", "بنت", "مدرسه", "لانش", "ما يحب الحار", "بدون حار"],
+    productTerms: ["خفيف", "وجبه", "وجبة", "بوكس", "دجاج", "بطاط", "مقبلات", "جبن", "خبز", "بدون حار"],
+    avoidTerms: ["حار", "شطة", "سبايسي", "ذبيحه", "مفطح"],
+  },
+  {
+    id: "office",
+    filter: "بحث",
+    queryTerms: ["دوام", "مكتب", "اجتماع", "موظفين", "استراحة", "غدا دوام", "سريع", "بوكسات", "بوكس"],
+    productTerms: ["بوكس", "وجبه", "وجبة", "صينيه", "صواني", "مقبلات", "مجبوس", "برياني", "سريع"],
+  },
+  {
+    id: "spicy",
+    filter: "بحث",
+    queryTerms: ["حار", "سبايسي", "spicy", "حر", "شطة", "فلفل", "بهار", "حراق"],
+    productTerms: ["حار", "سبايسي", "شطة", "فلفل", "بهار", "حراق"],
+  },
+  {
     id: "seafood",
     filter: "بحث",
-    queryTerms: ["بحري", "سمج", "سمك", "روبيان", "ربيان", "زبيدي", "هامور"],
-    productTerms: ["بحري", "سمج", "سمك", "روبيان", "ربيان", "زبيدي", "هامور", "مربين"],
+    queryTerms: ["بحري", "سمج", "سمك", "روبيان", "ربيان", "زبيدي", "هامور", "ماكولات بحريه", "مأكولات بحرية", "سيفود", "سي فود", "صيد"],
+    productTerms: ["بحري", "سمج", "سمك", "روبيان", "ربيان", "زبيدي", "هامور", "مربين", "مطبق سمك", "مطبق زبيدي", "صيد"],
   },
 ];
 
-const getSmartQueryIntentMatches = (query: string) => {
+const getSmartQueryTermMatchScore = (query: string, term: string) => {
   const normalizedQuery = normalizeKuwaitiSearchText(query);
+  const normalizedTerm = normalizeKuwaitiSearchText(term);
+  if (!normalizedQuery || !normalizedTerm) return 0;
   const compactQuery = normalizedQuery.replace(/\s+/g, "");
+  const compactTerm = normalizedTerm.replace(/\s+/g, "");
+  const queryTokens = splitSmartSearchTokens(normalizedQuery);
+  const termTokens = splitSmartSearchTokens(normalizedTerm);
+
+  if (normalizedQuery.includes(normalizedTerm) || compactQuery.includes(compactTerm)) return Math.max(3, normalizedTerm.length);
+  if (normalizedTerm.includes(normalizedQuery) && normalizedQuery.length >= 2) return Math.max(2, normalizedQuery.length);
+
+  const tokenScore = queryTokens.reduce((total, token) => {
+    const best = termTokens.reduce((bestScore, termToken) => {
+      if (token.length < 2 || termToken.length < 2) return bestScore;
+      if (termToken.startsWith(token)) return Math.max(bestScore, token.length + 2);
+      if (token.startsWith(termToken)) return Math.max(bestScore, termToken.length + 1);
+      const similarity = getSmartTextSimilarity(token, termToken);
+      return similarity >= 0.78 ? Math.max(bestScore, Math.round(similarity * Math.min(token.length, termToken.length))) : bestScore;
+    }, 0);
+    return total + best;
+  }, 0);
+
+  return tokenScore;
+};
+
+const getSmartQueryIntentMatches = (query: string) => {
   return SMART_PRODUCT_INTENTS
     .map((intent) => {
-      const score = intent.queryTerms.reduce((total, term) => {
-        const normalizedTerm = normalizeKuwaitiSearchText(term);
-        if (!normalizedTerm) return total;
-        const compactTerm = normalizedTerm.replace(/\s+/g, "");
-        if (normalizedQuery.includes(normalizedTerm) || compactQuery.includes(compactTerm)) {
-          return total + Math.max(3, normalizedTerm.length);
-        }
-        return total;
-      }, 0);
+      const score = intent.queryTerms.reduce((total, term) => total + getSmartQueryTermMatchScore(query, term), 0);
       return { ...intent, score };
     })
     .filter((intent) => intent.score > 0)
@@ -361,6 +655,18 @@ const getSmartQueryIntentMatches = (query: string) => {
 };
 
 const detectSmartMoodFilter = (query: string) => getSmartQueryIntentMatches(query)[0]?.filter || "بحث";
+
+const getSmartRequestedPeopleCount = (query: string) => {
+  const normalized = normalizeKuwaitiSearchText(query);
+  const digitMatch = normalized.match(/(\d+)\s*(اشخاص|شخص|انفار|نفر|ناس|ضيوف)/);
+  if (digitMatch) return Number(digitMatch[1]);
+  const words: Record<string, number> = { واحد: 1, اثنين: 2, اثنينه: 2, ثلاثه: 3, ثلاثة: 3, اربع: 4, اربعه: 4, خمسة: 5, خمس: 5, سته: 6, ستة: 6, سبعه: 7, سبعة: 7, ثمانيه: 8, ثمانية: 8, عشره: 10, عشرة: 10 };
+  const hit = Object.entries(words).find(([word]) => normalized.includes(`${word} اشخاص`) || normalized.includes(`${word} نفر`) || normalized.includes(`${word} ضيوف`));
+  return hit ? hit[1] : 0;
+};
+
+const SMART_SEARCH_LARGE_ORDER_TERMS = ["صينيه", "صينية", "صواني", "وليمه", "ولائم", "بوفيه", "مفطح", "ذبيحه", "قوزي", "مندي", "مجبوس", "برياني"];
+const SMART_SEARCH_SINGLE_ORDER_TERMS = ["وجبه", "وجبة", "بوكس", "نفر", "خفيف", "تصبيره", "سناك", "مقبلات"];
 
 const scoreProductForSmartSearch = (product: any, query: string) => {
   if (!product || product?.isActive === false || product?.isOutOfStock) return -1;
@@ -407,9 +713,15 @@ const scoreProductForSmartSearch = (product: any, query: string) => {
     }
 
     const closeWord = productWords.find((word) =>
-      word.length > 2 && token.length > 2 && (word.startsWith(token) || token.startsWith(word) || getSmartTextSimilarity(word, token) >= 0.74)
+      word.length > 1 && token.length > 1 && (word.startsWith(token) || token.startsWith(word) || getSmartTextSimilarity(word, token) >= 0.68)
     );
-    if (closeWord) score += token.length >= 4 ? 13 : 7;
+    if (closeWord) score += token.length >= 4 ? 17 : 9;
+  });
+
+  const catalogTerms = getSmartProductCatalogTerms(product);
+  directTokens.forEach((token) => {
+    const catalogHit = catalogTerms.some((term) => term.includes(token) || token.includes(term) || getSmartTextSimilarity(term, token) >= 0.7);
+    if (catalogHit) score += 20;
   });
 
   intents.forEach((intent, index) => {
@@ -445,6 +757,15 @@ const scoreProductForSmartSearch = (product: any, query: string) => {
     score -= 30;
   }
 
+  const requestedPeople = getSmartRequestedPeopleCount(query);
+  if (requestedPeople >= 4) {
+    if (productHasAnySmartTerm(productText, SMART_SEARCH_LARGE_ORDER_TERMS)) score += 55;
+    if (productHasAnySmartTerm(productText, SMART_SEARCH_SINGLE_ORDER_TERMS)) score -= 20;
+  } else if (requestedPeople > 0 && requestedPeople <= 2) {
+    if (productHasAnySmartTerm(productText, SMART_SEARCH_SINGLE_ORDER_TERMS)) score += 35;
+    if (productHasAnySmartTerm(productText, ["ذبيحه", "مفطح", "وليمه", "ولائم"])) score -= 45;
+  }
+
   if (product?.isTopSeller || product?.isBestSeller || product?.isMenuFeatured || product?.featuredInMenu || product?.isFeatured) score += 6;
   if (Number(product?.price || product?.basePrice || 0) > 0) score += 2;
 
@@ -472,8 +793,13 @@ const getSmartValidatedAiMatches = (products: any[] = [], aiMatchingIds: string[
 
 const getSmartProductMatches = (products: any[] = [], query: string, limit = 60) => {
   const activeProducts = (Array.isArray(products) ? products : []).filter((product: any) => product?.isActive !== false && !product?.isOutOfStock);
+  const localLearning = readSmartSearchLocalMemory();
   const scored = activeProducts
-    .map((product: any, index: number) => ({ product, index, score: scoreProductForSmartSearch(product, query) }))
+    .map((product: any, index: number) => ({
+      product,
+      index,
+      score: scoreProductForSmartSearch(product, query) + getSmartSearchLearningBoost(product, query, localLearning),
+    }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score || a.index - b.index)
     .map((item) => item.product);
@@ -486,6 +812,24 @@ const getSmartProductMatches = (products: any[] = [], query: string, limit = 60)
   const fallbackProducts = avoidTerms.length
     ? activeProducts.filter((product: any) => !productHasAnySmartAvoidTerm(getProductSmartSearchText(product), avoidTerms))
     : activeProducts;
+
+  const meaningfulQuery = hasSmartMeaningfulQuery(query);
+  const normalizedTokens = splitSmartSearchTokens(query).filter((token) => !SMART_SEARCH_GENERIC_TOKENS.has(token));
+  const fuzzyFallback = fallbackProducts
+    .map((product: any, index: number) => {
+      const words = getProductSmartSearchWords(product);
+      const score = normalizedTokens.reduce((total, token) => {
+        const hit = words.find((word) => word.length > 1 && token.length > 1 && (word.startsWith(token) || token.startsWith(word) || getSmartTextSimilarity(word, token) >= 0.62));
+        return total + (hit ? 1 : 0);
+      }, 0);
+      return { product, index, score };
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((item) => item.product);
+
+  if (fuzzyFallback.length > 0) return fuzzyFallback.slice(0, limit);
+  if (meaningfulQuery) return [];
 
   return fallbackProducts
     .slice()
@@ -2260,6 +2604,7 @@ export default function CustomerSite() {
   const [activeStory, setActiveStory] = useState<string>("الكل");
   const [activeProductCategory, setActiveProductCategory] = useState<string | null>(null);
   const [quickProductSearch, setQuickProductSearch] = useState("");
+  const [smartSearchLearningTick, setSmartSearchLearningTick] = useState(0);
   const [showFlashSale, setShowFlashSale] = useState(false);
   const [smartPick, setSmartPick] = useState<any>(null); // Re-adding smartPick
   const [flyingPlates, setFlyingPlates] = useState<
@@ -2282,6 +2627,32 @@ export default function CustomerSite() {
       window.removeEventListener("offline", updateOnline);
     };
   }, []);
+
+  useEffect(() => {
+    refreshSmartSearchLocalLearning();
+    const timer = window.setInterval(() => {
+      refreshSmartSearchLocalLearning();
+      setSmartSearchLearningTick((value) => value + 1);
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const query = quickProductSearch.trim() || moodQuery.trim();
+    if (!query || !hasSmartMeaningfulQuery(query)) return;
+    const timer = window.setTimeout(() => {
+      const visibleProducts = getCustomerVisibleProducts(products || []);
+      const matches = getSmartProductMatches(visibleProducts, query, 12);
+      recordSmartSearchLocalLearning(query, matches);
+      setSmartSearchLearningTick((value) => value + 1);
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [quickProductSearch, moodQuery, products]);
+
+  const quickSmartSuggestions = useMemo(
+    () => getSmartSearchLiveSuggestions(getCustomerVisibleProducts(products || []), quickProductSearch, 7),
+    [products, quickProductSearch, smartSearchLearningTick]
+  );
 
   useEffect(() => {
     isDiwaniyaPushReady().then(setCanUseDiwaniyaPush).catch(() => setCanUseDiwaniyaPush(false));
@@ -4821,10 +5192,24 @@ export default function CustomerSite() {
                       <input
                         value={quickProductSearch}
                         onChange={(e) => setQuickProductSearch(e.target.value)}
-                        placeholder="تدور على طبق معيّن؟"
+                        placeholder="اكتب نيتك بأي طريقة: مشتهي بحري، حق ٦ أشخاص، مريض، ديوانية..."
                         className="bg-transparent outline-none w-full text-sm font-bold text-brand placeholder:text-stone-400"
                       />
                     </div>
+                    {quickSmartSuggestions.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {quickSmartSuggestions.map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            type="button"
+                            onClick={() => setQuickProductSearch(suggestion)}
+                            className="px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100 text-[11px] font-extrabold text-amber-900 hover:bg-amber-100 transition-colors"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="al-empty-state p-8 text-center border-2 border-dashed border-amber-100 rounded-[28px] bg-white/80">
                     <div className="al-empty-icon">🍽️</div>
@@ -4840,10 +5225,24 @@ export default function CustomerSite() {
                       <input
                         value={quickProductSearch}
                         onChange={(e) => setQuickProductSearch(e.target.value)}
-                        placeholder="تدور على طبق معيّن؟"
+                        placeholder="اكتب نيتك بأي طريقة: مشتهي بحري، حق ٦ أشخاص، مريض، ديوانية..."
                         className="bg-transparent outline-none w-full text-sm font-bold text-brand placeholder:text-stone-400"
                       />
                     </div>
+                    {quickSmartSuggestions.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {quickSmartSuggestions.map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            type="button"
+                            onClick={() => setQuickProductSearch(suggestion)}
+                            className="px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100 text-[11px] font-extrabold text-amber-900 hover:bg-amber-100 transition-colors"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   {quickProductSearch.trim() ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
