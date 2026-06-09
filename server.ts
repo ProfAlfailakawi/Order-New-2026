@@ -2583,7 +2583,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   });
 
   app.post("/api/squad-join", async (req, res) => {
-   const { phone, squadId, name, isAuto } = req.body;
+   const { phone, squadId, name } = req.body;
    if (!phone || !squadId) return res.status(400).json({ error: "Missing phone or squadId" });
    try {
      const cleanQPhone = cleanPhone(phone);
@@ -2607,20 +2607,6 @@ app.get("/api/debug/order/:id", async (req, res) => {
          return { squads };
        }
 
-       if (isAuto) {
-         // Direct entry proximity join! Automatically added directly to memberList bypassing approval
-         squad.membersList.push({
-           phone: cleanQPhone,
-           name: name || "عضو السدو",
-           score: 100,
-           orderCount: 0,
-           lossesCount: 0,
-           checkedInAt: new Date().toISOString()
-         });
-         squads[finalSquadIndex] = squad;
-         joinedSquad = squad;
-         return { squads };
-       }
 
        const reqs = Array.isArray(current.geofenceJoinRequests) ? [...current.geofenceJoinRequests] : [];
        const filteredReqs = reqs.filter((r: any) => !(cleanPhone(r.phone) === cleanQPhone && String(r.squadId) === String(squadId) && String(r.status || "pending") === "pending"));
