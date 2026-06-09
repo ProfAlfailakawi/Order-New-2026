@@ -524,6 +524,9 @@ async function sendAdminPushDirectOnce(input: {
       status: "no_tokens",
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
+
+    // Delivery-only safety: allow the admin alert worker to send later when tokens exist.
+    await eventRef.delete().catch(() => undefined);
     return { success: false, tokensCount: 0, reason: "no-active-tokens" };
   }
 
@@ -586,17 +589,32 @@ async function sendAdminPushDirectOnce(input: {
 
   const tokenBatches: string[][] = [];
   for (let i = 0; i < tokens.length; i += 500) tokenBatches.push(tokens.slice(i, i + 500));
-  const batchResponses = await Promise.all(
-    tokenBatches.map(async (batchTokens) => ({
-      tokens: batchTokens,
-      response: await adminMessaging.sendEachForMulticast({ ...baseMessage, tokens: batchTokens }),
-    }))
-  );
-  const response = {
-    successCount: batchResponses.reduce((sum, item) => sum + item.response.successCount, 0),
-    failureCount: batchResponses.reduce((sum, item) => sum + item.response.failureCount, 0),
-    responses: batchResponses.flatMap((item) => item.response.responses),
-  };
+
+  let batchResponses: any[] = [];
+  let response: any;
+  try {
+    batchResponses = await Promise.all(
+      tokenBatches.map(async (batchTokens) => ({
+        tokens: batchTokens,
+        response: await adminMessaging.sendEachForMulticast({ ...baseMessage, tokens: batchTokens }),
+      }))
+    );
+    response = {
+      successCount: batchResponses.reduce((sum, item) => sum + item.response.successCount, 0),
+      failureCount: batchResponses.reduce((sum, item) => sum + item.response.failureCount, 0),
+      responses: batchResponses.flatMap((item) => item.response.responses),
+    };
+  } catch (sendError: any) {
+    await eventRef.set({
+      status: "send_error",
+      error: sendError?.message || String(sendError),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    // Delivery-only safety: do not leave a claimed event blocking the admin alert worker retry.
+    await eventRef.delete().catch(() => undefined);
+    throw sendError;
+  }
 
   if (response.failureCount > 0) {
     const batch = adminDb.batch();
@@ -637,6 +655,11 @@ async function sendAdminPushDirectOnce(input: {
     sentAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   }, { merge: true });
+
+  if (response.successCount <= 0) {
+    // Delivery-only safety: if FCM accepted nothing, do not block the fallback alert worker.
+    await eventRef.delete().catch(() => undefined);
+  }
 
   return result;
 }
