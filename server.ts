@@ -534,6 +534,13 @@ async function sendAdminPushDirectOnce(input: {
   );
 
   const isPaymentAlert = String(input.alertType || "").toLowerCase().includes("payment") || String(input.alertType || "").toLowerCase().includes("invoice") || String(input.alertType || "").toLowerCase().includes("paid");
+  const alertTypeText = String(input.alertType || "").toLowerCase();
+  const shouldRenotifyFinalState =
+    alertTypeText.includes("paid") ||
+    alertTypeText.includes("captured") ||
+    alertTypeText.includes("success") ||
+    alertTypeText.includes("failed") ||
+    alertTypeText.includes("completed");
   const baseMessage = {
     notification: {
       title: input.title,
@@ -562,10 +569,10 @@ async function sendAdminPushDirectOnce(input: {
       notification: {
         title: input.title,
         body: input.body,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/icon-192.png",
+        icon: "/ios-icon-192-v6.png",
+        badge: "/ios-icon-192-v6.png",
         tag: input.eventId,
-        renotify: false,
+        renotify: shouldRenotifyFinalState,
         requireInteraction: true,
         data: {
           url,
