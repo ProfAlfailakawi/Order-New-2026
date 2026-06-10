@@ -551,15 +551,15 @@ async function sendAdminPushDirectOnce(input: {
     },
     data: {
       type: "smart_alert",
-      alertType: input.alertType,
-      eventId: input.eventId,
-      notificationTag: input.eventId,
-      url,
-      click_action: url,
-      title: input.title,
-      body: input.body,
-      orderId: input.orderId || "",
-      invoiceId: input.invoiceId || "",
+      alertType: String(input.alertType || "smart_alert"),
+      eventId: String(input.eventId || `order-push-${Date.now()}`),
+      notificationTag: String(input.eventId || `order-push-${Date.now()}`),
+      url: String(url || "/"),
+      click_action: String(url || "/"),
+      title: String(input.title || "تنبيه"),
+      body: String(input.body || ""),
+      orderId: String(input.orderId || ""),
+      invoiceId: String(input.invoiceId || ""),
     },
     webpush: {
       headers: {
@@ -625,8 +625,7 @@ async function sendAdminPushDirectOnce(input: {
           const code = resp.error?.code;
           if (
             code === "messaging/registration-token-not-registered" ||
-            code === "messaging/invalid-registration-token" ||
-            code === "messaging/invalid-argument"
+            code === "messaging/invalid-registration-token"
           ) {
             batch.update(adminDb!.collection("pushTokens").doc(batchTokens[idx]), {
               active: false,
@@ -1073,6 +1072,7 @@ async function sendDiwaniyaExternalPush(input: {
     if (!uniqueTokens.length) return { success: false, skipped: true, reason: "no-active-tokens" };
 
     const pushUrl = normalizePushUrl(input.url);
+    const pushEventId = `diwaniya-${input.type}-${input.orderId || input.squadId || Date.now()}`;
     const baseMessage = {
       notification: {
         title: input.title,
@@ -1081,8 +1081,13 @@ async function sendDiwaniyaExternalPush(input: {
       data: {
         type: String(input.type || "diwaniya"),
         url: pushUrl,
+        click_action: pushUrl,
         orderId: String(input.orderId || ""),
         squadId: String(input.squadId || ""),
+        eventId: pushEventId,
+        notificationTag: pushEventId,
+        title: String(input.title || ""),
+        body: String(input.body || ""),
       },
       webpush: {
         headers: {
@@ -1095,8 +1100,8 @@ async function sendDiwaniyaExternalPush(input: {
         notification: {
           icon: "/icon-192.png",
           badge: "/icon-180.png",
-          tag: `diwaniya-${input.type}-${input.orderId || input.squadId || Date.now()}`,
-          renotify: false,
+          tag: pushEventId,
+          renotify: input.type !== "presence_in",
           requireInteraction: input.type === "qatya_request",
           silent: input.type === "presence_in",
         },
@@ -1117,12 +1122,21 @@ async function sendDiwaniyaExternalPush(input: {
       responses: batchResponses.flatMap((item) => item.response.responses),
     };
 
-    const failedTokens = batchResponses.flatMap(({ tokens: batchTokens, response: batchResponse }) =>
-      batchResponse.responses.map((r, idx) => (!r.success ? batchTokens[idx] : "")).filter(Boolean)
+    const invalidTokens = batchResponses.flatMap(({ tokens: batchTokens, response: batchResponse }) =>
+      batchResponse.responses
+        .map((r, idx) => {
+          if (r.success) return "";
+          const code = (r.error as any)?.code || "";
+          return (
+            code === "messaging/registration-token-not-registered" ||
+            code === "messaging/invalid-registration-token"
+          ) ? batchTokens[idx] : "";
+        })
+        .filter(Boolean)
     );
-    if (failedTokens.length > 0) {
+    if (invalidTokens.length > 0) {
       await updateAppDataAtomically((current) => {
-        const bad = new Set(failedTokens);
+        const bad = new Set(invalidTokens);
         const currentTokens = Array.isArray(current.diwaniyaPushTokens) ? current.diwaniyaPushTokens : [];
         return {
           diwaniyaPushTokens: currentTokens.map((item: any) =>
@@ -1158,7 +1172,7 @@ async function startServer() {
 
   app.post("/api/diwaniya-push/register", async (req, res) => {
     try {
-      const { phone, token, squadId, prefs, userAgent } = req.body || {};
+      const { phone, token, squadId, prefs, userAgent, platform, standalone, notificationPermission, currentUrl } = req.body || {};
       const clean = cleanPhone(phone);
       const cleanToken = String(token || "").trim();
       if (!clean || !cleanToken) return res.status(400).json({ error: "Missing phone or token" });
@@ -1177,7 +1191,11 @@ async function startServer() {
           squadId: squadId ? String(squadId) : "",
           prefs: nextPrefs,
           active: true,
-          userAgent: String(userAgent || "").slice(0, 180),
+          userAgent: String(userAgent || "").slice(0, 300),
+          platform: String(platform || "").slice(0, 40),
+          standalone: Boolean(standalone),
+          notificationPermission: String(notificationPermission || "").slice(0, 40),
+          currentUrl: String(currentUrl || "").slice(0, 300),
           updatedAt: now,
           createdAt: idx >= 0 ? tokens[idx].createdAt || now : now,
         };
