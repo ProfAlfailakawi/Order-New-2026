@@ -1,4 +1,4 @@
-import { getApp } from 'firebase/app';
+import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getMessaging, getToken, isSupported, onMessage } from 'firebase/messaging';
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -10,14 +10,35 @@ export type DiwaniyaPushState =
   | 'saved'
   | 'error';
 
+export const FALLBACK_VAPID_KEY =
+  'BGL4HY3Wt_Mlvf-aOyxUJA1TwffllGlkm19H5IVijVfxBzGUWWFrIkQVlIr5-FQ_xQd2JGxsdCuZpBcjABpv3Fw';
+
 const VAPID_KEY =
   ((import.meta as any).env?.VITE_FIREBASE_VAPID_KEY as string | undefined) ||
   ((firebaseConfig as any).webPushVapidKey as string | undefined) ||
-  '';
+  FALLBACK_VAPID_KEY;
 
 const TOKEN_STORAGE_KEY = 'diwaniya_important_push_token';
 
+function getFirebaseAppSafely() {
+  return getApps().length ? getApp() : initializeApp(firebaseConfig as any);
+}
+
+async function getFreshMessagingServiceWorkerRegistration(): Promise<ServiceWorkerRegistration> {
+  const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
+  try {
+    await registration.update();
+  } catch (error) {
+    console.warn('[DiwaniyaPush] Service Worker update skipped:', error);
+  }
+
+  const readyRegistration = await navigator.serviceWorker.ready;
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  return readyRegistration || registration;
+}
+
 export const isDiwaniyaPushReady = async () => {
+  if (typeof window === 'undefined') return false;
   if (!('Notification' in window) || !('serviceWorker' in navigator)) return false;
   if (!VAPID_KEY) return false;
   return isSupported().catch(() => false);
@@ -40,14 +61,8 @@ export const enableDiwaniyaImportantPush = async ({ phone, squadId }: { phone: s
     return { state: 'blocked' as DiwaniyaPushState, message: 'إذن التنبيهات مسكر' };
   }
 
-  const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-  try {
-    await registration.update();
-  } catch (error) {
-    console.warn('[DiwaniyaPush] Service Worker update skipped:', error);
-  }
-  await navigator.serviceWorker.ready;
-  const messaging = getMessaging(getApp());
+  const registration = await getFreshMessagingServiceWorkerRegistration();
+  const messaging = getMessaging(getFirebaseAppSafely());
   let token = '';
   try {
     token = await getToken(messaging, {
@@ -74,6 +89,13 @@ export const enableDiwaniyaImportantPush = async ({ phone, squadId }: { phone: s
       squadId: squadId || '',
       prefs: { qatya: true, roulette: true },
       userAgent: navigator.userAgent,
+      platform: /iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'iOS' : 'web',
+      standalone:
+        window.matchMedia?.('(display-mode: standalone)')?.matches ||
+        (navigator as any).standalone === true ||
+        false,
+      notificationPermission: Notification.permission,
+      currentUrl: window.location.href,
     }),
   });
 
@@ -88,7 +110,7 @@ export const watchDiwaniyaForegroundPush = (onNotify: (payload: any) => void) =>
   isSupported()
     .then((supported) => {
       if (!supported) return;
-      const messaging = getMessaging(getApp());
+      const messaging = getMessaging(getFirebaseAppSafely());
       unsubscribe = onMessage(messaging, onNotify);
     })
     .catch(() => {});
