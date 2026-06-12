@@ -1425,10 +1425,13 @@ export default function CustomerSite() {
       return [];
     }
   });
+  const getActiveRegions = (list: any[]): Region[] =>
+    (Array.isArray(list) ? list : []).filter((r: any) => r?.isActive !== false);
+
   const [regions, setRegions] = useState<Region[]>(() => {
     try {
       const cached = localStorage.getItem("cached_regions");
-      return cached ? JSON.parse(cached) : [];
+      return cached ? getActiveRegions(JSON.parse(cached)) : [];
     } catch (e) {
       return [];
     }
@@ -3272,7 +3275,7 @@ export default function CustomerSite() {
              }
           }),
           fetchWithRetry("/api/regions").then(d => { 
-            const sorted = [...(d || [])].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar"));
+            const sorted = getActiveRegions(d || []).sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar"));
             if (isMounted) {
               setRegions(sorted);
               try {

@@ -116,6 +116,7 @@ export interface Order {
 export interface Region {
   id: string;
   name: string;
+  isActive?: boolean;
   deliveryFee?: number;
   deliveryPrice?: number;
   finalPrice?: number;
