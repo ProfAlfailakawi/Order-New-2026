@@ -116,12 +116,12 @@ export interface Order {
 export interface Region {
   id: string;
   name: string;
-  isActive?: boolean;
   deliveryFee?: number;
   deliveryPrice?: number;
   finalPrice?: number;
   price?: number;
   cost?: number;
+  isActive?: boolean;
 }
 
 export interface Analytics {
