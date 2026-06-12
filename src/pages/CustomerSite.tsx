@@ -66,6 +66,9 @@ const sanitizeWhatsAppText = (text: string) =>
 
 const DEFAULT_PRODUCT_CATEGORIES = ["الولائم", "اللحوم", "الدجاج", "البحري", "المقبلات"];
 
+const getActiveRegions = (items: any[] = []) =>
+  (Array.isArray(items) ? items : []).filter((region: any) => region?.isActive !== false);
+
 const normalizeCategoryName = (value?: string) => String(value || "عام").trim() || "عام";
 
 const normalizeProductSearchText = (value?: string) =>
@@ -1425,9 +1428,6 @@ export default function CustomerSite() {
       return [];
     }
   });
-  const getActiveRegions = (list: any[]): Region[] =>
-    (Array.isArray(list) ? list : []).filter((r: any) => r?.isActive !== false);
-
   const [regions, setRegions] = useState<Region[]>(() => {
     try {
       const cached = localStorage.getItem("cached_regions");
@@ -3819,7 +3819,7 @@ export default function CustomerSite() {
       return;
     }
 
-    const selectedRegion = regions.find(
+    const selectedRegion = getActiveRegions(regions).find(
       (r: any) => normalizeRegionName(r.name) === typedRegion,
     );
 
@@ -3903,7 +3903,7 @@ export default function CustomerSite() {
         .replace(/\s+/g, " ")
         .toLowerCase();
     const normalizedRegion = normalizeRegionName(address.region);
-    const matchedRegion = regions.find(
+    const matchedRegion = getActiveRegions(regions).find(
       (r: any) => normalizeRegionName(r.name) === normalizedRegion,
     );
     if (!matchedRegion) {
@@ -8059,7 +8059,7 @@ function CheckoutOverlay({
     setStep(initialStep);
   }, [initialStep]);
 
-  const filteredRegions = regions.filter(
+  const filteredRegions = getActiveRegions(regions).filter(
     (r: any) =>
       (r.name || "").toLowerCase().includes(regionSearch.toLowerCase()) ||
       (r.name || "").includes(regionSearch),
@@ -8489,7 +8489,7 @@ function CheckoutOverlay({
                         </div>
                       </div>
 
-                      {showRegions && regions.length > 0 && (
+                      {showRegions && getActiveRegions(regions).length > 0 && (
                         <motion.div
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
