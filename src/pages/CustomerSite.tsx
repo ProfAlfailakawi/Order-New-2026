@@ -8554,11 +8554,22 @@ function CheckoutOverlay({
                       lng: location.lng,
                       mapProvider: 'leaflet-openstreetmap',
                     }) as any)}
-                    onAddressGuess={(guess) => setAddress((prev: any) => {
-                      const current = prev || address || {};
-                      const cleanAutoAddressField = (value: any, kind: 'block' | 'street' | 'building') => {
-                        let text = String(value ?? '').trim();
-                        if (!text) return '';
+	                    onAddressGuess={(guess) => setAddress((prev: any) => {
+	                      const current = prev || address || {};
+	                      const normalizeRegionForMatch = (value: any) =>
+	                        String(value || "")
+	                          .trim()
+	                          .replace(/[إأآا]/g, "ا")
+	                          .replace(/[ة]/g, "ه")
+	                          .replace(/\s+/g, " ")
+	                          .toLowerCase();
+	                      const guessedRegion = normalizeRegionForMatch(guess.region);
+	                      const matchedRegion = guessedRegion
+	                        ? getActiveRegions(regions).find((r: any) => normalizeRegionForMatch(r.name) === guessedRegion)
+	                        : null;
+	                      const cleanAutoAddressField = (value: any, kind: 'block' | 'street' | 'building') => {
+	                        let text = String(value ?? '').trim();
+	                        if (!text) return '';
                         const patterns: Record<typeof kind, RegExp> = {
                           block: /^[\s\u200e\u200f]*(?:قطعة|قطعه|ق\.?|block)\s*[:：#\-–—،,]?\s*/i,
                           street: /^[\s\u200e\u200f]*(?:شارع|ش\.?|street|road|طريق)\s*[:：#\-–—،,]?\s*/i,
@@ -8570,13 +8581,13 @@ function CheckoutOverlay({
                           text = text.replace(patterns[kind], '').trim();
                         }
                         return normalizeDigits(text);
-                      };
-                      return {
-                        ...current,
-                        region: guess.region || current.region || '',
-                        block: cleanAutoAddressField(guess.block || current.block, 'block'),
-                        street: cleanAutoAddressField(guess.street || current.street, 'street'),
-                        building: cleanAutoAddressField(guess.building || current.building, 'building'),
+	                      };
+	                      return {
+	                        ...current,
+	                        region: matchedRegion?.name || current.region || '',
+	                        block: cleanAutoAddressField(guess.block || current.block, 'block'),
+	                        street: cleanAutoAddressField(guess.street || current.street, 'street'),
+	                        building: cleanAutoAddressField(guess.building || current.building, 'building'),
                         extraDetails: current.extraDetails || guess.extraDetails || '',
                       } as any;
                     })}
