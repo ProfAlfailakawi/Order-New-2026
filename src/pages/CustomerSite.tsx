@@ -2816,7 +2816,7 @@ export default function CustomerSite() {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [cart.length]);
+  }, [cart.length, squadInfo?.id]);
 
   useEffect(() => {
     if (!sessionStorage.getItem("flashSaleSeen") && topProducts.length > 0) {
@@ -9112,13 +9112,18 @@ function CheckoutOverlay({
                         </div>
                       </button>
 	                      <button
-	                        onClick={() => {
-	                          try {
-	                            localStorage.removeItem("split_prefill_members");
-	                            localStorage.removeItem("split_prefill_ready");
-	                            localStorage.removeItem("split_prefill_source");
-	                            localStorage.removeItem("split_prefill_squad_id");
-	                          } catch (e) {}
+	                        onClick={async () => {
+	                          const hasCurrentDiwaniya = Boolean(squadInfo?.id || localStorage.getItem("squadId"));
+	                          if (hasCurrentDiwaniya) {
+	                            await prepareDiwaniyaSplitMembers();
+	                          } else {
+	                            try {
+	                              localStorage.removeItem("split_prefill_members");
+	                              localStorage.removeItem("split_prefill_ready");
+	                              localStorage.removeItem("split_prefill_source");
+	                              localStorage.removeItem("split_prefill_squad_id");
+	                            } catch (e) {}
+	                          }
 	                          onSubmit("roulette");
 	                        }}
                         className="payment-method-card payment-method-card-wahag w-full bg-fuchsia-600 text-white rounded-2xl p-4 sm:p-5 shadow-md active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-fuchsia-700 text-lg text-right"

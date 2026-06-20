@@ -1913,7 +1913,23 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
       // Geofencing data lookup
       const allGeofenceRequests = data.geofenceJoinRequests || [];
-      const activeSquadsWithCoords = enrichedSquads.filter((s: any) => s.lat !== undefined && s.lng !== undefined);
+      const activeSquadsWithCoords = enrichedSquads
+        .map((s: any) => {
+          const rawLat = s.lat ?? s.latitude ?? s.location?.lat ?? s.location?.latitude;
+          const rawLng = s.lng ?? s.longitude ?? s.location?.lng ?? s.location?.longitude;
+          const latNum = Number(rawLat);
+          const lngNum = Number(rawLng);
+          if (!Number.isFinite(latNum) || !Number.isFinite(lngNum) || Math.abs(latNum) > 90 || Math.abs(lngNum) > 180) {
+            return null;
+          }
+          return {
+            ...s,
+            lat: latNum,
+            lng: lngNum,
+            location: { ...(s.location || {}), lat: latNum, lng: lngNum },
+          };
+        })
+        .filter(Boolean);
       
       let pendingGeofenceRequests: any[] = [];
       if (cleanQPhone) {
@@ -2042,7 +2058,13 @@ app.get("/api/debug/order/:id", async (req, res) => {
     if (!squadId || lat === undefined || lng === undefined) {
       return res.status(400).json({ error: "Missing squadId, lat, or lng" });
     }
+    const parsedLat = Number(lat);
+    const parsedLng = Number(lng);
+    if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLng) || Math.abs(parsedLat) > 90 || Math.abs(parsedLng) > 180) {
+      return res.status(400).json({ error: "Invalid location coordinates" });
+    }
     try {
+      let savedDistance = Number.isFinite(Number(geofenceDistance)) ? Number(geofenceDistance) : 100;
       const ok = await updateAppDataAtomically((current: any) => {
         const squads = Array.isArray(current.squads) ? [...current.squads] : [];
         const idx = squads.findIndex((s: any) => String(s.id) === String(squadId));
@@ -2071,15 +2093,16 @@ app.get("/api/debug/order/:id", async (req, res) => {
           const fallbackDistance = Number(squads[idx]?.geofenceDistance ?? squads[idx]?.location?.geofenceDistance ?? 100);
           const requestedDistance = Number(geofenceDistance ?? fallbackDistance);
           const normalizedDistance = Math.max(10, Math.min(maxAllowedDistance, Math.round(Number.isFinite(requestedDistance) && requestedDistance > 0 ? requestedDistance : fallbackDistance || 100)));
+          savedDistance = normalizedDistance;
           squads[idx] = {
             ...squads[idx],
-            lat: Number(lat),
-            lng: Number(lng),
+            lat: parsedLat,
+            lng: parsedLng,
             geofenceDistance: normalizedDistance,
             location: {
               ...(squads[idx]?.location || {}),
-              lat: Number(lat),
-              lng: Number(lng),
+              lat: parsedLat,
+              lng: parsedLng,
               geofenceDistance: normalizedDistance,
             },
           };
@@ -2087,7 +2110,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         return { squads };
       });
       if (!ok) throw new Error("Failed to set squad location in database");
-      res.json({ success: true, lat, lng, geofenceDistance: Number(geofenceDistance) });
+      res.json({ success: true, lat: parsedLat, lng: parsedLng, geofenceDistance: savedDistance });
     } catch(e) {
       res.status(500).json({ error: String(e) });
     }
@@ -2098,8 +2121,11 @@ app.get("/api/debug/order/:id", async (req, res) => {
     if (!phone || !squadId) {
       return res.status(400).json({ error: "Missing phone or squadId" });
     }
+    const cleanQPhone = cleanPhone(phone);
+    if (cleanQPhone.length !== 8) return res.status(400).json({ error: "Invalid phone" });
+    const cleanName = String(name || "").trim();
+    const safeDistance = Number.isFinite(Number(distance)) ? Number(distance) : 0;
     try {
-      const cleanQPhone = cleanPhone(phone);
       let isAutoApproved = false;
       let squadOwnerPhone = "";
       
@@ -2124,8 +2150,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
           // Add as member if owner and not yet in membersList
           if (isOwner && !isMember) {
             squad.membersList.push({
-              phone,
-              name: name || "المعزب",
+              phone: cleanQPhone,
+              name: cleanName || "المعزب",
               points: 0,
               joinedAt: new Date().toISOString()
             });
@@ -2134,10 +2160,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
           }
           
           filtered.push({
-            phone,
-            name: name || (isOwner ? "المعزب" : "عضو قريب"),
+            phone: cleanQPhone,
+            name: cleanName || (isOwner ? "المعزب" : "عضو قريب"),
             squadId: String(squadId),
-            distance: Number(distance || 0),
+            distance: safeDistance,
             timestamp: new Date().toISOString(),
             status: "approved"
           });
@@ -2146,21 +2172,21 @@ app.get("/api/debug/order/:id", async (req, res) => {
             type: "join_approved",
             squadId,
             squadName: squad?.name || "",
-            toPhone: phone,
+            toPhone: cleanQPhone,
             fromPhone: ownerPhone,
             fromName: "الديوانية",
             title: "تم تفريش السجادة 🎉",
             message: isOwner ? "تم تفعيل موقعك الافتراضي ونزولك على سجادة ديوانيتك يا معزب!" : "أهلاً بك مجدداً في ديوانيتك! تم رصد وجودك ودخولك تلقائياً.",
-            meta: { distance: Number(distance || 0) }
+            meta: { distance: safeDistance }
           });
           
           return { geofenceJoinRequests: filtered, squads, diwaniyaNotifications };
         } else {
           filtered.push({
-            phone,
-            name: name || "عضو قريب",
+            phone: cleanQPhone,
+            name: cleanName || "عضو قريب",
             squadId: String(squadId),
-            distance: Number(distance || 0),
+            distance: safeDistance,
             timestamp: new Date().toISOString(),
             status: "pending"
           });
@@ -2170,11 +2196,11 @@ app.get("/api/debug/order/:id", async (req, res) => {
             squadId,
             squadName: squad?.name || "",
             toPhone: ownerPhone,
-            fromPhone: phone,
-            fromName: name || "عضو قريب",
+            fromPhone: cleanQPhone,
+            fromName: cleanName || "عضو قريب",
             title: "واحد قريب من ديوانيتكم",
-            message: `${name || "أحد الربع"} ناطر موافقة المعزب.`,
-            meta: { distance: Number(distance || 0) }
+            message: `${cleanName || "أحد الربع"} ناطر موافقة المعزب.`,
+            meta: { distance: safeDistance }
           });
           
           return { geofenceJoinRequests: filtered, diwaniyaNotifications };
@@ -2187,7 +2213,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           toPhones: [squadOwnerPhone],
           type: "join_request",
           title: "طلب دخول قريب",
-          body: `${name || "أحد الربع"} عند الديوانية وناطر موافقتك.`,
+          body: `${cleanName || "أحد الربع"} عند الديوانية وناطر موافقتك.`,
           squadId: String(squadId),
           url: "/?showSquads=true"
         });
@@ -2203,6 +2229,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     if (!phone || !squadId) return res.status(400).json({ error: "Missing phone or squadId" });
     try {
       const cleanTargetPhone = cleanPhone(phone);
+      if (cleanTargetPhone.length !== 8) return res.status(400).json({ error: "Invalid phone" });
       let joinedSquad: any = null;
       const ok = await updateAppDataAtomically((current: any) => {
         const squads = Array.isArray(current.squads) ? [...current.squads] : [];
@@ -2224,7 +2251,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
             const mIndex = squad.membersList.findIndex((m: any) => cleanPhone(m.phone) === cleanTargetPhone);
             if (mIndex === -1) {
               squad.membersList.push({
-                phone: phone,
+                phone: cleanTargetPhone,
                 name: (requestObj ? requestObj.name : "") || "عضو قريب",
                 points: 0,
                 joinedAt: new Date().toISOString()
@@ -2252,7 +2279,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
               customers.push({
                 id: "CUST-" + Date.now().toString(36),
                 name: (requestObj ? requestObj.name : "") || "",
-                phone: phone,
+                phone: cleanTargetPhone,
                 address: "",
                 lastOrderDate: new Date().toISOString(),
                 squadId: squad.id,
@@ -2274,7 +2301,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           type: approved ? "join_approved" : "join_rejected",
           squadId,
           squadName: joinedSquad?.name || requestObj?.squadName || "",
-          toPhone: phone,
+          toPhone: cleanTargetPhone,
           fromPhone: joinedSquad?.phone || "",
           fromName: "المعزب",
           title: notifyTitle,
@@ -2295,7 +2322,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
   app.post("/api/squad-presence", async (req, res) => {
     const { squadId, phone, name, action, message } = req.body || {};
     if (!squadId || !phone || !action) return res.status(400).json({ error: "Missing squadId, phone, or action" });
+    const normalizedAction = String(action || "").toLowerCase();
+    if (!["in", "out", "wobble"].includes(normalizedAction)) return res.status(400).json({ error: "Invalid presence action" });
     const cleanTarget = cleanPhone(phone);
+    if (cleanTarget.length !== 8) return res.status(400).json({ error: "Invalid phone" });
     const now = new Date().toISOString();
     let presence: any[] = [];
     const ok = await updateAppDataAtomically((current: any) => {
@@ -2303,9 +2333,9 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const squads = Array.isArray(current.squads) ? current.squads : [];
       const squad = squads.find((s: any) => String(s.id) === String(squadId));
       const filtered = all.filter((p: any) => !(String(p.squadId) === String(squadId) && cleanPhone(p.phone) === cleanTarget));
-      if (action === "in") {
+      if (normalizedAction === "in") {
         filtered.push({ squadId: String(squadId), phone: cleanTarget, name: name || "عضو", checkedInAt: now, lastSeenAt: now, isAuto: !!req.body.isAuto });
-      } else if (action === "wobble") {
+      } else if (normalizedAction === "wobble") {
         const existing = all.find((p: any) => String(p.squadId) === String(squadId) && cleanPhone(p.phone) === cleanTarget);
         if (existing) {
           filtered.push({
@@ -2332,7 +2362,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         ...(squad?.membersList || []).map((m: any) => m.phone)
       ].map(cleanPhone).filter((ph: any) => ph && ph !== cleanTarget))) as string[];
       let diwaniyaNotifications = current.diwaniyaNotifications || [];
-      if (action === "in") {
+      if (normalizedAction === "in") {
         diwaniyaNotifications = pushDiwaniyaNotifications(diwaniyaNotifications, recipients.map((toPhone: string) => ({
             type: "presence_in",
             squadId,
@@ -2343,7 +2373,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
             title: "واحد من الربع وصل",
             message: `${name || "أحد الربع"} موجود بديوانية ${squad?.name || "الربع"}.`
         })));
-      } else if (action === "wobble") {
+      } else if (normalizedAction === "wobble") {
         diwaniyaNotifications = pushDiwaniyaNotifications(diwaniyaNotifications, recipients.map((toPhone: string) => ({
             type: "wobble_alert",
             squadId,
@@ -2358,7 +2388,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       return { squadPresence: filtered, diwaniyaNotifications };
     });
     if (!ok) return res.status(500).json({ error: "Failed to update presence" });
-    if (action === "in" || action === "wobble") {
+    if (normalizedAction === "in" || normalizedAction === "wobble") {
       try {
         const current = await getAppData();
         const squad = (Array.isArray(current.squads) ? current.squads : []).find((s: any) => String(s.id) === String(squadId));
@@ -2367,7 +2397,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           ...(squad?.membersList || []).map((m: any) => m.phone)
         ].map(cleanPhone).filter((ph: any) => ph && ph !== cleanTarget)));
         if (recipients.length) {
-          if (action === "in") {
+          if (normalizedAction === "in") {
             void sendDiwaniyaExternalPush({
               toPhones: recipients,
               type: "presence_in",
@@ -2376,7 +2406,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
               squadId: String(squadId),
               url: "/?showSquads=true"
             });
-          } else if (action === "wobble") {
+          } else if (normalizedAction === "wobble") {
             void sendDiwaniyaExternalPush({
               toPhones: recipients,
               type: "wobble_alert",
@@ -2635,6 +2665,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
    if (!phone || !squadId) return res.status(400).json({ error: "Missing phone or squadId" });
    try {
      const cleanQPhone = cleanPhone(phone);
+     if (cleanQPhone.length !== 8) return res.status(400).json({ error: "Invalid phone" });
      let joinedSquad: any = null;
      const ok = await updateAppDataAtomically((current: any) => {
        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
@@ -4078,7 +4109,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
     try {
       const { id } = req.params;
       const { name, phone } = req.body;
-      if (!name) return res.status(400).json({ error: "Missing name" });
+      const cleanName = String(name || "").trim();
+      const cleanQPhone = cleanPhone(phone);
+      if (!cleanName) return res.status(400).json({ error: "Missing name" });
+      if (cleanQPhone.length !== 8) return res.status(400).json({ error: "Invalid phone" });
 
       await updateAppDataAtomically((current) => {
         let orders = [...(current.orders || [])];
@@ -4087,12 +4121,13 @@ app.get("/api/debug/order/:id", async (req, res) => {
           if (!orders[index].splitParticipants) {
             orders[index].splitParticipants = [];
           }
+          const normalizedJoinName = cleanName.toLowerCase();
           if (
-            !orders[index].splitParticipants.some((p: any) => p.name === name || (phone && p.phone === phone))
+            !orders[index].splitParticipants.some((p: any) => String(p.name || "").trim().toLowerCase() === normalizedJoinName || cleanPhone(p.phone) === cleanQPhone)
           ) {
             orders[index].splitParticipants.push({
-              name,
-              phone,
+              name: cleanName,
+              phone: cleanQPhone,
               joinedAt: new Date().toISOString(),
             });
             return { orders };
@@ -4117,6 +4152,11 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const index = orders.findIndex((o: any) => o.id === id);
       if (index === -1)
         return res.status(400).json({ error: "Order not found" });
+      const existingOrder = orders[index];
+      const existingParticipants = Array.isArray(existingOrder?.splitParticipants) ? existingOrder.splitParticipants : [];
+      if (!existingOrder?.rouletteLoser && existingParticipants.length < 2) {
+        return res.status(400).json({ error: "Need at least two participants" });
+      }
 
       let loserName = "";
       let roulettePushPhones: string[] = [];
@@ -4128,12 +4168,11 @@ app.get("/api/debug/order/:id", async (req, res) => {
         if (index === -1) return null;
 
         const order = orders[index];
-        if (!order.splitParticipants || order.splitParticipants.length === 0) return null;
-
         if (order.rouletteLoser) {
           loserName = order.rouletteLoser;
           return null;
         }
+        if (!order.splitParticipants || order.splitParticipants.length < 2) return null;
 
         const loserIndex = Math.floor(Math.random() * order.splitParticipants.length);
         const loser = order.splitParticipants[loserIndex];
@@ -4175,6 +4214,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
         return { orders, squads };
       });
+
+      if (!loserName) {
+        return res.status(400).json({ error: "Need at least two participants" });
+      }
 
       if (loserName && roulettePushPhones.length > 0) {
         void sendDiwaniyaExternalPush({

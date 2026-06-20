@@ -12,6 +12,16 @@ export interface RobustLocationOptions {
 export function robustGetCurrentPosition(
   options: RobustLocationOptions = {}
 ): Promise<GeolocationPosition> {
+  if (typeof navigator === "undefined" || !navigator.geolocation) {
+    return Promise.reject({
+      code: 2,
+      message: "Geolocation is not supported on this device.",
+      PERMISSION_DENIED: 1,
+      POSITION_UNAVAILABLE: 2,
+      TIMEOUT: 3
+    } as GeolocationPositionError);
+  }
+
   const {
     timeout = 15000,
     maximumAge = 30000,
