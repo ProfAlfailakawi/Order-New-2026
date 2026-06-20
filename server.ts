@@ -1816,11 +1816,15 @@ app.get("/api/debug/order/:id", async (req, res) => {
   app.get("/api/squad-gamification", async (req, res) => {
     let { phone, squadId } = req.query;
     try {
-      const d = await getAppDataRef();
-      const data = d.data() || {};
+      const data = await getAppDataForKeys(["squads", "customers", "orders"]);
       const squads = data.squads || [];
       
       const customers = data.customers || [];
+      const customerByPhone = new Map<string, any>();
+      customers.forEach((customer: any) => {
+        const phoneKey = cleanPhone(customer?.phone || "");
+        if (phoneKey) customerByPhone.set(phoneKey, customer);
+      });
       const squadTiersForPublic = Array.isArray(data.squadTiers) ? data.squadTiers : [];
       const getTierForPoints = (points: number) => {
         return [...squadTiersForPublic]
@@ -1832,7 +1836,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const enrichedSquads = squads.map((sq: any) => {
          let teamPoints = 0;
          const mappedMembers = (sq.membersList || []).map((m: any) => {
-             const cust = customers.find((c: any) => cleanPhone(c.phone) === cleanPhone(m.phone));
+             const cust = customerByPhone.get(cleanPhone(m.phone));
              const realPoints = cust ? (cust.loyaltyPoints !== undefined ? cust.loyaltyPoints : (cust.points || 0)) : (m.points || 0);
              teamPoints += realPoints;
              return { ...m, orderCount: realPoints, points: realPoints };
@@ -1859,7 +1863,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
       if (cleanQPhone) {
          // Gather any customer records or settings that link this user
-         const myCustomerProfile = customers.find((c: any) => cleanPhone(c.phone) === cleanQPhone);
+         const myCustomerProfile = customerByPhone.get(cleanQPhone);
          const customerSquadIds = new Set([
            ...(myCustomerProfile?.squadIds || []).map(String),
            myCustomerProfile?.squadId ? String(myCustomerProfile.squadId) : ""
@@ -2108,7 +2112,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           };
         }
         return { squads };
-      });
+      }, ["squads"]);
       if (!ok) throw new Error("Failed to set squad location in database");
       res.json({ success: true, lat: parsedLat, lng: parsedLng, geofenceDistance: savedDistance });
     } catch(e) {
@@ -2205,7 +2209,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           
           return { geofenceJoinRequests: filtered, diwaniyaNotifications };
         }
-      });
+      }, ["squads"]);
       if (!ok) throw new Error("Failed to save geofence request");
       
       if (!isAutoApproved && squadOwnerPhone) {
@@ -2309,7 +2313,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         });
 
         return { geofenceJoinRequests: reqs, squads, customers, diwaniyaNotifications };
-      });
+      }, ["squads", "customers"]);
       if (!ok) throw new Error("Failed atomic transaction");
       res.json({ success: true, squad: joinedSquad });
     } catch(e) {
@@ -2386,11 +2390,11 @@ app.get("/api/debug/order/:id", async (req, res) => {
         })));
       }
       return { squadPresence: filtered, diwaniyaNotifications };
-    });
+    }, ["squads"]);
     if (!ok) return res.status(500).json({ error: "Failed to update presence" });
     if (normalizedAction === "in" || normalizedAction === "wobble") {
       try {
-        const current = await getAppData();
+        const current = await getAppDataForKeys(["squads"]);
         const squad = (Array.isArray(current.squads) ? current.squads : []).find((s: any) => String(s.id) === String(squadId));
         const recipients = Array.from(new Set([
           squad?.phone,

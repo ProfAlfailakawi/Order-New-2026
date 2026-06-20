@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Compass, Loader2, MapPin } from 'lucide-react';
+import { robustGetCurrentPosition } from '../utils/geolocation';
 
 declare global {
   interface Window { L?: any; __alturathLeafletLoading?: Promise<any>; }
@@ -101,6 +102,7 @@ const LeafletLocationPicker: React.FC<{
     const controller = new AbortController();
     reverseAbortRef.current = controller;
     setIsResolvingAddress(true);
+    const timeoutId = window.setTimeout(() => controller.abort(), 6500);
     try {
       const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(String(lat))}&lon=${encodeURIComponent(String(lng))}&addressdetails=1&accept-language=ar,en&countrycodes=kw`;
       const res = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json' } });
@@ -117,6 +119,7 @@ const LeafletLocationPicker: React.FC<{
     } catch (error: any) {
       if (error?.name !== 'AbortError') setStatus('تم تثبيت اللوكيشن، وتعذر جلب العنوان التلقائي حالياً. الحقول اليدوية متاحة.');
     } finally {
+      window.clearTimeout(timeoutId);
       if (reverseSeqRef.current === seq) setIsResolvingAddress(false);
     }
   };
@@ -157,7 +160,7 @@ const LeafletLocationPicker: React.FC<{
       return;
     }
     setStatus('نحدد موقعك الآن...');
-    navigator.geolocation.getCurrentPosition((position) => {
+    robustGetCurrentPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }).then((position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
       const accuracy = Math.round(position.coords.accuracy || 0);
@@ -167,7 +170,7 @@ const LeafletLocationPicker: React.FC<{
         const L = window.L;
         accuracyRef.current = L?.circle([lat, lng], { radius: accuracy || 35, color: '#16a34a', fillColor: '#22c55e', fillOpacity: 0.08, weight: 1 }).addTo(mapRef.current);
       }
-    }, () => setStatus('لم نقدر نأخذ موقعك. تأكد من السماح للموقع من المتصفح.'), { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 });
+    }).catch(() => setStatus('لم نقدر نأخذ موقعك. تأكد من السماح للموقع من المتصفح.'));
   };
 
   return (
