@@ -28,13 +28,16 @@ export function RouletteSplit({
   handlePay,
   paymentStatus,
   urlName,
+  urlPhone,
 }: {
   order: any;
   handlePay: (name: string, phone: string, amount: string) => void;
   paymentStatus?: string | null;
   urlName?: string | null;
+  urlPhone?: string | null;
 }) {
   const navigate = useNavigate();
+  const cleanUrlPhone = normalizeDigits(urlPhone || "").replace(/[^0-9]/g, "").slice(-8);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const participants = order.splitParticipants || [];
@@ -44,10 +47,10 @@ export function RouletteSplit({
   const [isSettling, setIsSettling] = useState(false);
   const [localSuccess, setLocalSuccess] = useState(false);
   const [mySpinName, setMySpinName] = useState(
-    () => localStorage.getItem(`roulette_${order.id}`) || "",
+    () => localStorage.getItem(`roulette_${order.id}`) || urlName || "",
   );
   const [mySpinPhone, setMySpinPhone] = useState(
-    () => localStorage.getItem(`roulette_phone_${order.id}`) || "",
+    () => localStorage.getItem(`roulette_phone_${order.id}`) || cleanUrlPhone || "",
   );
   const [activeIndex, setActiveIndex] = useState(0);
   const [replayNonce, setReplayNonce] = useState(0);
@@ -56,6 +59,11 @@ export function RouletteSplit({
       setLocalSuccess(true);
     }
   }, [paymentStatus]);
+
+  useEffect(() => {
+    if (!mySpinName && urlName) setMySpinName(urlName);
+    if (!mySpinPhone && cleanUrlPhone) setMySpinPhone(cleanUrlPhone);
+  }, [urlName, cleanUrlPhone, mySpinName, mySpinPhone]);
 
   const errorMsg = React.useMemo(() => {
     const errorMsgs = [
@@ -157,6 +165,24 @@ export function RouletteSplit({
     );
     return idx === -1 ? 0 : idx;
   }, [loser, participants]);
+  const loserParticipant = React.useMemo(() => {
+    if (!loser || participants.length === 0) return null;
+    const normalizedLoser = normalizeArabicName(loser);
+    return participants.find((p: any) => normalizeArabicName(p.name) === normalizedLoser) || null;
+  }, [loser, participants]);
+  const normalizedLoserName = loser ? normalizeArabicName(loser) : "";
+  const urlNameMatchesLoser = Boolean(normalizedLoserName && normalizeArabicName(urlName || "") === normalizedLoserName);
+  const mySpinNameMatchesLoser = Boolean(normalizedLoserName && normalizeArabicName(mySpinName || "") === normalizedLoserName);
+  const loserPayName = String(loserParticipant?.name || loser || (urlNameMatchesLoser ? urlName : "") || (mySpinNameMatchesLoser ? mySpinName : "") || "").trim();
+  const loserPayPhone = normalizeDigits(String(
+    loserParticipant?.phone ||
+    (mySpinNameMatchesLoser ? mySpinPhone : "") ||
+    (urlNameMatchesLoser ? cleanUrlPhone : "") ||
+    order.customerPhone ||
+    "00000000"
+  ))
+    .replace(/[^0-9]/g, "")
+    .slice(-8) || "00000000";
 
   const displayIndex = isSpinning ? activeIndex : loserIndex;
   const pulseParticipants = participants.length > 0 ? participants : [{ name: loser || "؟" }];
@@ -539,13 +565,13 @@ export function RouletteSplit({
                            <p className="text-2xl font-black text-white">{order.total.toFixed(3)} د.ك</p>
                         </div>
                         <button
-                          onClick={() =>
-                            handlePay(
-                              urlName || mySpinName || loser,
-                              mySpinPhone || order.customerPhone || "00000000",
-                              String(order.total),
-                            )
-                          }
+	                          onClick={() =>
+	                            handlePay(
+	                              loserPayName,
+	                              loserPayPhone,
+	                              String(order.total),
+	                            )
+	                          }
                           className="w-full bg-white text-violet-600 font-black py-4 rounded-xl mt-4 active:scale-95 transition-transform flex justify-center items-center gap-2 shadow-[0_0_25px_rgba(139,92,246,0.3)]"
                         >
                           <CreditCard className="w-5 h-5" />

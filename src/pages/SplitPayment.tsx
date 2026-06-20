@@ -444,9 +444,10 @@ export default function SplitPayment() {
     const isEvent = typeof overrideName === "object" && overrideName !== null;
     const actualName = isEvent ? undefined : (overrideName as string);
     
-    const amountVal = String(overrideAmount ?? contributorAmount ?? "").trim();
-    const finalName = String(actualName ?? contributorName ?? mySplitRecord?.name ?? "").trim();
-    const finalPhone = normalizePhone(String(overridePhone ?? contributorPhone ?? mySplitRecord?.phone ?? ""));
+    const firstFilled = (...values: any[]) => values.find((value) => String(value ?? "").trim().length > 0) ?? "";
+    const amountVal = String(firstFilled(overrideAmount, contributorAmount)).trim();
+    const finalName = String(firstFilled(actualName, contributorName, mySplitRecord?.name)).trim();
+    const finalPhone = normalizePhone(String(firstFilled(overridePhone, contributorPhone, mySplitRecord?.phone)));
 
     if (!finalName) {
       alert("اكتب اسمك يالغالي");
@@ -594,7 +595,7 @@ export default function SplitPayment() {
     : "bg-sky-50 text-sky-700 border-sky-100";
 
   if ((order as any).splitType === "roulette") {
-    return <RouletteSplit order={order} handlePay={handlePay} paymentStatus={paymentStatus} urlName={urlName} />;
+    return <RouletteSplit order={order} handlePay={handlePay} paymentStatus={paymentStatus} urlName={urlName} urlPhone={urlPhone} />;
   }
 
   return (
