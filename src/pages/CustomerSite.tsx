@@ -2709,11 +2709,6 @@ export default function CustomerSite() {
     return () => window.clearTimeout(timer);
   }, [quickProductSearch, moodQuery, products]);
 
-  const quickSmartSuggestions = useMemo(
-    () => getSmartSearchLiveSuggestions(getCustomerVisibleProducts(products || []), quickProductSearch, 7),
-    [products, quickProductSearch, smartSearchLearningTick]
-  );
-
   useEffect(() => {
     isDiwaniyaPushReady().then(setCanUseDiwaniyaPush).catch(() => setCanUseDiwaniyaPush(false));
     return watchDiwaniyaForegroundPush((payload) => {
@@ -5245,23 +5240,9 @@ export default function CustomerSite() {
                         value={quickProductSearch}
                         onChange={(e) => setQuickProductSearch(e.target.value)}
                         placeholder="اكتب نيتك بأي طريقة: مشتهي بحري، حق ٦ أشخاص، مريض، ديوانية..."
-                        className="bg-transparent outline-none w-full text-sm font-bold text-brand placeholder:text-stone-400"
+                        className="bg-transparent outline-none w-full text-xs sm:text-sm font-medium sm:font-bold text-brand placeholder:text-stone-400"
                       />
                     </div>
-                    {quickSmartSuggestions.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {quickSmartSuggestions.map((suggestion) => (
-                          <button
-                            key={suggestion}
-                            type="button"
-                            onClick={() => setQuickProductSearch(suggestion)}
-                            className="px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100 text-[11px] font-extrabold text-amber-900 hover:bg-amber-100 transition-colors"
-                          >
-                            {suggestion}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                   <div className="al-empty-state p-8 text-center border-2 border-dashed border-amber-100 rounded-[28px] bg-white/80">
                     <div className="al-empty-icon">🍽️</div>
@@ -5278,23 +5259,9 @@ export default function CustomerSite() {
                         value={quickProductSearch}
                         onChange={(e) => setQuickProductSearch(e.target.value)}
                         placeholder="اكتب نيتك بأي طريقة: مشتهي بحري، حق ٦ أشخاص، مريض، ديوانية..."
-                        className="bg-transparent outline-none w-full text-sm font-bold text-brand placeholder:text-stone-400"
+                        className="bg-transparent outline-none w-full text-xs sm:text-sm font-medium sm:font-bold text-brand placeholder:text-stone-400"
                       />
                     </div>
-                    {quickSmartSuggestions.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {quickSmartSuggestions.map((suggestion) => (
-                          <button
-                            key={suggestion}
-                            type="button"
-                            onClick={() => setQuickProductSearch(suggestion)}
-                            className="px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100 text-[11px] font-extrabold text-amber-900 hover:bg-amber-100 transition-colors"
-                          >
-                            {suggestion}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                   {quickProductSearch.trim() ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
