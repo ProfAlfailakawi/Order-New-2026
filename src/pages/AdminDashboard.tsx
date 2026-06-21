@@ -280,6 +280,10 @@ export default function AdminDashboard() {
   const filteredNewOrders = filteredOrders.filter(checkAdminVisibility);
 
   const handleFreeDelivery = async (order: Order) => {
+    if (!navigator.onLine) {
+      alert("يتعذر التعديل دون اتصال ⚠️ البرنامج يعمل حالياً بوضع القراءة فقط.");
+      return;
+    }
     if (order.deliveryFee === 0 && order.isFreeDelivery) return;
     try {
       // Let the centralized backend handle this
@@ -295,6 +299,10 @@ export default function AdminDashboard() {
   };
 
   const handleMarkAsPaid = async (id: string) => {
+    if (!navigator.onLine) {
+      alert("يتعذر التعديل دون اتصال ⚠️ البرنامج يعمل حالياً بوضع القراءة فقط.");
+      return;
+    }
     try {
       // Let the centralized backend handle this to move it into invoices array
       await fetch(`/api/admin/orders/${id}/pay`, { method: "PATCH" });
@@ -306,6 +314,10 @@ export default function AdminDashboard() {
   };
 
   const handleCancelOrder = async (id: string) => {
+    if (!navigator.onLine) {
+      alert("يتعذر التعديل دون اتصال ⚠️ البرنامج يعمل حالياً بوضع القراءة فقط.");
+      return;
+    }
     if (!confirm("هل أنت متأكد من إلغاء هذا الطلب كلياً ومسحه من القطيّة والأوردرات النشطة؟")) return;
     try {
       const res = await fetch(`/api/admin/orders/${id}/cancel`, { method: "PATCH" });

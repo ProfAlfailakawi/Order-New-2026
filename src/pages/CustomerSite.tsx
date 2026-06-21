@@ -45,6 +45,8 @@ import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegrou
 import { robustGetCurrentPosition } from "../utils/geolocation";
 import LeafletLocationPicker from "../components/LeafletLocationPicker";
 import LeafletKuwaitMap from "../components/LeafletKuwaitMap";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import { OfflineModal } from "../components/OfflineModal";
 
 // --- Soft entrance accent without the old curtain effect ---
 function ZariBishtGate() {
