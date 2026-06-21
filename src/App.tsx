@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
 import CustomerSite from "./pages/CustomerSite";
 import SplitPayment from "./pages/SplitPayment";
+import { useOnlineStatus } from "./hooks/useOnlineStatus";
+import { OfflineModal } from "./components/OfflineModal";
 
 const OrderPage = lazy(() => import("./pages/OrderPage"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -20,6 +22,7 @@ function NotFoundFoodPage() {
 }
 
 export default function App() {
+  const isOnline = useOnlineStatus();
   useEffect(() => {
     // Default to RTL for Arabic
     document.documentElement.dir = "rtl";
@@ -29,6 +32,7 @@ export default function App() {
   return (
     <Router>
       <div className="min-h-screen font-sans w-full max-w-full overflow-x-hidden">
+        <OfflineModal isOpen={!isOnline} />
         <Suspense fallback={<div dir="rtl" className="min-h-screen flex items-center justify-center bg-[#fff8ef] text-[#183326] font-bold">جاري التحميل...</div>}>
           <Routes>
             <Route path="/" element={<CustomerSite />} />

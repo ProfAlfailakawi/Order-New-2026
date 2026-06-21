@@ -31,6 +31,10 @@ export function NewInvoiceModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!navigator.onLine) {
+      alert("يتعذر التعديل دون اتصال ⚠️ البرنامج يعمل حالياً بوضع القراءة فقط.");
+      return;
+    }
     setIsLoading(true);
     try {
       const orderData = {
