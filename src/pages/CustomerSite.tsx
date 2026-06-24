@@ -3410,6 +3410,7 @@ export default function CustomerSite() {
                 ) {
                   newCart.push({
                     ...item,
+                    quantity: Math.max(item.quantity, product.minOrderQty || 1),
                     id: Math.random().toString(36).substring(2, 9),
                     price: product.price, // Update to current price
                     product: normalizeProductForAddons(product),
@@ -3828,12 +3829,14 @@ export default function CustomerSite() {
 
     if (existingItemIndex > -1) {
       const newCart = [...cart];
-      newCart[existingItemIndex].quantity += item.quantity;
+      const minQty = item.product?.minOrderQty || 1;
+      newCart[existingItemIndex].quantity = Math.max(newCart[existingItemIndex].quantity + item.quantity, minQty);
       setCart(newCart);
     } else {
+      const minQty = item.product?.minOrderQty || 1;
       setCart([
         ...cart,
-        { ...item, id: Math.random().toString(36).substr(2, 9) },
+        { ...item, id: Math.random().toString(36).substr(2, 9), quantity: Math.max(item.quantity, minQty) },
       ]);
     }
     const addedName = item?.name || "الطلب";

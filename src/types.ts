@@ -34,6 +34,7 @@ export interface Product {
   preparationInstructions?: string;
   isMenuFeatured?: boolean;
   featuredRank?: number;
+  minOrderQty?: number;
 }
 
 export interface OrderItemAddon {
