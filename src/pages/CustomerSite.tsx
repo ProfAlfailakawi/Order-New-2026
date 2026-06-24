@@ -8353,20 +8353,24 @@ function CheckoutOverlay({
                       }}
                       className="flex gap-4 p-4 bg-white rounded-3xl border border-stone-100 relative group shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing w-full z-10"
                     >
-                      <div className="flex-grow">
+                      <div className="flex-grow relative">
                         <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-bold text-brand text-base">
+                          <h4 className="font-bold text-brand text-sm leading-tight max-w-[80%]">
                             {item.name}
                           </h4>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-white bg-brand px-2 py-0.5 rounded-md">
-                              ×{item.quantity}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="text-[10px] font-bold text-white bg-brand px-1.5 py-0.5 rounded">
+                              {item.quantity}×
+                            </span>
+                            <span className="text-sm font-bold text-brand whitespace-nowrap">
+                                {calculateItemTotalWithAddons(item)}{" "}
+                                <span className="text-[10px] text-accent">د.ك</span>
                             </span>
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 mb-4">
+                        <div className="flex flex-wrap gap-1.5 mb-2">
                           {item.selectedOption && (
-                            <span className="text-[9px] font-bold bg-stone-50/80 backdrop-blur-sm text-stone-500 px-2 py-1 rounded-md border border-stone-100">
+                            <span className="text-[9px] font-bold bg-stone-50 text-stone-500 px-1.5 py-0.5 rounded border border-stone-100">
                               {item.selectedOption}
                             </span>
                           )}
@@ -8374,9 +8378,9 @@ function CheckoutOverlay({
                             (e: any, idx: number) => (
                               <span
                                 key={`${e.name}-${idx}`}
-                                className="text-[9px] font-bold bg-accent/5 text-accent px-2 py-1 rounded-md border border-accent/10"
+                                className="text-[9px] font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
                               >
-                                +{e.name} {e.price ? `(${e.price} د.ك)` : ''}
+                                +{e.name}
                               </span>
                             ),
                           )}
@@ -8384,29 +8388,21 @@ function CheckoutOverlay({
                             (addon: any, idx: number) => (
                               <span
                                 key={`addon-${addon.addonId}-${idx}`}
-                                className="text-[9px] font-bold bg-accent/5 text-accent px-2 py-1 rounded-md border border-accent/10"
+                                className="text-[9px] font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
                               >
-                                +{addon.quantity} {cleanCustomerAddonLabel(addon.name)} {(addon.payableQuantity === 0 || addon.price === 0) && !addon.isHiddenPrice ? '(مجاني)' : addon.price > 0 && !addon.isHiddenPrice ? `(${addon.price} د.ك)` : ''}
+                                +{addon.quantity} {cleanCustomerAddonLabel(addon.name)}
                               </span>
                             ),
                           )}
                         </div>
-                        <div className="flex items-center justify-between pt-3 border-t border-stone-50">
-                          <span className="text-[11px] font-bold text-stone-400 leading-[1.6] py-0.5">
-                            المجموع الفرعي
-                          </span>
-                          <span className="text-lg font-medium text-brand">
-                            {calculateItemTotalWithAddons(item)}{" "}
-                            <span className="text-xs text-accent">د.ك</span>
-                          </span>
-                        </div>
+                        <button
+                          onClick={() => onRemove(item.id)}
+                          className="absolute -bottom-2 -right-1 text-red-400 hover:text-red-600 p-1 transition-colors"
+                          aria-label="إزالة"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => onRemove(item.id)}
-                        className="absolute -top-2 -left-2 w-8 h-8 bg-white text-red-500 hover:bg-red-500 hover:text-white rounded-full flex items-center justify-center border border-stone-100 shadow-md transition-all opacity-100 sm:opacity-0 group-hover:opacity-100"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
                     </motion.div>
                   </motion.div>
                 ))}
