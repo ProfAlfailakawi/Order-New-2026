@@ -1292,6 +1292,16 @@ const cleanCustomerAddonLabel = (value: any): string => {
 };
 
 export default function CustomerSite() {
+  const initialDiwaniyaQrCode = (() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return String(params.get("code") || "").trim();
+    } catch (e) {
+      return "";
+    }
+  })();
+  const hasInitialDiwaniyaQrEntry = Boolean(initialDiwaniyaQrCode);
+
   const [isPhoneLayout, setIsPhoneLayout] = useState(false);
 
   useEffect(() => {
@@ -1574,9 +1584,11 @@ export default function CustomerSite() {
   const [squadBeautifulLog, setSquadBeautifulLog] = useState<any>(null);
   const [diwaniyaNotifications, setDiwaniyaNotifications] = useState<any[]>([]);
   const [unreadDiwaniyaNotifications, setUnreadDiwaniyaNotifications] = useState(0);
-  const [showSquadModal, setShowSquadModal] = useState(false);
+  const [showSquadModal, setShowSquadModal] = useState(hasInitialDiwaniyaQrEntry);
+  const [isDirectDiwaniyaEntry, setIsDirectDiwaniyaEntry] = useState(hasInitialDiwaniyaQrEntry);
 
   const [showAppetiteTheatre, setShowAppetiteTheatre] = useState(() => {
+    if (hasInitialDiwaniyaQrEntry) return false;
     try {
       return !sessionStorage.getItem("appetite_theatre_shown");
     } catch (e) {
@@ -1604,7 +1616,7 @@ export default function CustomerSite() {
     // auto-check presence, or open a squad without explicit user action and owner approval.
     return;
   };
-  const [initialSquadCode, setInitialSquadCode] = useState("");
+  const [initialSquadCode, setInitialSquadCode] = useState(initialDiwaniyaQrCode);
   const [activeSquadTab, setActiveSquadTab] = useState<"overview"|"orders"|"notifications"|"location"|"leaderboard"|"tiers">("overview");
   const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
   const squadSessionTokenRef = useRef(0);
@@ -2619,7 +2631,11 @@ export default function CustomerSite() {
 
     const codeParam = urlParams.get("code");
     if (codeParam) {
-      setInitialSquadCode(codeParam);
+      setInitialSquadCode(String(codeParam).trim());
+      setIsCheckout(false);
+      setIsDirectDiwaniyaEntry(true);
+      setShowAppetiteTheatre(false);
+      try { sessionStorage.setItem("appetite_theatre_shown", "1"); } catch(e) {}
       setShowSquadModal(true);
       urlParams.delete("code");
       setSearchParams(urlParams, { replace: true });
@@ -4535,6 +4551,8 @@ export default function CustomerSite() {
     };
   }, [products]);
 
+  const isDirectDiwaniyaQrOpen = isDirectDiwaniyaEntry && showSquadModal;
+
   return (
     <>
       <AnimatePresence>
@@ -5946,9 +5964,17 @@ export default function CustomerSite() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] flex items-end justify-center bg-brand/40 backdrop-blur-sm overflow-x-hidden"
+                className={cn(
+                  "fixed inset-0 z-[100] flex justify-center overflow-x-hidden",
+                  isDirectDiwaniyaQrOpen
+                    ? "items-stretch bg-stone-50"
+                    : "items-end bg-brand/40 backdrop-blur-sm sm:items-center"
+                )}
                 onMouseDown={(e) => {
-                  if (e.target === e.currentTarget) setShowSquadModal(false);
+                  if (e.target === e.currentTarget) {
+                    setShowSquadModal(false);
+                    setIsDirectDiwaniyaEntry(false);
+                  }
                 }}
               >
                 <motion.div
@@ -5956,7 +5982,12 @@ export default function CustomerSite() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0, y: "20px" }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="bg-stone-50 w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh] relative mt-auto sm:mt-0"
+                  className={cn(
+                    "bg-stone-50 w-full max-w-md overflow-hidden flex flex-col relative",
+                    isDirectDiwaniyaQrOpen
+                      ? "h-[100dvh] max-h-[100dvh] rounded-none shadow-none mt-0"
+                      : "rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl max-h-[85vh] mt-auto sm:mt-0"
+                  )}
                   onClick={(e) => e.stopPropagation()}
                 >
                    {/* Zari Bisht Gate Entrance */}
@@ -6013,6 +6044,7 @@ export default function CustomerSite() {
                             e.preventDefault();
                             e.stopPropagation();
                             setShowSquadModal(false);
+                            setIsDirectDiwaniyaEntry(false);
                           }}
                           className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 hover:text-brand hover:bg-stone-200 transition-colors font-black text-xs active:scale-95"
                           aria-label="إغلاق صفحة الديوانية"
