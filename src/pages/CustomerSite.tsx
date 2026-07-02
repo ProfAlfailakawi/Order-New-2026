@@ -1720,7 +1720,8 @@ export default function CustomerSite() {
   const [ownerJoinDecisionLoading, setOwnerJoinDecisionLoading] = useState<Record<string, boolean>>({});
   const [radarStatus, setRadarStatus] = useState<"idle" | "checking" | "ready" | "denied" | "weak" | "unsupported" | "empty">("idle");
   const [showRadarInstructionModal, setShowRadarInstructionModal] = useState(false);
-  const [radarStatusMsg, setRadarStatusMsg] = useState("نطلب موقعك عشان الديوانية تعتمد على القرب الحقيقي.");
+  const [radarLocationNoticeDismissed, setRadarLocationNoticeDismissed] = useState(false);
+  const [radarStatusMsg, setRadarStatusMsg] = useState("خدمة الموقع اختيارية للرادار فقط. تقدر تستخدم الموقع طبيعي بدونها.");
   const [radarAccuracy, setRadarAccuracy] = useState<number | null>(null);
   const radarStatusRef = useRef<typeof radarStatus>("idle");
   const locationPromptAttemptsRef = useRef(0);
@@ -1798,6 +1799,12 @@ export default function CustomerSite() {
   }, [wobbleNotifications.length, qatyaNotifications.length]);
 
   const refreshRadarOnce = useCallback(async () => {
+      if (isDirectDiwaniyaEntry || hasInitialDiwaniyaQrEntry || initialSquadCode) {
+        setRadarStatus("idle");
+        setRadarStatusMsg("الدخول من QR الديوانية لا يحتاج تشغيل الموقع الآن.");
+        setShowRadarInstructionModal(false);
+        return;
+      }
       if (mockLocation) {
         setRadarStatus("ready");
         setRadarStatusMsg("تم تفعيل الموقع التجريبي المحاكي بجانب ديوانية قريبة للتجربة 🧪");
@@ -1809,8 +1816,9 @@ export default function CustomerSite() {
        return;
      }
 
+     setRadarLocationNoticeDismissed(false);
      setRadarStatus("checking");
-     setRadarStatusMsg("جاري الاتصال بالأقمار الصناعية لتحديد موقعك... 📡");
+     setRadarStatusMsg("جاري تشغيل رادار الديوانية وتحديد القرب... 📡");
      setRadarDismissedList([]);
      setIsNearbyRadarPanelCollapsed(false);
      try { localStorage.removeItem("radar_dismissed_squads"); } catch(e) {}
@@ -1836,20 +1844,24 @@ export default function CustomerSite() {
        setRadarStatus(isDenied ? "denied" : "idle");
        setRadarStatusMsg(
          isDenied
-           ? "المتصفح رفض إعطاء الموقع. لا يوجد زر سحري يتجاوز الحظر؛ لازم تغيّر الإذن إلى سماح من إعدادات الموقع ثم تعيد المحاولة."
-           : "الرادار حاول فعلاً لكنه ما قدر يلتقط موقعك الآن. تأكد من تشغيل GPS والإنترنت ثم جرّب مرة ثانية."
+           ? "الموقع شغال، لكن خدمة اللوكيشن مقفلة من المتصفح. هذا يؤثر على الرادار فقط وليس على الطلب أو التصفح."
+           : "تعذر تشغيل الرادار الآن. تقدر تكمل استخدام الموقع طبيعي وتجرب تشغيل اللوكيشن لاحقاً."
        );
        if (isDenied) {
-         setShowRadarInstructionModal(true);
+         setShowRadarInstructionModal(false);
        }
      }
-  }, [mockLocation]);
+  }, [mockLocation, isDirectDiwaniyaEntry, hasInitialDiwaniyaQrEntry, initialSquadCode]);
 
   useEffect(() => {
      radarStatusRef.current = radarStatus;
   }, [radarStatus]);
 
   useEffect(() => {
+     if (isDirectDiwaniyaEntry || hasInitialDiwaniyaQrEntry || initialSquadCode) {
+       setShowRadarInstructionModal(false);
+       return;
+     }
      if (mockLocation || !navigator.geolocation) return;
 
      const clearPromptTimer = () => {
@@ -1867,8 +1879,8 @@ export default function CustomerSite() {
            const permission = await (navigator as any).permissions.query({ name: "geolocation" as PermissionName });
            if (permission.state === "denied") {
              setRadarStatus("denied");
-             setRadarStatusMsg("الموقع مقفّل من المتصفح. فعّله من إعدادات الموقع عشان الديوانية تعتمد عليك صح.");
-             setShowRadarInstructionModal(true);
+             setRadarStatusMsg("خدمة اللوكيشن مقفلة من المتصفح. الموقع يعمل طبيعي، والرادار فقط يحتاج تفعيلها.");
+             setShowRadarInstructionModal(false);
              return false;
            }
          }
@@ -1915,10 +1927,14 @@ export default function CustomerSite() {
        window.removeEventListener("focus", onVisibleOrFocus);
        document.removeEventListener("visibilitychange", onVisibleOrFocus);
      };
-  }, [mockLocation, refreshRadarOnce]);
+  }, [mockLocation, refreshRadarOnce, isDirectDiwaniyaEntry, hasInitialDiwaniyaQrEntry, initialSquadCode]);
 
   useEffect(() => {
      const askWhenLocationIsOff = async () => {
+       if (isDirectDiwaniyaEntry || hasInitialDiwaniyaQrEntry || initialSquadCode) {
+         setShowRadarInstructionModal(false);
+         return;
+       }
        if (mockLocation) return;
        if (!navigator.geolocation) return;
        if (radarStatus === "ready") return;
@@ -1956,7 +1972,7 @@ export default function CustomerSite() {
        window.removeEventListener("focus", onFocus);
        document.removeEventListener("visibilitychange", onVisible);
      };
-  }, [refreshRadarOnce, mockLocation, radarStatus]);
+  }, [refreshRadarOnce, mockLocation, radarStatus, isDirectDiwaniyaEntry, hasInitialDiwaniyaQrEntry, initialSquadCode]);
 
   const clearSquadSessionOnThisDevice = useCallback(() => {
      squadSessionTokenRef.current += 1;
@@ -2015,7 +2031,7 @@ export default function CustomerSite() {
   useEffect(() => {
      if (!navigator.geolocation) {
        setRadarStatus("unsupported");
-       setRadarStatusMsg("جهازك أو المتصفح ما يدعم تحديد الموقع.");
+       setRadarStatusMsg("جهازك أو المتصفح لا يدعم خدمة اللوكيشن. الموقع يعمل طبيعي، لكن الرادار لن يعمل على هذا الجهاز.");
        return;
      }
      if (mockLocation) {
@@ -2209,7 +2225,7 @@ export default function CustomerSite() {
        (err) => {
          console.warn("Geofence watchPosition error: ", err);
          setRadarStatus(err.code === 1 ? "denied" : "idle");
-       setRadarStatusMsg(err.code === 1 ? "الموقع مقفّل من المتصفح. فعّله إذا تبي الرادار يطلع لك الدواوين القريبة." : "الرادار ما اشتغل الحين. اضغط تشغيل الرادار وجرب مرة ثانية.");
+       setRadarStatusMsg(err.code === 1 ? "خدمة اللوكيشن مقفلة من المتصفح. الموقع يعمل طبيعي، والرادار فقط يحتاجها." : "الرادار ما اشتغل الآن. تقدر تكمل استخدام الموقع وتجرب مرة ثانية لاحقاً.");
        },
        { enableHighAccuracy: true, timeout: 20050, maximumAge: 10000 }
      );
@@ -4552,6 +4568,7 @@ export default function CustomerSite() {
   }, [products]);
 
   const isDirectDiwaniyaQrOpen = isDirectDiwaniyaEntry && showSquadModal;
+  const isDiwaniyaQrLocationQuietMode = isDirectDiwaniyaEntry || hasInitialDiwaniyaQrEntry || Boolean(initialSquadCode);
 
   return (
     <>
@@ -6210,7 +6227,7 @@ export default function CustomerSite() {
 
         {/* حالة رادار الديوانية وتشغيل اللوكيشن بوضوح */}
         <AnimatePresence>
-          {!isCheckout && radarNearbySquads.length === 0 && radarStatus !== "idle" && radarStatus !== "empty" && radarStatus !== "ready" && (
+          {!isDiwaniyaQrLocationQuietMode && !isCheckout && !radarLocationNoticeDismissed && radarNearbySquads.length === 0 && radarStatus !== "idle" && radarStatus !== "empty" && radarStatus !== "ready" && (
             <motion.div
               initial={{ opacity: 0, y: 56, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -6221,21 +6238,31 @@ export default function CustomerSite() {
                 floatingAlertBottom,
               )}
             >
-              <div className="flex items-center justify-between gap-3">
-                <button
-                  onClick={() => radarStatus === "denied" ? setShowRadarInstructionModal(true) : refreshRadarOnce()}
-                  disabled={radarStatus === "checking"}
-                  className="bg-brand text-white rounded-2xl px-4 py-2 text-[10px] font-black active:scale-95 shrink-0 disabled:opacity-60"
-                >
-                  {radarStatus === "checking" ? "جاري الفحص" : radarStatus === "denied" ? "طريقة التفعيل" : radarStatus === "weak" ? "تحسين الدقة" : "تشغيل الرادار"}
-                </button>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => radarStatus === "denied" ? setShowRadarInstructionModal(true) : refreshRadarOnce()}
+                    disabled={radarStatus === "checking"}
+                    className="bg-brand text-white rounded-2xl px-3.5 py-2 text-[10px] font-black active:scale-95 disabled:opacity-60"
+                  >
+                    {radarStatus === "checking" ? "جاري الفحص" : radarStatus === "denied" ? "تفعيل الرادار" : radarStatus === "weak" ? "تحسين الدقة" : "تشغيل الرادار"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRadarLocationNoticeDismissed(true)}
+                    className="h-8 w-8 rounded-full bg-stone-100 text-stone-400 flex items-center justify-center active:scale-95"
+                    aria-label="إغلاق تنبيه اللوكيشن"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-end gap-1.5 text-[11px] font-black">
-                    <span>{radarStatus === "denied" ? "الموقع غير متاح" : radarStatus === "weak" ? "الموقع تقريبي" : "رادار الديوانية"}</span>
+                    <span>{radarStatus === "denied" ? "اللوكيشن مقفّل فقط" : radarStatus === "weak" ? "الموقع تقريبي" : "رادار الديوانية"}</span>
                     {radarStatus === "denied" && <MapPin className="w-3.5 h-3.5 text-amber-500" />}
                   </div>
                   <div className="text-[9px] font-bold text-stone-500 mt-0.5 leading-snug line-clamp-2">
-                    {radarStatus === "denied" ? "فعّله من المتصفح لتشغيل الرادار." : radarStatusMsg}
+                    {radarStatus === "denied" ? "الموقع يعمل طبيعي. اللوكيشن مطلوب للرادار فقط." : radarStatusMsg}
                   </div>
                   {radarAccuracy !== null && <div className="text-[8px] font-black text-stone-400 mt-0.5">الدقة: {radarAccuracy}م</div>}
                 </div>
@@ -6476,7 +6503,7 @@ export default function CustomerSite() {
 
         {/* دليل تشغيل الرادار وتفعيل الموقع للمتصفح والأجهزة */}
         <AnimatePresence>
-          {showRadarInstructionModal && (
+          {!isDiwaniyaQrLocationQuietMode && showRadarInstructionModal && (
             <motion.div
               key="radar-instruction-modal"
               initial={{ opacity: 0 }}
@@ -6504,16 +6531,16 @@ export default function CustomerSite() {
                 </button>
 
                 <MapPin className="w-9 h-9 mx-auto text-amber-500 mb-3" />
-                <h3 className="text-lg font-black text-brand leading-tight">الموقع غير متاح</h3>
+                <h3 className="text-lg font-black text-brand leading-tight">خدمة اللوكيشن مقفلة</h3>
                 <p className="mt-1.5 text-[11px] font-bold text-stone-500 leading-relaxed">
-                  فعّله من المتصفح لتشغيل الرادار.
+                  الموقع يعمل طبيعي. تفعيل اللوكيشن مطلوب فقط لرادار الديوانيات القريبة.
                 </p>
 
                 <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50/45 px-3 py-3 text-right">
-                  <p className="text-[11px] font-black text-brand mb-1">الخطوات</p>
+                  <p className="text-[11px] font-black text-brand mb-1">لتفعيل الرادار فقط</p>
                   <ol className="space-y-1.5 text-[10px] font-bold text-stone-600 leading-relaxed list-decimal list-inside">
-                    <li>افتح إعدادات الموقع.</li>
-                    <li>اختر سماح.</li>
+                    <li>افتح إعدادات الموقع من المتصفح.</li>
+                    <li>اختر سماح للّوكيشن.</li>
                     <li>ارجع واضغط جرّب الآن.</li>
                   </ol>
                 </div>
@@ -6530,10 +6557,13 @@ export default function CustomerSite() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowRadarInstructionModal(false)}
+                  onClick={() => {
+                    setShowRadarInstructionModal(false);
+                    setRadarLocationNoticeDismissed(true);
+                  }}
                   className="mt-2 w-full py-2.5 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-500 text-[11px] font-bold transition-all text-center"
                 >
-                  تراجع
+                  متابعة بدون لوكيشن
                 </button>
               </motion.div>
             </motion.div>
