@@ -1047,20 +1047,23 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     setTempCodeLoading(false);
   };
 
-  const handleJoinWithTempCode = async () => {
-    const cleanCode = tempJoinCode.trim();
-    const cleanTempPhone = cleanPhoneLocal(normalizeDigits(tempJoinPhone || guestPhone || loginPhone || currentMemberPhone || "")).slice(0, 8);
-    const finalName = (tempJoinName || guestName || customerName || "").trim();
+  const runTempCodeJoin = async (options?: { code?: string; phone?: string; name?: string; silent?: boolean }) => {
+    const cleanCode = String(options?.code ?? tempJoinCode).trim();
+    const rawPhone = options?.phone ?? (tempJoinPhone || guestPhone || loginPhone || currentMemberPhone || "");
+    const cleanTempPhone = cleanPhoneLocal(normalizeDigits(rawPhone));
+    const finalName = String(options?.name ?? (tempJoinName || guestName || customerName || "")).trim();
+    const silent = Boolean(options?.silent);
 
     if (!cleanCode) {
-      alert("حط كود الديوانية أول.");
-      return;
+      if (!silent) alert("حط كود الديوانية أول.");
+      return false;
     }
 
     if (!cleanTempPhone || cleanTempPhone.length !== 8 || !finalName) {
       setTempCodeNeedsProfile(true);
-      alert("الكود مضبوط. حط اسمك ورقم تلفونك ونكمل دخولك للديوانية.");
-      return;
+      setMyDiwaniyaTab("code");
+      if (!silent) alert("الكود مضبوط. حط اسمك ورقم تلفونك ونكمل دخولك للديوانية.");
+      return false;
     }
 
     setTempCodeLoading(true);
@@ -1077,34 +1080,66 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         setGuestPhone(cleanTempPhone);
         setGuestName(finalName);
         try { localStorage.setItem("customer_phone_track", cleanTempPhone); } catch(e) {}
-        setActiveSquadId(String(data.squad.id));
+        const joinedSquadId = String(data?.squad?.id || "");
+        if (joinedSquadId) {
+          try { localStorage.setItem("squadId", joinedSquadId); } catch(e) {}
+          setActiveSquadId(joinedSquadId);
+        }
+        if (setSquadInfo && data?.squad) {
+          setSquadInfo({ ...data.squad, memberData: { name: finalName, phone: cleanTempPhone, isMember: true } });
+        }
         setTempCodeNeedsProfile(false);
-        if (onRefresh) onRefresh();
+        setMyDiwaniyaTab("home");
+        if (setInitialCode) setInitialCode("");
+        if (onRefresh) window.setTimeout(onRefresh, 60);
+        setTempCodeLoading(false);
+        return true;
       } else {
-        alert(data?.error || "الكود غير صحيح أو انتهت صلاحيته.");
+        if (!silent) alert(data?.error || "الكود غير صحيح أو انتهت صلاحيته.");
       }
-    } catch { alert("الاتصال تعطل وقت استخدام الكود."); }
+    } catch {
+      if (!silent) alert("الاتصال تعطل وقت استخدام الكود.");
+    }
     setTempCodeLoading(false);
+    return false;
   };
 
-  // Auto-handle initial code from QR scan
+  const handleJoinWithTempCode = async () => {
+    await runTempCodeJoin();
+  };
+
+  const autoJoinCodeRef = React.useRef("");
+
+  // Auto-handle initial code from QR scan: open code flow directly and complete silently when profile data exists.
   React.useEffect(() => {
-    if (initialCode && !squadInfo) {
-      setTempJoinCode(initialCode);
-      // If we have profile info, we can try to join automatically
-      const cleanPhone = (customerPhone || guestPhone || loginPhone || "").replace(/\D/g, "").slice(0, 8);
-      const name = (customerName || guestName || "").trim();
-      
-      if (cleanPhone.length === 8 && name) {
-        // We have enough info, try silent join
-        const timer = setTimeout(() => {
-           handleJoinWithTempCode();
-           if (setInitialCode) setInitialCode("");
-        }, 500);
-        return () => clearTimeout(timer);
-      }
+    if (!initialCode || squadInfo) return;
+
+    const cleanCode = String(initialCode).trim();
+    if (!cleanCode) return;
+
+    setTempJoinCode(cleanCode);
+    setMyDiwaniyaTab("code");
+
+    let storedPhone = "";
+    try { storedPhone = localStorage.getItem("customer_phone_track") || ""; } catch(e) {}
+    const cleanPhone = cleanPhoneLocal(normalizeDigits(customerPhone || guestPhone || loginPhone || storedPhone || ""));
+    const name = String(customerName || guestName || tempJoinName || "").trim();
+
+    if (cleanPhone.length !== 8 || !name) {
+      if (cleanPhone.length === 8) setTempJoinPhone(cleanPhone);
+      setTempCodeNeedsProfile(true);
+      return;
     }
-  }, [initialCode, squadInfo, customerPhone, customerName, setInitialCode]);
+
+    const autoJoinKey = `${cleanCode}:${cleanPhone}`;
+    if (autoJoinCodeRef.current === autoJoinKey) return;
+    autoJoinCodeRef.current = autoJoinKey;
+
+    const timer = window.setTimeout(() => {
+      runTempCodeJoin({ code: cleanCode, phone: cleanPhone, name, silent: true });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [initialCode, squadInfo, customerPhone, customerName, guestPhone, guestName, loginPhone, tempJoinName, setInitialCode]);
 
   const handleOpenGroupOrder = async () => {
     if (!squadInfo?.id || !currentMemberPhone) return;
