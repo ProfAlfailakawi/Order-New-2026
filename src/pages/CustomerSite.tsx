@@ -8079,7 +8079,8 @@ function CheckoutOverlay({
   const currentTier = getLoyaltyTier(customerPoints || 0);
   const currentTierIndex = normalizedLoyaltyTiers.findIndex((tier: any) => String(tier?.id ?? tier?.name) === String(currentTier?.id ?? currentTier?.name));
   const nextTier = currentTierIndex >= 0 ? normalizedLoyaltyTiers[currentTierIndex + 1] : null;
-  const expectedPoints = Math.max(0, Math.floor(Number(itemsTotal || 0)));
+  // نقاط الولاء تُحتسب على المبلغ المدفوع فعلياً (شامل التوصيل بعد الخصم) — مطابقة لاحتساب السيرفر
+  const expectedPoints = Math.max(0, Math.round(Number(total || 0)));
   const pointsAfterOrder = Number(customerPoints || 0) + expectedPoints;
   const upcomingTier = nextTier && pointsAfterOrder >= Number(nextTier?.minPoints || 0) ? nextTier : null;
   const pointsNeeded = nextTier ? Math.max(0, Number(nextTier.minPoints || 0) - Number(customerPoints || 0)) : 0;
@@ -8982,7 +8983,7 @@ function CheckoutOverlay({
               <div className="flex justify-between items-center text-xs font-bold text-brand/40 pb-3 border-b border-stone-50">
                 <span>النقاط المتوقعة من هذا الطلب</span>
                 <span className="flex items-center gap-1">
-                  + {Math.floor(itemsTotal)} ⚡
+                  + {expectedPoints} ⚡
                 </span>
               </div>
                 </>
