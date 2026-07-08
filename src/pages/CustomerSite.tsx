@@ -3569,7 +3569,8 @@ export default function CustomerSite() {
     }
   }
 
-  const total = Math.max(0, itemsTotal + deliveryFee - discountAmount);
+  const effectiveDeliveryFee = deliveryFee === -1 ? 0 : deliveryFee;
+  const total = Math.max(0, itemsTotal + effectiveDeliveryFee - discountAmount);
 
   const handleZeroClickOrder = async () => {
     if (
