@@ -1,14 +1,89 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+    
+    // Admins and Partners with null-safeguards
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.uid == "2KVrKwyvmVaKQYc9iiw87xoztrA3" ||
+        request.auth.uid == "abi4lzKo4VfiLkrBAkYfK8NjtLS2" ||
+        (request.auth.token != null && 'email' in request.auth.token && request.auth.token.email != null && (
+          request.auth.token.email == "volcanokw@gmail.com" ||
+          request.auth.token.email == "Volcanokw@gmail.com"
+        ))
+      );
     }
-    match /appData/{document=**} {
-      allow read, write: if true;
+    
+    function isPartner() {
+      return request.auth != null && (
+        request.auth.uid == "L4qKc2PsZXamk96nvGTqPLjYhI03" ||
+        request.auth.uid == "0v30UI3SYyfzuGO15i5qRqejif62" ||
+        request.auth.uid == "2qUU5RXByXPkQASR1mJR9krryPd2" ||
+        (request.auth.token != null && 'email' in request.auth.token && request.auth.token.email != null && (
+          request.auth.token.email == "dr.ahmad.alfailakawi@gmail.com" ||
+          request.auth.token.email == "dr.ahmad.alfailakawi@gmail.com" ||
+          request.auth.token.email == "alfailakawidrahmad@gmail.com" ||
+          request.auth.token.email == "mfq241188@gmail.com" ||
+          request.auth.token.email == "omaralawadhi67@gmail.com"
+        ))
+      );
+    }
+    
+    function isAuthorized() {
+      return isAdmin() || isPartner();
+    }
+
+    match /{document=**} {
+      allow read, write: if isAuthorized();
+    }
+
+    // Client App Access
+    match /products/{productId} {
+      allow read: if true;
+    }
+    match /app_products/{productId} {
+      allow read: if true;
+    }
+    match /regions/{regionId} {
+      allow read: if true;
+    }
+    match /pushTokens/{token} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if true;
+    }
+    match /appData/{userId} {
+      allow read, write: if request.auth != null && (request.auth.uid == userId || isAuthorized());
+      
+      match /{allSubDocs=**} {
+        allow read, write: if request.auth != null && (request.auth.uid == userId || isAuthorized());
+      }
     }
     match /appData/shared_company_data {
-      allow read, write: if true;
+      allow read: if true; 
+      allow write: if isAuthorized();
+      
+      match /{allSubDocs=**} {
+        allow read: if true;
+        allow write: if isAuthorized();
+      }
+    }
+
+    match /squads/{squadId} {
+      allow read: if true;
+      allow write: if isAuthorized();
+    }
+
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read: if true; // In a production app, we would restrict this by token or phone, but for simplicity here we allow reading by ID/Query
+      allow update: if true; // temporarily allow all updates to fix issues
+      allow delete: if isAuthorized();
+    }
+    match /invoices/{invoiceId} {
+      allow read: if true; // To check payment status
+      allow update: if true;
+      allow delete: if isAuthorized();
     }
   }
 }
