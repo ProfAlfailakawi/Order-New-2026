@@ -352,6 +352,15 @@ export default function AdminDashboard() {
     // Strict rule
     const isInvalid = !cleaned || cleaned === "00000000" || cleaned.length < 8;
 
+    console.log("DEBUG WA:", {
+        orderId: order.id,
+        customerName: order.customerName,
+        rawPhone: finalPhone,
+        formattedPhone: cleaned,
+        isInvalid: isInvalid,
+        sourcePath: "AdminDashboard.tsx - contactCustomer"
+    });
+
     if (isInvalid) {
         alert("رقم العميل مو موجود أو مو مضبوط");
         return;
