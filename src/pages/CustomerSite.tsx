@@ -1,5 +1,6 @@
 import { DEFAULT_GLOBAL_LOGO } from "../constants";
 import React, { useState, useEffect, useRef, useMemo, useCallback, startTransition } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -7411,14 +7412,20 @@ function ProductModal({
     DEFAULT_GLOBAL_LOGO;
 
   useEffect(() => {
-    if (!isImagePreviewOpen) return;
+    if (!isImagePreviewOpen || typeof document === "undefined") return;
 
-    const handlePreviewKeyDown = (event: KeyboardEvent) => {
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleImagePreviewKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setIsImagePreviewOpen(false);
     };
 
-    window.addEventListener("keydown", handlePreviewKeyDown);
-    return () => window.removeEventListener("keydown", handlePreviewKeyDown);
+    window.addEventListener("keydown", handleImagePreviewKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleImagePreviewKeyDown);
+      document.body.style.overflow = previousBodyOverflow;
+    };
   }, [isImagePreviewOpen]);
 
   useEffect(() => {
@@ -7574,6 +7581,7 @@ function ProductModal({
   const smartRecommendedAddons = productAddons.filter(isSmartRecommendationAddon).slice(0, 1);
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -7626,13 +7634,21 @@ function ProductModal({
             DEFAULT_GLOBAL_LOGO ? (
               <button
                 type="button"
-                onClick={() => setIsImagePreviewOpen(true)}
-                className="relative block rounded-[28px] cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setIsImagePreviewOpen(true);
+                }}
+                onPointerDown={(event) => event.stopPropagation()}
+                className="relative z-10 block rounded-[28px] cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
+                style={{ touchAction: "manipulation" }}
                 aria-label={`تكبير صورة ${product.name}`}
               >
                 <img
                   referrerPolicy="no-referrer"
                   src={productImageSrc}
+                  alt={product.name}
+                  draggable={false}
                   onError={(e) => {
                     const fallback =
                       settings?.companyLogo ||
@@ -7649,7 +7665,7 @@ function ProductModal({
                       e.currentTarget.src = fallback;
                     }
                   }}
-                  className="w-[108px] h-[108px] sm:w-[126px] sm:h-[126px] object-contain bg-white p-2 rounded-[28px] shadow-[0_20px_48px_rgba(26,46,34,0.18)] relative ring-1 ring-white/80 transition-transform duration-200 active:scale-[0.98]"
+                  className="w-[108px] h-[108px] sm:w-[126px] sm:h-[126px] object-contain bg-white p-2 rounded-[28px] shadow-[0_20px_48px_rgba(26,46,34,0.18)] relative ring-1 ring-white/80 transition-transform duration-200 active:scale-[0.98] select-none"
                 />
               </button>
             ) : (
@@ -8005,47 +8021,53 @@ function ProductModal({
           </div>
         </div>
       </motion.div>
+    </motion.div>
 
-      <AnimatePresence>
-        {isImagePreviewOpen && (
-          <motion.div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 sm:p-8 backdrop-blur-md"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            onClick={(event) => {
-              event.stopPropagation();
-              setIsImagePreviewOpen(false);
-            }}
-            role="dialog"
-            aria-modal="true"
-            aria-label={`صورة ${product.name} بالحجم الكامل`}
-          >
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                setIsImagePreviewOpen(false);
-              }}
-              className="absolute right-4 top-4 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-xl transition-transform active:scale-95 sm:right-6 sm:top-6"
-              aria-label="إغلاق الصورة"
-            >
-              <X className="h-6 w-6" />
-            </button>
-
+    {typeof document !== "undefined" &&
+      createPortal(
+        <AnimatePresence>
+          {isImagePreviewOpen && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-              onClick={(event) => event.stopPropagation()}
-              className="flex max-h-[92vh] max-w-[96vw] items-center justify-center"
+              key="product-image-preview"
+              className="fixed inset-0 flex items-center justify-center bg-black/90 p-4 sm:p-8 backdrop-blur-md"
+              style={{ zIndex: 2147483647 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                if (event.target === event.currentTarget) {
+                  setIsImagePreviewOpen(false);
+                }
+              }}
+              role="dialog"
+              aria-modal="true"
+              aria-label={`صورة ${product.name} بالحجم الكامل`}
             >
-              <img
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setIsImagePreviewOpen(false);
+                }}
+                className="absolute right-4 top-4 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-xl transition-transform active:scale-95 sm:right-6 sm:top-6"
+                aria-label="إغلاق الصورة"
+              >
+                <X className="h-6 w-6" />
+              </button>
+
+              <motion.img
                 referrerPolicy="no-referrer"
                 src={productImageSrc}
                 alt={product.name}
+                draggable={false}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                onPointerDown={(event) => event.stopPropagation()}
                 onError={(e) => {
                   const fallback =
                     settings?.companyLogo ||
@@ -8062,13 +8084,14 @@ function ProductModal({
                     e.currentTarget.src = fallback;
                   }
                 }}
-                className="max-h-[88vh] max-w-[94vw] rounded-[24px] bg-white object-contain shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
+                className="max-h-[88dvh] max-w-[94vw] select-none rounded-[24px] bg-white object-contain shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
               />
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
+    </>
   );
 }
 
