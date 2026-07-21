@@ -1665,9 +1665,12 @@ app.get("/api/debug/order/:id", async (req, res) => {
   // Admin: Update Store Status
   app.patch("/api/admin/settings/storeStatus", async (req, res) => {
     try {
-      const docRef = doc(db, "appData", "shared_company_data");
+      const payload = req.body || {};
+      const opening = payload.openingHours || payload.workingHours || payload.hours;
       await updateAppData({
-        "settings.storeStatus": req.body,
+        "settings.storeStatus": payload,
+        "storeStatus": payload,
+        ...(opening ? { "workingHours": opening, "openingHours": opening } : {})
       });
       res.json({ success: true });
     } catch (e) {
@@ -1738,6 +1741,15 @@ app.get("/api/debug/order/:id", async (req, res) => {
         settings.loyaltySettings = data.loyaltySettings || {};
         settings.productCategories = data.productCategories || settings.productCategories || [];
         settings.menuCategories = data.menuCategories || settings.menuCategories || [];
+
+        // Ensure storeStatus and workingHours are attached
+        const mergedStoreStatus = data.settings?.storeStatus || data.storeStatus || settings.storeStatus || {};
+        const mergedOpeningHours = data.openingHours || data.workingHours || mergedStoreStatus?.openingHours || mergedStoreStatus?.workingHours;
+        if (mergedOpeningHours && typeof mergedOpeningHours === "object") {
+          mergedStoreStatus.openingHours = mergedOpeningHours;
+          mergedStoreStatus.workingHours = mergedOpeningHours;
+        }
+        settings.storeStatus = mergedStoreStatus;
 
         // Include company info from root if it exists
         if (data.info) {

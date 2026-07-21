@@ -98,39 +98,133 @@ export const getDisplayTotal = (order: any) => {
     return Math.max(0, itemsTotal - discount + deliveryFee);
 };
 
+export const formatTime12h = (timeStr?: string): string => {
+  if (!timeStr || typeof timeStr !== "string" || !timeStr.includes(":")) return timeStr || "";
+  const [hStr, mStr] = timeStr.split(":");
+  let hour = parseInt(hStr, 10);
+  const min = mStr || "00";
+  if (isNaN(hour)) return timeStr;
+  const period = hour >= 12 ? "م" : "ص";
+  if (hour === 0) hour = 12;
+  else if (hour > 12) hour -= 12;
+  return `${hour}:${min} ${period}`;
+};
+
+export const ARABIC_DAYS_MAP: Record<string, string> = {
+  sunday: "الأحد",
+  monday: "الإثنين",
+  tuesday: "الثلاثاء",
+  wednesday: "الأربعاء",
+  thursday: "الخميس",
+  friday: "الجمعة",
+  saturday: "السبت"
+};
+
+export const DAYS_ORDER = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+export function formatOpeningHoursSummary(storeStatus: any): {
+  summaryText: string;
+  todayText: string;
+  weeklyList: Array<{ dayKey: string; dayName: string; enabled: boolean; text: string }>;
+} {
+  const openingHours = storeStatus?.openingHours || storeStatus?.workingHours || storeStatus?.hours;
+  if (!openingHours || typeof openingHours !== "object") {
+    return {
+      summaryText: "أوقات العمل المعتمدة: يومياً من 12:00 م إلى 11:30 م",
+      todayText: "من 12:00 م إلى 11:30 م",
+      weeklyList: DAYS_ORDER.map(d => ({
+        dayKey: d,
+        dayName: ARABIC_DAYS_MAP[d] || d,
+        enabled: true,
+        text: "12:00 م - 11:30 م"
+      }))
+    };
+  }
+
+  const now = new Date();
+  const currentDayKey = DAYS_ORDER[now.getDay()];
+
+  const weeklyList = DAYS_ORDER.map(d => {
+    const sched = openingHours[d];
+    const dayName = ARABIC_DAYS_MAP[d] || d;
+    if (!sched || sched.enabled === false) {
+      return { dayKey: d, dayName, enabled: false, text: "عطلة / مغلق" };
+    }
+    const openFmt = formatTime12h(sched.open || "12:00");
+    const closeFmt = formatTime12h(sched.close || "23:30");
+    return { dayKey: d, dayName, enabled: true, text: `من ${openFmt} إلى ${closeFmt}` };
+  });
+
+  const todaySched = openingHours[currentDayKey];
+  const todayText = (!todaySched || todaySched.enabled === false)
+    ? "مغلق اليوم"
+    : `من ${formatTime12h(todaySched.open || "12:00")} إلى ${formatTime12h(todaySched.close || "23:30")}`;
+
+  const enabledDays = weeklyList.filter(w => w.enabled);
+  let summaryText = "";
+  if (enabledDays.length === 7) {
+    const firstText = enabledDays[0].text;
+    const allSame = enabledDays.every(e => e.text === firstText);
+    if (allSame) {
+      summaryText = `أوقات العمل: يومياً ${firstText}`;
+    } else {
+      summaryText = `أوقات العمل اليوم (${ARABIC_DAYS_MAP[currentDayKey]}): ${todayText}`;
+    }
+  } else if (enabledDays.length > 0) {
+    summaryText = `أوقات العمل اليوم (${ARABIC_DAYS_MAP[currentDayKey]}): ${todayText}`;
+  } else {
+    summaryText = "المتجر مغلق حالياً حسب الجدول المحدد.";
+  }
+
+  return { summaryText, todayText, weeklyList };
+}
+
 export function checkStoreStatus(storeStatus: any) {
-  if (!storeStatus) return { isOpen: true, message: "" };
+  if (!storeStatus) {
+    return { isOpen: true, message: "", formattedHours: "", weeklyList: [] };
+  }
+
+  const { summaryText, todayText, weeklyList } = formatOpeningHoursSummary(storeStatus);
 
   if (storeStatus.manualClose) {
     return { 
       isOpen: false, 
-      message: storeStatus.closeMessage || "المعذرة، المتجر مسكر الحين." 
+      message: storeStatus.closeMessage || "المعذرة، المتجر مسكر الحين بطلب من الإدارة.",
+      formattedHours: summaryText,
+      todayText,
+      weeklyList,
+      storeStatus
     };
   }
 
-  if (storeStatus.openingHours) {
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const openingHours = storeStatus.openingHours || storeStatus.workingHours || storeStatus.hours;
+
+  if (openingHours && typeof openingHours === "object" && Object.keys(openingHours).length > 0) {
     const now = new Date();
-    const currentDay = days[now.getDay()]; 
+    const currentDayKey = DAYS_ORDER[now.getDay()]; 
     const currentHours = now.getHours();
     const currentMinutes = now.getMinutes();
     const currentTimeInMinutes = (currentHours * 60) + currentMinutes;
 
-    const todaySchedule = storeStatus.openingHours[currentDay];
+    const todaySchedule = openingHours[currentDayKey];
 
     if (todaySchedule && todaySchedule.enabled === false) {
       return { 
         isOpen: false, 
-        message: storeStatus.closeMessage || "المعذرة، المتجر مسكر اليوم حسب الجدول." 
+        message: storeStatus.closeMessage || `المعذرة، المطعم مغلق اليوم (${ARABIC_DAYS_MAP[currentDayKey]}) حسب جدول أوقات العمل.`,
+        formattedHours: summaryText,
+        todayText,
+        weeklyList,
+        storeStatus
       };
     }
 
-    if (todaySchedule && todaySchedule.enabled) {
-      const [openHour, openMin] = todaySchedule.open.split(':').map(Number);
-      const [closeHour, closeMin] = todaySchedule.close.split(':').map(Number);
+    if (todaySchedule && (todaySchedule.enabled === true || todaySchedule.open)) {
+      const [openHour, openMin] = (todaySchedule.open || "12:00").split(':').map(Number);
+      const [closeHour, closeMin] = (todaySchedule.close || "23:30").split(':').map(Number);
       
-      const openTimeInMinutes = (openHour * 60) + openMin;
-      let closeTimeInMinutes = (closeHour * 60) + closeMin;
+      const openTimeInMinutes = (openHour * 60) + (isNaN(openMin) ? 0 : openMin);
+      let closeTimeInMinutes = (closeHour * 60) + (isNaN(closeMin) ? 0 : closeMin);
       
       if (closeTimeInMinutes < openTimeInMinutes) {
         closeTimeInMinutes += (24 * 60); 
@@ -144,15 +238,21 @@ export function checkStoreStatus(storeStatus: any) {
       const isOpenNow = currentCompareTime >= openTimeInMinutes && currentCompareTime <= closeTimeInMinutes;
 
       if (!isOpenNow) {
+         const openFmt = formatTime12h(todaySchedule.open || "12:00");
+         const closeFmt = formatTime12h(todaySchedule.close || "23:30");
          return { 
            isOpen: false, 
-           message: storeStatus.closeMessage || `المعذرة، المتجر يفتح يومياً من ${todaySchedule.open} إلى ${todaySchedule.close}.`
+           message: storeStatus.closeMessage || `المطعم مغلق حالياً. أوقات العمل اليوم (${ARABIC_DAYS_MAP[currentDayKey]}): من ${openFmt} إلى ${closeFmt}.`,
+           formattedHours: summaryText,
+           todayText,
+           weeklyList,
+           storeStatus
          };
       }
     }
   }
 
-  return { isOpen: true, message: "" };
+  return { isOpen: true, message: "", formattedHours: summaryText, todayText, weeklyList, storeStatus };
 }
 
 export const formatKuwaitiDate = (dateVal: any): { date: string; time: string; full: string } => {

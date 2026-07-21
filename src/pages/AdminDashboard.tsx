@@ -897,18 +897,19 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between p-6 bg-stone-50 rounded-[32px] border border-stone-100">
                     <div>
                       <h3 className="text-lg font-extrabold text-brand mb-1">إغلاق المتجر يدوياً</h3>
-                      <p className="text-stone-400 text-xs font-medium">تفعيل هذا الخيار سيغلق المتجر فوراً.</p>
+                      <p className="text-stone-400 text-xs font-medium">تفعيل هذا الخيار سيغلق المتجر فوراً ويمنع اتمام الطلبات.</p>
                     </div>
                     <button 
                       onClick={async () => {
                          const newValue = !settings.storeStatus?.manualClose;
+                         const updatedStatus = { ...settings.storeStatus, manualClose: newValue };
                          try {
                            await fetch("/api/admin/settings/storeStatus", {
                              method: "PATCH",
                              headers: { "Content-Type": "application/json" },
-                             body: JSON.stringify({...settings.storeStatus, manualClose: newValue})
+                             body: JSON.stringify(updatedStatus)
                            });
-                           setSettings({...settings, storeStatus: {...settings.storeStatus, manualClose: newValue}});
+                           setSettings({...settings, storeStatus: updatedStatus});
                          } catch (e) {
                            console.error(e);
                          }
@@ -920,7 +921,7 @@ export default function AdminDashboard() {
                   </div>
                   
                   <div className="space-y-3">
-                    <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-2">رسالة الإغلاق</label>
+                    <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest px-2">رسالة الإغلاق المخصصة</label>
                     <textarea 
                         value={settings.storeStatus?.closeMessage || "المعذرة، المتجر مسكر الحين."}
                         onBlur={async (e) => {
@@ -939,7 +940,153 @@ export default function AdminDashboard() {
                           setSettings({...settings, storeStatus: newStatus});
                         }}
                         className="w-full p-6 bg-stone-50 border border-stone-100 rounded-2xl font-extrabold text-brand"
+                        rows={2}
                     />
+                  </div>
+
+                  {/* Restaurant Operating Hours Section */}
+                  <div className="pt-6 border-t border-stone-100 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-xl font-extrabold text-brand flex items-center gap-2">
+                          <span>⏰</span> جدول أوقات عمل المطعم
+                        </h3>
+                        <p className="text-stone-400 text-xs font-medium mt-1">حدد ساعات العمل لكل يوم، ويتم تطبيق المنع التلقائي عند اتمام الطلب خارح أوقات العمل.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const defaultHours = {
+                            sunday: { enabled: true, open: "12:00", close: "23:30" },
+                            monday: { enabled: true, open: "12:00", close: "23:30" },
+                            tuesday: { enabled: true, open: "12:00", close: "23:30" },
+                            wednesday: { enabled: true, open: "12:00", close: "23:30" },
+                            thursday: { enabled: true, open: "12:00", close: "23:30" },
+                            friday: { enabled: true, open: "12:00", close: "23:30" },
+                            saturday: { enabled: true, open: "12:00", close: "23:30" },
+                          };
+                          const newStoreStatus = {
+                            ...settings.storeStatus,
+                            openingHours: defaultHours,
+                            workingHours: defaultHours
+                          };
+                          try {
+                            await fetch("/api/admin/settings/storeStatus", {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify(newStoreStatus)
+                            });
+                            setSettings({ ...settings, storeStatus: newStoreStatus });
+                            alert("تم تطبيق التوقيت القياسي (12:00 م - 11:30 م) على جميع الأيام بنجاح! ⚡");
+                          } catch (e) {
+                            console.error(e);
+                          }
+                        }}
+                        className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-brand text-xs font-bold rounded-xl transition-all"
+                      >
+                        ⚡ توقيت موحد لجميع الأيام (12:00 م - 11:30 م)
+                      </button>
+                    </div>
+
+                    <div className="space-y-3 bg-stone-50/50 p-6 rounded-3xl border border-stone-100">
+                      {[
+                        { key: 'sunday', name: 'الأحد' },
+                        { key: 'monday', name: 'الإثنين' },
+                        { key: 'tuesday', name: 'الثلاثاء' },
+                        { key: 'wednesday', name: 'الأربعاء' },
+                        { key: 'thursday', name: 'الخميس' },
+                        { key: 'friday', name: 'الجمعة' },
+                        { key: 'saturday', name: 'السبت' },
+                      ].map((day) => {
+                        const currentHours = settings.storeStatus?.openingHours?.[day.key] || settings.storeStatus?.workingHours?.[day.key] || { enabled: true, open: "12:00", close: "23:30" };
+                        const isEnabled = currentHours.enabled !== false;
+
+                        const updateDaySchedule = (updatedDayObj: any) => {
+                          const currentOpening = settings.storeStatus?.openingHours || settings.storeStatus?.workingHours || {
+                            sunday: { enabled: true, open: "12:00", close: "23:30" },
+                            monday: { enabled: true, open: "12:00", close: "23:30" },
+                            tuesday: { enabled: true, open: "12:00", close: "23:30" },
+                            wednesday: { enabled: true, open: "12:00", close: "23:30" },
+                            thursday: { enabled: true, open: "12:00", close: "23:30" },
+                            friday: { enabled: true, open: "12:00", close: "23:30" },
+                            saturday: { enabled: true, open: "12:00", close: "23:30" },
+                          };
+                          const newOpening = {
+                            ...currentOpening,
+                            [day.key]: updatedDayObj
+                          };
+                          const newStoreStatus = {
+                            ...settings.storeStatus,
+                            openingHours: newOpening,
+                            workingHours: newOpening
+                          };
+                          setSettings({ ...settings, storeStatus: newStoreStatus });
+                        };
+
+                        return (
+                          <div key={day.key} className="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-2xl border border-stone-100 gap-4">
+                            <div className="flex items-center gap-3 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  updateDaySchedule({ ...currentHours, enabled: !isEnabled });
+                                }}
+                                className={`w-12 h-6 rounded-full relative transition-all duration-300 ${isEnabled ? 'bg-emerald-500' : 'bg-stone-300'}`}
+                              >
+                                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all shadow-sm ${isEnabled ? 'right-6.5' : 'right-0.5'}`} />
+                              </button>
+                              <span className="font-extrabold text-brand w-20 text-sm">{day.name}</span>
+                              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${isEnabled ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}`}>
+                                {isEnabled ? 'مفتوح' : 'مغلق'}
+                              </span>
+                            </div>
+
+                            {isEnabled && (
+                              <div className="flex items-center gap-3 text-xs font-bold text-stone-600">
+                                <span>من:</span>
+                                <input
+                                  type="time"
+                                  value={currentHours.open || "12:00"}
+                                  onChange={(e) => updateDaySchedule({ ...currentHours, open: e.target.value })}
+                                  className="p-2 bg-stone-50 border border-stone-200 rounded-xl font-mono text-brand font-black"
+                                />
+                                <span>إلى:</span>
+                                <input
+                                  type="time"
+                                  value={currentHours.close || "23:30"}
+                                  onChange={(e) => updateDaySchedule({ ...currentHours, close: e.target.value })}
+                                  className="p-2 bg-stone-50 border border-stone-200 rounded-xl font-mono text-brand font-black"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch("/api/admin/settings/storeStatus", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(settings.storeStatus || {})
+                          });
+                          if (res.ok) {
+                            alert("تم حفظ أوقات عمل المطعم بنجاح وتحديث القاعدة المشتركة! 💾");
+                          } else {
+                            alert("تعذر حفظ أوقات العمل.");
+                          }
+                        } catch (e) {
+                          console.error(e);
+                          alert("خطأ أثناء الحفظ.");
+                        }
+                      }}
+                      className="w-full py-4 bg-brand text-white rounded-2xl font-black shadow-lg hover:shadow-brand/20 transition-all flex items-center justify-center gap-2"
+                    >
+                      💾 حفظ جدول أوقات العمل
+                    </button>
                   </div>
                </div>
 

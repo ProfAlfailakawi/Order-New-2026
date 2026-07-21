@@ -39,6 +39,7 @@ import {
   Users,
   BellRing,
   LogIn,
+  Clock,
 } from "lucide-react";
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
@@ -1292,6 +1293,83 @@ const cleanCustomerAddonLabel = (value: any): string => {
 
   return cleaned || original;
 };
+
+function StoreClosedWorkingHoursNotice({ storeStatus }: { storeStatus: any }) {
+  const status = checkStoreStatus(storeStatus);
+  const [showAllHours, setShowAllHours] = useState(false);
+
+  if (status.isOpen) return null;
+
+  return (
+    <div className="bg-red-50/90 border-2 border-red-200/80 rounded-3xl p-5 shadow-sm space-y-4 text-right mb-4">
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-red-100 border border-red-200 flex items-center justify-center text-red-600 shrink-0 mt-0.5">
+          <Clock className="w-5 h-5" />
+        </div>
+        <div className="flex-grow min-w-0">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h3 className="text-base font-black text-red-950 flex items-center gap-2">
+              <span>المطعم مغلق حالياً</span>
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+            </h3>
+            <span className="text-[10px] font-black bg-red-100 text-red-700 px-2.5 py-1 rounded-full border border-red-200">
+              خارج أوقات العمل
+            </span>
+          </div>
+          <p className="text-xs font-bold text-red-800/90 mt-1.5 leading-relaxed">
+            {status.message}
+          </p>
+        </div>
+      </div>
+
+      {/* Working Hours Box */}
+      <div className="bg-white/90 rounded-2xl p-4 border border-red-100/80 space-y-3">
+        <div className="flex items-center justify-between text-xs font-black text-stone-800">
+          <span className="flex items-center gap-1.5 text-brand">
+            <span>⏰</span> أوقات عمل المطعم المعتمدة:
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowAllHours(!showAllHours)}
+            className="text-[11px] font-extrabold text-accent underline flex items-center gap-1 hover:opacity-80"
+          >
+            {showAllHours ? "إخفاء باقي الأيام" : "جدول أيام الأسبوع 📅"}
+          </button>
+        </div>
+
+        <p className="text-xs font-black text-stone-700 bg-stone-50 p-2.5 rounded-xl border border-stone-100">
+          {status.formattedHours}
+        </p>
+
+        {showAllHours && status.weeklyList && status.weeklyList.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-stone-100">
+            {status.weeklyList.map((item: any) => (
+              <div
+                key={item.dayKey}
+                className={cn(
+                  "flex items-center justify-between p-2.5 rounded-xl text-xs font-bold border",
+                  item.enabled
+                    ? "bg-stone-50/80 border-stone-100 text-stone-800"
+                    : "bg-red-50/50 border-red-100/50 text-red-400"
+                )}
+              >
+                <span className="font-extrabold">{item.dayName}</span>
+                <span className={item.enabled ? "text-stone-600 font-mono" : "text-red-500 font-medium"}>
+                  {item.text}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 text-[11px] font-bold text-stone-500 bg-white/60 p-2.5 rounded-xl border border-red-100/50">
+        <span>💡</span>
+        <span>تقدر تتصفح المنيو وتجهز سلتك برحتك، وتقدر تطلب فور افتتاح المطعم!</span>
+      </div>
+    </div>
+  );
+}
 
 export default function CustomerSite() {
   const initialDiwaniyaQrCode = (() => {
@@ -5910,8 +5988,12 @@ export default function CustomerSite() {
                 {cart.length}
               </div>
               <div className="min-w-0 text-right">
-                <strong className="block leading-tight">سلتك جاهزة</strong>
-                <span className="text-[11px] text-white/65">{cart.length} منتجات · {total} د.ك</span>
+                <strong className="block leading-tight">
+                  {checkStoreStatus(settings?.storeStatus).isOpen ? "سلتك جاهزة" : "سلتك جاهزة (المطعم مغلق ⏰)"}
+                </strong>
+                <span className="text-[11px] text-white/65">
+                  {cart.length} منتجات · {total} د.ك
+                </span>
               </div>
             </button>
             <div className="al-cart-actions shrink-0">
@@ -5927,18 +6009,12 @@ export default function CustomerSite() {
               <button
                 type="button"
                 className="al-cart-checkout"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  // يبقى العميل في المنيو مع السلة صحيحة؛ فتح السلة يكون من منطقة السلة نفسها.
-                  setIsCheckout(false);
-                  window.requestAnimationFrame(() => {
-                    const menuAnchor = document.getElementById("menu") || document.querySelector("[data-menu-anchor]") || document.body;
-                    menuAnchor?.scrollIntoView?.({ behavior: "smooth", block: "start" });
-                  });
+                onClick={() => {
+                  setCheckoutInitialStep("cart");
+                  setIsCheckout(true);
                 }}
               >
-                إضافة منتجات
+                إتمام الطلب 🚀
               </button>
             </div>
           </motion.div>
@@ -8315,6 +8391,7 @@ function CheckoutOverlay({
         </div>
 
         <div className="checkout-wow-body flex-grow overflow-y-auto p-6 space-y-8 no-scrollbar bg-[#fafaf9]">
+          <StoreClosedWorkingHoursNotice storeStatus={settings?.storeStatus} />
           {cart.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-6 pt-10">
               <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-stone-50">
