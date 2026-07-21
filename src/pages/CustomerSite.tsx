@@ -9182,7 +9182,7 @@ function CheckoutOverlay({
                   )}
                 >
                   {!isOpen ? (
-                    <span>{message}</span>
+                    <span>المطعم مغلق حالياً (الطلب غير متاح)</span>
                   ) : (
                     <span>كمل بياناتك</span>
                   )}
@@ -9213,7 +9213,7 @@ function CheckoutOverlay({
                     )}
                   >
                     {!isOpen ? (
-                      <span>{message}</span>
+                      <span>المطعم مغلق حالياً (الطلب غير متاح)</span>
                     ) : customerPhone.length < 8 ? (
                       <span>اكتب رقم تلفون صحيح من 8 أرقام</span>
                     ) : deliveryFee === -1 ? (
