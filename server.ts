@@ -1170,6 +1170,20 @@ async function startServer() {
     next();
   });
 
+  // SECURITY: /api/debug* endpoints dump the full database (customers, orders,
+  // invoices, PII) with no authentication. Block them in production unless
+  // explicitly enabled via ENABLE_DEBUG_ENDPOINTS=true.
+  app.use((req, res, next) => {
+    if (
+      /^\/api\/debug/.test(req.path) &&
+      process.env.NODE_ENV === "production" &&
+      process.env.ENABLE_DEBUG_ENDPOINTS !== "true"
+    ) {
+      return res.status(404).json({ error: "Not found" });
+    }
+    next();
+  });
+
   app.post("/api/diwaniya-push/register", async (req, res) => {
     try {
       const { phone, token, squadId, prefs, userAgent, platform, standalone, notificationPermission, currentUrl } = req.body || {};
@@ -4258,6 +4272,22 @@ app.get("/api/debug/order/:id", async (req, res) => {
     ["/api/payment-webhook/:pathOrderId/:pathSplitId", "/api/payment-webhook/:pathOrderId", "/api/payment-webhook", "/api/webhook/upayments"],
     async (req, res) => {
       try {
+        // SECURITY: the webhook marks orders as PAID based purely on the request
+        // body/query "status" field with no signature check, so anyone can forge a
+        // "paid" order. When PAYMENT_WEBHOOK_SECRET is configured, require it (set the
+        // same value in the UPayments notification URL, e.g. ...?whsec=YOUR_SECRET,
+        // or send it as the x-webhook-secret header). No-op until the secret is set.
+        const WEBHOOK_SECRET = process.env.PAYMENT_WEBHOOK_SECRET || "";
+        if (WEBHOOK_SECRET) {
+          const provided = String(
+            req.query.whsec || req.headers["x-webhook-secret"] || "",
+          );
+          if (provided !== WEBHOOK_SECRET) {
+            console.warn("[PAYMENT] Rejected webhook: invalid or missing secret");
+            return res.status(401).json({ error: "unauthorized" });
+          }
+        }
+
         console.log(
           `[PAYMENT] Webhook received at ${new Date().toISOString()}:`,
           JSON.stringify(req.body),
