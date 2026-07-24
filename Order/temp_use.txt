@@ -1,0 +1,5 @@
+702:  app.use(express.json());
+762:  app.use(express.urlencoded({ extended: true }));
+4277:    app.use(vite.middlewares);
+4280:    app.use(express.static(distPath, { index: false }));
+4290:  app.use((err: any, req: any, res: any, next: any) => {

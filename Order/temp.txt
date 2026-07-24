@@ -1,0 +1,59 @@
+const getKuwaitiLiveMenuSignal = (products: any[], cart: any[], squadInfo?: any) => {
+  const active = (products || []).filter((p: any) => p?.isActive !== false && !p?.isOutOfStock);
+  const [products, setProducts] = useState<Product[]>(() => {
+      const cached = localStorage.getItem("cached_products");
+      return !localStorage.getItem("cached_products");
+      const cached = localStorage.getItem("cached_top_products");
+    setTimeout(() => document.getElementById("products-section")?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
+        // Filter top products to ensure they are under 15 KD and in stock
+        products.length > 0 &&
+        const affordableBestSellers = products.filter(
+        const affordableProducts = products.filter(
+  }, [products, cart, isCheckout, customerPoints, customerName, orderSuccess]);
+          fetchWithRetry("/api/products").then((allProducts) => {
+              localStorage.setItem("cached_products", JSON.stringify(validProducts));
+          fetchWithRetry("/api/top-products").then(d => { 
+                localStorage.setItem("cached_top_products", JSON.stringify(list));
+        return !!localStorage.getItem("cached_products");
+      products.length > 0 &&
+                const product = products.find(
+  }, [searchParams, products, setSearchParams]);
+    if (checkoutStep !== "payment" || products.length === 0) return;
+  }, [searchParams, products.length, setSearchParams]);
+    window.setTimeout(() => document.getElementById("products-section")?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+          const product = products.find(
+        const bestSellers = products.filter(
+            : products
+    const riceProducts = products.filter(
+    const snackProducts = products.filter(
+    const allAvailable = products.filter((p) => !p.isOutOfStock);
+  }, [products]);
+                    const el = document.getElementById("products-section");
+        <main className="p-4 sm:p-6 lg:p-8 space-y-8 customer-products-zone customer-wow-menu">
+            const liveSignal = getKuwaitiLiveMenuSignal(products, cart, squadInfo);
+            const liveSignal = getKuwaitiLiveMenuSignal(products, cart, squadInfo);
+                products={topProducts}
+          <section id="products-section">
+                  ? products
+                  : products.filter((p) => {
+                    const existingComforts = products.filter(p => {
+                    displayProducts = existingComforts.length ? existingComforts : products.filter((p) => p?.isActive !== false && !p?.isOutOfStock).slice(0, 5);
+                    const existingTrays = products.filter(p => {
+                    displayProducts = existingTrays.length ? existingTrays : products.filter((p) => p?.isActive !== false && !p?.isOutOfStock).slice(0, 5);
+                 // if nothing found with mood filter but products exist, fallback to all (or best sellers) to not show an empty screen
+                        displayProducts = products.filter(p => {
+                        displayProducts = products.filter(p => p.category?.includes("حلو") || p.name?.includes("حلو") || p.name?.includes("كاكاو") || p.name?.includes("كيك")).slice(0, 5);
+                        if (displayProducts.length === 0) displayProducts = products.filter(p => (p.price || 0) < 15).slice(0, 5);
+                        displayProducts = products.filter(p => (p.price || 0) < 15).slice(0, 5); // Fallback to affordable stuff
+                      // General action: Scroll to products
+                      const el = document.getElementById("products-section");
+  products,
+  products: any[];
+    setCurrentIndex((prev) => (prev + 1) % products.length);
+    setCurrentIndex((prev) => (prev - 1 + products.length) % products.length);
+  if (!products || products.length === 0) return null;
+        {products.map((product, i) => {
+          if (rawOffset > Math.floor(products.length / 2))
+            offset -= products.length;
+          if (rawOffset < -Math.floor(products.length / 2))
+            offset += products.length;
