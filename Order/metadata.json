@@ -1,6 +1,0 @@
-{
-  "name": "شركة مطبخ التراث الكويتي - برنامج الطلبات",
-  "description": "برنامج طلبات متطور مع نظام الولاء والتحديات (الديوانية) ولوحة تحكم شاملة للمدير.",
-  "requestFramePermissions": ["geolocation"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
