@@ -1,0 +1,402 @@
+[
+  {
+    "name": "طبخ الذبيحة (طلب خاص)",
+    "supplierId": "we27tunga",
+    "cost": 35,
+    "isActive": true,
+    "price": 49.5,
+    "category": "عام",
+    "id": "mv603scm2"
+  },
+  {
+    "supplierId": "we27tunga",
+    "name": "ربع ذبيحة (نعيمي)",
+    "cost": 52,
+    "isActive": true,
+    "price": 58,
+    "category": "عام",
+    "id": "c653cxr2w"
+  },
+  {
+    "supplierId": "we27tunga",
+    "name": "نص ذبيحة (نعيمي)",
+    "cost": 100,
+    "isActive": true,
+    "category": "عام",
+    "id": "kqmd3i13d",
+    "price": 116
+  },
+  {
+    "cost": 100,
+    "name": "المفطح",
+    "supplierId": "we27tunga",
+    "price": 116,
+    "id": "6ff0xw1h6",
+    "category": "عام",
+    "isActive": true
+  },
+  {
+    "cost": 38,
+    "name": "ربع ذبيحة (استرالي)",
+    "supplierId": "we27tunga",
+    "price": 43,
+    "category": "عام",
+    "id": "cc0294qks",
+    "isActive": true
+  },
+  {
+    "supplierId": "we27tunga",
+    "name": "نص ذبيحة (استرالي)",
+    "cost": 76,
+    "isActive": true,
+    "price": 86,
+    "category": "عام",
+    "id": "mt29hylpj"
+  },
+  {
+    "category": "عام",
+    "id": "1mnc7qlko",
+    "price": 5.5,
+    "isActive": true,
+    "cost": 4.5,
+    "supplierId": "we27tunga",
+    "name": "مجبوس لحم (استرالي)"
+  },
+  {
+    "isActive": true,
+    "category": "عام",
+    "id": "x8j0cvkzv",
+    "price": 5.85,
+    "name": "مقلوبة لحم (استرالي)",
+    "supplierId": "we27tunga",
+    "cost": 4.75
+  },
+  {
+    "id": "fga6ex8ip",
+    "category": "عام",
+    "price": 5.85,
+    "isActive": true,
+    "cost": 4.75,
+    "supplierId": "we27tunga",
+    "name": "برياني لحم (استرالي)"
+  },
+  {
+    "price": 8,
+    "category": "عام",
+    "id": "dqf08x6e6",
+    "isActive": true,
+    "cost": 7,
+    "supplierId": "we27tunga",
+    "name": "مجبوس لحم (نعيمي)"
+  },
+  {
+    "id": "0k7th4765",
+    "category": "عام",
+    "price": 8.25,
+    "isActive": true,
+    "cost": 7.25,
+    "supplierId": "we27tunga",
+    "name": "مقلوبة لحم (نعيمي)"
+  },
+  {
+    "supplierId": "we27tunga",
+    "name": "برياني لحم (نعيمي)",
+    "cost": 7.25,
+    "isActive": true,
+    "price": 8.25,
+    "id": "4n1128sit",
+    "category": "عام"
+  },
+  {
+    "supplierId": "we27tunga",
+    "name": "برية لحم (عربي)",
+    "cost": 7,
+    "isActive": true,
+    "id": "sgnzz5qkf",
+    "category": "عام",
+    "price": 8
+  },
+  {
+    "isActive": true,
+    "id": "26i6xl49n",
+    "category": "عام",
+    "price": 3.5,
+    "supplierId": "we27tunga",
+    "name": "مجبوس دجاج ",
+    "cost": 2.9
+  },
+  {
+    "cost": 2.9,
+    "name": "دجاج 65",
+    "supplierId": "we27tunga",
+    "price": 3.5,
+    "id": "6gqj0p8xf",
+    "category": "عام",
+    "isActive": true
+  },
+  {
+    "isActive": true,
+    "price": 3.85,
+    "id": "dckqwkcwg",
+    "category": "عام",
+    "name": "مقلوبة دجاج",
+    "supplierId": "we27tunga",
+    "cost": 3.2
+  },
+  {
+    "isActive": true,
+    "price": 3.85,
+    "category": "عام",
+    "id": "aphqneh0i",
+    "name": "برياني دجاج",
+    "supplierId": "we27tunga",
+    "cost": 3.2
+  },
+  {
+    "price": 5.5,
+    "category": "عام",
+    "id": "kphbkrbav",
+    "isActive": true,
+    "cost": 4.75,
+    "supplierId": "we27tunga",
+    "name": "نويبي"
+  },
+  {
+    "price": 5.5,
+    "id": "kthnskjgv",
+    "category": "عام",
+    "isActive": true,
+    "cost": 4.75,
+    "supplierId": "we27tunga",
+    "name": "شعوم"
+  },
+  {
+    "name": "مربين",
+    "supplierId": "we27tunga",
+    "cost": 4,
+    "isActive": true,
+    "price": 5,
+    "category": "عام",
+    "id": "3xja089tz"
+  },
+  {
+    "supplierId": "we27tunga",
+    "name": "مموش ربيان طري",
+    "cost": 4.25,
+    "isActive": true,
+    "category": "عام",
+    "id": "dq1z0bqva",
+    "imageUrl": "",
+    "price": 5.5
+  },
+  {
+    "name": "مطبق زبيدي (وسط)",
+    "supplierId": "we27tunga",
+    "cost": 9,
+    "isActive": true,
+    "price": 9.5,
+    "id": "ct3tv77od",
+    "category": "عام"
+  },
+  {
+    "cost": 5.25,
+    "supplierId": "we27tunga",
+    "name": "مطبق سيباس (وسط)",
+    "imageUrl": "",
+    "price": 6.5,
+    "category": "عام",
+    "id": "lb44mif1o",
+    "isActive": true
+  },
+  {
+    "name": "سيباس مشوي (وسط)",
+    "supplierId": "we27tunga",
+    "cost": 5.25,
+    "isActive": true,
+    "id": "n76i7t07x",
+    "category": "عام",
+    "imageUrl": "",
+    "price": 6.5
+  },
+  {
+    "supplierId": "we27tunga",
+    "name": "مطبق هامور",
+    "cost": 6.25,
+    "isActive": true,
+    "category": "عام",
+    "id": "8ggipjjro",
+    "imageUrl": "",
+    "price": 9
+  },
+  {
+    "cost": 6.25,
+    "name": "مرق هامور ",
+    "supplierId": "we27tunga",
+    "category": "عام",
+    "id": "8gpu5awt3",
+    "price": 7.75,
+    "isActive": true
+  },
+  {
+    "cost": 8,
+    "name": "ورق عنب ليمون (حجم كبير)",
+    "supplierId": "bkeazwohr",
+    "id": "ffbo6zflz",
+    "category": "عام",
+    "price": 13,
+    "isActive": true
+  },
+  {
+    "name": "ورق عنب دبس رمان (حجم كبير)",
+    "supplierId": "bkeazwohr",
+    "cost": 8.5,
+    "isActive": true,
+    "category": "عام",
+    "id": "ka6y4fue5",
+    "price": 13.5
+  },
+  {
+    "isActive": true,
+    "category": "عام",
+    "id": "5icbp8kzt",
+    "price": 3.5,
+    "supplierId": "bkeazwohr",
+    "name": "ورق عنب ليمون (حجم ميني)",
+    "cost": 2
+  },
+  {
+    "cost": 2.5,
+    "name": "ورق عنب دبس رمان (حجم ميني)",
+    "supplierId": "bkeazwohr",
+    "price": 4,
+    "category": "عام",
+    "id": "164x6hwvs",
+    "isActive": true
+  },
+  {
+    "supplierId": "bkeazwohr",
+    "name": "جدر محاشي (حجم كبير)",
+    "cost": 8,
+    "isActive": true,
+    "price": 14.5,
+    "category": "عام",
+    "id": "runiqo99y"
+  },
+  {
+    "isActive": true,
+    "id": "5m3s3poca",
+    "category": "عام",
+    "price": 11.5,
+    "supplierId": "bkeazwohr",
+    "name": "جدر محاشي (حجم وسط)",
+    "cost": 5.6
+  },
+  {
+    "category": "عام",
+    "id": "rrnmlcl1v",
+    "price": 1.5,
+    "isActive": true,
+    "cost": 1.2,
+    "supplierId": "we27tunga",
+    "name": "جريش"
+  },
+  {
+    "price": 1.5,
+    "category": "عام",
+    "id": "a22kwu7it",
+    "isActive": true,
+    "cost": 1.2,
+    "name": "هريس",
+    "supplierId": "we27tunga"
+  },
+  {
+    "price": 30,
+    "id": "5dno2c5m2",
+    "category": "عام",
+    "isActive": true,
+    "cost": 28,
+    "supplierId": "we27tunga",
+    "name": "طبخ نص الذبيحة (طلب خاص)"
+  },
+  {
+    "category": "عام",
+    "id": "5lu48onwt",
+    "price": 8,
+    "isActive": true,
+    "cost": 5.75,
+    "supplierId": "n4rz0vlej",
+    "name": "مجبوس الموزات"
+  },
+  {
+    "isActive": true,
+    "category": "عام",
+    "id": "x5zvweqs1",
+    "imageUrl": "",
+    "price": 6.5,
+    "supplierId": "n4rz0vlej",
+    "name": "مربين فريش",
+    "cost": 5.75
+  },
+  {
+    "category": "عام",
+    "id": "lbp21ymf1",
+    "price": 213,
+    "isActive": true,
+    "cost": 180,
+    "supplierId": "we27tunga",
+    "name": "قوزي ذبيحة لحم (ملكي)"
+  },
+  {
+    "cost": 2.95,
+    "name": "مقلوبة خضار",
+    "supplierId": "n4rz0vlej",
+    "category": "عام",
+    "id": "zvlfw80t5",
+    "imageUrl": "",
+    "price": 3.5,
+    "isActive": true
+  },
+  {
+    "cost": 3.75,
+    "name": "بشاميل",
+    "supplierId": "n4rz0vlej",
+    "imageUrl": "",
+    "price": 4.5,
+    "category": "عام",
+    "id": "mx9ue335y",
+    "isActive": true
+  },
+  {
+    "category": "عام",
+    "id": "9awp28c3q",
+    "imageUrl": "",
+    "price": 7.5,
+    "isActive": true,
+    "cost": 6.5,
+    "supplierId": "n4rz0vlej",
+    "name": "بخاري لحم عربي"
+  },
+  {
+    "supplierId": "n4rz0vlej",
+    "name": "مجبوس لحم (نعيمي) ٥ أشخاص",
+    "cost": 32,
+    "isActive": true,
+    "imageUrl": "",
+    "price": 37,
+    "category": "عام",
+    "id": "k9jldl98g"
+  },
+  {
+    "supplierId": "bkeazwohr",
+    "isOutOfStock": false,
+    "imageUrl": "",
+    "preparationInstructions": "تحضير قبل فترة",
+    "name": "Test",
+    "createdAt": "2026-05-10T00:10:16.022Z",
+    "cost": 0.5,
+    "isActive": true,
+    "price": 1,
+    "id": "f3aszee6i",
+    "category": "عام"
+  }
+]
