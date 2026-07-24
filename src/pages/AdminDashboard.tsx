@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { Order, Analytics, Region } from "../types";
 import { db } from "../lib/firebase";
-import { collection, onSnapshot, doc, getDoc, query, orderBy } from "firebase/firestore";
+import { collection, onSnapshot, doc, setDoc, getDoc, query, orderBy } from "firebase/firestore";
 import { DEFAULT_GLOBAL_LOGO } from "../constants";
 import { cn, calculateItemsTotal, getDisplayTotal, normalizeDigits, formatKuwaitiDate } from "../utils";
 import { calculateItemTotalWithAddons } from "../utils/priceCalculation";
@@ -78,44 +78,6 @@ export default function AdminDashboard() {
   const [newZoneName, setNewZoneName] = useState("");
   const [newZonePrice, setNewZonePrice] = useState<number>(0);
   const [customers, setCustomers] = useState<any[]>([]);
-
-  // SECURITY: admin login gate. Fail-open — if ADMIN_PASSWORD isn't configured on
-  // the server (or the check fails for any reason) the dashboard renders as before,
-  // so this never locks the admin out. It only shows a password screen when the
-  // server reports that admin auth is enabled and the current session isn't logged in.
-  const [adminAuth, setAdminAuth] = useState<{ enabled: boolean; authed: boolean; ready: boolean }>({
-    enabled: false,
-    authed: true,
-    ready: false,
-  });
-  const [adminPass, setAdminPass] = useState("");
-  const [adminLoginError, setAdminLoginError] = useState("");
-  const refreshAdminAuth = () => {
-    fetch("/api/admin/auth-status")
-      .then((r) => r.json())
-      .then((d) => setAdminAuth({ enabled: !!d.enabled, authed: !!d.authed, ready: true }))
-      .catch(() => setAdminAuth({ enabled: false, authed: true, ready: true }));
-  };
-  useEffect(() => { refreshAdminAuth(); }, []);
-  const submitAdminLogin = async (e?: any) => {
-    if (e?.preventDefault) e.preventDefault();
-    setAdminLoginError("");
-    try {
-      const res = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: adminPass }),
-      });
-      if (res.ok) {
-        setAdminPass("");
-        refreshAdminAuth();
-      } else {
-        setAdminLoginError("كلمة السر غير صحيحة");
-      }
-    } catch {
-      setAdminLoginError("تعذّر الاتصال بالخادم");
-    }
-  };
   const [squads, setSquads] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>({});
   const [loyaltyTiers, setLoyaltyTiers] = useState<any[]>([]);
@@ -425,38 +387,6 @@ export default function AdminDashboard() {
     })
     .sort((a: any, b: any) => Number(b.teamPoints || 0) - Number(a.teamPoints || 0))
     .slice(0, 5);
-
-  // SECURITY: show the login screen only when the server requires it and we're not
-  // authenticated yet. Fail-open in every other case (see refreshAdminAuth above).
-  if (adminAuth.ready && adminAuth.enabled && !adminAuth.authed) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#fafaf9] p-6" dir="rtl">
-        <form
-          onSubmit={submitAdminLogin}
-          className="w-full max-w-sm bg-white border border-stone-100 rounded-[32px] shadow-xl p-8 space-y-5 text-center"
-        >
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-brand/5 flex items-center justify-center text-3xl">🔒</div>
-          <h1 className="text-xl font-black text-brand">لوحة التحكم</h1>
-          <p className="text-stone-400 text-xs font-bold">أدخل كلمة سر المشرف للمتابعة</p>
-          <input
-            type="password"
-            autoFocus
-            value={adminPass}
-            onChange={(e) => setAdminPass(e.target.value)}
-            placeholder="كلمة السر"
-            className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl text-center font-bold text-brand outline-none focus:border-brand"
-          />
-          {adminLoginError && <p className="text-red-500 text-xs font-bold">{adminLoginError}</p>}
-          <button
-            type="submit"
-            className="w-full p-4 rounded-2xl bg-brand text-white font-black shadow-lg active:scale-95 transition"
-          >
-            دخول
-          </button>
-        </form>
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-screen bg-[#fafaf9] text-brand selection:bg-brand selection:text-white" dir="rtl">
@@ -1606,11 +1536,10 @@ export default function AdminDashboard() {
                     onClick={async () => {
                        const newValue = !settings.isFreeDelivery;
                        try {
-                         await fetch("/api/admin/settings/general", {
-                            method: "PATCH",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ isFreeDelivery: newValue }),
-                         });
+                         const docRef = doc(db, "appData", "shared_company_data");
+                         await setDoc(docRef, {
+                            "settings.isFreeDelivery": newValue
+                         }, { merge: true });
                        } catch (e) {
                          console.error(e);
                        }
@@ -1635,11 +1564,10 @@ export default function AdminDashboard() {
                       onChange={async (e) => {
                          const val = Number(normalizeDigits(e.target.value).replace(/[^0-9.]/g, ''));
                          try {
-                           await fetch("/api/admin/settings/general", {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ freeDeliveryThreshold: val }),
-                           });
+                           const docRef = doc(db, "appData", "shared_company_data");
+                           await setDoc(docRef, {
+                              "settings.freeDeliveryThreshold": val
+                           }, { merge: true });
                          } catch (err) {
                            console.error(err);
                          }
@@ -1677,11 +1605,10 @@ export default function AdminDashboard() {
                         onChange={async (e) => {
                            const val = normalizeDigits(e.target.value).replace(/\D/g, "").slice(0, 8);
                            try {
-                             await fetch("/api/admin/settings/general", {
-                                method: "PATCH",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ companyPhone: val }),
-                             });
+                             const docRef = doc(db, "appData", "shared_company_data");
+                             await setDoc(docRef, {
+                                "settings.companyPhone": val
+                             }, { merge: true });
                            } catch (err) {
                              console.error(err);
                            }
