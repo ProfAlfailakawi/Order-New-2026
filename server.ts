@@ -449,6 +449,11 @@ async function updateAppDataAtomically(
           }
         }
 
+        // Coerce squad fields to native types for EVERY transaction (roulette, qatya,
+        // presence, join, order create...) in one place, so no callback can crash on a
+        // stringified membersList/location and no future call site can forget to guard.
+        coerceSquadsInData(currentData);
+
         const updates = removeUndefinedDeep(updater(currentData));
 
         if (updates) {
