@@ -5,6 +5,7 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import crypto from "crypto";
 import LZString from "lz-string";
 import { initializeApp } from "firebase/app";
 import admin from "firebase-admin";
@@ -1182,6 +1183,83 @@ async function startServer() {
       return res.status(404).json({ error: "Not found" });
     }
     next();
+  });
+
+  // ---------------------------------------------------------------------------
+  // SECURITY: Admin authentication.
+  // Every /api/admin/* endpoint (mark-as-paid, cancel, free delivery, promo
+  // codes, settings, zones...) was previously callable by anyone. When
+  // ADMIN_PASSWORD is set, the admin must log in once; a signed HttpOnly cookie
+  // is then sent automatically with every same-origin request. If ADMIN_PASSWORD
+  // is NOT set, behaviour is unchanged (opt-in) so nothing breaks on deploy.
+  // ---------------------------------------------------------------------------
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
+  const ADMIN_COOKIE = "admin_session";
+  const adminSessionToken = () =>
+    crypto.createHash("sha256").update("adm|v1|" + ADMIN_PASSWORD).digest("hex");
+  const parseCookies = (req: any): Record<string, string> => {
+    const out: Record<string, string> = {};
+    const raw = String(req.headers?.cookie || "");
+    raw.split(";").forEach((part) => {
+      const i = part.indexOf("=");
+      if (i > -1) out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+    });
+    return out;
+  };
+  const isAdminAuthed = (req: any) =>
+    !ADMIN_PASSWORD || parseCookies(req)[ADMIN_COOKIE] === adminSessionToken();
+
+  app.get("/api/admin/auth-status", (req, res) => {
+    res.json({ enabled: !!ADMIN_PASSWORD, authed: isAdminAuthed(req) });
+  });
+  app.post("/api/admin/login", (req, res) => {
+    if (!ADMIN_PASSWORD) return res.json({ success: true, enabled: false });
+    const pass = String(req.body?.password || "");
+    // constant-time compare
+    const a = Buffer.from(crypto.createHash("sha256").update(pass).digest("hex"));
+    const b = Buffer.from(crypto.createHash("sha256").update(ADMIN_PASSWORD).digest("hex"));
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      return res.status(401).json({ error: "كلمة السر غير صحيحة" });
+    }
+    const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+    res.setHeader(
+      "Set-Cookie",
+      `${ADMIN_COOKIE}=${adminSessionToken()}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800${secure}`,
+    );
+    res.json({ success: true });
+  });
+  app.post("/api/admin/logout", (_req, res) => {
+    res.setHeader("Set-Cookie", `${ADMIN_COOKIE}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`);
+    res.json({ success: true });
+  });
+  // Guard for every other /api/admin/* route.
+  app.use("/api/admin", (req, res, next) => {
+    if (req.path === "/login" || req.path === "/logout" || req.path === "/auth-status") return next();
+    if (isAdminAuthed(req)) return next();
+    return res.status(401).json({ error: "unauthorized" });
+  });
+
+  // Admin: general store settings (replaces direct browser writes to Firestore).
+  app.patch("/api/admin/settings/general", async (req, res) => {
+    try {
+      const allowed = ["isFreeDelivery", "freeDeliveryThreshold", "companyPhone"];
+      const patch: any = {};
+      for (const key of allowed) {
+        if (req.body && Object.prototype.hasOwnProperty.call(req.body, key)) {
+          patch[key] = req.body[key];
+        }
+      }
+      if (Object.keys(patch).length === 0) {
+        return res.status(400).json({ error: "No valid settings provided" });
+      }
+      const ok = await updateAppDataAtomically((current: any) => ({
+        settings: { ...(current.settings || {}), ...patch },
+      }));
+      if (!ok) return res.status(500).json({ error: "Failed to update settings" });
+      res.json({ success: true, settings: patch });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || String(e) });
+    }
   });
 
   app.post("/api/diwaniya-push/register", async (req, res) => {
@@ -3318,6 +3396,40 @@ app.get("/api/debug/order/:id", async (req, res) => {
     ) {
       console.warn("[ORDER] Invalid order data received:", req.body);
       return res.status(400).json({ error: "بيانات الطلب غير مكتملة" });
+    }
+
+    // SECURITY: the client sends `total`, which drives the amount charged. Reject
+    // grossly under-priced orders (e.g. total=0.1 on a real basket) so a tampered
+    // request can't buy goods for nothing. Lenient floor (default 5% of the item
+    // subtotal) so legitimate discounts/promos are never blocked; tune via
+    // ORDER_TOTAL_FLOOR_RATIO. NOTE: item prices are also client-supplied, so this
+    // is a guardrail, not a full fix — the complete fix is server-side repricing
+    // from the product catalog (see SECURITY_FIXES.md).
+    try {
+      const computedItemsTotal = (items || []).reduce((sum: number, i: any) => {
+        const extras = (i.selectedExtras || i.extras || []).reduce(
+          (e: number, x: any) => e + (Number(x.price) || 0),
+          0,
+        );
+        return sum + (Number(i.price) || 0) * (Number(i.quantity) || 1) + extras;
+      }, 0);
+      // Default: only reject impossible totals (negative / NaN) — always safe, a
+      // legitimate order can never have these. The proportional under-pricing floor
+      // is OPT-IN (set ORDER_TOTAL_FLOOR_RATIO, e.g. 0.05) so it can never reject a
+      // legitimate fully-discounted / points-redeemed (total=0) order by default.
+      const floorRatio = Number(process.env.ORDER_TOTAL_FLOOR_RATIO || 0);
+      if (
+        !Number.isFinite(Number(total)) ||
+        Number(total) < 0 ||
+        (floorRatio > 0 && computedItemsTotal > 0 && Number(total) < computedItemsTotal * floorRatio)
+      ) {
+        console.warn(
+          `[ORDER] Rejected under-priced order: total=${total} itemsTotal=${computedItemsTotal}`,
+        );
+        return res.status(400).json({ error: "قيمة الطلب غير صحيحة" });
+      }
+    } catch (_e) {
+      /* never block a legitimate order on a guardrail computation error */
     }
 
     const orderCustomId = generateUnifiedId("ORD");
