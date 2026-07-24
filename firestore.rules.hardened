@@ -1,0 +1,41 @@
+rules_version = '2';
+// HARDENED RULES — deploy after verifying the backend writes via the Admin SDK.
+// The Firebase Admin SDK (used by server.ts on Cloud Run) BYPASSES these rules,
+// so the server keeps full read/write. Browsers get read-only access to the two
+// documents the app actually needs and can no longer write to (or wipe) the DB.
+//
+// BEFORE deploying, confirm the deployed backend is NOT falling back to the client
+// SDK. Check the Cloud Run logs for this line — it must be ABSENT:
+//   [ADMIN_DB_INFO] ... Disabling Admin Firestore ... using Client SDK
+// If that line appears, the server writes as an anonymous client and these rules
+// would block order saving — grant the Cloud Run service account the
+// "Cloud Datastore User" role first, then deploy.
+//
+// Deploy with:  cp firestore.rules.hardened firestore.rules && firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Company data document — read by the admin dashboard and the split-payment
+    // page. Writes go through the authenticated /api backend (Admin SDK).
+    match /appData/{doc=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Per-order / per-invoice docs used for real-time payment status. Read-only.
+    match /orders/{orderId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /invoices/{invoiceId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Everything else (pushTokens, pushEvents, shards, arbitrary collections):
+    // no browser access at all. The server (Admin SDK) is unaffected.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
