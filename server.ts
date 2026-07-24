@@ -220,9 +220,51 @@ async function mergeSharedShards(rootData: any) {
       merged[key] = value;
     }
   }
+  coerceSquadsInData(merged); // native squad types before anything maps over membersList
   return merged;
 }
 
+
+// Diwaniya (squad) fields must be native types before any code touches them. The admin
+// has at times written membersList/location as JSON *text* (e.g. membersList = "[]").
+// Then `(sq.membersList || []).map(...)` runs on a non-empty string — strings have no
+// .map — throwing a TypeError that 500s /api/squad-gamification and shows "Internal
+// Server Error" on checkout, stopping the customer from paying. Coercing every squad at
+// the load boundary makes the whole app crash-proof no matter what shape the data is in.
+function coerceSquadParseArray(value: any): any[] {
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    const t = value.trim();
+    if (!t) return [];
+    try { const p = JSON.parse(t); return Array.isArray(p) ? p : []; } catch { return []; }
+  }
+  return [];
+}
+function coerceSquadTypes(sq: any): any {
+  if (!sq || typeof sq !== "object" || Array.isArray(sq)) return sq;
+  const out: any = { ...sq };
+  for (const f of ["membersList", "participants", "membersData"]) {
+    if (f in out) out[f] = coerceSquadParseArray(out[f]);
+  }
+  // `members` is usually a numeric count but can be an array. A numeric string → number;
+  // any other string (e.g. a stringified list) → array. It must never stay a string.
+  if (typeof out.members === "string") {
+    const t = out.members.trim();
+    out.members = /^\d+$/.test(t) ? Number(t) : coerceSquadParseArray(out.members);
+  }
+  for (const f of ["location", "geo", "diwaniyaLocation", "coordinates", "mapLocation", "radarLocation"]) {
+    if (typeof out[f] !== "string") continue;
+    try {
+      const p = JSON.parse(out[f]);
+      if (p && typeof p === "object" && !Array.isArray(p)) out[f] = p; else delete out[f];
+    } catch { delete out[f]; }
+  }
+  return out;
+}
+function coerceSquadsInData(data: any): any {
+  if (data && Array.isArray(data.squads)) data.squads = data.squads.map(coerceSquadTypes);
+  return data;
+}
 
 async function getAppDataForKeys(keysToLoad: readonly ShardedAppDataKey[] = []) {
   const uniqueKeys = Array.from(new Set(keysToLoad)).filter((key): key is ShardedAppDataKey =>
@@ -257,6 +299,7 @@ async function getAppDataForKeys(keysToLoad: readonly ShardedAppDataKey[] = []) 
     const value = await loadSharedShard(key);
     if (Array.isArray(value) && value.length > 0) data[key] = value;
   }));
+  coerceSquadsInData(data); // native squad types before anything maps over membersList
   _appDataKeyedCache.set(cacheKey, { time: Date.now(), data });
   return data;
 }
@@ -2248,7 +2291,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       if (cleanTargetPhone.length !== 8) return res.status(400).json({ error: "Invalid phone" });
       let joinedSquad: any = null;
       const ok = await updateAppDataAtomically((current: any) => {
-        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
+        const squads = (Array.isArray(current.squads) ? [...current.squads] : []).map(coerceSquadTypes);
         const customers = Array.isArray(current.customers) ? [...current.customers] : [];
         const reqs = Array.isArray(current.geofenceJoinRequests) ? [...current.geofenceJoinRequests] : [];
 
@@ -2346,7 +2389,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     let presence: any[] = [];
     const ok = await updateAppDataAtomically((current: any) => {
       const all = Array.isArray(current.squadPresence) ? [...current.squadPresence] : [];
-      const squads = Array.isArray(current.squads) ? current.squads : [];
+      const squads = (Array.isArray(current.squads) ? current.squads : []).map(coerceSquadTypes);
       const squad = squads.find((s: any) => String(s.id) === String(squadId));
       const filtered = all.filter((p: any) => !(String(p.squadId) === String(squadId) && cleanPhone(p.phone) === cleanTarget));
       if (normalizedAction === "in") {
@@ -3425,6 +3468,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       }
 
       const appData = d.data() || {};
+      coerceSquadsInData(appData); // native membersList/location before split/notify/update
       const orders = appData.orders || [];
       const customers = appData.customers || [];
       const squadsForSplit = appData.squads || [];
@@ -3477,7 +3521,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
       await updateAppDataAtomically((current) => {
         const orders = [...(current.orders || [])];
         const customers = [...(current.customers || [])];
-        const squads = [...(current.squads || [])];
+        // Coerce each squad's membersList/location to native types: a stringified "[]"
+        // would pass the `if (!membersList)` guard below (a non-empty string is truthy)
+        // and then crash on .findIndex/.push — 500-ing checkout order creation.
+        const squads = [...(current.squads || [])].map(coerceSquadTypes);
         
         orders.push(newOrder);
 
