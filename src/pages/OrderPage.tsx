@@ -133,7 +133,7 @@ export default function OrderPage() {
     if (oid) setUrlOrderId(oid);
   }, [searchParams]);
 
-  // If this window is a popup (e.g. from AI Studio), notify parent and close
+  // Notify a same-origin opener, but keep this tab on the tracking experience.
   useEffect(() => {
     if (window.opener && window.opener !== window && urlPayment && urlOrderId) {
       try {
@@ -143,9 +143,8 @@ export default function OrderPage() {
             orderId: urlOrderId,
             payment: urlPayment,
           }),
-          "*",
+          window.location.origin,
         );
-        window.close();
       } catch (e) {
         console.error(e);
       }
