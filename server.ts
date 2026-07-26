@@ -15,6 +15,7 @@ import {
   buildPublicAppData,
   getCustomerOrderAccess,
   getCustomerTokenFromHeaders,
+  getTrackingTokenFromHeaders,
   hashCustomerAccessToken,
   isAllowedPaymentLink,
   issueCustomerAccessToken,
@@ -1356,6 +1357,7 @@ async function startServer() {
         return res.status(400).json({ error: "Invalid phone number" });
       }
       const customerToken = getCustomerTokenFromHeaders(req.headers);
+      const trackingToken = getTrackingTokenFromHeaders(req.headers);
 
       const appData = await getAppDataForKeys(["orders", "invoices", "customers", "products", "supplierCopies"]);
 
@@ -1427,6 +1429,7 @@ async function startServer() {
           phone: cleanQueryPhone,
           orderId: order_id,
           token: customerToken,
+          trackingToken,
           tokenAuthorizesPhone: customerTokenAuthorizesPhone,
         });
 
@@ -1454,7 +1457,18 @@ async function startServer() {
           const ph = cleanPhone(inv.customerPhone || inv.phone || "");
           return ph === cleanQueryPhone && isPaid(inv.status, inv.paymentStatus) && inv.deleted !== true && inv.isDeleted !== true;
         });
-        const invoicesTotal = activeInvoicesForPoints.reduce((sum: number, inv: any) => sum + (Number(inv.total || inv.totalAmount || inv.amount || 0)), 0);
+        const invoicesTotal = activeInvoicesForPoints.reduce(
+          (sum: number, inv: any) =>
+            sum +
+            Number(
+              inv.totalAmount ??
+                inv.grandTotal ??
+                inv.total ??
+                inv.amount ??
+                0,
+            ),
+          0,
+        );
 
         points = Math.round(invoicesTotal);
       }
@@ -1503,14 +1517,35 @@ async function startServer() {
         const oDeliveryFeeOriginal = Number(
           o.deliveryFee ?? o.deliveryInfo?.finalPrice ?? 0,
         );
-        const oTotalOriginal = Number(o.total ?? o.totalAmount ?? 0);
-        const itemsTotalValue = Math.max(
-          0,
-          oTotalOriginal - oDeliveryFeeOriginal,
+        const oTotalOriginal = Number(
+          o.totalAmount ??
+            o.grandTotal ??
+            o.finalTotal ??
+            o.amountDue ??
+            o.total ??
+            o.amount ??
+            0,
         );
+        const oDiscountAmount = Number(
+          o.discountAmount ?? o.discount ?? o.promoDiscount ?? 0,
+        );
+        const explicitSubtotal = Number(
+          o.subtotal ?? o.itemsSubtotal ?? o.subTotal,
+        );
+        const itemsTotalValue = Number.isFinite(explicitSubtotal)
+          ? Math.max(0, explicitSubtotal)
+          : Math.max(
+              0,
+              oTotalOriginal +
+                oDiscountAmount -
+                oDeliveryFeeOriginal,
+            );
 
-        let shouldBeFree =
-          o.isFreeDelivery || isGlobalFreeDelivery || o.deliveryType === "free";
+        const wasStoredAsFree =
+          o.isFreeDelivery ||
+          o.deliveryType === "free" ||
+          oDeliveryFeeOriginal === 0;
+        let shouldBeFree = wasStoredAsFree || isGlobalFreeDelivery;
 
         // Apply threshold dynamically even for old orders if tracked now
         if (
@@ -1522,7 +1557,10 @@ async function startServer() {
         }
 
         const finalDeliveryFee = shouldBeFree ? 0 : oDeliveryFeeOriginal;
-        const finalTotal = shouldBeFree ? itemsTotalValue : oTotalOriginal;
+        const finalTotal =
+          shouldBeFree && !wasStoredAsFree
+            ? Math.max(0, oTotalOriginal - oDeliveryFeeOriginal)
+            : Math.max(0, oTotalOriginal);
 
         let custName = o.customerName;
         let custPhone = o.customerPhone || o.phone;
@@ -1605,6 +1643,10 @@ async function startServer() {
           isFreeDelivery: shouldBeFree,
           deliveryType: shouldBeFree ? "free" : o.deliveryType,
           deliveryFee: finalDeliveryFee,
+          subtotal: itemsTotalValue,
+          discountAmount: oDiscountAmount,
+          grandTotal: finalTotal,
+          totalAmount: finalTotal,
           total: finalTotal,
         };
       });
@@ -4550,6 +4592,13 @@ async function startServer() {
         const searchParams = new URL(
           req.protocol + "://" + req.get("host") + req.originalUrl,
         ).searchParams;
+        const trackingAccessToken = String(
+          searchParams.get("track_access") || "",
+        ).trim();
+        const safeTrackingAccessToken =
+          /^[A-Za-z0-9_-]{43,128}$/.test(trackingAccessToken)
+            ? trackingAccessToken
+            : "";
 
         let statusFields = [
           req.params?.pathStatus,
@@ -4606,6 +4655,7 @@ async function startServer() {
         let phone = "";
         if (orderId) {
           const callbackPayload = { ...req.body, ...req.query };
+          delete callbackPayload.track_access;
           if (!isSplit && (isExplicitSuccess || isExplicitFailure)) {
             await syncRootPaymentDocsFast(baseOrderId, isExplicitSuccess, callbackPayload);
             void handlePaymentUpdate(orderId, splitId, isExplicitSuccess, callbackPayload);
@@ -4849,7 +4899,10 @@ async function startServer() {
            } catch(e) {}
         }
         
-        let trackUrl = `${baseUrl}/track?order_id=${baseOrderId}&payment=${paymentParam}`;
+        const trackingAccessQuery = safeTrackingAccessToken
+          ? `&track_access=${encodeURIComponent(safeTrackingAccessToken)}`
+          : "";
+        let trackUrl = `${baseUrl}/track?order_id=${encodeURIComponent(baseOrderId)}&payment=${encodeURIComponent(paymentParam)}${trackingAccessQuery}`;
         if (isSplit) {
            trackUrl = `${baseUrl}/split/${baseOrderId}?payment=${paymentParam}`;
         }
@@ -4970,14 +5023,35 @@ async function startServer() {
             typeof possibleOrderId === "string"
               ? possibleOrderId.split("?")[0]
               : possibleOrderId;
-          trackFallback += `?order_id=${cleanId}`;
+          const fallbackParams = new URLSearchParams({
+            order_id: String(cleanId),
+            payment: "failed",
+          });
+          const possibleTrackingAccess = String(
+            req.query.track_access || "",
+          ).trim();
+          if (
+            /^[A-Za-z0-9_-]{43,128}$/.test(
+              possibleTrackingAccess,
+            )
+          ) {
+            fallbackParams.set(
+              "track_access",
+              possibleTrackingAccess,
+            );
+          }
+          trackFallback += `?${fallbackParams.toString()}`;
+          const safeCleanId = JSON.stringify(String(cleanId));
+          const safeTrackFallback = JSON.stringify(trackFallback);
           res.type("html")
             .send(`<html><head><title>Redirecting...</title></head><body><script>
+                  const orderId = ${safeCleanId};
+                  const targetUrl = ${safeTrackFallback};
                   try {
-                      localStorage.setItem("track_order_id", "${cleanId}");
+                      localStorage.setItem("track_order_id", orderId);
                       localStorage.setItem("track_status", "failed");
                   } catch(e) {}
-                  window.location.href="${trackFallback}";
+                  window.location.href = targetUrl;
               </script></body></html>`);
         } else {
           res

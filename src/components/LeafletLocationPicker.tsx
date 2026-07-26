@@ -93,6 +93,7 @@ const LeafletLocationPicker: React.FC<{
   const reverseAbortRef = useRef<AbortController | null>(null);
   const [status, setStatus] = useState('حرّك الدبوس أو اضغط تحديد موقعي لزيادة دقة التوصيل.');
   const [isResolvingAddress, setIsResolvingAddress] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
 
   const reverseGeocode = async (lat: number, lng: number) => {
     if (!onAddressGuess) return;
@@ -154,13 +155,24 @@ const LeafletLocationPicker: React.FC<{
     return () => { cancelled = true; reverseAbortRef.current?.abort(); };
   }, []);
 
-  const useCurrentLocation = () => {
+  const useCurrentLocation = async () => {
+    if (isLocating) return;
     if (!navigator.geolocation) {
       setStatus('المتصفح لا يدعم تحديد الموقع.');
       return;
     }
+    if (!window.isSecureContext) {
+      setStatus('تحديد الموقع يحتاج فتح الموقع باتصال HTTPS آمن.');
+      return;
+    }
+    setIsLocating(true);
     setStatus('نحدد موقعك الآن...');
-    robustGetCurrentPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }).then((position) => {
+    try {
+      const position = await robustGetCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 18000,
+        maximumAge: 60000,
+      });
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
       const accuracy = Math.round(position.coords.accuracy || 0);
@@ -170,7 +182,17 @@ const LeafletLocationPicker: React.FC<{
         const L = window.L;
         accuracyRef.current = L?.circle([lat, lng], { radius: accuracy || 35, color: '#16a34a', fillColor: '#22c55e', fillOpacity: 0.08, weight: 1 }).addTo(mapRef.current);
       }
-    }).catch(() => setStatus('لم نقدر نأخذ موقعك. تأكد من السماح للموقع من المتصفح.'));
+    } catch (error: any) {
+      if (Number(error?.code) === 1) {
+        setStatus('صلاحية الموقع مقفلة. فعّلها لهذا الموقع من إعدادات سفاري ثم اضغط مرة ثانية.');
+      } else if (Number(error?.code) === 3) {
+        setStatus('تحديد الموقع أخذ وقتاً أطول من المتوقع. تأكد من الإنترنت وخدمة الموقع ثم جرّب مرة ثانية.');
+      } else {
+        setStatus('لم نقدر نأخذ موقعك الآن. تقدر تحدده من الخريطة أو تجرّب مرة ثانية.');
+      }
+    } finally {
+      setIsLocating(false);
+    }
   };
 
   return (
@@ -180,8 +202,8 @@ const LeafletLocationPicker: React.FC<{
           <div className="text-sm font-black text-brand flex items-center gap-2"><MapPin className="w-4 h-4 text-emerald-600" /> نقطة التوصيل الدقيقة</div>
           <p className="text-[11px] text-stone-500 font-bold mt-1">اختياري لكنه يخلي التوصيل أدق من كتابة العنوان فقط.</p>
         </div>
-        <button type="button" onClick={useCurrentLocation} className="shrink-0 inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700 border border-emerald-100 active:scale-95 transition">
-          {isResolvingAddress ? <Loader2 className="w-4 h-4 animate-spin" /> : <Compass className="w-4 h-4" />} حدد موقعي
+        <button type="button" onClick={useCurrentLocation} disabled={isLocating} className="shrink-0 inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700 border border-emerald-100 active:scale-95 transition disabled:cursor-wait disabled:opacity-70">
+          {isLocating || isResolvingAddress ? <Loader2 className="w-4 h-4 animate-spin" /> : <Compass className="w-4 h-4" />} {isLocating ? 'جاري التحديد' : 'حدد موقعي'}
         </button>
       </div>
       <div className="relative h-[260px] overflow-hidden rounded-[24px] border border-stone-100 bg-stone-100" dir="ltr">
