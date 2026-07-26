@@ -19,9 +19,8 @@ import {
 import { Order } from "../types";
 import { cn, normalizePhone, normalizeDigits, getSaduAvatar, formatKuwaitiDate } from "../utils";
 import confetti from "canvas-confetti";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "../lib/firebase";
 import { RouletteSplit } from "../components/RouletteSplit";
+import { getCustomerAccessHeaders } from "../lib/customerAccess";
 
 const getSafeSplitPayments = (order: any): any[] => {
   if (!order) return [];
@@ -235,80 +234,19 @@ export default function SplitPayment() {
   }, [paymentStatus, isFullyPaid, searchParams, setSearchParams]);
 
   useEffect(() => {
-    console.log("SplitPayment mounted with ID:", id);
     if (!id) return;
-
-    // Real-time listener via Firestore
-    const unsub = onSnapshot(
-      doc(db, "appData", "shared_company_data"),
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-          const orders = data.orders || [];
-          const invoices = data.invoices || [];
-          
-          let searchId = String(id).trim().toUpperCase();
-          if (searchId.startsWith("#")) {
-            searchId = searchId.substring(1);
-          }
-          if (searchId.includes("-S-")) {
-            searchId = searchId.split("-S-")[0];
-          }
-
-          const foundOrder = orders.find((o: any) => String(o.id).trim().toUpperCase() === searchId) || 
-                           invoices.find((o: any) => String(o.id).trim().toUpperCase() === searchId);
-          if (foundOrder) {
-            setOrder(foundOrder);
-            setError(null);
-
-            // Count paid contributors
-            const paidCount = getSafeSplitPayments(foundOrder).filter(
-              (p: any) => p.status === "paid",
-            ).length;
-
-            // Trigger effect if a new person paid
-            if (
-              paidCount > prevPaidCountRef.current &&
-              prevPaidCountRef.current !== 0
-            ) {
-              triggerFeedback();
-              triggerCoinsDroppingAndRing();
-            }
-            prevPaidCountRef.current = paidCount;
-
-            // Check if fully paid
-            const totalPaid = getSafeSplitPayments(foundOrder)
-              .filter((p: any) => p.status === "paid")
-              .reduce(
-                (sum: number, p: any) => sum + (Number(p.amount) || 0),
-                0,
-              );
-
-            const isFinished = foundOrder.total - totalPaid <= 0.005;
-            if (isFinished && !celebrationTriggered.current) {
-              celebrationTriggered.current = true;
-              triggerConfetti();
-            }
-          } else {
-            setError(null);
-            setTimeout(() => fetchOrder(true).finally(() => setLoading(false)), 650);
-            return;
-          }
-        } else {
-            setError(null);
-            setTimeout(() => fetchOrder(true).finally(() => setLoading(false)), 650);
-            return;
-        }
-        setLoading(false);
-      },
-      (err) => {
-        console.error('SplitPayment snapshot error:', err);
-        fetchOrder(true).finally(() => setLoading(false));
-      }
-    );
-
-    return () => unsub();
-  }, [id]);
+    let cancelled = false;
+    const refresh = async (isSilent: boolean) => {
+      if (cancelled) return;
+      await fetchOrder(isSilent);
+    };
+    void refresh(false);
+    const timer = window.setInterval(() => void refresh(true), 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [id, urlPhone, contributorPhone]);
 
   const triggerFeedback = () => {
     // Haptic feedback
@@ -377,14 +315,49 @@ export default function SplitPayment() {
   const fetchOrder = async (isSilent = false) => {
     if (!id) return;
     try {
+      const normalizedRequesterPhone =
+        urlPhone || normalizePhone(contributorPhone);
+      const requesterPhone =
+        normalizedRequesterPhone.length === 8 ? normalizedRequesterPhone : "";
+      const params = new URLSearchParams({ order_id: id });
+      if (requesterPhone) params.set("phone", requesterPhone);
       const res = await fetch(
-        `/api/track-orders?order_id=${encodeURIComponent(id)}`,
+        `/api/track-orders?${params.toString()}`,
+        { headers: getCustomerAccessHeaders(requesterPhone) },
       );
       if (res.ok) {
         const data = await res.json();
         if (data && data.length > 0) {
-          setOrder(data[0]);
+          const foundOrder = data[0];
+          setOrder(foundOrder);
           setError(null);
+
+          const paidCount = getSafeSplitPayments(foundOrder).filter(
+            (person: any) => person.status === "paid",
+          ).length;
+          if (
+            paidCount > prevPaidCountRef.current &&
+            prevPaidCountRef.current !== 0
+          ) {
+            triggerFeedback();
+            triggerCoinsDroppingAndRing();
+          }
+          prevPaidCountRef.current = paidCount;
+
+          const totalPaid = getSafeSplitPayments(foundOrder)
+            .filter((person: any) => person.status === "paid")
+            .reduce(
+              (sum: number, person: any) =>
+                sum + (Number(person.amount) || 0),
+              0,
+            );
+          if (
+            Number(foundOrder.total || 0) - totalPaid <= 0.005 &&
+            !celebrationTriggered.current
+          ) {
+            celebrationTriggered.current = true;
+            triggerConfetti();
+          }
         } else {
           if (!order && !isSilent) setError("الطلب غير موجود");
         }
@@ -481,13 +454,13 @@ export default function SplitPayment() {
     localStorage.setItem("split_amount", amountVal);
 
     setIsSubmitting(true);
-    console.log("[DEBUG] Submitting payment. Order object:", order);
     try {
       const res = await fetch("/api/create-split-payment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
+          ...getCustomerAccessHeaders(finalPhone),
         },
         body: JSON.stringify({
           orderId: order.id,
