@@ -69,6 +69,10 @@ const TypewriterText = ({
 
 import { calculateItemTotalWithAddons } from "../utils/priceCalculation";
 import { openPrintableInvoice, openWhatsAppInvoiceText, shareOrPrintInvoice } from "../utils/invoiceShare";
+import {
+  getCustomerAccessHeaders,
+  getStoredCustomerOrderId,
+} from "../lib/customerAccess";
 
 const formatOrderWords = (count: number) => {
   if (count === 1) return "طلب واحد";
@@ -133,7 +137,7 @@ export default function OrderPage() {
     if (oid) setUrlOrderId(oid);
   }, [searchParams]);
 
-  // Notify a same-origin opener, but keep this tab on the tracking experience.
+  // If this window is a popup (e.g. from AI Studio), notify parent and close
   useEffect(() => {
     if (window.opener && window.opener !== window && urlPayment && urlOrderId) {
       try {
@@ -143,8 +147,9 @@ export default function OrderPage() {
             orderId: urlOrderId,
             payment: urlPayment,
           }),
-          window.location.origin,
+          "*",
         );
+        window.close();
       } catch (e) {
         console.error(e);
       }
@@ -281,7 +286,9 @@ export default function OrderPage() {
 
   useEffect(() => {
      if (phone && phone.length >= 8) {
-        fetch(`/api/squad-gamification?phone=${encodeURIComponent(phone)}`)
+        fetch(`/api/squad-gamification?phone=${encodeURIComponent(phone)}`, {
+          headers: getCustomerAccessHeaders(phone),
+        })
           .then(res => res.json())
           .then(data => {
              if (data && data.mySquad) {
@@ -298,7 +305,12 @@ export default function OrderPage() {
              setSquadInfo(null);
           });
 
-        fetch(`/api/customers?phone=${encodeURIComponent(phone)}`)
+        const customerParams = new URLSearchParams({ phone });
+        const customerOrderId = urlOrderId || getStoredCustomerOrderId();
+        if (customerOrderId) customerParams.set("order_id", customerOrderId);
+        fetch(`/api/customers?${customerParams.toString()}`, {
+          headers: getCustomerAccessHeaders(phone),
+        })
           .then(res => res.json())
           .then(data => {
              if (Array.isArray(data) && data.length > 0) {
@@ -321,7 +333,7 @@ export default function OrderPage() {
         setSquadInfo(null);
         setCustomerPoints(null);
      }
-  }, [phone]);
+  }, [phone, urlOrderId]);
 
   // Clear the payment alert after some time
   useEffect(() => {
@@ -344,8 +356,26 @@ export default function OrderPage() {
   useEffect(() => {
     const handleGlobalMessage = (event: MessageEvent) => {
       try {
-        const data = JSON.parse(event.data);
-        if (data && data.type === "payment_return" && data.orderId) {
+        const data =
+          typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        const isPaymentReturn =
+          data?.type === "payment_return" || data?.type === "PAYMENT_COMPLETE";
+        if (data && isPaymentReturn && (data.orderId || data.url)) {
+          let messageOrderId = data.orderId;
+          let messagePayment = data.payment;
+          if ((!messageOrderId || !messagePayment) && data.url) {
+            try {
+              const paymentUrl = new URL(data.url);
+              messageOrderId =
+                messageOrderId ||
+                paymentUrl.searchParams.get("order_id") ||
+                paymentUrl.searchParams.get("tracked_order");
+              messagePayment = messagePayment || paymentUrl.searchParams.get("payment");
+            } catch (err) {}
+          }
+          if (!messageOrderId) return;
+          messagePayment = messagePayment || "success";
+
           // Keep the phone number if available
           let phoneToKeep = "";
           try {
@@ -359,19 +389,19 @@ export default function OrderPage() {
             "";
           setSearchParams(
             {
-              order_id: data.orderId,
-              payment: data.payment,
+              order_id: messageOrderId,
+              payment: messagePayment,
               phone: phoneToKeep,
             },
             { replace: true },
           );
 
           try {
-            sessionStorage.setItem("post_payment_open_order_id", data.orderId);
+            sessionStorage.setItem("post_payment_open_order_id", messageOrderId);
           } catch (e) {}
 
-          if (["success", "paid"].includes(String(data.payment || "").toLowerCase())) {
-            const paidOrderId = String(data.orderId).toUpperCase();
+          if (["success", "paid"].includes(String(messagePayment || "").toLowerCase())) {
+            const paidOrderId = String(messageOrderId).toUpperCase();
             setSessionSuccessOrders(prev => {
               if (prev.includes(paidOrderId)) return prev;
               const next = [...prev, paidOrderId];
@@ -383,9 +413,9 @@ export default function OrderPage() {
           }
 
           // Directly trigger search instead of hard reload
-          handleSearch(undefined, phoneToKeep, data.orderId);
+          handleSearch(undefined, phoneToKeep, messageOrderId);
           [80, 250, 700, 1500].forEach((delay) => {
-            window.setTimeout(() => fetchOrders(phoneToKeep, data.orderId, true), delay);
+            window.setTimeout(() => fetchOrders(phoneToKeep, messageOrderId, true), delay);
           });
         }
       } catch (e) {}
@@ -447,6 +477,7 @@ export default function OrderPage() {
 
       const res = await fetch(`/api/track-orders?${urlParams.toString()}`, {
         cache: "no-store",
+        headers: getCustomerAccessHeaders(currentPhone),
       });
       const resText = await res.text();
       let data;
@@ -757,7 +788,12 @@ export default function OrderPage() {
 
       const payRes = await fetch(payEndpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getCustomerAccessHeaders(
+            (order as any).customerPhone || phone,
+          ),
+        },
         body: JSON.stringify(payBody),
       });
 
@@ -782,8 +818,16 @@ export default function OrderPage() {
         // Update link in DB so Admin has it updated (optional but good idea)
         fetch(`/api/orders/${order.id}/payment-link`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paymentLink }),
+          headers: {
+            "Content-Type": "application/json",
+            ...getCustomerAccessHeaders(
+              (order as any).customerPhone || phone,
+            ),
+          },
+          body: JSON.stringify({
+            paymentLink,
+            customerPhone: (order as any).customerPhone || phone,
+          }),
         }).catch((err: any) => {
           if (
             err &&

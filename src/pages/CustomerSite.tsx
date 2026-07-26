@@ -49,6 +49,11 @@ import LeafletLocationPicker from "../components/LeafletLocationPicker";
 import LeafletKuwaitMap from "../components/LeafletKuwaitMap";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { OfflineModal } from "../components/OfflineModal";
+import {
+  getCustomerAccessHeaders,
+  getStoredCustomerOrderId,
+  storeCustomerAccessToken,
+} from "../lib/customerAccess";
 
 // --- Soft entrance accent without the old curtain effect ---
 function ZariBishtGate() {
@@ -1762,7 +1767,9 @@ export default function CustomerSite() {
     const requestSquadId = squadIdOverride ?? activeSquadId;
     try {
        const endpoint = `/api/squad-gamification?phone=${encodeURIComponent(requestPhone)}&squadId=${encodeURIComponent(requestSquadId)}`;
-       const res = await fetch(endpoint);
+       const res = await fetch(endpoint, {
+         headers: getCustomerAccessHeaders(requestPhone),
+       });
        if (!res.ok) return;
        const data = await res.json();
        const isExplicitRefresh = phoneOverride !== undefined || squadIdOverride !== undefined;
@@ -3166,10 +3173,18 @@ export default function CustomerSite() {
 
         let fetchedLastOrder = null;
         try {
+          const storedOrderId = getStoredCustomerOrderId();
+          const trackingParams = new URLSearchParams({
+            phone: customerPhone,
+          });
+          if (storedOrderId) trackingParams.set("order_id", storedOrderId);
           const trackRes = await fetch(
-            `/api/track-orders?phone=${encodeURIComponent(customerPhone)}`,
+            `/api/track-orders?${trackingParams.toString()}`,
             {
-              headers: { Accept: "application/json" },
+              headers: {
+                Accept: "application/json",
+                ...getCustomerAccessHeaders(customerPhone),
+              },
             },
           );
           if (trackRes.ok) {
@@ -3219,8 +3234,12 @@ export default function CustomerSite() {
         } catch (e) {}
 
         // Try Customers API
+        const storedOrderId = getStoredCustomerOrderId();
+        const customerParams = new URLSearchParams({ phone: customerPhone });
+        if (storedOrderId) customerParams.set("order_id", storedOrderId);
         const customerRes = await fetch(
-          `/api/customers?phone=${encodeURIComponent(customerPhone)}`,
+          `/api/customers?${customerParams.toString()}`,
+          { headers: getCustomerAccessHeaders(customerPhone) },
         );
         if (customerRes.ok) {
           let customers: any = null;
@@ -3492,7 +3511,8 @@ export default function CustomerSite() {
       const processReorder = async () => {
         try {
           const orderRes = await fetch(
-            `/api/track-orders?order_id=${reorderId}`,
+            `/api/track-orders?order_id=${encodeURIComponent(reorderId)}&phone=${encodeURIComponent(customerPhone)}`,
+            { headers: getCustomerAccessHeaders(customerPhone) },
           );
           if (orderRes.ok) {
             const data = await orderRes.json();
@@ -3703,7 +3723,12 @@ export default function CustomerSite() {
           const trackRes = await fetch(
             `/api/track-orders?phone=${encodeURIComponent(lastOrderInfo.customerPhone || customerPhone)}`,
             {
-              headers: { Accept: "application/json" },
+              headers: {
+                Accept: "application/json",
+                ...getCustomerAccessHeaders(
+                  lastOrderInfo.customerPhone || customerPhone,
+                ),
+              },
             },
           );
           if (trackRes.ok) {
@@ -4192,8 +4217,11 @@ export default function CustomerSite() {
         return;
       }
       const newOrderId = responseData.id;
-      console.log("responseData:", responseData);
-      console.log("newOrderId:", newOrderId);
+      storeCustomerAccessToken(
+        customerPhone,
+        responseData.customerAccessToken,
+      );
+      console.log("[ORDER] Created successfully:", newOrderId);
 
       let paymentLink = "";
       let waLink = "";
@@ -4219,7 +4247,10 @@ export default function CustomerSite() {
           try {
             const payRes = await fetch("/api/create-payment", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+                ...getCustomerAccessHeaders(customerPhone),
+              },
               body: JSON.stringify({
                 amount: orderData.total,
                 customerName: customerName,
@@ -4252,8 +4283,14 @@ export default function CustomerSite() {
             if (paymentLink) {
               fetch(`/api/orders/${newOrderId}/payment-link`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ paymentLink }),
+                headers: {
+                  "Content-Type": "application/json",
+                  ...getCustomerAccessHeaders(customerPhone),
+                },
+                body: JSON.stringify({
+                  paymentLink,
+                  customerPhone,
+                }),
               }).catch((err: any) => {
                 if (
                   err &&
@@ -4354,7 +4391,10 @@ export default function CustomerSite() {
     try {
       const response = await fetch("/api/create-payment", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getCustomerAccessHeaders(cPhone),
+        },
         body: JSON.stringify({
           amount: orderTotal,
           customerName: cName,
@@ -8330,7 +8370,10 @@ function CheckoutOverlay({
 
     if (currentSquadId && customerCleanPhone) {
       try {
-        const res = await fetch(`/api/squad-gamification?phone=${encodeURIComponent(customerCleanPhone)}&squadId=${encodeURIComponent(currentSquadId)}`);
+        const res = await fetch(
+          `/api/squad-gamification?phone=${encodeURIComponent(customerCleanPhone)}&squadId=${encodeURIComponent(currentSquadId)}`,
+          { headers: getCustomerAccessHeaders(customerCleanPhone) },
+        );
         if (res.ok) {
           const data = await res.json();
           addMembers(data?.mySquad?.membersList);
