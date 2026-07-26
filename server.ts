@@ -4757,7 +4757,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
                         </div>
                         <h1>${isExplicitFailure ? "فشلت عملية الدفع" : "تم الدفع بنجاح"}</h1>
                         <p>${isExplicitFailure ? "نعتذر، لم نتمكن من إتمام عملية الدفع." : "شكراً لك، تم تأكيد طلبك بنجاح."}</p>
-                        <a href="${trackUrl}" class="btn" onclick="closePopupAndRedirect(event)">العودة إلى الموقع</a>
+                        <a href="${trackUrl}" class="btn" onclick="goToTracking(event)">متابعة الطلب</a>
                     </div>
                 </div>
                 <script>
@@ -4769,25 +4769,27 @@ app.get("/api/debug/order/:id", async (req, res) => {
                         }
                     } catch(e) {}
 
-                    function closePopupAndRedirect(e) {
+                    function goToTracking(e) {
                         if (e) e.preventDefault();
                         const targetUrl = e ? e.currentTarget.href : "${trackUrl}";
-                        
+
                         try {
                             if (window.opener && !window.opener.closed) {
-                                window.opener.postMessage(JSON.stringify({ type: 'payment_return', orderId: '${baseOrderId}', payment: '${paymentParam}' }), '*');
-                                window.opener.postMessage({ type: 'PAYMENT_COMPLETE', url: targetUrl, orderId: '${baseOrderId}', payment: '${paymentParam}' }, '*');
-                                setTimeout(() => window.close(), 100);
-                            } else {
-                                window.location.href = targetUrl;
+                                window.opener.postMessage(JSON.stringify({ type: 'payment_return', orderId: '${baseOrderId}', payment: '${paymentParam}' }), window.location.origin);
+                                window.opener.postMessage({ type: 'PAYMENT_COMPLETE', url: targetUrl, orderId: '${baseOrderId}', payment: '${paymentParam}' }, window.location.origin);
                             }
-                        } catch (err) {
-                            window.location.href = targetUrl;
-                        }
+                        } catch (err) {}
+
+                        // Keep this payment tab open and move it to the tracking page.
+                        window.location.replace(targetUrl);
                     }
 
-                    // Auto-trigger completion immediately to avoid duplicate screens
-                    closePopupAndRedirect();
+                    // Briefly show the confirmed result, then keep the customer on tracking.
+                    document.getElementById("loading").style.display = "none";
+                    document.getElementById("content").style.display = "block";
+                    setTimeout(function () {
+                        goToTracking();
+                    }, 1200);
                 </script>
             </body>
             </html>
