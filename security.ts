@@ -75,6 +75,17 @@ export function getCustomerTokenFromHeaders(
   return Array.isArray(value) ? String(value[0] || "").trim() : String(value || "").trim();
 }
 
+export function getTrackingTokenFromHeaders(
+  headers: Record<string, unknown> | undefined,
+): string {
+  const value =
+    headers?.["x-alturath-tracking-token"] ??
+    headers?.["X-Alturath-Tracking-Token"];
+  return Array.isArray(value)
+    ? String(value[0] || "").trim()
+    : String(value || "").trim();
+}
+
 function recordOwnerPhone(record: any): string {
   return normalizeCustomerPhone(
     record?.customerPhone ||
@@ -156,6 +167,7 @@ export function getCustomerOrderAccess(
     phone?: unknown;
     orderId?: unknown;
     token?: unknown;
+    trackingToken?: unknown;
     tokenAuthorizesPhone?: boolean;
   },
 ): CustomerOrderAccess {
@@ -171,6 +183,10 @@ export function getCustomerOrderAccess(
     input.token,
     record?.customerAccessTokenHash,
   );
+  const trackingTokenMatches = tokenMatchesHash(
+    input.trackingToken,
+    record?.trackingAccessTokenHash,
+  );
   const phoneTokenMatches =
     ownerMatches && input.tokenAuthorizesPhone === true;
 
@@ -181,7 +197,13 @@ export function getCustomerOrderAccess(
   }
 
   if (!isExact) return "none";
-  if (recordTokenMatches || phoneTokenMatches) return "private";
+  if (
+    trackingTokenMatches ||
+    recordTokenMatches ||
+    phoneTokenMatches
+  ) {
+    return "private";
+  }
 
   // Compatibility for orders created before customer access tokens existed:
   // require both the complete order ID and its matching Kuwait phone number.
@@ -207,6 +229,56 @@ function sanitizeSplitPeople(values: unknown, requesterPhone: string): any[] {
   });
 }
 
+function redactNestedPhoneFields(
+  value: any,
+  requesterPhone: string,
+): any {
+  if (Array.isArray(value)) {
+    return value.map((item) =>
+      redactNestedPhoneFields(item, requesterPhone),
+    );
+  }
+  if (!value || typeof value !== "object") return value;
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    return value;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, nestedValue]) => {
+      const normalizedKey = key.replace(/[^a-z]/gi, "").toLowerCase();
+      const isPhoneField = [
+        "phone",
+        "phones",
+        "mobile",
+        "mobilenumber",
+        "telephone",
+        "tel",
+        "whatsapp",
+        "whatsappnumber",
+        "contactphone",
+        "contactnumber",
+        "customerphone",
+        "ownerphone",
+      ].includes(normalizedKey);
+
+      if (isPhoneField) {
+        const nestedPhone = normalizeCustomerPhone(nestedValue);
+        return [
+          key,
+          requesterPhone && nestedPhone === requesterPhone
+            ? nestedPhone
+            : "",
+        ];
+      }
+      return [
+        key,
+        redactNestedPhoneFields(nestedValue, requesterPhone),
+      ];
+    }),
+  );
+}
+
 export function sanitizeTrackedOrder(
   record: any,
   access: Exclude<CustomerOrderAccess, "none">,
@@ -216,6 +288,7 @@ export function sanitizeTrackedOrder(
   const sanitized = { ...(record || {}) };
 
   delete sanitized.customerAccessTokenHash;
+  delete sanitized.trackingAccessTokenHash;
   delete sanitized.customerId;
   delete sanitized.paymentId;
   delete sanitized.transactionId;
@@ -236,6 +309,30 @@ export function sanitizeTrackedOrder(
     );
   }
 
+  if (
+    access === "private" &&
+    (!phone || recordOwnerPhone(record) !== phone)
+  ) {
+    sanitized.customerPhone = "";
+    sanitized.phone = "";
+    if (
+      sanitized.address &&
+      typeof sanitized.address === "object"
+    ) {
+      delete sanitized.address.phone;
+      delete sanitized.address.customerPhone;
+      delete sanitized.address.mobile;
+    }
+    if (
+      sanitized.deliveryInfo &&
+      typeof sanitized.deliveryInfo === "object"
+    ) {
+      delete sanitized.deliveryInfo.phone;
+      delete sanitized.deliveryInfo.customerPhone;
+      delete sanitized.deliveryInfo.mobile;
+    }
+  }
+
   if (access === "split") {
     delete sanitized.customerName;
     delete sanitized.customerPhone;
@@ -249,7 +346,7 @@ export function sanitizeTrackedOrder(
     sanitized.customerPhone = "";
   }
 
-  return sanitized;
+  return redactNestedPhoneFields(sanitized, phone);
 }
 
 function keepOnlyRequesterPhone(value: unknown, requesterPhone: string): string {
