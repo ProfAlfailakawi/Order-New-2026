@@ -1724,9 +1724,6 @@ export default function OrderPage() {
                             </button>
                           )}
                       </h3>
-                      <p className="text-stone-400 text-xs font-medium uppercase tracking-widest mt-1">
-                        {getOrderReference(selectedOrder)}
-                      </p>
                     </div>
                   </div>
                   <button
