@@ -11,7 +11,8 @@
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "test:security": "node --import tsx --test security-regression.test.ts"
+    "test:security": "node --import tsx --test security-regression.test.ts",
+    "test:regression": "node --import tsx --test security-regression.test.ts geolocation-regression.test.ts"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

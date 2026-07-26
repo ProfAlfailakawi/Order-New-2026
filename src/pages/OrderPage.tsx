@@ -71,8 +71,14 @@ import { calculateItemTotalWithAddons } from "../utils/priceCalculation";
 import { openPrintableInvoice, openWhatsAppInvoiceText, shareOrPrintInvoice } from "../utils/invoiceShare";
 import {
   getCustomerAccessHeaders,
+  getTrackingAccessToken,
   getStoredCustomerOrderId,
+  storeTrackingAccessToken,
 } from "../lib/customerAccess";
+import {
+  getCanonicalFinancialSummary,
+  getCanonicalOrderReference,
+} from "../lib/trackingPresentation";
 
 const formatOrderWords = (count: number) => {
   if (count === 1) return "طلب واحد";
@@ -94,11 +100,7 @@ const getFirstName = (name?: string) => {
 };
 
 const getOrderReference = (order: any) => {
-  const raw = String(order?.invoiceId || order?.id || order?.displayId || "").trim().toUpperCase();
-  if (!raw) return "ORD-0000";
-  const stripped = raw.replace(/^(ORD|INV|REF)[-\s#]*/ig, "").replace(/[^A-Z0-9]/ig, "");
-  const last4 = stripped.slice(-4);
-  return last4 ? `ORD-${last4}` : `ORD-${raw.slice(-4) || "0000"}`;
+  return getCanonicalOrderReference(order) || "غير متوفر";
 };
 
 const getSafeSplitPayments = (order: any): any[] => {
@@ -160,10 +162,17 @@ export default function OrderPage() {
     // 1. Handle order handoff via URL param for automatic open, or localStorage prefill
     const urlOrderSearch =
       searchParams.get("order_id") || searchParams.get("tracked_order");
+    const urlTrackingAccess = searchParams.get("track_access") || "";
     let lsPhone = searchParams.get("phone") || window.name || "";
     let lsTargetOrderId = urlOrderSearch;
 
     try {
+      if (urlOrderSearch && urlTrackingAccess) {
+        storeTrackingAccessToken(
+          urlOrderSearch,
+          urlTrackingAccess,
+        );
+      }
       const storedPhone = localStorage.getItem("customer_phone_track");
       if (storedPhone && storedPhone.length >= 8) lsPhone = storedPhone;
 
@@ -211,6 +220,7 @@ export default function OrderPage() {
         const newParams = new URLSearchParams(searchParams);
         newParams.delete("order_id");
         newParams.delete("tracked_order");
+        newParams.delete("track_access");
         // Keep phone for better UX
         setSearchParams(newParams, { replace: true });
       }
@@ -228,6 +238,8 @@ export default function OrderPage() {
   const [orderDetailsTab, setOrderDetailsTab] = useState<"status" | "invoice">("status");
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [searchValidationMessage, setSearchValidationMessage] =
+    useState("");
   const autoOpenedTargetRef = useRef<string | null>(null);
   const [squadInfo, setSquadInfo] = useState<any>(null);
   const [customerPoints, setCustomerPoints] = useState<number | null>(null);
@@ -363,7 +375,8 @@ export default function OrderPage() {
         if (data && isPaymentReturn && (data.orderId || data.url)) {
           let messageOrderId = data.orderId;
           let messagePayment = data.payment;
-          if ((!messageOrderId || !messagePayment) && data.url) {
+          let messageTrackingAccess = "";
+          if (data.url) {
             try {
               const paymentUrl = new URL(data.url);
               messageOrderId =
@@ -371,10 +384,18 @@ export default function OrderPage() {
                 paymentUrl.searchParams.get("order_id") ||
                 paymentUrl.searchParams.get("tracked_order");
               messagePayment = messagePayment || paymentUrl.searchParams.get("payment");
+              messageTrackingAccess =
+                paymentUrl.searchParams.get("track_access") || "";
             } catch (err) {}
           }
           if (!messageOrderId) return;
           messagePayment = messagePayment || "success";
+          if (messageTrackingAccess) {
+            storeTrackingAccessToken(
+              messageOrderId,
+              messageTrackingAccess,
+            );
+          }
 
           // Keep the phone number if available
           let phoneToKeep = "";
@@ -444,7 +465,19 @@ export default function OrderPage() {
     } catch (err) {}
 
     if (!targetOrderId && searchPhone.length < 8) return;
+    if (
+      targetOrderId &&
+      searchPhone.length < 8 &&
+      !getTrackingAccessToken(targetOrderId)
+    ) {
+      setSearchValidationMessage(
+        "لخصوصية طلبك، اكتب رقم التلفون مع رقم الطلب الكامل، أو افتح رابط التتبع المرسل لك.",
+      );
+      setSearched(false);
+      return;
+    }
 
+    setSearchValidationMessage("");
     setLoading(true);
     await fetchOrders(searchPhone, targetOrderId);
     setSearched(true);
@@ -477,7 +510,10 @@ export default function OrderPage() {
 
       const res = await fetch(`/api/track-orders?${urlParams.toString()}`, {
         cache: "no-store",
-        headers: getCustomerAccessHeaders(currentPhone),
+        headers: getCustomerAccessHeaders(
+          currentPhone,
+          handoffOrderId,
+        ),
       });
       const resText = await res.text();
       let data;
@@ -719,11 +755,17 @@ export default function OrderPage() {
   };
 
   const getDisplayTotal = (order: any) => {
-    if (order.deliveryType === "free") {
-      return calculateItemsTotal(order.items);
-    }
-    return order.total || 0;
+    return getCanonicalFinancialSummary(
+      order,
+      calculateItemsTotal(order.items),
+    ).grandTotal;
   };
+
+  const getDisplayFinancialSummary = (order: any) =>
+    getCanonicalFinancialSummary(
+      order,
+      calculateItemsTotal(order?.items),
+    );
 
   const canShowSmartReorder = orders.length > 1;
   const lastReorderableOrder = canShowSmartReorder
@@ -1008,7 +1050,7 @@ export default function OrderPage() {
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-extrabold text-brand">وين طلبي؟</h2>
             <p className="text-stone-400 text-sm font-medium">
-              حط رقم تليفونك أو رقم الطلب علشان تتابع حالة طلباتك
+              حط رقم تليفونك، وإذا عندك رقم الطلب اكتبه كامل مثل ORD أو INV
             </p>
           </div>
 
@@ -1035,13 +1077,22 @@ export default function OrderPage() {
               </div>
               <input
                 type="text"
-                placeholder="رقم الطلب (اختياري)"
+                placeholder="رقم الطلب الكامل (اختياري)"
                 value={searchOrderIdInput}
                 onChange={(e) => setSearchOrderIdInput(normalizeDigits(e.target.value))}
                 dir="rtl"
                 className="order-id-track-input w-full py-6 pr-16 pl-6 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-xl font-extrabold text-brand placeholder:text-stone-300 text-center uppercase"
               />
             </div>
+
+            {searchValidationMessage && (
+              <p
+                className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-xs font-extrabold leading-6 text-amber-800"
+                role="alert"
+              >
+                {searchValidationMessage}
+              </p>
+            )}
 
             <button
               type="submit"
@@ -2529,6 +2580,21 @@ export default function OrderPage() {
                   </div>
 
                   <div className="track-v15-total-panel track-wow-total-panel p-8 bg-stone-50/50 border-t border-stone-100 flex flex-col gap-4">
+                    {getDisplayFinancialSummary(selectedOrder)
+                      .discountAmount > 0 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-stone-400 font-bold uppercase tracking-widest">
+                          الخصم
+                        </span>
+                        <span className="font-extrabold text-emerald-600 italic">
+                          -
+                          {getDisplayFinancialSummary(
+                            selectedOrder,
+                          ).discountAmount.toFixed(3)}{" "}
+                          د.ك
+                        </span>
+                      </div>
+                    )}
                     {selectedOrder.deliveryFee !== undefined && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-stone-400 font-bold uppercase tracking-widest">

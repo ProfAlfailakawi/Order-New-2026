@@ -1,6 +1,6 @@
 /**
- * Robust geolocation fetcher that combines getCurrentPosition with a watchPosition fallback.
- * This pattern is more reliable on mobile devices where GPS locks might take time.
+ * Geolocation fetcher with a lower-accuracy fallback for Safari and devices
+ * that cannot acquire a precise GPS fix quickly.
  */
 
 export interface RobustLocationOptions {
@@ -31,6 +31,7 @@ export function robustGetCurrentPosition(
   return new Promise((resolve, reject) => {
     let settled = false;
     let watchId: number | null = null;
+    let safetyTimer: ReturnType<typeof setTimeout> | null = null;
 
     const finish = (position?: GeolocationPosition, error?: GeolocationPositionError) => {
       if (settled) return;
@@ -38,6 +39,9 @@ export function robustGetCurrentPosition(
 
       if (watchId !== null) {
         navigator.geolocation.clearWatch(watchId);
+      }
+      if (safetyTimer !== null) {
+        clearTimeout(safetyTimer);
       }
 
       if (position) {
@@ -47,46 +51,52 @@ export function robustGetCurrentPosition(
       }
     };
 
-    // Attempt standard one-shot fetch first
+    const startSafariFallback = (initialError: GeolocationPositionError) => {
+      let fallbackFailures = 0;
+      let lastError = initialError;
+      const fallbackFailed = (error: GeolocationPositionError) => {
+        fallbackFailures += 1;
+        lastError = error;
+        if (fallbackFailures >= 2) finish(undefined, lastError);
+      };
+      const fallbackOptions: PositionOptions = {
+        enableHighAccuracy: false,
+        timeout: Math.max(5000, Math.floor(timeout / 2)),
+        maximumAge: Math.max(maximumAge, 120000),
+      };
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => finish(position),
+        fallbackFailed,
+        fallbackOptions,
+      );
+      watchId = navigator.geolocation.watchPosition(
+        (position) => finish(position),
+        fallbackFailed,
+        fallbackOptions,
+      );
+    };
+
     navigator.geolocation.getCurrentPosition(
       (pos) => finish(pos),
       (err) => {
-        // If it fails (except for "Permission Denied"), try watchPosition fallback
-        if (err.code === 1) { // PERMISSION_DENIED
+        if (err.code === 1) {
           finish(undefined, err);
           return;
         }
-
-        // Fallback to watchPosition which can be more "persistent" in seeking a lock
-        watchId = navigator.geolocation.watchPosition(
-          (pos) => {
-            // Only resolve if accuracy is "good enough" or if we are nearing the timeout
-            // For simplicity, we just resolve on the first successful hit
-            finish(pos);
-          },
-          (watchErr) => {
-            // If watchPosition also fails, we're likely truly out of options
-            finish(undefined, watchErr);
-          },
-          {
-            enableHighAccuracy,
-            timeout,
-            maximumAge
-          }
-        );
+        startSafariFallback(err);
       },
       {
         enableHighAccuracy,
-        timeout: Math.floor(timeout / 2), // Spend half the time on the one-shot
+        timeout: Math.max(5000, Math.floor(timeout / 2)),
         maximumAge
       }
     );
 
-    // Hard safety timeout in case navigator.geolocation hangs completely
-    setTimeout(() => {
+    safetyTimer = setTimeout(() => {
       if (!settled) {
         finish(undefined, {
-          code: 3, // TIMEOUT
+          code: 3,
           message: "Geolocation took too long to respond.",
           PERMISSION_DENIED: 1,
           POSITION_UNAVAILABLE: 2,
