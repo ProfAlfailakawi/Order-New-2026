@@ -103,6 +103,21 @@ const getOrderReference = (order: any) => {
   return getCanonicalOrderReference(order) || "غير متوفر";
 };
 
+const getOrderDisplayReference = (order: any) => {
+  const reference = getOrderReference(order);
+  if (!reference || reference === "غير متوفر") return reference;
+
+  const normalized = String(reference).trim().toUpperCase();
+  if (!normalized.startsWith("ORD")) return normalized;
+
+  const compactSource = normalized
+    .replace(/^ORD[-\s#]*/i, "")
+    .replace(/[^A-Z0-9]/g, "");
+  const suffix = compactSource.slice(-4);
+
+  return suffix ? `ORD-${suffix}` : normalized;
+};
+
 const getSafeSplitPayments = (order: any): any[] => {
   if (!order) return [];
   const splits = order.splitPayments;
@@ -1724,6 +1739,12 @@ export default function OrderPage() {
                             </button>
                           )}
                       </h3>
+                      <p
+                        dir="ltr"
+                        className="text-stone-400 text-xs font-medium uppercase tracking-widest mt-1"
+                      >
+                        {getOrderDisplayReference(selectedOrder)}
+                      </p>
                     </div>
                   </div>
                   <button
@@ -2382,9 +2403,6 @@ export default function OrderPage() {
                     <div className="track-v15-details-head">
                       <div className="min-w-0">
                         <h3>رقم وبيانات الطلب</h3>
-                      </div>
-                      <div className="track-v15-invoice-chip">
-                        {getOrderReference(selectedOrder)}
                       </div>
                     </div>
                     <motion.div
