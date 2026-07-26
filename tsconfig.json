@@ -16,7 +16,8 @@
     "src/**/*",
     "server.ts",
     "security.ts",
-    "security-regression.test.ts"
+    "security-regression.test.ts",
+    "geolocation-regression.test.ts"
   ],
   "exclude": ["node_modules", "dist", "_security_backup"]
 }

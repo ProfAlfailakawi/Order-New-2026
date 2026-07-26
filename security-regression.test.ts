@@ -9,11 +9,16 @@ import {
   sanitizeTrackedOrder,
   tokenAuthorizesCustomerPhone,
 } from "./security";
+import {
+  getCanonicalFinancialSummary,
+  getCanonicalOrderReference,
+} from "./src/lib/trackingPresentation";
 
 const ownerPhone = "50000001";
 const otherPhone = "50000002";
 const participantPhone = "50000003";
 const issued = issueCustomerAccessToken();
+const trackingIssued = issueCustomerAccessToken();
 
 const protectedOrder = {
   id: "ORD-EXACT-OWNER-1",
@@ -29,6 +34,22 @@ const protectedOrder = {
     { name: "صاحب الطلب", phone: ownerPhone, amount: 5, status: "pending" },
     { name: "مشارك", phone: participantPhone, amount: 5, status: "pending" },
   ],
+};
+
+const protectedInvoice = {
+  id: "INV-5085",
+  customerName: "صاحب الفاتورة",
+  customerPhone: ownerPhone,
+  trackingAccessTokenHash: trackingIssued.tokenHash,
+  totalAmount: 0.5,
+  discount: 1,
+  deliveryFee: 0,
+  deliveryType: "free",
+  items: [{ name: "جريش", quantity: 1, price: 1.5 }],
+  deliveryInfo: {
+    phone: otherPhone,
+    contact: { mobile: otherPhone },
+  },
 };
 
 test("public app data excludes operational and customer collections", () => {
@@ -107,6 +128,60 @@ test("partial order IDs are rejected", () => {
   );
 });
 
+test("a secure tracking token unlocks only its exact full reference", () => {
+  assert.equal(
+    getCustomerOrderAccess(protectedInvoice, {
+      orderId: protectedInvoice.id,
+      trackingToken: trackingIssued.token,
+    }),
+    "private",
+  );
+  assert.equal(
+    getCustomerOrderAccess(protectedInvoice, {
+      orderId: "5085",
+      trackingToken: trackingIssued.token,
+    }),
+    "none",
+  );
+  assert.equal(
+    getCustomerOrderAccess(
+      { ...protectedInvoice, id: "INV-5086" },
+      {
+        orderId: protectedInvoice.id,
+        trackingToken: trackingIssued.token,
+      },
+    ),
+    "none",
+  );
+  assert.equal(
+    getCustomerOrderAccess(protectedInvoice, {
+      orderId: protectedInvoice.id,
+      trackingToken: "wrong-token",
+    }),
+    "none",
+  );
+});
+
+test("tracking responses preserve INV references and discounted totals", () => {
+  assert.equal(
+    getCanonicalOrderReference(protectedInvoice),
+    "INV-5085",
+  );
+  assert.equal(
+    getCanonicalOrderReference({ id: "ORD-20260727-6X1N" }),
+    "ORD-20260727-6X1N",
+  );
+
+  const summary = getCanonicalFinancialSummary(
+    protectedInvoice,
+    1.5,
+  );
+  assert.equal(summary.subtotal, 1.5);
+  assert.equal(summary.discountAmount, 1);
+  assert.equal(summary.deliveryFee, 0);
+  assert.equal(summary.grandTotal, 0.5);
+});
+
 test("split links work while hiding owner and other participant details", () => {
   const access = getCustomerOrderAccess(protectedOrder, {
     phone: participantPhone,
@@ -126,6 +201,17 @@ test("split links work while hiding owner and other participant details", () => 
   assert.equal(result.customerAccessTokenHash, undefined);
   assert.equal(result.splitPayments[0].phone, "");
   assert.equal(result.splitPayments[1].phone, participantPhone);
+});
+
+test("tracking token hashes never leave the tracking response", () => {
+  const result = sanitizeTrackedOrder(
+    protectedInvoice,
+    "private",
+  );
+  assert.equal(result.trackingAccessTokenHash, undefined);
+  assert.equal(result.customerPhone, "");
+  assert.equal(result.deliveryInfo.phone, undefined);
+  assert.equal(result.deliveryInfo.contact.mobile, "");
 });
 
 test("legacy orders require the full ID together with the matching phone", () => {
