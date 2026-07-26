@@ -11,6 +11,18 @@ import admin from "firebase-admin";
 import { getMessaging } from "firebase-admin/messaging";
 import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
 import { GoogleGenAI, Type } from "@google/genai";
+import {
+  buildPublicAppData,
+  getCustomerOrderAccess,
+  getCustomerTokenFromHeaders,
+  hashCustomerAccessToken,
+  isAllowedPaymentLink,
+  issueCustomerAccessToken,
+  sanitizeSquadForCustomer,
+  sanitizeTrackedOrder,
+  tokenAuthorizesCustomerPhone,
+  tokenMatchesHash,
+} from "./security";
 
 // Initialize Gemini SDK with User-Agent telemetry
 const aiClient = new GoogleGenAI({
@@ -220,51 +232,9 @@ async function mergeSharedShards(rootData: any) {
       merged[key] = value;
     }
   }
-  coerceSquadsInData(merged); // native squad types before anything maps over membersList
   return merged;
 }
 
-
-// Diwaniya (squad) fields must be native types before any code touches them. The admin
-// has at times written membersList/location as JSON *text* (e.g. membersList = "[]").
-// Then `(sq.membersList || []).map(...)` runs on a non-empty string — strings have no
-// .map — throwing a TypeError that 500s /api/squad-gamification and shows "Internal
-// Server Error" on checkout, stopping the customer from paying. Coercing every squad at
-// the load boundary makes the whole app crash-proof no matter what shape the data is in.
-function coerceSquadParseArray(value: any): any[] {
-  if (Array.isArray(value)) return value;
-  if (typeof value === "string") {
-    const t = value.trim();
-    if (!t) return [];
-    try { const p = JSON.parse(t); return Array.isArray(p) ? p : []; } catch { return []; }
-  }
-  return [];
-}
-function coerceSquadTypes(sq: any): any {
-  if (!sq || typeof sq !== "object" || Array.isArray(sq)) return sq;
-  const out: any = { ...sq };
-  for (const f of ["membersList", "participants", "membersData"]) {
-    if (f in out) out[f] = coerceSquadParseArray(out[f]);
-  }
-  // `members` is usually a numeric count but can be an array. A numeric string → number;
-  // any other string (e.g. a stringified list) → array. It must never stay a string.
-  if (typeof out.members === "string") {
-    const t = out.members.trim();
-    out.members = /^\d+$/.test(t) ? Number(t) : coerceSquadParseArray(out.members);
-  }
-  for (const f of ["location", "geo", "diwaniyaLocation", "coordinates", "mapLocation", "radarLocation"]) {
-    if (typeof out[f] !== "string") continue;
-    try {
-      const p = JSON.parse(out[f]);
-      if (p && typeof p === "object" && !Array.isArray(p)) out[f] = p; else delete out[f];
-    } catch { delete out[f]; }
-  }
-  return out;
-}
-function coerceSquadsInData(data: any): any {
-  if (data && Array.isArray(data.squads)) data.squads = data.squads.map(coerceSquadTypes);
-  return data;
-}
 
 async function getAppDataForKeys(keysToLoad: readonly ShardedAppDataKey[] = []) {
   const uniqueKeys = Array.from(new Set(keysToLoad)).filter((key): key is ShardedAppDataKey =>
@@ -299,7 +269,6 @@ async function getAppDataForKeys(keysToLoad: readonly ShardedAppDataKey[] = []) 
     const value = await loadSharedShard(key);
     if (Array.isArray(value) && value.length > 0) data[key] = value;
   }));
-  coerceSquadsInData(data); // native squad types before anything maps over membersList
   _appDataKeyedCache.set(cacheKey, { time: Date.now(), data });
   return data;
 }
@@ -448,11 +417,6 @@ async function updateAppDataAtomically(
             }
           }
         }
-
-        // Coerce squad fields to native types for EVERY transaction (roulette, qatya,
-        // presence, join, order create...) in one place, so no callback can crash on a
-        // stringified membersList/location and no future call site can forget to guard.
-        coerceSquadsInData(currentData);
 
         const updates = removeUndefinedDeep(updater(currentData));
 
@@ -1043,6 +1007,60 @@ function cleanPhone(phone) {
   return cleaned;
 }
 
+const ORDER_ADMIN_ALLOWED_UIDS = new Set([
+  "2KVrKwyvmVaKQYc9iiw87xoztrA3",
+  "abi4lzKo4VfiLkrBAkYfK8NjtLS2",
+  "L4qKc2PsZXamk96nvGTqPLjYhI03",
+  "0v30UI3SYyfzuGO15i5qRqejif62",
+  "2qUU5RXByXPkQASR1mJR9krryPd2",
+]);
+const ORDER_ADMIN_ALLOWED_EMAILS = new Set([
+  "volcanokw@gmail.com",
+  "dr.ahmad.alfailakawi@gmail.com",
+  "alfailakawidrahmad@gmail.com",
+  "mfq241188@gmail.com",
+  "omaralawadhi67@gmail.com",
+]);
+
+async function requireAuthorizedAdminAuth(req: any, res: any, next: any) {
+  try {
+    const header = String(req.headers?.authorization || "");
+    const token = header.toLowerCase().startsWith("bearer ")
+      ? header.slice(7).trim()
+      : "";
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+    const decoded: any = await admin.auth().verifyIdToken(token);
+    const uid = String(decoded?.uid || "");
+    const email = String(decoded?.email || "").trim().toLowerCase();
+    if (
+      !ORDER_ADMIN_ALLOWED_UIDS.has(uid) &&
+      !ORDER_ADMIN_ALLOWED_EMAILS.has(email)
+    ) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    return next();
+  } catch {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+}
+
+function requireDebugAccess(req: any, res: any, next: any) {
+  if (String(process.env.ENABLE_DEBUG_ROUTES || "").toLowerCase() !== "true") {
+    return res.status(404).json({ error: "Not found" });
+  }
+
+  const expected = String(process.env.ADMIN_TEST_SECRET || "").trim();
+  const received = String(req.headers?.["x-admin-secret"] || "").trim();
+  if (
+    !expected ||
+    !tokenMatchesHash(received, hashCustomerAccessToken(expected))
+  ) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  return next();
+}
+
 function makeDiwaniyaNotification(input: any) {
   const now = new Date().toISOString();
   return {
@@ -1217,6 +1235,19 @@ async function startServer() {
     res.setHeader("Surrogate-Control", "no-store");
     next();
   });
+  app.use("/api/admin", requireAuthorizedAdminAuth);
+  app.use(
+    [
+      "/api/debug",
+      "/api/debug/order",
+      "/api/debug-collections",
+      "/api/debug-docs",
+      "/api/debug-search",
+      "/api/debug-squads",
+      "/api/debug-loyalty",
+    ],
+    requireDebugAccess,
+  );
 
   app.post("/api/diwaniya-push/register", async (req, res) => {
     try {
@@ -1285,25 +1316,21 @@ async function startServer() {
   // API Routes
 
   // 1. Track Orders
-  app.get("/api/appdata", async (req, res) => {
-  try {
-    const d = await getAppDataRef();
-    res.json(d.exists() ? d.data() : {});
-  } catch(e) {
-    res.status(500).json({});
-  }
-});
+  app.get("/api/appdata", async (_req, res) => {
+    try {
+      const d = await getAppDataRef();
+      const data = d.exists() ? d.data() : {};
+      return res.json(buildPublicAppData(data));
+    } catch {
+      return res.status(500).json({});
+    }
+  });
 
-app.patch("/api/appdata", async (req, res) => {
-  try {
-    await updateAppData(req.body);
-    res.json({ success: true });
-  } catch(e) {
-    res.status(500).json({});
-  }
-});
+  app.patch("/api/appdata", (_req, res) => {
+    return res.status(405).json({ error: "Method not allowed" });
+  });
 
-app.get("/api/debug/order/:id", async (req, res) => {
+  app.get("/api/debug/order/:id", async (req, res) => {
     try {
       const dbData = await getAppDataRef();
       const data = dbData.exists() ? dbData.data() : {};
@@ -1325,6 +1352,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
     try {
       const cleanQueryPhone = phone ? cleanPhone(phone) : null;
+      if (phone && cleanQueryPhone?.length !== 8) {
+        return res.status(400).json({ error: "Invalid phone number" });
+      }
+      const customerToken = getCustomerTokenFromHeaders(req.headers);
 
       const appData = await getAppDataForKeys(["orders", "invoices", "customers", "products", "supplierCopies"]);
 
@@ -1359,74 +1390,54 @@ app.get("/api/debug/order/:id", async (req, res) => {
         ...inv,
         isInvoice: true,
       }));
-
-      console.log(
-        `DEBUG: Tracking orders for ${cleanQueryPhone} or order_id ${order_id}. Total shared orders: ${allOrdersOriginal.length}, invoices: ${allInvoices.length}`,
-      );
-
       const customers = appData.customers || [];
-      const matchingCustomerIds = customers
-        .filter(
-          (c: any) =>
-            cleanQueryPhone && cleanPhone(c.phone) === cleanQueryPhone,
-        )
-        .map((c: any) => c.id);
-
-      // Filter function
-      const filterFn = (item: any) => {
-        let match = false;
-        if (cleanQueryPhone) {
-          const itemPhone = cleanPhone(
-            item.customerPhone ||
-              item.phone ||
-              (item.address && item.address.phone),
-          );
-          match =
-            itemPhone === cleanQueryPhone ||
-            (item.customerId && matchingCustomerIds.includes(item.customerId));
-
-          // Allow participants in split payments to see it
-          if (!match && item.splitPayments && Array.isArray(item.splitPayments)) {
-            match = item.splitPayments.some((p: any) => cleanPhone(p.phone) === cleanQueryPhone);
-          }
-
-          // Allow participants in roulette to see it
-          if (!match && item.splitParticipants && Array.isArray(item.splitParticipants)) {
-            match = item.splitParticipants.some((p: any) => cleanPhone(p.phone) === cleanQueryPhone);
-          }
-        }
-        if (!match && order_id) {
-          let qid = String(order_id).trim().toUpperCase();
-          
-          let last4Match = "";
-          if (qid.startsWith("ORD-") && qid.length >= 7) {
-            last4Match = qid.replace("ORD-", "");
-          } else if (qid.length === 4) {
-            last4Match = qid;
-          }
-
-          match =
-            String(item.id).toUpperCase() === qid ||
-            String(item.linkedInvoiceId).toUpperCase() === qid ||
-            String(item.invoiceId).toUpperCase() === qid ||
-            (!!last4Match && String(item.id).toUpperCase().endsWith(last4Match)) ||
-            (!!last4Match && item.invoiceId && String(item.invoiceId).toUpperCase().endsWith(last4Match)) ||
-            (!!last4Match && item.linkedInvoiceId && String(item.linkedInvoiceId).toUpperCase().endsWith(last4Match));
-
-          if (!match && qid.includes("-S-")) {
-            const base = qid.split("-S-")[0];
-            match = String(item.id).toUpperCase() === base;
-          }
-        }
-        return match;
-      };
-
-      const matchedOrders = allOrdersOriginal.filter(filterFn);
-      const matchedInvoices = allInvoices.filter(filterFn);
-      const allMatched = [...matchedOrders, ...matchedInvoices];
-      console.log(
-        `DEBUG: Found matched orders: ${matchedOrders.length}, invoices: ${matchedInvoices.length}`,
+      const customerPhoneById = new Map(
+        customers
+          .filter((customer: any) => customer?.id)
+          .map((customer: any) => [
+            String(customer.id),
+            cleanPhone(customer.phone || customer.customerPhone || ""),
+          ]),
       );
+      const withResolvedOwnerPhone = (item: any) => {
+        if (
+          cleanPhone(
+            item?.customerPhone ||
+              item?.phone ||
+              item?.address?.phone,
+          )
+        ) {
+          return item;
+        }
+        const resolvedPhone = item?.customerId
+          ? customerPhoneById.get(String(item.customerId))
+          : "";
+        return resolvedPhone ? { ...item, customerPhone: resolvedPhone } : item;
+      };
+      const allCustomerRecords = [...allOrdersOriginal, ...allInvoices].map(
+        withResolvedOwnerPhone,
+      );
+      const customerTokenAuthorizesPhone = tokenAuthorizesCustomerPhone(
+        allCustomerRecords,
+        cleanQueryPhone,
+        customerToken,
+      );
+      const accessFor = (item: any) =>
+        getCustomerOrderAccess(withResolvedOwnerPhone(item), {
+          phone: cleanQueryPhone,
+          orderId: order_id,
+          token: customerToken,
+          tokenAuthorizesPhone: customerTokenAuthorizesPhone,
+        });
+
+      const matchedOrders = allOrdersOriginal.filter(
+        (item: any) => accessFor(item) !== "none",
+      );
+      const matchedInvoices = allInvoices.filter(
+        (item: any) => accessFor(item) !== "none",
+      );
+      const allMatched = [...matchedOrders, ...matchedInvoices];
+      console.log(`[TRACK] Authorized records returned: ${allMatched.length}`);
 
       const finalOrders = allMatched;
 
@@ -1460,10 +1471,6 @@ app.get("/api/debug/order/:id", async (req, res) => {
         appData.settings?.freeDeliveryThreshold ||
           appData.settings?.freeDeliveryLimit ||
           0,
-      );
-
-      console.log(
-        `DEBUG TrackOrders: Phone=${cleanQueryPhone}, GlobalFree=${isGlobalFreeDelivery}, Threshold=${freeDeliveryThreshold}`,
       );
 
       let needsPersistence = false;
@@ -1614,7 +1621,16 @@ app.get("/api/debug/order/:id", async (req, res) => {
         await updateAppData({ orders: mergedOrders, customers: customers });
       }
 
-      res.json(populatedOrders);
+      const safeOrders = populatedOrders
+        .map((order: any) => {
+          const access = accessFor(order);
+          return access === "none"
+            ? null
+            : sanitizeTrackedOrder(order, access, cleanQueryPhone);
+        })
+        .filter(Boolean);
+
+      res.json(safeOrders);
     } catch (error) {
       console.error("Error tracking orders:", error);
       res.status(500).json({ error: "Failed to fetch orders" });
@@ -1762,12 +1778,12 @@ app.get("/api/debug/order/:id", async (req, res) => {
   });
 
   // 3. Settings (fallback to shared_company_data)
-  app.get("/api/settings", async (req, res) => {
+  app.get("/api/settings", async (_req, res) => {
     try {
       let settings: any = {};
       const data = await getAppDataForKeys([]);
       if (data) {
-        settings = data.settings || {};
+        settings = { ...(data.settings || {}) };
         const rootGeofenceDistance =
           data.squadGeofenceDistance ??
           data.diwaniyaGeofenceDistance ??
@@ -1815,7 +1831,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           }
         }
       }
-      res.json(settings);
+      res.json(buildPublicAppData({ settings }).settings);
     } catch (error) {
       console.error("Error fetching settings:", error);
       res.status(500).json({ error: "Failed to fetch settings" });
@@ -1876,7 +1892,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   app.get("/api/squad-gamification", async (req, res) => {
     let { phone, squadId } = req.query;
     try {
-      const data = await getAppDataForKeys(["squads", "customers", "orders"]);
+      const data = await getAppDataForKeys(["squads", "customers", "orders", "invoices"]);
       const squads = data.squads || [];
       
       const customers = data.customers || [];
@@ -1918,6 +1934,12 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const topSquads = [...enrichedSquads].sort((a,b) => b.totalOrders - a.totalOrders).slice(0, 5);
 
       const cleanQPhone = phone ? cleanPhone(phone as string) : null;
+      const customerToken = getCustomerTokenFromHeaders(req.headers);
+      const hasVerifiedCustomerAccess = tokenAuthorizesCustomerPhone(
+        [...(data.orders || []), ...(data.invoices || [])],
+        cleanQPhone,
+        customerToken,
+      );
       let joinedSquadId = squadId ? String(squadId) : null;
       let userSquads: any[] = [];
 
@@ -2076,23 +2098,57 @@ app.get("/api/debug/order/:id", async (req, res) => {
         : [];
       const unreadDiwaniyaNotifications = diwaniyaNotifications.filter((n: any) => !n.readAt).length;
 
+      const safeSquadPresence = squadPresence.map((entry: any) =>
+        sanitizeSquadForCustomer(entry, cleanQPhone),
+      );
+      const safeNotifications = diwaniyaNotifications.map(
+        (notification: any) =>
+          sanitizeSquadForCustomer(notification, cleanQPhone),
+      );
+      const safeBeautifulLog =
+        hasVerifiedCustomerAccess && squadBeautifulLog
+          ? {
+              ...squadBeautifulLog,
+              recentOrders: (squadBeautifulLog.recentOrders || []).map(
+                (order: any) =>
+                  sanitizeTrackedOrder(order, "split", cleanQPhone),
+              ),
+            }
+          : null;
+
       res.json({
-         topSquads,
-         mySquad,
+         topSquads: topSquads.map((squad: any) =>
+           sanitizeSquadForCustomer(squad, cleanQPhone),
+         ),
+         mySquad: mySquad
+           ? sanitizeSquadForCustomer(mySquad, cleanQPhone)
+           : null,
          myRank,
          myMemberData,
-         userSquads,
-         activeSquads: activeSquadsWithCoords,
-         pendingGeofenceRequests,
+         userSquads: userSquads.map((squad: any) =>
+           sanitizeSquadForCustomer(squad, cleanQPhone),
+         ),
+         activeSquads: activeSquadsWithCoords.map((squad: any) =>
+           sanitizeSquadForCustomer(squad, cleanQPhone),
+         ),
+         pendingGeofenceRequests: hasVerifiedCustomerAccess
+           ? pendingGeofenceRequests
+           : [],
          myGeofenceRequests,
-         squadPresence,
-         activeGroupOrder,
-         tempCodes,
-         usualOrder,
-         squadBeautifulLog,
-         activeQatyaOrders,
-         diwaniyaNotifications,
-         unreadDiwaniyaNotifications
+         squadPresence: safeSquadPresence,
+         activeGroupOrder: activeGroupOrder
+           ? sanitizeTrackedOrder(activeGroupOrder, "split", cleanQPhone)
+           : null,
+         tempCodes: hasVerifiedCustomerAccess ? tempCodes : [],
+         usualOrder: hasVerifiedCustomerAccess ? usualOrder : null,
+         squadBeautifulLog: safeBeautifulLog,
+         activeQatyaOrders: activeQatyaOrders.map((order: any) =>
+           sanitizeTrackedOrder(order, "split", cleanQPhone),
+         ),
+         diwaniyaNotifications: safeNotifications,
+         unreadDiwaniyaNotifications: safeNotifications.filter(
+           (notification: any) => !notification.readAt,
+         ).length,
       });
     } catch(e) {
       res.status(500).json({ error: String(e) });
@@ -2296,7 +2352,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       if (cleanTargetPhone.length !== 8) return res.status(400).json({ error: "Invalid phone" });
       let joinedSquad: any = null;
       const ok = await updateAppDataAtomically((current: any) => {
-        const squads = (Array.isArray(current.squads) ? [...current.squads] : []).map(coerceSquadTypes);
+        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
         const customers = Array.isArray(current.customers) ? [...current.customers] : [];
         const reqs = Array.isArray(current.geofenceJoinRequests) ? [...current.geofenceJoinRequests] : [];
 
@@ -2394,7 +2450,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     let presence: any[] = [];
     const ok = await updateAppDataAtomically((current: any) => {
       const all = Array.isArray(current.squadPresence) ? [...current.squadPresence] : [];
-      const squads = (Array.isArray(current.squads) ? current.squads : []).map(coerceSquadTypes);
+      const squads = Array.isArray(current.squads) ? current.squads : [];
       const squad = squads.find((s: any) => String(s.id) === String(squadId));
       const filtered = all.filter((p: any) => !(String(p.squadId) === String(squadId) && cleanPhone(p.phone) === cleanTarget));
       if (normalizedAction === "in") {
@@ -2795,18 +2851,41 @@ app.get("/api/debug/order/:id", async (req, res) => {
   });
 
   app.get("/api/customers", async (req, res) => {
-    let { phone } = req.query;
+    const { phone, order_id } = req.query;
     if (!phone) {
       return res.status(400).json({ error: "Phone number required" });
     }
     try {
       const cleanQueryPhone = cleanPhone(phone);
+      if (cleanQueryPhone.length !== 8) {
+        return res.status(400).json({ error: "Invalid phone number" });
+      }
 
       const d = await getAppDataRef();
       const data = d.data() || {};
       const customers = data.customers || [];
       const invoices = data.invoices || [];
       const orders = data.orders || [];
+      const allCustomerRecords = [...orders, ...invoices];
+      const customerToken = getCustomerTokenFromHeaders(req.headers);
+      const hasCustomerToken = tokenAuthorizesCustomerPhone(
+        allCustomerRecords,
+        cleanQueryPhone,
+        customerToken,
+      );
+      const hasLegacyOrderProof = Boolean(order_id) && allCustomerRecords.some(
+        (record: any) =>
+          getCustomerOrderAccess(record, {
+            phone: cleanQueryPhone,
+            orderId: order_id,
+            token: customerToken,
+            tokenAuthorizesPhone: hasCustomerToken,
+          }) === "private",
+      );
+
+      if (!hasCustomerToken && !hasLegacyOrderProof) {
+        return res.status(403).json({ error: "Customer verification required" });
+      }
 
       const isPaid = (status?: string, paymentStatus?: string) => {
         const s = String(status || "").toLowerCase();
@@ -2827,10 +2906,13 @@ app.get("/api/debug/order/:id", async (req, res) => {
       customers.forEach((customer: any) => {
         const phoneField = customer.phone;
         if (phoneField && cleanPhone(phoneField) === cleanQueryPhone) {
-          const stored = customer.loyaltyPoints !== undefined ? customer.loyaltyPoints : (customer.points || 0);
           matchedCustomers.push({
-            ...customer,
+            name: customer.name || customer.customerName || "",
+            phone: cleanQueryPhone,
+            address: customer.address || null,
             loyaltyPoints: computedPoints,
+            points: computedPoints,
+            lastUpdated: customer.lastUpdated || customer.lastOrderDate || "",
           });
         }
       });
@@ -2845,9 +2927,15 @@ app.get("/api/debug/order/:id", async (req, res) => {
         if (recentInvoice) {
           matchedCustomers.push({
             name: recentInvoice.customerName || recentInvoice.name || "",
-            phone: phone,
+            phone: cleanQueryPhone,
             address: recentInvoice.address || null,
             loyaltyPoints: computedPoints,
+            points: computedPoints,
+            lastUpdated:
+              recentInvoice.updatedAt ||
+              recentInvoice.createdAt ||
+              recentInvoice.date ||
+              "",
           });
         }
       }
@@ -2861,9 +2949,15 @@ app.get("/api/debug/order/:id", async (req, res) => {
         if (recentOrder) {
           matchedCustomers.push({
             name: recentOrder.customerName || recentOrder.name || "",
-            phone: phone,
+            phone: cleanQueryPhone,
             address: recentOrder.address || null,
             loyaltyPoints: computedPoints,
+            points: computedPoints,
+            lastUpdated:
+              recentOrder.updatedAt ||
+              recentOrder.createdAt ||
+              recentOrder.date ||
+              "",
           });
         }
       }
@@ -3336,9 +3430,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       splitOrigin,
     } = req.body;
 
-    console.log(
-      `[ORDER] New order request from ${customerPhone} (${customerName}) total: ${total}`,
-    );
+    console.log(`[ORDER] New order request received. Items: ${Array.isArray(items) ? items.length : 0}`);
 
     // Basic validation
     if (
@@ -3350,11 +3442,12 @@ app.get("/api/debug/order/:id", async (req, res) => {
       items.length === 0 ||
       typeof total !== "number"
     ) {
-      console.warn("[ORDER] Invalid order data received:", req.body);
+      console.warn("[ORDER] Invalid order data received");
       return res.status(400).json({ error: "بيانات الطلب غير مكتملة" });
     }
 
     const orderCustomId = generateUnifiedId("ORD");
+    const customerAccess = issueCustomerAccessToken();
 
     const newOrder: any = {
       id: orderCustomId,
@@ -3373,6 +3466,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       createdAt: new Date().toISOString(),
       source: "customer_website",
       generalNotes: generalNotes || "",
+      customerAccessTokenHash: customerAccess.tokenHash,
     };
 
     const normalizedQatiaType = String(qatiaType || "").toLowerCase();
@@ -3473,7 +3567,6 @@ app.get("/api/debug/order/:id", async (req, res) => {
       }
 
       const appData = d.data() || {};
-      coerceSquadsInData(appData); // native membersList/location before split/notify/update
       const orders = appData.orders || [];
       const customers = appData.customers || [];
       const squadsForSplit = appData.squads || [];
@@ -3526,10 +3619,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       await updateAppDataAtomically((current) => {
         const orders = [...(current.orders || [])];
         const customers = [...(current.customers || [])];
-        // Coerce each squad's membersList/location to native types: a stringified "[]"
-        // would pass the `if (!membersList)` guard below (a non-empty string is truthy)
-        // and then crash on .findIndex/.push — 500-ing checkout order creation.
-        const squads = [...(current.squads || [])].map(coerceSquadTypes);
+        const squads = [...(current.squads || [])];
         
         orders.push(newOrder);
 
@@ -3633,14 +3723,18 @@ app.get("/api/debug/order/:id", async (req, res) => {
           url: `/split/${newOrder.id}`
         });
       }
-      res.status(201).json(newOrder);
+      const { customerAccessTokenHash: _privateTokenHash, ...safeOrder } = newOrder;
+      res.status(201).json({
+        ...safeOrder,
+        customerAccessToken: customerAccess.token,
+      });
     } catch (e) {
       console.error("[ORDER] Critical error creating order:", e);
       res.status(500).json({ error: "حدث خطأ غير متوقع في الخادم" });
     }
   });
 
-  app.get("/api/create-test-split-order", async (req, res) => {
+  app.get("/api/create-test-split-order", requireDebugAccess, async (req, res) => {
     try {
       const d = await getAppDataRef();
       const data = d.data() || {};
@@ -3670,9 +3764,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         return res.status(400).json({ error: "بيانات الطلب غير مكتملة" });
       }
 
-      console.log(
-        `[SPLIT] Creating partial payment for Order ${orderId}: ${amount} KWD by ${name}`,
-      );
+      console.log("[SPLIT] Authorized split-payment request received");
 
       const d = await getAppDataRef();
       const data = d.data() || {};
@@ -3703,6 +3795,20 @@ app.get("/api/debug/order/:id", async (req, res) => {
       }
 
       const existingOrder = isInvoice ? invoices[index] : orders[index];
+      const customerToken = getCustomerTokenFromHeaders(req.headers);
+      const access = getCustomerOrderAccess(existingOrder, {
+        phone: customerMobile,
+        orderId,
+        token: customerToken,
+        tokenAuthorizesPhone: tokenAuthorizesCustomerPhone(
+          [...orders, ...invoices],
+          customerMobile,
+          customerToken,
+        ),
+      });
+      if (access === "none") {
+        return res.status(403).json({ error: "تعذر التحقق من صاحب الطلب" });
+      }
 
       const splitPayments = existingOrder.splitPayments || [];
       const orderTotal = Number(existingOrder.total) || 0;
@@ -3888,7 +3994,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       } catch (error: any) {
         const status = error.response?.status || 500;
         const errorData = error.response?.data || {};
-        console.error("[SPLIT] External API Error:", status, errorData);
+        console.error("[SPLIT] External API request failed with status:", status);
 
         let errMsg =
           errorData.error || errorData.message || "فشل الاتصال بمزود الدفع";
@@ -3897,7 +4003,6 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const safeStatus = status === 404 ? 400 : status;
         return res.status(safeStatus).json({
           error: errMsg,
-          details: errorData,
         });
       }
 
@@ -3906,17 +4011,14 @@ app.get("/api/debug/order/:id", async (req, res) => {
         paymentResponse.data &&
         paymentResponse.data.link
       ) {
-        console.log(
-          `[SPLIT] Payment link created: ${paymentResponse.data.link}`,
-        );
+        console.log("[SPLIT] Payment link created successfully");
         res.json({ paymentLink: paymentResponse.data.link });
       } else {
-        console.error("[SPLIT] Invalid response structure:", paymentResponse);
+        console.error("[SPLIT] Invalid payment provider response structure");
         res.status(500).json({
           error:
             "فشل في إنشاء الرابط: " +
             (paymentResponse.message || "استجابة غير صالحة من البوابة"),
-          details: paymentResponse,
         });
       }
     } catch (e: any) {
@@ -3948,8 +4050,24 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const orders = data.orders || [];
         const invoices = data.invoices || [];
         const existingOrder = [...orders, ...invoices].find((o: any) => paymentRecordMatches(o, orderId));
+        if (!existingOrder) {
+          return res.status(404).json({ error: "الطلب غير موجود" });
+        }
+        const customerToken = getCustomerTokenFromHeaders(req.headers);
+        const access = getCustomerOrderAccess(existingOrder, {
+          phone: customerMobile,
+          orderId,
+          token: customerToken,
+          tokenAuthorizesPhone: tokenAuthorizesCustomerPhone(
+            [...orders, ...invoices],
+            customerMobile,
+            customerToken,
+          ),
+        });
+        if (access === "none") {
+          return res.status(403).json({ error: "تعذر التحقق من صاحب الطلب" });
+        }
         if (
-          existingOrder &&
           (existingOrder.paymentStatus === "paid" ||
             (existingOrder.status || "").startsWith("تم الدفع"))
         ) {
@@ -4006,13 +4124,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
         ? "https://sandboxapi.upayments.com/api/v1/charge"
         : "https://uapi.upayments.com/api/v1/charge";
 
-      // Log token details (truncated for security) to help debug 401 errors
       console.log(
-        `[PAYMENT] UPAYMENTS_API_KEY exists: ${!!process.env.UPAYMENTS_API_KEY}, length: ${rawApiKey.length}`,
-      );
-      const tokenPrefix = cleanApiKey.substring(0, 5) + "...";
-      console.log(
-        `[PAYMENT] Creating payment with isSandbox=${isSandbox}, token starts with ${tokenPrefix}, Url: ${upaymentsApiUrl}`,
+        `[PAYMENT] Creating payment in ${isSandbox ? "sandbox" : "production"} mode`,
       );
 
       let protocol = req.headers["x-forwarded-proto"] || req.protocol;
@@ -4116,7 +4229,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       } catch (error: any) {
         const status = error.response?.status || 500;
         const errorData = error.response?.data || {};
-        console.error("[PAYMENT] UPayments API Error:", status, errorData);
+        console.error("[PAYMENT] UPayments API request failed with status:", status);
 
         if (status === 401) {
           return res.status(500).json({
@@ -4127,7 +4240,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
         const errMsg =
           errorData.error || errorData.message || `UPayments Error: ${status}`;
-        return res.status(status).json({ error: errMsg, details: errorData });
+        return res.status(status).json({ error: errMsg });
       }
 
       if (
@@ -4137,7 +4250,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       ) {
         res.json({ paymentLink: paymentResponse.data.link });
       } else {
-        console.error("[PAYMENT] Failed to generate link:", paymentResponse);
+        console.error("[PAYMENT] Provider response did not contain a payment link");
         res.status(500).json({
           error: paymentResponse.data?.error || "Failed to create payment link",
         });
@@ -4154,14 +4267,40 @@ app.get("/api/debug/order/:id", async (req, res) => {
   app.put("/api/orders/:id/payment-link", async (req, res) => {
     try {
       const { id } = req.params;
-      const { paymentLink } = req.body;
-      if (!paymentLink) return res.status(400).json({ error: "No link" });
+      const { paymentLink, customerPhone } = req.body;
+      if (!isAllowedPaymentLink(paymentLink)) {
+        return res.status(400).json({ error: "Invalid payment link" });
+      }
+
+      const d = await getAppDataRef();
+      const data = d.data() || {};
+      const orders = Array.isArray(data.orders) ? data.orders : [];
+      const invoices = Array.isArray(data.invoices) ? data.invoices : [];
+      const target = [...orders, ...invoices].find(
+        (record: any) => String(record?.id || "") === String(id),
+      );
+      if (!target) return res.status(404).json({ error: "Order not found" });
+
+      const customerToken = getCustomerTokenFromHeaders(req.headers);
+      const access = getCustomerOrderAccess(target, {
+        phone: customerPhone,
+        orderId: id,
+        token: customerToken,
+        tokenAuthorizesPhone: tokenAuthorizesCustomerPhone(
+          [...orders, ...invoices],
+          customerPhone,
+          customerToken,
+        ),
+      });
+      if (access !== "private") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
 
       await updateAppDataAtomically((current) => {
-        let orders = [...(current.orders || [])];
+        const orders = [...(current.orders || [])];
         const index = orders.findIndex((o: any) => o.id === id);
         if (index !== -1) {
-          orders[index].paymentLink = paymentLink;
+          orders[index] = { ...orders[index], paymentLink };
           return { orders };
         }
         return null;
@@ -4310,10 +4449,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     ["/api/payment-webhook/:pathOrderId/:pathSplitId", "/api/payment-webhook/:pathOrderId", "/api/payment-webhook", "/api/webhook/upayments"],
     async (req, res) => {
       try {
-        console.log(
-          `[PAYMENT] Webhook received at ${new Date().toISOString()}:`,
-          JSON.stringify(req.body),
-        );
+        console.log("[PAYMENT] Webhook received");
 
         const pathOrder = req.params?.pathOrderId as string;
         const pathSplit = req.params?.pathSplitId as string;
@@ -4718,7 +4854,11 @@ app.get("/api/debug/order/:id", async (req, res) => {
            trackUrl = `${baseUrl}/split/${baseOrderId}?payment=${paymentParam}`;
         }
 
-        // We removed the immediate redirect so the beautiful HTML screen always appears.
+        const safeTrackUrl = JSON.stringify(trackUrl);
+        const safeBaseOrderId = JSON.stringify(baseOrderId);
+        const safePaymentParam = JSON.stringify(paymentParam);
+
+        // Show the return screen briefly, then hand the customer back to tracking reliably.
 
         console.log(
           `[PAYMENT] Showing return page for order ${orderId} (Failure detected: ${isExplicitFailure}, status: ${paymentParam})`,
@@ -4757,39 +4897,56 @@ app.get("/api/debug/order/:id", async (req, res) => {
                         </div>
                         <h1>${isExplicitFailure ? "فشلت عملية الدفع" : "تم الدفع بنجاح"}</h1>
                         <p>${isExplicitFailure ? "نعتذر، لم نتمكن من إتمام عملية الدفع." : "شكراً لك، تم تأكيد طلبك بنجاح."}</p>
-                        <a href="${trackUrl}" class="btn" onclick="goToTracking(event)">متابعة الطلب</a>
+                        <a href="${trackUrl}" class="btn" onclick="continueToTracking(event)">العودة إلى الموقع</a>
                     </div>
                 </div>
                 <script>
+                    const targetUrl = ${safeTrackUrl};
+                    const orderId = ${safeBaseOrderId};
+                    const payment = ${safePaymentParam};
+
                     try {
-                        localStorage.setItem("track_order_id", "${baseOrderId}");
-                        localStorage.setItem("track_status", "${paymentParam}");
-                        if ("${paymentParam}" === "success" || "${paymentParam}" === "paid") {
-                            localStorage.setItem("post_payment_open_order_id", "${baseOrderId}");
+                        localStorage.setItem("track_order_id", orderId);
+                        localStorage.setItem("track_status", payment);
+                        if (payment === "success" || payment === "paid") {
+                            localStorage.setItem("post_payment_open_order_id", orderId);
                         }
                     } catch(e) {}
 
-                    function goToTracking(e) {
-                        if (e) e.preventDefault();
-                        const targetUrl = e ? e.currentTarget.href : "${trackUrl}";
-
+                    function notifyOpener() {
+                        if (!window.opener || window.opener.closed) return false;
                         try {
-                            if (window.opener && !window.opener.closed) {
-                                window.opener.postMessage(JSON.stringify({ type: 'payment_return', orderId: '${baseOrderId}', payment: '${paymentParam}' }), window.location.origin);
-                                window.opener.postMessage({ type: 'PAYMENT_COMPLETE', url: targetUrl, orderId: '${baseOrderId}', payment: '${paymentParam}' }, window.location.origin);
-                            }
-                        } catch (err) {}
+                            const payload = { type: "payment_return", url: targetUrl, orderId, payment };
+                            window.opener.postMessage(JSON.stringify(payload), "*");
+                            window.opener.postMessage({ type: "PAYMENT_COMPLETE", url: targetUrl, orderId, payment }, "*");
+                            try { window.opener.location.href = targetUrl; } catch (err) {}
+                            return true;
+                        } catch (err) {
+                            return false;
+                        }
+                    }
 
-                        // Keep this payment tab open and move it to the tracking page.
+                    function continueToTracking(e) {
+                        if (e) e.preventDefault();
+                        const deliveredToOpener = notifyOpener();
+                        if (deliveredToOpener) {
+                            setTimeout(() => {
+                                try { window.close(); } catch (err) {}
+                                window.location.replace(targetUrl);
+                            }, 800);
+                            return;
+                        }
                         window.location.replace(targetUrl);
                     }
 
-                    // Briefly show the confirmed result, then keep the customer on tracking.
-                    document.getElementById("loading").style.display = "none";
-                    document.getElementById("content").style.display = "block";
-                    setTimeout(function () {
-                        goToTracking();
-                    }, 1200);
+                    setTimeout(() => {
+                        const loading = document.getElementById("loading");
+                        const content = document.getElementById("content");
+                        if (loading) loading.style.display = "none";
+                        if (content) content.style.display = "block";
+                    }, 450);
+
+                    setTimeout(() => continueToTracking(), 1800);
                 </script>
             </body>
             </html>
@@ -4834,37 +4991,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
   );
 
   // Search Orders by Phone
-  app.get("/api/search-order/:phone", async (req, res) => {
-    const { phone } = req.params;
-    if (!phone) {
-      return res.status(400).json({ error: "Phone number is required." });
-    }
-
-    try {
-      const cleanQueryPhone = cleanPhone(phone);
-      const d = await getAppDataRef();
-      const appData = d.data() || {};
-
-      const allOrders = appData.orders || [];
-
-      // Filter by phone
-      const matchedOrders = allOrders.filter(
-        (order: any) =>
-          cleanPhone(order.customerPhone || order.phone) === cleanQueryPhone,
-      );
-
-      // Sort by date descending
-      matchedOrders.sort((a: any, b: any) => {
-        const dateA = new Date(a.createdAt || a.date || 0).getTime();
-        const dateB = new Date(b.createdAt || b.date || 0).getTime();
-        return dateB - dateA;
-      });
-
-      res.json(matchedOrders.slice(0, 10));
-    } catch (error) {
-      console.error("Error searching orders:", error);
-      res.status(500).json({ error: "Failed to search orders" });
-    }
+  app.get("/api/search-order/:phone", (_req, res) => {
+    return res.status(404).json({ error: "Not found" });
   });
 
   // Legacy endpoints for UI compatibility

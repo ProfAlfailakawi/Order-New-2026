@@ -9,7 +9,9 @@
     "start": "tsx server.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test:security": "node --import tsx --test security-regression.test.ts"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

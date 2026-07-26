@@ -1,0 +1,319 @@
+import {
+  createHash,
+  randomBytes,
+  timingSafeEqual,
+} from "node:crypto";
+
+const CUSTOMER_TOKEN_HASH_PATTERN = /^[a-f0-9]{64}$/i;
+
+const PUBLIC_SETTINGS_KEYS = [
+  "companyName",
+  "companyLogo",
+  "logo",
+  "storeStatus",
+  "isFreeDelivery",
+  "freeDeliveryThreshold",
+  "freeDeliveryLimit",
+  "productCategories",
+  "menuCategories",
+  "loyaltyTiers",
+  "loyaltyLevels",
+  "loyaltySettings",
+  "squadTiers",
+  "squadLevels",
+  "diwaniyaTiers",
+  "diwaniyaLevels",
+  "squadSettings",
+  "squadGeofenceDistance",
+  "diwaniyaGeofenceDistance",
+  "geofenceDistance",
+  "radarDistance",
+  "radarGeofenceDistance",
+] as const;
+
+export type CustomerOrderAccess = "private" | "split" | "none";
+
+export function normalizeCustomerPhone(value: unknown): string {
+  const digits = String(value || "").replace(/\D/g, "").replace(/^0+/, "");
+  if (digits.startsWith("965") && digits.length > 8) return digits.slice(-8);
+  return digits.length >= 8 ? digits.slice(-8) : digits;
+}
+
+export function issueCustomerAccessToken(): {
+  token: string;
+  tokenHash: string;
+} {
+  const token = randomBytes(32).toString("base64url");
+  return { token, tokenHash: hashCustomerAccessToken(token) };
+}
+
+export function hashCustomerAccessToken(token: unknown): string {
+  return createHash("sha256").update(String(token || "")).digest("hex");
+}
+
+export function tokenMatchesHash(
+  token: unknown,
+  expectedHash: unknown,
+): boolean {
+  const cleanToken = String(token || "").trim();
+  const cleanExpected = String(expectedHash || "").trim().toLowerCase();
+  if (!cleanToken || !CUSTOMER_TOKEN_HASH_PATTERN.test(cleanExpected)) {
+    return false;
+  }
+
+  const actual = Buffer.from(hashCustomerAccessToken(cleanToken), "hex");
+  const expected = Buffer.from(cleanExpected, "hex");
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
+}
+
+export function getCustomerTokenFromHeaders(
+  headers: Record<string, unknown> | undefined,
+): string {
+  const value =
+    headers?.["x-alturath-customer-token"] ??
+    headers?.["X-Alturath-Customer-Token"];
+  return Array.isArray(value) ? String(value[0] || "").trim() : String(value || "").trim();
+}
+
+function recordOwnerPhone(record: any): string {
+  return normalizeCustomerPhone(
+    record?.customerPhone ||
+      record?.phone ||
+      record?.address?.phone ||
+      record?.deliveryInfo?.phone,
+  );
+}
+
+function recordReferences(record: any): string[] {
+  return [
+    record?.id,
+    record?.orderId,
+    record?.invoiceId,
+    record?.invoiceNo,
+    record?.linkedInvoiceId,
+  ]
+    .map((value) => String(value || "").trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function normalizeRequestedOrderId(value: unknown): string {
+  let normalized = String(value || "").trim().toUpperCase();
+  if (normalized.startsWith("#")) normalized = normalized.slice(1);
+  if (normalized.includes("-S-")) normalized = normalized.split("-S-")[0];
+  return normalized;
+}
+
+export function isExactOrderReference(
+  record: any,
+  requestedOrderId: unknown,
+): boolean {
+  const requested = normalizeRequestedOrderId(requestedOrderId);
+  return Boolean(requested) && recordReferences(record).includes(requested);
+}
+
+function splitPeople(record: any): any[] {
+  const values = [
+    ...(Array.isArray(record?.splitPayments) ? record.splitPayments : []),
+    ...(Array.isArray(record?.splitParticipants) ? record.splitParticipants : []),
+  ];
+  return values.filter(Boolean);
+}
+
+function isSplitOrder(record: any): boolean {
+  const splitType = String(record?.splitType || "").trim().toLowerCase();
+  return (
+    Boolean(splitType && splitType !== "none") ||
+    splitPeople(record).length > 0 ||
+    String(record?.status || "").includes("قطية")
+  );
+}
+
+function phoneIsSplitParticipant(record: any, phone: string): boolean {
+  return Boolean(phone) && splitPeople(record).some(
+    (person: any) => normalizeCustomerPhone(person?.phone) === phone,
+  );
+}
+
+export function tokenAuthorizesCustomerPhone(
+  records: any[],
+  phone: unknown,
+  token: unknown,
+): boolean {
+  const cleanPhone = normalizeCustomerPhone(phone);
+  if (cleanPhone.length !== 8 || !String(token || "").trim()) return false;
+
+  return (Array.isArray(records) ? records : []).some((record: any) => {
+    return (
+      recordOwnerPhone(record) === cleanPhone &&
+      tokenMatchesHash(token, record?.customerAccessTokenHash)
+    );
+  });
+}
+
+export function getCustomerOrderAccess(
+  record: any,
+  input: {
+    phone?: unknown;
+    orderId?: unknown;
+    token?: unknown;
+    tokenAuthorizesPhone?: boolean;
+  },
+): CustomerOrderAccess {
+  const phone = normalizeCustomerPhone(input.phone);
+  const hasExactOrderId = Boolean(String(input.orderId || "").trim());
+  const isExact = hasExactOrderId && isExactOrderReference(record, input.orderId);
+  const ownerMatches = phone.length === 8 && recordOwnerPhone(record) === phone;
+  const participantMatches = phoneIsSplitParticipant(record, phone);
+  const hasStoredToken = CUSTOMER_TOKEN_HASH_PATTERN.test(
+    String(record?.customerAccessTokenHash || ""),
+  );
+  const recordTokenMatches = ownerMatches && tokenMatchesHash(
+    input.token,
+    record?.customerAccessTokenHash,
+  );
+  const phoneTokenMatches =
+    ownerMatches && input.tokenAuthorizesPhone === true;
+
+  if (!hasExactOrderId) {
+    if (phoneTokenMatches) return "private";
+    if (participantMatches && input.tokenAuthorizesPhone === true) return "split";
+    return "none";
+  }
+
+  if (!isExact) return "none";
+  if (recordTokenMatches || phoneTokenMatches) return "private";
+
+  // Compatibility for orders created before customer access tokens existed:
+  // require both the complete order ID and its matching Kuwait phone number.
+  if (ownerMatches && !hasStoredToken) return "private";
+
+  // Shared split links remain usable, but never expose the owner's private fields.
+  if (isSplitOrder(record) && (!phone || participantMatches)) return "split";
+  return "none";
+}
+
+function sanitizeSplitPeople(values: unknown, requesterPhone: string): any[] {
+  if (!Array.isArray(values)) return [];
+  return values.map((person: any) => {
+    const personPhone = normalizeCustomerPhone(person?.phone);
+    const isRequester = Boolean(
+      requesterPhone && personPhone === requesterPhone,
+    );
+    return {
+      ...person,
+      phone: isRequester ? personPhone : "",
+      isCurrentCustomer: isRequester,
+    };
+  });
+}
+
+export function sanitizeTrackedOrder(
+  record: any,
+  access: Exclude<CustomerOrderAccess, "none">,
+  requesterPhone?: unknown,
+): any {
+  const phone = normalizeCustomerPhone(requesterPhone);
+  const sanitized = { ...(record || {}) };
+
+  delete sanitized.customerAccessTokenHash;
+  delete sanitized.customerId;
+  delete sanitized.paymentId;
+  delete sanitized.transactionId;
+  delete sanitized.trackId;
+  delete sanitized.gatewayResponse;
+  delete sanitized.webhookPayload;
+
+  if (Array.isArray(sanitized.splitPayments)) {
+    sanitized.splitPayments = sanitizeSplitPeople(
+      sanitized.splitPayments,
+      phone,
+    );
+  }
+  if (Array.isArray(sanitized.splitParticipants)) {
+    sanitized.splitParticipants = sanitizeSplitPeople(
+      sanitized.splitParticipants,
+      phone,
+    );
+  }
+
+  if (access === "split") {
+    delete sanitized.customerName;
+    delete sanitized.customerPhone;
+    delete sanitized.phone;
+    delete sanitized.address;
+    delete sanitized.deliveryInfo;
+    delete sanitized.generalNotes;
+    delete sanitized.notes;
+    delete sanitized.paymentLink;
+    sanitized.customerName = "";
+    sanitized.customerPhone = "";
+  }
+
+  return sanitized;
+}
+
+function keepOnlyRequesterPhone(value: unknown, requesterPhone: string): string {
+  const phone = normalizeCustomerPhone(value);
+  return requesterPhone && phone === requesterPhone ? phone : "";
+}
+
+export function sanitizeSquadForCustomer(
+  squad: any,
+  requesterPhone?: unknown,
+): any {
+  if (!squad || typeof squad !== "object") return squad;
+  const phone = normalizeCustomerPhone(requesterPhone);
+  const visit = (value: any, key = ""): any => {
+    if (/(phone|mobile|whatsapp|telephone|tel)/i.test(key)) {
+      return keepOnlyRequesterPhone(value, phone);
+    }
+    if (Array.isArray(value)) return value.map((item) => visit(item));
+    if (!value || typeof value !== "object") return value;
+
+    const result: any = {};
+    for (const [nestedKey, nestedValue] of Object.entries(value)) {
+      result[nestedKey] = visit(nestedValue, nestedKey);
+    }
+    return result;
+  };
+
+  return visit(squad);
+}
+
+function sanitizePublicSettings(settings: any): any {
+  const source = settings && typeof settings === "object" ? settings : {};
+  const result: any = {};
+  for (const key of PUBLIC_SETTINGS_KEYS) {
+    if (source[key] !== undefined) result[key] = source[key];
+  }
+  return result;
+}
+
+export function buildPublicAppData(data: any): any {
+  const source = data && typeof data === "object" ? data : {};
+  return {
+    settings: sanitizePublicSettings(source.settings),
+    zones: Array.isArray(source.zones) ? source.zones : [],
+    loyaltyTiers: Array.isArray(source.loyaltyTiers) ? source.loyaltyTiers : [],
+    squadTiers: Array.isArray(source.squadTiers) ? source.squadTiers : [],
+    productCategories: Array.isArray(source.productCategories)
+      ? source.productCategories
+      : [],
+    menuCategories: Array.isArray(source.menuCategories)
+      ? source.menuCategories
+      : [],
+  };
+}
+
+export function isAllowedPaymentLink(value: unknown): boolean {
+  try {
+    const url = new URL(String(value || ""));
+    const hostname = url.hostname.toLowerCase();
+    return (
+      url.protocol === "https:" &&
+      (hostname === "upayments.com" || hostname.endsWith(".upayments.com"))
+    );
+  } catch {
+    return false;
+  }
+}
