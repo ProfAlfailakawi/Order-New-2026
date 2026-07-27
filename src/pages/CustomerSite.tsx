@@ -1294,78 +1294,88 @@ const cleanCustomerAddonLabel = (value: any): string => {
   return cleaned || original;
 };
 
-function StoreClosedWorkingHoursNotice({ storeStatus }: { storeStatus: any }) {
-  const status = checkStoreStatus(storeStatus);
-  const [showAllHours, setShowAllHours] = useState(false);
-
+function StoreClosedWorkingHoursNotice({
+  status,
+  onClose,
+}: {
+  status: ReturnType<typeof checkStoreStatus>;
+  onClose: () => void;
+}) {
   if (status.isOpen) return null;
 
   return (
-    <div className="bg-red-50/90 border-2 border-red-200/80 rounded-3xl p-5 shadow-sm space-y-4 text-right mb-4">
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-red-100 border border-red-200 flex items-center justify-center text-red-600 shrink-0 mt-0.5">
-          <Clock className="w-5 h-5" />
+    <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col justify-center py-2 text-right" dir="rtl">
+      <div className="overflow-hidden rounded-[2rem] border border-stone-200 bg-white shadow-[0_24px_70px_rgba(55,36,18,0.10)]">
+        <div className="border-b border-stone-100 bg-gradient-to-l from-[#fffaf1] via-white to-white px-5 py-6 sm:px-7">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-200/70 bg-amber-50 text-amber-700">
+              <Clock className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="inline-flex rounded-full border border-stone-200 bg-white px-3 py-1 text-[10px] font-black text-stone-500">
+                الطلب متوقف مؤقتاً
+              </span>
+              <h3 className="mt-3 text-xl font-black text-brand sm:text-2xl">المطعم مغلق حالياً</h3>
+              <p className="mt-2 text-sm font-bold leading-7 text-stone-500">{status.message}</p>
+            </div>
+          </div>
         </div>
-        <div className="flex-grow min-w-0">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <h3 className="text-base font-black text-red-950 flex items-center gap-2">
-              <span>المطعم مغلق حالياً</span>
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-            </h3>
-            <span className="text-[10px] font-black bg-red-100 text-red-700 px-2.5 py-1 rounded-full border border-red-200">
-              خارج أوقات العمل
+
+        <div className="px-5 py-5 sm:px-7 sm:py-6">
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-700">أوقات العمل</p>
+              <p className="mt-1 text-sm font-black text-brand">الجدول الأسبوعي الكامل</p>
+            </div>
+            <span className="rounded-xl bg-stone-50 px-3 py-2 text-[10px] font-black text-stone-500">
+              بتوقيت الكويت
             </span>
           </div>
-          <p className="text-xs font-bold text-red-800/90 mt-1.5 leading-relaxed">
-            {status.message}
-          </p>
-        </div>
-      </div>
 
-      {/* Working Hours Box */}
-      <div className="bg-white/90 rounded-2xl p-4 border border-red-100/80 space-y-3">
-        <div className="flex items-center justify-between text-xs font-black text-stone-800">
-          <span className="flex items-center gap-1.5 text-brand">
-            <span>⏰</span> أوقات عمل المطعم المعتمدة:
-          </span>
-          <button
-            type="button"
-            onClick={() => setShowAllHours(!showAllHours)}
-            className="text-[11px] font-extrabold text-accent underline flex items-center gap-1 hover:opacity-80"
-          >
-            {showAllHours ? "إخفاء باقي الأيام" : "جدول أيام الأسبوع 📅"}
-          </button>
-        </div>
-
-        <p className="text-xs font-black text-stone-700 bg-stone-50 p-2.5 rounded-xl border border-stone-100">
-          {status.formattedHours}
-        </p>
-
-        {showAllHours && status.weeklyList && status.weeklyList.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-stone-100">
-            {status.weeklyList.map((item: any) => (
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {(status.weeklyList || []).map((item: any) => (
               <div
                 key={item.dayKey}
                 className={cn(
-                  "flex items-center justify-between p-2.5 rounded-xl text-xs font-bold border",
-                  item.enabled
-                    ? "bg-stone-50/80 border-stone-100 text-stone-800"
-                    : "bg-red-50/50 border-red-100/50 text-red-400"
+                  "flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-xs",
+                  item.isToday
+                    ? "border-amber-300 bg-amber-50/70 shadow-sm"
+                    : item.enabled
+                      ? "border-stone-100 bg-stone-50/70"
+                      : "border-stone-100 bg-white",
                 )}
               >
-                <span className="font-extrabold">{item.dayName}</span>
-                <span className={item.enabled ? "text-stone-600 font-mono" : "text-red-500 font-medium"}>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "h-2 w-2 rounded-full",
+                      item.enabled ? "bg-emerald-500" : "bg-stone-300",
+                    )}
+                  />
+                  <span className="font-black text-brand">{item.dayName}</span>
+                  {item.isToday && (
+                    <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-[9px] font-black text-amber-900">اليوم</span>
+                  )}
+                </div>
+                <span className={cn("font-bold", item.enabled ? "text-stone-600" : "text-stone-400")}>
                   {item.text}
                 </span>
               </div>
             ))}
           </div>
-        )}
-      </div>
 
-      <div className="flex items-center gap-2 text-[11px] font-bold text-stone-500 bg-white/60 p-2.5 rounded-xl border border-red-100/50">
-        <span>💡</span>
-        <span>تقدر تتصفح المنيو وتجهز سلتك برحتك، وتقدر تطلب فور افتتاح المطعم!</span>
+          <div className="mt-5 rounded-2xl border border-stone-100 bg-stone-50 px-4 py-3 text-xs font-bold leading-6 text-stone-500">
+            تقدر تتصفح المنيو وتجهز سلتك، لكن ما راح تبدأ أي خطوة دفع إلا بعد افتتاح المطعم.
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-4 w-full rounded-2xl bg-brand px-5 py-4 text-sm font-black text-white shadow-lg shadow-brand/10 transition-all active:scale-[0.99]"
+          >
+            العودة للمنيو
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -8222,6 +8232,11 @@ function CheckoutOverlay({
   const [regionSearch, setRegionSearch] = useState("");
   const [showRegions, setShowRegions] = useState(false);
   const [step, setStep] = useState<"cart" | "delivery" | "payment">(initialStep);
+  const [storeClock, setStoreClock] = useState(() => Date.now());
+  const storeAvailability = useMemo(
+    () => checkStoreStatus(settings?.storeStatus, new Date(storeClock)),
+    [settings?.storeStatus, storeClock],
+  );
   const lastOrderItemsCount = Array.isArray(lastOrderInfo?.items) ? lastOrderInfo.items.length : 0;
   const lastOrderTotal = Number(lastOrderInfo?.total || lastOrderInfo?.amount || 0);
   const cleanHistory = Array.isArray(customerOrderHistory) ? customerOrderHistory : [];
@@ -8291,6 +8306,18 @@ function CheckoutOverlay({
   useEffect(() => {
     setStep(initialStep);
   }, [initialStep]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setStoreClock(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!storeAvailability.isOpen) {
+      setStep("cart");
+      setFormError(null);
+    }
+  }, [storeAvailability.isOpen, setFormError]);
 
   const filteredRegions = getActiveRegions(regions).filter(
     (r: any) =>
@@ -8375,7 +8402,8 @@ function CheckoutOverlay({
           <div className="flex items-center gap-4">
             <button
               onClick={() => {
-                if (step === "payment") setStep("delivery");
+                if (!storeAvailability.isOpen) onClose();
+                else if (step === "payment") setStep("delivery");
                 else onClose();
               }}
               className="p-3 bg-stone-50 border border-stone-100 rounded-2xl hover:bg-brand hover:text-white hover:-translate-x-1 transition-all shadow-sm"
@@ -8384,15 +8412,22 @@ function CheckoutOverlay({
             </button>
             <div>
               <h2 className="text-2xl font-black text-brand flex items-center gap-2 tracking-tight mt-1">
-                {step === "cart" ? "ملخص الطلب" : step === "payment" ? "طريقة الدفع" : "العنوان"}
+                {!storeAvailability.isOpen
+                  ? "أوقات العمل"
+                  : step === "cart"
+                    ? "ملخص الطلب"
+                    : step === "payment"
+                      ? "طريقة الدفع"
+                      : "العنوان"}
               </h2>
             </div>
           </div>
         </div>
 
         <div className="checkout-wow-body flex-grow overflow-y-auto p-6 space-y-8 no-scrollbar bg-[#fafaf9]">
-          <StoreClosedWorkingHoursNotice storeStatus={settings?.storeStatus} />
-          {cart.length === 0 ? (
+          {!storeAvailability.isOpen ? (
+            <StoreClosedWorkingHoursNotice status={storeAvailability} onClose={onClose} />
+          ) : cart.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-6 pt-10">
               <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-stone-50">
                 <ShoppingCart className="w-12 h-12 text-stone-300 empty-state-art" />
@@ -9013,7 +9048,7 @@ function CheckoutOverlay({
           ) : null}
         </div>
 
-        {cart.length > 0 && (
+        {storeAvailability.isOpen && cart.length > 0 && (
           <div className={`checkout-wow-footer checkout-footer-${step} ${step === "payment" ? "p-4 sm:p-5 space-y-3" : "p-6 space-y-6"} bg-white border-t border-stone-100 shadow-[0_-15px_40px_rgba(0,0,0,0.02)]`}>
             <AnimatePresence>
               {formError && (

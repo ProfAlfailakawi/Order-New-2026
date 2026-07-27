@@ -11,6 +11,7 @@ import admin from "firebase-admin";
 import { getMessaging } from "firebase-admin/messaging";
 import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
 import { GoogleGenAI, Type } from "@google/genai";
+import { checkStoreStatus, getConfiguredStoreStatus } from "./src/lib/storeAvailability";
 
 // Initialize Gemini SDK with User-Agent telemetry
 const aiClient = new GoogleGenAI({
@@ -259,6 +260,27 @@ async function getAppDataForKeys(keysToLoad: readonly ShardedAppDataKey[] = []) 
   }));
   _appDataKeyedCache.set(cacheKey, { time: Date.now(), data });
   return data;
+}
+
+async function rejectCheckoutWhenStoreClosed(res: express.Response) {
+  try {
+    const data = await getAppDataForKeys([]);
+    const availability = checkStoreStatus(getConfiguredStoreStatus(data));
+    if (availability.isOpen) return false;
+
+    res.status(409).json({
+      code: "STORE_CLOSED",
+      error: availability.message,
+      formattedHours: availability.formattedHours,
+      todayText: availability.todayText,
+      weeklyList: availability.weeklyList,
+    });
+    return true;
+  } catch (error: any) {
+    // Availability checks must never interfere with a healthy checkout when the status source is unavailable.
+    console.warn("[STORE_STATUS] Availability check skipped:", error?.message || String(error));
+    return false;
+  }
 }
 
 async function getAppData() {
@@ -3265,6 +3287,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
   // 7. Orders Submission
   app.post("/api/orders", async (req, res) => {
+    if (await rejectCheckoutWhenStoreClosed(res)) return;
+
     const {
       customerName,
       customerPhone,
@@ -3876,6 +3900,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
   // Payment Endpoint
   app.post("/api/create-payment", async (req, res) => {
     try {
+      if (await rejectCheckoutWhenStoreClosed(res)) return;
+
       const {
         amount,
         customerName,
