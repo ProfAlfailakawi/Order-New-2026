@@ -726,6 +726,260 @@ function paymentRecordMatches(record: any, targetId: any): boolean {
   );
 }
 
+type TrackedPaymentState =
+  | "paid"
+  | "failed"
+  | "cancelled"
+  | "pending"
+  | "unknown";
+
+function getTrackedPaymentState(record: any): TrackedPaymentState {
+  const paymentStatus = String(
+    record?.paymentStatus ?? record?.payment_status ?? "",
+  )
+    .trim()
+    .toLowerCase();
+  const status = String(record?.status ?? "").trim().toLowerCase();
+
+  if (
+    ["failed", "failure", "declined", "rejected", "expired", "error"].includes(
+      paymentStatus,
+    ) ||
+    status.includes("فشل") ||
+    status.includes("declined") ||
+    status.includes("rejected")
+  ) {
+    return "failed";
+  }
+
+  if (
+    ["cancelled", "canceled", "cancel"].includes(paymentStatus) ||
+    status.includes("ملغي") ||
+    status.includes("إلغاء") ||
+    status.includes("الغاء") ||
+    status.includes("cancel")
+  ) {
+    return "cancelled";
+  }
+
+  if (
+    ["paid", "captured", "approved", "authorized", "success", "successful"].includes(
+      paymentStatus,
+    ) ||
+    status === "paid" ||
+    status === "تم الدفع" ||
+    status === "تم الدفع بنجاح" ||
+    status.includes("تم التوصيل")
+  ) {
+    return "paid";
+  }
+
+  if (
+    ["pending", "new", "partial", "split", "split_pending"].includes(
+      paymentStatus,
+    ) ||
+    status === "جديد" ||
+    status.includes("بانتظار") ||
+    status.includes("تجميع القطية")
+  ) {
+    return "pending";
+  }
+
+  return "unknown";
+}
+
+function toPaymentTimestamp(value: any): number {
+  if (!value) return 0;
+  if (typeof value?.toMillis === "function") {
+    try {
+      return Number(value.toMillis()) || 0;
+    } catch {}
+  }
+  if (typeof value?._seconds === "number") {
+    return value._seconds * 1000 + Number(value._nanoseconds || 0) / 1e6;
+  }
+  if (typeof value?.seconds === "number") {
+    return value.seconds * 1000 + Number(value.nanoseconds || 0) / 1e6;
+  }
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function getTrackedPaymentTimestamp(
+  record: any,
+  state: TrackedPaymentState,
+): number {
+  const preferred =
+    state === "paid"
+      ? [record?.paymentUpdatedAt, record?.paidAt]
+      : state === "failed"
+        ? [record?.paymentUpdatedAt, record?.failedAt]
+        : [record?.paymentUpdatedAt];
+  const preferredTimes = preferred
+    .map(toPaymentTimestamp)
+    .filter((timestamp) => timestamp > 0);
+  if (preferredTimes.length > 0) {
+    return Math.max(...preferredTimes);
+  }
+
+  const fallback = [
+    record?.updatedAt,
+    record?.lastUpdated,
+    record?.modifiedAt,
+    record?.createdAt,
+    record?.date,
+  ];
+  return Math.max(0, ...fallback.map(toPaymentTimestamp));
+}
+
+function getTrackedRecordRichness(record: any): number {
+  const itemCount = Array.isArray(record?.items) ? record.items.length : 0;
+  const splitCount = Array.isArray(record?.splitPayments)
+    ? record.splitPayments.length
+    : 0;
+  return (
+    itemCount * 20 +
+    splitCount * 5 +
+    (record?.address ? 8 : 0) +
+    (record?.customerPhone || record?.phone ? 4 : 0) +
+    (record?.customerName ? 3 : 0) +
+    (record?.deliveryDate || record?.deliveryTime ? 2 : 0)
+  );
+}
+
+/**
+ * Tracking may receive the same sale from both `orders` and `invoices`.
+ * Reconcile them into one record so polling cannot jump between conflicting
+ * copies (for example: a failed invoice and a stale paid order).
+ */
+function reconcileTrackedPaymentRecords(records: any[]): any[] {
+  if (!Array.isArray(records) || records.length < 2) return records || [];
+
+  const invoiceKeyByLinkedOrder = new Map<string, string>();
+  records.forEach((record: any) => {
+    if (!record?.isInvoice) return;
+    const invoiceKey = normalizePaymentLookupId(
+      record.id || record.invoiceId || record.invoice_id,
+    );
+    const linkedOrderKey = normalizePaymentLookupId(
+      record.linkedOrderId || record.orderId || record.order_id,
+    );
+    if (invoiceKey && linkedOrderKey) {
+      invoiceKeyByLinkedOrder.set(linkedOrderKey, invoiceKey);
+    }
+  });
+
+  const groups = new Map<string, Array<{ record: any; index: number }>>();
+  records.forEach((record: any, index: number) => {
+    const ownId = normalizePaymentLookupId(
+      record?.id || record?.orderId || record?.order_id,
+    );
+    const explicitInvoiceId = normalizePaymentLookupId(
+      record?.isInvoice
+        ? record?.id || record?.invoiceId || record?.invoice_id
+        : record?.linkedInvoiceId || record?.invoiceId || record?.invoice_id,
+    );
+    const key =
+      explicitInvoiceId ||
+      invoiceKeyByLinkedOrder.get(ownId) ||
+      ownId ||
+      `TRACK-${index}`;
+    const group = groups.get(key) || [];
+    group.push({ record, index });
+    groups.set(key, group);
+  });
+
+  return Array.from(groups.entries()).map(([groupKey, entries]) => {
+    if (entries.length === 1) return entries[0].record;
+
+    const richest = [...entries].sort(
+      (a, b) =>
+        getTrackedRecordRichness(b.record) -
+          getTrackedRecordRichness(a.record) ||
+        a.index - b.index,
+    )[0].record;
+
+    const authoritative = [...entries].sort((a, b) => {
+      const stateA = getTrackedPaymentState(a.record);
+      const stateB = getTrackedPaymentState(b.record);
+      const knownA = stateA === "unknown" || stateA === "pending" ? 0 : 1;
+      const knownB = stateB === "unknown" || stateB === "pending" ? 0 : 1;
+      if (knownA !== knownB) return knownB - knownA;
+
+      const timeA = getTrackedPaymentTimestamp(a.record, stateA);
+      const timeB = getTrackedPaymentTimestamp(b.record, stateB);
+      if (timeA !== timeB) return timeB - timeA;
+
+      const invoiceA = a.record?.isInvoice ? 1 : 0;
+      const invoiceB = b.record?.isInvoice ? 1 : 0;
+      if (invoiceA !== invoiceB) return invoiceB - invoiceA;
+
+      return a.index - b.index;
+    })[0].record;
+
+    const invoiceRecord = entries.find(
+      (entry) => entry.record?.isInvoice,
+    )?.record;
+    const orderRecord = entries.find(
+      (entry) => !entry.record?.isInvoice,
+    )?.record;
+    const merged: any = {
+      ...richest,
+      ...authoritative,
+      trackingRecordKey: groupKey,
+    };
+
+    if (
+      Array.isArray(richest?.items) &&
+      richest.items.length >
+        (Array.isArray(merged.items) ? merged.items.length : 0)
+    ) {
+      merged.items = richest.items;
+    }
+    if (!merged.address && richest?.address) merged.address = richest.address;
+    if (!merged.customerPhone && richest?.customerPhone) {
+      merged.customerPhone = richest.customerPhone;
+    }
+    if (!merged.customerName && richest?.customerName) {
+      merged.customerName = richest.customerName;
+    }
+
+    if (invoiceRecord) {
+      merged.linkedInvoiceId =
+        merged.linkedInvoiceId ||
+        invoiceRecord.id ||
+        invoiceRecord.invoiceId;
+    }
+    if (orderRecord) {
+      merged.linkedOrderId =
+        merged.linkedOrderId || orderRecord.id || orderRecord.orderId;
+    }
+
+    [
+      "status",
+      "paymentStatus",
+      "payment_status",
+      "paidAt",
+      "failedAt",
+      "paymentUpdatedAt",
+      "transactionId",
+      "paymentId",
+      "payment_id",
+      "paid",
+      "failed",
+      "canPay",
+    ].forEach((field) => {
+      if (authoritative?.[field] !== undefined) {
+        merged[field] = authoritative[field];
+      } else {
+        delete merged[field];
+      }
+    });
+
+    return merged;
+  });
+}
+
 async function syncRootPaymentDocsFast(orderId: string, isSuccess: boolean, providerData: any) {
   if (!adminDb || !orderId) return;
   const cleanId = normalizePaymentLookupId(orderId);
@@ -1455,9 +1709,10 @@ async function startServer() {
         (item: any) => accessFor(item) !== "none",
       );
       const allMatched = [...matchedOrders, ...matchedInvoices];
-      console.log(`[TRACK] Authorized records returned: ${allMatched.length}`);
-
-      const finalOrders = allMatched;
+      const finalOrders = reconcileTrackedPaymentRecords(allMatched);
+      console.log(
+        `[TRACK] Authorized records returned: ${allMatched.length}; reconciled: ${finalOrders.length}`,
+      );
 
       // Calculate loyalty points from paid active invoices only, matching the Admin customer source.
       let points = 0;
@@ -1502,33 +1757,9 @@ async function startServer() {
           0,
       );
 
-      let needsPersistence = false;
       const populatedOrders = finalOrders.map((o: any) => {
-        // Healing Logic: If paymentStatus is paid but status is stuck in split/roulette mode, auto-fix it
-        if ((o.paymentStatus === 'paid' || o.status === 'paid' || (o.splitPayments && o.splitPayments.filter((sp:any) => sp.status === 'paid').reduce((sum:number, sp:any) => sum + (Number(sp.amount) || 0), 0) >= (Number(o.total) || 0) - 0.005)) && 
-            (o.status === "قيد تجميع القطية" || o.status === "بانتظار الدفع" || o.status === "جديد")) {
-          o.status = "تم الدفع بنجاح";
-          o.paymentStatus = "paid";
-          needsPersistence = true;
-          
-          if (!o.paidAt) {
-             o.paidAt = new Date().toISOString();
-          }
-
-          // Add points to customer if healing for the first time
-          const cPhone = cleanPhone(o.customerPhone);
-          const cIdx = customers.findIndex((c: any) => cleanPhone(c.phone) === cPhone);
-          if (cIdx !== -1) {
-             const prevPoints = Number(customers[cIdx].loyaltyPoints) || 0;
-             customers[cIdx].loyaltyPoints = prevPoints + (Number(o.total) || 0);
-             if (cPhone === cleanQueryPhone) {
-                 points = customers[cIdx].loyaltyPoints;
-             }
-          }
-
-          console.log(`[HEALING] Order ${o.id} auto-corrected to paid status during tracking`);
-        }
-        
+        // Tracking is read-only for payment state. Only the payment callback/
+        // webhook pipeline may promote a record to paid.
         const oDeliveryFeeOriginal = Number(
           o.deliveryFee ?? o.deliveryInfo?.finalPrice ?? 0,
         );
@@ -1665,18 +1896,6 @@ async function startServer() {
           total: finalTotal,
         };
       });
-
-      if (needsPersistence) {
-        // Find updated orders and merge into allOrders (which includes orders not being tracked)
-        const mergedOrders = (appData.orders || []).map(o => {
-          const match = populatedOrders.find(po => po.id === o.id);
-          if (match && match.paymentStatus === 'paid') {
-             return { ...o, status: match.status, paymentStatus: match.paymentStatus, paidAt: match.paidAt };
-          }
-          return o;
-        });
-        await updateAppData({ orders: mergedOrders, customers: customers });
-      }
 
       const safeOrders = populatedOrders
         .map((order: any) => {
