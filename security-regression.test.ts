@@ -74,9 +74,13 @@ test("public app data excludes operational and customer collections", () => {
   assert.equal(result.settings.companyName, "التراث");
 });
 
-test("a phone number alone cannot read another customer's order", () => {
+test("a matching phone number can retrieve its own orders across devices", () => {
   assert.equal(
     getCustomerOrderAccess(protectedOrder, { phone: ownerPhone }),
+    "private",
+  );
+  assert.equal(
+    getCustomerOrderAccess(protectedOrder, { phone: otherPhone }),
     "none",
   );
   assert.equal(
