@@ -102,7 +102,6 @@ function recordReferences(record: any): string[] {
     record?.invoiceId,
     record?.invoiceNo,
     record?.linkedInvoiceId,
-    record?.linkedOrderId,
   ]
     .map((value) => String(value || "").trim().toUpperCase())
     .filter(Boolean);
@@ -323,6 +322,24 @@ export function sanitizeTrackedOrder(
   delete sanitized.trackId;
   delete sanitized.gatewayResponse;
   delete sanitized.webhookPayload;
+
+  // بيانات المورد والتكلفة داخلية، وتبقى محفوظة في نسخة الطلب
+  // التي يقرأها برنامج الإدارة فقط. لا تُعاد إلى واجهة العميل.
+  if (Array.isArray(sanitized.items)) {
+    sanitized.items = sanitized.items.map((rawItem: any) => {
+      const item = { ...(rawItem || {}) };
+      delete item.supplierId;
+      delete item.supplierID;
+      delete item.supplierName;
+      delete item.supplierProductId;
+      delete item.supplierCost;
+      delete item.purchaseCost;
+      delete item.costAtTime;
+      delete item.cost;
+      delete item.supplier;
+      return item;
+    });
+  }
 
   if (Array.isArray(sanitized.splitPayments)) {
     sanitized.splitPayments = sanitizeSplitPeople(
