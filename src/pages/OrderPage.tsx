@@ -108,14 +108,17 @@ const getOrderDisplayReference = (order: any) => {
   if (!reference || reference === "غير متوفر") return reference;
 
   const normalized = String(reference).trim().toUpperCase();
-  if (!normalized.startsWith("ORD")) return normalized;
+  const prefixMatch = normalized.match(/^(ORD|INV)[-\s#]*/i);
+  if (!prefixMatch) return normalized;
 
   const compactSource = normalized
-    .replace(/^ORD[-\s#]*/i, "")
+    .replace(/^(ORD|INV)[-\s#]*/i, "")
     .replace(/[^A-Z0-9]/g, "");
   const suffix = compactSource.slice(-4);
 
-  return suffix ? `ORD-${suffix}` : normalized;
+  return suffix
+    ? `${prefixMatch[1].toUpperCase()}-${suffix}`
+    : normalized;
 };
 
 const getSafeSplitPayments = (order: any): any[] => {
@@ -178,7 +181,8 @@ export default function OrderPage() {
     const urlOrderSearch =
       searchParams.get("order_id") || searchParams.get("tracked_order");
     const urlTrackingAccess = searchParams.get("track_access") || "";
-    let lsPhone = searchParams.get("phone") || window.name || "";
+    const urlPhone = normalizePhone(searchParams.get("phone") || "");
+    let lsPhone = urlPhone || normalizePhone(window.name || "");
     let lsTargetOrderId = urlOrderSearch;
 
     try {
@@ -188,8 +192,12 @@ export default function OrderPage() {
           urlTrackingAccess,
         );
       }
-      const storedPhone = localStorage.getItem("customer_phone_track");
-      if (storedPhone && storedPhone.length >= 8) lsPhone = storedPhone;
+      const storedPhone = normalizePhone(
+        localStorage.getItem("customer_phone_track") || "",
+      );
+      // A phone carried by the tracking link belongs to that exact message
+      // and must take priority over stale data from another customer/device.
+      if (!urlPhone && storedPhone.length >= 8) lsPhone = storedPhone;
 
       const trackingId = localStorage.getItem("track_order_id");
       const trackingStatus = localStorage.getItem("track_status");
@@ -486,7 +494,7 @@ export default function OrderPage() {
       !getTrackingAccessToken(targetOrderId)
     ) {
       setSearchValidationMessage(
-        "لخصوصية طلبك، اكتب رقم التلفون مع رقم الطلب الكامل، أو افتح رابط التتبع المرسل لك.",
+        "لخصوصية طلبك، اكتب رقم التلفون مع رقم الطلب مثل ORD-1WW5، أو افتح رابط التتبع المرسل لك.",
       );
       setSearched(false);
       return;
@@ -553,12 +561,16 @@ export default function OrderPage() {
           if (hId.startsWith("#")) hId = hId.substring(1);
           if (hId.includes("-S-")) hId = hId.split("-S-")[0];
 
+          const requestedDisplayReference = getOrderDisplayReference({
+            id: hId,
+          });
           const target = data.find(
             (o: any) =>
               String(o.id).toUpperCase() === hId ||
               (o.linkedInvoiceId &&
                 String(o.linkedInvoiceId).toUpperCase() === hId) ||
-              (o.invoiceId && String(o.invoiceId).toUpperCase() === hId),
+              (o.invoiceId && String(o.invoiceId).toUpperCase() === hId) ||
+              getOrderDisplayReference(o) === requestedDisplayReference,
           );
           if (target) {
             // Only force-open if NOT polling. If polling, line 223 handles updates to already-open modals.
@@ -1065,7 +1077,7 @@ export default function OrderPage() {
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-extrabold text-brand">وين طلبي؟</h2>
             <p className="text-stone-400 text-sm font-medium">
-              حط رقم تليفونك، وإذا عندك رقم الطلب اكتبه كامل مثل ORD أو INV
+              حط رقم تليفونك، وإذا عندك رقم الطلب اكتبه مثل ORD-1WW5 أو INV-5085
             </p>
           </div>
 
@@ -1077,12 +1089,13 @@ export default function OrderPage() {
               <input
                 type="tel"
                 inputMode="numeric"
-                placeholder="رقم التلفون (مثل: 9999 9999)"
+                placeholder="رقم التلفون: 9999 9999"
                 value={phone}
                 onChange={(e) => setPhone(normalizePhone(e.target.value))}
                 dir="ltr"
                 pattern="[0-9]*"
-                className="w-full py-6 pr-16 pl-6 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-xl font-extrabold text-brand placeholder:text-stone-300 text-center tracking-[0.2em]"
+                className="w-full py-6 px-12 sm:px-16 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-lg sm:text-xl font-extrabold text-brand placeholder:text-stone-300 placeholder:text-base sm:placeholder:text-lg placeholder:tracking-normal text-center"
+                style={{ textAlign: "center" }}
               />
             </div>
 
@@ -1092,11 +1105,16 @@ export default function OrderPage() {
               </div>
               <input
                 type="text"
-                placeholder="رقم الطلب الكامل (اختياري)"
+                placeholder="رقم الطلب مثل ORD-1WW5 (اختياري)"
                 value={searchOrderIdInput}
-                onChange={(e) => setSearchOrderIdInput(normalizeDigits(e.target.value))}
-                dir="rtl"
-                className="order-id-track-input w-full py-6 pr-16 pl-6 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-xl font-extrabold text-brand placeholder:text-stone-300 text-center uppercase"
+                onChange={(e) =>
+                  setSearchOrderIdInput(
+                    normalizeDigits(e.target.value).toUpperCase(),
+                  )
+                }
+                dir="ltr"
+                className="order-id-track-input w-full py-6 px-12 sm:px-16 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-lg sm:text-xl font-extrabold text-brand placeholder:text-stone-300 placeholder:text-sm sm:placeholder:text-base text-center uppercase"
+                style={{ textAlign: "center" }}
               />
             </div>
 
