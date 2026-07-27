@@ -287,7 +287,7 @@ export default function AdminDashboard() {
     if (order.deliveryFee === 0 && order.isFreeDelivery) return;
     try {
       // Let the centralized backend handle this
-      await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/admin/orders/${order.id}/free-delivery`, { method: "PATCH" });
+      await fetch(`/api/admin/orders/${order.id}/free-delivery`, { method: "PATCH" });
 
       const newItemsTotal = calculateItemsTotal(order.items || []);
       
@@ -305,7 +305,7 @@ export default function AdminDashboard() {
     }
     try {
       // Let the centralized backend handle this to move it into invoices array
-      await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/admin/orders/${id}/pay`, { method: "PATCH" });
+      await fetch(`/api/admin/orders/${id}/pay`, { method: "PATCH" });
       
       setSelectedOrder(null);
     } catch (err) {
@@ -320,7 +320,7 @@ export default function AdminDashboard() {
     }
     if (!confirm("هل أنت متأكد من إلغاء هذا الطلب كلياً ومسحه من القطيّة والأوردرات النشطة؟")) return;
     try {
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/admin/orders/${id}/cancel`, { method: "PATCH" });
+      const res = await fetch(`/api/admin/orders/${id}/cancel`, { method: "PATCH" });
       if (res.ok) {
         setSelectedOrder(null);
       } else {
@@ -904,7 +904,7 @@ export default function AdminDashboard() {
                          const newValue = !settings.storeStatus?.manualClose;
                          const updatedStatus = { ...settings.storeStatus, manualClose: newValue };
                          try {
-                           await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/admin/settings/storeStatus", {
+                           await fetch("/api/admin/settings/storeStatus", {
                              method: "PATCH",
                              headers: { "Content-Type": "application/json" },
                              body: JSON.stringify(updatedStatus)
@@ -926,7 +926,7 @@ export default function AdminDashboard() {
                         value={settings.storeStatus?.closeMessage || "المعذرة، المتجر مسكر الحين."}
                         onBlur={async (e) => {
                           try {
-                           await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/admin/settings/storeStatus", {
+                           await fetch("/api/admin/settings/storeStatus", {
                              method: "PATCH",
                              headers: { "Content-Type": "application/json" },
                              body: JSON.stringify({...settings.storeStatus, closeMessage: e.target.value})
@@ -971,7 +971,7 @@ export default function AdminDashboard() {
                             workingHours: defaultHours
                           };
                           try {
-                            await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/admin/settings/storeStatus", {
+                            await fetch("/api/admin/settings/storeStatus", {
                               method: "PATCH",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify(newStoreStatus)
@@ -1068,7 +1068,7 @@ export default function AdminDashboard() {
                       type="button"
                       onClick={async () => {
                         try {
-                          const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/admin/settings/storeStatus", {
+                          const res = await fetch("/api/admin/settings/storeStatus", {
                             method: "PATCH",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify(settings.storeStatus || {})
@@ -1131,7 +1131,7 @@ export default function AdminDashboard() {
                     onClick={async () => {
                       const dist = Number(settings.squadGeofenceDistance ?? settings.settings?.squadGeofenceDistance ?? settings.diwaniyaGeofenceDistance ?? settings.geofenceDistance ?? settings.radarDistance ?? settings.radarGeofenceDistance ?? 100);
                       try {
-                        const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/admin/settings/squadGeofenceDistance", {
+                        const res = await fetch("/api/admin/settings/squadGeofenceDistance", {
                           method: "PATCH",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ distance: dist })
@@ -1225,7 +1225,7 @@ export default function AdminDashboard() {
                         <button 
                            onClick={async () => {
                               try {
-                                 await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/admin/settings/loyaltyTiers", {
+                                 await fetch("/api/admin/settings/loyaltyTiers", {
                                     method: "PATCH",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({ tiers: LOYALTY_TIERS })
@@ -1344,7 +1344,7 @@ export default function AdminDashboard() {
                         <button 
                            onClick={async () => {
                               try {
-                                 await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/admin/settings/squadTiers", {
+                                 await fetch("/api/admin/settings/squadTiers", {
                                     method: "PATCH",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({ tiers: SQUAD_TIERS })
@@ -1502,7 +1502,7 @@ export default function AdminDashboard() {
                         onClick={async () => {
                           if (!newZoneName) return alert("اكتب اسم المنطقة");
                           try {
-                            const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/admin/zones", {
+                            const res = await fetch("/api/admin/zones", {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({ name: newZoneName, finalPrice: newZonePrice })
@@ -1688,7 +1688,7 @@ export default function AdminDashboard() {
                                 <button 
                                   onClick={async () => {
                                     try {
-                                      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/admin/zones/${zone.id}`, {
+                                      const res = await fetch(`/api/admin/zones/${zone.id}`, {
                                         method: "PATCH",
                                         headers: { "Content-Type": "application/json" },
                                         body: JSON.stringify({ 
@@ -1731,7 +1731,7 @@ export default function AdminDashboard() {
                                   onClick={async () => {
                                     if (!confirm("هل أنت متأكد من حذف هذه المنطقة؟")) return;
                                     try {
-                                      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/admin/zones/${zone.id}`, { method: "DELETE" });
+                                      const res = await fetch(`/api/admin/zones/${zone.id}`, { method: "DELETE" });
                                       if (!res.ok) throw new Error("Failed to delete");
                                     } catch (err) {
                                       console.error(err);
@@ -1798,7 +1798,7 @@ export default function AdminDashboard() {
                         if (!newPromoCode || newPromoValue <= 0) return;
                         setIsAddingPromo(true);
                         try {
-                          const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/admin/promocodes", {
+                          const res = await fetch("/api/admin/promocodes", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
@@ -1871,7 +1871,7 @@ export default function AdminDashboard() {
                             <button 
                               onClick={async () => {
                                 if (!confirm("هل أنت متأكد من حذف هذا الكوبون؟")) return;
-                                await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/admin/promocodes/${promo.code}`, { method: "DELETE" });
+                                await fetch(`/api/admin/promocodes/${promo.code}`, { method: "DELETE" });
                               }}
                               className="p-3 bg-red-50 border border-red-100 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-all active:scale-95"
                             >
