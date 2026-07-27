@@ -69,16 +69,6 @@ const TypewriterText = ({
 
 import { calculateItemTotalWithAddons } from "../utils/priceCalculation";
 import { openPrintableInvoice, openWhatsAppInvoiceText, shareOrPrintInvoice } from "../utils/invoiceShare";
-import {
-  getCustomerAccessHeaders,
-  getTrackingAccessToken,
-  getStoredCustomerOrderId,
-  storeTrackingAccessToken,
-} from "../lib/customerAccess";
-import {
-  getCanonicalFinancialSummary,
-  getCanonicalOrderReference,
-} from "../lib/trackingPresentation";
 
 const formatOrderWords = (count: number) => {
   if (count === 1) return "طلب واحد";
@@ -100,25 +90,11 @@ const getFirstName = (name?: string) => {
 };
 
 const getOrderReference = (order: any) => {
-  return getCanonicalOrderReference(order) || "غير متوفر";
-};
-
-const getOrderDisplayReference = (order: any) => {
-  const reference = getOrderReference(order);
-  if (!reference || reference === "غير متوفر") return reference;
-
-  const normalized = String(reference).trim().toUpperCase();
-  const prefixMatch = normalized.match(/^(ORD|INV)[-\s#]*/i);
-  if (!prefixMatch) return normalized;
-
-  const compactSource = normalized
-    .replace(/^(ORD|INV)[-\s#]*/i, "")
-    .replace(/[^A-Z0-9]/g, "");
-  const suffix = compactSource.slice(-4);
-
-  return suffix
-    ? `${prefixMatch[1].toUpperCase()}-${suffix}`
-    : normalized;
+  const raw = String(order?.invoiceId || order?.id || order?.displayId || "").trim().toUpperCase();
+  if (!raw) return "ORD-0000";
+  const stripped = raw.replace(/^(ORD|INV|REF)[-\s#]*/ig, "").replace(/[^A-Z0-9]/ig, "");
+  const last4 = stripped.slice(-4);
+  return last4 ? `ORD-${last4}` : `ORD-${raw.slice(-4) || "0000"}`;
 };
 
 const getSafeSplitPayments = (order: any): any[] => {
@@ -138,74 +114,6 @@ const isDiwaniyaQatyaOrder = (order: any): boolean => {
     String(p?.source || "").toLowerCase().includes("diwaniya")
   );
 };
-
-const getExplicitPaymentState = (
-  order: any,
-): "paid" | "failed" | "cancelled" | "pending" | "unknown" => {
-  const paymentStatus = String(
-    order?.paymentStatus ?? order?.payment_status ?? "",
-  )
-    .trim()
-    .toLowerCase();
-  const status = String(order?.status ?? "").trim().toLowerCase();
-
-  if (
-    ["failed", "failure", "declined", "rejected", "expired", "error"].includes(
-      paymentStatus,
-    ) ||
-    status.includes("فشل") ||
-    status.includes("declined") ||
-    status.includes("rejected")
-  ) {
-    return "failed";
-  }
-
-  if (
-    ["cancelled", "canceled", "cancel"].includes(paymentStatus) ||
-    status.includes("ملغي") ||
-    status.includes("إلغاء") ||
-    status.includes("الغاء") ||
-    status.includes("cancel")
-  ) {
-    return "cancelled";
-  }
-
-  if (
-    ["paid", "captured", "approved", "authorized", "success", "successful"].includes(
-      paymentStatus,
-    ) ||
-    status === "paid" ||
-    status === "تم الدفع" ||
-    status === "تم الدفع بنجاح" ||
-    status.includes("تم التوصيل")
-  ) {
-    return "paid";
-  }
-
-  if (
-    ["pending", "new", "partial", "split", "split_pending"].includes(
-      paymentStatus,
-    ) ||
-    status === "جديد" ||
-    status.includes("بانتظار") ||
-    status.includes("تجميع القطية")
-  ) {
-    return "pending";
-  }
-
-  return "unknown";
-};
-
-const getOrderIdentity = (order: any): string =>
-  String(
-    order?.id ??
-      order?.invoiceId ??
-      order?.invoice_id ??
-      order?.linkedInvoiceId ??
-      "",
-  )
-    .trim()
-    .toUpperCase();
 
 export default function OrderPage() {
   const navigate = useNavigate();
@@ -248,24 +156,12 @@ export default function OrderPage() {
     // 1. Handle order handoff via URL param for automatic open, or localStorage prefill
     const urlOrderSearch =
       searchParams.get("order_id") || searchParams.get("tracked_order");
-    const urlTrackingAccess = searchParams.get("track_access") || "";
-    const urlPhone = normalizePhone(searchParams.get("phone") || "");
-    let lsPhone = urlPhone || normalizePhone(window.name || "");
+    let lsPhone = searchParams.get("phone") || window.name || "";
     let lsTargetOrderId = urlOrderSearch;
 
     try {
-      if (urlOrderSearch && urlTrackingAccess) {
-        storeTrackingAccessToken(
-          urlOrderSearch,
-          urlTrackingAccess,
-        );
-      }
-      const storedPhone = normalizePhone(
-        localStorage.getItem("customer_phone_track") || "",
-      );
-      // A phone carried by the tracking link belongs to that exact message
-      // and must take priority over stale data from another customer/device.
-      if (!urlPhone && storedPhone.length >= 8) lsPhone = storedPhone;
+      const storedPhone = localStorage.getItem("customer_phone_track");
+      if (storedPhone && storedPhone.length >= 8) lsPhone = storedPhone;
 
       const trackingId = localStorage.getItem("track_order_id");
       const trackingStatus = localStorage.getItem("track_status");
@@ -311,7 +207,6 @@ export default function OrderPage() {
         const newParams = new URLSearchParams(searchParams);
         newParams.delete("order_id");
         newParams.delete("tracked_order");
-        newParams.delete("track_access");
         // Keep phone for better UX
         setSearchParams(newParams, { replace: true });
       }
@@ -329,8 +224,6 @@ export default function OrderPage() {
   const [orderDetailsTab, setOrderDetailsTab] = useState<"status" | "invoice">("status");
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [searchValidationMessage, setSearchValidationMessage] =
-    useState("");
   const autoOpenedTargetRef = useRef<string | null>(null);
   const [squadInfo, setSquadInfo] = useState<any>(null);
   const [customerPoints, setCustomerPoints] = useState<number | null>(null);
@@ -349,35 +242,32 @@ export default function OrderPage() {
   }, [selectedOrder?.id]);
 
   useEffect(() => {
-    // Remove the legacy persistent success cache. A payment result must never
-    // outlive the current return session or override a later server failure.
+    // Initialize success orders from local storage to handle refreshes better
     try {
-      localStorage.removeItem("temp_success_orders");
-    } catch (e) {}
+      const storedSuccesses = localStorage.getItem("temp_success_orders");
+      if (storedSuccesses) {
+        setSessionSuccessOrders(JSON.parse(storedSuccesses));
+      }
+    } catch(e) {}
   }, []);
 
   useEffect(() => {
-    const paymentState = String(urlPayment || "").trim().toLowerCase();
-    if (!urlOrderId) return;
-
-    const orderId = String(urlOrderId).trim().toUpperCase();
-    if (["failed", "failure", "cancel", "cancelled", "canceled"].includes(paymentState)) {
-      setSessionSuccessOrders((previous) =>
-        previous.filter((id) => id !== orderId),
-      );
-      return;
-    }
-
-    if (["success", "paid"].includes(paymentState)) {
-      setSessionSuccessOrders((previous) =>
-        previous.includes(orderId) ? previous : [...previous, orderId],
-      );
+    if (urlPayment === "success" && urlOrderId) {
+      const oId = String(urlOrderId).toUpperCase();
+      setSessionSuccessOrders(prev => {
+        if (prev.includes(oId)) return prev;
+        const newState = [...prev, oId];
+        try {
+          localStorage.setItem("temp_success_orders", JSON.stringify(newState));
+        } catch(e) {}
+        return newState;
+      });
     }
   }, [urlPayment, urlOrderId]);
 
 
   useEffect(() => {
-    fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/settings")
+    fetch("/api/settings")
       .then((res) => res.json())
       .then((settings) => {
         const rawTiers =
@@ -392,9 +282,7 @@ export default function OrderPage() {
 
   useEffect(() => {
      if (phone && phone.length >= 8) {
-        fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/squad-gamification?phone=${encodeURIComponent(phone)}`, {
-          headers: getCustomerAccessHeaders(phone),
-        })
+        fetch(`/api/squad-gamification?phone=${encodeURIComponent(phone)}`)
           .then(res => res.json())
           .then(data => {
              if (data && data.mySquad) {
@@ -411,12 +299,7 @@ export default function OrderPage() {
              setSquadInfo(null);
           });
 
-        const customerParams = new URLSearchParams({ phone });
-        const customerOrderId = urlOrderId || getStoredCustomerOrderId();
-        if (customerOrderId) customerParams.set("order_id", customerOrderId);
-        fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/customers?${customerParams.toString()}`, {
-          headers: getCustomerAccessHeaders(phone),
-        })
+        fetch(`/api/customers?phone=${encodeURIComponent(phone)}`)
           .then(res => res.json())
           .then(data => {
              if (Array.isArray(data) && data.length > 0) {
@@ -439,7 +322,7 @@ export default function OrderPage() {
         setSquadInfo(null);
         setCustomerPoints(null);
      }
-  }, [phone, urlOrderId]);
+  }, [phone]);
 
   // Clear the payment alert after some time
   useEffect(() => {
@@ -462,35 +345,8 @@ export default function OrderPage() {
   useEffect(() => {
     const handleGlobalMessage = (event: MessageEvent) => {
       try {
-        const data =
-          typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-        const isPaymentReturn =
-          data?.type === "payment_return" || data?.type === "PAYMENT_COMPLETE";
-        if (data && isPaymentReturn && (data.orderId || data.url)) {
-          let messageOrderId = data.orderId;
-          let messagePayment = data.payment;
-          let messageTrackingAccess = "";
-          if (data.url) {
-            try {
-              const paymentUrl = new URL(data.url);
-              messageOrderId =
-                messageOrderId ||
-                paymentUrl.searchParams.get("order_id") ||
-                paymentUrl.searchParams.get("tracked_order");
-              messagePayment = messagePayment || paymentUrl.searchParams.get("payment");
-              messageTrackingAccess =
-                paymentUrl.searchParams.get("track_access") || "";
-            } catch (err) {}
-          }
-          if (!messageOrderId) return;
-          messagePayment = messagePayment || "success";
-          if (messageTrackingAccess) {
-            storeTrackingAccessToken(
-              messageOrderId,
-              messageTrackingAccess,
-            );
-          }
-
+        const data = JSON.parse(event.data);
+        if (data && data.type === "payment_return" && data.orderId) {
           // Keep the phone number if available
           let phoneToKeep = "";
           try {
@@ -504,19 +360,19 @@ export default function OrderPage() {
             "";
           setSearchParams(
             {
-              order_id: messageOrderId,
-              payment: messagePayment,
+              order_id: data.orderId,
+              payment: data.payment,
               phone: phoneToKeep,
             },
             { replace: true },
           );
 
           try {
-            sessionStorage.setItem("post_payment_open_order_id", messageOrderId);
+            sessionStorage.setItem("post_payment_open_order_id", data.orderId);
           } catch (e) {}
 
-          if (["success", "paid"].includes(String(messagePayment || "").toLowerCase())) {
-            const paidOrderId = String(messageOrderId).toUpperCase();
+          if (["success", "paid"].includes(String(data.payment || "").toLowerCase())) {
+            const paidOrderId = String(data.orderId).toUpperCase();
             setSessionSuccessOrders(prev => {
               if (prev.includes(paidOrderId)) return prev;
               const next = [...prev, paidOrderId];
@@ -528,9 +384,9 @@ export default function OrderPage() {
           }
 
           // Directly trigger search instead of hard reload
-          handleSearch(undefined, phoneToKeep, messageOrderId);
+          handleSearch(undefined, phoneToKeep, data.orderId);
           [80, 250, 700, 1500].forEach((delay) => {
-            window.setTimeout(() => fetchOrders(phoneToKeep, messageOrderId, true), delay);
+            window.setTimeout(() => fetchOrders(phoneToKeep, data.orderId, true), delay);
           });
         }
       } catch (e) {}
@@ -559,19 +415,7 @@ export default function OrderPage() {
     } catch (err) {}
 
     if (!targetOrderId && searchPhone.length < 8) return;
-    if (
-      targetOrderId &&
-      searchPhone.length < 8 &&
-      !getTrackingAccessToken(targetOrderId)
-    ) {
-      setSearchValidationMessage(
-        "لخصوصية طلبك، اكتب رقم التلفون مع رقم الطلب مثل ORD-1WW5، أو افتح رابط التتبع المرسل لك.",
-      );
-      setSearched(false);
-      return;
-    }
 
-    setSearchValidationMessage("");
     setLoading(true);
     await fetchOrders(searchPhone, targetOrderId);
     setSearched(true);
@@ -602,12 +446,8 @@ export default function OrderPage() {
       if (currentPhone) urlParams.append("phone", currentPhone);
       if (handoffOrderId) urlParams.append("order_id", handoffOrderId);
 
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/track-orders?${urlParams.toString()}`, {
+      const res = await fetch(`/api/track-orders?${urlParams.toString()}`, {
         cache: "no-store",
-        headers: getCustomerAccessHeaders(
-          currentPhone,
-          handoffOrderId,
-        ),
       });
       const resText = await res.text();
       let data;
@@ -619,34 +459,11 @@ export default function OrderPage() {
       }
       if (Array.isArray(data)) {
         setOrders(data);
-
-        // The backend record is authoritative. A temporary success handoff may
-        // hide loading flicker, but it must be removed immediately when the
-        // server reports failure/cancellation or a definitive paid state.
-        setSessionSuccessOrders((previous) =>
-          previous.filter((optimisticId) => {
-            const matching = data.find(
-              (order: any) => getOrderIdentity(order) === optimisticId,
-            );
-            if (!matching) return true;
-            const state = getExplicitPaymentState(matching);
-            return state === "pending" || state === "unknown";
-          }),
-        );
-
         setSelectedOrder((prev) => {
           if (!prev) return prev;
-          const previousIdentity = getOrderIdentity(prev);
-          const sameType = data.find(
-            (order: any) =>
-              getOrderIdentity(order) === previousIdentity &&
-              Boolean(order?.isInvoice) === Boolean((prev as any)?.isInvoice),
+          const updated = data.find(
+            (o: any) => o.id === prev.id || o.invoiceId === prev.id,
           );
-          const updated =
-            sameType ||
-            data.find(
-              (order: any) => getOrderIdentity(order) === previousIdentity,
-            );
           return updated || prev;
         });
 
@@ -655,18 +472,12 @@ export default function OrderPage() {
           if (hId.startsWith("#")) hId = hId.substring(1);
           if (hId.includes("-S-")) hId = hId.split("-S-")[0];
 
-          const requestedDisplayReference = getOrderDisplayReference({
-            id: hId,
-          });
           const target = data.find(
             (o: any) =>
               String(o.id).toUpperCase() === hId ||
               (o.linkedInvoiceId &&
                 String(o.linkedInvoiceId).toUpperCase() === hId) ||
-              (o.invoiceId && String(o.invoiceId).toUpperCase() === hId) ||
-              ((o as any).linkedOrderId &&
-                String((o as any).linkedOrderId).toUpperCase() === hId) ||
-              getOrderDisplayReference(o) === requestedDisplayReference,
+              (o.invoiceId && String(o.invoiceId).toUpperCase() === hId),
           );
           if (target) {
             // Only force-open if NOT polling. If polling, line 223 handles updates to already-open modals.
@@ -742,34 +553,11 @@ export default function OrderPage() {
 
   const getStatusDisplay = (order: any) => {
     let rawStatus = order?.status;
-    const oId = getOrderIdentity(order);
-    const explicitState = getExplicitPaymentState(order);
+    const oId = String(order?.id || order?.invoiceId || "").toUpperCase();
 
-    // Server-side failure/cancellation always wins over any temporary browser
-    // handoff. This prevents a failed invoice from turning green after polling.
-    if (explicitState === "failed") {
-      return {
-        text: "فشل في عملية الدفع",
-        color: "text-red-600 bg-red-50",
-        icon: <X className="w-4 h-4" />,
-      };
-    }
-    if (explicitState === "cancelled") {
-      const timedOut =
-        String(rawStatus || "").includes("انتهى وقت القطية");
-      return {
-        text: timedOut ? "ملغي - انتهى وقت القطية" : "ملغي",
-        color: "text-red-600 bg-red-50",
-        icon: <X className="w-4 h-4" />,
-      };
-    }
-
-    // Optimistic success is allowed only while the backend is still pending or
-    // unknown, and is discarded as soon as a definitive server state arrives.
-    if (
-      sessionSuccessOrders.includes(oId) &&
-      (explicitState === "pending" || explicitState === "unknown")
-    ) {
+    // If we just successfully paid this order in this session, force display as paid
+    // to prevent flickering before the backend update propagates.
+    if (sessionSuccessOrders.includes(oId)) {
       return {
         text: "تم الدفع بنجاح",
         color: "text-green-600 bg-green-50",
@@ -777,21 +565,15 @@ export default function OrderPage() {
       };
     }
 
-    if (explicitState === "paid") {
-      rawStatus = "تم الدفع بنجاح";
-    } else if (
-      (order?.paymentStatus === "split" ||
-        order?.paymentStatus === "partial") &&
-      (!rawStatus ||
-        rawStatus === "جديد" ||
-        rawStatus === "بانتظار الدفع" ||
-        rawStatus === "بانتظار اكتمال القطية")
-    ) {
+    if ((order?.paymentStatus === "split" || order?.paymentStatus === "partial") && (!rawStatus || rawStatus === "جديد" || rawStatus === "بانتظار الدفع" || rawStatus === "بانتظار اكتمال القطية")) {
       rawStatus = "قيد تجميع القطية";
     }
-
+    
     if (!rawStatus) {
-      rawStatus = "جديد";
+      if (order?.paymentStatus === "paid") rawStatus = "تم الدفع بنجاح";
+      else if (order?.paymentStatus === "failed")
+        rawStatus = "فشل في عملية الدفع";
+      else rawStatus = "جديد";
     }
 
     const s = rawStatus.toLowerCase();
@@ -907,17 +689,11 @@ export default function OrderPage() {
   };
 
   const getDisplayTotal = (order: any) => {
-    return getCanonicalFinancialSummary(
-      order,
-      calculateItemsTotal(order.items),
-    ).grandTotal;
+    if (order.deliveryType === "free") {
+      return calculateItemsTotal(order.items);
+    }
+    return order.total || 0;
   };
-
-  const getDisplayFinancialSummary = (order: any) =>
-    getCanonicalFinancialSummary(
-      order,
-      calculateItemsTotal(order?.items),
-    );
 
   const canShowSmartReorder = orders.length > 1;
   const lastReorderableOrder = canShowSmartReorder
@@ -982,12 +758,7 @@ export default function OrderPage() {
 
       const payRes = await fetch(payEndpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getCustomerAccessHeaders(
-            (order as any).customerPhone || phone,
-          ),
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payBody),
       });
 
@@ -1010,18 +781,10 @@ export default function OrderPage() {
 
       if (paymentLink) {
         // Update link in DB so Admin has it updated (optional but good idea)
-        fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/orders/${order.id}/payment-link`, {
+        fetch(`/api/orders/${order.id}/payment-link`, {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            ...getCustomerAccessHeaders(
-              (order as any).customerPhone || phone,
-            ),
-          },
-          body: JSON.stringify({
-            paymentLink,
-            customerPhone: (order as any).customerPhone || phone,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paymentLink }),
         }).catch((err: any) => {
           if (
             err &&
@@ -1202,7 +965,7 @@ export default function OrderPage() {
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-extrabold text-brand">وين طلبي؟</h2>
             <p className="text-stone-400 text-sm font-medium">
-              حط رقم تليفونك، وإذا عندك رقم الطلب اكتبه مثل ORD-1WW5 أو INV-5085
+              حط رقم تليفونك أو رقم الطلب علشان تتابع حالة طلباتك
             </p>
           </div>
 
@@ -1214,13 +977,12 @@ export default function OrderPage() {
               <input
                 type="tel"
                 inputMode="numeric"
-                placeholder="رقم التلفون: 9999 9999"
+                placeholder="رقم التلفون (مثل: 9999 9999)"
                 value={phone}
                 onChange={(e) => setPhone(normalizePhone(e.target.value))}
                 dir="ltr"
                 pattern="[0-9]*"
-                className="w-full py-6 px-12 sm:px-16 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-lg sm:text-xl font-extrabold text-brand placeholder:text-stone-300 placeholder:text-base sm:placeholder:text-lg placeholder:tracking-normal text-center"
-                style={{ textAlign: "center" }}
+                className="w-full py-6 pr-16 pl-6 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-xl font-extrabold text-brand placeholder:text-stone-300 text-center tracking-[0.2em]"
               />
             </div>
 
@@ -1230,27 +992,13 @@ export default function OrderPage() {
               </div>
               <input
                 type="text"
-                placeholder="رقم الطلب مثل ORD-1WW5 (اختياري)"
+                placeholder="رقم الطلب (اختياري)"
                 value={searchOrderIdInput}
-                onChange={(e) =>
-                  setSearchOrderIdInput(
-                    normalizeDigits(e.target.value).toUpperCase(),
-                  )
-                }
-                dir="ltr"
-                className="order-id-track-input w-full py-6 px-12 sm:px-16 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-lg sm:text-xl font-extrabold text-brand placeholder:text-stone-300 placeholder:text-sm sm:placeholder:text-base text-center uppercase"
-                style={{ textAlign: "center" }}
+                onChange={(e) => setSearchOrderIdInput(normalizeDigits(e.target.value))}
+                dir="rtl"
+                className="order-id-track-input w-full py-6 pr-16 pl-6 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-xl font-extrabold text-brand placeholder:text-stone-300 text-center uppercase"
               />
             </div>
-
-            {searchValidationMessage && (
-              <p
-                className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-xs font-extrabold leading-6 text-amber-800"
-                role="alert"
-              >
-                {searchValidationMessage}
-              </p>
-            )}
 
             <button
               type="submit"
@@ -1388,7 +1136,7 @@ export default function OrderPage() {
                     const items = buildSharedOrderItems(order);
                     const label = items.length
                       ? items.slice(0, 3).map((item) => item.qty > 1 ? `${item.name} ×${item.qty}` : item.name).join("، ") + (items.length > 3 ? ` +${items.length - 3}` : "")
-                      : getOrderDisplayReference(order);
+                      : getOrderReference(order);
                     return { label, order, total: Number(getDisplayTotal(order) || 0) };
                   })
                   .filter((item) => String(item.label || "").trim())
@@ -1597,7 +1345,7 @@ export default function OrderPage() {
                                         {visibleOrders.length > 0 ? visibleOrders.map((item) => (
                                           <div key={`${item.label}-${getOrderReference(item.order)}`} className="rounded-[18px] bg-stone-50 border border-stone-100 p-3 flex items-center justify-between gap-3">
                                             <strong className="text-sm font-black text-brand truncate">{item.label}</strong>
-                                            <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-stone-500">{getOrderDisplayReference(item.order)}</span>
+                                            <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-stone-500">{getOrderReference(item.order)}</span>
                                           </div>
                                         )) : (
                                           <div className="rounded-[18px] bg-stone-50 border border-stone-100 p-4 text-center text-xs font-bold text-stone-400">تظهر طلباتك بعد أول طلب</div>
@@ -1612,7 +1360,7 @@ export default function OrderPage() {
 
                                     {lastOrder && (
                                       <div className="rounded-[24px] bg-white border border-stone-100 p-4 flex items-center justify-between gap-3 text-sm font-bold text-stone-500 shadow-sm">
-                                        <span className="truncate">آخر طلب: {getOrderDisplayReference(lastOrder)}</span>
+                                        <span className="truncate">آخر طلب: {getOrderReference(lastOrder)}</span>
                                         <span className="text-emerald-600 shrink-0">{Math.round(Number(getDisplayTotal(lastOrder) || 0))} د.ك</span>
                                       </div>
                                     )}
@@ -1746,7 +1494,7 @@ export default function OrderPage() {
                             رقم الطلب
                           </span>
                           <span className="text-xs font-extrabold text-brand bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-100">
-                            {getOrderDisplayReference(order)}
+                            {getOrderReference(order)}
                           </span>
                           {(order.paymentStatus === "paid" ||
                             (order.status || "").startsWith("تم الدفع") ||
@@ -1882,11 +1630,8 @@ export default function OrderPage() {
                             </button>
                           )}
                       </h3>
-                      <p
-                        dir="ltr"
-                        className="text-stone-400 text-xs font-medium uppercase tracking-widest mt-1"
-                      >
-                        {getOrderDisplayReference(selectedOrder)}
+                      <p className="text-stone-400 text-xs font-medium uppercase tracking-widest mt-1">
+                        {getOrderReference(selectedOrder)}
                       </p>
                     </div>
                   </div>
@@ -2547,6 +2292,9 @@ export default function OrderPage() {
                       <div className="min-w-0">
                         <h3>رقم وبيانات الطلب</h3>
                       </div>
+                      <div className="track-v15-invoice-chip">
+                        {getOrderReference(selectedOrder)}
+                      </div>
                     </div>
                     <motion.div
                       initial={{ opacity: 0, x: -10 }}
@@ -2738,26 +2486,6 @@ export default function OrderPage() {
                   </div>
 
                   <div className="track-v15-total-panel track-wow-total-panel p-8 bg-stone-50/50 border-t border-stone-100 flex flex-col gap-4">
-                    {getDisplayFinancialSummary(selectedOrder)
-                      .discountAmount > 0 && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-stone-400 font-bold uppercase tracking-widest">
-                          الخصم
-                        </span>
-                        <span
-                          dir="ltr"
-                          className="inline-flex items-baseline gap-1 whitespace-nowrap font-extrabold text-emerald-600 italic"
-                        >
-                          <span>−</span>
-                          <span>
-                            {getDisplayFinancialSummary(
-                              selectedOrder,
-                            ).discountAmount.toFixed(3)}
-                          </span>
-                          <span dir="rtl">د.ك</span>
-                        </span>
-                      </div>
-                    )}
                     {selectedOrder.deliveryFee !== undefined && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-stone-400 font-bold uppercase tracking-widest">
