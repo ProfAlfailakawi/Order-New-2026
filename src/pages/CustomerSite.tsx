@@ -1365,7 +1365,7 @@ function StoreClosedWorkingHoursNotice({
           </div>
 
           <div className="mt-5 rounded-2xl border border-stone-100 bg-stone-50 px-4 py-3 text-xs font-bold leading-6 text-stone-500">
-            تقدر تتصفح المنيو وتجهز سلتك، لكن ما راح تبدأ أي خطوة دفع إلا بعد افتتاح المطعم.
+            تقدر تتصفح المنيو وتجهز سلتك براحتك، وتقدر تطلب فور افتتاح المطعم!
           </div>
 
           <button
