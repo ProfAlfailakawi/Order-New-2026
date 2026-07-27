@@ -4000,18 +4000,17 @@ async function startServer() {
     }
 
     try {
-      const docRef = doc(db, "appData", "shared_company_data");
-      const d = await getAppDataRef();
+      // Checkout needs only the two catalog shards; split checkout additionally loads customers and
+      // squads. Loading every archive/AI/campaign shard made a simple order wait for the entire
+      // company database before it could be saved.
+      const checkoutShardKeys: ShardedAppDataKey[] = ["products", "supplierCopies"];
+      if (isDiwaniyaQatya) checkoutShardKeys.push("customers", "squads");
+      const appData = await getAppDataForKeys(checkoutShardKeys);
 
-      if (!d.exists()) {
+      if (!appData || typeof appData !== "object") {
         console.error("[ORDER] shared_company_data document NOT FOUND");
         return res.status(500).json({ error: "فشل الوصول إلى قاعدة البيانات" });
       }
-
-      const appData = d.data() || {};
-      const orders = appData.orders || [];
-      const customers = appData.customers || [];
-      const squadsForSplit = appData.squads || [];
       const splitNotificationRecipients: any[] = [];
       let qatyaExternalPushPhones: string[] = [];
       if (isDiwaniyaQatya && squadId) {
@@ -4191,15 +4190,13 @@ async function startServer() {
            }
         }
         return { orders, customers, squads, diwaniyaNotifications };
-      });
+      }, ["orders", "customers", "squads"]);
 
-      try {
-        await mirrorCustomerOrderForAdminRealtime(newOrder);
-      } catch (mirrorError: any) {
-        // The authoritative shard is already saved. Do not reject the customer's order if the
-        // realtime convenience mirror is temporarily unavailable.
+      // The authoritative order shard is already committed. The convenience realtime mirror is
+      // best-effort and must never delay the customer's success response.
+      void mirrorCustomerOrderForAdminRealtime(newOrder).catch((mirrorError: any) => {
         console.warn("[ORDER] Admin realtime order mirror failed:", mirrorError?.message || String(mirrorError));
-      }
+      });
 
       console.log(`[ORDER] Order ${newOrder.id} saved successfully`);
       scheduleAdminOrderCreatedPush(newOrder);
