@@ -80,7 +80,7 @@ export const enableDiwaniyaImportantPush = async ({ phone, squadId }: { phone: s
 
   if (!token) return { state: 'error' as DiwaniyaPushState, message: 'ما قدرنا نجهز رمز الإشعار' };
 
-  const response = await fetch('/api/diwaniya-push/register', {
+  const response = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/diwaniya-push/register", {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

@@ -2134,7 +2134,7 @@ export default function CustomerSite() {
                     const lastAutoTimeVal = parseFloat(sessionStorage.getItem(`last_auto_check_${activeSquadId}`) || "0");
                     if (Date.now() - lastAutoTimeVal > 45000) {
                       sessionStorage.setItem(`last_auto_check_${activeSquadId}`, String(Date.now()));
-                      fetch("/api/squad-presence", {
+                      fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-presence", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -2237,7 +2237,7 @@ export default function CustomerSite() {
                  const lastAutoTimeVal = parseFloat(sessionStorage.getItem(`last_auto_check_${activeSquadId}`) || "0");
                  if (Date.now() - lastAutoTimeVal > 45000) {
                    sessionStorage.setItem(`last_auto_check_${activeSquadId}`, String(Date.now()));
-                   fetch("/api/squad-presence", {
+                   fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-presence", {
                      method: "POST",
                      headers: { "Content-Type": "application/json" },
                      body: JSON.stringify({
@@ -2404,7 +2404,7 @@ export default function CustomerSite() {
      if (!targetSquad?.id) return;
      setRadarLoadingMap(prev => ({ ...prev, [targetSquad.id]: true }));
      try {
-       const res = await fetch("/api/squad-geofence-join-request", {
+       const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-geofence-join-request", {
          method: "POST",
          headers: { "Content-Type": "application/json" },
          body: JSON.stringify({
@@ -2447,7 +2447,7 @@ export default function CustomerSite() {
     const orderId = notification?.meta?.orderId;
     try {
       if (phone && notification?.id) {
-        await fetch("/api/diwaniya-notifications/read", {
+        await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/diwaniya-notifications/read", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ phone, notificationId: notification.id })
@@ -2501,7 +2501,7 @@ export default function CustomerSite() {
     const phone = cleanPhoneForSquad(customerPhone || "").slice(-8);
     try {
       if (phone && n?.id && n?.sourceKind === "notification") {
-        await fetch("/api/diwaniya-notifications/read", {
+        await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/diwaniya-notifications/read", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ phone, notificationId: n.id })
@@ -2597,7 +2597,7 @@ export default function CustomerSite() {
      if (!targetPhone || !decisionSquadId) return;
      setOwnerJoinDecisionLoading(prev => ({ ...prev, [targetPhone]: true }));
      try {
-       const res = await fetch("/api/squad-geofence-approve-request", {
+       const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-geofence-approve-request", {
          method: "POST",
          headers: { "Content-Type": "application/json" },
          body: JSON.stringify({ phone: targetPhone, squadId: decisionSquadId, approved })
@@ -2626,7 +2626,7 @@ export default function CustomerSite() {
     setGuestName(cleanOwnerName);
     setIsSubmittingSquad(true);
     try {
-       const res = await fetch("/api/squad-create", {
+       const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -2668,7 +2668,7 @@ export default function CustomerSite() {
     setGuestName(cleanJoinName);
     setIsSubmittingSquad(true);
     try {
-       const res = await fetch("/api/squad-join", {
+       const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-join", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -3089,7 +3089,7 @@ export default function CustomerSite() {
 
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch("/api/smart-search", {
+        const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/smart-search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query: moodQuery }),
@@ -3120,7 +3120,7 @@ export default function CustomerSite() {
     setIsValidatingPromo(true);
     setPromoError("");
     try {
-      const res = await fetch("/api/validate-promo", {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/validate-promo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: promoCodeInput.trim() }),
@@ -3178,8 +3178,7 @@ export default function CustomerSite() {
             phone: customerPhone,
           });
           if (storedOrderId) trackingParams.set("order_id", storedOrderId);
-          const trackRes = await fetch(
-            `/api/track-orders?${trackingParams.toString()}`,
+          const trackRes = await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/track-orders?${trackingParams.toString()}`,
             {
               headers: {
                 Accept: "application/json",
@@ -3237,8 +3236,7 @@ export default function CustomerSite() {
         const storedOrderId = getStoredCustomerOrderId();
         const customerParams = new URLSearchParams({ phone: customerPhone });
         if (storedOrderId) customerParams.set("order_id", storedOrderId);
-        const customerRes = await fetch(
-          `/api/customers?${customerParams.toString()}`,
+        const customerRes = await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/customers?${customerParams.toString()}`,
           { headers: getCustomerAccessHeaders(customerPhone) },
         );
         if (customerRes.ok) {
@@ -3419,21 +3417,21 @@ export default function CustomerSite() {
     const loadData = async () => {
       try {
         await Promise.all([
-          fetchWithRetry("/api/products").then((allProducts) => {
+          fetchWithRetry((import.meta.env.VITE_API_BASE_URL || "") + "/api/products").then((allProducts) => {
             if (!isMounted) return;
             const validProducts = getCustomerVisibleProducts(Array.isArray(allProducts) ? allProducts : []);
             setProducts(validProducts);
             writeCustomerCacheIdle("cached_products", validProducts);
             setIsLoadingProducts(false);
           }),
-          fetchWithRetry("/api/top-products").then(d => { 
+          fetchWithRetry((import.meta.env.VITE_API_BASE_URL || "") + "/api/top-products").then(d => { 
             if (isMounted) {
               const list = getCustomerVisibleProducts(Array.isArray(d) ? d : []);
               setTopProducts(list);
               writeCustomerCacheIdle("cached_top_products", list);
             }
           }),
-          fetchWithRetry("/api/recent-fomo", 1).then(d => { 
+          fetchWithRetry((import.meta.env.VITE_API_BASE_URL || "") + "/api/recent-fomo", 1).then(d => { 
              if (isMounted && Array.isArray(d) && d.length > 0) {
                  const enrichedFomo = d.map(item => {
                     const rnd = Math.random();
@@ -3445,20 +3443,19 @@ export default function CustomerSite() {
                  setFomoPurchases(enrichedFomo);
              }
           }),
-          fetchWithRetry("/api/regions").then(d => { 
+          fetchWithRetry((import.meta.env.VITE_API_BASE_URL || "") + "/api/regions").then(d => { 
             const sorted = getActiveRegions(d || []).sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar"));
             if (isMounted) {
               setRegions(sorted);
               writeCustomerCacheIdle("cached_regions", sorted);
             }
           }),
-          fetchWithRetry("/api/settings").then(d => { 
+          fetchWithRetry((import.meta.env.VITE_API_BASE_URL || "") + "/api/settings").then(d => { 
             if (isMounted && d) {
               setSettings(d);
               writeCustomerCacheIdle("cached_settings", d);
             }
-          }),
-          fetchWithRetry("/api/debug", 1).then(d => { if (isMounted && d) console.log(d); })
+          })
         ]);
       } catch (err: any) {
         if (err && err.message && (err.message.includes("Failed to fetch") || err.message.includes("Load failed"))) return;
@@ -3510,8 +3507,7 @@ export default function CustomerSite() {
       processedReorderRef.current = reorderId;
       const processReorder = async () => {
         try {
-          const orderRes = await fetch(
-            `/api/track-orders?order_id=${encodeURIComponent(reorderId)}&phone=${encodeURIComponent(customerPhone)}`,
+          const orderRes = await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/track-orders?order_id=${encodeURIComponent(reorderId)}&phone=${encodeURIComponent(customerPhone)}`,
             { headers: getCustomerAccessHeaders(customerPhone) },
           );
           if (orderRes.ok) {
@@ -3720,8 +3716,7 @@ export default function CustomerSite() {
       // If last order has missing items, try to be smarter and find an older order that is fully available
       if (result.missing || result.cart.length === 0) {
         try {
-          const trackRes = await fetch(
-            `/api/track-orders?phone=${encodeURIComponent(lastOrderInfo.customerPhone || customerPhone)}`,
+          const trackRes = await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/track-orders?phone=${encodeURIComponent(lastOrderInfo.customerPhone || customerPhone)}`,
             {
               headers: {
                 Accept: "application/json",
@@ -4188,7 +4183,7 @@ export default function CustomerSite() {
 
     try {
       // Sync to Local API (which handles firestore sync safely via Node backend)
-      const response = await fetch("/api/orders", {
+      const response = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
@@ -4245,7 +4240,7 @@ export default function CustomerSite() {
         // Create payment only if total > 0
         if (!isFreeOrder) {
           try {
-            const payRes = await fetch("/api/create-payment", {
+            const payRes = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/create-payment", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -4281,7 +4276,7 @@ export default function CustomerSite() {
             }
 
             if (paymentLink) {
-              fetch(`/api/orders/${newOrderId}/payment-link`, {
+              fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/orders/${newOrderId}/payment-link`, {
                 method: "PUT",
                 headers: {
                   "Content-Type": "application/json",
@@ -4389,7 +4384,7 @@ export default function CustomerSite() {
       return;
     }
     try {
-      const response = await fetch("/api/create-payment", {
+      const response = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/create-payment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -8370,8 +8365,7 @@ function CheckoutOverlay({
 
     if (currentSquadId && customerCleanPhone) {
       try {
-        const res = await fetch(
-          `/api/squad-gamification?phone=${encodeURIComponent(customerCleanPhone)}&squadId=${encodeURIComponent(currentSquadId)}`,
+        const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/squad-gamification?phone=${encodeURIComponent(customerCleanPhone)}&squadId=${encodeURIComponent(currentSquadId)}`,
           { headers: getCustomerAccessHeaders(customerCleanPhone) },
         );
         if (res.ok) {
