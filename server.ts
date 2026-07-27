@@ -11,19 +11,6 @@ import admin from "firebase-admin";
 import { getMessaging } from "firebase-admin/messaging";
 import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
 import { GoogleGenAI, Type } from "@google/genai";
-import {
-  buildPublicAppData,
-  getCustomerOrderAccess,
-  getCustomerTokenFromHeaders,
-  getTrackingTokenFromHeaders,
-  hashCustomerAccessToken,
-  isAllowedPaymentLink,
-  issueCustomerAccessToken,
-  sanitizeSquadForCustomer,
-  sanitizeTrackedOrder,
-  tokenAuthorizesCustomerPhone,
-  tokenMatchesHash,
-} from "./security";
 
 // Initialize Gemini SDK with User-Agent telemetry
 const aiClient = new GoogleGenAI({
@@ -233,7 +220,6 @@ async function mergeSharedShards(rootData: any) {
       merged[key] = value;
     }
   }
-  if (Array.isArray(merged.squads)) merged.squads = merged.squads.map(coerceSquadTypes);
   return merged;
 }
 
@@ -271,7 +257,6 @@ async function getAppDataForKeys(keysToLoad: readonly ShardedAppDataKey[] = []) 
     const value = await loadSharedShard(key);
     if (Array.isArray(value) && value.length > 0) data[key] = value;
   }));
-  if (Array.isArray(data.squads)) data.squads = data.squads.map(coerceSquadTypes);
   _appDataKeyedCache.set(cacheKey, { time: Date.now(), data });
   return data;
 }
@@ -344,17 +329,6 @@ const removeUndefinedDeep = (value: any): any => {
   }
 
   return value;
-};
-
-const coerceSquadTypes = (sq: any) => {
-  if (typeof sq.membersList === "string") {
-    try { sq.membersList = JSON.parse(sq.membersList); } catch(e) { sq.membersList = []; }
-  }
-  if (!Array.isArray(sq.membersList)) sq.membersList = [];
-  if (typeof sq.location === "string") {
-    try { sq.location = JSON.parse(sq.location); } catch(e) { sq.location = null; }
-  }
-  return sq;
 };
 
 async function updateAppData(data: any) {
@@ -431,7 +405,6 @@ async function updateAppDataAtomically(
             }
           }
         }
-        if (Array.isArray(currentData.squads)) currentData.squads = currentData.squads.map(coerceSquadTypes);
 
         const updates = removeUndefinedDeep(updater(currentData));
 
@@ -480,7 +453,6 @@ async function updateAppDataAtomically(
           }
         }
       }
-      if (Array.isArray(currentData.squads)) currentData.squads = currentData.squads.map(coerceSquadTypes);
 
       const updates = removeUndefinedDeep(updater(currentData));
 
@@ -508,27 +480,6 @@ async function updateAppDataAtomically(
     console.error("[CLIENT_DB] Atomic update failed", err);
     return false;
   }
-}
-
-async function mirrorCustomerOrderForAdminRealtime(order: any) {
-  if (!order?.id) return;
-  const cleaned = removeUndefinedDeep({
-    ...order,
-    date: order.date || order.createdAt || new Date().toISOString(),
-    updatedAt: order.updatedAt || order.createdAt || new Date().toISOString(),
-  });
-  delete cleaned.customerAccessTokenHash;
-
-  if (adminDb) {
-    try {
-      await adminDb.collection("orders").doc(String(cleaned.id)).set(cleaned, { merge: true });
-      return;
-    } catch (error) {
-      handleAdminDbError(error, "mirrorCustomerOrderForAdminRealtime");
-    }
-  }
-
-  await setDoc(doc(db, "orders", String(cleaned.id)), cleaned, { merge: true });
 }
 
 async function sendAdminPushDirectOnce(input: {
@@ -747,363 +698,61 @@ function paymentRecordMatches(record: any, targetId: any): boolean {
   );
 }
 
-type TrackedPaymentState =
-  | "paid"
-  | "failed"
-  | "cancelled"
-  | "pending"
-  | "unknown";
-
-function getTrackedPaymentState(record: any): TrackedPaymentState {
-  const paymentStatus = String(
-    record?.paymentStatus ?? record?.payment_status ?? "",
-  )
-    .trim()
-    .toLowerCase();
-  const status = String(record?.status ?? "").trim().toLowerCase();
-
-  if (
-    ["failed", "failure", "declined", "rejected", "expired", "error"].includes(
-      paymentStatus,
-    ) ||
-    status.includes("فشل") ||
-    status.includes("declined") ||
-    status.includes("rejected")
-  ) {
-    return "failed";
-  }
-
-  if (
-    ["cancelled", "canceled", "cancel"].includes(paymentStatus) ||
-    status.includes("ملغي") ||
-    status.includes("إلغاء") ||
-    status.includes("الغاء") ||
-    status.includes("cancel")
-  ) {
-    return "cancelled";
-  }
-
-  if (
-    ["paid", "captured", "approved", "authorized", "success", "successful"].includes(
-      paymentStatus,
-    ) ||
-    status === "paid" ||
-    status === "تم الدفع" ||
-    status === "تم الدفع بنجاح" ||
-    status.includes("تم التوصيل")
-  ) {
-    return "paid";
-  }
-
-  if (
-    ["pending", "new", "partial", "split", "split_pending"].includes(
-      paymentStatus,
-    ) ||
-    status === "جديد" ||
-    status.includes("بانتظار") ||
-    status.includes("تجميع القطية")
-  ) {
-    return "pending";
-  }
-
-  return "unknown";
-}
-
-function toPaymentTimestamp(value: any): number {
-  if (!value) return 0;
-  if (typeof value?.toMillis === "function") {
-    try {
-      return Number(value.toMillis()) || 0;
-    } catch {}
-  }
-  if (typeof value?._seconds === "number") {
-    return value._seconds * 1000 + Number(value._nanoseconds || 0) / 1e6;
-  }
-  if (typeof value?.seconds === "number") {
-    return value.seconds * 1000 + Number(value.nanoseconds || 0) / 1e6;
-  }
-  const timestamp = new Date(value).getTime();
-  return Number.isFinite(timestamp) ? timestamp : 0;
-}
-
-function getTrackedPaymentTimestamp(
-  record: any,
-  state: TrackedPaymentState,
-): number {
-  const preferred =
-    state === "paid"
-      ? [record?.paymentUpdatedAt, record?.paidAt]
-      : state === "failed"
-        ? [record?.paymentUpdatedAt, record?.failedAt]
-        : [record?.paymentUpdatedAt];
-  const preferredTimes = preferred
-    .map(toPaymentTimestamp)
-    .filter((timestamp) => timestamp > 0);
-  if (preferredTimes.length > 0) {
-    return Math.max(...preferredTimes);
-  }
-
-  const fallback = [
-    record?.updatedAt,
-    record?.lastUpdated,
-    record?.modifiedAt,
-    record?.createdAt,
-    record?.date,
-  ];
-  return Math.max(0, ...fallback.map(toPaymentTimestamp));
-}
-
-function getTrackedRecordRichness(record: any): number {
-  const itemCount = Array.isArray(record?.items) ? record.items.length : 0;
-  const splitCount = Array.isArray(record?.splitPayments)
-    ? record.splitPayments.length
-    : 0;
-  return (
-    itemCount * 20 +
-    splitCount * 5 +
-    (record?.address ? 8 : 0) +
-    (record?.customerPhone || record?.phone ? 4 : 0) +
-    (record?.customerName ? 3 : 0) +
-    (record?.deliveryDate || record?.deliveryTime ? 2 : 0)
-  );
-}
-
-/**
- * Tracking may receive the same sale from both `orders` and `invoices`.
- * Reconcile them into one record so polling cannot jump between conflicting
- * copies (for example: a failed invoice and a stale paid order).
- */
-function reconcileTrackedPaymentRecords(records: any[]): any[] {
-  if (!Array.isArray(records) || records.length < 2) return records || [];
-
-  const invoiceKeyByLinkedOrder = new Map<string, string>();
-  records.forEach((record: any) => {
-    if (!record?.isInvoice) return;
-    const invoiceKey = normalizePaymentLookupId(
-      record.id || record.invoiceId || record.invoice_id,
-    );
-    const linkedOrderKey = normalizePaymentLookupId(
-      record.linkedOrderId || record.orderId || record.order_id,
-    );
-    if (invoiceKey && linkedOrderKey) {
-      invoiceKeyByLinkedOrder.set(linkedOrderKey, invoiceKey);
-    }
-  });
-
-  const groups = new Map<string, Array<{ record: any; index: number }>>();
-  records.forEach((record: any, index: number) => {
-    const ownId = normalizePaymentLookupId(
-      record?.id || record?.orderId || record?.order_id,
-    );
-    const explicitInvoiceId = normalizePaymentLookupId(
-      record?.isInvoice
-        ? record?.id || record?.invoiceId || record?.invoice_id
-        : record?.linkedInvoiceId || record?.invoiceId || record?.invoice_id,
-    );
-    const key =
-      explicitInvoiceId ||
-      invoiceKeyByLinkedOrder.get(ownId) ||
-      ownId ||
-      `TRACK-${index}`;
-    const group = groups.get(key) || [];
-    group.push({ record, index });
-    groups.set(key, group);
-  });
-
-  return Array.from(groups.entries()).map(([groupKey, entries]) => {
-    if (entries.length === 1) return entries[0].record;
-
-    const richest = [...entries].sort(
-      (a, b) =>
-        getTrackedRecordRichness(b.record) -
-          getTrackedRecordRichness(a.record) ||
-        a.index - b.index,
-    )[0].record;
-
-    const authoritative = [...entries].sort((a, b) => {
-      const stateA = getTrackedPaymentState(a.record);
-      const stateB = getTrackedPaymentState(b.record);
-      const knownA = stateA === "unknown" || stateA === "pending" ? 0 : 1;
-      const knownB = stateB === "unknown" || stateB === "pending" ? 0 : 1;
-      if (knownA !== knownB) return knownB - knownA;
-
-      const timeA = getTrackedPaymentTimestamp(a.record, stateA);
-      const timeB = getTrackedPaymentTimestamp(b.record, stateB);
-      if (timeA !== timeB) return timeB - timeA;
-
-      const invoiceA = a.record?.isInvoice ? 1 : 0;
-      const invoiceB = b.record?.isInvoice ? 1 : 0;
-      if (invoiceA !== invoiceB) return invoiceB - invoiceA;
-
-      return a.index - b.index;
-    })[0].record;
-
-    const invoiceRecord = entries.find(
-      (entry) => entry.record?.isInvoice,
-    )?.record;
-    const orderRecord = entries.find(
-      (entry) => !entry.record?.isInvoice,
-    )?.record;
-    const merged: any = {
-      ...richest,
-      ...authoritative,
-      trackingRecordKey: groupKey,
-    };
-
-    if (
-      Array.isArray(richest?.items) &&
-      richest.items.length >
-        (Array.isArray(merged.items) ? merged.items.length : 0)
-    ) {
-      merged.items = richest.items;
-    }
-    if (!merged.address && richest?.address) merged.address = richest.address;
-    if (!merged.customerPhone && richest?.customerPhone) {
-      merged.customerPhone = richest.customerPhone;
-    }
-    if (!merged.customerName && richest?.customerName) {
-      merged.customerName = richest.customerName;
-    }
-
-    if (invoiceRecord) {
-      merged.linkedInvoiceId =
-        merged.linkedInvoiceId ||
-        invoiceRecord.id ||
-        invoiceRecord.invoiceId;
-    }
-    if (orderRecord) {
-      merged.linkedOrderId =
-        merged.linkedOrderId || orderRecord.id || orderRecord.orderId;
-    }
-
-    [
-      "status",
-      "paymentStatus",
-      "payment_status",
-      "paidAt",
-      "failedAt",
-      "paymentUpdatedAt",
-      "transactionId",
-      "paymentId",
-      "payment_id",
-      "paid",
-      "failed",
-      "canPay",
-    ].forEach((field) => {
-      if (authoritative?.[field] !== undefined) {
-        merged[field] = authoritative[field];
-      } else {
-        delete merged[field];
-      }
-    });
-
-    return merged;
-  });
-}
-
 async function syncRootPaymentDocsFast(orderId: string, isSuccess: boolean, providerData: any) {
-  if (!orderId) return;
+  if (!adminDb || !orderId) return;
   const cleanId = normalizePaymentLookupId(orderId);
   if (!cleanId) return;
 
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const patch: any = isSuccess
+    ? {
+        status: "تم الدفع بنجاح",
+        paymentStatus: "paid",
+        payment_status: "paid",
+        paid: true,
+        failed: false,
+        canPay: false,
+        paidAt: now,
+        paymentUpdatedAt: now,
+        updatedAt: now,
+      }
+    : {
+        status: "فشل في عملية الدفع",
+        paymentStatus: "failed",
+        payment_status: "failed",
+        failed: true,
+        paid: false,
+        canPay: true,
+        failedAt: now,
+        paymentUpdatedAt: now,
+        updatedAt: now,
+      };
+
   const transactionId = providerData?.reference?.id || providerData?.TrackID || providerData?.order_id || providerData?.track_id || "";
-  const buildPatch = (timestamp: any) => {
-    const patch: any = isSuccess
-      ? {
-          status: "تم الدفع بنجاح",
-          paymentStatus: "paid",
-          payment_status: "paid",
-          paid: true,
-          failed: false,
-          canPay: false,
-          paidAt: timestamp,
-          paymentUpdatedAt: timestamp,
-          updatedAt: timestamp,
-        }
-      : {
-          status: "فشل في عملية الدفع",
-          paymentStatus: "failed",
-          payment_status: "failed",
-          failed: true,
-          paid: false,
-          canPay: true,
-          failedAt: timestamp,
-          paymentUpdatedAt: timestamp,
-          updatedAt: timestamp,
-        };
-
-    if (transactionId) {
-      patch.transactionId = transactionId;
-      patch.paymentId = transactionId;
-      patch.payment_id = transactionId;
-    }
-    return patch;
-  };
-
-  const currentHasConfirmedPayment = (current: any) => {
-    const markedPaid =
-      current?.paid === true ||
-      String(current?.paymentStatus || current?.payment_status || "").toLowerCase() === "paid" ||
-      String(current?.status || "").includes("تم الدفع");
-    const hasGatewayProof = Boolean(
-      current?.paidAt ||
-      current?.transactionId ||
-      current?.paymentId ||
-      current?.payment_id ||
-      current?.reference?.id
-    );
-    return markedPaid && hasGatewayProof;
-  };
-
-  if (adminDb) {
-    const patch = buildPatch(admin.firestore.FieldValue.serverTimestamp());
-    const updateIfExists = async (ref: any) => {
-      const snap = await ref.get();
-      if (!snap.exists) return;
-      const current = snap.data() || {};
-      if (!isSuccess && currentHasConfirmedPayment(current)) return;
-      await ref.set(patch, { merge: true });
-    };
-
-    try {
-      await Promise.all([
-        updateIfExists(adminDb.collection("orders").doc(cleanId)),
-        updateIfExists(adminDb.collection("invoices").doc(cleanId)),
-        adminDb.collection("orders").where("linkedInvoiceId", "==", cleanId).limit(20).get().then((snap: any) =>
-          Promise.all(snap.docs.map((docSnap: any) => updateIfExists(docSnap.ref)))
-        ),
-        adminDb.collection("invoices").where("linkedOrderId", "==", cleanId).limit(20).get().then((snap: any) =>
-          Promise.all(snap.docs.map((docSnap: any) => updateIfExists(docSnap.ref)))
-        ),
-      ]);
-      return;
-    } catch (error: any) {
-      handleAdminDbError(error, "syncRootPaymentDocsFast");
-      console.warn("[PAYMENT_UPDATE] Admin SDK root sync failed; retrying with Client SDK:", error?.message || String(error));
-    }
+  if (transactionId) {
+    patch.transactionId = transactionId;
+    patch.paymentId = transactionId;
+    patch.payment_id = transactionId;
   }
 
-  // Google Studio deployments can run without Admin SDK IAM. Keep the same realtime mirrors
-  // current through the authenticated Client SDK so the admin supplier ledger still refreshes.
-  const patch = buildPatch(new Date().toISOString());
-  const updateClientIfExists = async (ref: any) => {
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return;
+  const updateIfExists = async (ref: any) => {
+    const snap = await ref.get();
+    if (!snap.exists) return;
     const current = snap.data() || {};
-    if (!isSuccess && currentHasConfirmedPayment(current)) return;
-    await setDoc(ref, patch, { merge: true });
+    if (!isSuccess && (current.paymentStatus === "paid" || String(current.status || "").includes("تم الدفع"))) return;
+    await ref.set(patch, { merge: true });
   };
 
   try {
-    const [linkedOrders, linkedInvoices] = await Promise.all([
-      getDocs(query(collection(db, "orders"), where("linkedInvoiceId", "==", cleanId), limit(20))),
-      getDocs(query(collection(db, "invoices"), where("linkedOrderId", "==", cleanId), limit(20))),
-    ]);
     await Promise.all([
-      updateClientIfExists(doc(db, "orders", cleanId)),
-      updateClientIfExists(doc(db, "invoices", cleanId)),
-      ...linkedOrders.docs.map((docSnap: any) => updateClientIfExists(docSnap.ref)),
-      ...linkedInvoices.docs.map((docSnap: any) => updateClientIfExists(docSnap.ref)),
+      updateIfExists(adminDb.collection("orders").doc(cleanId)),
+      updateIfExists(adminDb.collection("invoices").doc(cleanId)),
+      adminDb.collection("orders").where("linkedInvoiceId", "==", cleanId).limit(20).get().then((snap: any) =>
+        Promise.all(snap.docs.map((docSnap: any) => updateIfExists(docSnap.ref)))
+      ),
+      adminDb.collection("invoices").where("linkedOrderId", "==", cleanId).limit(20).get().then((snap: any) =>
+        Promise.all(snap.docs.map((docSnap: any) => updateIfExists(docSnap.ref)))
+      ),
     ]);
   } catch (error: any) {
     console.warn("[PAYMENT_UPDATE] Fast root payment sync skipped:", error?.message || String(error));
@@ -1113,7 +762,6 @@ async function syncRootPaymentDocsFast(orderId: string, isSuccess: boolean, prov
 async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: boolean, providerData: any) {
   console.log(`[PAYMENT_UPDATE] Processing Order:${orderId} Split:${splitId} Success:${isSuccess}`);
   const directPushes: any[] = [];
-  let refreshedOrderMirror: any = null;
   const fastOrderId = String(orderId || "").includes("-S-")
     ? String(orderId || "").split("-S-")[0]
     : String(orderId || "");
@@ -1291,26 +939,12 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
       });
 
       if (updated) {
-        if (oIdx !== -1 && orders[oIdx]) {
-          refreshedOrderMirror = removeUndefinedDeep({
-            ...orders[oIdx],
-            date: orders[oIdx].date || orders[oIdx].createdAt || new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          });
-        }
         return { orders, invoices, customers };
       }
       return null;
   }, ["orders", "invoices", "customers"]);
 
   if (ok) {
-    if (refreshedOrderMirror) {
-      // Backfill the complete paid/failed order snapshot (items + supplier metadata) into the
-      // realtime root mirror. A status-only mirror cannot build the supplier ledger reliably.
-      void mirrorCustomerOrderForAdminRealtime(refreshedOrderMirror).catch((mirrorError: any) => {
-        console.warn("[PAYMENT_UPDATE] Full admin order mirror refresh failed:", mirrorError?.message || String(mirrorError));
-      });
-    }
     _appDataCache = null;
     _appDataCacheTime = 0;
     _appDataKeyedCache.clear();
@@ -1359,60 +993,6 @@ function cleanPhone(phone) {
     return cleaned.slice(-8);
   }
   return cleaned;
-}
-
-const ORDER_ADMIN_ALLOWED_UIDS = new Set([
-  "2KVrKwyvmVaKQYc9iiw87xoztrA3",
-  "abi4lzKo4VfiLkrBAkYfK8NjtLS2",
-  "L4qKc2PsZXamk96nvGTqPLjYhI03",
-  "0v30UI3SYyfzuGO15i5qRqejif62",
-  "2qUU5RXByXPkQASR1mJR9krryPd2",
-]);
-const ORDER_ADMIN_ALLOWED_EMAILS = new Set([
-  "volcanokw@gmail.com",
-  "dr.ahmad.alfailakawi@gmail.com",
-  "alfailakawidrahmad@gmail.com",
-  "mfq241188@gmail.com",
-  "omaralawadhi67@gmail.com",
-]);
-
-async function requireAuthorizedAdminAuth(req: any, res: any, next: any) {
-  try {
-    const header = String(req.headers?.authorization || "");
-    const token = header.toLowerCase().startsWith("bearer ")
-      ? header.slice(7).trim()
-      : "";
-    if (!token) return res.status(401).json({ error: "Unauthorized" });
-
-    const decoded: any = await admin.auth().verifyIdToken(token);
-    const uid = String(decoded?.uid || "");
-    const email = String(decoded?.email || "").trim().toLowerCase();
-    if (
-      !ORDER_ADMIN_ALLOWED_UIDS.has(uid) &&
-      !ORDER_ADMIN_ALLOWED_EMAILS.has(email)
-    ) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-    return next();
-  } catch {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-}
-
-function requireDebugAccess(req: any, res: any, next: any) {
-  if (String(process.env.ENABLE_DEBUG_ROUTES || "").toLowerCase() !== "true") {
-    return res.status(404).json({ error: "Not found" });
-  }
-
-  const expected = String(process.env.ADMIN_TEST_SECRET || "").trim();
-  const received = String(req.headers?.["x-admin-secret"] || "").trim();
-  if (
-    !expected ||
-    !tokenMatchesHash(received, hashCustomerAccessToken(expected))
-  ) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-  return next();
 }
 
 function makeDiwaniyaNotification(input: any) {
@@ -1589,19 +1169,6 @@ async function startServer() {
     res.setHeader("Surrogate-Control", "no-store");
     next();
   });
-  app.use("/api/admin", requireAuthorizedAdminAuth);
-  app.use(
-    [
-      "/api/debug",
-      "/api/debug/order",
-      "/api/debug-collections",
-      "/api/debug-docs",
-      "/api/debug-search",
-      "/api/debug-squads",
-      "/api/debug-loyalty",
-    ],
-    requireDebugAccess,
-  );
 
   app.post("/api/diwaniya-push/register", async (req, res) => {
     try {
@@ -1670,21 +1237,25 @@ async function startServer() {
   // API Routes
 
   // 1. Track Orders
-  app.get("/api/appdata", async (_req, res) => {
-    try {
-      const d = await getAppDataRef();
-      const data = d.exists() ? d.data() : {};
-      return res.json(buildPublicAppData(data));
-    } catch {
-      return res.status(500).json({});
-    }
-  });
+  app.get("/api/appdata", async (req, res) => {
+  try {
+    const d = await getAppDataRef();
+    res.json(d.exists() ? d.data() : {});
+  } catch(e) {
+    res.status(500).json({});
+  }
+});
 
-  app.patch("/api/appdata", (_req, res) => {
-    return res.status(405).json({ error: "Method not allowed" });
-  });
+app.patch("/api/appdata", async (req, res) => {
+  try {
+    await updateAppData(req.body);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({});
+  }
+});
 
-  app.get("/api/debug/order/:id", async (req, res) => {
+app.get("/api/debug/order/:id", async (req, res) => {
     try {
       const dbData = await getAppDataRef();
       const data = dbData.exists() ? dbData.data() : {};
@@ -1706,11 +1277,6 @@ async function startServer() {
 
     try {
       const cleanQueryPhone = phone ? cleanPhone(phone) : null;
-      if (phone && cleanQueryPhone?.length !== 8) {
-        return res.status(400).json({ error: "Invalid phone number" });
-      }
-      const customerToken = getCustomerTokenFromHeaders(req.headers);
-      const trackingToken = getTrackingTokenFromHeaders(req.headers);
 
       const appData = await getAppDataForKeys(["orders", "invoices", "customers", "products", "supplierCopies"]);
 
@@ -1745,58 +1311,76 @@ async function startServer() {
         ...inv,
         isInvoice: true,
       }));
-      const customers = appData.customers || [];
-      const customerPhoneById = new Map(
-        customers
-          .filter((customer: any) => customer?.id)
-          .map((customer: any) => [
-            String(customer.id),
-            cleanPhone(customer.phone || customer.customerPhone || ""),
-          ]),
-      );
-      const withResolvedOwnerPhone = (item: any) => {
-        if (
-          cleanPhone(
-            item?.customerPhone ||
-              item?.phone ||
-              item?.address?.phone,
-          )
-        ) {
-          return item;
-        }
-        const resolvedPhone = item?.customerId
-          ? customerPhoneById.get(String(item.customerId))
-          : "";
-        return resolvedPhone ? { ...item, customerPhone: resolvedPhone } : item;
-      };
-      const allCustomerRecords = [...allOrdersOriginal, ...allInvoices].map(
-        withResolvedOwnerPhone,
-      );
-      const customerTokenAuthorizesPhone = tokenAuthorizesCustomerPhone(
-        allCustomerRecords,
-        cleanQueryPhone,
-        customerToken,
-      );
-      const accessFor = (item: any) =>
-        getCustomerOrderAccess(withResolvedOwnerPhone(item), {
-          phone: cleanQueryPhone,
-          orderId: order_id,
-          token: customerToken,
-          trackingToken,
-          tokenAuthorizesPhone: customerTokenAuthorizesPhone,
-        });
 
-      const matchedOrders = allOrdersOriginal.filter(
-        (item: any) => accessFor(item) !== "none",
-      );
-      const matchedInvoices = allInvoices.filter(
-        (item: any) => accessFor(item) !== "none",
-      );
-      const allMatched = [...matchedOrders, ...matchedInvoices];
-      const finalOrders = reconcileTrackedPaymentRecords(allMatched);
       console.log(
-        `[TRACK] Authorized records returned: ${allMatched.length}; reconciled: ${finalOrders.length}`,
+        `DEBUG: Tracking orders for ${cleanQueryPhone} or order_id ${order_id}. Total shared orders: ${allOrdersOriginal.length}, invoices: ${allInvoices.length}`,
       );
+
+      const customers = appData.customers || [];
+      const matchingCustomerIds = customers
+        .filter(
+          (c: any) =>
+            cleanQueryPhone && cleanPhone(c.phone) === cleanQueryPhone,
+        )
+        .map((c: any) => c.id);
+
+      // Filter function
+      const filterFn = (item: any) => {
+        let match = false;
+        if (cleanQueryPhone) {
+          const itemPhone = cleanPhone(
+            item.customerPhone ||
+              item.phone ||
+              (item.address && item.address.phone),
+          );
+          match =
+            itemPhone === cleanQueryPhone ||
+            (item.customerId && matchingCustomerIds.includes(item.customerId));
+
+          // Allow participants in split payments to see it
+          if (!match && item.splitPayments && Array.isArray(item.splitPayments)) {
+            match = item.splitPayments.some((p: any) => cleanPhone(p.phone) === cleanQueryPhone);
+          }
+
+          // Allow participants in roulette to see it
+          if (!match && item.splitParticipants && Array.isArray(item.splitParticipants)) {
+            match = item.splitParticipants.some((p: any) => cleanPhone(p.phone) === cleanQueryPhone);
+          }
+        }
+        if (!match && order_id) {
+          let qid = String(order_id).trim().toUpperCase();
+          
+          let last4Match = "";
+          if (qid.startsWith("ORD-") && qid.length >= 7) {
+            last4Match = qid.replace("ORD-", "");
+          } else if (qid.length === 4) {
+            last4Match = qid;
+          }
+
+          match =
+            String(item.id).toUpperCase() === qid ||
+            String(item.linkedInvoiceId).toUpperCase() === qid ||
+            String(item.invoiceId).toUpperCase() === qid ||
+            (!!last4Match && String(item.id).toUpperCase().endsWith(last4Match)) ||
+            (!!last4Match && item.invoiceId && String(item.invoiceId).toUpperCase().endsWith(last4Match)) ||
+            (!!last4Match && item.linkedInvoiceId && String(item.linkedInvoiceId).toUpperCase().endsWith(last4Match));
+
+          if (!match && qid.includes("-S-")) {
+            const base = qid.split("-S-")[0];
+            match = String(item.id).toUpperCase() === base;
+          }
+        }
+        return match;
+      };
+
+      const matchedOrders = allOrdersOriginal.filter(filterFn);
+      const matchedInvoices = allInvoices.filter(filterFn);
+      const allMatched = [...matchedOrders, ...matchedInvoices];
+      console.log(
+        `DEBUG: Found matched orders: ${matchedOrders.length}, invoices: ${matchedInvoices.length}`,
+      );
+
+      const finalOrders = allMatched;
 
       // Calculate loyalty points from paid active invoices only, matching the Admin customer source.
       let points = 0;
@@ -1811,18 +1395,7 @@ async function startServer() {
           const ph = cleanPhone(inv.customerPhone || inv.phone || "");
           return ph === cleanQueryPhone && isPaid(inv.status, inv.paymentStatus) && inv.deleted !== true && inv.isDeleted !== true;
         });
-        const invoicesTotal = activeInvoicesForPoints.reduce(
-          (sum: number, inv: any) =>
-            sum +
-            Number(
-              inv.totalAmount ??
-                inv.grandTotal ??
-                inv.total ??
-                inv.amount ??
-                0,
-            ),
-          0,
-        );
+        const invoicesTotal = activeInvoicesForPoints.reduce((sum: number, inv: any) => sum + (Number(inv.total || inv.totalAmount || inv.amount || 0)), 0);
 
         points = Math.round(invoicesTotal);
       }
@@ -1841,41 +1414,48 @@ async function startServer() {
           0,
       );
 
+      console.log(
+        `DEBUG TrackOrders: Phone=${cleanQueryPhone}, GlobalFree=${isGlobalFreeDelivery}, Threshold=${freeDeliveryThreshold}`,
+      );
+
+      let needsPersistence = false;
       const populatedOrders = finalOrders.map((o: any) => {
-        // Tracking is read-only for payment state. Only the payment callback/
-        // webhook pipeline may promote a record to paid.
+        // Healing Logic: If paymentStatus is paid but status is stuck in split/roulette mode, auto-fix it
+        if ((o.paymentStatus === 'paid' || o.status === 'paid' || (o.splitPayments && o.splitPayments.filter((sp:any) => sp.status === 'paid').reduce((sum:number, sp:any) => sum + (Number(sp.amount) || 0), 0) >= (Number(o.total) || 0) - 0.005)) && 
+            (o.status === "قيد تجميع القطية" || o.status === "بانتظار الدفع" || o.status === "جديد")) {
+          o.status = "تم الدفع بنجاح";
+          o.paymentStatus = "paid";
+          needsPersistence = true;
+          
+          if (!o.paidAt) {
+             o.paidAt = new Date().toISOString();
+          }
+
+          // Add points to customer if healing for the first time
+          const cPhone = cleanPhone(o.customerPhone);
+          const cIdx = customers.findIndex((c: any) => cleanPhone(c.phone) === cPhone);
+          if (cIdx !== -1) {
+             const prevPoints = Number(customers[cIdx].loyaltyPoints) || 0;
+             customers[cIdx].loyaltyPoints = prevPoints + (Number(o.total) || 0);
+             if (cPhone === cleanQueryPhone) {
+                 points = customers[cIdx].loyaltyPoints;
+             }
+          }
+
+          console.log(`[HEALING] Order ${o.id} auto-corrected to paid status during tracking`);
+        }
+        
         const oDeliveryFeeOriginal = Number(
           o.deliveryFee ?? o.deliveryInfo?.finalPrice ?? 0,
         );
-        const oTotalOriginal = Number(
-          o.totalAmount ??
-            o.grandTotal ??
-            o.finalTotal ??
-            o.amountDue ??
-            o.total ??
-            o.amount ??
-            0,
+        const oTotalOriginal = Number(o.total ?? o.totalAmount ?? 0);
+        const itemsTotalValue = Math.max(
+          0,
+          oTotalOriginal - oDeliveryFeeOriginal,
         );
-        const oDiscountAmount = Number(
-          o.discountAmount ?? o.discount ?? o.promoDiscount ?? 0,
-        );
-        const explicitSubtotal = Number(
-          o.subtotal ?? o.itemsSubtotal ?? o.subTotal,
-        );
-        const itemsTotalValue = Number.isFinite(explicitSubtotal)
-          ? Math.max(0, explicitSubtotal)
-          : Math.max(
-              0,
-              oTotalOriginal +
-                oDiscountAmount -
-                oDeliveryFeeOriginal,
-            );
 
-        const wasStoredAsFree =
-          o.isFreeDelivery ||
-          o.deliveryType === "free" ||
-          oDeliveryFeeOriginal === 0;
-        let shouldBeFree = wasStoredAsFree || isGlobalFreeDelivery;
+        let shouldBeFree =
+          o.isFreeDelivery || isGlobalFreeDelivery || o.deliveryType === "free";
 
         // Apply threshold dynamically even for old orders if tracked now
         if (
@@ -1887,10 +1467,7 @@ async function startServer() {
         }
 
         const finalDeliveryFee = shouldBeFree ? 0 : oDeliveryFeeOriginal;
-        const finalTotal =
-          shouldBeFree && !wasStoredAsFree
-            ? Math.max(0, oTotalOriginal - oDeliveryFeeOriginal)
-            : Math.max(0, oTotalOriginal);
+        const finalTotal = shouldBeFree ? itemsTotalValue : oTotalOriginal;
 
         let custName = o.customerName;
         let custPhone = o.customerPhone || o.phone;
@@ -1973,24 +1550,23 @@ async function startServer() {
           isFreeDelivery: shouldBeFree,
           deliveryType: shouldBeFree ? "free" : o.deliveryType,
           deliveryFee: finalDeliveryFee,
-          subtotal: itemsTotalValue,
-          discountAmount: oDiscountAmount,
-          grandTotal: finalTotal,
-          totalAmount: finalTotal,
           total: finalTotal,
         };
       });
 
-      const safeOrders = populatedOrders
-        .map((order: any) => {
-          const access = accessFor(order);
-          return access === "none"
-            ? null
-            : sanitizeTrackedOrder(order, access, cleanQueryPhone);
-        })
-        .filter(Boolean);
+      if (needsPersistence) {
+        // Find updated orders and merge into allOrders (which includes orders not being tracked)
+        const mergedOrders = (appData.orders || []).map(o => {
+          const match = populatedOrders.find(po => po.id === o.id);
+          if (match && match.paymentStatus === 'paid') {
+             return { ...o, status: match.status, paymentStatus: match.paymentStatus, paidAt: match.paidAt };
+          }
+          return o;
+        });
+        await updateAppData({ orders: mergedOrders, customers: customers });
+      }
 
-      res.json(safeOrders);
+      res.json(populatedOrders);
     } catch (error) {
       console.error("Error tracking orders:", error);
       res.status(500).json({ error: "Failed to fetch orders" });
@@ -2138,12 +1714,12 @@ async function startServer() {
   });
 
   // 3. Settings (fallback to shared_company_data)
-  app.get("/api/settings", async (_req, res) => {
+  app.get("/api/settings", async (req, res) => {
     try {
       let settings: any = {};
       const data = await getAppDataForKeys([]);
       if (data) {
-        settings = { ...(data.settings || {}) };
+        settings = data.settings || {};
         const rootGeofenceDistance =
           data.squadGeofenceDistance ??
           data.diwaniyaGeofenceDistance ??
@@ -2191,7 +1767,7 @@ async function startServer() {
           }
         }
       }
-      res.json(buildPublicAppData({ settings }).settings);
+      res.json(settings);
     } catch (error) {
       console.error("Error fetching settings:", error);
       res.status(500).json({ error: "Failed to fetch settings" });
@@ -2252,7 +1828,7 @@ async function startServer() {
   app.get("/api/squad-gamification", async (req, res) => {
     let { phone, squadId } = req.query;
     try {
-      const data = await getAppDataForKeys(["squads", "customers", "orders", "invoices"]);
+      const data = await getAppDataForKeys(["squads", "customers", "orders"]);
       const squads = data.squads || [];
       
       const customers = data.customers || [];
@@ -2294,12 +1870,6 @@ async function startServer() {
       const topSquads = [...enrichedSquads].sort((a,b) => b.totalOrders - a.totalOrders).slice(0, 5);
 
       const cleanQPhone = phone ? cleanPhone(phone as string) : null;
-      const customerToken = getCustomerTokenFromHeaders(req.headers);
-      const hasVerifiedCustomerAccess = tokenAuthorizesCustomerPhone(
-        [...(data.orders || []), ...(data.invoices || [])],
-        cleanQPhone,
-        customerToken,
-      );
       let joinedSquadId = squadId ? String(squadId) : null;
       let userSquads: any[] = [];
 
@@ -2458,57 +2028,23 @@ async function startServer() {
         : [];
       const unreadDiwaniyaNotifications = diwaniyaNotifications.filter((n: any) => !n.readAt).length;
 
-      const safeSquadPresence = squadPresence.map((entry: any) =>
-        sanitizeSquadForCustomer(entry, cleanQPhone),
-      );
-      const safeNotifications = diwaniyaNotifications.map(
-        (notification: any) =>
-          sanitizeSquadForCustomer(notification, cleanQPhone),
-      );
-      const safeBeautifulLog =
-        hasVerifiedCustomerAccess && squadBeautifulLog
-          ? {
-              ...squadBeautifulLog,
-              recentOrders: (squadBeautifulLog.recentOrders || []).map(
-                (order: any) =>
-                  sanitizeTrackedOrder(order, "split", cleanQPhone),
-              ),
-            }
-          : null;
-
       res.json({
-         topSquads: topSquads.map((squad: any) =>
-           sanitizeSquadForCustomer(squad, cleanQPhone),
-         ),
-         mySquad: mySquad
-           ? sanitizeSquadForCustomer(mySquad, cleanQPhone)
-           : null,
+         topSquads,
+         mySquad,
          myRank,
          myMemberData,
-         userSquads: userSquads.map((squad: any) =>
-           sanitizeSquadForCustomer(squad, cleanQPhone),
-         ),
-         activeSquads: activeSquadsWithCoords.map((squad: any) =>
-           sanitizeSquadForCustomer(squad, cleanQPhone),
-         ),
-         pendingGeofenceRequests: hasVerifiedCustomerAccess
-           ? pendingGeofenceRequests
-           : [],
+         userSquads,
+         activeSquads: activeSquadsWithCoords,
+         pendingGeofenceRequests,
          myGeofenceRequests,
-         squadPresence: safeSquadPresence,
-         activeGroupOrder: activeGroupOrder
-           ? sanitizeTrackedOrder(activeGroupOrder, "split", cleanQPhone)
-           : null,
-         tempCodes: hasVerifiedCustomerAccess ? tempCodes : [],
-         usualOrder: hasVerifiedCustomerAccess ? usualOrder : null,
-         squadBeautifulLog: safeBeautifulLog,
-         activeQatyaOrders: activeQatyaOrders.map((order: any) =>
-           sanitizeTrackedOrder(order, "split", cleanQPhone),
-         ),
-         diwaniyaNotifications: safeNotifications,
-         unreadDiwaniyaNotifications: safeNotifications.filter(
-           (notification: any) => !notification.readAt,
-         ).length,
+         squadPresence,
+         activeGroupOrder,
+         tempCodes,
+         usualOrder,
+         squadBeautifulLog,
+         activeQatyaOrders,
+         diwaniyaNotifications,
+         unreadDiwaniyaNotifications
       });
     } catch(e) {
       res.status(500).json({ error: String(e) });
@@ -3211,41 +2747,18 @@ async function startServer() {
   });
 
   app.get("/api/customers", async (req, res) => {
-    const { phone, order_id } = req.query;
+    let { phone } = req.query;
     if (!phone) {
       return res.status(400).json({ error: "Phone number required" });
     }
     try {
       const cleanQueryPhone = cleanPhone(phone);
-      if (cleanQueryPhone.length !== 8) {
-        return res.status(400).json({ error: "Invalid phone number" });
-      }
 
       const d = await getAppDataRef();
       const data = d.data() || {};
       const customers = data.customers || [];
       const invoices = data.invoices || [];
       const orders = data.orders || [];
-      const allCustomerRecords = [...orders, ...invoices];
-      const customerToken = getCustomerTokenFromHeaders(req.headers);
-      const hasCustomerToken = tokenAuthorizesCustomerPhone(
-        allCustomerRecords,
-        cleanQueryPhone,
-        customerToken,
-      );
-      const hasLegacyOrderProof = Boolean(order_id) && allCustomerRecords.some(
-        (record: any) =>
-          getCustomerOrderAccess(record, {
-            phone: cleanQueryPhone,
-            orderId: order_id,
-            token: customerToken,
-            tokenAuthorizesPhone: hasCustomerToken,
-          }) === "private",
-      );
-
-      if (!hasCustomerToken && !hasLegacyOrderProof) {
-        return res.status(403).json({ error: "Customer verification required" });
-      }
 
       const isPaid = (status?: string, paymentStatus?: string) => {
         const s = String(status || "").toLowerCase();
@@ -3266,13 +2779,10 @@ async function startServer() {
       customers.forEach((customer: any) => {
         const phoneField = customer.phone;
         if (phoneField && cleanPhone(phoneField) === cleanQueryPhone) {
+          const stored = customer.loyaltyPoints !== undefined ? customer.loyaltyPoints : (customer.points || 0);
           matchedCustomers.push({
-            name: customer.name || customer.customerName || "",
-            phone: cleanQueryPhone,
-            address: customer.address || null,
+            ...customer,
             loyaltyPoints: computedPoints,
-            points: computedPoints,
-            lastUpdated: customer.lastUpdated || customer.lastOrderDate || "",
           });
         }
       });
@@ -3287,15 +2797,9 @@ async function startServer() {
         if (recentInvoice) {
           matchedCustomers.push({
             name: recentInvoice.customerName || recentInvoice.name || "",
-            phone: cleanQueryPhone,
+            phone: phone,
             address: recentInvoice.address || null,
             loyaltyPoints: computedPoints,
-            points: computedPoints,
-            lastUpdated:
-              recentInvoice.updatedAt ||
-              recentInvoice.createdAt ||
-              recentInvoice.date ||
-              "",
           });
         }
       }
@@ -3309,15 +2813,9 @@ async function startServer() {
         if (recentOrder) {
           matchedCustomers.push({
             name: recentOrder.customerName || recentOrder.name || "",
-            phone: cleanQueryPhone,
+            phone: phone,
             address: recentOrder.address || null,
             loyaltyPoints: computedPoints,
-            points: computedPoints,
-            lastUpdated:
-              recentOrder.updatedAt ||
-              recentOrder.createdAt ||
-              recentOrder.date ||
-              "",
           });
         }
       }
@@ -3765,88 +3263,6 @@ async function startServer() {
     }, pendingRetryMs);
   }
 
-  const getOrderProductSupplierId = (product: any): string =>
-    String(product?.supplierId || product?.supplierID || product?.supplier?.id || "").trim();
-
-  const getOrderProductCost = (product: any): number => {
-    const candidates = [
-      product?.cost,
-      product?.supplierCost,
-      product?.purchaseCost,
-      product?.costPrice,
-      product?.supplierPrice,
-    ];
-    for (const candidate of candidates) {
-      const value = Number(candidate);
-      if (Number.isFinite(value) && value > 0) return value;
-    }
-    return 0;
-  };
-
-  const resolveOrderProductSnapshot = (item: any, products: any[]): any => {
-    const itemId = String(item?.productId || item?.id || "").trim();
-    const itemSupplierId = String(item?.supplierId || item?.supplierID || item?.supplier?.id || "").trim();
-    const itemNameKey = normalizeCustomerProductText(item?.name || item?.productName || "");
-    const itemCategoryKey = normalizeCustomerProductText(item?.category || "");
-
-    const allProducts = Array.isArray(products) ? products.filter(Boolean) : [];
-    const exactCandidates = itemId
-      ? allProducts.filter((product: any) =>
-          String(product?.id || product?.productId || "").trim() === itemId
-        )
-      : [];
-
-    const score = (product: any) => {
-      const supplierId = getOrderProductSupplierId(product);
-      const productNameKey = normalizeCustomerProductText(product?.name || product?.productName || "");
-      const productCategoryKey = normalizeCustomerProductText(product?.category || "");
-      return (
-        (itemId && String(product?.id || product?.productId || "").trim() === itemId ? 1000 : 0) +
-        (itemSupplierId && supplierId === itemSupplierId ? 500 : 0) +
-        (supplierId ? 120 : 0) +
-        (getOrderProductCost(product) > 0 ? 80 : 0) +
-        (itemNameKey && productNameKey === itemNameKey ? 40 : 0) +
-        (itemCategoryKey && productCategoryKey === itemCategoryKey ? 15 : 0) +
-        (product?.isPrimarySupplier === true || product?.isPreferredSupplier === true || product?.isDefaultSupplier === true ? 20 : 0) +
-        (product?.isActive !== false ? 5 : 0)
-      );
-    };
-
-    if (exactCandidates.length > 0) {
-      return [...exactCandidates].sort((a, b) => score(b) - score(a))[0];
-    }
-
-    if (!itemNameKey) return undefined;
-    const nameCandidates = allProducts.filter((product: any) =>
-      normalizeCustomerProductText(product?.name || product?.productName || "") === itemNameKey &&
-      (!itemCategoryKey || normalizeCustomerProductText(product?.category || "") === itemCategoryKey)
-    );
-    if (nameCandidates.length === 0) return undefined;
-
-    if (itemSupplierId) {
-      const directSupplier = nameCandidates.filter((product: any) =>
-        getOrderProductSupplierId(product) === itemSupplierId
-      );
-      if (directSupplier.length > 0) {
-        return [...directSupplier].sort((a, b) => score(b) - score(a))[0];
-      }
-    }
-
-    const supplierIds = new Set(
-      nameCandidates.map(getOrderProductSupplierId).filter(Boolean)
-    );
-    if (supplierIds.size === 1) {
-      return [...nameCandidates].sort((a, b) => score(b) - score(a))[0];
-    }
-
-    const preferred = nameCandidates.filter((product: any) =>
-      product?.isPrimarySupplier === true ||
-      product?.isPreferredSupplier === true ||
-      product?.isDefaultSupplier === true
-    );
-    return preferred.length === 1 ? preferred[0] : [...nameCandidates].sort((a, b) => score(b) - score(a))[0];
-  };
-
   // 7. Orders Submission
   app.post("/api/orders", async (req, res) => {
     const {
@@ -3872,7 +3288,9 @@ async function startServer() {
       splitOrigin,
     } = req.body;
 
-    console.log(`[ORDER] New order request received. Items: ${Array.isArray(items) ? items.length : 0}`);
+    console.log(
+      `[ORDER] New order request from ${customerPhone} (${customerName}) total: ${total}`,
+    );
 
     // Basic validation
     if (
@@ -3884,12 +3302,11 @@ async function startServer() {
       items.length === 0 ||
       typeof total !== "number"
     ) {
-      console.warn("[ORDER] Invalid order data received");
+      console.warn("[ORDER] Invalid order data received:", req.body);
       return res.status(400).json({ error: "بيانات الطلب غير مكتملة" });
     }
 
     const orderCustomId = generateUnifiedId("ORD");
-    const customerAccess = issueCustomerAccessToken();
 
     const newOrder: any = {
       id: orderCustomId,
@@ -3908,7 +3325,6 @@ async function startServer() {
       createdAt: new Date().toISOString(),
       source: "customer_website",
       generalNotes: generalNotes || "",
-      customerAccessTokenHash: customerAccess.tokenHash,
     };
 
     const normalizedQatiaType = String(qatiaType || "").toLowerCase();
@@ -4000,17 +3416,18 @@ async function startServer() {
     }
 
     try {
-      // Checkout needs only the two catalog shards; split checkout additionally loads customers and
-      // squads. Loading every archive/AI/campaign shard made a simple order wait for the entire
-      // company database before it could be saved.
-      const checkoutShardKeys: ShardedAppDataKey[] = ["products", "supplierCopies"];
-      if (isDiwaniyaQatya) checkoutShardKeys.push("customers", "squads");
-      const appData = await getAppDataForKeys(checkoutShardKeys);
+      const docRef = doc(db, "appData", "shared_company_data");
+      const d = await getAppDataRef();
 
-      if (!appData || typeof appData !== "object") {
+      if (!d.exists()) {
         console.error("[ORDER] shared_company_data document NOT FOUND");
         return res.status(500).json({ error: "فشل الوصول إلى قاعدة البيانات" });
       }
+
+      const appData = d.data() || {};
+      const orders = appData.orders || [];
+      const customers = appData.customers || [];
+      const squadsForSplit = appData.squads || [];
       const splitNotificationRecipients: any[] = [];
       let qatyaExternalPushPhones: string[] = [];
       if (isDiwaniyaQatya && squadId) {
@@ -4044,68 +3461,18 @@ async function startServer() {
         ...(appData.products || []),
         ...(appData.supplierCopies || []),
       ];
-      const suppliers = Array.isArray(appData.suppliers) ? appData.suppliers : [];
-      const supplierNameById = new Map(
-        suppliers
-          .filter((supplier: any) => supplier?.id !== undefined && supplier?.id !== null)
-          .map((supplier: any) => [String(supplier.id), String(supplier.name || "")])
-      );
 
-      // Validate all items and freeze the exact supplier/cost snapshot at purchase time.
-      // Duplicate customer-facing products may exist in products + supplierCopies, so a plain
-      // Array.find() can select the display copy with no supplier metadata and create zero debt.
-      const resolvedItems = items.map((item: any) => ({
-        item,
-        product: resolveOrderProductSnapshot(item, products),
-      }));
-
-      for (const { product } of resolvedItems) {
+      // Validate all items are currently active
+      for (const item of items) {
+        const product = products.find(
+          (p: any) => p.id === item.productId || p.id === item.id,
+        );
         if (product && product.isActive === false) {
           return res
             .status(400)
             .json({ error: `المنتج ${product.name} غير متوفر حالياً` });
         }
       }
-
-      newOrder.items = resolvedItems.map(({ item, product }: any) => {
-        if (!product) return removeUndefinedDeep({ ...item });
-
-        const supplierId = String(
-          item?.supplierId ||
-          item?.supplierID ||
-          item?.supplier?.id ||
-          getOrderProductSupplierId(product) ||
-          ""
-        ).trim();
-        const itemCostCandidates = [
-          item?.costAtTime,
-          item?.supplierCost,
-          item?.purchaseCost,
-          item?.cost,
-        ];
-        let snapshotCost = 0;
-        for (const candidate of itemCostCandidates) {
-          const value = Number(candidate);
-          if (Number.isFinite(value) && value > 0) {
-            snapshotCost = value;
-            break;
-          }
-        }
-        if (snapshotCost <= 0) snapshotCost = getOrderProductCost(product);
-
-        return removeUndefinedDeep({
-          ...item,
-          productId: item.productId || item.id || product.id || product.productId,
-          name: item.name || item.productName || product.name || product.productName,
-          supplierId: supplierId || undefined,
-          supplierName: supplierId
-            ? (item.supplierName || product.supplierName || supplierNameById.get(supplierId) || undefined)
-            : undefined,
-          supplierProductId: product.id || product.productId || undefined,
-          costAtTime: snapshotCost,
-          priceAtTime: item.priceAtTime ?? item.price ?? product.price ?? 0,
-        });
-      });
 
       await updateAppDataAtomically((current) => {
         const orders = [...(current.orders || [])];
@@ -4190,12 +3557,6 @@ async function startServer() {
            }
         }
         return { orders, customers, squads, diwaniyaNotifications };
-      }, ["orders", "customers", "squads"]);
-
-      // The authoritative order shard is already committed. The convenience realtime mirror is
-      // best-effort and must never delay the customer's success response.
-      void mirrorCustomerOrderForAdminRealtime(newOrder).catch((mirrorError: any) => {
-        console.warn("[ORDER] Admin realtime order mirror failed:", mirrorError?.message || String(mirrorError));
       });
 
       console.log(`[ORDER] Order ${newOrder.id} saved successfully`);
@@ -4220,37 +3581,14 @@ async function startServer() {
           url: `/split/${newOrder.id}`
         });
       }
-      const { customerAccessTokenHash: _privateTokenHash, ...safeOrder } = newOrder;
-      const publicOrder = {
-        ...safeOrder,
-        items: Array.isArray(safeOrder.items)
-          ? safeOrder.items.map((storedItem: any) => {
-              const {
-                supplierId: _supplierId,
-                supplierID: _supplierID,
-                supplierName: _supplierName,
-                supplierProductId: _supplierProductId,
-                supplierCost: _supplierCost,
-                purchaseCost: _purchaseCost,
-                costAtTime: _costAtTime,
-                cost: _cost,
-                ...publicItem
-              } = storedItem || {};
-              return publicItem;
-            })
-          : safeOrder.items,
-      };
-      res.status(201).json({
-        ...publicOrder,
-        customerAccessToken: customerAccess.token,
-      });
+      res.status(201).json(newOrder);
     } catch (e) {
       console.error("[ORDER] Critical error creating order:", e);
       res.status(500).json({ error: "حدث خطأ غير متوقع في الخادم" });
     }
   });
 
-  app.get("/api/create-test-split-order", requireDebugAccess, async (req, res) => {
+  app.get("/api/create-test-split-order", async (req, res) => {
     try {
       const d = await getAppDataRef();
       const data = d.data() || {};
@@ -4280,7 +3618,9 @@ async function startServer() {
         return res.status(400).json({ error: "بيانات الطلب غير مكتملة" });
       }
 
-      console.log("[SPLIT] Authorized split-payment request received");
+      console.log(
+        `[SPLIT] Creating partial payment for Order ${orderId}: ${amount} KWD by ${name}`,
+      );
 
       const d = await getAppDataRef();
       const data = d.data() || {};
@@ -4311,20 +3651,6 @@ async function startServer() {
       }
 
       const existingOrder = isInvoice ? invoices[index] : orders[index];
-      const customerToken = getCustomerTokenFromHeaders(req.headers);
-      const access = getCustomerOrderAccess(existingOrder, {
-        phone: customerMobile,
-        orderId,
-        token: customerToken,
-        tokenAuthorizesPhone: tokenAuthorizesCustomerPhone(
-          [...orders, ...invoices],
-          customerMobile,
-          customerToken,
-        ),
-      });
-      if (access === "none") {
-        return res.status(403).json({ error: "تعذر التحقق من صاحب الطلب" });
-      }
 
       const splitPayments = existingOrder.splitPayments || [];
       const orderTotal = Number(existingOrder.total) || 0;
@@ -4510,7 +3836,7 @@ async function startServer() {
       } catch (error: any) {
         const status = error.response?.status || 500;
         const errorData = error.response?.data || {};
-        console.error("[SPLIT] External API request failed with status:", status);
+        console.error("[SPLIT] External API Error:", status, errorData);
 
         let errMsg =
           errorData.error || errorData.message || "فشل الاتصال بمزود الدفع";
@@ -4519,6 +3845,7 @@ async function startServer() {
         const safeStatus = status === 404 ? 400 : status;
         return res.status(safeStatus).json({
           error: errMsg,
+          details: errorData,
         });
       }
 
@@ -4527,14 +3854,17 @@ async function startServer() {
         paymentResponse.data &&
         paymentResponse.data.link
       ) {
-        console.log("[SPLIT] Payment link created successfully");
+        console.log(
+          `[SPLIT] Payment link created: ${paymentResponse.data.link}`,
+        );
         res.json({ paymentLink: paymentResponse.data.link });
       } else {
-        console.error("[SPLIT] Invalid payment provider response structure");
+        console.error("[SPLIT] Invalid response structure:", paymentResponse);
         res.status(500).json({
           error:
             "فشل في إنشاء الرابط: " +
             (paymentResponse.message || "استجابة غير صالحة من البوابة"),
+          details: paymentResponse,
         });
       }
     } catch (e: any) {
@@ -4566,24 +3896,8 @@ async function startServer() {
         const orders = data.orders || [];
         const invoices = data.invoices || [];
         const existingOrder = [...orders, ...invoices].find((o: any) => paymentRecordMatches(o, orderId));
-        if (!existingOrder) {
-          return res.status(404).json({ error: "الطلب غير موجود" });
-        }
-        const customerToken = getCustomerTokenFromHeaders(req.headers);
-        const access = getCustomerOrderAccess(existingOrder, {
-          phone: customerMobile,
-          orderId,
-          token: customerToken,
-          tokenAuthorizesPhone: tokenAuthorizesCustomerPhone(
-            [...orders, ...invoices],
-            customerMobile,
-            customerToken,
-          ),
-        });
-        if (access === "none") {
-          return res.status(403).json({ error: "تعذر التحقق من صاحب الطلب" });
-        }
         if (
+          existingOrder &&
           (existingOrder.paymentStatus === "paid" ||
             (existingOrder.status || "").startsWith("تم الدفع"))
         ) {
@@ -4640,8 +3954,13 @@ async function startServer() {
         ? "https://sandboxapi.upayments.com/api/v1/charge"
         : "https://uapi.upayments.com/api/v1/charge";
 
+      // Log token details (truncated for security) to help debug 401 errors
       console.log(
-        `[PAYMENT] Creating payment in ${isSandbox ? "sandbox" : "production"} mode`,
+        `[PAYMENT] UPAYMENTS_API_KEY exists: ${!!process.env.UPAYMENTS_API_KEY}, length: ${rawApiKey.length}`,
+      );
+      const tokenPrefix = cleanApiKey.substring(0, 5) + "...";
+      console.log(
+        `[PAYMENT] Creating payment with isSandbox=${isSandbox}, token starts with ${tokenPrefix}, Url: ${upaymentsApiUrl}`,
       );
 
       let protocol = req.headers["x-forwarded-proto"] || req.protocol;
@@ -4745,7 +4064,7 @@ async function startServer() {
       } catch (error: any) {
         const status = error.response?.status || 500;
         const errorData = error.response?.data || {};
-        console.error("[PAYMENT] UPayments API request failed with status:", status);
+        console.error("[PAYMENT] UPayments API Error:", status, errorData);
 
         if (status === 401) {
           return res.status(500).json({
@@ -4756,7 +4075,7 @@ async function startServer() {
 
         const errMsg =
           errorData.error || errorData.message || `UPayments Error: ${status}`;
-        return res.status(status).json({ error: errMsg });
+        return res.status(status).json({ error: errMsg, details: errorData });
       }
 
       if (
@@ -4766,7 +4085,7 @@ async function startServer() {
       ) {
         res.json({ paymentLink: paymentResponse.data.link });
       } else {
-        console.error("[PAYMENT] Provider response did not contain a payment link");
+        console.error("[PAYMENT] Failed to generate link:", paymentResponse);
         res.status(500).json({
           error: paymentResponse.data?.error || "Failed to create payment link",
         });
@@ -4783,40 +4102,14 @@ async function startServer() {
   app.put("/api/orders/:id/payment-link", async (req, res) => {
     try {
       const { id } = req.params;
-      const { paymentLink, customerPhone } = req.body;
-      if (!isAllowedPaymentLink(paymentLink)) {
-        return res.status(400).json({ error: "Invalid payment link" });
-      }
-
-      const d = await getAppDataRef();
-      const data = d.data() || {};
-      const orders = Array.isArray(data.orders) ? data.orders : [];
-      const invoices = Array.isArray(data.invoices) ? data.invoices : [];
-      const target = [...orders, ...invoices].find(
-        (record: any) => String(record?.id || "") === String(id),
-      );
-      if (!target) return res.status(404).json({ error: "Order not found" });
-
-      const customerToken = getCustomerTokenFromHeaders(req.headers);
-      const access = getCustomerOrderAccess(target, {
-        phone: customerPhone,
-        orderId: id,
-        token: customerToken,
-        tokenAuthorizesPhone: tokenAuthorizesCustomerPhone(
-          [...orders, ...invoices],
-          customerPhone,
-          customerToken,
-        ),
-      });
-      if (access !== "private") {
-        return res.status(403).json({ error: "Forbidden" });
-      }
+      const { paymentLink } = req.body;
+      if (!paymentLink) return res.status(400).json({ error: "No link" });
 
       await updateAppDataAtomically((current) => {
-        const orders = [...(current.orders || [])];
+        let orders = [...(current.orders || [])];
         const index = orders.findIndex((o: any) => o.id === id);
         if (index !== -1) {
-          orders[index] = { ...orders[index], paymentLink };
+          orders[index].paymentLink = paymentLink;
           return { orders };
         }
         return null;
@@ -4965,7 +4258,10 @@ async function startServer() {
     ["/api/payment-webhook/:pathOrderId/:pathSplitId", "/api/payment-webhook/:pathOrderId", "/api/payment-webhook", "/api/webhook/upayments"],
     async (req, res) => {
       try {
-        console.log("[PAYMENT] Webhook received");
+        console.log(
+          `[PAYMENT] Webhook received at ${new Date().toISOString()}:`,
+          JSON.stringify(req.body),
+        );
 
         const pathOrder = req.params?.pathOrderId as string;
         const pathSplit = req.params?.pathSplitId as string;
@@ -5066,13 +4362,6 @@ async function startServer() {
         const searchParams = new URL(
           req.protocol + "://" + req.get("host") + req.originalUrl,
         ).searchParams;
-        const trackingAccessToken = String(
-          searchParams.get("track_access") || "",
-        ).trim();
-        const safeTrackingAccessToken =
-          /^[A-Za-z0-9_-]{43,128}$/.test(trackingAccessToken)
-            ? trackingAccessToken
-            : "";
 
         let statusFields = [
           req.params?.pathStatus,
@@ -5129,7 +4418,6 @@ async function startServer() {
         let phone = "";
         if (orderId) {
           const callbackPayload = { ...req.body, ...req.query };
-          delete callbackPayload.track_access;
           if (!isSplit && (isExplicitSuccess || isExplicitFailure)) {
             await syncRootPaymentDocsFast(baseOrderId, isExplicitSuccess, callbackPayload);
             void handlePaymentUpdate(orderId, splitId, isExplicitSuccess, callbackPayload);
@@ -5373,19 +4661,12 @@ async function startServer() {
            } catch(e) {}
         }
         
-        const trackingAccessQuery = safeTrackingAccessToken
-          ? `&track_access=${encodeURIComponent(safeTrackingAccessToken)}`
-          : "";
-        let trackUrl = `${baseUrl}/track?order_id=${encodeURIComponent(baseOrderId)}&payment=${encodeURIComponent(paymentParam)}${trackingAccessQuery}`;
+        let trackUrl = `${baseUrl}/track?order_id=${baseOrderId}&payment=${paymentParam}`;
         if (isSplit) {
            trackUrl = `${baseUrl}/split/${baseOrderId}?payment=${paymentParam}`;
         }
 
-        const safeTrackUrl = JSON.stringify(trackUrl);
-        const safeBaseOrderId = JSON.stringify(baseOrderId);
-        const safePaymentParam = JSON.stringify(paymentParam);
-
-        // Show the return screen briefly, then hand the customer back to tracking reliably.
+        // We removed the immediate redirect so the beautiful HTML screen always appears.
 
         console.log(
           `[PAYMENT] Showing return page for order ${orderId} (Failure detected: ${isExplicitFailure}, status: ${paymentParam})`,
@@ -5424,56 +4705,37 @@ async function startServer() {
                         </div>
                         <h1>${isExplicitFailure ? "فشلت عملية الدفع" : "تم الدفع بنجاح"}</h1>
                         <p>${isExplicitFailure ? "نعتذر، لم نتمكن من إتمام عملية الدفع." : "شكراً لك، تم تأكيد طلبك بنجاح."}</p>
-                        <a href="${trackUrl}" class="btn" onclick="continueToTracking(event)">العودة إلى الموقع</a>
+                        <a href="${trackUrl}" class="btn" onclick="closePopupAndRedirect(event)">العودة إلى الموقع</a>
                     </div>
                 </div>
                 <script>
-                    const targetUrl = ${safeTrackUrl};
-                    const orderId = ${safeBaseOrderId};
-                    const payment = ${safePaymentParam};
-
                     try {
-                        localStorage.setItem("track_order_id", orderId);
-                        localStorage.setItem("track_status", payment);
-                        if (payment === "success" || payment === "paid") {
-                            localStorage.setItem("post_payment_open_order_id", orderId);
+                        localStorage.setItem("track_order_id", "${baseOrderId}");
+                        localStorage.setItem("track_status", "${paymentParam}");
+                        if ("${paymentParam}" === "success" || "${paymentParam}" === "paid") {
+                            localStorage.setItem("post_payment_open_order_id", "${baseOrderId}");
                         }
                     } catch(e) {}
 
-                    function notifyOpener() {
-                        if (!window.opener || window.opener.closed) return false;
-                        try {
-                            const payload = { type: "payment_return", url: targetUrl, orderId, payment };
-                            window.opener.postMessage(JSON.stringify(payload), "*");
-                            window.opener.postMessage({ type: "PAYMENT_COMPLETE", url: targetUrl, orderId, payment }, "*");
-                            try { window.opener.location.href = targetUrl; } catch (err) {}
-                            return true;
-                        } catch (err) {
-                            return false;
-                        }
-                    }
-
-                    function continueToTracking(e) {
+                    function closePopupAndRedirect(e) {
                         if (e) e.preventDefault();
-                        const deliveredToOpener = notifyOpener();
-                        if (deliveredToOpener) {
-                            setTimeout(() => {
-                                try { window.close(); } catch (err) {}
-                                window.location.replace(targetUrl);
-                            }, 800);
-                            return;
+                        const targetUrl = e ? e.currentTarget.href : "${trackUrl}";
+                        
+                        try {
+                            if (window.opener && !window.opener.closed) {
+                                window.opener.postMessage(JSON.stringify({ type: 'payment_return', orderId: '${baseOrderId}', payment: '${paymentParam}' }), '*');
+                                window.opener.postMessage({ type: 'PAYMENT_COMPLETE', url: targetUrl, orderId: '${baseOrderId}', payment: '${paymentParam}' }, '*');
+                                setTimeout(() => window.close(), 100);
+                            } else {
+                                window.location.href = targetUrl;
+                            }
+                        } catch (err) {
+                            window.location.href = targetUrl;
                         }
-                        window.location.replace(targetUrl);
                     }
 
-                    setTimeout(() => {
-                        const loading = document.getElementById("loading");
-                        const content = document.getElementById("content");
-                        if (loading) loading.style.display = "none";
-                        if (content) content.style.display = "block";
-                    }, 450);
-
-                    setTimeout(() => continueToTracking(), 1800);
+                    // Auto-trigger completion immediately to avoid duplicate screens
+                    closePopupAndRedirect();
                 </script>
             </body>
             </html>
@@ -5497,35 +4759,14 @@ async function startServer() {
             typeof possibleOrderId === "string"
               ? possibleOrderId.split("?")[0]
               : possibleOrderId;
-          const fallbackParams = new URLSearchParams({
-            order_id: String(cleanId),
-            payment: "failed",
-          });
-          const possibleTrackingAccess = String(
-            req.query.track_access || "",
-          ).trim();
-          if (
-            /^[A-Za-z0-9_-]{43,128}$/.test(
-              possibleTrackingAccess,
-            )
-          ) {
-            fallbackParams.set(
-              "track_access",
-              possibleTrackingAccess,
-            );
-          }
-          trackFallback += `?${fallbackParams.toString()}`;
-          const safeCleanId = JSON.stringify(String(cleanId));
-          const safeTrackFallback = JSON.stringify(trackFallback);
+          trackFallback += `?order_id=${cleanId}`;
           res.type("html")
             .send(`<html><head><title>Redirecting...</title></head><body><script>
-                  const orderId = ${safeCleanId};
-                  const targetUrl = ${safeTrackFallback};
                   try {
-                      localStorage.setItem("track_order_id", orderId);
+                      localStorage.setItem("track_order_id", "${cleanId}");
                       localStorage.setItem("track_status", "failed");
                   } catch(e) {}
-                  window.location.href = targetUrl;
+                  window.location.href="${trackFallback}";
               </script></body></html>`);
         } else {
           res
@@ -5539,8 +4780,37 @@ async function startServer() {
   );
 
   // Search Orders by Phone
-  app.get("/api/search-order/:phone", (_req, res) => {
-    return res.status(404).json({ error: "Not found" });
+  app.get("/api/search-order/:phone", async (req, res) => {
+    const { phone } = req.params;
+    if (!phone) {
+      return res.status(400).json({ error: "Phone number is required." });
+    }
+
+    try {
+      const cleanQueryPhone = cleanPhone(phone);
+      const d = await getAppDataRef();
+      const appData = d.data() || {};
+
+      const allOrders = appData.orders || [];
+
+      // Filter by phone
+      const matchedOrders = allOrders.filter(
+        (order: any) =>
+          cleanPhone(order.customerPhone || order.phone) === cleanQueryPhone,
+      );
+
+      // Sort by date descending
+      matchedOrders.sort((a: any, b: any) => {
+        const dateA = new Date(a.createdAt || a.date || 0).getTime();
+        const dateB = new Date(b.createdAt || b.date || 0).getTime();
+        return dateB - dateA;
+      });
+
+      res.json(matchedOrders.slice(0, 10));
+    } catch (error) {
+      console.error("Error searching orders:", error);
+      res.status(500).json({ error: "Failed to search orders" });
+    }
   });
 
   // Legacy endpoints for UI compatibility
