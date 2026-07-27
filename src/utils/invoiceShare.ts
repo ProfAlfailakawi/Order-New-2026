@@ -1,4 +1,5 @@
 import { formatKuwaitiDate } from '../utils';
+import { getCanonicalFinancialSummary } from '../lib/trackingPresentation';
 // Keep icons as tokens until after encodeURIComponent. This prevents broken
 // environments from converting emojis into replacement characters (�) before
 // WhatsApp receives them.
@@ -39,7 +40,10 @@ const getDisplayOrderReference = (order: any) => {
   const fullReference = getFullOrderReference(order);
   if (fullReference === '-') return fullReference;
 
-  const normalized = fullReference.toUpperCase();
+  let normalized = fullReference.toUpperCase();
+  if (normalized.startsWith('#')) {
+    normalized = normalized.slice(1);
+  }
   const prefixMatch = normalized.match(/^(ORD|INV)[-\s#]*/i);
   if (!prefixMatch) return normalized;
 
@@ -53,9 +57,21 @@ const getDisplayOrderReference = (order: any) => {
 
 const getTrackingPhone = (order: any) => {
   const digits = toEnglishDigits(
-    order?.customerPhone || order?.phone || order?.address?.phone || '',
+    order?.customerPhone ||
+      order?.phone ||
+      order?.address?.phone ||
+      order?.deliveryInfo?.phone ||
+      order?.deliveryInfo?.contact?.mobile ||
+      '',
   ).replace(/\D/g, '');
   return digits.length >= 8 ? digits.slice(-8) : '';
+};
+
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined' && window.location) {
+    return window.location.origin;
+  }
+  return 'https://alturathkw.shop';
 };
 
 const buildTrackingUrl = (order: any) => {
@@ -64,7 +80,7 @@ const buildTrackingUrl = (order: any) => {
   });
   const trackingPhone = getTrackingPhone(order);
   if (trackingPhone) params.set('phone', trackingPhone);
-  return `https://alturathkw.shop/track?${params.toString()}`;
+  return `${getBaseUrl()}/track?${params.toString()}`;
 };
 
 const formatKwd = (value: any) => `${toEnglishDigits(Number(value || 0).toFixed(3))} د.ك`;
@@ -133,12 +149,12 @@ export const buildWhatsAppInvoiceText = (order: any, products: any[] = []) => {
       calculatedTotal += getAddonTotal(a, qty);
     });
   });
-  calculatedTotal += Number(order?.deliveryFee || 0);
-  calculatedTotal -= Number(order?.discountAmount || order?.discount || 0);
+
+  const summary = getCanonicalFinancialSummary(order, calculatedTotal);
+  const total = summary.grandTotal;
 
   const displayInvoiceNumber = getDisplayOrderReference(order);
   const customerName = order?.customerName || order?.name || 'عميلنا العزيز';
-  const total = getOrderTotal(order, calculatedTotal);
   const trackingUrl = buildTrackingUrl(order);
 
   return [
@@ -170,12 +186,12 @@ export const buildWhatsAppPaymentLinkText = (order: any, paymentUrl: string) => 
       calculatedTotal += getAddonTotal(a, qty);
     });
   });
-  calculatedTotal += Number(order?.deliveryFee || 0);
-  calculatedTotal -= Number(order?.discountAmount || order?.discount || 0);
+
+  const summary = getCanonicalFinancialSummary(order, calculatedTotal);
+  const total = summary.grandTotal;
 
   const displayInvoiceNumber = getDisplayOrderReference(order);
   const customerName = order?.customerName || order?.name || 'عميلنا العزيز';
-  const total = getOrderTotal(order, calculatedTotal);
   const trackingUrl = buildTrackingUrl(order);
 
   return [
@@ -253,9 +269,10 @@ const buildInvoiceHTML = (order: any, products: any[] = []) => {
       </tr>`;
   }).join('');
 
-  const deliveryFee = Number((order as any).deliveryFee || 0);
-  const discount = Number((order as any).discountAmount || (order as any).discount || 0);
-  const grandTotal = Math.max(0, getOrderTotal(order, productsSubtotal + addonsSubtotal + deliveryFee - discount));
+  const summary = getCanonicalFinancialSummary(order, productsSubtotal + addonsSubtotal);
+  const deliveryFee = summary.deliveryFee;
+  const discount = summary.discountAmount;
+  const grandTotal = summary.grandTotal;
 
   return `<!doctype html>
 <html lang="ar" dir="rtl">

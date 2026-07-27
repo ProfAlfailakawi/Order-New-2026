@@ -3457,8 +3457,7 @@ export default function CustomerSite() {
               setSettings(d);
               writeCustomerCacheIdle("cached_settings", d);
             }
-          }),
-          fetchWithRetry("/api/debug", 1).then(d => { if (isMounted && d) console.log(d); })
+          })
         ]);
       } catch (err: any) {
         if (err && err.message && (err.message.includes("Failed to fetch") || err.message.includes("Load failed"))) return;
