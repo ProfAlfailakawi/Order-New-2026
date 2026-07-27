@@ -102,6 +102,7 @@ function recordReferences(record: any): string[] {
     record?.invoiceId,
     record?.invoiceNo,
     record?.linkedInvoiceId,
+    record?.linkedOrderId,
   ]
     .map((value) => String(value || "").trim().toUpperCase())
     .filter(Boolean);

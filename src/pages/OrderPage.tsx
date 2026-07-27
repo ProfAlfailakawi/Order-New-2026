@@ -139,6 +139,74 @@ const isDiwaniyaQatyaOrder = (order: any): boolean => {
   );
 };
 
+const getExplicitPaymentState = (
+  order: any,
+): "paid" | "failed" | "cancelled" | "pending" | "unknown" => {
+  const paymentStatus = String(
+    order?.paymentStatus ?? order?.payment_status ?? "",
+  )
+    .trim()
+    .toLowerCase();
+  const status = String(order?.status ?? "").trim().toLowerCase();
+
+  if (
+    ["failed", "failure", "declined", "rejected", "expired", "error"].includes(
+      paymentStatus,
+    ) ||
+    status.includes("فشل") ||
+    status.includes("declined") ||
+    status.includes("rejected")
+  ) {
+    return "failed";
+  }
+
+  if (
+    ["cancelled", "canceled", "cancel"].includes(paymentStatus) ||
+    status.includes("ملغي") ||
+    status.includes("إلغاء") ||
+    status.includes("الغاء") ||
+    status.includes("cancel")
+  ) {
+    return "cancelled";
+  }
+
+  if (
+    ["paid", "captured", "approved", "authorized", "success", "successful"].includes(
+      paymentStatus,
+    ) ||
+    status === "paid" ||
+    status === "تم الدفع" ||
+    status === "تم الدفع بنجاح" ||
+    status.includes("تم التوصيل")
+  ) {
+    return "paid";
+  }
+
+  if (
+    ["pending", "new", "partial", "split", "split_pending"].includes(
+      paymentStatus,
+    ) ||
+    status === "جديد" ||
+    status.includes("بانتظار") ||
+    status.includes("تجميع القطية")
+  ) {
+    return "pending";
+  }
+
+  return "unknown";
+};
+
+const getOrderIdentity = (order: any): string =>
+  String(
+    order?.id ??
+      order?.invoiceId ??
+      order?.invoice_id ??
+      order?.linkedInvoiceId ??
+      "",
+  )
+    .trim()
+    .toUpperCase();
+
 export default function OrderPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -281,26 +349,29 @@ export default function OrderPage() {
   }, [selectedOrder?.id]);
 
   useEffect(() => {
-    // Initialize success orders from local storage to handle refreshes better
+    // Remove the legacy persistent success cache. A payment result must never
+    // outlive the current return session or override a later server failure.
     try {
-      const storedSuccesses = localStorage.getItem("temp_success_orders");
-      if (storedSuccesses) {
-        setSessionSuccessOrders(JSON.parse(storedSuccesses));
-      }
-    } catch(e) {}
+      localStorage.removeItem("temp_success_orders");
+    } catch (e) {}
   }, []);
 
   useEffect(() => {
-    if (urlPayment === "success" && urlOrderId) {
-      const oId = String(urlOrderId).toUpperCase();
-      setSessionSuccessOrders(prev => {
-        if (prev.includes(oId)) return prev;
-        const newState = [...prev, oId];
-        try {
-          localStorage.setItem("temp_success_orders", JSON.stringify(newState));
-        } catch(e) {}
-        return newState;
-      });
+    const paymentState = String(urlPayment || "").trim().toLowerCase();
+    if (!urlOrderId) return;
+
+    const orderId = String(urlOrderId).trim().toUpperCase();
+    if (["failed", "failure", "cancel", "cancelled", "canceled"].includes(paymentState)) {
+      setSessionSuccessOrders((previous) =>
+        previous.filter((id) => id !== orderId),
+      );
+      return;
+    }
+
+    if (["success", "paid"].includes(paymentState)) {
+      setSessionSuccessOrders((previous) =>
+        previous.includes(orderId) ? previous : [...previous, orderId],
+      );
     }
   }, [urlPayment, urlOrderId]);
 
@@ -548,11 +619,34 @@ export default function OrderPage() {
       }
       if (Array.isArray(data)) {
         setOrders(data);
+
+        // The backend record is authoritative. A temporary success handoff may
+        // hide loading flicker, but it must be removed immediately when the
+        // server reports failure/cancellation or a definitive paid state.
+        setSessionSuccessOrders((previous) =>
+          previous.filter((optimisticId) => {
+            const matching = data.find(
+              (order: any) => getOrderIdentity(order) === optimisticId,
+            );
+            if (!matching) return true;
+            const state = getExplicitPaymentState(matching);
+            return state === "pending" || state === "unknown";
+          }),
+        );
+
         setSelectedOrder((prev) => {
           if (!prev) return prev;
-          const updated = data.find(
-            (o: any) => o.id === prev.id || o.invoiceId === prev.id,
+          const previousIdentity = getOrderIdentity(prev);
+          const sameType = data.find(
+            (order: any) =>
+              getOrderIdentity(order) === previousIdentity &&
+              Boolean(order?.isInvoice) === Boolean((prev as any)?.isInvoice),
           );
+          const updated =
+            sameType ||
+            data.find(
+              (order: any) => getOrderIdentity(order) === previousIdentity,
+            );
           return updated || prev;
         });
 
@@ -570,6 +664,8 @@ export default function OrderPage() {
               (o.linkedInvoiceId &&
                 String(o.linkedInvoiceId).toUpperCase() === hId) ||
               (o.invoiceId && String(o.invoiceId).toUpperCase() === hId) ||
+              ((o as any).linkedOrderId &&
+                String((o as any).linkedOrderId).toUpperCase() === hId) ||
               getOrderDisplayReference(o) === requestedDisplayReference,
           );
           if (target) {
@@ -646,11 +742,34 @@ export default function OrderPage() {
 
   const getStatusDisplay = (order: any) => {
     let rawStatus = order?.status;
-    const oId = String(order?.id || order?.invoiceId || "").toUpperCase();
+    const oId = getOrderIdentity(order);
+    const explicitState = getExplicitPaymentState(order);
 
-    // If we just successfully paid this order in this session, force display as paid
-    // to prevent flickering before the backend update propagates.
-    if (sessionSuccessOrders.includes(oId)) {
+    // Server-side failure/cancellation always wins over any temporary browser
+    // handoff. This prevents a failed invoice from turning green after polling.
+    if (explicitState === "failed") {
+      return {
+        text: "فشل في عملية الدفع",
+        color: "text-red-600 bg-red-50",
+        icon: <X className="w-4 h-4" />,
+      };
+    }
+    if (explicitState === "cancelled") {
+      const timedOut =
+        String(rawStatus || "").includes("انتهى وقت القطية");
+      return {
+        text: timedOut ? "ملغي - انتهى وقت القطية" : "ملغي",
+        color: "text-red-600 bg-red-50",
+        icon: <X className="w-4 h-4" />,
+      };
+    }
+
+    // Optimistic success is allowed only while the backend is still pending or
+    // unknown, and is discarded as soon as a definitive server state arrives.
+    if (
+      sessionSuccessOrders.includes(oId) &&
+      (explicitState === "pending" || explicitState === "unknown")
+    ) {
       return {
         text: "تم الدفع بنجاح",
         color: "text-green-600 bg-green-50",
@@ -658,15 +777,21 @@ export default function OrderPage() {
       };
     }
 
-    if ((order?.paymentStatus === "split" || order?.paymentStatus === "partial") && (!rawStatus || rawStatus === "جديد" || rawStatus === "بانتظار الدفع" || rawStatus === "بانتظار اكتمال القطية")) {
+    if (explicitState === "paid") {
+      rawStatus = "تم الدفع بنجاح";
+    } else if (
+      (order?.paymentStatus === "split" ||
+        order?.paymentStatus === "partial") &&
+      (!rawStatus ||
+        rawStatus === "جديد" ||
+        rawStatus === "بانتظار الدفع" ||
+        rawStatus === "بانتظار اكتمال القطية")
+    ) {
       rawStatus = "قيد تجميع القطية";
     }
-    
+
     if (!rawStatus) {
-      if (order?.paymentStatus === "paid") rawStatus = "تم الدفع بنجاح";
-      else if (order?.paymentStatus === "failed")
-        rawStatus = "فشل في عملية الدفع";
-      else rawStatus = "جديد";
+      rawStatus = "جديد";
     }
 
     const s = rawStatus.toLowerCase();
@@ -2619,12 +2744,17 @@ export default function OrderPage() {
                         <span className="text-stone-400 font-bold uppercase tracking-widest">
                           الخصم
                         </span>
-                        <span className="font-extrabold text-emerald-600 italic">
-                          -
-                          {getDisplayFinancialSummary(
-                            selectedOrder,
-                          ).discountAmount.toFixed(3)}{" "}
-                          د.ك
+                        <span
+                          dir="ltr"
+                          className="inline-flex items-baseline gap-1 whitespace-nowrap font-extrabold text-emerald-600 italic"
+                        >
+                          <span>−</span>
+                          <span>
+                            {getDisplayFinancialSummary(
+                              selectedOrder,
+                            ).discountAmount.toFixed(3)}
+                          </span>
+                          <span dir="rtl">د.ك</span>
                         </span>
                       </div>
                     )}
