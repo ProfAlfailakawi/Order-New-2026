@@ -1113,6 +1113,7 @@ async function syncRootPaymentDocsFast(orderId: string, isSuccess: boolean, prov
 async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: boolean, providerData: any) {
   console.log(`[PAYMENT_UPDATE] Processing Order:${orderId} Split:${splitId} Success:${isSuccess}`);
   const directPushes: any[] = [];
+  let refreshedOrderMirror: any = null;
   const fastOrderId = String(orderId || "").includes("-S-")
     ? String(orderId || "").split("-S-")[0]
     : String(orderId || "");
@@ -1290,12 +1291,26 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
       });
 
       if (updated) {
+        if (oIdx !== -1 && orders[oIdx]) {
+          refreshedOrderMirror = removeUndefinedDeep({
+            ...orders[oIdx],
+            date: orders[oIdx].date || orders[oIdx].createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+        }
         return { orders, invoices, customers };
       }
       return null;
   }, ["orders", "invoices", "customers"]);
 
   if (ok) {
+    if (refreshedOrderMirror) {
+      // Backfill the complete paid/failed order snapshot (items + supplier metadata) into the
+      // realtime root mirror. A status-only mirror cannot build the supplier ledger reliably.
+      void mirrorCustomerOrderForAdminRealtime(refreshedOrderMirror).catch((mirrorError: any) => {
+        console.warn("[PAYMENT_UPDATE] Full admin order mirror refresh failed:", mirrorError?.message || String(mirrorError));
+      });
+    }
     _appDataCache = null;
     _appDataCacheTime = 0;
     _appDataKeyedCache.clear();
@@ -3750,6 +3765,88 @@ async function startServer() {
     }, pendingRetryMs);
   }
 
+  const getOrderProductSupplierId = (product: any): string =>
+    String(product?.supplierId || product?.supplierID || product?.supplier?.id || "").trim();
+
+  const getOrderProductCost = (product: any): number => {
+    const candidates = [
+      product?.cost,
+      product?.supplierCost,
+      product?.purchaseCost,
+      product?.costPrice,
+      product?.supplierPrice,
+    ];
+    for (const candidate of candidates) {
+      const value = Number(candidate);
+      if (Number.isFinite(value) && value > 0) return value;
+    }
+    return 0;
+  };
+
+  const resolveOrderProductSnapshot = (item: any, products: any[]): any => {
+    const itemId = String(item?.productId || item?.id || "").trim();
+    const itemSupplierId = String(item?.supplierId || item?.supplierID || item?.supplier?.id || "").trim();
+    const itemNameKey = normalizeCustomerProductText(item?.name || item?.productName || "");
+    const itemCategoryKey = normalizeCustomerProductText(item?.category || "");
+
+    const allProducts = Array.isArray(products) ? products.filter(Boolean) : [];
+    const exactCandidates = itemId
+      ? allProducts.filter((product: any) =>
+          String(product?.id || product?.productId || "").trim() === itemId
+        )
+      : [];
+
+    const score = (product: any) => {
+      const supplierId = getOrderProductSupplierId(product);
+      const productNameKey = normalizeCustomerProductText(product?.name || product?.productName || "");
+      const productCategoryKey = normalizeCustomerProductText(product?.category || "");
+      return (
+        (itemId && String(product?.id || product?.productId || "").trim() === itemId ? 1000 : 0) +
+        (itemSupplierId && supplierId === itemSupplierId ? 500 : 0) +
+        (supplierId ? 120 : 0) +
+        (getOrderProductCost(product) > 0 ? 80 : 0) +
+        (itemNameKey && productNameKey === itemNameKey ? 40 : 0) +
+        (itemCategoryKey && productCategoryKey === itemCategoryKey ? 15 : 0) +
+        (product?.isPrimarySupplier === true || product?.isPreferredSupplier === true || product?.isDefaultSupplier === true ? 20 : 0) +
+        (product?.isActive !== false ? 5 : 0)
+      );
+    };
+
+    if (exactCandidates.length > 0) {
+      return [...exactCandidates].sort((a, b) => score(b) - score(a))[0];
+    }
+
+    if (!itemNameKey) return undefined;
+    const nameCandidates = allProducts.filter((product: any) =>
+      normalizeCustomerProductText(product?.name || product?.productName || "") === itemNameKey &&
+      (!itemCategoryKey || normalizeCustomerProductText(product?.category || "") === itemCategoryKey)
+    );
+    if (nameCandidates.length === 0) return undefined;
+
+    if (itemSupplierId) {
+      const directSupplier = nameCandidates.filter((product: any) =>
+        getOrderProductSupplierId(product) === itemSupplierId
+      );
+      if (directSupplier.length > 0) {
+        return [...directSupplier].sort((a, b) => score(b) - score(a))[0];
+      }
+    }
+
+    const supplierIds = new Set(
+      nameCandidates.map(getOrderProductSupplierId).filter(Boolean)
+    );
+    if (supplierIds.size === 1) {
+      return [...nameCandidates].sort((a, b) => score(b) - score(a))[0];
+    }
+
+    const preferred = nameCandidates.filter((product: any) =>
+      product?.isPrimarySupplier === true ||
+      product?.isPreferredSupplier === true ||
+      product?.isDefaultSupplier === true
+    );
+    return preferred.length === 1 ? preferred[0] : [...nameCandidates].sort((a, b) => score(b) - score(a))[0];
+  };
+
   // 7. Orders Submission
   app.post("/api/orders", async (req, res) => {
     const {
@@ -3948,13 +4045,22 @@ async function startServer() {
         ...(appData.products || []),
         ...(appData.supplierCopies || []),
       ];
+      const suppliers = Array.isArray(appData.suppliers) ? appData.suppliers : [];
+      const supplierNameById = new Map(
+        suppliers
+          .filter((supplier: any) => supplier?.id !== undefined && supplier?.id !== null)
+          .map((supplier: any) => [String(supplier.id), String(supplier.name || "")])
+      );
 
-      // Validate all items are currently active and freeze the supplier/cost metadata at
-      // purchase time. The admin supplier ledger must not depend on a later catalogue lookup.
-      for (const item of items) {
-        const product = products.find(
-          (p: any) => p.id === item.productId || p.id === item.id,
-        );
+      // Validate all items and freeze the exact supplier/cost snapshot at purchase time.
+      // Duplicate customer-facing products may exist in products + supplierCopies, so a plain
+      // Array.find() can select the display copy with no supplier metadata and create zero debt.
+      const resolvedItems = items.map((item: any) => ({
+        item,
+        product: resolveOrderProductSnapshot(item, products),
+      }));
+
+      for (const { product } of resolvedItems) {
         if (product && product.isActive === false) {
           return res
             .status(400)
@@ -3962,17 +4068,42 @@ async function startServer() {
         }
       }
 
-      newOrder.items = items.map((item: any) => {
-        const product = products.find(
-          (p: any) => p.id === item.productId || p.id === item.id,
-        );
-        if (!product) return item;
+      newOrder.items = resolvedItems.map(({ item, product }: any) => {
+        if (!product) return removeUndefinedDeep({ ...item });
+
+        const supplierId = String(
+          item?.supplierId ||
+          item?.supplierID ||
+          item?.supplier?.id ||
+          getOrderProductSupplierId(product) ||
+          ""
+        ).trim();
+        const itemCostCandidates = [
+          item?.costAtTime,
+          item?.supplierCost,
+          item?.purchaseCost,
+          item?.cost,
+        ];
+        let snapshotCost = 0;
+        for (const candidate of itemCostCandidates) {
+          const value = Number(candidate);
+          if (Number.isFinite(value) && value > 0) {
+            snapshotCost = value;
+            break;
+          }
+        }
+        if (snapshotCost <= 0) snapshotCost = getOrderProductCost(product);
+
         return removeUndefinedDeep({
           ...item,
-          productId: item.productId || item.id || product.id,
-          name: item.name || item.productName || product.name,
-          supplierId: item.supplierId || product.supplierId,
-          costAtTime: item.costAtTime ?? product.cost ?? 0,
+          productId: item.productId || item.id || product.id || product.productId,
+          name: item.name || item.productName || product.name || product.productName,
+          supplierId: supplierId || undefined,
+          supplierName: supplierId
+            ? (item.supplierName || product.supplierName || supplierNameById.get(supplierId) || undefined)
+            : undefined,
+          supplierProductId: product.id || product.productId || undefined,
+          costAtTime: snapshotCost,
           priceAtTime: item.priceAtTime ?? item.price ?? product.price ?? 0,
         });
       });
@@ -4093,8 +4224,27 @@ async function startServer() {
         });
       }
       const { customerAccessTokenHash: _privateTokenHash, ...safeOrder } = newOrder;
-      res.status(201).json({
+      const publicOrder = {
         ...safeOrder,
+        items: Array.isArray(safeOrder.items)
+          ? safeOrder.items.map((storedItem: any) => {
+              const {
+                supplierId: _supplierId,
+                supplierID: _supplierID,
+                supplierName: _supplierName,
+                supplierProductId: _supplierProductId,
+                supplierCost: _supplierCost,
+                purchaseCost: _purchaseCost,
+                costAtTime: _costAtTime,
+                cost: _cost,
+                ...publicItem
+              } = storedItem || {};
+              return publicItem;
+            })
+          : safeOrder.items,
+      };
+      res.status(201).json({
+        ...publicOrder,
         customerAccessToken: customerAccess.token,
       });
     } catch (e) {
