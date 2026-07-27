@@ -321,8 +321,7 @@ export default function SplitPayment() {
         normalizedRequesterPhone.length === 8 ? normalizedRequesterPhone : "";
       const params = new URLSearchParams({ order_id: id });
       if (requesterPhone) params.set("phone", requesterPhone);
-      const res = await fetch(
-        `/api/track-orders?${params.toString()}`,
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/track-orders?${params.toString()}`,
         { headers: getCustomerAccessHeaders(requesterPhone) },
       );
       if (res.ok) {
@@ -455,7 +454,7 @@ export default function SplitPayment() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/create-split-payment", {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/create-split-payment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

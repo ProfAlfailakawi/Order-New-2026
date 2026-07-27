@@ -306,7 +306,7 @@ export default function OrderPage() {
 
 
   useEffect(() => {
-    fetch("/api/settings")
+    fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/settings")
       .then((res) => res.json())
       .then((settings) => {
         const rawTiers =
@@ -321,7 +321,7 @@ export default function OrderPage() {
 
   useEffect(() => {
      if (phone && phone.length >= 8) {
-        fetch(`/api/squad-gamification?phone=${encodeURIComponent(phone)}`, {
+        fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/squad-gamification?phone=${encodeURIComponent(phone)}`, {
           headers: getCustomerAccessHeaders(phone),
         })
           .then(res => res.json())
@@ -343,7 +343,7 @@ export default function OrderPage() {
         const customerParams = new URLSearchParams({ phone });
         const customerOrderId = urlOrderId || getStoredCustomerOrderId();
         if (customerOrderId) customerParams.set("order_id", customerOrderId);
-        fetch(`/api/customers?${customerParams.toString()}`, {
+        fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/customers?${customerParams.toString()}`, {
           headers: getCustomerAccessHeaders(phone),
         })
           .then(res => res.json())
@@ -531,7 +531,7 @@ export default function OrderPage() {
       if (currentPhone) urlParams.append("phone", currentPhone);
       if (handoffOrderId) urlParams.append("order_id", handoffOrderId);
 
-      const res = await fetch(`/api/track-orders?${urlParams.toString()}`, {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/track-orders?${urlParams.toString()}`, {
         cache: "no-store",
         headers: getCustomerAccessHeaders(
           currentPhone,
@@ -885,7 +885,7 @@ export default function OrderPage() {
 
       if (paymentLink) {
         // Update link in DB so Admin has it updated (optional but good idea)
-        fetch(`/api/orders/${order.id}/payment-link`, {
+        fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/orders/${order.id}/payment-link`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",

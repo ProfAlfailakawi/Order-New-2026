@@ -216,7 +216,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       bg: bgList[Math.floor(Math.random() * bgList.length)]
     };
     try {
-      const res = await fetch("/api/squad-add-memory", {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-add-memory", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ squadId: squadInfo.id, memory: newMem })
@@ -438,7 +438,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     setIsRegisteringGeo(true);
     setGeoStatusMsg("نحفظ الموقع يدويًا... 💾");
     try {
-      const res = await fetch("/api/squad-set-location", {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-set-location", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -498,7 +498,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
         }
       }
 
-      const res = await fetch("/api/squad-set-location", {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-set-location", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -557,7 +557,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const handleApproveRejectRequest = async (targetPhone: string, approved: boolean) => {
     setIsApproving(prev => ({ ...prev, [targetPhone]: true }));
     try {
-      const res = await fetch("/api/squad-geofence-approve-request", {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-geofence-approve-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -808,7 +808,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     }
     const timer = window.setTimeout(async () => {
       try {
-        await fetch("/api/squad-set-location", {
+        await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-set-location", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -939,7 +939,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     const finalPhone = cleaned.slice(-8);
 
     try {
-      const res = await fetch(`/api/squad-gamification?phone=${encodeURIComponent(finalPhone)}`);
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/squad-gamification?phone=${encodeURIComponent(finalPhone)}`);
       
       if (!res.ok) {
         alert("⚠️ حدث خطأ أثناء الاتصال بالخادم للتأكد من الموضع. يرجى المحاولة بعد قليل.");
@@ -998,7 +998,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     }
     setIsPresenceLoading(true);
     try {
-      const res = await fetch("/api/squad-presence", {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-presence", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ squadId: squadInfo.id, phone: currentMemberPhone, name: customerName || guestName || "عضو", action })
@@ -1012,7 +1012,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const handleWobbleAction = async (msg: string) => {
     if (!squadInfo?.id || !currentMemberPhone) return;
     try {
-      const res = await fetch("/api/squad-presence", {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-presence", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -1033,7 +1033,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     if (!squadInfo?.id || !customerPhone) return;
     setTempCodeLoading(true);
     try {
-      const res = await fetch("/api/squad-temp-code", {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-temp-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ squadId: squadInfo.id, phone: customerPhone })
@@ -1068,7 +1068,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
     setTempCodeLoading(true);
     try {
-      const res = await fetch("/api/squad-join-temp-code", {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-join-temp-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: cleanCode, phone: cleanTempPhone, name: finalName })
@@ -1145,7 +1145,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     if (!squadInfo?.id || !currentMemberPhone) return;
     setGroupOrderLoading(true);
     try {
-      const res = await fetch("/api/squad-group-order", {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-group-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ squadId: squadInfo.id, phone: currentMemberPhone, name: customerName || guestName || "عضو", action: "open", participants: squadMembersForSplit, title: `طلب الربع - ${cleanSquadName(squadInfo.name)}` })
@@ -1249,7 +1249,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     if (!squadInfo?.id || !currentMemberPhone) return;
     setGroupOrderLoading(true);
     try {
-      const res = await fetch("/api/squad-group-order", {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-group-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ squadId: squadInfo.id, phone: currentMemberPhone, action: "close" })
@@ -1262,7 +1262,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const markDiwaniyaNotificationsRead = async (notificationId?: string) => {
     if (!currentMemberPhone) return;
     try {
-      await fetch("/api/diwaniya-notifications/read", {
+      await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/diwaniya-notifications/read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: currentMemberPhone, notificationId, all: !notificationId })
@@ -2298,7 +2298,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                         if(!squadInfo?.id) return;
                                         if(!confirm("هل تبي تحذف هالذكرى نهائياً؟")) return;
                                         try {
-                                          const res = await fetch("/api/squad-delete-memory", {
+                                          const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/squad-delete-memory", {
                                             method: "POST",
                                             headers: { "Content-Type": "application/json" },
                                             body: JSON.stringify({ squadId: squadInfo.id, memoryId: selectedMemory.id })
