@@ -32,6 +32,25 @@ const clean = (value: any) => {
   return String(value).trim();
 };
 
+const getFullOrderReference = (order: any) =>
+  clean(order?.invoiceId || order?.id || order?.displayId || order?.orderId || order?.invoiceNo) || '-';
+
+const getDisplayOrderReference = (order: any) => {
+  const fullReference = getFullOrderReference(order);
+  if (fullReference === '-') return fullReference;
+
+  const normalized = fullReference.toUpperCase();
+  const prefixMatch = normalized.match(/^(ORD|INV)[-\s#]*/i);
+  if (!prefixMatch) return normalized;
+
+  const compactSource = normalized
+    .replace(/^(ORD|INV)[-\s#]*/i, '')
+    .replace(/[^A-Z0-9]/g, '');
+  const suffix = compactSource.slice(-4);
+
+  return suffix ? `${prefixMatch[1].toUpperCase()}-${suffix}` : normalized;
+};
+
 const formatKwd = (value: any) => `${toEnglishDigits(Number(value || 0).toFixed(3))} د.ك`;
 
 const getOrderAddress = (order: any) => {
@@ -101,7 +120,8 @@ export const buildWhatsAppInvoiceText = (order: any, products: any[] = []) => {
   calculatedTotal += Number(order?.deliveryFee || 0);
   calculatedTotal -= Number(order?.discountAmount || order?.discount || 0);
 
-  const invoiceNumber = order?.invoiceId || order?.id || '-';
+  const invoiceNumber = getFullOrderReference(order);
+  const displayInvoiceNumber = getDisplayOrderReference(order);
   const customerName = order?.customerName || order?.name || 'عميلنا العزيز';
   const total = getOrderTotal(order, calculatedTotal);
   const trackingUrl = `https://alturathkw.shop/track?tracked_order=${encodeURIComponent(String(invoiceNumber))}`;
@@ -110,7 +130,7 @@ export const buildWhatsAppInvoiceText = (order: any, products: any[] = []) => {
     `${DISPLAY_ICONS.sparkles} فاتورة طلبكم من مطبخ التراث الكويتي`,
     '',
     `مرحباً ${customerName}،`,
-    `تم تجهيز فاتورتكم للطلب رقم: ${invoiceNumber}`,
+    `تم تجهيز فاتورتكم للطلب رقم: ${displayInvoiceNumber}`,
     '',
     `الإجمالي المستحق: ${formatKwd(total)}`,
     '',
@@ -138,7 +158,8 @@ export const buildWhatsAppPaymentLinkText = (order: any, paymentUrl: string) => 
   calculatedTotal += Number(order?.deliveryFee || 0);
   calculatedTotal -= Number(order?.discountAmount || order?.discount || 0);
 
-  const invoiceNumber = order?.invoiceId || order?.id || '-';
+  const invoiceNumber = getFullOrderReference(order);
+  const displayInvoiceNumber = getDisplayOrderReference(order);
   const customerName = order?.customerName || order?.name || 'عميلنا العزيز';
   const total = getOrderTotal(order, calculatedTotal);
   const trackingUrl = `https://alturathkw.shop/track?tracked_order=${encodeURIComponent(String(invoiceNumber))}`;
@@ -147,7 +168,7 @@ export const buildWhatsAppPaymentLinkText = (order: any, paymentUrl: string) => 
     `${DISPLAY_ICONS.sparkles} فاتورة طلبكم من مطبخ التراث الكويتي`,
     '',
     `مرحباً ${customerName}،`,
-    `تم تجهيز فاتورتكم للطلب رقم: ${invoiceNumber}`,
+    `تم تجهيز فاتورتكم للطلب رقم: ${displayInvoiceNumber}`,
     '',
     `الإجمالي المستحق: ${formatKwd(total)}`,
     '',
@@ -178,6 +199,7 @@ const buildInvoiceHTML = (order: any, products: any[] = []) => {
   const customerName = clean(order?.customerName || order?.name) || 'عميل';
   const customerPhone = clean(order?.customerPhone || order?.phone);
   const address = getOrderAddress(order) || 'غير محدد';
+  const displayInvoiceNumber = getDisplayOrderReference(order);
 
   let productsSubtotal = 0;
   let addonsSubtotal = 0;
@@ -225,7 +247,7 @@ const buildInvoiceHTML = (order: any, products: any[] = []) => {
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
-  <title>فاتورة ${(order as any).invoiceId || (order as any).id || ''}</title>
+  <title>فاتورة ${displayInvoiceNumber}</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     @page{size:A4;margin:10mm}
@@ -261,7 +283,7 @@ const buildInvoiceHTML = (order: any, products: any[] = []) => {
     <section class="cards">
       <div class="card">
         <h2><span class="icon">☰</span> تفاصيل الفاتورة</h2>
-        <div class="row"><span class="label">رقم الفاتورة</span><span class="value">${toEnglishDigits((order as any).invoiceId || (order as any).id || '-')}</span></div>
+        <div class="row"><span class="label">رقم الفاتورة</span><span class="value">${toEnglishDigits(displayInvoiceNumber)}</span></div>
         <div class="row"><span class="label">التاريخ والوقت</span><span class="value">${toEnglishDigits(formatKuwaitiDate(invoiceDate).full)}</span></div>
         <div class="row"><span class="label">الحالة</span><span class="value status ${statusClass}">${toEnglishDigits(status)}</span></div>
       </div>

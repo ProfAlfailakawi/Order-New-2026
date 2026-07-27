@@ -1245,7 +1245,7 @@ export default function OrderPage() {
                     const items = buildSharedOrderItems(order);
                     const label = items.length
                       ? items.slice(0, 3).map((item) => item.qty > 1 ? `${item.name} ×${item.qty}` : item.name).join("، ") + (items.length > 3 ? ` +${items.length - 3}` : "")
-                      : getOrderReference(order);
+                      : getOrderDisplayReference(order);
                     return { label, order, total: Number(getDisplayTotal(order) || 0) };
                   })
                   .filter((item) => String(item.label || "").trim())
@@ -1454,7 +1454,7 @@ export default function OrderPage() {
                                         {visibleOrders.length > 0 ? visibleOrders.map((item) => (
                                           <div key={`${item.label}-${getOrderReference(item.order)}`} className="rounded-[18px] bg-stone-50 border border-stone-100 p-3 flex items-center justify-between gap-3">
                                             <strong className="text-sm font-black text-brand truncate">{item.label}</strong>
-                                            <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-stone-500">{getOrderReference(item.order)}</span>
+                                            <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-stone-500">{getOrderDisplayReference(item.order)}</span>
                                           </div>
                                         )) : (
                                           <div className="rounded-[18px] bg-stone-50 border border-stone-100 p-4 text-center text-xs font-bold text-stone-400">تظهر طلباتك بعد أول طلب</div>
@@ -1469,7 +1469,7 @@ export default function OrderPage() {
 
                                     {lastOrder && (
                                       <div className="rounded-[24px] bg-white border border-stone-100 p-4 flex items-center justify-between gap-3 text-sm font-bold text-stone-500 shadow-sm">
-                                        <span className="truncate">آخر طلب: {getOrderReference(lastOrder)}</span>
+                                        <span className="truncate">آخر طلب: {getOrderDisplayReference(lastOrder)}</span>
                                         <span className="text-emerald-600 shrink-0">{Math.round(Number(getDisplayTotal(lastOrder) || 0))} د.ك</span>
                                       </div>
                                     )}
@@ -1603,7 +1603,7 @@ export default function OrderPage() {
                             رقم الطلب
                           </span>
                           <span className="text-xs font-extrabold text-brand bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-100">
-                            {getOrderReference(order)}
+                            {getOrderDisplayReference(order)}
                           </span>
                           {(order.paymentStatus === "paid" ||
                             (order.status || "").startsWith("تم الدفع") ||
