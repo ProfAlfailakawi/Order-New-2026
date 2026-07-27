@@ -132,6 +132,30 @@ test("partial order IDs are rejected", () => {
   );
 });
 
+test("the customer-facing short order ID resolves to the complete stored ID", () => {
+  assert.equal(
+    getCustomerOrderAccess(protectedOrder, {
+      phone: ownerPhone,
+      orderId: "ORD-NER1",
+    }),
+    "private",
+  );
+  assert.equal(
+    getCustomerOrderAccess(protectedOrder, {
+      phone: otherPhone,
+      orderId: "ORD-NER1",
+    }),
+    "none",
+  );
+  assert.equal(
+    getCustomerOrderAccess(protectedOrder, {
+      phone: ownerPhone,
+      orderId: "NER1",
+    }),
+    "none",
+  );
+});
+
 test("a secure tracking token unlocks only its exact full reference", () => {
   assert.equal(
     getCustomerOrderAccess(protectedInvoice, {
