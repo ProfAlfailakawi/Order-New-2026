@@ -81,7 +81,7 @@ export function RouletteSplit({
     if (!name.trim()) return;
     if (phone.length !== 8) return alert("دخل رقم تلفون صحيح 8 أرقام");
     try {
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/orders/${order.id}/join-roulette`, {
+      const res = await fetch(`/api/orders/${order.id}/join-roulette`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, phone }),
@@ -110,7 +110,7 @@ export function RouletteSplit({
   const spin = async () => {
     if (participants.length < 2) return alert("نحتاج شخصين عالأقل عشان نوهق واحد!");
     try {
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/orders/${order.id}/spin-roulette`, { method: "POST" });
+      const res = await fetch(`/api/orders/${order.id}/spin-roulette`, { method: "POST" });
       if (!res.ok) throw new Error('ما قدرنا نشغل لعبة وهق غيرك 🎰');
     } catch (e: any) {
       if (

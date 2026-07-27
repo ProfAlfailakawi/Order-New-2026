@@ -58,7 +58,7 @@ export function NewInvoiceModal({
         source: "admin_dashboard"
       };
 
-      const response = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/orders", {
+      const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData)
