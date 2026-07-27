@@ -114,12 +114,38 @@ function normalizeRequestedOrderId(value: unknown): string {
   return normalized;
 }
 
+function toCustomerFacingOrderReference(reference: unknown): string {
+  const normalized = normalizeRequestedOrderId(reference);
+  const prefixMatch = normalized.match(/^(ORD|INV)[-\s#]*/i);
+  if (!prefixMatch) return normalized;
+
+  const compactSource = normalized
+    .replace(/^(ORD|INV)[-\s#]*/i, "")
+    .replace(/[^A-Z0-9]/g, "");
+  const suffix = compactSource.slice(-4);
+  return suffix
+    ? `${prefixMatch[1].toUpperCase()}-${suffix}`
+    : normalized;
+}
+
 export function isExactOrderReference(
   record: any,
   requestedOrderId: unknown,
 ): boolean {
   const requested = normalizeRequestedOrderId(requestedOrderId);
-  return Boolean(requested) && recordReferences(record).includes(requested);
+  if (!requested) return false;
+
+  const references = recordReferences(record);
+  if (references.includes(requested)) return true;
+
+  // The customer-facing reference is intentionally short (for example
+  // ORD-1WW5), while the stored database reference remains complete.
+  // Only accept the canonical prefixed four-character form; arbitrary
+  // partial fragments such as "1WW5" remain invalid.
+  if (!/^(ORD|INV)-[A-Z0-9]{4}$/.test(requested)) return false;
+  return references.some(
+    (reference) => toCustomerFacingOrderReference(reference) === requested,
+  );
 }
 
 function splitPeople(record: any): any[] {
@@ -176,9 +202,6 @@ export function getCustomerOrderAccess(
   const isExact = hasExactOrderId && isExactOrderReference(record, input.orderId);
   const ownerMatches = phone.length === 8 && recordOwnerPhone(record) === phone;
   const participantMatches = phoneIsSplitParticipant(record, phone);
-  const hasStoredToken = CUSTOMER_TOKEN_HASH_PATTERN.test(
-    String(record?.customerAccessTokenHash || ""),
-  );
   const recordTokenMatches = ownerMatches && tokenMatchesHash(
     input.token,
     record?.customerAccessTokenHash,
@@ -201,16 +224,17 @@ export function getCustomerOrderAccess(
 
   if (!isExact) return "none";
   if (
+    ownerMatches ||
     trackingTokenMatches ||
     recordTokenMatches ||
     phoneTokenMatches
   ) {
+    // Phone-only tracking is already allowed across devices. Supplying the
+    // matching full or customer-facing order reference must not make that
+    // same customer lose access merely because this is a different browser.
     return "private";
   }
 
-  // Compatibility for orders created before customer access tokens existed:
-  // require both the complete order ID and its matching Kuwait phone number.
-  if (ownerMatches && !hasStoredToken) return "private";
 
   // Shared split links remain usable, but never expose the owner's private fields.
   if (isSplitOrder(record) && (!phone || participantMatches)) return "split";

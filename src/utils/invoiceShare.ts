@@ -51,6 +51,22 @@ const getDisplayOrderReference = (order: any) => {
   return suffix ? `${prefixMatch[1].toUpperCase()}-${suffix}` : normalized;
 };
 
+const getTrackingPhone = (order: any) => {
+  const digits = toEnglishDigits(
+    order?.customerPhone || order?.phone || order?.address?.phone || '',
+  ).replace(/\D/g, '');
+  return digits.length >= 8 ? digits.slice(-8) : '';
+};
+
+const buildTrackingUrl = (order: any) => {
+  const params = new URLSearchParams({
+    tracked_order: getDisplayOrderReference(order),
+  });
+  const trackingPhone = getTrackingPhone(order);
+  if (trackingPhone) params.set('phone', trackingPhone);
+  return `https://alturathkw.shop/track?${params.toString()}`;
+};
+
 const formatKwd = (value: any) => `${toEnglishDigits(Number(value || 0).toFixed(3))} د.ك`;
 
 const getOrderAddress = (order: any) => {
@@ -120,11 +136,10 @@ export const buildWhatsAppInvoiceText = (order: any, products: any[] = []) => {
   calculatedTotal += Number(order?.deliveryFee || 0);
   calculatedTotal -= Number(order?.discountAmount || order?.discount || 0);
 
-  const invoiceNumber = getFullOrderReference(order);
   const displayInvoiceNumber = getDisplayOrderReference(order);
   const customerName = order?.customerName || order?.name || 'عميلنا العزيز';
   const total = getOrderTotal(order, calculatedTotal);
-  const trackingUrl = `https://alturathkw.shop/track?tracked_order=${encodeURIComponent(String(invoiceNumber))}`;
+  const trackingUrl = buildTrackingUrl(order);
 
   return [
     `${DISPLAY_ICONS.sparkles} فاتورة طلبكم من مطبخ التراث الكويتي`,
@@ -158,11 +173,10 @@ export const buildWhatsAppPaymentLinkText = (order: any, paymentUrl: string) => 
   calculatedTotal += Number(order?.deliveryFee || 0);
   calculatedTotal -= Number(order?.discountAmount || order?.discount || 0);
 
-  const invoiceNumber = getFullOrderReference(order);
   const displayInvoiceNumber = getDisplayOrderReference(order);
   const customerName = order?.customerName || order?.name || 'عميلنا العزيز';
   const total = getOrderTotal(order, calculatedTotal);
-  const trackingUrl = `https://alturathkw.shop/track?tracked_order=${encodeURIComponent(String(invoiceNumber))}`;
+  const trackingUrl = buildTrackingUrl(order);
 
   return [
     `${DISPLAY_ICONS.sparkles} فاتورة طلبكم من مطبخ التراث الكويتي`,
