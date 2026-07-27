@@ -233,6 +233,7 @@ async function mergeSharedShards(rootData: any) {
       merged[key] = value;
     }
   }
+  if (Array.isArray(merged.squads)) merged.squads = merged.squads.map(coerceSquadTypes);
   return merged;
 }
 
@@ -270,6 +271,7 @@ async function getAppDataForKeys(keysToLoad: readonly ShardedAppDataKey[] = []) 
     const value = await loadSharedShard(key);
     if (Array.isArray(value) && value.length > 0) data[key] = value;
   }));
+  if (Array.isArray(data.squads)) data.squads = data.squads.map(coerceSquadTypes);
   _appDataKeyedCache.set(cacheKey, { time: Date.now(), data });
   return data;
 }
@@ -342,6 +344,17 @@ const removeUndefinedDeep = (value: any): any => {
   }
 
   return value;
+};
+
+const coerceSquadTypes = (sq: any) => {
+  if (typeof sq.membersList === "string") {
+    try { sq.membersList = JSON.parse(sq.membersList); } catch(e) { sq.membersList = []; }
+  }
+  if (!Array.isArray(sq.membersList)) sq.membersList = [];
+  if (typeof sq.location === "string") {
+    try { sq.location = JSON.parse(sq.location); } catch(e) { sq.location = null; }
+  }
+  return sq;
 };
 
 async function updateAppData(data: any) {
@@ -418,6 +431,7 @@ async function updateAppDataAtomically(
             }
           }
         }
+        if (Array.isArray(currentData.squads)) currentData.squads = currentData.squads.map(coerceSquadTypes);
 
         const updates = removeUndefinedDeep(updater(currentData));
 
@@ -466,6 +480,7 @@ async function updateAppDataAtomically(
           }
         }
       }
+      if (Array.isArray(currentData.squads)) currentData.squads = currentData.squads.map(coerceSquadTypes);
 
       const updates = removeUndefinedDeep(updater(currentData));
 
