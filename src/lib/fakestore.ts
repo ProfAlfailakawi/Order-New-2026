@@ -12,7 +12,7 @@ export function onSnapshot(ref: any, callback: any) {
   const poll = async () => {
     if (isCancelled) return;
     try {
-      const r = await fetch("/api/appdata");
+      const r = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/appdata");
       if (r.ok) {
         const data = await r.json();
         callback({ exists: () => true, data: () => data });
@@ -29,7 +29,7 @@ export function onSnapshot(ref: any, callback: any) {
 
 export async function updateDoc(ref: any, data: any) {
   try {
-    const r = await fetch("/api/appdata", { 
+    const r = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/appdata", { 
       method: 'PATCH', 
       headers: { 'Content-Type': 'application/json' }, 
       body: JSON.stringify(data) 
@@ -46,7 +46,7 @@ export async function updateDoc(ref: any, data: any) {
 
 export async function getDoc(ref: any) {
   try {
-    const r = await fetch("/api/appdata");
+    const r = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/appdata");
     const data = await r.json();
     return { exists: () => true, data: () => data };
   } catch(e) {
