@@ -191,8 +191,11 @@ export function getCustomerOrderAccess(
     ownerMatches && input.tokenAuthorizesPhone === true;
 
   if (!hasExactOrderId) {
-    if (phoneTokenMatches) return "private";
-    if (participantMatches && input.tokenAuthorizesPhone === true) return "split";
+    // Phone-only tracking must work across the customer's devices.
+    // The token remains useful for protected direct links, but is not tied
+    // to the browser that originally placed the order.
+    if (ownerMatches) return "private";
+    if (participantMatches) return "split";
     return "none";
   }
 
