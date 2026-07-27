@@ -510,6 +510,27 @@ async function updateAppDataAtomically(
   }
 }
 
+async function mirrorCustomerOrderForAdminRealtime(order: any) {
+  if (!order?.id) return;
+  const cleaned = removeUndefinedDeep({
+    ...order,
+    date: order.date || order.createdAt || new Date().toISOString(),
+    updatedAt: order.updatedAt || order.createdAt || new Date().toISOString(),
+  });
+  delete cleaned.customerAccessTokenHash;
+
+  if (adminDb) {
+    try {
+      await adminDb.collection("orders").doc(String(cleaned.id)).set(cleaned, { merge: true });
+      return;
+    } catch (error) {
+      handleAdminDbError(error, "mirrorCustomerOrderForAdminRealtime");
+    }
+  }
+
+  await setDoc(doc(db, "orders", String(cleaned.id)), cleaned, { merge: true });
+}
+
 async function sendAdminPushDirectOnce(input: {
   eventId: string;
   title: string;
@@ -981,60 +1002,108 @@ function reconcileTrackedPaymentRecords(records: any[]): any[] {
 }
 
 async function syncRootPaymentDocsFast(orderId: string, isSuccess: boolean, providerData: any) {
-  if (!adminDb || !orderId) return;
+  if (!orderId) return;
   const cleanId = normalizePaymentLookupId(orderId);
   if (!cleanId) return;
 
-  const now = admin.firestore.FieldValue.serverTimestamp();
-  const patch: any = isSuccess
-    ? {
-        status: "تم الدفع بنجاح",
-        paymentStatus: "paid",
-        payment_status: "paid",
-        paid: true,
-        failed: false,
-        canPay: false,
-        paidAt: now,
-        paymentUpdatedAt: now,
-        updatedAt: now,
-      }
-    : {
-        status: "فشل في عملية الدفع",
-        paymentStatus: "failed",
-        payment_status: "failed",
-        failed: true,
-        paid: false,
-        canPay: true,
-        failedAt: now,
-        paymentUpdatedAt: now,
-        updatedAt: now,
-      };
-
   const transactionId = providerData?.reference?.id || providerData?.TrackID || providerData?.order_id || providerData?.track_id || "";
-  if (transactionId) {
-    patch.transactionId = transactionId;
-    patch.paymentId = transactionId;
-    patch.payment_id = transactionId;
+  const buildPatch = (timestamp: any) => {
+    const patch: any = isSuccess
+      ? {
+          status: "تم الدفع بنجاح",
+          paymentStatus: "paid",
+          payment_status: "paid",
+          paid: true,
+          failed: false,
+          canPay: false,
+          paidAt: timestamp,
+          paymentUpdatedAt: timestamp,
+          updatedAt: timestamp,
+        }
+      : {
+          status: "فشل في عملية الدفع",
+          paymentStatus: "failed",
+          payment_status: "failed",
+          failed: true,
+          paid: false,
+          canPay: true,
+          failedAt: timestamp,
+          paymentUpdatedAt: timestamp,
+          updatedAt: timestamp,
+        };
+
+    if (transactionId) {
+      patch.transactionId = transactionId;
+      patch.paymentId = transactionId;
+      patch.payment_id = transactionId;
+    }
+    return patch;
+  };
+
+  const currentHasConfirmedPayment = (current: any) => {
+    const markedPaid =
+      current?.paid === true ||
+      String(current?.paymentStatus || current?.payment_status || "").toLowerCase() === "paid" ||
+      String(current?.status || "").includes("تم الدفع");
+    const hasGatewayProof = Boolean(
+      current?.paidAt ||
+      current?.transactionId ||
+      current?.paymentId ||
+      current?.payment_id ||
+      current?.reference?.id
+    );
+    return markedPaid && hasGatewayProof;
+  };
+
+  if (adminDb) {
+    const patch = buildPatch(admin.firestore.FieldValue.serverTimestamp());
+    const updateIfExists = async (ref: any) => {
+      const snap = await ref.get();
+      if (!snap.exists) return;
+      const current = snap.data() || {};
+      if (!isSuccess && currentHasConfirmedPayment(current)) return;
+      await ref.set(patch, { merge: true });
+    };
+
+    try {
+      await Promise.all([
+        updateIfExists(adminDb.collection("orders").doc(cleanId)),
+        updateIfExists(adminDb.collection("invoices").doc(cleanId)),
+        adminDb.collection("orders").where("linkedInvoiceId", "==", cleanId).limit(20).get().then((snap: any) =>
+          Promise.all(snap.docs.map((docSnap: any) => updateIfExists(docSnap.ref)))
+        ),
+        adminDb.collection("invoices").where("linkedOrderId", "==", cleanId).limit(20).get().then((snap: any) =>
+          Promise.all(snap.docs.map((docSnap: any) => updateIfExists(docSnap.ref)))
+        ),
+      ]);
+      return;
+    } catch (error: any) {
+      handleAdminDbError(error, "syncRootPaymentDocsFast");
+      console.warn("[PAYMENT_UPDATE] Admin SDK root sync failed; retrying with Client SDK:", error?.message || String(error));
+    }
   }
 
-  const updateIfExists = async (ref: any) => {
-    const snap = await ref.get();
-    if (!snap.exists) return;
+  // Google Studio deployments can run without Admin SDK IAM. Keep the same realtime mirrors
+  // current through the authenticated Client SDK so the admin supplier ledger still refreshes.
+  const patch = buildPatch(new Date().toISOString());
+  const updateClientIfExists = async (ref: any) => {
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
     const current = snap.data() || {};
-    if (!isSuccess && (current.paymentStatus === "paid" || String(current.status || "").includes("تم الدفع"))) return;
-    await ref.set(patch, { merge: true });
+    if (!isSuccess && currentHasConfirmedPayment(current)) return;
+    await setDoc(ref, patch, { merge: true });
   };
 
   try {
+    const [linkedOrders, linkedInvoices] = await Promise.all([
+      getDocs(query(collection(db, "orders"), where("linkedInvoiceId", "==", cleanId), limit(20))),
+      getDocs(query(collection(db, "invoices"), where("linkedOrderId", "==", cleanId), limit(20))),
+    ]);
     await Promise.all([
-      updateIfExists(adminDb.collection("orders").doc(cleanId)),
-      updateIfExists(adminDb.collection("invoices").doc(cleanId)),
-      adminDb.collection("orders").where("linkedInvoiceId", "==", cleanId).limit(20).get().then((snap: any) =>
-        Promise.all(snap.docs.map((docSnap: any) => updateIfExists(docSnap.ref)))
-      ),
-      adminDb.collection("invoices").where("linkedOrderId", "==", cleanId).limit(20).get().then((snap: any) =>
-        Promise.all(snap.docs.map((docSnap: any) => updateIfExists(docSnap.ref)))
-      ),
+      updateClientIfExists(doc(db, "orders", cleanId)),
+      updateClientIfExists(doc(db, "invoices", cleanId)),
+      ...linkedOrders.docs.map((docSnap: any) => updateClientIfExists(docSnap.ref)),
+      ...linkedInvoices.docs.map((docSnap: any) => updateClientIfExists(docSnap.ref)),
     ]);
   } catch (error: any) {
     console.warn("[PAYMENT_UPDATE] Fast root payment sync skipped:", error?.message || String(error));
@@ -3880,7 +3949,8 @@ async function startServer() {
         ...(appData.supplierCopies || []),
       ];
 
-      // Validate all items are currently active
+      // Validate all items are currently active and freeze the supplier/cost metadata at
+      // purchase time. The admin supplier ledger must not depend on a later catalogue lookup.
       for (const item of items) {
         const product = products.find(
           (p: any) => p.id === item.productId || p.id === item.id,
@@ -3891,6 +3961,21 @@ async function startServer() {
             .json({ error: `المنتج ${product.name} غير متوفر حالياً` });
         }
       }
+
+      newOrder.items = items.map((item: any) => {
+        const product = products.find(
+          (p: any) => p.id === item.productId || p.id === item.id,
+        );
+        if (!product) return item;
+        return removeUndefinedDeep({
+          ...item,
+          productId: item.productId || item.id || product.id,
+          name: item.name || item.productName || product.name,
+          supplierId: item.supplierId || product.supplierId,
+          costAtTime: item.costAtTime ?? product.cost ?? 0,
+          priceAtTime: item.priceAtTime ?? item.price ?? product.price ?? 0,
+        });
+      });
 
       await updateAppDataAtomically((current) => {
         const orders = [...(current.orders || [])];
@@ -3976,6 +4061,14 @@ async function startServer() {
         }
         return { orders, customers, squads, diwaniyaNotifications };
       });
+
+      try {
+        await mirrorCustomerOrderForAdminRealtime(newOrder);
+      } catch (mirrorError: any) {
+        // The authoritative shard is already saved. Do not reject the customer's order if the
+        // realtime convenience mirror is temporarily unavailable.
+        console.warn("[ORDER] Admin realtime order mirror failed:", mirrorError?.message || String(mirrorError));
+      }
 
       console.log(`[ORDER] Order ${newOrder.id} saved successfully`);
       scheduleAdminOrderCreatedPush(newOrder);
