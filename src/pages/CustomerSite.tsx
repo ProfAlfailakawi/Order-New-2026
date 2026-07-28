@@ -1,5 +1,5 @@
 import { DEFAULT_GLOBAL_LOGO } from "../constants";
-import React, { useState, useEffect, useRef, useMemo, useCallback, startTransition } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
@@ -44,6 +44,7 @@ import {
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
 import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegroundPush, type DiwaniyaPushState } from "../lib/diwaniyaPush";
+import { restoreCustomerMenuProducts } from "../lib/customerMenuTransport";
 import { robustGetCurrentPosition } from "../utils/geolocation";
 import LeafletLocationPicker from "../components/LeafletLocationPicker";
 import LeafletKuwaitMap from "../components/LeafletKuwaitMap";
@@ -96,15 +97,6 @@ const scheduleCustomerIdle = (work: () => void, timeout = 1200) => {
   const ric = (window as any).requestIdleCallback;
   if (typeof ric === "function") return ric(work, { timeout });
   return window.setTimeout(work, 0);
-};
-
-const cancelCustomerIdle = (id: any) => {
-  if (id === null || id === undefined || typeof window === "undefined") return;
-  const cic = (window as any).cancelIdleCallback;
-  if (typeof cic === "function") {
-    try { cic(id); return; } catch {}
-  }
-  window.clearTimeout(id);
 };
 
 const writeCustomerCacheIdle = (key: string, value: any) => {
@@ -1403,7 +1395,12 @@ export default function CustomerSite() {
     return () => mediaQuery.removeEventListener?.("change", updatePhoneLayout);
   }, []);
 
-  const [settings, setSettings] = useState<any>({});
+  const [settings, setSettings] = useState<any>(() => {
+    const cached = readCustomerCache("cached_settings");
+    return cached && typeof cached === "object" && !Array.isArray(cached)
+      ? cached
+      : {};
+  });
   
   const LOYALTY_TIERS = useMemo(() => {
     const tiers = normalizeAdminArray(settings.loyaltyTiers ?? settings.loyaltyLevels ?? settings.loyaltySettings?.tiers);
@@ -1541,12 +1538,21 @@ export default function CustomerSite() {
   };
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => {
+    const cached = readCustomerCache("cached_products");
+    return getCustomerVisibleProducts(Array.isArray(cached) ? cached : []);
+  });
   const [isLoadingProducts, setIsLoadingProducts] = useState(() => {
     return !hasCustomerCache("cached_products");
   });
-  const [topProducts, setTopProducts] = useState<Product[]>([]);
-  const [regions, setRegions] = useState<Region[]>([]);
+  const [topProducts, setTopProducts] = useState<Product[]>(() => {
+    const cached = readCustomerCache("cached_top_products");
+    return getCustomerVisibleProducts(Array.isArray(cached) ? cached : []);
+  });
+  const [regions, setRegions] = useState<Region[]>(() => {
+    const cached = readCustomerCache("cached_regions");
+    return getActiveRegions(Array.isArray(cached) ? cached : []);
+  });
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isCheckout, setIsCheckout] = useState(false);
@@ -1559,54 +1565,6 @@ export default function CustomerSite() {
   const [isCreatingSquad, setIsCreatingSquad] = useState(false);
   const [newSquadName, setNewSquadName] = useState("");
   const [isSubmittingSquad, setIsSubmittingSquad] = useState(false);
-  useEffect(() => {
-    let cancelled = false;
-    let activeIdle: any = null;
-    const tasks = [
-      () => {
-        const cached = readCustomerCache("cached_settings");
-        if (!cancelled && cached && typeof cached === "object") {
-          startTransition(() => setSettings(cached));
-        }
-      },
-      () => {
-        const cached = readCustomerCache("cached_products");
-        if (!cancelled && Array.isArray(cached)) {
-          const visibleProducts = getCustomerVisibleProducts(cached);
-          startTransition(() => {
-            setProducts(visibleProducts);
-            setIsLoadingProducts(false);
-          });
-        }
-      },
-      () => {
-        const cached = readCustomerCache("cached_top_products");
-        if (!cancelled && Array.isArray(cached)) {
-          startTransition(() => setTopProducts(getCustomerVisibleProducts(cached)));
-        }
-      },
-      () => {
-        const cached = readCustomerCache("cached_regions");
-        if (!cancelled && Array.isArray(cached)) {
-          startTransition(() => setRegions(getActiveRegions(cached)));
-        }
-      },
-    ];
-
-    const runNext = (index: number) => {
-      if (cancelled || index >= tasks.length) return;
-      activeIdle = scheduleCustomerIdle(() => {
-        tasks[index]();
-        runNext(index + 1);
-      }, 700);
-    };
-
-    runNext(0);
-    return () => {
-      cancelled = true;
-      cancelCustomerIdle(activeIdle);
-    };
-  }, []);
   const [guestName, setGuestName] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
   const [loginPhone, setLoginPhone] = useState("");
@@ -3331,7 +3289,9 @@ export default function CustomerSite() {
     return () => clearTimeout(timer);
   }, [customerPhone]);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(
+    () => !hasCustomerCache("cached_products"),
+  );
 
   useEffect(() => {
     if (fomoPurchases.length === 0 || isCheckout) {
@@ -3407,85 +3367,142 @@ export default function CustomerSite() {
       return null;
     };
 
-    const loadData = async () => {
-      try {
-        await Promise.all([
-          fetchWithRetry("/api/products").then((allProducts) => {
-            if (!isMounted) return;
-            const validProducts = getCustomerVisibleProducts(Array.isArray(allProducts) ? allProducts : []);
+    const loadCustomerMenu = async () => {
+      const payload = await fetchWithRetry("/api/customer-menu");
+      if (payload?.success === true) {
+        try {
+          const validProducts = getCustomerVisibleProducts(
+            restoreCustomerMenuProducts(payload),
+          );
+          const productsById = new Map(
+            validProducts.map((product: any) => [
+              String(product?.id ?? product?._id ?? ""),
+              product,
+            ]),
+          );
+          const topIds = Array.isArray(payload.topProductIds)
+            ? payload.topProductIds
+            : [];
+          const validTopProducts = topIds
+            .map((id: any) => productsById.get(String(id)))
+            .filter(Boolean) as Product[];
+
+          if (isMounted) {
             setProducts(validProducts);
+            setTopProducts(validTopProducts);
             writeCustomerCacheIdle("cached_products", validProducts);
+            writeCustomerCacheIdle("cached_top_products", validTopProducts);
             setIsLoadingProducts(false);
-          }),
-          fetchWithRetry("/api/top-products").then(d => { 
-            if (isMounted) {
-              const list = getCustomerVisibleProducts(Array.isArray(d) ? d : []);
-              setTopProducts(list);
-              writeCustomerCacheIdle("cached_top_products", list);
-            }
-          }),
-          fetchWithRetry("/api/recent-fomo", 1).then(d => { 
-             if (isMounted && Array.isArray(d) && d.length > 0) {
-                 const enrichedFomo = d.map(item => {
-                    const rnd = Math.random();
-                    if (rnd > 0.85) return { ...item, type: 'insight' };
-                    if (rnd > 0.6) return { ...item, type: 'trend' };
-                    if (rnd > 0.4) return { ...item, type: 'scarcity' };
-                    return { ...item, type: 'normal' };
-                 });
-                 setFomoPurchases(enrichedFomo);
-             }
-          }),
-          fetchWithRetry("/api/regions").then(d => { 
-            const sorted = getActiveRegions(d || []).sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar"));
-            if (isMounted) {
-              setRegions(sorted);
-              writeCustomerCacheIdle("cached_regions", sorted);
-            }
-          }),
-          fetchWithRetry("/api/settings").then(d => { 
-            if (isMounted && d) {
-              setSettings(d);
-              writeCustomerCacheIdle("cached_settings", d);
-            }
-          }),
-          fetchWithRetry("/api/debug", 1).then(d => { if (isMounted && d) console.log(d); })
-        ]);
-      } catch (err: any) {
-        if (err && err.message && (err.message.includes("Failed to fetch") || err.message.includes("Load failed"))) return;
-        console.error("Error initiating fetch", err);
-      } finally {
-        if (isMounted) {
-          setIsLoadingProducts(false);
-          setIsLoading(false);
+          }
+          return;
+        } catch (error) {
+          console.warn(
+            "Customer menu payload was incomplete; using compatibility endpoints.",
+            error,
+          );
         }
       }
+
+      // Safe compatibility path during a rolling deployment or a temporary
+      // customer-menu endpoint failure. Its response contracts stay unchanged.
+      const [allProducts, topProductsResponse] = await Promise.all([
+        fetchWithRetry("/api/products"),
+        fetchWithRetry("/api/top-products"),
+      ]);
+      if (!isMounted) return;
+      if (Array.isArray(allProducts)) {
+        const validProducts = getCustomerVisibleProducts(allProducts);
+        setProducts(validProducts);
+        writeCustomerCacheIdle("cached_products", validProducts);
+      }
+      if (Array.isArray(topProductsResponse)) {
+        const validTopProducts =
+          getCustomerVisibleProducts(topProductsResponse);
+        setTopProducts(validTopProducts);
+        writeCustomerCacheIdle("cached_top_products", validTopProducts);
+      }
+      setIsLoadingProducts(false);
     };
 
-    loadData();
-    // Customer brand splash appears on the initial page entrance only.
-    // If we have cached content already, we can dismiss it very quickly (e.g. 250ms) to make it feel blazing fast!
-    // Otherwise, we wait for the database fetch to complete, with a safety timeout of 2500ms max.
-    const hasCache = (() => {
-      try {
-        return !!localStorage.getItem("cached_products");
-      } catch (e) {
-        return false;
-      }
-    })();
-    
-    const splashDelay = hasCache ? 250 : 2500;
-    const safetyTimer = setTimeout(() => {
-      if (isMounted) setIsLoading(false);
-    }, splashDelay);
+    let loadInFlight: Promise<void> | null = null;
+    const loadData = () => {
+      if (loadInFlight) return loadInFlight;
+      const request = (async () => {
+        try {
+          void fetchWithRetry("/api/recent-fomo", 1).then((data) => {
+            if (!isMounted || !Array.isArray(data) || data.length === 0) return;
+            const enrichedFomo = data.map((item) => {
+              const randomValue = Math.random();
+              if (randomValue > 0.85) return { ...item, type: "insight" };
+              if (randomValue > 0.6) return { ...item, type: "trend" };
+              if (randomValue > 0.4) return { ...item, type: "scarcity" };
+              return { ...item, type: "normal" };
+            });
+            setFomoPurchases(enrichedFomo);
+          });
 
-    // Auto-refresh every 15 seconds to keep data live (Best Sellers, New Arrivals, etc.)
-    const refreshInterval = setInterval(loadData, 15000);
+          await Promise.all([
+            loadCustomerMenu(),
+            fetchWithRetry("/api/regions").then((data) => {
+              if (!isMounted || !Array.isArray(data)) return;
+              const sorted = getActiveRegions(data).sort((a: any, b: any) =>
+                (a.name || "").localeCompare(b.name || "", "ar"),
+              );
+              setRegions(sorted);
+              writeCustomerCacheIdle("cached_regions", sorted);
+            }),
+            fetchWithRetry("/api/settings").then((data) => {
+              if (isMounted && data) {
+                setSettings(data);
+                writeCustomerCacheIdle("cached_settings", data);
+              }
+            }),
+          ]);
+        } catch (err: any) {
+          if (
+            err?.message?.includes("Failed to fetch") ||
+            err?.message?.includes("Load failed")
+          ) {
+            return;
+          }
+          console.error("Error initiating fetch", err);
+        } finally {
+          if (isMounted) {
+            setIsLoadingProducts(false);
+            setIsLoading(false);
+          }
+        }
+      })();
+      loadInFlight = request;
+      void request.finally(() => {
+        if (loadInFlight === request) loadInFlight = null;
+      });
+      return request;
+    };
+
+    void loadData();
+
+    // Cached cloud data renders in the first React paint. Cold visits retain
+    // only a bounded safety timeout while the fresh cloud request is running.
+    const safetyTimer = hasCustomerCache("cached_products")
+      ? null
+      : window.setTimeout(() => {
+          if (isMounted) setIsLoading(false);
+        }, 2500);
+
+    // Keep data current while the customer is looking at the app. Background
+    // tabs make no repeated cloud requests and refresh immediately on return.
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void loadData();
+    };
+    const refreshInterval = window.setInterval(refreshWhenVisible, 15000);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
       isMounted = false;
-      clearTimeout(safetyTimer);
-      clearInterval(refreshInterval);
+      if (safetyTimer !== null) window.clearTimeout(safetyTimer);
+      window.clearInterval(refreshInterval);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, []);
 
@@ -9395,6 +9412,7 @@ const SteamCompanion: React.FC = () => {
   useEffect(() => {
     // Generate constant ambient gentle steam at the bottom margins
     const interval = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
       const id = Math.random();
       const startX = Math.random() * window.innerWidth;
       const startY = window.innerHeight - 30;
@@ -9452,33 +9470,36 @@ const SteamCompanion: React.FC = () => {
     const targetY = window.innerHeight - 80;
 
     const tick = () => {
-      setPuffs((prev) => {
-        return prev
-          .map((p) => {
-            // Ambient particles float straight up, added-item particles dance towards the bottom cart
-            const isAmbient = p.opacity < 0.4;
-            if (isAmbient) {
-              return {
-                ...p,
-                currentY: p.currentY - 0.7,
-                currentX: p.currentX + Math.sin(p.currentY / 30) * 0.4,
-                opacity: p.opacity - 0.002
-              };
-            } else {
-              // Interactive trail path interpolation to the cart
-              const dx = targetX - p.currentX;
-              const dy = targetY - p.currentY;
-              return {
-                ...p,
-                currentX: p.currentX + dx * 0.08 + (Math.random() - 0.5) * 4,
-                currentY: p.currentY + dy * 0.08 + (Math.random() - 0.5) * 4,
-                opacity: p.opacity - 0.02,
-                size: p.size + 0.4
-              };
-            }
-          })
-          .filter((p) => p.opacity > 0 && p.currentY > 0);
-      });
+      if (document.visibilityState === "visible") {
+        setPuffs((prev) => {
+          if (prev.length === 0) return prev;
+          return prev
+            .map((p) => {
+              // Ambient particles float straight up, added-item particles dance towards the bottom cart
+              const isAmbient = p.opacity < 0.4;
+              if (isAmbient) {
+                return {
+                  ...p,
+                  currentY: p.currentY - 0.7,
+                  currentX: p.currentX + Math.sin(p.currentY / 30) * 0.4,
+                  opacity: p.opacity - 0.002
+                };
+              } else {
+                // Interactive trail path interpolation to the cart
+                const dx = targetX - p.currentX;
+                const dy = targetY - p.currentY;
+                return {
+                  ...p,
+                  currentX: p.currentX + dx * 0.08 + (Math.random() - 0.5) * 4,
+                  currentY: p.currentY + dy * 0.08 + (Math.random() - 0.5) * 4,
+                  opacity: p.opacity - 0.02,
+                  size: p.size + 0.4
+                };
+              }
+            })
+            .filter((p) => p.opacity > 0 && p.currentY > 0);
+        });
+      }
       animId = requestAnimationFrame(tick);
     };
 
@@ -9493,13 +9514,14 @@ const SteamCompanion: React.FC = () => {
           key={p.id}
           className="absolute rounded-full filter blur-[20px]"
           style={{
-            left: `${p.currentX}px`,
-            top: `${p.currentY}px`,
+            left: 0,
+            top: 0,
             width: `${p.size}px`,
             height: `${p.size}px`,
             opacity: p.opacity,
             background: "radial-gradient(circle, rgba(205,162,80,0.3) 0%, rgba(13,58,34,0.02) 60%, transparent 100%)",
-            transform: "translate(-50%, -50%)"
+            transform: `translate3d(${p.currentX}px, ${p.currentY}px, 0) translate(-50%, -50%)`,
+            willChange: "transform, opacity"
           }}
         />
       ))}
