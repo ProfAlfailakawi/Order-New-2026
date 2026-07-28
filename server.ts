@@ -12,6 +12,13 @@ import { getMessaging } from "firebase-admin/messaging";
 import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
 import { GoogleGenAI, Type } from "@google/genai";
 import { checkStoreStatus, getConfiguredStoreStatus } from "./src/lib/storeAvailability";
+import { packCustomerMenuProducts } from "./src/lib/customerMenuTransport.ts";
+import {
+  brotliCompress,
+  constants as zlibConstants,
+  gzip,
+} from "node:zlib";
+import { promisify } from "node:util";
 
 // Initialize Gemini SDK with User-Agent telemetry
 const aiClient = new GoogleGenAI({
@@ -118,6 +125,45 @@ let _appDataCache: any = null;
 let _appDataCacheTime = 0;
 const _appDataKeyedCache = new Map<string, { time: number; data: any }>();
 const CACHE_TTL = 250; // Keep app reads quick without hiding fresh payment/order writes
+
+const brotliCompressAsync = promisify(brotliCompress);
+const gzipAsync = promisify(gzip);
+
+// Compression is deliberately scoped to the read-only customer menu response.
+// Payment, order creation, callbacks and notification endpoints keep their current
+// transport path untouched.
+async function sendCompressedCustomerMenuJson(
+  req: express.Request,
+  res: express.Response,
+  payload: any,
+) {
+  const json = JSON.stringify(payload);
+  const input = Buffer.from(json, "utf8");
+  const acceptedEncodings = String(req.headers["accept-encoding"] || "");
+
+  res.type("application/json; charset=utf-8");
+  res.setHeader("Vary", "Accept-Encoding");
+  try {
+    if (acceptedEncodings.includes("br")) {
+      const body = await brotliCompressAsync(input, {
+        params: {
+          [zlibConstants.BROTLI_PARAM_QUALITY]: 4,
+          [zlibConstants.BROTLI_PARAM_SIZE_HINT]: input.length,
+        },
+      });
+      res.setHeader("Content-Encoding", "br");
+      return res.send(body);
+    }
+    if (acceptedEncodings.includes("gzip")) {
+      const body = await gzipAsync(input, { level: 6 });
+      res.setHeader("Content-Encoding", "gzip");
+      return res.send(body);
+    }
+  } catch (compressionError) {
+    console.warn("[CUSTOMER_MENU] Compression skipped:", compressionError);
+  }
+  return res.send(input);
+}
 
 const SHARDED_APPDATA_KEYS = [
   "orders",
@@ -2945,73 +2991,112 @@ app.get("/api/debug/order/:id", async (req, res) => {
     return Array.from(grouped.values());
   };
 
+  const buildCustomerTopProducts = (
+    products: any[] = [],
+    allInvoices: any[] = [],
+  ) => {
+    const productStats: Record<
+      string,
+      { count: number; revenue: number }
+    > = {};
+    allInvoices.forEach((order: any) => {
+      if (!Array.isArray(order?.items)) return;
+      order.items.forEach((item: any) => {
+        if (!item?.productId) return;
+        if (!productStats[item.productId]) {
+          productStats[item.productId] = { count: 0, revenue: 0 };
+        }
+        const quantity = Number(item.quantity) || 1;
+        const price = Number(item.priceAtTime || item.price || 0);
+        productStats[item.productId].count += quantity;
+        productStats[item.productId].revenue += price * quantity;
+      });
+    });
+
+    const byQuantity = [...products]
+      .filter((product) => (productStats[product.id]?.count || 0) > 0)
+      .sort(
+        (a, b) =>
+          (productStats[b.id]?.count || 0) -
+          (productStats[a.id]?.count || 0),
+      )
+      .slice(0, 15);
+    const byRevenue = [...products]
+      .filter((product) => (productStats[product.id]?.revenue || 0) > 0)
+      .sort(
+        (a, b) =>
+          (productStats[b.id]?.revenue || 0) -
+          (productStats[a.id]?.revenue || 0),
+      )
+      .slice(0, 15);
+
+    const mixedMap = new Map<string, any>();
+    byQuantity.forEach((product) => mixedMap.set(product.id, product));
+    byRevenue.forEach((product) => mixedMap.set(product.id, product));
+    const allTopProducts = Array.from(mixedMap.values());
+    if (allTopProducts.length < 6) {
+      const fallbacks = [...products]
+        .filter((product) => !product.isHidden && !product.isOutOfStock)
+        .slice(0, 20);
+      fallbacks.forEach((product) => {
+        if (!mixedMap.has(product.id)) {
+          allTopProducts.push(product);
+          mixedMap.set(product.id, product);
+        }
+      });
+    }
+
+    return allTopProducts.sort(() => 0.5 - Math.random()).slice(0, 6);
+  };
+
+  // One read-only request replaces the two large, overlapping product requests.
+  // Top products are represented by IDs because their full objects already exist
+  // in the menu array. Inline images are de-duplicated only for network transport.
+  app.get("/api/customer-menu", async (req, res) => {
+    try {
+      const data = await getAppDataForKeys([
+        "products",
+        "supplierCopies",
+        "invoices",
+      ]);
+      const allProducts = [
+        ...(data.products || []),
+        ...(data.supplierCopies || []),
+      ];
+      const products = getCustomerVisibleProducts(
+        processProducts(allProducts),
+      ).sort((a: any, b: any) =>
+        (a.name || "").localeCompare(b.name || "", "ar"),
+      );
+      const topProducts = buildCustomerTopProducts(
+        products,
+        data.invoices || [],
+      );
+      const packedMenu = packCustomerMenuProducts(products);
+
+      return await sendCompressedCustomerMenuJson(req, res, {
+        success: true,
+        formatVersion: 1,
+        products: packedMenu.products,
+        topProductIds: topProducts
+          .map((product: any) => String(product?.id || ""))
+          .filter(Boolean),
+        assetPack: packedMenu.assetPack,
+        transportStats: packedMenu.stats,
+      });
+    } catch (error) {
+      console.error("[CUSTOMER_MENU] Failed:", error);
+      return res.status(500).json({ error: "Failed to fetch customer menu" });
+    }
+  });
+
   // 5. Top Products
   app.get("/api/top-products", async (req, res) => {
     try {
       const data = await getAppDataForKeys(["products", "supplierCopies", "invoices"]);
       const allProducts = [...(data.products || []), ...(data.supplierCopies || [])];
-
-      let products = getCustomerVisibleProducts(processProducts(allProducts));
-      const allInvoices = data.invoices || [];
-
-      const productStats: any = {};
-      allInvoices.forEach((order: any) => {
-        if (order.items && Array.isArray(order.items)) {
-          order.items.forEach((item: any) => {
-            if (!item.productId) return;
-            if (!productStats[item.productId]) {
-              productStats[item.productId] = { count: 0, revenue: 0 };
-            }
-            const quantity = Number(item.quantity) || 1;
-            const price = Number(item.priceAtTime || item.price || 0);
-            productStats[item.productId].count += quantity;
-            productStats[item.productId].revenue += price * quantity;
-          });
-        }
-      });
-
-      // 1. Top products by quantity (Total Quantity) - take top 15
-      const byQuantity = [...products]
-        .filter((p) => (productStats[p.id]?.count || 0) > 0)
-        .sort(
-          (a, b) =>
-            (productStats[b.id]?.count || 0) - (productStats[a.id]?.count || 0),
-        )
-        .slice(0, 15);
-
-      // 2. Top products by sales amount (Total Sales) - take top 15
-      const byRevenue = [...products]
-        .filter((p) => (productStats[p.id]?.revenue || 0) > 0)
-        .sort(
-          (a, b) =>
-            (productStats[b.id]?.revenue || 0) -
-            (productStats[a.id]?.revenue || 0),
-        )
-        .slice(0, 15);
-
-      // Mix both and remove duplicates
-      const mixedMap = new Map();
-      byQuantity.forEach((p) => mixedMap.set(p.id, p));
-      byRevenue.forEach((p) => mixedMap.set(p.id, p));
-
-      let allTopProducts = Array.from(mixedMap.values());
-      
-      // If we don't have enough data, fallback to active products
-      if (allTopProducts.length < 6) {
-        const fallbacks = [...products].filter(p => !p.isHidden && !p.isOutOfStock).slice(0, 20);
-        fallbacks.forEach(p => {
-          if (!mixedMap.has(p.id)) {
-            allTopProducts.push(p);
-            mixedMap.set(p.id, p);
-          }
-        });
-      }
-
-      // Randomly select 6 products from the pool so it changes on every load
-      const shuffled = allTopProducts.sort(() => 0.5 - Math.random());
-      let topProductsList = shuffled.slice(0, 6);
-
-      res.json(topProductsList);
+      const products = getCustomerVisibleProducts(processProducts(allProducts));
+      res.json(buildCustomerTopProducts(products, data.invoices || []));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch top products" });
     }
