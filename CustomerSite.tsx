@@ -1,5 +1,6 @@
 import { DEFAULT_GLOBAL_LOGO } from "../constants";
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -38,13 +39,17 @@ import {
   Users,
   BellRing,
   LogIn,
+  Clock,
 } from "lucide-react";
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { db } from "../lib/firebase";
 import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegroundPush, type DiwaniyaPushState } from "../lib/diwaniyaPush";
+import { restoreCustomerMenuProducts } from "../lib/customerMenuTransport";
 import { robustGetCurrentPosition } from "../utils/geolocation";
 import LeafletLocationPicker from "../components/LeafletLocationPicker";
 import LeafletKuwaitMap from "../components/LeafletKuwaitMap";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import { OfflineModal } from "../components/OfflineModal";
 
 // --- Soft entrance accent without the old curtain effect ---
 function ZariBishtGate() {
@@ -65,9 +70,44 @@ const sanitizeWhatsAppText = (text: string) =>
   String(text || "").replace(/[\u{1F000}-\u{1FAFF}]/gu, "").replace(/\uFFFD/g, "");
 
 const DEFAULT_PRODUCT_CATEGORIES = ["الولائم", "اللحوم", "الدجاج", "البحري", "المقبلات"];
+const CUSTOMER_ENTRY_SEEN_KEY = "alturath_customer_entry_seen_v1";
+const CUSTOMER_MARKETING_DAY_KEY = "alturath_customer_marketing_day_v1";
+const CUSTOMER_MARKETING_DISMISS_KEY = "alturath_customer_marketing_dismissed_v1";
 
 const getActiveRegions = (items: any[] = []) =>
   (Array.isArray(items) ? items : []).filter((region: any) => region?.isActive !== false);
+
+const hasCustomerCache = (key: string) => {
+  try {
+    return typeof window !== "undefined" && Boolean(window.localStorage.getItem(key));
+  } catch {
+    return false;
+  }
+};
+
+const readCustomerCache = (key: string) => {
+  try {
+    const raw = typeof window !== "undefined" ? window.localStorage.getItem(key) : null;
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const scheduleCustomerIdle = (work: () => void, timeout = 1200) => {
+  if (typeof window === "undefined") return null;
+  const ric = (window as any).requestIdleCallback;
+  if (typeof ric === "function") return ric(work, { timeout });
+  return window.setTimeout(work, 0);
+};
+
+const writeCustomerCacheIdle = (key: string, value: any) => {
+  scheduleCustomerIdle(() => {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch {}
+  }, 2500);
+};
 
 const normalizeCategoryName = (value?: string) => String(value || "عام").trim() || "عام";
 
@@ -1248,7 +1288,104 @@ const cleanCustomerAddonLabel = (value: any): string => {
   return cleaned || original;
 };
 
+function StoreClosedWorkingHoursNotice({
+  status,
+  onClose,
+}: {
+  status: ReturnType<typeof checkStoreStatus>;
+  onClose: () => void;
+}) {
+  if (status.isOpen) return null;
+
+  return (
+    <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col justify-center py-2 text-right" dir="rtl">
+      <div className="overflow-hidden rounded-[2rem] border border-stone-200 bg-white shadow-[0_24px_70px_rgba(55,36,18,0.10)]">
+        <div className="border-b border-stone-100 bg-gradient-to-l from-[#fffaf1] via-white to-white px-5 py-6 sm:px-7">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-200/70 bg-amber-50 text-amber-700">
+              <Clock className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="inline-flex rounded-full border border-stone-200 bg-white px-3 py-1 text-[10px] font-black text-stone-500">
+                الطلب متوقف مؤقتاً
+              </span>
+              <h3 className="mt-3 text-xl font-black text-brand sm:text-2xl">المطعم مغلق حالياً</h3>
+              <p className="mt-2 text-sm font-bold leading-7 text-stone-500">{status.message}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-5 py-5 sm:px-7 sm:py-6">
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-700">أوقات العمل</p>
+              <p className="mt-1 text-sm font-black text-brand">الجدول الأسبوعي الكامل</p>
+            </div>
+            <span className="rounded-xl bg-stone-50 px-3 py-2 text-[10px] font-black text-stone-500">
+              بتوقيت الكويت
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {(status.weeklyList || []).map((item: any) => (
+              <div
+                key={item.dayKey}
+                className={cn(
+                  "flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-xs",
+                  item.isToday
+                    ? "border-amber-300 bg-amber-50/70 shadow-sm"
+                    : item.enabled
+                      ? "border-stone-100 bg-stone-50/70"
+                      : "border-stone-100 bg-white",
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "h-2 w-2 rounded-full",
+                      item.enabled ? "bg-emerald-500" : "bg-stone-300",
+                    )}
+                  />
+                  <span className="font-black text-brand">{item.dayName}</span>
+                  {item.isToday && (
+                    <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-[9px] font-black text-amber-900">اليوم</span>
+                  )}
+                </div>
+                <span className={cn("font-bold", item.enabled ? "text-stone-600" : "text-stone-400")}>
+                  {item.text}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-stone-100 bg-stone-50 px-4 py-3 text-xs font-bold leading-6 text-stone-500">
+            تقدر تتصفح المنيو وتجهز سلتك براحتك، وتقدر تطلب فور افتتاح المطعم!
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-4 w-full rounded-2xl bg-brand px-5 py-4 text-sm font-black text-white shadow-lg shadow-brand/10 transition-all active:scale-[0.99]"
+          >
+            العودة للمنيو
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CustomerSite() {
+  const initialDiwaniyaQrCode = (() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return String(params.get("code") || "").trim();
+    } catch (e) {
+      return "";
+    }
+  })();
+  const hasInitialDiwaniyaQrEntry = Boolean(initialDiwaniyaQrCode);
+
   const [isPhoneLayout, setIsPhoneLayout] = useState(false);
 
   useEffect(() => {
@@ -1261,12 +1398,10 @@ export default function CustomerSite() {
   }, []);
 
   const [settings, setSettings] = useState<any>(() => {
-    try {
-      const cached = localStorage.getItem("cached_settings");
-      return cached ? JSON.parse(cached) : {};
-    } catch (e) {
-      return {};
-    }
+    const cached = readCustomerCache("cached_settings");
+    return cached && typeof cached === "object" && !Array.isArray(cached)
+      ? cached
+      : {};
   });
   
   const LOYALTY_TIERS = useMemo(() => {
@@ -1406,35 +1541,19 @@ export default function CustomerSite() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>(() => {
-    try {
-      const cached = localStorage.getItem("cached_products");
-      return cached ? getCustomerVisibleProducts(JSON.parse(cached)) : [];
-    } catch (e) {
-      return [];
-    }
+    const cached = readCustomerCache("cached_products");
+    return getCustomerVisibleProducts(Array.isArray(cached) ? cached : []);
   });
   const [isLoadingProducts, setIsLoadingProducts] = useState(() => {
-    try {
-      return !localStorage.getItem("cached_products");
-    } catch (e) {
-      return true;
-    }
+    return !hasCustomerCache("cached_products");
   });
   const [topProducts, setTopProducts] = useState<Product[]>(() => {
-    try {
-      const cached = localStorage.getItem("cached_top_products");
-      return cached ? getCustomerVisibleProducts(JSON.parse(cached)) : [];
-    } catch (e) {
-      return [];
-    }
+    const cached = readCustomerCache("cached_top_products");
+    return getCustomerVisibleProducts(Array.isArray(cached) ? cached : []);
   });
   const [regions, setRegions] = useState<Region[]>(() => {
-    try {
-      const cached = localStorage.getItem("cached_regions");
-      return cached ? getActiveRegions(JSON.parse(cached)) : [];
-    } catch (e) {
-      return [];
-    }
+    const cached = readCustomerCache("cached_regions");
+    return getActiveRegions(Array.isArray(cached) ? cached : []);
   });
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -1492,6 +1611,22 @@ export default function CustomerSite() {
   const [fomoPurchases, setFomoPurchases] = useState<any[]>([]);
   const [fomoIndex, setFomoIndex] = useState(0);
   const [showFomo, setShowFomo] = useState(false);
+  const [marketingBannerDismissed, setMarketingBannerDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const storedDay = window.localStorage.getItem(CUSTOMER_MARKETING_DAY_KEY);
+      const storedDismissed = window.localStorage.getItem(CUSTOMER_MARKETING_DISMISS_KEY) === "1";
+      if (storedDay !== todayKey) {
+        window.localStorage.setItem(CUSTOMER_MARKETING_DAY_KEY, todayKey);
+        window.localStorage.removeItem(CUSTOMER_MARKETING_DISMISS_KEY);
+        return false;
+      }
+      return storedDismissed;
+    } catch {
+      return false;
+    }
+  });
   
   // Gamification & Squads
   const [squadInfo, setSquadInfo] = useState<any>(null);
@@ -1515,24 +1650,16 @@ export default function CustomerSite() {
   const [squadBeautifulLog, setSquadBeautifulLog] = useState<any>(null);
   const [diwaniyaNotifications, setDiwaniyaNotifications] = useState<any[]>([]);
   const [unreadDiwaniyaNotifications, setUnreadDiwaniyaNotifications] = useState(0);
-  const [showSquadModal, setShowSquadModal] = useState(false);
+  const [showSquadModal, setShowSquadModal] = useState(hasInitialDiwaniyaQrEntry);
+  const [isDirectDiwaniyaEntry, setIsDirectDiwaniyaEntry] = useState(hasInitialDiwaniyaQrEntry);
 
   const [showAppetiteTheatre, setShowAppetiteTheatre] = useState(() => {
+    if (hasInitialDiwaniyaQrEntry) return false;
     try {
-      return !sessionStorage.getItem("appetite_theatre_shown");
+      return localStorage.getItem(CUSTOMER_ENTRY_SEEN_KEY) !== "1";
     } catch (e) {
       return true;
     }
-  });
-
-  const [theatrePhrase] = useState(() => {
-    const APPETITE_PHRASES = [
-      "نقدم لكم أفخم طعم مع خدمة تليق بمقامكم الكريم 🤝☕",
-      "يا هلا ومسهلا بالربع.. الكرم على أصوله تلاقونه بالسدو ☕",
-      "دلة وهيل، وجمعة تفتح النفس على أطيب طعم تراثي 🍢",
-      "اقلط عندنا.. ذوق الماضي بلمسة الحاضر الفخمة تفضل 🐪"
-    ];
-    return APPETITE_PHRASES[Math.floor(Math.random() * APPETITE_PHRASES.length)];
   });
 
   // 🧬 Biometrics, Gyroscope & Proximity Radar UI
@@ -1545,7 +1672,7 @@ export default function CustomerSite() {
     // auto-check presence, or open a squad without explicit user action and owner approval.
     return;
   };
-  const [initialSquadCode, setInitialSquadCode] = useState("");
+  const [initialSquadCode, setInitialSquadCode] = useState(initialDiwaniyaQrCode);
   const [activeSquadTab, setActiveSquadTab] = useState<"overview"|"orders"|"notifications"|"location"|"leaderboard"|"tiers">("overview");
   const [activeSquadId, setActiveSquadId] = useState(() => localStorage.getItem("squadId") || "");
   const squadSessionTokenRef = useRef(0);
@@ -1553,6 +1680,55 @@ export default function CustomerSite() {
   const [isRadarBannerCollapsed, setIsRadarBannerCollapsed] = useState(false);
   const [isNearbyRadarPanelCollapsed, setIsNearbyRadarPanelCollapsed] = useState(false);
   const hasAnimatedRadarBannerRef = useRef(false);
+  const customerFocusMode = isCheckout || orderSuccess || isSubmitting || Boolean(selectedProduct);
+  const hasOperationalAlertSurface = Boolean(
+    radarNearbySquads.length > 0 ||
+    (customerPhone && pendingGeofenceRequests.length > 0) ||
+    (customerPhone && qatyaAlertItems.length > 0) ||
+    (customerPhone && wobbleAlertItems.length > 0) ||
+    myGeofenceRequests.some((r) => r.status === "pending"),
+  );
+  const shouldShowMarketingBanner = !customerFocusMode && !marketingBannerDismissed;
+  const shouldShowFomo = showFomo && !customerFocusMode && !hasOperationalAlertSurface;
+  const canShowNearbyRadarCollapsed = radarNearbySquads.length > 0 && isNearbyRadarPanelCollapsed;
+  const canShowOwnerJoinCollapsed =
+    customerPhone &&
+    pendingGeofenceRequests.length > 0 &&
+    isOwnerJoinAlertCollapsed &&
+    !canShowNearbyRadarCollapsed;
+  const canShowQatyaCollapsed =
+    customerPhone &&
+    qatyaAlertItems.length > 0 &&
+    isQatyaAlertCollapsed &&
+    !canShowNearbyRadarCollapsed &&
+    !canShowOwnerJoinCollapsed;
+  const canShowWobbleCollapsed =
+    customerPhone &&
+    wobbleAlertItems.length > 0 &&
+    isWobbleAlertCollapsed &&
+    !canShowNearbyRadarCollapsed &&
+    !canShowOwnerJoinCollapsed &&
+    !canShowQatyaCollapsed;
+  const canShowPendingRadarCollapsed =
+    myGeofenceRequests.some((r) => r.status === "pending") &&
+    isRadarBannerCollapsed &&
+    !canShowNearbyRadarCollapsed &&
+    !canShowOwnerJoinCollapsed &&
+    !canShowQatyaCollapsed &&
+    !canShowWobbleCollapsed;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const storedDay = window.localStorage.getItem(CUSTOMER_MARKETING_DAY_KEY);
+      if (storedDay !== todayKey) {
+        window.localStorage.setItem(CUSTOMER_MARKETING_DAY_KEY, todayKey);
+        window.localStorage.removeItem(CUSTOMER_MARKETING_DISMISS_KEY);
+        setMarketingBannerDismissed(false);
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     const hasPending = myGeofenceRequests.some(r => r.status === "pending");
@@ -1649,7 +1825,8 @@ export default function CustomerSite() {
   const [ownerJoinDecisionLoading, setOwnerJoinDecisionLoading] = useState<Record<string, boolean>>({});
   const [radarStatus, setRadarStatus] = useState<"idle" | "checking" | "ready" | "denied" | "weak" | "unsupported" | "empty">("idle");
   const [showRadarInstructionModal, setShowRadarInstructionModal] = useState(false);
-  const [radarStatusMsg, setRadarStatusMsg] = useState("نطلب موقعك عشان الديوانية تعتمد على القرب الحقيقي.");
+  const [radarLocationNoticeDismissed, setRadarLocationNoticeDismissed] = useState(false);
+  const [radarStatusMsg, setRadarStatusMsg] = useState("خدمة الموقع اختيارية للرادار فقط. تقدر تستخدم الموقع طبيعي بدونها.");
   const [radarAccuracy, setRadarAccuracy] = useState<number | null>(null);
   const radarStatusRef = useRef<typeof radarStatus>("idle");
   const locationPromptAttemptsRef = useRef(0);
@@ -1727,6 +1904,12 @@ export default function CustomerSite() {
   }, [wobbleNotifications.length, qatyaNotifications.length]);
 
   const refreshRadarOnce = useCallback(async () => {
+      if (isDirectDiwaniyaEntry || hasInitialDiwaniyaQrEntry || initialSquadCode) {
+        setRadarStatus("idle");
+        setRadarStatusMsg("الدخول من QR الديوانية لا يحتاج تشغيل الموقع الآن.");
+        setShowRadarInstructionModal(false);
+        return;
+      }
       if (mockLocation) {
         setRadarStatus("ready");
         setRadarStatusMsg("تم تفعيل الموقع التجريبي المحاكي بجانب ديوانية قريبة للتجربة 🧪");
@@ -1738,8 +1921,9 @@ export default function CustomerSite() {
        return;
      }
 
+     setRadarLocationNoticeDismissed(false);
      setRadarStatus("checking");
-     setRadarStatusMsg("جاري الاتصال بالأقمار الصناعية لتحديد موقعك... 📡");
+     setRadarStatusMsg("جاري تشغيل رادار الديوانية وتحديد القرب... 📡");
      setRadarDismissedList([]);
      setIsNearbyRadarPanelCollapsed(false);
      try { localStorage.removeItem("radar_dismissed_squads"); } catch(e) {}
@@ -1765,20 +1949,24 @@ export default function CustomerSite() {
        setRadarStatus(isDenied ? "denied" : "idle");
        setRadarStatusMsg(
          isDenied
-           ? "المتصفح رفض إعطاء الموقع. لا يوجد زر سحري يتجاوز الحظر؛ لازم تغيّر الإذن إلى سماح من إعدادات الموقع ثم تعيد المحاولة."
-           : "الرادار حاول فعلاً لكنه ما قدر يلتقط موقعك الآن. تأكد من تشغيل GPS والإنترنت ثم جرّب مرة ثانية."
+           ? "الموقع شغال، لكن خدمة اللوكيشن مقفلة من المتصفح. هذا يؤثر على الرادار فقط وليس على الطلب أو التصفح."
+           : "تعذر تشغيل الرادار الآن. تقدر تكمل استخدام الموقع طبيعي وتجرب تشغيل اللوكيشن لاحقاً."
        );
        if (isDenied) {
-         setShowRadarInstructionModal(true);
+         setShowRadarInstructionModal(false);
        }
      }
-  }, [mockLocation]);
+  }, [mockLocation, isDirectDiwaniyaEntry, hasInitialDiwaniyaQrEntry, initialSquadCode]);
 
   useEffect(() => {
      radarStatusRef.current = radarStatus;
   }, [radarStatus]);
 
   useEffect(() => {
+     if (isDirectDiwaniyaEntry || hasInitialDiwaniyaQrEntry || initialSquadCode) {
+       setShowRadarInstructionModal(false);
+       return;
+     }
      if (mockLocation || !navigator.geolocation) return;
 
      const clearPromptTimer = () => {
@@ -1796,8 +1984,8 @@ export default function CustomerSite() {
            const permission = await (navigator as any).permissions.query({ name: "geolocation" as PermissionName });
            if (permission.state === "denied") {
              setRadarStatus("denied");
-             setRadarStatusMsg("الموقع مقفّل من المتصفح. فعّله من إعدادات الموقع عشان الديوانية تعتمد عليك صح.");
-             setShowRadarInstructionModal(true);
+             setRadarStatusMsg("خدمة اللوكيشن مقفلة من المتصفح. الموقع يعمل طبيعي، والرادار فقط يحتاج تفعيلها.");
+             setShowRadarInstructionModal(false);
              return false;
            }
          }
@@ -1844,10 +2032,14 @@ export default function CustomerSite() {
        window.removeEventListener("focus", onVisibleOrFocus);
        document.removeEventListener("visibilitychange", onVisibleOrFocus);
      };
-  }, [mockLocation, refreshRadarOnce]);
+  }, [mockLocation, refreshRadarOnce, isDirectDiwaniyaEntry, hasInitialDiwaniyaQrEntry, initialSquadCode]);
 
   useEffect(() => {
      const askWhenLocationIsOff = async () => {
+       if (isDirectDiwaniyaEntry || hasInitialDiwaniyaQrEntry || initialSquadCode) {
+         setShowRadarInstructionModal(false);
+         return;
+       }
        if (mockLocation) return;
        if (!navigator.geolocation) return;
        if (radarStatus === "ready") return;
@@ -1885,7 +2077,7 @@ export default function CustomerSite() {
        window.removeEventListener("focus", onFocus);
        document.removeEventListener("visibilitychange", onVisible);
      };
-  }, [refreshRadarOnce, mockLocation, radarStatus]);
+  }, [refreshRadarOnce, mockLocation, radarStatus, isDirectDiwaniyaEntry, hasInitialDiwaniyaQrEntry, initialSquadCode]);
 
   const clearSquadSessionOnThisDevice = useCallback(() => {
      squadSessionTokenRef.current += 1;
@@ -1944,7 +2136,7 @@ export default function CustomerSite() {
   useEffect(() => {
      if (!navigator.geolocation) {
        setRadarStatus("unsupported");
-       setRadarStatusMsg("جهازك أو المتصفح ما يدعم تحديد الموقع.");
+       setRadarStatusMsg("جهازك أو المتصفح لا يدعم خدمة اللوكيشن. الموقع يعمل طبيعي، لكن الرادار لن يعمل على هذا الجهاز.");
        return;
      }
      if (mockLocation) {
@@ -2138,7 +2330,7 @@ export default function CustomerSite() {
        (err) => {
          console.warn("Geofence watchPosition error: ", err);
          setRadarStatus(err.code === 1 ? "denied" : "idle");
-       setRadarStatusMsg(err.code === 1 ? "الموقع مقفّل من المتصفح. فعّله إذا تبي الرادار يطلع لك الدواوين القريبة." : "الرادار ما اشتغل الحين. اضغط تشغيل الرادار وجرب مرة ثانية.");
+       setRadarStatusMsg(err.code === 1 ? "خدمة اللوكيشن مقفلة من المتصفح. الموقع يعمل طبيعي، والرادار فقط يحتاجها." : "الرادار ما اشتغل الآن. تقدر تكمل استخدام الموقع وتجرب مرة ثانية لاحقاً.");
        },
        { enableHighAccuracy: true, timeout: 20050, maximumAge: 10000 }
      );
@@ -2560,7 +2752,11 @@ export default function CustomerSite() {
 
     const codeParam = urlParams.get("code");
     if (codeParam) {
-      setInitialSquadCode(codeParam);
+      setInitialSquadCode(String(codeParam).trim());
+      setIsCheckout(false);
+      setIsDirectDiwaniyaEntry(true);
+      setShowAppetiteTheatre(false);
+      try { localStorage.setItem(CUSTOMER_ENTRY_SEEN_KEY, "1"); } catch(e) {}
       setShowSquadModal(true);
       urlParams.delete("code");
       setSearchParams(urlParams, { replace: true });
@@ -2651,11 +2847,6 @@ export default function CustomerSite() {
     }, 900);
     return () => window.clearTimeout(timer);
   }, [quickProductSearch, moodQuery, products]);
-
-  const quickSmartSuggestions = useMemo(
-    () => getSmartSearchLiveSuggestions(getCustomerVisibleProducts(products || []), quickProductSearch, 7),
-    [products, quickProductSearch, smartSearchLearningTick]
-  );
 
   useEffect(() => {
     isDiwaniyaPushReady().then(setCanUseDiwaniyaPush).catch(() => setCanUseDiwaniyaPush(false));
@@ -2759,7 +2950,7 @@ export default function CustomerSite() {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [cart.length]);
+  }, [cart.length, squadInfo?.id]);
 
   useEffect(() => {
     if (!sessionStorage.getItem("flashSaleSeen") && topProducts.length > 0) {
@@ -3165,26 +3356,28 @@ export default function CustomerSite() {
     return () => clearTimeout(timer);
   }, [customerPhone]);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(
+    () => !hasCustomerCache("cached_products"),
+  );
 
   useEffect(() => {
-    if (fomoPurchases.length === 0 || isCheckout) {
-      if (isCheckout) setShowFomo(false);
+    if (fomoPurchases.length === 0 || customerFocusMode || hasOperationalAlertSurface) {
+      if (customerFocusMode || hasOperationalAlertSurface) setShowFomo(false);
       return;
     }
-    const showT = setTimeout(() => setShowFomo(true), 15000); // Wait 15s
+    const showT = setTimeout(() => setShowFomo(true), 35000);
     const hideT = setTimeout(() => {
       setShowFomo(false);
       setTimeout(() => {
         setFomoIndex((p) => (p + 1) % fomoPurchases.length);
       }, 500);
-    }, 20000); // Hide 5s later
+    }, 41000);
 
     return () => {
       clearTimeout(showT);
       clearTimeout(hideT);
     };
-  }, [fomoPurchases.length, fomoIndex, isCheckout]);
+  }, [customerFocusMode, fomoPurchases.length, fomoIndex, hasOperationalAlertSurface]);
 
   function getRelativeTime(timestamp: string | number) {
     if (!timestamp) return "قبل قليل";
@@ -3241,97 +3434,142 @@ export default function CustomerSite() {
       return null;
     };
 
-    const loadData = async () => {
-      try {
-        // Critical path only — products, regions, settings are what the customer
-        // needs to see the menu and complete an order. Resolving these three lets
-        // the splash dismiss immediately without waiting for secondary APIs.
-        await Promise.all([
-          fetchWithRetry("/api/products").then((allProducts) => {
-            if (!isMounted) return;
-            const validProducts = getCustomerVisibleProducts(Array.isArray(allProducts) ? allProducts : []);
+    const loadCustomerMenu = async () => {
+      const payload = await fetchWithRetry("/api/customer-menu");
+      if (payload?.success === true) {
+        try {
+          const validProducts = getCustomerVisibleProducts(
+            restoreCustomerMenuProducts(payload),
+          );
+          const productsById = new Map(
+            validProducts.map((product: any) => [
+              String(product?.id ?? product?._id ?? ""),
+              product,
+            ]),
+          );
+          const topIds = Array.isArray(payload.topProductIds)
+            ? payload.topProductIds
+            : [];
+          const validTopProducts = topIds
+            .map((id: any) => productsById.get(String(id)))
+            .filter(Boolean) as Product[];
+
+          if (isMounted) {
             setProducts(validProducts);
-            try {
-              localStorage.setItem("cached_products", JSON.stringify(validProducts));
-            } catch (e) {}
+            setTopProducts(validTopProducts);
+            writeCustomerCacheIdle("cached_products", validProducts);
+            writeCustomerCacheIdle("cached_top_products", validTopProducts);
             setIsLoadingProducts(false);
-          }),
-          fetchWithRetry("/api/regions").then(d => { 
-            const sorted = getActiveRegions(d || []).sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "ar"));
-            if (isMounted) {
-              setRegions(sorted);
-              try {
-                localStorage.setItem("cached_regions", JSON.stringify(sorted));
-              } catch (e) {}
-            }
-          }),
-          fetchWithRetry("/api/settings").then(d => { 
-            if (isMounted && d) {
-              setSettings(d);
-              try {
-                localStorage.setItem("cached_settings", JSON.stringify(d));
-              } catch (e) {}
-            }
-          }),
-        ]);
-      } catch (err: any) {
-        if (err && err.message && (err.message.includes("Failed to fetch") || err.message.includes("Load failed"))) return;
-        console.error("Error initiating fetch", err);
-      } finally {
-        if (isMounted) {
-          setIsLoadingProducts(false);
-          setIsLoading(false);
+          }
+          return;
+        } catch (error) {
+          console.warn(
+            "Customer menu payload was incomplete; using compatibility endpoints.",
+            error,
+          );
         }
       }
 
-      // Secondary fetches — non-critical display enhancements.
-      // Fire independently so they never block the splash or menu rendering.
-      fetchWithRetry("/api/top-products").then(d => { 
-        if (!isMounted) return;
-        const list = getCustomerVisibleProducts(Array.isArray(d) ? d : []);
-        setTopProducts(list);
-        try {
-          localStorage.setItem("cached_top_products", JSON.stringify(list));
-        } catch (e) {}
-      }).catch(() => {});
-      fetchWithRetry("/api/recent-fomo", 1).then(d => { 
-        if (!isMounted || !Array.isArray(d) || d.length === 0) return;
-        const enrichedFomo = d.map(item => {
-          const rnd = Math.random();
-          if (rnd > 0.85) return { ...item, type: 'insight' };
-          if (rnd > 0.6) return { ...item, type: 'trend' };
-          if (rnd > 0.4) return { ...item, type: 'scarcity' };
-          return { ...item, type: 'normal' };
-        });
-        setFomoPurchases(enrichedFomo);
-      }).catch(() => {});
-      fetchWithRetry("/api/debug", 1).then(d => { if (isMounted && d) console.log(d); }).catch(() => {});
+      // Safe compatibility path during a rolling deployment or a temporary
+      // customer-menu endpoint failure. Its response contracts stay unchanged.
+      const [allProducts, topProductsResponse] = await Promise.all([
+        fetchWithRetry("/api/products"),
+        fetchWithRetry("/api/top-products"),
+      ]);
+      if (!isMounted) return;
+      if (Array.isArray(allProducts)) {
+        const validProducts = getCustomerVisibleProducts(allProducts);
+        setProducts(validProducts);
+        writeCustomerCacheIdle("cached_products", validProducts);
+      }
+      if (Array.isArray(topProductsResponse)) {
+        const validTopProducts =
+          getCustomerVisibleProducts(topProductsResponse);
+        setTopProducts(validTopProducts);
+        writeCustomerCacheIdle("cached_top_products", validTopProducts);
+      }
+      setIsLoadingProducts(false);
     };
 
-    loadData();
-    // Customer brand splash appears on the initial page entrance only.
-    // With cached content: dismiss after 100ms (one blink, cache renders immediately beneath).
-    // Without cache: safety timeout of 1500ms max — loadData() resolves sooner in practice.
-    const hasCache = (() => {
-      try {
-        return !!localStorage.getItem("cached_products");
-      } catch (e) {
-        return false;
-      }
-    })();
-    
-    const splashDelay = hasCache ? 100 : 1500;
-    const safetyTimer = setTimeout(() => {
-      if (isMounted) setIsLoading(false);
-    }, splashDelay);
+    let loadInFlight: Promise<void> | null = null;
+    const loadData = () => {
+      if (loadInFlight) return loadInFlight;
+      const request = (async () => {
+        try {
+          void fetchWithRetry("/api/recent-fomo", 1).then((data) => {
+            if (!isMounted || !Array.isArray(data) || data.length === 0) return;
+            const enrichedFomo = data.map((item) => {
+              const randomValue = Math.random();
+              if (randomValue > 0.85) return { ...item, type: "insight" };
+              if (randomValue > 0.6) return { ...item, type: "trend" };
+              if (randomValue > 0.4) return { ...item, type: "scarcity" };
+              return { ...item, type: "normal" };
+            });
+            setFomoPurchases(enrichedFomo);
+          });
 
-    // Auto-refresh every 15 seconds to keep data live (Best Sellers, New Arrivals, etc.)
-    const refreshInterval = setInterval(loadData, 15000);
+          await Promise.all([
+            loadCustomerMenu(),
+            fetchWithRetry("/api/regions").then((data) => {
+              if (!isMounted || !Array.isArray(data)) return;
+              const sorted = getActiveRegions(data).sort((a: any, b: any) =>
+                (a.name || "").localeCompare(b.name || "", "ar"),
+              );
+              setRegions(sorted);
+              writeCustomerCacheIdle("cached_regions", sorted);
+            }),
+            fetchWithRetry("/api/settings").then((data) => {
+              if (isMounted && data) {
+                setSettings(data);
+                writeCustomerCacheIdle("cached_settings", data);
+              }
+            }),
+          ]);
+        } catch (err: any) {
+          if (
+            err?.message?.includes("Failed to fetch") ||
+            err?.message?.includes("Load failed")
+          ) {
+            return;
+          }
+          console.error("Error initiating fetch", err);
+        } finally {
+          if (isMounted) {
+            setIsLoadingProducts(false);
+            setIsLoading(false);
+          }
+        }
+      })();
+      loadInFlight = request;
+      void request.finally(() => {
+        if (loadInFlight === request) loadInFlight = null;
+      });
+      return request;
+    };
+
+    void loadData();
+
+    // Cached cloud data renders in the first React paint. Cold visits retain
+    // only a bounded safety timeout while the fresh cloud request is running.
+    const safetyTimer = hasCustomerCache("cached_products")
+      ? null
+      : window.setTimeout(() => {
+          if (isMounted) setIsLoading(false);
+        }, 2500);
+
+    // Keep data current while the customer is looking at the app. Background
+    // tabs make no repeated cloud requests and refresh immediately on return.
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void loadData();
+    };
+    const refreshInterval = window.setInterval(refreshWhenVisible, 15000);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
       isMounted = false;
-      clearTimeout(safetyTimer);
-      clearInterval(refreshInterval);
+      if (safetyTimer !== null) window.clearTimeout(safetyTimer);
+      window.clearInterval(refreshInterval);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, []);
 
@@ -3368,6 +3606,7 @@ export default function CustomerSite() {
                 ) {
                   newCart.push({
                     ...item,
+                    quantity: Math.max(item.quantity, product.minOrderQty || 1),
                     id: Math.random().toString(36).substring(2, 9),
                     price: product.price, // Update to current price
                     product: normalizeProductForAddons(product),
@@ -3786,12 +4025,14 @@ export default function CustomerSite() {
 
     if (existingItemIndex > -1) {
       const newCart = [...cart];
-      newCart[existingItemIndex].quantity += item.quantity;
+      const minQty = item.product?.minOrderQty || 1;
+      newCart[existingItemIndex].quantity = Math.max(newCart[existingItemIndex].quantity + item.quantity, minQty);
       setCart(newCart);
     } else {
+      const minQty = item.product?.minOrderQty || 1;
       setCart([
         ...cart,
-        { ...item, id: Math.random().toString(36).substr(2, 9) },
+        { ...item, id: Math.random().toString(36).substr(2, 9), quantity: Math.max(item.quantity, minQty) },
       ]);
     }
     const addedName = item?.name || "الطلب";
@@ -4490,6 +4731,9 @@ export default function CustomerSite() {
     };
   }, [products]);
 
+  const isDirectDiwaniyaQrOpen = isDirectDiwaniyaEntry && showSquadModal;
+  const isDiwaniyaQrLocationQuietMode = isDirectDiwaniyaEntry || hasInitialDiwaniyaQrEntry || Boolean(initialSquadCode);
+
   return (
     <>
       <AnimatePresence>
@@ -4537,78 +4781,56 @@ export default function CustomerSite() {
                 <span className="absolute -top-1 -right-1 text-yellow-500 text-lg animate-bounce">✨</span>
               </motion.div>
 
-              {/* Luxurious Visual Title & Subtitle */}
+              {/* Clear, minimal choice for first-time visitors */}
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2, duration: 0.6 }}
-                className="space-y-4 mb-10 text-right w-full"
+                className="mb-8 w-full text-center"
                 dir="rtl"
               >
-                <div className="flex justify-center mb-1">
-                  <span className="text-[10px] text-white uppercase font-black tracking-widest bg-[#0d3a22] px-3.5 py-1.5 rounded-full border border-[#0d3a22]/10 shadow-sm shadow-[#0d3a22]/10">
-                    بيت الضيافة الرقمي الفاخر ☕⚜️
-                  </span>
-                </div>
-                
-                <h1 className="text-xl sm:text-2xl font-extrabold text-[#0d3a22] leading-snug text-center font-sans mt-3 px-2">
-                  يا حيا الله من لفانا.. يمعتنا على الطيب والذوق الكويتي الأصيل ✨
+                <h1 className="text-2xl sm:text-3xl font-black text-[#0d3a22] leading-relaxed px-2">
+                  حيّاكم الله في مطبخ التراث الكويتي
                 </h1>
-
-                {/* Elegant Sadu Divider */}
-                <div className="flex items-center justify-center gap-3 py-1 my-2">
-                  <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#b28a41]" />
-                  <span className="text-stone-400 text-xs shrink-0">❖ ❖ ❖</span>
-                  <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#b28a41]" />
-                </div>
-
-                <p className="text-stone-600 font-bold text-center text-xs sm:text-sm leading-relaxed px-4">
-                  {theatrePhrase}
+                <p className="mt-3 text-sm sm:text-base text-stone-600 font-bold leading-relaxed px-3">
+                  لطلب الأكل واختيار الأصناف، ادخل المنيو.
                 </p>
               </motion.div>
 
-              {/* Direct Call to Action Button group */}
               <motion.div
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
                 className="flex flex-col gap-3.5 w-full font-sans"
               >
-                {/* Primary: Open Menu */}
                 <button
                   onClick={() => {
-                    try { sessionStorage.setItem("appetite_theatre_shown", "1"); } catch(e) {}
+                    try { localStorage.setItem(CUSTOMER_ENTRY_SEEN_KEY, "1"); } catch(e) {}
                     setShowAppetiteTheatre(false);
                     triggerHapticAndSound("click");
                   }}
-                  className="w-full bg-[#0d3a22] text-white py-4 px-6 rounded-2xl font-black text-sm shadow-lg hover:bg-[#072414] transition-all flex items-center justify-center gap-2 border-b-4 border-[#061e11]"
+                  className="w-full bg-[#0d3a22] text-white py-[18px] px-6 rounded-2xl font-black text-base shadow-lg hover:bg-[#072414] transition-all flex items-center justify-center gap-2.5 border-b-4 border-[#061e11]"
                 >
-                  <Sparkles className="w-4 h-4 text-[#cdaf78]" />
-                  <span>افتح المنيو واستمتع بالذوق</span>
+                  <ShoppingBag className="w-5 h-5 text-[#cdaf78]" />
+                  <span>دخول المنيو وطلب الأكل</span>
                 </button>
 
-                {/* Secondary: I am from the Diwaniya */}
                 <button
                   onClick={() => {
-                    try { sessionStorage.setItem("appetite_theatre_shown", "1"); } catch(e) {}
+                    try { localStorage.setItem(CUSTOMER_ENTRY_SEEN_KEY, "1"); } catch(e) {}
                     setShowAppetiteTheatre(false);
                     setShowSquadModal(true);
                     triggerHapticAndSound("click");
                   }}
-                  className="w-full bg-[#faf8f5] hover:bg-stone-100 text-[#0d3a22] py-3.5 px-6 rounded-2xl font-black text-xs transition-all flex flex-col items-center justify-center gap-1 border border-stone-200"
+                  className="w-full bg-[#faf8f5] hover:bg-stone-100 text-[#0d3a22] py-3.5 px-6 rounded-2xl font-black text-sm transition-all flex flex-col items-center justify-center gap-1 border border-stone-200"
                 >
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-[#b28a41]" />
-                    <span>دخول الربع (أعضاء مجلس الديوانية) 👥</span>
+                    <span>دخول الديوانية</span>
                   </div>
-                  <span className="text-[10px] text-[#b28a41] opacity-90 font-bold">ملتقى الربع واليمعات</span>
+                  <span className="text-[10px] text-[#9a783d] font-bold">لأعضاء الديوانية فقط</span>
                 </button>
               </motion.div>
-
-              {/* Subdued foot credits */}
-              <p className="absolute bottom-6 text-[10px] text-stone-400 font-bold tracking-wider font-sans">
-                كرم الضيافة الكويتي الأصيل
-              </p>
             </div>
           </motion.div>
         )}
@@ -4667,13 +4889,28 @@ export default function CustomerSite() {
         dir="rtl"
       >
         {/* Squad Gamification Banner */}
-        {!isCheckout && (
+        {shouldShowMarketingBanner && (
           <div className="px-4 sm:px-6 pt-4 pb-2 bg-stone-50/80 backdrop-blur-sm border-b border-stone-100">
             {squadInfo ? (
               <div 
                 onClick={() => { setActiveSquadTab("overview"); setShowSquadModal(true); }}
-                className="bg-gradient-to-l from-accent/10 to-transparent border border-accent/20 rounded-xl p-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-accent/15 transition-all shadow-sm"
+                className="bg-gradient-to-l from-accent/10 to-transparent border border-accent/20 rounded-xl p-3 pr-12 flex items-center justify-between gap-3 cursor-pointer hover:bg-accent/15 transition-all shadow-sm relative"
               >
+                 <button
+                   type="button"
+                   onClick={(event) => {
+                     event.stopPropagation();
+                     setMarketingBannerDismissed(true);
+                     try {
+                       localStorage.setItem(CUSTOMER_MARKETING_DAY_KEY, new Date().toISOString().slice(0, 10));
+                       localStorage.setItem(CUSTOMER_MARKETING_DISMISS_KEY, "1");
+                     } catch {}
+                   }}
+                   className="absolute left-3 top-3 h-7 w-7 rounded-full bg-white/80 text-stone-400 hover:text-stone-600 flex items-center justify-center"
+                   aria-label="إخفاء الشريط"
+                 >
+                   <X className="w-3.5 h-3.5" />
+                 </button>
                  <div className="flex items-center gap-2.5">
                     <div className="w-9 h-9 rounded-full bg-white shadow-sm border border-accent/20 flex items-center justify-center text-accent shrink-0 relative">
                        <Crown className="w-5 h-5" />
@@ -4696,8 +4933,23 @@ export default function CustomerSite() {
             ) : (
               <div 
                 onClick={() => { setActiveSquadTab("leaderboard"); setShowSquadModal(true); }}
-                className="bg-gradient-to-l from-orange-50 to-transparent border border-orange-100 rounded-xl p-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-orange-100/50 transition-all shadow-sm"
+                className="bg-gradient-to-l from-orange-50 to-transparent border border-orange-100 rounded-xl p-3 pr-12 flex items-center justify-between gap-3 cursor-pointer hover:bg-orange-100/50 transition-all shadow-sm relative"
               >
+                 <button
+                   type="button"
+                   onClick={(event) => {
+                     event.stopPropagation();
+                     setMarketingBannerDismissed(true);
+                     try {
+                       localStorage.setItem(CUSTOMER_MARKETING_DAY_KEY, new Date().toISOString().slice(0, 10));
+                       localStorage.setItem(CUSTOMER_MARKETING_DISMISS_KEY, "1");
+                     } catch {}
+                   }}
+                   className="absolute left-3 top-3 h-7 w-7 rounded-full bg-white/85 text-stone-400 hover:text-stone-600 flex items-center justify-center"
+                   aria-label="إخفاء الشريط"
+                 >
+                   <X className="w-3.5 h-3.5" />
+                 </button>
                  <div className="flex items-center gap-2.5">
                     <div className="w-9 h-9 rounded-full bg-white shadow-sm border border-orange-200 flex items-center justify-center text-orange-500 shrink-0 relative">
                        <Crown className="w-5 h-5" />
@@ -5200,23 +5452,9 @@ export default function CustomerSite() {
                         value={quickProductSearch}
                         onChange={(e) => setQuickProductSearch(e.target.value)}
                         placeholder="اكتب نيتك بأي طريقة: مشتهي بحري، حق ٦ أشخاص، مريض، ديوانية..."
-                        className="bg-transparent outline-none w-full text-sm font-bold text-brand placeholder:text-stone-400"
+                        className="bg-transparent outline-none w-full text-xs sm:text-sm font-medium sm:font-bold text-brand placeholder:text-stone-400"
                       />
                     </div>
-                    {quickSmartSuggestions.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {quickSmartSuggestions.map((suggestion) => (
-                          <button
-                            key={suggestion}
-                            type="button"
-                            onClick={() => setQuickProductSearch(suggestion)}
-                            className="px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100 text-[11px] font-extrabold text-amber-900 hover:bg-amber-100 transition-colors"
-                          >
-                            {suggestion}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                   <div className="al-empty-state p-8 text-center border-2 border-dashed border-amber-100 rounded-[28px] bg-white/80">
                     <div className="al-empty-icon">🍽️</div>
@@ -5233,23 +5471,9 @@ export default function CustomerSite() {
                         value={quickProductSearch}
                         onChange={(e) => setQuickProductSearch(e.target.value)}
                         placeholder="اكتب نيتك بأي طريقة: مشتهي بحري، حق ٦ أشخاص، مريض، ديوانية..."
-                        className="bg-transparent outline-none w-full text-sm font-bold text-brand placeholder:text-stone-400"
+                        className="bg-transparent outline-none w-full text-xs sm:text-sm font-medium sm:font-bold text-brand placeholder:text-stone-400"
                       />
                     </div>
-                    {quickSmartSuggestions.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {quickSmartSuggestions.map((suggestion) => (
-                          <button
-                            key={suggestion}
-                            type="button"
-                            onClick={() => setQuickProductSearch(suggestion)}
-                            className="px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100 text-[11px] font-extrabold text-amber-900 hover:bg-amber-100 transition-colors"
-                          >
-                            {suggestion}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                   {quickProductSearch.trim() ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -5694,9 +5918,8 @@ export default function CustomerSite() {
 
         {/* FOMO Popup */}
         <AnimatePresence>
-          {showFomo &&
+          {shouldShowFomo &&
             fomoPurchases.length > 0 &&
-            !isCheckout &&
             !orderSuccess && (
               <motion.div
                 initial={{ opacity: 0, y: 50, scale: 0.9 }}
@@ -5888,8 +6111,12 @@ export default function CustomerSite() {
                 {cart.length}
               </div>
               <div className="min-w-0 text-right">
-                <strong className="block leading-tight">سلتك جاهزة</strong>
-                <span className="text-[11px] text-white/65">{cart.length} منتجات · {total} د.ك</span>
+                <strong className="block leading-tight">
+                  {checkStoreStatus(settings?.storeStatus).isOpen ? "سلتك جاهزة" : "سلتك جاهزة (المطعم مغلق ⏰)"}
+                </strong>
+                <span className="text-[11px] text-white/65">
+                  {cart.length} منتجات · {total} د.ك
+                </span>
               </div>
             </button>
             <div className="al-cart-actions shrink-0">
@@ -5905,18 +6132,12 @@ export default function CustomerSite() {
               <button
                 type="button"
                 className="al-cart-checkout"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  // يبقى العميل في المنيو مع السلة صحيحة؛ فتح السلة يكون من منطقة السلة نفسها.
-                  setIsCheckout(false);
-                  window.requestAnimationFrame(() => {
-                    const menuAnchor = document.getElementById("menu") || document.querySelector("[data-menu-anchor]") || document.body;
-                    menuAnchor?.scrollIntoView?.({ behavior: "smooth", block: "start" });
-                  });
+                onClick={() => {
+                  setCheckoutInitialStep("cart");
+                  setIsCheckout(true);
                 }}
               >
-                إضافة منتجات
+                إتمام الطلب 🚀
               </button>
             </div>
           </motion.div>
@@ -5929,9 +6150,17 @@ export default function CustomerSite() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] flex items-end justify-center bg-brand/40 backdrop-blur-sm overflow-x-hidden"
+                className={cn(
+                  "fixed inset-0 z-[100] flex justify-center overflow-x-hidden",
+                  isDirectDiwaniyaQrOpen
+                    ? "items-stretch bg-stone-50"
+                    : "items-end bg-brand/40 backdrop-blur-sm sm:items-center"
+                )}
                 onMouseDown={(e) => {
-                  if (e.target === e.currentTarget) setShowSquadModal(false);
+                  if (e.target === e.currentTarget) {
+                    setShowSquadModal(false);
+                    setIsDirectDiwaniyaEntry(false);
+                  }
                 }}
               >
                 <motion.div
@@ -5939,7 +6168,12 @@ export default function CustomerSite() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0, y: "20px" }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="bg-stone-50 w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh] relative mt-auto sm:mt-0"
+                  className={cn(
+                    "bg-stone-50 w-full max-w-md overflow-hidden flex flex-col relative",
+                    isDirectDiwaniyaQrOpen
+                      ? "h-[100dvh] max-h-[100dvh] rounded-none shadow-none mt-0"
+                      : "rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl max-h-[85vh] mt-auto sm:mt-0"
+                  )}
                   onClick={(e) => e.stopPropagation()}
                 >
                    {/* Zari Bisht Gate Entrance */}
@@ -5996,6 +6230,7 @@ export default function CustomerSite() {
                             e.preventDefault();
                             e.stopPropagation();
                             setShowSquadModal(false);
+                            setIsDirectDiwaniyaEntry(false);
                           }}
                           className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 hover:text-brand hover:bg-stone-200 transition-colors font-black text-xs active:scale-95"
                           aria-label="إغلاق صفحة الديوانية"
@@ -6161,7 +6396,7 @@ export default function CustomerSite() {
 
         {/* حالة رادار الديوانية وتشغيل اللوكيشن بوضوح */}
         <AnimatePresence>
-          {!isCheckout && radarNearbySquads.length === 0 && radarStatus !== "idle" && radarStatus !== "empty" && radarStatus !== "ready" && (
+          {!isDiwaniyaQrLocationQuietMode && !isCheckout && !radarLocationNoticeDismissed && radarNearbySquads.length === 0 && radarStatus !== "idle" && radarStatus !== "empty" && radarStatus !== "ready" && (
             <motion.div
               initial={{ opacity: 0, y: 56, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -6172,21 +6407,31 @@ export default function CustomerSite() {
                 floatingAlertBottom,
               )}
             >
-              <div className="flex items-center justify-between gap-3">
-                <button
-                  onClick={() => radarStatus === "denied" ? setShowRadarInstructionModal(true) : refreshRadarOnce()}
-                  disabled={radarStatus === "checking"}
-                  className="bg-brand text-white rounded-2xl px-4 py-2 text-[10px] font-black active:scale-95 shrink-0 disabled:opacity-60"
-                >
-                  {radarStatus === "checking" ? "جاري الفحص" : radarStatus === "denied" ? "طريقة التفعيل" : radarStatus === "weak" ? "تحسين الدقة" : "تشغيل الرادار"}
-                </button>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => radarStatus === "denied" ? setShowRadarInstructionModal(true) : refreshRadarOnce()}
+                    disabled={radarStatus === "checking"}
+                    className="bg-brand text-white rounded-2xl px-3.5 py-2 text-[10px] font-black active:scale-95 disabled:opacity-60"
+                  >
+                    {radarStatus === "checking" ? "جاري الفحص" : radarStatus === "denied" ? "تفعيل الرادار" : radarStatus === "weak" ? "تحسين الدقة" : "تشغيل الرادار"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRadarLocationNoticeDismissed(true)}
+                    className="h-8 w-8 rounded-full bg-stone-100 text-stone-400 flex items-center justify-center active:scale-95"
+                    aria-label="إغلاق تنبيه اللوكيشن"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-end gap-1.5 text-[11px] font-black">
-                    <span>{radarStatus === "denied" ? "الموقع غير متاح" : radarStatus === "weak" ? "الموقع تقريبي" : "رادار الديوانية"}</span>
+                    <span>{radarStatus === "denied" ? "اللوكيشن مقفّل فقط" : radarStatus === "weak" ? "الموقع تقريبي" : "رادار الديوانية"}</span>
                     {radarStatus === "denied" && <MapPin className="w-3.5 h-3.5 text-amber-500" />}
                   </div>
                   <div className="text-[9px] font-bold text-stone-500 mt-0.5 leading-snug line-clamp-2">
-                    {radarStatus === "denied" ? "فعّله من المتصفح لتشغيل الرادار." : radarStatusMsg}
+                    {radarStatus === "denied" ? "الموقع يعمل طبيعي. اللوكيشن مطلوب للرادار فقط." : radarStatusMsg}
                   </div>
                   {radarAccuracy !== null && <div className="text-[8px] font-black text-stone-400 mt-0.5">الدقة: {radarAccuracy}م</div>}
                 </div>
@@ -6198,7 +6443,7 @@ export default function CustomerSite() {
         {/* رادار التراث - إشعار جيو لوكيشن ذكي للديوانيات القريبة */}
         <AnimatePresence>
           {radarNearbySquads.length > 0 && (
-            isNearbyRadarPanelCollapsed ? (
+            canShowNearbyRadarCollapsed ? (
               <motion.button
                 key="collapsed-nearby-radar"
                 initial={{ opacity: 0, scale: 0.85, y: 20 }}
@@ -6427,7 +6672,7 @@ export default function CustomerSite() {
 
         {/* دليل تشغيل الرادار وتفعيل الموقع للمتصفح والأجهزة */}
         <AnimatePresence>
-          {showRadarInstructionModal && (
+          {!isDiwaniyaQrLocationQuietMode && showRadarInstructionModal && (
             <motion.div
               key="radar-instruction-modal"
               initial={{ opacity: 0 }}
@@ -6455,16 +6700,16 @@ export default function CustomerSite() {
                 </button>
 
                 <MapPin className="w-9 h-9 mx-auto text-amber-500 mb-3" />
-                <h3 className="text-lg font-black text-brand leading-tight">الموقع غير متاح</h3>
+                <h3 className="text-lg font-black text-brand leading-tight">خدمة اللوكيشن مقفلة</h3>
                 <p className="mt-1.5 text-[11px] font-bold text-stone-500 leading-relaxed">
-                  فعّله من المتصفح لتشغيل الرادار.
+                  الموقع يعمل طبيعي. تفعيل اللوكيشن مطلوب فقط لرادار الديوانيات القريبة.
                 </p>
 
                 <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50/45 px-3 py-3 text-right">
-                  <p className="text-[11px] font-black text-brand mb-1">الخطوات</p>
+                  <p className="text-[11px] font-black text-brand mb-1">لتفعيل الرادار فقط</p>
                   <ol className="space-y-1.5 text-[10px] font-bold text-stone-600 leading-relaxed list-decimal list-inside">
-                    <li>افتح إعدادات الموقع.</li>
-                    <li>اختر سماح.</li>
+                    <li>افتح إعدادات الموقع من المتصفح.</li>
+                    <li>اختر سماح للّوكيشن.</li>
                     <li>ارجع واضغط جرّب الآن.</li>
                   </ol>
                 </div>
@@ -6481,10 +6726,13 @@ export default function CustomerSite() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowRadarInstructionModal(false)}
+                  onClick={() => {
+                    setShowRadarInstructionModal(false);
+                    setRadarLocationNoticeDismissed(true);
+                  }}
                   className="mt-2 w-full py-2.5 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-500 text-[11px] font-bold transition-all text-center"
                 >
-                  تراجع
+                  متابعة بدون لوكيشن
                 </button>
               </motion.div>
             </motion.div>
@@ -6494,7 +6742,7 @@ export default function CustomerSite() {
         {/* تنبيه عام للمعزب عند وصول طلب انضمام حتى خارج صفحة الديوانية */}
         <AnimatePresence>
           {customerPhone && pendingGeofenceRequests.length > 0 && (
-            isOwnerJoinAlertCollapsed ? (
+            canShowOwnerJoinCollapsed ? (
               <motion.button
                 key="owner-join-alert-collapsed"
                 initial={{ opacity: 0, scale: 0.85, y: 20 }}
@@ -6588,7 +6836,7 @@ export default function CustomerSite() {
         {/* تنبيه قطية الديوانية للأعضاء حتى وهم يتصفحون المنيو */}
         <AnimatePresence>
           {customerPhone && qatyaAlertItems.length > 0 && (
-            isQatyaAlertCollapsed ? (
+            canShowQatyaCollapsed ? (
               <motion.button
                 key="qatya-alert-collapsed"
                 initial={{ opacity: 0, scale: 0.85, y: 20 }}
@@ -6697,7 +6945,7 @@ export default function CustomerSite() {
         {/* Wobble Alerts (نداء الدلة) */}
         <AnimatePresence>
           {customerPhone && wobbleAlertItems.length > 0 && (
-            isWobbleAlertCollapsed ? (
+            canShowWobbleCollapsed ? (
               <motion.button
                 key="wobble-alert-collapsed"
                 initial={{ opacity: 0, scale: 0.85, y: 20 }}
@@ -6789,7 +7037,7 @@ export default function CustomerSite() {
         {/* جاري انتظار القبول من صاحب الديوانية */}
         <AnimatePresence>
           {myGeofenceRequests.some(r => r.status === "pending") && (
-            isRadarBannerCollapsed ? (
+            canShowPendingRadarCollapsed ? (
               <motion.button
                 key="collapsed-radar"
                 initial={{ opacity: 0, scale: 0.8, x: 50 }}
@@ -7354,6 +7602,30 @@ function ProductModal({
     return qs;
   });
   const [note, setNote] = useState("");
+  const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
+  const productImageSrc =
+    (product as any).imageUrl ||
+    product.image ||
+    settings?.companyLogo ||
+    settings?.logo ||
+    DEFAULT_GLOBAL_LOGO;
+
+  useEffect(() => {
+    if (!isImagePreviewOpen || typeof document === "undefined") return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleImagePreviewKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsImagePreviewOpen(false);
+    };
+
+    window.addEventListener("keydown", handleImagePreviewKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleImagePreviewKeyDown);
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [isImagePreviewOpen]);
 
   useEffect(() => {
     setSelectedAddonsIds((prev) => {
@@ -7508,6 +7780,7 @@ function ProductModal({
   const smartRecommendedAddons = productAddons.filter(isSmartRecommendationAddon).slice(0, 1);
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -7558,33 +7831,42 @@ function ProductModal({
             settings?.companyLogo ||
             settings?.logo ||
             DEFAULT_GLOBAL_LOGO ? (
-              <img
-                referrerPolicy="no-referrer"
-                src={
-                  (product as any).imageUrl ||
-                  product.image ||
-                  settings?.companyLogo ||
-                  settings?.logo ||
-                  DEFAULT_GLOBAL_LOGO
-                }
-                onError={(e) => {
-                  const fallback =
-                    settings?.companyLogo ||
-                    settings?.logo ||
-                    DEFAULT_GLOBAL_LOGO;
-                  if (
-                    e.currentTarget.src.includes(fallback) ||
-                    e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO)
-                  ) {
-                    e.currentTarget.onerror = null;
-                    if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO))
-                      e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
-                  } else {
-                    e.currentTarget.src = fallback;
-                  }
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setIsImagePreviewOpen(true);
                 }}
-                className="w-[108px] h-[108px] sm:w-[126px] sm:h-[126px] object-contain bg-white p-2 rounded-[28px] shadow-[0_20px_48px_rgba(26,46,34,0.18)] relative ring-1 ring-white/80"
-              />
+                onPointerDown={(event) => event.stopPropagation()}
+                className="relative z-10 block rounded-[28px] cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
+                style={{ touchAction: "manipulation" }}
+                aria-label={`تكبير صورة ${product.name}`}
+              >
+                <img
+                  referrerPolicy="no-referrer"
+                  src={productImageSrc}
+                  alt={product.name}
+                  draggable={false}
+                  onError={(e) => {
+                    const fallback =
+                      settings?.companyLogo ||
+                      settings?.logo ||
+                      DEFAULT_GLOBAL_LOGO;
+                    if (
+                      e.currentTarget.src.includes(fallback) ||
+                      e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO)
+                    ) {
+                      e.currentTarget.onerror = null;
+                      if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO))
+                        e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
+                    } else {
+                      e.currentTarget.src = fallback;
+                    }
+                  }}
+                  className="w-[108px] h-[108px] sm:w-[126px] sm:h-[126px] object-contain bg-white p-2 rounded-[28px] shadow-[0_20px_48px_rgba(26,46,34,0.18)] relative ring-1 ring-white/80 transition-transform duration-200 active:scale-[0.98] select-none"
+                />
+              </button>
             ) : (
               <div className="w-[108px] h-[108px] sm:w-[126px] sm:h-[126px] flex items-center justify-center bg-stone-50/80 backdrop-blur-sm border border-stone-100 text-stone-400 rounded-[28px] shadow-md relative p-1">
                 <span className="text-[10px] font-medium p-1 text-center leading-tight">
@@ -7939,6 +8221,76 @@ function ProductModal({
         </div>
       </motion.div>
     </motion.div>
+
+    {typeof document !== "undefined" &&
+      createPortal(
+        <AnimatePresence>
+          {isImagePreviewOpen && (
+            <motion.div
+              key="product-image-preview"
+              className="fixed inset-0 flex items-center justify-center bg-black/90 p-4 sm:p-8 backdrop-blur-md"
+              style={{ zIndex: 2147483647 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                if (event.target === event.currentTarget) {
+                  setIsImagePreviewOpen(false);
+                }
+              }}
+              role="dialog"
+              aria-modal="true"
+              aria-label={`صورة ${product.name} بالحجم الكامل`}
+            >
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setIsImagePreviewOpen(false);
+                }}
+                className="absolute right-4 top-4 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-xl transition-transform active:scale-95 sm:right-6 sm:top-6"
+                aria-label="إغلاق الصورة"
+              >
+                <X className="h-6 w-6" />
+              </button>
+
+              <motion.img
+                referrerPolicy="no-referrer"
+                src={productImageSrc}
+                alt={product.name}
+                draggable={false}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                onPointerDown={(event) => event.stopPropagation()}
+                onError={(e) => {
+                  const fallback =
+                    settings?.companyLogo ||
+                    settings?.logo ||
+                    DEFAULT_GLOBAL_LOGO;
+                  if (
+                    e.currentTarget.src.includes(fallback) ||
+                    e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO)
+                  ) {
+                    e.currentTarget.onerror = null;
+                    if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO))
+                      e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
+                  } else {
+                    e.currentTarget.src = fallback;
+                  }
+                }}
+                className="max-h-[88dvh] max-w-[94vw] select-none rounded-[24px] bg-white object-contain shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
+    </>
   );
 }
 
@@ -7993,6 +8345,11 @@ function CheckoutOverlay({
   const [regionSearch, setRegionSearch] = useState("");
   const [showRegions, setShowRegions] = useState(false);
   const [step, setStep] = useState<"cart" | "delivery" | "payment">(initialStep);
+  const [storeClock, setStoreClock] = useState(() => Date.now());
+  const storeAvailability = useMemo(
+    () => checkStoreStatus(settings?.storeStatus, new Date(storeClock)),
+    [settings?.storeStatus, storeClock],
+  );
   const lastOrderItemsCount = Array.isArray(lastOrderInfo?.items) ? lastOrderInfo.items.length : 0;
   const lastOrderTotal = Number(lastOrderInfo?.total || lastOrderInfo?.amount || 0);
   const cleanHistory = Array.isArray(customerOrderHistory) ? customerOrderHistory : [];
@@ -8062,6 +8419,18 @@ function CheckoutOverlay({
   useEffect(() => {
     setStep(initialStep);
   }, [initialStep]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setStoreClock(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!storeAvailability.isOpen) {
+      setStep("cart");
+      setFormError(null);
+    }
+  }, [storeAvailability.isOpen, setFormError]);
 
   const filteredRegions = getActiveRegions(regions).filter(
     (r: any) =>
@@ -8146,7 +8515,8 @@ function CheckoutOverlay({
           <div className="flex items-center gap-4">
             <button
               onClick={() => {
-                if (step === "payment") setStep("delivery");
+                if (!storeAvailability.isOpen) onClose();
+                else if (step === "payment") setStep("delivery");
                 else onClose();
               }}
               className="p-3 bg-stone-50 border border-stone-100 rounded-2xl hover:bg-brand hover:text-white hover:-translate-x-1 transition-all shadow-sm"
@@ -8155,14 +8525,22 @@ function CheckoutOverlay({
             </button>
             <div>
               <h2 className="text-2xl font-black text-brand flex items-center gap-2 tracking-tight mt-1">
-                {step === "cart" ? "ملخص الطلب" : step === "payment" ? "طريقة الدفع" : "العنوان"}
+                {!storeAvailability.isOpen
+                  ? "أوقات العمل"
+                  : step === "cart"
+                    ? "ملخص الطلب"
+                    : step === "payment"
+                      ? "طريقة الدفع"
+                      : "العنوان"}
               </h2>
             </div>
           </div>
         </div>
 
         <div className="checkout-wow-body flex-grow overflow-y-auto p-6 space-y-8 no-scrollbar bg-[#fafaf9]">
-          {cart.length === 0 ? (
+          {!storeAvailability.isOpen ? (
+            <StoreClosedWorkingHoursNotice status={storeAvailability} onClose={onClose} />
+          ) : cart.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-6 pt-10">
               <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-stone-50">
                 <ShoppingCart className="w-12 h-12 text-stone-300 empty-state-art" />
@@ -8336,20 +8714,24 @@ function CheckoutOverlay({
                       }}
                       className="flex gap-4 p-4 bg-white rounded-3xl border border-stone-100 relative group shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing w-full z-10"
                     >
-                      <div className="flex-grow">
+                      <div className="flex-grow relative">
                         <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-bold text-brand text-base">
+                          <h4 className="font-bold text-brand text-sm leading-tight max-w-[80%]">
                             {item.name}
                           </h4>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-white bg-brand px-2 py-0.5 rounded-md">
-                              ×{item.quantity}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="text-[10px] font-bold text-white bg-brand px-1.5 py-0.5 rounded">
+                              {item.quantity}×
+                            </span>
+                            <span className="text-sm font-bold text-brand whitespace-nowrap">
+                                {calculateItemTotalWithAddons(item)}{" "}
+                                <span className="text-[10px] text-accent">د.ك</span>
                             </span>
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 mb-4">
+                        <div className="flex flex-wrap gap-1.5 mb-2">
                           {item.selectedOption && (
-                            <span className="text-[9px] font-bold bg-stone-50/80 backdrop-blur-sm text-stone-500 px-2 py-1 rounded-md border border-stone-100">
+                            <span className="text-[9px] font-bold bg-stone-50 text-stone-500 px-1.5 py-0.5 rounded border border-stone-100">
                               {item.selectedOption}
                             </span>
                           )}
@@ -8357,9 +8739,9 @@ function CheckoutOverlay({
                             (e: any, idx: number) => (
                               <span
                                 key={`${e.name}-${idx}`}
-                                className="text-[9px] font-bold bg-accent/5 text-accent px-2 py-1 rounded-md border border-accent/10"
+                                className="text-[9px] font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
                               >
-                                +{e.name} {e.price ? `(${e.price} د.ك)` : ''}
+                                +{e.name}
                               </span>
                             ),
                           )}
@@ -8367,29 +8749,21 @@ function CheckoutOverlay({
                             (addon: any, idx: number) => (
                               <span
                                 key={`addon-${addon.addonId}-${idx}`}
-                                className="text-[9px] font-bold bg-accent/5 text-accent px-2 py-1 rounded-md border border-accent/10"
+                                className="text-[9px] font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
                               >
-                                +{addon.quantity} {cleanCustomerAddonLabel(addon.name)} {(addon.payableQuantity === 0 || addon.price === 0) && !addon.isHiddenPrice ? '(مجاني)' : addon.price > 0 && !addon.isHiddenPrice ? `(${addon.price} د.ك)` : ''}
+                                +{addon.quantity} {cleanCustomerAddonLabel(addon.name)}
                               </span>
                             ),
                           )}
                         </div>
-                        <div className="flex items-center justify-between pt-3 border-t border-stone-50">
-                          <span className="text-[11px] font-bold text-stone-400 leading-[1.6] py-0.5">
-                            المجموع الفرعي
-                          </span>
-                          <span className="text-lg font-medium text-brand">
-                            {calculateItemTotalWithAddons(item)}{" "}
-                            <span className="text-xs text-accent">د.ك</span>
-                          </span>
-                        </div>
+                        <button
+                          onClick={() => onRemove(item.id)}
+                          className="absolute -bottom-2 -right-1 text-red-400 hover:text-red-600 p-1 transition-colors"
+                          aria-label="إزالة"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => onRemove(item.id)}
-                        className="absolute -top-2 -left-2 w-8 h-8 bg-white text-red-500 hover:bg-red-500 hover:text-white rounded-full flex items-center justify-center border border-stone-100 shadow-md transition-all opacity-100 sm:opacity-0 group-hover:opacity-100"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
                     </motion.div>
                   </motion.div>
                 ))}
@@ -8542,11 +8916,22 @@ function CheckoutOverlay({
                       lng: location.lng,
                       mapProvider: 'leaflet-openstreetmap',
                     }) as any)}
-                    onAddressGuess={(guess) => setAddress((prev: any) => {
-                      const current = prev || address || {};
-                      const cleanAutoAddressField = (value: any, kind: 'block' | 'street' | 'building') => {
-                        let text = String(value ?? '').trim();
-                        if (!text) return '';
+	                    onAddressGuess={(guess) => setAddress((prev: any) => {
+	                      const current = prev || address || {};
+	                      const normalizeRegionForMatch = (value: any) =>
+	                        String(value || "")
+	                          .trim()
+	                          .replace(/[إأآا]/g, "ا")
+	                          .replace(/[ة]/g, "ه")
+	                          .replace(/\s+/g, " ")
+	                          .toLowerCase();
+	                      const guessedRegion = normalizeRegionForMatch(guess.region);
+	                      const matchedRegion = guessedRegion
+	                        ? getActiveRegions(regions).find((r: any) => normalizeRegionForMatch(r.name) === guessedRegion)
+	                        : null;
+	                      const cleanAutoAddressField = (value: any, kind: 'block' | 'street' | 'building') => {
+	                        let text = String(value ?? '').trim();
+	                        if (!text) return '';
                         const patterns: Record<typeof kind, RegExp> = {
                           block: /^[\s\u200e\u200f]*(?:قطعة|قطعه|ق\.?|block)\s*[:：#\-–—،,]?\s*/i,
                           street: /^[\s\u200e\u200f]*(?:شارع|ش\.?|street|road|طريق)\s*[:：#\-–—،,]?\s*/i,
@@ -8558,13 +8943,13 @@ function CheckoutOverlay({
                           text = text.replace(patterns[kind], '').trim();
                         }
                         return normalizeDigits(text);
-                      };
-                      return {
-                        ...current,
-                        region: guess.region || current.region || '',
-                        block: cleanAutoAddressField(guess.block || current.block, 'block'),
-                        street: cleanAutoAddressField(guess.street || current.street, 'street'),
-                        building: cleanAutoAddressField(guess.building || current.building, 'building'),
+	                      };
+	                      return {
+	                        ...current,
+	                        region: matchedRegion?.name || current.region || '',
+	                        block: cleanAutoAddressField(guess.block || current.block, 'block'),
+	                        street: cleanAutoAddressField(guess.street || current.street, 'street'),
+	                        building: cleanAutoAddressField(guess.building || current.building, 'building'),
                         extraDetails: current.extraDetails || guess.extraDetails || '',
                       } as any;
                     })}
@@ -8776,7 +9161,7 @@ function CheckoutOverlay({
           ) : null}
         </div>
 
-        {cart.length > 0 && (
+        {storeAvailability.isOpen && cart.length > 0 && (
           <div className={`checkout-wow-footer checkout-footer-${step} ${step === "payment" ? "p-4 sm:p-5 space-y-3" : "p-6 space-y-6"} bg-white border-t border-stone-100 shadow-[0_-15px_40px_rgba(0,0,0,0.02)]`}>
             <AnimatePresence>
               {formError && (
@@ -8945,7 +9330,7 @@ function CheckoutOverlay({
                   )}
                 >
                   {!isOpen ? (
-                    <span>{message}</span>
+                    <span>المطعم مغلق حالياً (الطلب غير متاح)</span>
                   ) : (
                     <span>كمل بياناتك</span>
                   )}
@@ -8976,7 +9361,7 @@ function CheckoutOverlay({
                     )}
                   >
                     {!isOpen ? (
-                      <span>{message}</span>
+                      <span>المطعم مغلق حالياً (الطلب غير متاح)</span>
                     ) : customerPhone.length < 8 ? (
                       <span>اكتب رقم تلفون صحيح من 8 أرقام</span>
                     ) : deliveryFee === -1 ? (
@@ -9067,13 +9452,18 @@ function CheckoutOverlay({
                         </div>
                       </button>
 	                      <button
-	                        onClick={() => {
-	                          try {
-	                            localStorage.removeItem("split_prefill_members");
-	                            localStorage.removeItem("split_prefill_ready");
-	                            localStorage.removeItem("split_prefill_source");
-	                            localStorage.removeItem("split_prefill_squad_id");
-	                          } catch (e) {}
+	                        onClick={async () => {
+	                          const hasCurrentDiwaniya = Boolean(squadInfo?.id || localStorage.getItem("squadId"));
+	                          if (hasCurrentDiwaniya) {
+	                            await prepareDiwaniyaSplitMembers();
+	                          } else {
+	                            try {
+	                              localStorage.removeItem("split_prefill_members");
+	                              localStorage.removeItem("split_prefill_ready");
+	                              localStorage.removeItem("split_prefill_source");
+	                              localStorage.removeItem("split_prefill_squad_id");
+	                            } catch (e) {}
+	                          }
 	                          onSubmit("roulette");
 	                        }}
                         className="payment-method-card payment-method-card-wahag w-full bg-fuchsia-600 text-white rounded-2xl p-4 sm:p-5 shadow-md active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-fuchsia-700 text-lg text-right"
@@ -9118,6 +9508,7 @@ const SteamCompanion: React.FC = () => {
   useEffect(() => {
     // Generate constant ambient gentle steam at the bottom margins
     const interval = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
       const id = Math.random();
       const startX = Math.random() * window.innerWidth;
       const startY = window.innerHeight - 30;
@@ -9175,33 +9566,36 @@ const SteamCompanion: React.FC = () => {
     const targetY = window.innerHeight - 80;
 
     const tick = () => {
-      setPuffs((prev) => {
-        return prev
-          .map((p) => {
-            // Ambient particles float straight up, added-item particles dance towards the bottom cart
-            const isAmbient = p.opacity < 0.4;
-            if (isAmbient) {
-              return {
-                ...p,
-                currentY: p.currentY - 0.7,
-                currentX: p.currentX + Math.sin(p.currentY / 30) * 0.4,
-                opacity: p.opacity - 0.002
-              };
-            } else {
-              // Interactive trail path interpolation to the cart
-              const dx = targetX - p.currentX;
-              const dy = targetY - p.currentY;
-              return {
-                ...p,
-                currentX: p.currentX + dx * 0.08 + (Math.random() - 0.5) * 4,
-                currentY: p.currentY + dy * 0.08 + (Math.random() - 0.5) * 4,
-                opacity: p.opacity - 0.02,
-                size: p.size + 0.4
-              };
-            }
-          })
-          .filter((p) => p.opacity > 0 && p.currentY > 0);
-      });
+      if (document.visibilityState === "visible") {
+        setPuffs((prev) => {
+          if (prev.length === 0) return prev;
+          return prev
+            .map((p) => {
+              // Ambient particles float straight up, added-item particles dance towards the bottom cart
+              const isAmbient = p.opacity < 0.4;
+              if (isAmbient) {
+                return {
+                  ...p,
+                  currentY: p.currentY - 0.7,
+                  currentX: p.currentX + Math.sin(p.currentY / 30) * 0.4,
+                  opacity: p.opacity - 0.002
+                };
+              } else {
+                // Interactive trail path interpolation to the cart
+                const dx = targetX - p.currentX;
+                const dy = targetY - p.currentY;
+                return {
+                  ...p,
+                  currentX: p.currentX + dx * 0.08 + (Math.random() - 0.5) * 4,
+                  currentY: p.currentY + dy * 0.08 + (Math.random() - 0.5) * 4,
+                  opacity: p.opacity - 0.02,
+                  size: p.size + 0.4
+                };
+              }
+            })
+            .filter((p) => p.opacity > 0 && p.currentY > 0);
+        });
+      }
       animId = requestAnimationFrame(tick);
     };
 
@@ -9216,13 +9610,14 @@ const SteamCompanion: React.FC = () => {
           key={p.id}
           className="absolute rounded-full filter blur-[20px]"
           style={{
-            left: `${p.currentX}px`,
-            top: `${p.currentY}px`,
+            left: 0,
+            top: 0,
             width: `${p.size}px`,
             height: `${p.size}px`,
             opacity: p.opacity,
             background: "radial-gradient(circle, rgba(205,162,80,0.3) 0%, rgba(13,58,34,0.02) 60%, transparent 100%)",
-            transform: "translate(-50%, -50%)"
+            transform: `translate3d(${p.currentX}px, ${p.currentY}px, 0) translate(-50%, -50%)`,
+            willChange: "transform, opacity"
           }}
         />
       ))}
