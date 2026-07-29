@@ -1,12 +1,12 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
 import CustomerSite from "./pages/CustomerSite";
-import SplitPayment from "./pages/SplitPayment";
 import { useOnlineStatus } from "./hooks/useOnlineStatus";
 import { OfflineModal } from "./components/OfflineModal";
 
 const OrderPage = lazy(() => import("./pages/OrderPage"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const SplitPayment = lazy(() => import("./pages/SplitPayment"));
 
 function NotFoundFoodPage() {
   return (
