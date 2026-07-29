@@ -42,12 +42,9 @@ import {
   Clock,
 } from "lucide-react";
 import { Product, OrderItem, Order, Address, Region } from "../types";
-import { db } from "../lib/firebase";
 import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegroundPush, type DiwaniyaPushState } from "../lib/diwaniyaPush";
 import { restoreCustomerMenuProducts } from "../lib/customerMenuTransport";
 import { robustGetCurrentPosition } from "../utils/geolocation";
-import LeafletLocationPicker from "../components/LeafletLocationPicker";
-import LeafletKuwaitMap from "../components/LeafletKuwaitMap";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { OfflineModal } from "../components/OfflineModal";
 
@@ -1063,8 +1060,29 @@ import {
 import { ZenSplashScreen } from "../components/ZenSplashScreen";
 import { DynamicEnvironment } from "../components/DynamicEnvironment";
 import { redirectToPayment } from "../utils/redirect";
-import { SquadModalContent } from "../components/SquadModalContent";
 import { buildWhatsAppInvoiceText, buildWhatsAppPaymentLinkText } from "../utils/invoiceShare";
+
+const LeafletLocationPicker = React.lazy(
+  () => import("../components/LeafletLocationPicker"),
+);
+const LeafletKuwaitMap = React.lazy(
+  () => import("../components/LeafletKuwaitMap"),
+);
+const SquadModalContent = React.lazy(() =>
+  import("../components/SquadModalContent").then((module) => ({
+    default: module.SquadModalContent,
+  })),
+);
+
+const DeferredFeatureFallback = ({ label }: { label: string }) => (
+  <div
+    className="flex min-h-28 w-full items-center justify-center rounded-2xl border border-stone-100 bg-stone-50/80 px-4 py-6 text-center text-xs font-black text-stone-500"
+    role="status"
+    aria-live="polite"
+  >
+    {label}
+  </div>
+);
 
 
 const cleanPhoneForSquad = (phone: any): string => {
@@ -5395,6 +5413,8 @@ export default function CustomerSite() {
                           <img
                             src={imgUrl}
                             alt={p.name}
+                            loading="lazy"
+                            decoding="async"
                             onError={(e) => {
                               if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO)) {
                                 e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
@@ -5432,6 +5452,8 @@ export default function CustomerSite() {
                     <img
                       src={suggestion.imageUrl || suggestion.image || fallbackLogo}
                       alt={suggestion.name}
+                      loading="lazy"
+                      decoding="async"
                       onError={(e) => {
                         if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO)) {
                           e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
@@ -6374,58 +6396,60 @@ export default function CustomerSite() {
                         ))}
                       </div>
 
-                      <SquadModalContent 
-                        activeSquadTab={activeSquadTab}
-                        squadInfo={squadInfo}
-                        userSquads={userSquads}
-                        settings={settings}
-                        squadPresence={squadPresence}
-                        activeGroupOrder={activeGroupOrder}
-                        activeQatyaOrders={activeQatyaOrders}
-                        tempCodes={tempCodes}
-                        usualOrder={usualOrder}
-                        squadBeautifulLog={squadBeautifulLog}
-                        diwaniyaNotifications={diwaniyaNotifications}
-                        unreadDiwaniyaNotifications={unreadDiwaniyaNotifications}
-                        SQUAD_TIERS={SQUAD_TIERS}
-                        getSquadTier={getSquadTier}
-                        topSquads={topSquads}
-                        customerPhone={customerPhone}
-                        customerName={customerName}
-                         customerPoints={customerPoints}
-                         LOYALTY_TIERS={LOYALTY_TIERS}
-                         getLoyaltyTier={getLoyaltyTier}
-                        guestName={guestName}
-                        setGuestName={setGuestName}
-                        guestPhone={guestPhone}
-                        setGuestPhone={setGuestPhone}
-                        loginPhone={loginPhone}
-                        setLoginPhone={setLoginPhone}
-                        isJoiningSquad={isJoiningSquad}
-                        setIsJoiningSquad={setIsJoiningSquad}
-                        isCreatingSquad={isCreatingSquad}
-                        setIsCreatingSquad={setIsCreatingSquad}
-                        isSubmittingSquad={isSubmittingSquad}
-                        setIsSubmittingSquad={setIsSubmittingSquad}
-                        newSquadName={newSquadName}
-                        setNewSquadName={setNewSquadName}
-                        setActiveSquadId={setActiveSquadId}
-                        setCustomerPhone={setCustomerPhone}
-                        setCustomerName={setCustomerName}
-                        setSquadInfo={setSquadInfo}
-                        onClearSquadSession={clearSquadSessionOnThisDevice}
-                        normalizeDigits={normalizeDigits}
-                        formatPoints={formatPoints}
-                        handleCreateSquad={handleCreateSquad}
-                        handleJoinSquad={handleJoinSquad}
-                       pendingGeofenceRequests={pendingGeofenceRequests}
-                       onRefresh={fetchSquadGamification}
-                       onPrepareQatya={handlePrepareQatyaFromDiwaniya}
-                       products={products}
-                       onAddToCart={addToCart}
-                       initialCode={initialSquadCode}
-                       setInitialCode={setInitialSquadCode}
-                      />
+                      <React.Suspense fallback={<DeferredFeatureFallback label="جاري تجهيز الديوانية..." />}>
+                        <SquadModalContent 
+                          activeSquadTab={activeSquadTab}
+                          squadInfo={squadInfo}
+                          userSquads={userSquads}
+                          settings={settings}
+                          squadPresence={squadPresence}
+                          activeGroupOrder={activeGroupOrder}
+                          activeQatyaOrders={activeQatyaOrders}
+                          tempCodes={tempCodes}
+                          usualOrder={usualOrder}
+                          squadBeautifulLog={squadBeautifulLog}
+                          diwaniyaNotifications={diwaniyaNotifications}
+                          unreadDiwaniyaNotifications={unreadDiwaniyaNotifications}
+                          SQUAD_TIERS={SQUAD_TIERS}
+                          getSquadTier={getSquadTier}
+                          topSquads={topSquads}
+                          customerPhone={customerPhone}
+                          customerName={customerName}
+                           customerPoints={customerPoints}
+                           LOYALTY_TIERS={LOYALTY_TIERS}
+                           getLoyaltyTier={getLoyaltyTier}
+                          guestName={guestName}
+                          setGuestName={setGuestName}
+                          guestPhone={guestPhone}
+                          setGuestPhone={setGuestPhone}
+                          loginPhone={loginPhone}
+                          setLoginPhone={setLoginPhone}
+                          isJoiningSquad={isJoiningSquad}
+                          setIsJoiningSquad={setIsJoiningSquad}
+                          isCreatingSquad={isCreatingSquad}
+                          setIsCreatingSquad={setIsCreatingSquad}
+                          isSubmittingSquad={isSubmittingSquad}
+                          setIsSubmittingSquad={setIsSubmittingSquad}
+                          newSquadName={newSquadName}
+                          setNewSquadName={setNewSquadName}
+                          setActiveSquadId={setActiveSquadId}
+                          setCustomerPhone={setCustomerPhone}
+                          setCustomerName={setCustomerName}
+                          setSquadInfo={setSquadInfo}
+                          onClearSquadSession={clearSquadSessionOnThisDevice}
+                          normalizeDigits={normalizeDigits}
+                          formatPoints={formatPoints}
+                          handleCreateSquad={handleCreateSquad}
+                          handleJoinSquad={handleJoinSquad}
+                         pendingGeofenceRequests={pendingGeofenceRequests}
+                         onRefresh={fetchSquadGamification}
+                         onPrepareQatya={handlePrepareQatyaFromDiwaniya}
+                         products={products}
+                         onAddToCart={addToCart}
+                         initialCode={initialSquadCode}
+                         setInitialCode={setInitialSquadCode}
+                        />
+                      </React.Suspense>
                    </div>
                 </motion.div>
               </motion.div>
@@ -6612,23 +6636,25 @@ export default function CustomerSite() {
                   إذا هذي ديوانيتك بدّل لها، وإذا مو عضو دز طلب والمعزب يوافق عليك.
                 </p>
 
-                <LeafletKuwaitMap
-                  markers={radarNearbySquads.filter((sq: any) => sq.lat !== undefined && sq.lng !== undefined).map((sq: any) => ({
-                    id: String(sq.id),
-                    name: `ديوانية ${sq.name}`,
-                    lat: Number(sq.lat),
-                    lng: Number(sq.lng),
-                    subtitle: `تبعد ${normalizeDigits(String(sq.distance))}م`,
-                    color: sq.isAlreadyMember ? '#10b981' : '#f59e0b',
-                    radiusMeters: Number(sq.geofenceDistance || 80),
-                    size: 28,
-                  }))}
-                  center={radarNearbySquads[0]?.lat && radarNearbySquads[0]?.lng ? { lat: Number(radarNearbySquads[0].lat), lng: Number(radarNearbySquads[0].lng) } : { lat: 29.3375, lng: 47.9774 }}
-                  zoom={15}
-                  dark
-                  showRange
-                  heightClassName="h-[220px]"
-                />
+                <React.Suspense fallback={<DeferredFeatureFallback label="جاري تجهيز الخريطة..." />}>
+                  <LeafletKuwaitMap
+                    markers={radarNearbySquads.filter((sq: any) => sq.lat !== undefined && sq.lng !== undefined).map((sq: any) => ({
+                      id: String(sq.id),
+                      name: `ديوانية ${sq.name}`,
+                      lat: Number(sq.lat),
+                      lng: Number(sq.lng),
+                      subtitle: `تبعد ${normalizeDigits(String(sq.distance))}م`,
+                      color: sq.isAlreadyMember ? '#10b981' : '#f59e0b',
+                      radiusMeters: Number(sq.geofenceDistance || 80),
+                      size: 28,
+                    }))}
+                    center={radarNearbySquads[0]?.lat && radarNearbySquads[0]?.lng ? { lat: Number(radarNearbySquads[0].lat), lng: Number(radarNearbySquads[0].lng) } : { lat: 29.3375, lng: 47.9774 }}
+                    zoom={15}
+                    dark
+                    showRange
+                    heightClassName="h-[220px]"
+                  />
+                </React.Suspense>
 
                 <div className="space-y-3">
                   {radarNearbySquads.map((sq: any) => {
@@ -7399,6 +7425,9 @@ const ChefWhisperCard = ({
                 <img
                   referrerPolicy="no-referrer"
                   src={imgUrl}
+                  loading={isHorizontal ? "eager" : "lazy"}
+                  decoding="async"
+                  fetchPriority={isHorizontal ? "high" : "auto"}
                   onError={(e) => {
                     if (e.currentTarget.src.includes(fallbackLogo)) {
                       e.currentTarget.onerror = null;
@@ -7465,6 +7494,8 @@ const ChefWhisperCard = ({
                     <img
                       referrerPolicy="no-referrer"
                       src={imgUrl}
+                      loading="lazy"
+                      decoding="async"
                       onError={(e) => {
                         if (e.currentTarget.src.includes(fallbackLogo)) {
                           e.currentTarget.onerror = null;
@@ -9016,15 +9047,16 @@ function CheckoutOverlay({
                     </div>
                   </div>
 
-                  <LeafletLocationPicker
-                    value={(address as any)?.location || ((address as any)?.lat && (address as any)?.lng ? { lat: (address as any).lat, lng: (address as any).lng } : null)}
-                    onChange={(location) => setAddress((prev: any) => ({
-                      ...(prev || address || {}),
-                      location,
-                      lat: location.lat,
-                      lng: location.lng,
-                      mapProvider: 'leaflet-openstreetmap',
-                    }) as any)}
+                  <React.Suspense fallback={<DeferredFeatureFallback label="جاري تجهيز خريطة التوصيل..." />}>
+                    <LeafletLocationPicker
+                      value={(address as any)?.location || ((address as any)?.lat && (address as any)?.lng ? { lat: (address as any).lat, lng: (address as any).lng } : null)}
+                      onChange={(location) => setAddress((prev: any) => ({
+                        ...(prev || address || {}),
+                        location,
+                        lat: location.lat,
+                        lng: location.lng,
+                        mapProvider: 'leaflet-openstreetmap',
+                      }) as any)}
 	                    onAddressGuess={(guess) => setAddress((prev: any) => {
 	                      const current = prev || address || {};
 	                      const normalizeRegionForMatch = (value: any) =>
@@ -9061,8 +9093,9 @@ function CheckoutOverlay({
 	                        building: cleanAutoAddressField(guess.building || current.building, 'building'),
                         extraDetails: current.extraDetails || guess.extraDetails || '',
                       } as any;
-                    })}
-                  />
+                      })}
+                    />
+                  </React.Suspense>
 
                   {/* Address Grid */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
