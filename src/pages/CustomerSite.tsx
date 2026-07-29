@@ -71,6 +71,34 @@ const sanitizeWhatsAppText = (text: string) =>
 
 const DEFAULT_PRODUCT_CATEGORIES = ["الولائم", "اللحوم", "الدجاج", "البحري", "المقبلات"];
 const CUSTOMER_ENTRY_SEEN_KEY = "alturath_customer_entry_seen_v1";
+const SMART_PROMO_LAST_SHOWN_KEY = "alturath_smart_promo_last_shown_v2";
+const SMART_PROMO_SESSION_KEY = "alturath_smart_promo_seen_session_v2";
+const FOMO_LAST_SHOWN_KEY = "alturath_fomo_last_shown_v2";
+const FOMO_SESSION_COUNT_KEY = "alturath_fomo_session_count_v2";
+const FOMO_DISMISSED_SESSION_KEY = "alturath_fomo_dismissed_session_v2";
+const SMART_PROMO_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+const FOMO_COOLDOWN_MS = 30 * 60 * 1000;
+const FOMO_MAX_PER_SESSION = 2;
+
+const readStoredTimestamp = (key: string) => {
+  try {
+    const value = Number(window.localStorage.getItem(key) || 0);
+    return Number.isFinite(value) ? value : 0;
+  } catch {
+    return 0;
+  }
+};
+
+const hasCooldownElapsed = (key: string, cooldownMs: number) =>
+  Date.now() - readStoredTimestamp(key) >= cooldownMs;
+
+const rememberTimestamp = (key: string) => {
+  try {
+    window.localStorage.setItem(key, String(Date.now()));
+  } catch {
+    // Storage can be unavailable in private browsing; the UI still works.
+  }
+};
 
 const getActiveRegions = (items: any[] = []) =>
   (Array.isArray(items) ? items : []).filter((region: any) => region?.isActive !== false);
@@ -1293,7 +1321,49 @@ function StoreClosedWorkingHoursNotice({
   status: ReturnType<typeof checkStoreStatus>;
   onClose: () => void;
 }) {
+  const [showWeeklyHours, setShowWeeklyHours] = useState(false);
+
   if (status.isOpen) return null;
+
+  const weeklyList = status.weeklyList || [];
+  const today = weeklyList.find((item: any) => item.isToday);
+  const otherDays = weeklyList.filter((item: any) => !item.isToday);
+  const manualMessage = status.storeStatus?.manualClose === true
+    ? String(status.storeStatus?.closeMessage || "")
+        .trim()
+        .replace(/^المطعم\s+مغلق(?:\s+حالياً)?\s*/u, "")
+        .replace(/^[.،:؛\-\s]+/u, "")
+    : "";
+
+  const renderWorkingDay = (item: any) => (
+    <div
+      key={item.dayKey}
+      className={cn(
+        "flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-xs",
+        item.isToday
+          ? "border-amber-300 bg-amber-50/70 shadow-sm"
+          : item.enabled
+            ? "border-stone-100 bg-stone-50/70"
+            : "border-stone-100 bg-white",
+      )}
+    >
+      <div className="flex min-w-0 items-center gap-2">
+        <span
+          className={cn(
+            "h-2 w-2 shrink-0 rounded-full",
+            item.enabled ? "bg-emerald-500" : "bg-stone-300",
+          )}
+        />
+        <span className="font-black text-brand">{item.dayName}</span>
+        {item.isToday && (
+          <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-[9px] font-black text-amber-900">اليوم</span>
+        )}
+      </div>
+      <span className={cn("shrink-0 font-bold", item.enabled ? "text-stone-600" : "text-stone-400")}>
+        {item.text}
+      </span>
+    </div>
+  );
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col justify-center py-2 text-right" dir="rtl">
@@ -1308,7 +1378,9 @@ function StoreClosedWorkingHoursNotice({
                 الطلب متوقف مؤقتاً
               </span>
               <h3 className="mt-3 text-xl font-black text-brand sm:text-2xl">المطعم مغلق حالياً</h3>
-              <p className="mt-2 text-sm font-bold leading-7 text-stone-500">{status.message}</p>
+              {manualMessage && (
+                <p className="mt-2 text-sm font-bold leading-7 text-stone-500">{manualMessage}</p>
+              )}
             </div>
           </div>
         </div>
@@ -1317,44 +1389,49 @@ function StoreClosedWorkingHoursNotice({
           <div className="mb-4 flex items-end justify-between gap-3">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-700">أوقات العمل</p>
-              <p className="mt-1 text-sm font-black text-brand">الجدول الأسبوعي الكامل</p>
+              <p className="mt-1 text-sm font-black text-brand">دوام اليوم</p>
             </div>
             <span className="rounded-xl bg-stone-50 px-3 py-2 text-[10px] font-black text-stone-500">
               بتوقيت الكويت
             </span>
           </div>
 
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {(status.weeklyList || []).map((item: any) => (
-              <div
-                key={item.dayKey}
-                className={cn(
-                  "flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-xs",
-                  item.isToday
-                    ? "border-amber-300 bg-amber-50/70 shadow-sm"
-                    : item.enabled
-                      ? "border-stone-100 bg-stone-50/70"
-                      : "border-stone-100 bg-white",
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      "h-2 w-2 rounded-full",
-                      item.enabled ? "bg-emerald-500" : "bg-stone-300",
-                    )}
-                  />
-                  <span className="font-black text-brand">{item.dayName}</span>
-                  {item.isToday && (
-                    <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-[9px] font-black text-amber-900">اليوم</span>
-                  )}
-                </div>
-                <span className={cn("font-bold", item.enabled ? "text-stone-600" : "text-stone-400")}>
-                  {item.text}
-                </span>
+          <div className="grid grid-cols-1 gap-2">
+            {today ? renderWorkingDay(today) : (
+              <div className="rounded-2xl border border-stone-100 bg-stone-50 px-4 py-3 text-xs font-bold text-stone-500">
+                أوقات اليوم غير متوفرة حالياً.
               </div>
-            ))}
+            )}
           </div>
+
+          {otherDays.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowWeeklyHours((value) => !value)}
+                aria-expanded={showWeeklyHours}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-3 text-xs font-black text-brand transition-colors hover:bg-stone-50"
+              >
+                {showWeeklyHours ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                {showWeeklyHours ? "إخفاء باقي الأسبوع" : "عرض الجدول الأسبوعي"}
+              </button>
+
+              <AnimatePresence initial={false}>
+                {showWeeklyHours && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {otherDays.map(renderWorkingDay)}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          )}
 
           <div className="mt-5 rounded-2xl border border-stone-100 bg-stone-50 px-4 py-3 text-xs font-bold leading-6 text-stone-500">
             تقدر تتصفح المنيو وتجهز سلتك براحتك، وتقدر تطلب فور افتتاح المطعم!
@@ -1609,6 +1686,14 @@ export default function CustomerSite() {
   const [fomoPurchases, setFomoPurchases] = useState<any[]>([]);
   const [fomoIndex, setFomoIndex] = useState(0);
   const [showFomo, setShowFomo] = useState(false);
+  const fomoShownCountRef = useRef((() => {
+    try {
+      const value = Number(sessionStorage.getItem(FOMO_SESSION_COUNT_KEY) || 0);
+      return Number.isFinite(value) ? value : 0;
+    } catch {
+      return 0;
+    }
+  })());
   
   // Gamification & Squads
   const [squadInfo, setSquadInfo] = useState<any>(null);
@@ -2886,33 +2971,100 @@ export default function CustomerSite() {
   }, [cart.length, squadInfo?.id]);
 
   useEffect(() => {
-    if (!sessionStorage.getItem("flashSaleSeen") && topProducts.length > 0) {
-      const t = setTimeout(() => {
-        const phrases = [
-          "شي خيال جربه!",
-          "يبيله التجربة اليوم؟",
-          "الطعم الأصيل اللي يعدل المزاج!",
-          "شنو بخاطرك ناكل اليوم؟",
-        ];
-        const randomPhrase =
-          phrases[Math.floor(Math.random() * phrases.length)];
-
-        // Filter top products to ensure they are under 15 KD and in stock
-        const eligibleItems = topProducts.filter(
-          (p) => (p.basePrice || p.price || 0) < 15 && !p.isOutOfStock,
-        );
-
-        if (eligibleItems.length > 0) {
-          const randomItem =
-            eligibleItems[Math.floor(Math.random() * eligibleItems.length)];
-          setSmartPick({ item: randomItem, phrase: randomPhrase });
-          setShowFlashSale(true);
-          sessionStorage.setItem("flashSaleSeen", "true");
-        }
-      }, 3000);
-      return () => clearTimeout(t);
+    let seenThisSession = false;
+    try {
+      seenThisSession = sessionStorage.getItem(SMART_PROMO_SESSION_KEY) === "1";
+    } catch {
+      // Continue with the persistent cooldown if session storage is unavailable.
     }
-  }, [topProducts]);
+
+    const canInterrupt =
+      !showAppetiteTheatre &&
+      !showSquadModal &&
+      !isCheckout &&
+      !selectedProduct &&
+      !orderSuccess &&
+      !psychMessage &&
+      cart.length === 0 &&
+      checkStoreStatus(settings?.storeStatus).isOpen;
+
+    if (
+      seenThisSession ||
+      !hasCooldownElapsed(SMART_PROMO_LAST_SHOWN_KEY, SMART_PROMO_COOLDOWN_MS) ||
+      topProducts.length === 0 ||
+      !canInterrupt
+    ) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      const eligibleItems = topProducts.filter(
+        (product) =>
+          (product.basePrice || product.price || 0) < 15 &&
+          !product.isOutOfStock,
+      );
+      if (eligibleItems.length === 0) return;
+
+      const phrases = [
+        "شي خيال جربه!",
+        "يبيله التجربة اليوم؟",
+        "الطعم الأصيل اللي يعدل المزاج!",
+        "شنو بخاطرك ناكل اليوم؟",
+      ];
+      const daySeed = Math.floor(Date.now() / SMART_PROMO_COOLDOWN_MS);
+      const selectedItem = eligibleItems[daySeed % eligibleItems.length];
+      const selectedPhrase = phrases[daySeed % phrases.length];
+
+      setSmartPick({ item: selectedItem, phrase: selectedPhrase });
+      setShowFlashSale(true);
+      rememberTimestamp(SMART_PROMO_LAST_SHOWN_KEY);
+      try {
+        sessionStorage.setItem(SMART_PROMO_SESSION_KEY, "1");
+      } catch {
+        // The persistent timestamp above still prevents frequent repeats.
+      }
+    }, 9000);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    topProducts,
+    showAppetiteTheatre,
+    showSquadModal,
+    isCheckout,
+    selectedProduct,
+    orderSuccess,
+    psychMessage,
+    cart.length,
+    settings?.storeStatus,
+  ]);
+
+  useEffect(() => {
+    if (
+      showFlashSale &&
+      (
+        showAppetiteTheatre ||
+        showSquadModal ||
+        isCheckout ||
+        selectedProduct ||
+        orderSuccess ||
+        psychMessage ||
+        cart.length > 0 ||
+        !checkStoreStatus(settings?.storeStatus).isOpen
+      )
+    ) {
+      setShowFlashSale(false);
+    }
+  }, [
+    showFlashSale,
+    showAppetiteTheatre,
+    showSquadModal,
+    isCheckout,
+    selectedProduct,
+    orderSuccess,
+    psychMessage,
+    cart.length,
+    settings?.storeStatus,
+  ]);
 
   useEffect(() => {
     let lastScroll = 0;
@@ -3294,23 +3446,70 @@ export default function CustomerSite() {
   );
 
   useEffect(() => {
-    if (fomoPurchases.length === 0 || isCheckout) {
-      if (isCheckout) setShowFomo(false);
+    let dismissedForSession = false;
+    try {
+      dismissedForSession =
+        sessionStorage.getItem(FOMO_DISMISSED_SESSION_KEY) === "1";
+    } catch {
+      // Fall back to the time-based cooldown.
+    }
+
+    const canShowFomo =
+      fomoPurchases.length > 0 &&
+      fomoShownCountRef.current < FOMO_MAX_PER_SESSION &&
+      !dismissedForSession &&
+      hasCooldownElapsed(FOMO_LAST_SHOWN_KEY, FOMO_COOLDOWN_MS) &&
+      !showAppetiteTheatre &&
+      !showFlashSale &&
+      !showSquadModal &&
+      !isCheckout &&
+      !selectedProduct &&
+      !orderSuccess &&
+      !psychMessage &&
+      cart.length === 0 &&
+      checkStoreStatus(settings?.storeStatus).isOpen;
+
+    if (!canShowFomo) {
+      setShowFomo(false);
       return;
     }
-    const showT = setTimeout(() => setShowFomo(true), 15000); // Wait 15s
-    const hideT = setTimeout(() => {
+
+    const showTimer = window.setTimeout(() => {
+      setShowFomo(true);
+      fomoShownCountRef.current += 1;
+      rememberTimestamp(FOMO_LAST_SHOWN_KEY);
+      try {
+        sessionStorage.setItem(
+          FOMO_SESSION_COUNT_KEY,
+          String(fomoShownCountRef.current),
+        );
+      } catch {
+        // The in-memory counter remains active for this page.
+      }
+    }, 45000);
+
+    const hideTimer = window.setTimeout(() => {
       setShowFomo(false);
-      setTimeout(() => {
-        setFomoIndex((p) => (p + 1) % fomoPurchases.length);
-      }, 500);
-    }, 20000); // Hide 5s later
+      setFomoIndex((value) => (value + 1) % fomoPurchases.length);
+    }, 50000);
 
     return () => {
-      clearTimeout(showT);
-      clearTimeout(hideT);
+      window.clearTimeout(showTimer);
+      window.clearTimeout(hideTimer);
     };
-  }, [fomoPurchases.length, fomoIndex, isCheckout]);
+  }, [
+    fomoPurchases.length,
+    fomoIndex,
+    showAppetiteTheatre,
+    showFlashSale,
+    showSquadModal,
+    isCheckout,
+    selectedProduct,
+    orderSuccess,
+    psychMessage,
+    cart.length,
+    settings?.storeStatus,
+  ]);
 
   function getRelativeTime(timestamp: string | number) {
     if (!timestamp) return "قبل قليل";
@@ -5843,6 +6042,11 @@ export default function CustomerSite() {
                       e.stopPropagation();
                       setFomoPurchases([]);
                       setShowFomo(false);
+                      try {
+                        sessionStorage.setItem(FOMO_DISMISSED_SESSION_KEY, "1");
+                      } catch {
+                        // Clearing the feed still dismisses it for this page.
+                      }
                     }}
                     className="absolute top-2 right-2 p-1 text-stone-400 hover:text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-full z-20 transition-colors"
                     title="إغلاق"
@@ -6016,9 +6220,10 @@ export default function CustomerSite() {
               </div>
               <div className="min-w-0 text-right">
                 <strong className="block leading-tight">
-                  {checkStoreStatus(settings?.storeStatus).isOpen ? "سلتك جاهزة" : "سلتك جاهزة (المطعم مغلق ⏰)"}
+                  سلتك جاهزة
                 </strong>
                 <span className="text-[11px] text-white/65">
+                  {!checkStoreStatus(settings?.storeStatus).isOpen && "لوقت الافتتاح · "}
                   {cart.length} منتجات · {total} د.ك
                 </span>
               </div>
