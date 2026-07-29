@@ -165,6 +165,45 @@ async function sendCompressedCustomerMenuJson(
   return res.send(input);
 }
 
+// Same transport-only compression, reused by the other read-only GET endpoints
+// (appdata/settings/regions/track/gamification/products). The decoded response
+// bytes are identical to res.json(); write paths, payment, order creation,
+// callbacks and notification endpoints keep their current transport untouched.
+async function sendCompressedReadOnlyJson(
+  req: express.Request,
+  res: express.Response,
+  payload: any,
+) {
+  const json = JSON.stringify(payload);
+  const input = Buffer.from(json, "utf8");
+
+  res.type("application/json; charset=utf-8");
+  if (input.length < 1024) return res.send(input); // too small to benefit
+
+  res.setHeader("Vary", "Accept-Encoding");
+  const acceptedEncodings = String(req.headers["accept-encoding"] || "");
+  try {
+    if (acceptedEncodings.includes("br")) {
+      const body = await brotliCompressAsync(input, {
+        params: {
+          [zlibConstants.BROTLI_PARAM_QUALITY]: 4,
+          [zlibConstants.BROTLI_PARAM_SIZE_HINT]: input.length,
+        },
+      });
+      res.setHeader("Content-Encoding", "br");
+      return res.send(body);
+    }
+    if (acceptedEncodings.includes("gzip")) {
+      const body = await gzipAsync(input, { level: 6 });
+      res.setHeader("Content-Encoding", "gzip");
+      return res.send(body);
+    }
+  } catch (compressionError) {
+    console.warn("[READ_ONLY_JSON] Compression skipped:", compressionError);
+  }
+  return res.send(input);
+}
+
 const SHARDED_APPDATA_KEYS = [
   "orders",
   "invoices",
@@ -1308,7 +1347,7 @@ async function startServer() {
   app.get("/api/appdata", async (req, res) => {
   try {
     const d = await getAppDataRef();
-    res.json(d.exists() ? d.data() : {});
+    return await sendCompressedReadOnlyJson(req, res, d.exists() ? d.data() : {});
   } catch(e) {
     res.status(500).json({});
   }
@@ -1634,7 +1673,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         await updateAppData({ orders: mergedOrders, customers: customers });
       }
 
-      res.json(populatedOrders);
+      return await sendCompressedReadOnlyJson(req, res, populatedOrders);
     } catch (error) {
       console.error("Error tracking orders:", error);
       res.status(500).json({ error: "Failed to fetch orders" });
@@ -1645,7 +1684,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   app.get("/api/regions", async (req, res) => {
     try {
       const data = await getAppDataForKeys([]);
-      res.json(data.zones || []);
+      return await sendCompressedReadOnlyJson(req, res, data.zones || []);
     } catch (error) {
       console.error("Error fetching regions:", error);
       res.status(500).json({ error: "Failed to fetch regions" });
@@ -1835,7 +1874,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           }
         }
       }
-      res.json(settings);
+      return await sendCompressedReadOnlyJson(req, res, settings);
     } catch (error) {
       console.error("Error fetching settings:", error);
       res.status(500).json({ error: "Failed to fetch settings" });
@@ -2096,7 +2135,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         : [];
       const unreadDiwaniyaNotifications = diwaniyaNotifications.filter((n: any) => !n.readAt).length;
 
-      res.json({
+      return await sendCompressedReadOnlyJson(req, res, {
          topSquads,
          mySquad,
          myRank,
@@ -3096,7 +3135,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const data = await getAppDataForKeys(["products", "supplierCopies", "invoices"]);
       const allProducts = [...(data.products || []), ...(data.supplierCopies || [])];
       const products = getCustomerVisibleProducts(processProducts(allProducts));
-      res.json(buildCustomerTopProducts(products, data.invoices || []));
+      return await sendCompressedReadOnlyJson(req, res, buildCustomerTopProducts(products, data.invoices || []));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch top products" });
     }
@@ -3214,7 +3253,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         (a.name || "").localeCompare(b.name || "", "ar"),
       );
 
-      res.json(products);
+      return await sendCompressedReadOnlyJson(req, res, products);
     } catch (error) {
       console.error("DEBUG: Failed to fetch products in /api/products:", error);
       res.status(500).json({
