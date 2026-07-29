@@ -1937,7 +1937,20 @@ app.get("/api/debug/order/:id", async (req, res) => {
     try {
       const data = await getAppDataForKeys(["squads", "customers", "orders"]);
       const squads = data.squads || [];
-      
+
+      // Some docs have array fields (squads[].membersList, customers[].squadIds) stored
+      // as a JSON string ('[{...}]') or as a map keyed by index/phone instead of an
+      // array. Normalize before iterating.
+      const toArray = (val: any): any[] => {
+        if (typeof val === "string") {
+          try { val = JSON.parse(val); } catch { return []; }
+        }
+        if (Array.isArray(val)) return val;
+        return val && typeof val === "object" ? Object.values(val) : [];
+      };
+      const toMembersArray = (val: any): any[] =>
+        toArray(val).filter((m: any) => m && typeof m === "object");
+
       const customers = data.customers || [];
       const customerByPhone = new Map<string, any>();
       customers.forEach((customer: any) => {
@@ -1954,7 +1967,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       
       const enrichedSquads = squads.map((sq: any) => {
          let teamPoints = 0;
-         const mappedMembers = (sq.membersList || []).map((m: any) => {
+         const mappedMembers = toMembersArray(sq.membersList).map((m: any) => {
              const cust = customerByPhone.get(cleanPhone(m.phone));
              const realPoints = cust ? (cust.loyaltyPoints !== undefined ? cust.loyaltyPoints : (cust.points || 0)) : (m.points || 0);
              teamPoints += realPoints;
@@ -1984,13 +1997,13 @@ app.get("/api/debug/order/:id", async (req, res) => {
          // Gather any customer records or settings that link this user
          const myCustomerProfile = customerByPhone.get(cleanQPhone);
          const customerSquadIds = new Set([
-           ...(myCustomerProfile?.squadIds || []).map(String),
+           ...toArray(myCustomerProfile?.squadIds).map(String),
            myCustomerProfile?.squadId ? String(myCustomerProfile.squadId) : ""
          ].filter(Boolean));
 
          // Find all squads the user is linked to (as member, owner, or via customer profile)
          userSquads = enrichedSquads.filter((sq: any) => {
-            const isMemberInList = (sq.membersList || []).some((m: any) => cleanPhone(m.phone) === cleanQPhone);
+            const isMemberInList = toMembersArray(sq.membersList).some((m: any) => cleanPhone(m.phone) === cleanQPhone);
             const isOwner = cleanPhone(sq.phone || "") === cleanQPhone || 
                             cleanPhone(sq.ownerPhone || "") === cleanQPhone || 
                             cleanPhone(sq.ownerPhoneLocal || "") === cleanQPhone;
@@ -2014,9 +2027,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
       let myMemberData = null;
 
       if (mySquad && cleanQPhone) {
-         const memberIndex = mySquad.membersList.findIndex((mem: any) => cleanPhone(mem.phone) === cleanQPhone);
+         const mySquadMembers = toMembersArray(mySquad.membersList);
+         const memberIndex = mySquadMembers.findIndex((mem: any) => cleanPhone(mem.phone) === cleanQPhone);
          if (memberIndex !== -1) {
-            myMemberData = { ...mySquad.membersList[memberIndex], isMember: true };
+            myMemberData = { ...mySquadMembers[memberIndex], isMember: true };
             myRank = memberIndex + 1;
          } else {
              // Check if they are the owner!
@@ -2029,7 +2043,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
              } else {
                 // زائر من رابط دعوة: نعرض الديوانية مع نموذج انضمام واضح بدل اعتبارها عضوية مكتملة.
                 myMemberData = { phone: cleanQPhone, name: "أنت", orderCount: 0, points: 0, isMember: false };
-                myRank = mySquad.membersList.length + 1;
+                myRank = mySquadMembers.length + 1;
              }
          }
       }
@@ -2101,7 +2115,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
             ...(Array.isArray(o.splitParticipants) ? o.splitParticipants : []),
           ];
           const belongsToMember = participants.some((m: any) => cleanPhone(m.phone || "") === cleanQPhone)
-            || (mySquad.membersList || []).some((m: any) => cleanPhone(m.phone || "") === cleanQPhone);
+            || toMembersArray(mySquad.membersList).some((m: any) => cleanPhone(m.phone || "") === cleanQPhone);
           return isSplit && !isClosed && belongsToMember;
         })
         .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
