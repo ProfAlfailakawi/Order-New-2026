@@ -22,6 +22,11 @@ export default defineConfig(({mode}) => {
         output: {
           manualChunks(id) {
             if (!id.includes('node_modules')) return undefined;
+            // Firestore + auth are only used by the lazy admin/split pages.
+            // Keeping them out of the eager firebase core chunk removes ~450KB
+            // from the customer page's critical path without changing behavior.
+            if (id.includes('firebase/firestore') || id.includes('webchannel-wrapper')) return 'vendor-firestore';
+            if (id.includes('firebase/auth')) return 'vendor-fb-auth';
             if (id.includes('firebase/')) return 'vendor-firebase';
             if (id.includes('@google/genai')) return 'vendor-ai';
             if (id.includes('motion')) return 'vendor-motion';
