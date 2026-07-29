@@ -1102,6 +1102,65 @@ function cleanPhone(phone) {
   return cleaned;
 }
 
+// Some Firestore docs store array fields (squads[].membersList, customers[].squadIds,
+// customers[].diwaniyaMemberships, ...) as a JSON string ('[{...}]'), as a map keyed by
+// index instead of an array, or as the char-by-char spread of a JSON string
+// ({"0":"[","1":"{",...} / ["[","{",...]) left behind by `{...str}` / `[...str]` on a
+// stringified value. Reading them with `Array.isArray(x) ? [...x] : []` silently RESETS
+// the field to [] and the next atomic write persists the wipe. Always recover through
+// these helpers instead of testing Array.isArray directly.
+function reassembleCharSplitJson(values: any[]): any[] | null {
+  // ["[", "\"", "2", "\"", "]"] -> ["2"] (guarded so legit id arrays like ["2"] pass through)
+  if (values.length < 2 || !values.every((ch) => typeof ch === "string" && ch.length === 1)) return null;
+  const joined = values.join("").trim();
+  if (!joined.startsWith("[") && !joined.startsWith("{")) return null;
+  try {
+    const parsed = JSON.parse(joined);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && typeof parsed === "object") return Object.values(parsed);
+  } catch {}
+  return null;
+}
+
+function toArray(val: any): any[] {
+  for (let i = 0; i < 2 && typeof val === "string"; i++) {
+    try { val = JSON.parse(val); } catch { return []; }
+  }
+  if (Array.isArray(val)) return reassembleCharSplitJson(val) ?? [...val];
+  if (val && typeof val === "object") {
+    const values = Object.values(val);
+    return reassembleCharSplitJson(values) ?? values;
+  }
+  return [];
+}
+
+function toMembersArray(val: any): any[] {
+  return toArray(val).filter((m: any) => m && typeof m === "object");
+}
+
+// Same recovery for object fields (squads[].location): parse JSON strings and strip or
+// reassemble char-spread junk keys ({"0":"{","1":"\"",...}) so `{...location}` cannot
+// keep persisting them.
+function toPlainObject(val: any): any {
+  for (let i = 0; i < 2 && typeof val === "string"; i++) {
+    try { val = JSON.parse(val); } catch { return {}; }
+  }
+  if (!val || typeof val !== "object" || Array.isArray(val)) return {};
+  const charKeys = Object.keys(val).filter((k) => /^\d+$/.test(k) && typeof val[k] === "string" && val[k].length === 1);
+  if (!charKeys.length) return val;
+  const rest: any = {};
+  for (const [k, v] of Object.entries(val)) {
+    if (!charKeys.includes(k)) rest[k] = v;
+  }
+  const joined = charKeys.sort((a, b) => Number(a) - Number(b)).map((k) => val[k]).join("");
+  try {
+    const parsed = JSON.parse(joined);
+    // Explicit keys (set after the corruption) win over reassembled ones.
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return { ...parsed, ...rest };
+  } catch {}
+  return rest;
+}
+
 function makeDiwaniyaNotification(input: any) {
   const now = new Date().toISOString();
   return {
@@ -1937,20 +1996,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
     try {
       const data = await getAppDataForKeys(["squads", "customers", "orders"]);
       const squads = data.squads || [];
-
-      // Some docs have array fields (squads[].membersList, customers[].squadIds) stored
-      // as a JSON string ('[{...}]') or as a map keyed by index/phone instead of an
-      // array. Normalize before iterating.
-      const toArray = (val: any): any[] => {
-        if (typeof val === "string") {
-          try { val = JSON.parse(val); } catch { return []; }
-        }
-        if (Array.isArray(val)) return val;
-        return val && typeof val === "object" ? Object.values(val) : [];
-      };
-      const toMembersArray = (val: any): any[] =>
-        toArray(val).filter((m: any) => m && typeof m === "object");
-
+      // membersList / squadIds may be stored corrupted (JSON string / index map) —
+      // module-level toArray/toMembersArray recover them before iterating.
       const customers = data.customers || [];
       const customerByPhone = new Map<string, any>();
       customers.forEach((customer: any) => {
@@ -2237,7 +2284,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
             lng: parsedLng,
             geofenceDistance: normalizedDistance,
             location: {
-              ...(squads[idx]?.location || {}),
+              ...toPlainObject(squads[idx]?.location),
               lat: parsedLat,
               lng: parsedLng,
               geofenceDistance: normalizedDistance,
@@ -2273,7 +2320,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         if (squadIdx === -1) return null;
         
         const squad = { ...squads[squadIdx] };
-        squad.membersList = Array.isArray(squad.membersList) ? [...squad.membersList] : [];
+        squad.membersList = toMembersArray(squad.membersList);
         const ownerPhone = cleanPhone(squad.phone || "");
         squadOwnerPhone = ownerPhone;
         const isOwner = ownerPhone === cleanQPhone;
@@ -2384,7 +2431,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           let fIndex = squads.findIndex((s: any) => String(s.id) === String(squadId));
           if (fIndex > -1) {
             const squad = { ...squads[fIndex] };
-            squad.membersList = Array.isArray(squad.membersList) ? [...squad.membersList] : [];
+            squad.membersList = toMembersArray(squad.membersList);
             const mIndex = squad.membersList.findIndex((m: any) => cleanPhone(m.phone) === cleanTargetPhone);
             if (mIndex === -1) {
               squad.membersList.push({
@@ -2402,7 +2449,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
             const membership = { id: squad.id, squadId: squad.id, name: squad.name, joinedAt: new Date().toISOString() };
             const cidx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanTargetPhone);
             if (cidx > -1) {
-              const ids = new Set([...(customers[cidx].squadIds || []), customers[cidx].squadId].filter(Boolean).map(String));
+              const ids = new Set([...toArray(customers[cidx].squadIds), customers[cidx].squadId].filter(Boolean).map(String));
               ids.add(String(squad.id));
               customers[cidx] = {
                 ...customers[cidx],
@@ -2410,7 +2457,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
                 squadId: squad.id,
                 squadIds: [...ids],
                 diwaniyaName: squad.name,
-                diwaniyaMemberships: [...(customers[cidx].diwaniyaMemberships || []).filter((m: any) => String(m.squadId || m.id) !== String(squad.id)), membership]
+                diwaniyaMemberships: [...toMembersArray(customers[cidx].diwaniyaMemberships).filter((m: any) => String(m.squadId || m.id) !== String(squad.id)), membership]
               };
             } else {
               customers.push({
@@ -2496,7 +2543,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       presence = filtered.filter((p: any) => String(p.squadId) === String(squadId));
       const recipients = Array.from(new Set([
         squad?.phone,
-        ...(squad?.membersList || []).map((m: any) => m.phone)
+        ...toMembersArray(squad?.membersList).map((m: any) => m.phone)
       ].map(cleanPhone).filter((ph: any) => ph && ph !== cleanTarget))) as string[];
       let diwaniyaNotifications = current.diwaniyaNotifications || [];
       if (normalizedAction === "in") {
@@ -2531,7 +2578,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const squad = (Array.isArray(current.squads) ? current.squads : []).find((s: any) => String(s.id) === String(squadId));
         const recipients = Array.from(new Set([
           squad?.phone,
-          ...(squad?.membersList || []).map((m: any) => m.phone)
+          ...toMembersArray(squad?.membersList).map((m: any) => m.phone)
         ].map(cleanPhone).filter((ph: any) => ph && ph !== cleanTarget)));
         if (recipients.length) {
           if (normalizedAction === "in") {
@@ -2603,7 +2650,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const squads = Array.isArray(current.squads) ? [...current.squads] : [];
       const sIdx = squads.findIndex((s: any) => String(s.id) === String(squadId));
       if (sIdx < 0) return null;
-      const squad = { ...squads[sIdx], membersList: Array.isArray(squads[sIdx].membersList) ? [...squads[sIdx].membersList] : [] };
+      const squad = { ...squads[sIdx], membersList: toMembersArray(squads[sIdx].membersList) };
       if (cleanPhone(squad.phone || codes[cIdx]?.ownerPhone || "") === cleanTarget) {
         return null;
       }
@@ -2618,9 +2665,9 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const cstIdx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanTarget);
       const membership = { id: squad.id, squadId: squad.id, name: squad.name, joinedAt: new Date().toISOString(), via: "tempCode" };
       if (cstIdx >= 0) {
-        const ids = new Set([...(customers[cstIdx].squadIds || []), customers[cstIdx].squadId].filter(Boolean).map(String));
+        const ids = new Set([...toArray(customers[cstIdx].squadIds), customers[cstIdx].squadId].filter(Boolean).map(String));
         ids.add(String(squad.id));
-        customers[cstIdx] = { ...customers[cstIdx], name: name || customers[cstIdx].name, squadId: squad.id, squadIds: [...ids], diwaniyaName: squad.name, diwaniyaMemberships: [...(customers[cstIdx].diwaniyaMemberships || []).filter((m:any)=>String(m.squadId||m.id)!==String(squad.id)), membership] };
+        customers[cstIdx] = { ...customers[cstIdx], name: name || customers[cstIdx].name, squadId: squad.id, squadIds: [...ids], diwaniyaName: squad.name, diwaniyaMemberships: [...toMembersArray(customers[cstIdx].diwaniyaMemberships).filter((m:any)=>String(m.squadId||m.id)!==String(squad.id)), membership] };
       } else {
         customers.push({ id: "CUST-" + Date.now().toString(36), name: name || "", phone: cleanTarget, address: "", lastOrderDate: new Date().toISOString(), squadId: squad.id, squadIds: [String(squad.id)], diwaniyaName: squad.name, diwaniyaMemberships: [membership], loyaltyPoints: 0, points: 0 });
       }
@@ -2664,7 +2711,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       if (action === "close") {
         if (idx >= 0) groupOrders[idx] = { ...groupOrders[idx], status: "closed", closedAt: new Date().toISOString() };
         groupOrder = idx >= 0 ? groupOrders[idx] : null;
-        const recipients = (squad?.membersList || []).map((m: any) => m.phone).filter((ph: any) => ph && cleanPhone(ph) !== cleanPhone(phone));
+        const recipients = toMembersArray(squad?.membersList).map((m: any) => m.phone).filter((ph: any) => ph && cleanPhone(ph) !== cleanPhone(phone));
         const diwaniyaNotifications = pushDiwaniyaNotifications(current.diwaniyaNotifications || [], recipients.map((toPhone: string) => ({
           type: "group_order_closed",
           squadId,
@@ -2691,7 +2738,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       groupOrders[idx] = go;
       groupOrder = go;
       const isNewOpen = action === "open" && (!Array.isArray(current.squadGroupOrders) || !current.squadGroupOrders.some((g: any) => String(g.squadId) === String(squadId) && g.status === "open"));
-      const recipients = isNewOpen ? (squad?.membersList || []).map((m: any) => m.phone).filter((ph: any) => ph && cleanPhone(ph) !== cleanPhone(phone)) : [];
+      const recipients = isNewOpen ? toMembersArray(squad?.membersList).map((m: any) => m.phone).filter((ph: any) => ph && cleanPhone(ph) !== cleanPhone(phone)) : [];
       const diwaniyaNotifications = pushDiwaniyaNotifications(current.diwaniyaNotifications || [], recipients.map((toPhone: string) => ({
         type: "group_order_open",
         squadId,
@@ -2717,7 +2764,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const idx = squads.findIndex((s: any) => String(s.id) === String(squadId));
         if (idx > -1) {
           const s = { ...squads[idx] };
-          s.memories = Array.isArray(s.memories) ? [...s.memories] : [];
+          s.memories = toArray(s.memories);
           s.memories.push(memory);
           squads[idx] = s;
         }
@@ -2739,7 +2786,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         const idx = squads.findIndex((s: any) => String(s.id) === String(squadId));
         if (idx > -1) {
           const s = { ...squads[idx] };
-          const memories = Array.isArray(s.memories) ? [...s.memories] : [];
+          const memories = toArray(s.memories);
           s.memories = memories.filter((m: any) => String(m.id) !== String(memoryId));
           squads[idx] = s;
         }
@@ -2781,9 +2828,9 @@ app.get("/api/debug/order/:id", async (req, res) => {
            const cidx = customers.findIndex((c: any) => cleanPhone(c.phone) === cleanQPhone);
            const membership = { id: newSquadId, squadId: newSquadId, name, joinedAt: new Date().toISOString() };
            if (cidx > -1) {
-              const ids = new Set([...(customers[cidx].squadIds || []), customers[cidx].squadId].filter(Boolean).map(String));
+              const ids = new Set([...toArray(customers[cidx].squadIds), customers[cidx].squadId].filter(Boolean).map(String));
               ids.add(String(newSquadId));
-              customers[cidx] = { ...customers[cidx], name: customerName || customers[cidx].name, squadId: newSquadId, squadIds: [...ids], diwaniyaName: name, diwaniyaMemberships: [...(customers[cidx].diwaniyaMemberships || []).filter((m:any)=>String(m.squadId||m.id)!==String(newSquadId)), membership] };
+              customers[cidx] = { ...customers[cidx], name: customerName || customers[cidx].name, squadId: newSquadId, squadIds: [...ids], diwaniyaName: name, diwaniyaMemberships: [...toMembersArray(customers[cidx].diwaniyaMemberships).filter((m:any)=>String(m.squadId||m.id)!==String(newSquadId)), membership] };
            } else {
               customers.push({ id: "CUST-" + Date.now().toString(36), name: customerName || "", phone, address: "", lastOrderDate: new Date().toISOString(), squadId: newSquadId, squadIds: [String(newSquadId)], diwaniyaName: name, diwaniyaMemberships: [membership], loyaltyPoints: 0, points: 0 });
            }
@@ -2811,7 +2858,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
          return null;
        }
        const squad = { ...squads[finalSquadIndex] };
-       squad.membersList = Array.isArray(squad.membersList) ? [...squad.membersList] : [];
+       squad.membersList = toMembersArray(squad.membersList);
        const ownerPhone = cleanPhone(squad.phone || "");
        const existingMemberIndex = squad.membersList.findIndex((m:any) => cleanPhone(m.phone) === cleanQPhone);
        if (ownerPhone && ownerPhone === cleanQPhone) {
@@ -3548,13 +3595,13 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
       if (squad) {
         [squad.membersList, squad.membersData, squad.membersDetails, squad.members, squad.participants].forEach((list: any) => {
-          if (Array.isArray(list)) sources.push(...list);
+          sources.push(...toMembersArray(list));
         });
       }
 
       (Array.isArray(appData.customers) ? appData.customers : []).forEach((c: any) => {
-        const squadIds = [c.squadId, c.squadID, c.diwaniyaId, ...(Array.isArray(c.squadIds) ? c.squadIds : [])].filter(Boolean).map(String);
-        const memberships = Array.isArray(c.diwaniyaMemberships) ? c.diwaniyaMemberships : [];
+        const squadIds = [c.squadId, c.squadID, c.diwaniyaId, ...toArray(c.squadIds)].filter(Boolean).map(String);
+        const memberships = toMembersArray(c.diwaniyaMemberships);
         const hasMembership = memberships.some((m: any) => String(m?.squadId || m?.id || m?.diwaniyaId || "") === sid);
         if (squadIds.includes(sid) || hasMembership) sources.push(c);
       });
@@ -3691,8 +3738,8 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
         let attributedSquad = isDiwaniyaQatya ? squadId : null;
         if (!attributedSquad && customerPhone) {
-            const custSquad = squads.find((sq: any) => 
-                 (sq.membersList || []).some((m: any) => cleanPhone(m.phone) === cleanPhoneQuery)
+            const custSquad = squads.find((sq: any) =>
+                 toMembersArray(sq.membersList).some((m: any) => cleanPhone(m.phone) === cleanPhoneQuery)
             );
             if (custSquad) attributedSquad = String(custSquad.id);
         }
@@ -3701,7 +3748,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
            const sqIndex = squads.findIndex((s:any) => String(s.id) === String(attributedSquad));
            if (sqIndex > -1) {
                if (customerPhone) {
-                   if (!squads[sqIndex].membersList) squads[sqIndex].membersList = [];
+                   squads[sqIndex].membersList = toMembersArray(squads[sqIndex].membersList);
                    let mIndex = squads[sqIndex].membersList.findIndex((m:any) => cleanPhone(m.phone) === cleanPhoneQuery);
                    if (mIndex > -1) {
                        if (customerName && (!squads[sqIndex].membersList[mIndex].name || squads[sqIndex].membersList[mIndex].name === "عميل")) {
@@ -4371,7 +4418,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
           const sIdx = squads.findIndex((s: any) => String(s.id) === String(rouletteSquadId));
           if (sIdx > -1) {
             const sq = { ...squads[sIdx] };
-            sq.membersList = Array.isArray(sq.membersList) ? [...sq.membersList] : [];
+            sq.membersList = toMembersArray(sq.membersList);
             const lPhone = cleanPhone(loser.phone || "");
             const mIdx = sq.membersList.findIndex((m: any) => (lPhone && cleanPhone(m.phone) === lPhone) || m.name === loser.name);
             if (mIdx > -1) {
