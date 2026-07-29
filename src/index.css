@@ -3756,3 +3756,40 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Phone cart dock: keep the final fixed bar fully inside the viewport. */
+@media(max-width:640px){
+  .al-cart-bar{
+    left:10px!important;
+    right:10px!important;
+    width:auto!important;
+    max-width:none!important;
+    transform:none!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    overflow:hidden!important;
+  }
+
+  .al-cart-bar.scale-\[1\.03\]{
+    transform:scale(1.03)!important;
+    transform-origin:center bottom!important;
+  }
+
+  .al-cart-summary{
+    max-width:none!important;
+    overflow:hidden!important;
+  }
+
+  .al-cart-summary > div:last-child{
+    min-width:0!important;
+    overflow:hidden!important;
+  }
+
+  .al-cart-summary strong,
+  .al-cart-summary span{
+    display:block!important;
+    max-width:100%!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+}
