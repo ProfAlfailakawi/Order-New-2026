@@ -980,7 +980,7 @@ export default function OrderPage() {
                 onChange={(e) => setPhone(normalizePhone(e.target.value))}
                 dir="ltr"
                 pattern="[0-9]*"
-                className="w-full py-5 sm:py-6 px-16 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-base sm:text-lg font-semibold text-brand placeholder:text-stone-300 placeholder:font-medium text-center tracking-[0.08em]"
+                className="w-full py-5 sm:py-6 px-12 sm:px-16 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-[13px] sm:text-base font-semibold text-brand placeholder:text-[12px] sm:placeholder:text-base placeholder:text-stone-300 placeholder:font-medium text-center tracking-[0.02em] sm:tracking-[0.05em]"
               />
             </div>
 
