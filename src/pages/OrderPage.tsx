@@ -983,7 +983,7 @@ export default function OrderPage() {
                 onChange={(e) => setPhone(normalizePhone(e.target.value))}
                 dir="ltr"
                 pattern="[0-9]*"
-                className="w-full py-6 pr-16 pl-6 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-xl font-extrabold text-brand placeholder:text-stone-300 text-center tracking-[0.2em]"
+                className="w-full py-5 sm:py-6 px-16 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-base sm:text-lg font-semibold text-brand placeholder:text-stone-300 placeholder:font-medium text-center tracking-[0.08em]"
               />
             </div>
 
@@ -996,8 +996,8 @@ export default function OrderPage() {
                 placeholder="رقم الطلب (اختياري)"
                 value={searchOrderIdInput}
                 onChange={(e) => setSearchOrderIdInput(normalizeDigits(e.target.value))}
-                dir="rtl"
-                className="order-id-track-input w-full py-6 pr-16 pl-6 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-xl font-extrabold text-brand placeholder:text-stone-300 text-center uppercase"
+                dir="ltr"
+                className="order-id-track-input w-full py-5 sm:py-6 px-16 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-base sm:text-lg font-semibold text-brand placeholder:text-stone-300 placeholder:font-medium text-center uppercase"
               />
             </div>
 
@@ -2289,11 +2289,14 @@ export default function OrderPage() {
 
                   {/* Premium order details */}
                   <div className="pt-8 px-4 sm:px-8 pb-8 space-y-8">
-                    <div className="track-v15-details-head">
-                      <div className="min-w-0">
+                    <div
+                      className="track-v15-details-head"
+                      style={{ flexDirection: "column", justifyContent: "center", textAlign: "center" }}
+                    >
+                      <div className="min-w-0 w-full text-center">
                         <h3>رقم وبيانات الطلب</h3>
                       </div>
-                      <div className="track-v15-invoice-chip">
+                      <div className="track-v15-invoice-chip mx-auto">
                         {getOrderReference(selectedOrder)}
                       </div>
                     </div>
