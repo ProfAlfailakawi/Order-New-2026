@@ -1102,6 +1102,137 @@ function cleanPhone(phone) {
   return cleaned;
 }
 
+// The admin app mirrors newly issued invoices into the top-level `invoices`
+// collection so they remain durable while the large shared invoice shard saves.
+// Tracking must read that mirror too; otherwise a perfectly valid fresh invoice
+// can exist in Admin but be absent from the customer's tracking screen until the
+// shared shard catches up. This is READ-ONLY tracking logic and does not touch
+// payment, webhook, notification or invoice creation flows.
+function getTrackingPhoneCandidates(phone: any): string[] {
+  const raw = String(phone || "").trim();
+  const clean = cleanPhone(raw);
+  if (!clean) return [];
+  return Array.from(new Set([raw, clean, `965${clean}`, `+965${clean}`].filter(Boolean)));
+}
+
+function getTrackingInvoiceIdCandidates(orderId: any): string[] {
+  let raw = String(orderId || "").trim().toUpperCase();
+  if (!raw) return [];
+  if (raw.startsWith("#")) raw = raw.slice(1);
+  if (raw.includes("-S-")) raw = raw.split("-S-")[0];
+
+  const ids = new Set<string>([raw]);
+  const digitsOnly = raw.replace(/[^0-9]/g, "");
+  if (/^\d{3,}$/.test(raw)) {
+    ids.add(`INV-${raw}`);
+    ids.add(`ORD-${raw}`);
+  } else if (raw.startsWith("INV-") && digitsOnly) {
+    ids.add(`ORD-${digitsOnly}`);
+  } else if (raw.startsWith("ORD-") && digitsOnly) {
+    ids.add(`INV-${digitsOnly}`);
+  }
+  return Array.from(ids);
+}
+
+function trackingDocTimestamp(value: any): number {
+  const raw = value?.updatedAt || value?.issuedAt || value?.createdAt || value?.date || 0;
+  if (raw && typeof raw?.toDate === "function") {
+    try { return raw.toDate().getTime(); } catch {}
+  }
+  const parsed = new Date(raw || 0).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+async function loadMirroredInvoicesForTracking(
+  phone: any,
+  orderId: any,
+  customerIds: any[] = [],
+): Promise<any[]> {
+  const found = new Map<string, any>();
+  const phoneCandidates = getTrackingPhoneCandidates(phone);
+  const idCandidates = getTrackingInvoiceIdCandidates(orderId);
+  const safeCustomerIds = Array.from(new Set((customerIds || []).map((id) => String(id || "").trim()).filter(Boolean))).slice(0, 8);
+  // When the customer profile is already known, customerId is the strongest lookup
+  // and avoids repeated country-code variants on every 3s tracking refresh. Keep one
+  // normalized-phone query as a safety net for invoices that predate customerId.
+  const phoneLookupCandidates = safeCustomerIds.length > 0
+    ? [cleanPhone(phone)].filter(Boolean)
+    : phoneCandidates;
+
+  const addDocData = (data: any, fallbackId = "") => {
+    if (!data || typeof data !== "object") return;
+    const normalized = { ...data };
+    if (!normalized.id && fallbackId) normalized.id = fallbackId;
+    const key = String(normalized.invoiceId || normalized.id || fallbackId || "").trim().toUpperCase();
+    if (!key) return;
+    const previous = found.get(key);
+    if (!previous || trackingDocTimestamp(normalized) >= trackingDocTimestamp(previous)) {
+      found.set(key, normalized);
+    }
+  };
+
+  const consumeAdminSnapshot = (snap: any) => {
+    if (!snap) return;
+    if (Array.isArray(snap.docs)) {
+      snap.docs.forEach((docSnap: any) => addDocData(docSnap.data?.(), docSnap.id));
+      return;
+    }
+    if (snap.exists) addDocData(snap.data?.(), snap.id);
+  };
+
+  if (adminDb) {
+    try {
+      const ref = adminDb.collection("invoices");
+      const reads: Promise<any>[] = [];
+      idCandidates.forEach((id) => reads.push(ref.doc(id).get()));
+      phoneLookupCandidates.forEach((candidate) => {
+        reads.push(ref.where("customerPhone", "==", candidate).limit(100).get());
+      });
+      safeCustomerIds.forEach((customerId) => {
+        reads.push(ref.where("customerId", "==", customerId).limit(100).get());
+      });
+
+      const results = await Promise.allSettled(reads);
+      results.forEach((result) => {
+        if (result.status === "fulfilled") consumeAdminSnapshot(result.value);
+      });
+      const adminReadFailed = results.some((result) => result.status === "rejected");
+      if (found.size > 0 || !adminReadFailed) return Array.from(found.values());
+    } catch (error) {
+      handleAdminDbError(error, "loadMirroredInvoicesForTracking");
+    }
+  }
+
+  // Client SDK fallback for deployments where the Admin SDK does not have a
+  // credential/role. Firestore rules already permit the same reads used by the
+  // rest of this server.
+  try {
+    const reads: Promise<any>[] = [];
+    idCandidates.forEach((id) => reads.push(getDoc(doc(db, "invoices", id))));
+    phoneLookupCandidates.forEach((candidate) => {
+      reads.push(getDocs(query(collection(db, "invoices"), where("customerPhone", "==", candidate), limit(100))));
+    });
+    safeCustomerIds.forEach((customerId) => {
+      reads.push(getDocs(query(collection(db, "invoices"), where("customerId", "==", customerId), limit(100))));
+    });
+
+    const results = await Promise.allSettled(reads);
+    results.forEach((result) => {
+      if (result.status !== "fulfilled") return;
+      const snap: any = result.value;
+      if (Array.isArray(snap?.docs)) {
+        snap.docs.forEach((docSnap: any) => addDocData(docSnap.data?.(), docSnap.id));
+      } else if (snap?.exists?.()) {
+        addDocData(snap.data?.(), snap.id);
+      }
+    });
+  } catch (error) {
+    console.warn("[TRACKING] Mirrored invoice fallback read skipped:", error);
+  }
+
+  return Array.from(found.values());
+}
+
 // Some Firestore docs store array fields (squads[].membersList, customers[].squadIds,
 // customers[].diwaniyaMemberships, ...) as a JSON string ('[{...}]'), as a map keyed by
 // index instead of an array, or as the char-by-char spread of a JSON string
@@ -1473,25 +1604,56 @@ app.get("/api/debug/order/:id", async (req, res) => {
         });
       }
 
-      const allInvoices = (appData.invoices || []).map((inv: any) => ({
-        ...inv,
-        isInvoice: true,
-      }));
-
-      console.log(
-        `DEBUG: Tracking orders for ${cleanQueryPhone} or order_id ${order_id}. Total shared orders: ${allOrdersOriginal.length}, invoices: ${allInvoices.length}`,
-      );
-
       const customers = appData.customers || [];
       const matchingCustomerIds = customers
         .filter(
           (c: any) =>
-            cleanQueryPhone && cleanPhone(c.phone) === cleanQueryPhone,
+            cleanQueryPhone &&
+            c?.isDeleted !== true &&
+            c?.deleted !== true &&
+            cleanPhone(c.phone || c.customerPhone) === cleanQueryPhone,
         )
         .map((c: any) => c.id);
 
+      // Merge the durable top-level invoice mirror with the shared invoice shard.
+      // Fresh invoices created in Admin can reach this mirror before the large shard
+      // write finishes; without this merge they temporarily disappear from Track.
+      const mirroredInvoices = await loadMirroredInvoicesForTracking(
+        phone,
+        order_id,
+        matchingCustomerIds,
+      );
+      const invoicesById = new Map<string, any>();
+      [...(appData.invoices || []), ...mirroredInvoices].forEach((inv: any) => {
+        if (!inv) return;
+        const key = String(inv.invoiceId || inv.id || "").trim().toUpperCase();
+        if (!key) return;
+        const previous = invoicesById.get(key);
+        const currentDeleted = inv?.isDeleted === true || inv?.deleted === true;
+        const previousDeleted = previous?.isDeleted === true || previous?.deleted === true;
+
+        // A shared-data soft-delete is a tombstone. Never let an older durable mirror
+        // resurrect that invoice in customer tracking just because the mirror still exists.
+        if (previousDeleted && !currentDeleted) return;
+
+        if (
+          !previous ||
+          currentDeleted ||
+          trackingDocTimestamp(inv) > trackingDocTimestamp(previous)
+        ) {
+          invoicesById.set(key, { ...inv, isInvoice: true });
+        }
+      });
+      const allInvoices = Array.from(invoicesById.values());
+
+      console.log(
+        `DEBUG: Tracking orders for ${cleanQueryPhone} or order_id ${order_id}. Total shared orders: ${allOrdersOriginal.length}, invoices: ${allInvoices.length} (mirror: ${mirroredInvoices.length})`,
+      );
+
       // Filter function
       const filterFn = (item: any) => {
+        if (!item || item?.isDeleted === true || item?.deleted === true) return false;
+
         let match = false;
         if (cleanQueryPhone) {
           const itemPhone = cleanPhone(
@@ -1499,9 +1661,14 @@ app.get("/api/debug/order/:id", async (req, res) => {
               item.phone ||
               (item.address && item.address.phone),
           );
-          match =
-            itemPhone === cleanQueryPhone ||
-            (item.customerId && matchingCustomerIds.includes(item.customerId));
+
+          // If the invoice/order carries its own phone snapshot, that historical value
+          // is authoritative. Only fall back to customerId for legacy records that have
+          // no phone at all. This prevents a deleted/changed old customer number from
+          // leaking records into another customer's Track screen.
+          match = itemPhone
+            ? itemPhone === cleanQueryPhone
+            : Boolean(item.customerId && matchingCustomerIds.includes(item.customerId));
 
           // Allow participants in split payments to see it
           if (!match && item.splitPayments && Array.isArray(item.splitPayments)) {
