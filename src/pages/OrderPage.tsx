@@ -154,16 +154,16 @@ export default function OrderPage() {
   }, [urlPayment, urlOrderId]);
 
   useEffect(() => {
-    // 1. Handle order handoff via URL param for automatic open, or localStorage prefill
+    // 1. Handle explicit tracking handoff without reviving a stale saved phone
     const urlOrderSearch =
       searchParams.get("order_id") || searchParams.get("tracked_order");
-    let lsPhone = searchParams.get("phone") || window.name || "";
+    // Track must never silently revive an old saved customer number. Only an explicit
+    // phone in the current tracking URL may auto-fill/auto-search the phone field.
+    // Order handoff still works independently through its order/invoice id.
+    const lsPhone = normalizePhone(searchParams.get("phone") || "");
     let lsTargetOrderId = urlOrderSearch;
 
     try {
-      const storedPhone = localStorage.getItem("customer_phone_track");
-      if (storedPhone && storedPhone.length >= 8) lsPhone = storedPhone;
-
       const trackingId = localStorage.getItem("track_order_id");
       const trackingStatus = localStorage.getItem("track_status");
 
@@ -348,17 +348,14 @@ export default function OrderPage() {
       try {
         const data = JSON.parse(event.data);
         if (data && data.type === "payment_return" && data.orderId) {
-          // Keep the phone number if available
-          let phoneToKeep = "";
-          try {
-            phoneToKeep = localStorage.getItem("customer_phone_track") || "";
-          } catch (err) {}
-          phoneToKeep =
-            phoneToKeep ||
-            window.name ||
+          // Keep only a phone that belongs to the current tracking context.
+          // Do not fall back to persisted localStorage/window.name values because they
+          // can belong to a customer that was deleted or changed long ago.
+          const phoneToKeep = normalizePhone(
             new URLSearchParams(window.location.search).get("phone") ||
-            phone ||
-            "";
+              phone ||
+              "",
+          );
           setSearchParams(
             {
               order_id: data.orderId,
