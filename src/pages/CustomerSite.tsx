@@ -1,4 +1,5 @@
 import { DEFAULT_GLOBAL_LOGO } from "../constants";
+import { COMMERCIAL_REGISTRATION_NUMBER, LEGAL_TRADE_NAME_AR } from "../lib/legalIdentity";
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -5222,6 +5223,11 @@ export default function CustomerSite() {
                 <span className="text-[11px] font-bold text-stone-400 leading-[1.6] py-0.5">
                   {goldenHourTheme.name}
                 </span>
+              </div>
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[9px] sm:text-[10px] font-bold text-stone-400 leading-[1.65]">
+                <span>الاسم التجاري: {LEGAL_TRADE_NAME_AR}</span>
+                <span className="text-stone-300">•</span>
+                <span>رقم السجل التجاري: {COMMERCIAL_REGISTRATION_NUMBER}</span>
               </div>
             </div>
           </div>
