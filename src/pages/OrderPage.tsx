@@ -69,6 +69,7 @@ const TypewriterText = ({
 
 import { calculateItemTotalWithAddons } from "../utils/priceCalculation";
 import { openPrintableInvoice, openWhatsAppInvoiceText, shareOrPrintInvoice } from "../utils/invoiceShare";
+import { COMMERCIAL_REGISTRATION_NUMBER, LEGAL_TRADE_NAME_AR } from "../lib/legalIdentity";
 
 const formatOrderWords = (count: number) => {
   if (count === 1) return "طلب واحد";
@@ -2295,6 +2296,10 @@ export default function OrderPage() {
                       <div className="track-v15-invoice-chip">
                         {getOrderReference(selectedOrder)}
                       </div>
+                    </div>
+                    <div className="rounded-2xl border border-stone-100 bg-stone-50/70 px-3 py-2.5 text-right text-[10px] sm:text-[11px] font-bold text-stone-500 leading-6">
+                      <div>الاسم التجاري: {LEGAL_TRADE_NAME_AR}</div>
+                      <div>رقم السجل التجاري: {COMMERCIAL_REGISTRATION_NUMBER}</div>
                     </div>
                     <motion.div
                       initial={{ opacity: 0, x: -10 }}

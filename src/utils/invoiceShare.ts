@@ -1,4 +1,5 @@
 import { formatKuwaitiDate } from '../utils';
+import { COMMERCIAL_REGISTRATION_NUMBER, LEGAL_TRADE_NAME_AR } from '../lib/legalIdentity';
 // Keep icons as tokens until after encodeURIComponent. This prevents broken
 // environments from converting emojis into replacement characters (�) before
 // WhatsApp receives them.
@@ -118,6 +119,8 @@ export const buildWhatsAppInvoiceText = (order: any, products: any[] = []) => {
     trackingUrl,
     '',
     'شكراً لثقتكم',
+    `الاسم التجاري: ${LEGAL_TRADE_NAME_AR}`,
+    `رقم السجل التجاري: ${COMMERCIAL_REGISTRATION_NUMBER}`,
     'Alturath.kw',
   ].join('\n');
 };
@@ -158,6 +161,8 @@ export const buildWhatsAppPaymentLinkText = (order: any, paymentUrl: string) => 
     paymentUrl,
     '',
     'شكراً لثقتكم',
+    `الاسم التجاري: ${LEGAL_TRADE_NAME_AR}`,
+    `رقم السجل التجاري: ${COMMERCIAL_REGISTRATION_NUMBER}`,
     'Alturath.kw',
   ].join('\n');
 };
@@ -235,7 +240,7 @@ const buildInvoiceHTML = (order: any, products: any[] = []) => {
     .page:before{content:'';position:absolute;inset:0 0 auto 0;height:5px;background:linear-gradient(90deg,var(--red),var(--green),var(--gold));opacity:.8}
     .header{display:grid;grid-template-columns:130px 1fr 190px;align-items:center;gap:22px;padding-bottom:22px;border-bottom:1px solid var(--line);}
     .logo{width:116px;height:116px;object-fit:contain;justify-self:center;}
-    .brand{text-align:center}.brand h1{margin:0;color:var(--green);font-size:38px;line-height:1.1;font-weight:900;letter-spacing:-1px}.tagline{margin-top:8px;color:#b88a31;font-weight:700;font-size:15px}.contacts{margin-top:16px;display:flex;justify-content:center;gap:18px;direction:ltr;color:#263143;font-weight:700}.contacts span{display:flex;align-items:center;gap:6px}.badge{background:linear-gradient(145deg,var(--green),var(--green2));color:#fff;border:2px solid var(--gold);border-radius:18px;padding:18px 14px;text-align:center;box-shadow:0 8px 22px rgba(15,79,45,.18)}.badge .title{font-size:30px;font-weight:900}.badge .sub{font-size:13px;color:#f4d986;font-weight:800;margin-top:5px}
+    .brand{text-align:center}.brand h1{margin:0;color:var(--green);font-size:38px;line-height:1.1;font-weight:900;letter-spacing:-1px}.tagline{margin-top:8px;color:#b88a31;font-weight:700;font-size:15px}.legal-identity{margin-top:9px;display:flex;justify-content:center;gap:8px 14px;flex-wrap:wrap;color:#4b5563;font-size:11px;font-weight:800;line-height:1.7}.legal-identity span{white-space:nowrap}.contacts{margin-top:11px;display:flex;justify-content:center;gap:18px;direction:ltr;color:#263143;font-weight:700}.contacts span{display:flex;align-items:center;gap:6px}.badge{background:linear-gradient(145deg,var(--green),var(--green2));color:#fff;border:2px solid var(--gold);border-radius:18px;padding:18px 14px;text-align:center;box-shadow:0 8px 22px rgba(15,79,45,.18)}.badge .title{font-size:30px;font-weight:900}.badge .sub{font-size:13px;color:#f4d986;font-weight:800;margin-top:5px}
     .pattern{height:18px;margin:14px -38px 24px;background:repeating-linear-gradient(45deg,rgba(215,169,79,.26) 0 8px,transparent 8px 17px),linear-gradient(90deg,rgba(215,25,47,.05),rgba(15,79,45,.05));border-block:1px solid rgba(215,169,79,.25)}
     .cards{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:22px}.card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 8px 24px rgba(15,79,45,.05);padding:22px}.card h2{margin:0 0 16px;color:var(--green);font-size:22px;font-weight:900;display:flex;align-items:center;gap:9px}.card h2 .icon{color:var(--red);font-size:22px}.row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #eee7dc}.row:last-child{border-bottom:0}.label{color:#555;font-weight:700}.value{font-weight:800;text-align:left;direction:rtl}.status{font-weight:900}.paid-status{color:var(--green)}.pending-status{color:#b45309;background:#fff7ed;border:1px solid #fed7aa;border-radius:999px;padding:2px 10px}.other-status{color:#475569}
     .table-wrap{border:1px solid var(--line);border-radius:18px;overflow:hidden;margin-top:8px;background:#fff}table{width:100%;border-collapse:collapse}.head th{background:linear-gradient(180deg,var(--green),#0b4327);color:#f7d880;font-size:15px;padding:15px 12px;text-align:center;font-weight:900}.head th:first-child{text-align:right}.item-row td{padding:20px 14px;border-bottom:1px dashed #dccfbc;vertical-align:top}.item-row:last-child td{border-bottom:0}.product-cell{width:45%}.product-name{font-size:22px;font-weight:900;color:#111827}.item-number{color:var(--red);margin-left:6px}.addons-wrap{margin-top:10px;display:grid;gap:5px}.addon-line{display:flex;justify-content:space-between;gap:12px;color:#343b48;font-weight:700;font-size:14px}.addon-line b{color:var(--red);font-size:18px;line-height:0}.addon-price{color:#a17622;white-space:nowrap}.center{text-align:center;font-size:20px;font-weight:800}.money{text-align:center;font-weight:800;direction:ltr;white-space:nowrap}.strong{color:var(--green);font-size:18px}.item-note{margin-top:8px;color:#b45309;font-size:13px;font-weight:700}
@@ -252,6 +257,7 @@ const buildInvoiceHTML = (order: any, products: any[] = []) => {
       <div class="brand">
         <h1>مطبخ التراث الكويتي</h1>
         <div class="tagline">أصالة الطعم.. من تراثنا الكويتي</div>
+        <div class="legal-identity"><span>الاسم التجاري: ${LEGAL_TRADE_NAME_AR}</span><span>رقم السجل التجاري: ${COMMERCIAL_REGISTRATION_NUMBER}</span></div>
         <div class="contacts"><span>☎ 92225308</span><span>☎ 94059238</span><span>◎ @Alturath.kw</span></div>
       </div>
       <div class="badge"><div class="title">فاتورة</div><div class="sub">شكراً لتسوقكم معنا</div></div>
@@ -291,7 +297,7 @@ const buildInvoiceHTML = (order: any, products: any[] = []) => {
       <div class="total-box" style="grid-column:1 / -1"><span class="total-title">الإجمالي النهائي</span><span class="total-amount">${formatKwd(grandTotal)}</span></div>
     </section>
 
-    <footer class="footer">🌿 شكراً لتعاملكم معنا<small>Alturath.kw | 92225308 | 94059238</small></footer>
+    <footer class="footer">🌿 شكراً لتعاملكم معنا<small>الاسم التجاري: ${LEGAL_TRADE_NAME_AR} | رقم السجل التجاري: ${COMMERCIAL_REGISTRATION_NUMBER}</small><small>Alturath.kw | 92225308 | 94059238</small></footer>
     <div class="no-print"><button class="print-btn" onclick="window.print()">طباعة / حفظ PDF</button></div>
   </main>
   <script>
