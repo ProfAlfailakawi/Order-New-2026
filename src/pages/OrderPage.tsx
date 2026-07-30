@@ -2297,7 +2297,7 @@ export default function OrderPage() {
                         {getOrderReference(selectedOrder)}
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-stone-100 bg-stone-50/70 px-3 py-2.5 text-right text-[10px] sm:text-[11px] font-bold text-stone-500 leading-6">
+                    <div className="rounded-2xl border border-stone-100/70 bg-stone-50/40 px-3 py-2 text-right text-[9px] sm:text-[10px] font-light text-stone-400/80 leading-5">
                       <div>الاسم التجاري: {LEGAL_TRADE_NAME_AR}</div>
                       <div>رقم السجل التجاري: {COMMERCIAL_REGISTRATION_NUMBER}</div>
                     </div>

@@ -5224,9 +5224,9 @@ export default function CustomerSite() {
                   {goldenHourTheme.name}
                 </span>
               </div>
-              <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[9px] sm:text-[10px] font-bold text-stone-400 leading-[1.65]">
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[8px] sm:text-[9px] font-light text-stone-300 leading-[1.55]">
                 <span>الاسم التجاري: {LEGAL_TRADE_NAME_AR}</span>
-                <span className="text-stone-300">•</span>
+                <span className="text-stone-200">•</span>
                 <span>رقم السجل التجاري: {COMMERCIAL_REGISTRATION_NUMBER}</span>
               </div>
             </div>
