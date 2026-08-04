@@ -1739,7 +1739,14 @@ export default function CustomerSite() {
   const [showSquadModal, setShowSquadModal] = useState(hasInitialDiwaniyaQrEntry);
   const [isDirectDiwaniyaEntry, setIsDirectDiwaniyaEntry] = useState(hasInitialDiwaniyaQrEntry);
 
-  const [showAppetiteTheatre, setShowAppetiteTheatre] = useState(false);
+  const [showAppetiteTheatre, setShowAppetiteTheatre] = useState(() => {
+    if (hasInitialDiwaniyaQrEntry) return false;
+    try {
+      return localStorage.getItem(CUSTOMER_ENTRY_SEEN_KEY) !== "1";
+    } catch (e) {
+      return true;
+    }
+  });
 
   // 🧬 Biometrics, Gyroscope & Proximity Radar UI
   const [biometricScanSquad, setBiometricScanSquad] = useState<any | null>(null);
