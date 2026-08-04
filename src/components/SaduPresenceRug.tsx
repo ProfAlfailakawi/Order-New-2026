@@ -3,6 +3,7 @@ import { Coffee, Flame, Volume2, VolumeX, Sparkles, HelpCircle, RefreshCw, Compa
 import { motion, AnimatePresence } from "motion/react";
 import { cn, formatKuwaitiDate } from "../utils";
 import confetti from "canvas-confetti";
+import { SmartIconGuidance } from "./SmartIconGuidance";
 
 // -------------------------------------------------------------
 // Web Haptic Vibration API Wrapper (Haptic Finjan Resonance)
@@ -570,29 +571,36 @@ export function SaduPresenceRug({
       )}>
         {/* Minimalist Geofence Compass Radar Icon Button (Pulsing silently and beautifully) */}
         <div className="absolute top-4 right-4 sm:right-9 z-30 flex items-center gap-2" dir="rtl">
-          <button
-            type="button"
-            onClick={handleActivateRadar}
-            disabled={isRadarPulseActive}
-            className={cn(
-              "w-8 h-8 sm:w-10 h-10 rounded-full border shadow-md flex items-center justify-center transition-all active:scale-95 pointer-events-auto",
-              isRadarPulseActive
-                ? "bg-emerald-500/10 border-emerald-400/60 text-emerald-400"
-                : radarDistance !== null
-                  ? "bg-emerald-500 border-yellow-250 text-stone-950"
-                  : "bg-black/35 backdrop-blur-md border-white/10 text-[#faf0d9]/80 hover:bg-black/55 hover:text-white"
-            )}
-            title="تفعيل رادار السدو الجغرافي الصامت"
+          <SmartIconGuidance
+            id="sadu_radar_compass"
+            title="رادار السدو الجغرافي"
+            description="قياس مسافة الأعضاء المترددين وتأكيد الحضور الصامت"
+            placement="bottom"
           >
-            {isRadarPulseActive ? (
-              <span className="relative flex h-4 w-4 items-center justify-center">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <Compass className="relative inline-flex w-4 h-4 animate-spin text-emerald-400" />
-              </span>
-            ) : (
-              <Compass className="w-4.5 h-4.5" />
-            )}
-          </button>
+            <button
+              type="button"
+              onClick={handleActivateRadar}
+              disabled={isRadarPulseActive}
+              className={cn(
+                "w-8 h-8 sm:w-10 h-10 rounded-full border shadow-md flex items-center justify-center transition-all active:scale-95 pointer-events-auto",
+                isRadarPulseActive
+                  ? "bg-emerald-500/10 border-emerald-400/60 text-emerald-400"
+                  : radarDistance !== null
+                    ? "bg-emerald-500 border-yellow-250 text-stone-950"
+                    : "bg-black/35 backdrop-blur-md border-white/10 text-[#faf0d9]/80 hover:bg-black/55 hover:text-white"
+              )}
+              title="تفعيل رادار السدو الجغرافي الصامت"
+            >
+              {isRadarPulseActive ? (
+                <span className="relative flex h-4 w-4 items-center justify-center">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <Compass className="relative inline-flex w-4 h-4 animate-spin text-emerald-400" />
+                </span>
+              ) : (
+                <Compass className="w-4.5 h-4.5" />
+              )}
+            </button>
+          </SmartIconGuidance>
           
           {(isRadarPulseActive || radarDistance !== null) && (
             <div className="bg-stone-950/95 backdrop-blur-md border border-emerald-400/50 py-1.5 px-3.5 rounded-full text-[10px] font-black text-emerald-300 flex items-center gap-1.5 shadow-xl select-none">

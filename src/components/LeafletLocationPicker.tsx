@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Compass, Loader2, MapPin } from 'lucide-react';
 import { robustGetCurrentPosition } from '../utils/geolocation';
+import { SmartIconGuidance } from './SmartIconGuidance';
 
 declare global {
   interface Window { L?: any; __alturathLeafletLoading?: Promise<any>; }
@@ -180,9 +181,16 @@ const LeafletLocationPicker: React.FC<{
           <div className="text-sm font-black text-brand flex items-center gap-2"><MapPin className="w-4 h-4 text-emerald-600" /> نقطة التوصيل الدقيقة</div>
           <p className="text-[11px] text-stone-500 font-bold mt-1">اختياري لكنه يخلي التوصيل أدق من كتابة العنوان فقط.</p>
         </div>
-        <button type="button" onClick={useCurrentLocation} className="shrink-0 inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700 border border-emerald-100 active:scale-95 transition">
-          {isResolvingAddress ? <Loader2 className="w-4 h-4 animate-spin" /> : <Compass className="w-4 h-4" />} حدد موقعي
-        </button>
+        <SmartIconGuidance
+          id="geolocation_autopin"
+          title="تحديد موقعك تلقائياً (GPS)"
+          description="التقاط موقع التوصيل الحالي من قمر صناعي GPS وتحديث العنوان فوراً"
+          placement="bottom"
+        >
+          <button type="button" onClick={useCurrentLocation} className="shrink-0 inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700 border border-emerald-100 active:scale-95 transition">
+            {isResolvingAddress ? <Loader2 className="w-4 h-4 animate-spin" /> : <Compass className="w-4 h-4" />} حدد موقعي
+          </button>
+        </SmartIconGuidance>
       </div>
       <div className="relative h-[260px] overflow-hidden rounded-[24px] border border-stone-100 bg-stone-100" dir="ltr">
         <div ref={hostRef} className="absolute inset-0" />
