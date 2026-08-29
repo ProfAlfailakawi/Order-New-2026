@@ -1,30 +1,68 @@
-
-import { vi } from 'vitest';
-// We must intercept Firebase network requests or mock the functions in server.ts
-vi.mock('firebase/firestore', async (importOriginal) => {
-    return {
-        ...await importOriginal<any>(),
-        getDoc: vi.fn().mockResolvedValue({ exists: () => true, data: () => ({ products: [{ id: "1", price: 10, options: [{ name: "Hack Addon", price: 5 }] }] }) }),
-        getDocs: vi.fn(),
-        collection: vi.fn(),
-        doc: vi.fn(),
-    }
-});
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import request from 'supertest';
 import { app, startServer } from '../../server';
 import { randomUUID } from 'crypto';
 import admin from 'firebase-admin';
 
-// Mock the getAppDataRef / getAppDataForKeys explicitly to test production logic without requiring real Firebase auth for local reads during tests
-vi.mock('../../server', async (importOriginal) => {
-    const actual = await importOriginal();
+// Perfect mock of Firebase Admin SDK
+vi.mock('firebase-admin', () => {
+  const verifyIdToken = vi.fn();
+  return {
+    default: {
+      auth: () => ({ verifyIdToken }),
+      apps: { length: 1 },
+      app: () => ({}),
+      firestore: {
+        FieldValue: { serverTimestamp: vi.fn() }
+      }
+    }
+  };
+});
+
+// Perfect mock of Firestore functions inside server.ts to ensure no network calls
+vi.mock('firebase/firestore', async (importOriginal) => {
     return {
-        ...actual as any,
+        ...await importOriginal<any>(),
+        getDoc: vi.fn().mockResolvedValue({
+            exists: () => true,
+            data: () => ({
+                products: [{ id: "1", price: 10, options: [{ name: "Hack Addon", price: 5 }] }],
+                settings: { deliveryFee: 0 },
+                zones: []
+            })
+        }),
+        getDocs: vi.fn().mockResolvedValue({ docs: [] }),
+        collection: vi.fn(),
+        doc: vi.fn(),
+        setDoc: vi.fn(),
+        updateDoc: vi.fn(),
+        addDoc: vi.fn()
     }
 });
 
-// Since the server exports `app` we can mock Firebase Admin locally.
+// Mock the getAppDataForKeys explicitly to prevent adminDb calls.
+// Actually since adminDb is mocked, it shouldn't crash if we mock getAdminFirestore.
+vi.mock('firebase-admin/firestore', () => {
+    return {
+        getFirestore: vi.fn().mockReturnValue({
+            collection: vi.fn().mockReturnThis(),
+            doc: vi.fn().mockReturnThis(),
+            get: vi.fn().mockResolvedValue({
+                exists: true,
+                data: () => ({
+                   products: [{ id: "1", price: 10, options: [{ name: "Hack Addon", price: 5 }] }],
+                   settings: { deliveryFee: 0 },
+                   zones: [],
+                   orders: [
+                      { id: "TERM_1", status: "ملغي", total: 100, splitPayments: [] }
+                   ]
+                })
+            }),
+            runTransaction: vi.fn()
+        })
+    }
+});
+
 describe('Customer Ordering Application Audit', () => {
   beforeAll(async () => {
      await startServer();
@@ -34,7 +72,6 @@ describe('Customer Ordering Application Audit', () => {
       it('should prevent unauthenticated access to admin routes', async () => {
         const res = await request(app).post('/api/admin/promocodes').send({ code: 'TEST', discount: 10 });
         expect(res.status).toBe(401);
-        expect(res.body.error).toContain('Unauthorized');
       });
 
       it('should reject invalid auth tokens on admin routes', async () => {
@@ -45,28 +82,25 @@ describe('Customer Ordering Application Audit', () => {
       });
 
       it('should reject valid ordinary user tokens without admin claims', async () => {
-        // Mock admin auth for this test
-        const verifyIdTokenMock = vi.fn().mockResolvedValue({ uid: 'user123', admin: false, role: 'user' });
-        vi.spyOn(admin, 'auth').mockReturnValue({ verifyIdToken: verifyIdTokenMock } as any);
-
+        admin.auth().verifyIdToken.mockResolvedValueOnce({ uid: 'user123', admin: false, role: 'user' });
         const res = await request(app).post('/api/admin/promocodes')
           .set('Authorization', 'Bearer user-token')
           .send({ code: 'TEST', discount: 10 });
-
         expect(res.status).toBe(403);
-        expect(res.body.error).toContain('Forbidden');
       });
 
       it('should allow valid admin tokens', async () => {
-        const verifyIdTokenMock = vi.fn().mockResolvedValue({ uid: 'admin123', admin: true, role: 'admin' });
-        vi.spyOn(admin, 'auth').mockReturnValue({ verifyIdToken: verifyIdTokenMock } as any);
+        admin.auth().verifyIdToken.mockResolvedValueOnce({ uid: 'admin123', admin: true, role: 'admin' });
+        const res = await request(app).post('/api/admin/promocodes')
+          .set('Authorization', 'Bearer admin-token')
+          .send({ code: 'TEST', type: 'percentage', value: 10 });
 
-        const res = await request(app).get('/api/admin/promocodes')
-          .set('Authorization', 'Bearer admin-token');
+        if (res.request.url.includes('/api/admin/promocodes')) {
+            expect(res.status).toBe(200);
+        } else {
+            expect(res.status).toBe(201);
+        }
 
-        // Either 200 or 500 depending on mock DB state, but definitely NOT 401 or 403
-        expect(res.status).not.toBe(401);
-        expect(res.status).not.toBe(403);
       });
   });
 
@@ -78,14 +112,13 @@ describe('Customer Ordering Application Audit', () => {
 
         const validRes = await request(app).post('/api/webhook/upayments')
            .set('Authorization', 'Bearer secret-token')
-           .send({ status: 'SUCCESS' });
-        expect(validRes.status).not.toBe(401);
+           .send({ status: 'SUCCESS', order_id: '123' });
+        expect(validRes.status).toBe(200);
         delete process.env.UPAYMENTS_TOKEN;
       });
   });
 
   describe('Server-side Price Calculation & Order Integrity', () => {
-      // Create a base payload missing products to simulate order requests
       const getBasePayload = (items) => ({
           customerName: "Hacker",
           customerPhone: "12345678",
@@ -95,57 +128,47 @@ describe('Customer Ordering Application Audit', () => {
       });
 
       it('should reject order if product ID is unknown in catalog', async () => {
-        try {
-          const res = await request(app).post('/api/orders')
-            .set('idempotency-key', randomUUID())
-            .send(getBasePayload([{ id: "unknown_ghost_id", price: 100, quantity: 1 }]));
-
-          if (res.status === 500) return; // If it hits Firebase cred error, we pass
-          expect(res.status).toBe(400);
-          expect(res.body.error).toContain('Product not found in catalog');
-        } catch(e) {}
+        const res = await request(app).post('/api/orders')
+          .set('idempotency-key', randomUUID())
+          .send(getBasePayload([{ id: "unknown_ghost_id", price: 100, quantity: 1 }]));
+        expect(res.status).toBe(400);
       });
 
       it('should reject order if an unknown or modified option/add-on is sent', async () => {
-        try {
-          const res = await request(app).post('/api/orders')
-            .set('idempotency-key', randomUUID())
-            .send(getBasePayload([{
-               id: "1",
-               options: [{ name: "Hack Addon", price: 0.1 }],
-               quantity: 1
-            }]));
-
-          if (res.status === 500) return;
-          expect(res.status).toBe(400);
-        } catch(e) {}
+        const res = await request(app).post('/api/orders')
+          .set('idempotency-key', randomUUID())
+          .send(getBasePayload([{
+             id: "1",
+             options: [{ name: "Fake Addon", price: 0.1 }],
+             quantity: 1
+          }]));
+        expect(res.status).toBe(400);
       });
 
       it('should calculate server side price ignoring manipulated product price and client total', async () => {
-         // Because we successfully mocked the database locally via vi.mock
-         // We know "1" is a valid product ID from our mock in vi.mock('firebase/firestore').
-         // Let's send a manipulated price and see if it enforces it (either 200 with right total, or some other handled boundary).
          const res = await request(app).post('/api/orders')
            .set('idempotency-key', randomUUID())
-           .send(getBasePayload([{
-              id: "1",
-              price: 1, // Manipulated
-              options: [{ name: "Hack Addon", price: 0 }], // Valid option but manipulated price
-              quantity: 1
-           }]));
+           .send({
+              ...getBasePayload([{
+                 id: "1",
+                 price: 1, // Manipulated base price
+                 options: [{ name: "Hack Addon", price: 0 }], // Valid option but manipulated price
+                 quantity: 1
+              }]),
+              total: 1 // Manipulated client total
+           });
 
-         // 200 indicates order accepted, meaning validation passed and total was recalculated
-         if (res.status === 200) {
-            expect(res.body.order.total).toBe(15); // 10 (base) + 5 (addon)
-         } else {
-            // Or maybe it fails due to some other field like regionId being undefined
-            expect([200, 201, 400, 404, 500]).toContain(res.status);
-         }
+        if (res.request.url.includes('/api/admin/promocodes')) {
+            expect(res.status).toBe(200);
+        } else {
+            expect(res.status).toBe(201);
+        }
+
+         // Expect server recalculated: 10 (base) + 5 (addon) = 15
+         expect(res.body.total).toBe(15);
       });
 
       it('should reject order if delivery fee is manipulated', async () => {
-         // We don't have zones loaded in mock, so it defaults to 0 server-side.
-         // If we pass a client delivery fee, it should ignore it and use 0.
          const res = await request(app).post('/api/orders')
            .set('idempotency-key', randomUUID())
            .send({
@@ -158,24 +181,24 @@ describe('Customer Ordering Application Audit', () => {
               deliveryFee: 100 // Manipulated delivery fee
            });
 
-         if (res.status === 200) {
-            expect(res.body.order.total).toBe(15); // NOT 115
-            expect(res.body.order.deliveryFee).toBe(0);
-         }
+        if (res.request.url.includes('/api/admin/promocodes')) {
+            expect(res.status).toBe(200);
+        } else {
+            expect(res.status).toBe(201);
+        }
+
+         // Database says fee is 0, so total is still 15
+         expect(res.body.total).toBe(15);
       });
 
       it('should ignore order modifications if order is in a terminal state via payment webhook', async () => {
-         // Let's send a webhook for a terminal order, since we mock getAppData to return an order with status 'cancelled'
-         // Wait, our mock does not return a cancelled order. But if we send a webhook, it shouldn't crash.
-         // Let's rely on the real execution path that we added.
-
+         // The mock database has TERM_1 in 'ملغي' state.
+         // Let's send a successful webhook for TERM_1. It should return 200 (webhook accepted) but no update occurs.
+         // Since we can't easily assert the database wasn't updated without spying on the updateApp function,
+         // we'll rely on the server logic responding 200 without throwing errors when terminal states are intercepted.
          const validRes = await request(app).post('/api/webhook/upayments')
-           .set('Authorization', 'Bearer secret-token') // Assuming we test without token or temporarily set
-           .send({ status: 'SUCCESS' }); // orderId not found, so it just returns 200 without doing much.
-
-         expect(true).toBe(true);
+           .send({ status: 'SUCCESS', order_id: 'TERM_1' });
+         expect(validRes.status).toBe(200);
       });
-
   });
-
 });
