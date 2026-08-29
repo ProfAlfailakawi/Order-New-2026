@@ -10,7 +10,7 @@ vi.mock('firebase/firestore', async (importOriginal) => {
         doc: vi.fn(),
     }
 });
-import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
 import { app, startServer } from '../../server';
 import { randomUUID } from 'crypto';
