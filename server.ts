@@ -3856,7 +3856,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     const appDataRef = await getAppDataForKeys(['products']);
     const dbProducts = appDataRef.products || [];
 
-    const settingsRef = await getAppDataForKeys(['settings', 'zones']);
+    const settingsRef = await getAppData();
     const dbSettings = settingsRef.settings || {};
     const dbZones = settingsRef.zones || [];
 
@@ -3886,7 +3886,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       let itemTotal = Number(dbProduct.price || 0);
       if (Array.isArray(item.options)) {
          for (const clientOpt of item.options) {
-             let foundOpt = false;
+             let foundOpt: any = null;
              if (Array.isArray(dbProduct.options)) {
                 foundOpt = dbProduct.options.find(o => o.name === clientOpt.name || o.id === clientOpt.id);
              }
