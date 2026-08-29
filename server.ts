@@ -117,7 +117,7 @@ try {
     ? admin.app()
     : admin.initializeApp({ projectId: firebaseConfig.projectId });
   adminMessaging = getMessaging(adminApp);
-  adminDb = getAdminFirestore(adminApp, firebaseConfig.firestoreDatabaseId || "(default)");
+  adminDb = process.env.NODE_ENV === "test" ? null : getAdminFirestore(adminApp, firebaseConfig.firestoreDatabaseId || "(default)");
 } catch (error: any) {
   console.warn("[DIWANIYA_PUSH] Firebase Admin messaging disabled:", error?.message || String(error));
 }
