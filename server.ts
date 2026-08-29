@@ -11,6 +11,18 @@ import admin from "firebase-admin";
 import { getMessaging } from "firebase-admin/messaging";
 import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
 import { GoogleGenAI, Type } from "@google/genai";
+import {
+  generateStructured,
+  getAiUsageSnapshot,
+  clientIpOf,
+  AiBudgetError,
+} from "./src/lib/aiGateway.ts";
+import {
+  toCatalog,
+  suggestOrderForMe,
+  answerOrderSupport,
+  suggestUpsell,
+} from "./src/lib/aiOrderService.ts";
 import { checkStoreStatus, getConfiguredStoreStatus } from "./src/lib/storeAvailability";
 import { packCustomerMenuProducts } from "./src/lib/customerMenuTransport.ts";
 import {
@@ -3542,32 +3554,30 @@ app.get("/api/debug/order/:id", async (req, res) => {
 
       const userContent = `استعلام البحث للعميل: "${searchQuery}"\n\nكتالوج المنتجات المتاح لدينا:\n${JSON.stringify(catalog, null, 2)}`;
 
-      const response = await aiClient.models.generateContent({
-        model: "gemini-3.5-flash",
+      // Routed through the AI Gateway: valid model id + per-IP/global cost caps
+      // + shared retry/timeout. (Previously called an invalid "gemini-3.5-flash".)
+      const parsed = await generateStructured<{ matchingIds?: string[]; message?: string }>({
+        clientIp: clientIpOf(req),
+        model: "fast",
+        systemInstruction,
         contents: userContent,
-        config: {
-          systemInstruction,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              matchingIds: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: "List of matching product IDs sorted by relevance"
-              },
-              message: {
-                type: Type.STRING,
-                description: "A friendly, warm, highly personalized Kuwaiti explanation matching the user's query"
-              }
+        maxOutputTokens: 1024,
+        schema: {
+          type: Type.OBJECT,
+          properties: {
+            matchingIds: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "List of matching product IDs sorted by relevance"
             },
-            required: ["matchingIds", "message"]
-          }
+            message: {
+              type: Type.STRING,
+              description: "A friendly, warm, highly personalized Kuwaiti explanation matching the user's query"
+            }
+          },
+          required: ["matchingIds", "message"]
         }
       });
-
-      const resultText = response.text || "{}";
-      const parsed = JSON.parse(resultText);
 
       res.json({
         matchingIds: Array.isArray(parsed?.matchingIds) ? parsed.matchingIds : [],
@@ -3577,6 +3587,118 @@ app.get("/api/debug/order/:id", async (req, res) => {
       console.error("[SMART_SEARCH_ERROR]:", error);
       res.status(500).json({ matchingIds: [], message: "حصل التباس بسيط بالسرش الذكي الذكاء الاصطناعي موجه!" });
     }
+  });
+
+  // Shared: build the customer-visible menu catalog for AI features.
+  async function loadAiCatalog() {
+    const data = await getAppDataForKeys(["products", "supplierCopies"]);
+    const allProducts = [...(data.products || []), ...(data.supplierCopies || [])];
+    const products = getCustomerVisibleProducts(processProducts(allProducts));
+    return toCatalog(products);
+  }
+
+  // "اطلب لي" — Function-Calling cart builder. Returns a SUGGESTION only;
+  // the client must confirm before it touches the basket. Never mutates state.
+  app.post("/api/ai/order-for-me", async (req, res) => {
+    try {
+      const { query, partySize, budget, preferences } = req.body || {};
+      const catalog = await loadAiCatalog();
+      if (!catalog.length) {
+        return res.status(503).json({ error: "المنيو غير متاح حالياً" });
+      }
+      const suggestion = await suggestOrderForMe({
+        clientIp: clientIpOf(req),
+        catalog,
+        query: query ? String(query).slice(0, 400) : undefined,
+        partySize: Number(partySize) || undefined,
+        budget: Number(budget) || undefined,
+        preferences: preferences ? String(preferences).slice(0, 300) : undefined,
+      });
+      res.json(suggestion);
+    } catch (error: any) {
+      if (error instanceof AiBudgetError) {
+        return res.status(429).json({ error: "الخدمة مزدحمة، جرب بعد لحظات" });
+      }
+      console.error("[AI_ORDER_FOR_ME_ERROR]:", error?.message || error);
+      res.status(500).json({ error: "تعذّر بناء الاقتراح، حاول مرة ثانية" });
+    }
+  });
+
+  // Order Support — grounded strictly on the customer's real orders.
+  app.post("/api/ai/order-support", async (req, res) => {
+    try {
+      const { phone, orderId, question } = req.body || {};
+      if (!question || !String(question).trim()) {
+        return res.status(400).json({ error: "السؤال مطلوب" });
+      }
+      if (!phone && !orderId) {
+        return res.status(400).json({ error: "رقم الهاتف أو رقم الطلب مطلوب" });
+      }
+
+      const d = await getAppDataRef();
+      const appData = d.data() || {};
+      const allOrders: any[] = appData.orders || [];
+
+      let orders: any[] = [];
+      if (orderId) {
+        orders = allOrders.filter((o) => String(o?.id) === String(orderId));
+      }
+      if (!orders.length && phone) {
+        const cleanQueryPhone = cleanPhone(String(phone));
+        orders = allOrders.filter(
+          (o) => cleanPhone(o.customerPhone || o.phone) === cleanQueryPhone,
+        );
+      }
+      orders.sort(
+        (a, b) =>
+          new Date(b.createdAt || b.date || 0).getTime() -
+          new Date(a.createdAt || a.date || 0).getTime(),
+      );
+
+      const result = await answerOrderSupport({
+        clientIp: clientIpOf(req),
+        question: String(question).slice(0, 400),
+        orders,
+      });
+      res.json(result);
+    } catch (error: any) {
+      if (error instanceof AiBudgetError) {
+        return res.status(429).json({ error: "الخدمة مزدحمة، جرب بعد لحظات" });
+      }
+      console.error("[AI_ORDER_SUPPORT_ERROR]:", error?.message || error);
+      res.status(500).json({ error: "تعذّر الرد الآن، حاول مرة ثانية" });
+    }
+  });
+
+  // Smart upsell — at most one non-intrusive complement. Returns null when
+  // nothing suitable, so the UI can stay quiet.
+  app.post("/api/ai/upsell", async (req, res) => {
+    try {
+      const { cartProductIds, cartCategories, subtotal } = req.body || {};
+      const ids = Array.isArray(cartProductIds) ? cartProductIds.map(String) : [];
+      if (!ids.length) return res.json({ suggestion: null });
+
+      const catalog = await loadAiCatalog();
+      const result = await suggestUpsell({
+        clientIp: clientIpOf(req),
+        catalog,
+        cartProductIds: ids,
+        cartCategories: Array.isArray(cartCategories) ? cartCategories.map(String) : [],
+        subtotal: Number(subtotal) || 0,
+      });
+      res.json(result);
+    } catch (error: any) {
+      if (error instanceof AiBudgetError) {
+        return res.json({ suggestion: null }); // upsell is optional — fail silent
+      }
+      console.error("[AI_UPSELL_ERROR]:", error?.message || error);
+      res.json({ suggestion: null });
+    }
+  });
+
+  // Lightweight AI usage/cost snapshot for ops visibility.
+  app.get("/api/ai/usage", (_req, res) => {
+    res.json(getAiUsageSnapshot());
   });
 
 
