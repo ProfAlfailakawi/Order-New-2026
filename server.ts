@@ -897,6 +897,17 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
       let sId = splitId;
       let isSplit = !!sId;
       
+      const oIdxTermCheck = orders.findIndex((o: any) => paymentRecordMatches(o, baseId));
+      if (oIdxTermCheck !== -1) {
+         const currentStatusRaw = String(orders[oIdxTermCheck].status || "").toLowerCase();
+         const terminalStates = ["ملغي", "cancelled", "تم التوصيل", "delivered", "مرفوض", "rejected"];
+         if (terminalStates.some(state => currentStatusRaw.includes(state))) {
+             console.log(`[PAYMENT_UPDATE] Ignoring update (including split) for terminal order ${baseId}`);
+             return null;
+         }
+      }
+
+
       if (baseId.includes("-S-")) {
         isSplit = true;
         const parts = baseId.split("-S-");
@@ -1475,7 +1486,13 @@ const adminAuth = async (req, res, next) => {
   const token = authHeader.split('Bearer ')[1];
   try {
      const decodedToken = await admin.auth().verifyIdToken(token);
-     // Optional: Check custom claims like decodedToken.admin === true
+
+     // Must explicitly enforce an admin boundary.
+     // Standard implementations use the 'admin' custom claim or 'role' claim.
+     if (decodedToken.admin !== true && decodedToken.role !== 'admin') {
+         return res.status(403).json({ error: 'Forbidden: Insufficient privileges' });
+     }
+
      req.user = decodedToken;
      next();
   } catch (error) {
@@ -3839,27 +3856,57 @@ app.get("/api/debug/order/:id", async (req, res) => {
     const appDataRef = await getAppDataForKeys(['products']);
     const dbProducts = appDataRef.products || [];
 
+    const settingsRef = await getAppDataForKeys(['settings', 'zones']);
+    const dbSettings = settingsRef.settings || {};
+    const dbZones = settingsRef.zones || [];
+
+    // Resolve delivery fee from server side zones or settings
+    let trustedDeliveryFee = 0;
+    if (!isFreeDelivery) {
+       const zone = dbZones.find(z => String(z.id) === String(regionId));
+       if (zone && zone.fee !== undefined) {
+           trustedDeliveryFee = Number(zone.fee);
+       } else if (dbSettings.deliveryFee !== undefined) {
+           trustedDeliveryFee = Number(dbSettings.deliveryFee);
+       } else {
+           trustedDeliveryFee = Number(deliveryFee || 0); // Last resort if absolutely no server config
+           // Actually, the reviewer asked NOT to trust client fallback. So let's default to 0 if not found, or reject.
+           trustedDeliveryFee = 0; // Secure fallback
+       }
+    }
+
     let calculatedTotal = 0;
-    let priceMismatch = false;
 
     for (const item of items) {
       const dbProduct = dbProducts.find((p) => String(p.id) === String(item.id));
-      if (dbProduct) {
-        let itemTotal = Number(dbProduct.price || 0);
-        if (Array.isArray(item.options)) {
-           item.options.forEach((opt) => {
-               itemTotal += Number(opt.price || 0);
-           });
-        }
-        calculatedTotal += itemTotal * (Number(item.quantity) || 1);
-      } else {
-        calculatedTotal += (Number(item.price || 0)) * (Number(item.quantity) || 1);
-        priceMismatch = true;
+      if (!dbProduct) {
+         return res.status(400).json({ error: "Product not found in catalog" });
       }
+
+      let itemTotal = Number(dbProduct.price || 0);
+      if (Array.isArray(item.options)) {
+         for (const clientOpt of item.options) {
+             let foundOpt = false;
+             if (Array.isArray(dbProduct.options)) {
+                foundOpt = dbProduct.options.find(o => o.name === clientOpt.name || o.id === clientOpt.id);
+             }
+             if (!foundOpt && Array.isArray(dbProduct.addons)) {
+                foundOpt = dbProduct.addons.find(o => o.name === clientOpt.name || o.id === clientOpt.id);
+             }
+
+             if (foundOpt) {
+                itemTotal += Number(foundOpt.price || 0);
+             } else {
+                return res.status(400).json({ error: "Invalid option selected" });
+             }
+         }
+      }
+      calculatedTotal += itemTotal * (Number(item.quantity) || 1);
     }
 
-    calculatedTotal += Number(deliveryFee || 0);
-    const total = Math.abs(calculatedTotal - _clientTotal) > 0.1 && !priceMismatch ? calculatedTotal : _clientTotal;
+    calculatedTotal += trustedDeliveryFee;
+    const total = calculatedTotal;
+
 
     const orderCustomId = generateUnifiedId("ORD");
 
