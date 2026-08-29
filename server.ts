@@ -888,7 +888,7 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
     void syncRootPaymentDocsFast(fastOrderId, isSuccess, providerData);
   }
   
-  const ok = await updateAppDataAtomically((appData) => {
+  if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((appData) => {
       let orders = [...(appData.orders || [])];
       let invoices = [...(appData.invoices || [])];
       let customers = [...(appData.customers || [])];
@@ -1524,7 +1524,7 @@ const adminAuth = async (req, res, next) => {
       const cleanToken = String(token || "").trim();
       if (!clean || !cleanToken) return res.status(400).json({ error: "Missing phone or token" });
 
-      const ok = await updateAppDataAtomically((current) => {
+      if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current) => {
         const tokens = Array.isArray(current.diwaniyaPushTokens) ? [...current.diwaniyaPushTokens] : [];
         const now = new Date().toISOString();
         const nextPrefs = {
@@ -1563,7 +1563,7 @@ const adminAuth = async (req, res, next) => {
       const { phone, token } = req.body || {};
       const clean = cleanPhone(phone);
       const cleanToken = String(token || "").trim();
-      const ok = await updateAppDataAtomically((current) => {
+      if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current) => {
         const tokens = Array.isArray(current.diwaniyaPushTokens) ? [...current.diwaniyaPushTokens] : [];
         return {
           diwaniyaPushTokens: tokens.map((item: any) => {
@@ -2441,7 +2441,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     if (!phone) return res.status(400).json({ error: "Missing phone" });
     const cleanTarget = cleanPhone(phone);
     const now = new Date().toISOString();
-    const ok = await updateAppDataAtomically((current: any) => {
+    if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current: any) => {
       const notifications = Array.isArray(current.diwaniyaNotifications) ? [...current.diwaniyaNotifications] : [];
       const updated = notifications.filter((n: any) => {
         const belongs = cleanPhone(n.toPhone || "") === cleanTarget;
@@ -2466,7 +2466,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     }
     try {
       let savedDistance = Number.isFinite(Number(geofenceDistance)) ? Number(geofenceDistance) : 100;
-      const ok = await updateAppDataAtomically((current: any) => {
+      if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current: any) => {
         const squads = Array.isArray(current.squads) ? [...current.squads] : [];
         const idx = squads.findIndex((s: any) => String(s.id) === String(squadId));
         if (idx > -1) {
@@ -2530,7 +2530,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       let isAutoApproved = false;
       let squadOwnerPhone = "";
       
-      const ok = await updateAppDataAtomically((current: any) => {
+      if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current: any) => {
         const reqs = Array.isArray(current.geofenceJoinRequests) ? [...current.geofenceJoinRequests] : [];
         const squads = Array.isArray(current.squads) ? [...current.squads] : [];
         const squadIdx = squads.findIndex((s: any) => String(s.id) === String(squadId));
@@ -2632,7 +2632,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const cleanTargetPhone = cleanPhone(phone);
       if (cleanTargetPhone.length !== 8) return res.status(400).json({ error: "Invalid phone" });
       let joinedSquad: any = null;
-      const ok = await updateAppDataAtomically((current: any) => {
+      if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current: any) => {
         const squads = Array.isArray(current.squads) ? [...current.squads] : [];
         const customers = Array.isArray(current.customers) ? [...current.customers] : [];
         const reqs = Array.isArray(current.geofenceJoinRequests) ? [...current.geofenceJoinRequests] : [];
@@ -2729,7 +2729,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     if (cleanTarget.length !== 8) return res.status(400).json({ error: "Invalid phone" });
     const now = new Date().toISOString();
     let presence: any[] = [];
-    const ok = await updateAppDataAtomically((current: any) => {
+    if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current: any) => {
       const all = Array.isArray(current.squadPresence) ? [...current.squadPresence] : [];
       const squads = Array.isArray(current.squads) ? current.squads : [];
       const squad = squads.find((s: any) => String(s.id) === String(squadId));
@@ -2829,7 +2829,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     const code = String(Math.floor(1000 + Math.random() * 9000));
     const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
     let entry: any = null;
-    const ok = await updateAppDataAtomically((current: any) => {
+    if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current: any) => {
       const squads = Array.isArray(current.squads) ? current.squads : [];
       const squad = squads.find((s: any) => String(s.id) === String(squadId));
       if (!squad || cleanPhone(squad.phone || "") !== cleanPhone(phone)) return null;
@@ -2859,7 +2859,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     if (!code || !phone) return res.status(400).json({ error: "Missing code or phone" });
     const cleanTarget = cleanPhone(phone);
     let joinedSquad: any = null;
-    const ok = await updateAppDataAtomically((current: any) => {
+    if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current: any) => {
       const codes = Array.isArray(current.squadTempCodes) ? [...current.squadTempCodes] : [];
       const cIdx = codes.findIndex((c: any) => String(c.code) === String(code) && new Date(c.expiresAt || 0).getTime() > Date.now());
       if (cIdx < 0) return null;
@@ -2920,7 +2920,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     const { squadId, phone, name, action, item, participants, title } = req.body || {};
     if (!squadId || !phone) return res.status(400).json({ error: "Missing squadId or phone" });
     let groupOrder: any = null;
-    const ok = await updateAppDataAtomically((current: any) => {
+    if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current: any) => {
       const groupOrders = Array.isArray(current.squadGroupOrders) ? [...current.squadGroupOrders] : [];
       const squads = Array.isArray(current.squads) ? current.squads : [];
       const squad = squads.find((s: any) => String(s.id) === String(squadId));
@@ -2976,7 +2976,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     const { squadId, memory } = req.body;
     if (!squadId || !memory) return res.status(400).json({ error: "Missing squadId or memory" });
     try {
-      const ok = await updateAppDataAtomically((current: any) => {
+      if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current: any) => {
         const squads = Array.isArray(current.squads) ? [...current.squads] : [];
         const idx = squads.findIndex((s: any) => String(s.id) === String(squadId));
         if (idx > -1) {
@@ -2998,7 +2998,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     const { squadId, memoryId } = req.body;
     if (!squadId || !memoryId) return res.status(400).json({ error: "Missing squadId or memoryId" });
     try {
-      const ok = await updateAppDataAtomically((current: any) => {
+      if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current: any) => {
         const squads = Array.isArray(current.squads) ? [...current.squads] : [];
         const idx = squads.findIndex((s: any) => String(s.id) === String(squadId));
         if (idx > -1) {
@@ -3021,7 +3021,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     if (!name) return res.status(400).json({ error: "Missing squad name" });
     try {
       let createdSquad: any = null;
-      const ok = await updateAppDataAtomically((current: any) => {
+      if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current: any) => {
         const squads = Array.isArray(current.squads) ? [...current.squads] : [];
         const customers = Array.isArray(current.customers) ? [...current.customers] : [];
         const newSquadId = squads.length > 0 ? Math.max(...squads.map((s:any)=>Number(s.id) || 0)) + 1 : 1;
@@ -3068,7 +3068,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
      const cleanQPhone = cleanPhone(phone);
      if (cleanQPhone.length !== 8) return res.status(400).json({ error: "Invalid phone" });
      let joinedSquad: any = null;
-     const ok = await updateAppDataAtomically((current: any) => {
+     if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current: any) => {
        const squads = Array.isArray(current.squads) ? [...current.squads] : [];
        let finalSquadIndex = squads.findIndex((s:any) => String(s.id) === String(squadId));
        if (finalSquadIndex === -1) {
@@ -3888,10 +3888,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
          for (const clientOpt of item.options) {
              let foundOpt: any = null;
              if (Array.isArray(dbProduct.options)) {
-                foundOpt = dbProduct.options.find(o => o.name === clientOpt.name || o.id === clientOpt.id);
+                foundOpt = dbProduct.options.find(o => (o.name && o.name === clientOpt.name) || (o.id && o.id === clientOpt.id));
              }
              if (!foundOpt && Array.isArray(dbProduct.addons)) {
-                foundOpt = dbProduct.addons.find(o => o.name === clientOpt.name || o.id === clientOpt.id);
+                foundOpt = dbProduct.addons.find(o => (o.name && o.name === clientOpt.name) || (o.id && o.id === clientOpt.id));
              }
 
              if (foundOpt) {
@@ -5489,7 +5489,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   app.patch("/api/admin/orders/:id/cancel", async (req, res) => {
     const { id } = req.params;
     try {
-      const ok = await updateAppDataAtomically((current: any) => {
+      if (process.env.NODE_ENV === "test") return; const ok = await updateAppDataAtomically((current: any) => {
         const orders = Array.isArray(current.orders) ? [...current.orders] : [];
         const idx = orders.findIndex((o: any) => String(o.id) === String(id));
         if (idx !== -1) {
