@@ -1,3 +1,4 @@
+import { getFirestore } from 'firebase-admin/firestore';
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import request from 'supertest';
 import { app, startServer } from '../../server';
@@ -41,7 +42,6 @@ vi.mock('firebase/firestore', async (importOriginal) => {
 });
 
 // Mock the getAppDataForKeys explicitly to prevent adminDb calls.
-// Actually since adminDb is mocked, it shouldn't crash if we mock getAdminFirestore.
 vi.mock('firebase-admin/firestore', () => {
     return {
         getFirestore: vi.fn().mockReturnValue({
@@ -94,13 +94,7 @@ describe('Customer Ordering Application Audit', () => {
         const res = await request(app).post('/api/admin/promocodes')
           .set('Authorization', 'Bearer admin-token')
           .send({ code: 'TEST', type: 'percentage', value: 10 });
-
-        if (res.request.url.includes('/api/admin/promocodes')) {
-            expect(res.status).toBe(200);
-        } else {
-            expect(res.status).toBe(201);
-        }
-
+        expect(res.status).toBe(200);
       });
   });
 
@@ -157,13 +151,7 @@ describe('Customer Ordering Application Audit', () => {
               }]),
               total: 1 // Manipulated client total
            });
-
-        if (res.request.url.includes('/api/admin/promocodes')) {
-            expect(res.status).toBe(200);
-        } else {
-            expect(res.status).toBe(201);
-        }
-
+         expect(res.status).toBe(201);
          // Expect server recalculated: 10 (base) + 5 (addon) = 15
          expect(res.body.total).toBe(15);
       });
@@ -180,25 +168,26 @@ describe('Customer Ordering Application Audit', () => {
               }]),
               deliveryFee: 100 // Manipulated delivery fee
            });
-
-        if (res.request.url.includes('/api/admin/promocodes')) {
-            expect(res.status).toBe(200);
-        } else {
-            expect(res.status).toBe(201);
-        }
-
+         expect(res.status).toBe(201);
          // Database says fee is 0, so total is still 15
          expect(res.body.total).toBe(15);
       });
 
       it('should ignore order modifications if order is in a terminal state via payment webhook', async () => {
-         // The mock database has TERM_1 in 'ملغي' state.
-         // Let's send a successful webhook for TERM_1. It should return 200 (webhook accepted) but no update occurs.
-         // Since we can't easily assert the database wasn't updated without spying on the updateApp function,
-         // we'll rely on the server logic responding 200 without throwing errors when terminal states are intercepted.
+         const firestoreMock = getFirestore();
+         const transactionSpy = firestoreMock.runTransaction as any;
+         if (transactionSpy.mockClear) transactionSpy.mockClear();
+
          const validRes = await request(app).post('/api/webhook/upayments')
            .send({ status: 'SUCCESS', order_id: 'TERM_1' });
          expect(validRes.status).toBe(200);
+         if (transactionSpy.mockClear) expect(transactionSpy).not.toHaveBeenCalled();
+
+         if (transactionSpy.mockClear) transactionSpy.mockClear();
+         const splitRes = await request(app).post('/api/webhook/upayments')
+           .send({ status: 'SUCCESS', order_id: 'TERM_1-S-SPLIT_1' });
+         expect(splitRes.status).toBe(200);
+         if (transactionSpy.mockClear) expect(transactionSpy).not.toHaveBeenCalled();
       });
   });
 });
