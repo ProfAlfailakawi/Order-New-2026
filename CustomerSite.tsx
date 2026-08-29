@@ -1604,6 +1604,26 @@ export default function CustomerSite() {
   const [aiSearchLoading, setAiSearchLoading] = useState(false);
   const [aiMatchingIds, setAiMatchingIds] = useState<string[] | null>(null);
 
+  // "اطلب لي" — AI host that proposes a full priced basket. Suggestion only;
+  // nothing enters the cart until the customer confirms.
+  const [ofmOpen, setOfmOpen] = useState(false);
+  const [ofmLoading, setOfmLoading] = useState(false);
+  const [ofmPartySize, setOfmPartySize] = useState<string>("");
+  const [ofmBudget, setOfmBudget] = useState<string>("");
+  const [ofmPrefs, setOfmPrefs] = useState<string>("");
+  const [ofmResult, setOfmResult] = useState<any>(null);
+  const [ofmError, setOfmError] = useState<string | null>(null);
+
+  // Order Support — grounded Q&A over the customer's real order state.
+  const [supportOpen, setSupportOpen] = useState(false);
+  const [supportQuestion, setSupportQuestion] = useState("");
+  const [supportLoading, setSupportLoading] = useState(false);
+  const [supportAnswer, setSupportAnswer] = useState<string | null>(null);
+
+  // Smart upsell — at most one non-intrusive complement, dismissible.
+  const [upsell, setUpsell] = useState<any>(null);
+  const [upsellDismissed, setUpsellDismissed] = useState(false);
+
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
   const [promoError, setPromoError] = useState("");
@@ -4048,6 +4068,148 @@ export default function CustomerSite() {
     setCart(cart.filter((item) => item.id !== id));
   };
 
+  // "اطلب لي": ask the AI host to build a priced basket suggestion.
+  const runOrderForMe = async () => {
+    setOfmLoading(true);
+    setOfmError(null);
+    setOfmResult(null);
+    try {
+      const res = await fetch("/api/ai/order-for-me", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: (ofmPrefs || moodQuery || "").trim(),
+          partySize: ofmPartySize ? Number(ofmPartySize) : undefined,
+          budget: ofmBudget ? Number(ofmBudget) : undefined,
+          preferences: ofmPrefs.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setOfmError(data?.error || "تعذّر بناء الاقتراح، حاول مرة ثانية");
+        return;
+      }
+      if (!Array.isArray(data?.items) || data.items.length === 0) {
+        setOfmError("ما قدرت أبني اقتراح مناسب، جرب توضّح طلبك أكثر");
+        return;
+      }
+      setOfmResult(data);
+    } catch {
+      setOfmError("تعذّر الاتصال، تأكد من الإنترنت وحاول مرة ثانية");
+    } finally {
+      setOfmLoading(false);
+    }
+  };
+
+  // Confirmation step: merge the suggested lines into the cart in one update.
+  const confirmOrderForMe = () => {
+    if (!ofmResult?.items?.length) return;
+    triggerHapticAndSound("success");
+    const productById = new Map(products.map((p) => [String(p.id), p]));
+    setCart((prev) => {
+      const next = [...prev];
+      for (const line of ofmResult.items) {
+        const prod = productById.get(String(line.productId));
+        const qty = Math.max(1, Number(line.quantity) || 1);
+        const idx = next.findIndex(
+          (c) =>
+            c.productId === line.productId &&
+            !c.selectedOption &&
+            !c.note &&
+            (c.selectedExtras || []).length === 0,
+        );
+        if (idx > -1) {
+          next[idx] = { ...next[idx], quantity: next[idx].quantity + qty };
+        } else {
+          next.push({
+            id: Math.random().toString(36).substr(2, 9),
+            productId: String(line.productId),
+            name: line.name,
+            quantity: qty,
+            price: Number(line.unitPrice) || Number(prod?.price) || 0,
+            selectedExtras: [],
+            ...(prod ? { product: prod, image: (prod as any).image } : {}),
+          } as OrderItem);
+        }
+      }
+      return next;
+    });
+    setCartMoment(`تمام! ضفت ${ofmResult.items.length} أصناف لطلبك`);
+    setCartBouncing(true);
+    window.setTimeout(() => setCartBouncing(false), 520);
+    window.setTimeout(() => setCartMoment(null), 2200);
+    setOfmOpen(false);
+    setOfmResult(null);
+  };
+
+  // Order Support: answer grounded strictly on the customer's real orders.
+  const runOrderSupport = async () => {
+    if (!supportQuestion.trim()) return;
+    setSupportLoading(true);
+    setSupportAnswer(null);
+    try {
+      const res = await fetch("/api/ai/order-support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: customerPhone,
+          question: supportQuestion.trim(),
+        }),
+      });
+      const data = await res.json();
+      setSupportAnswer(
+        res.ok
+          ? data?.answer || "تعذّر الرد، حاول مرة ثانية"
+          : data?.error || "تعذّر الرد، حاول مرة ثانية",
+      );
+    } catch {
+      setSupportAnswer("تعذّر الاتصال، حاول مرة ثانية");
+    } finally {
+      setSupportLoading(false);
+    }
+  };
+
+  // Fetch a single non-intrusive upsell when the cart changes (debounced).
+  const cartSignature = cart.map((c) => `${c.productId}`).sort().join(",");
+  useEffect(() => {
+    if (upsellDismissed || isCheckout || cart.length === 0) {
+      setUpsell(null);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const productById = new Map(products.map((p) => [String(p.id), p]));
+        const cartProductIds = cart.map((c) => String(c.productId));
+        const cartCategories = Array.from(
+          new Set(
+            cart
+              .map((c) => productById.get(String(c.productId))?.category)
+              .filter(Boolean) as string[],
+          ),
+        );
+        const subtotal = cart.reduce(
+          (s, c) => s + (Number(c.price) || 0) * (Number(c.quantity) || 1),
+          0,
+        );
+        const res = await fetch("/api/ai/upsell", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cartProductIds, cartCategories, subtotal }),
+        });
+        const data = await res.json();
+        if (!cancelled) setUpsell(data?.suggestion || null);
+      } catch {
+        if (!cancelled) setUpsell(null);
+      }
+    }, 900);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartSignature, isCheckout, upsellDismissed]);
+
   useEffect(() => {
     const normalizeRegionName = (value: any) =>
       String(value || "")
@@ -5229,6 +5391,35 @@ export default function CustomerSite() {
                 />
               </div>
 
+              {/* "اطلب لي" — AI host entry point, folded into the search card */}
+              <button
+                type="button"
+                onClick={() => {
+                  setOfmPrefs(moodQuery.trim());
+                  setOfmError(null);
+                  setOfmResult(null);
+                  setOfmOpen(true);
+                }}
+                className="flex items-center justify-center gap-2 w-full rounded-2xl bg-gradient-to-r from-brand to-accent text-white text-sm font-extrabold py-2.5 active:scale-[0.98] transition-transform"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>اطلب لي — خلّي المضيف يرتّب طلبك</span>
+              </button>
+
+              {customerPhone && customerPhone.length >= 8 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSupportAnswer(null);
+                    setSupportQuestion("");
+                    setSupportOpen(true);
+                  }}
+                  className="text-xs font-bold text-stone-400 hover:text-brand transition-colors py-0.5"
+                >
+                  عندك سؤال عن طلبك؟ اسأل المساعد
+                </button>
+              )}
+
               {aiSearchLoading && (
                 <div className="flex items-center justify-center gap-1.5 text-[#a88241] text-xs font-extrabold py-0.5 animate-pulse select-none">
                   <Sparkles className="w-3.5 h-3.5" />
@@ -5557,6 +5748,168 @@ export default function CustomerSite() {
               onClose={() => setSelectedProduct(null)}
               onAdd={addToCart}
             />
+          )}
+        </AnimatePresence>
+
+        {/* "اطلب لي" host sheet — suggestion + confirmation before any cart change */}
+        <AnimatePresence>
+          {ofmOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
+              onClick={(e) => {
+                if (e.target === e.currentTarget && !ofmLoading) setOfmOpen(false);
+              }}
+            >
+              <motion.div
+                initial={{ y: 40, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 40, opacity: 0 }}
+                dir="rtl"
+                className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[88vh] overflow-y-auto"
+              >
+                <div className="sticky top-0 bg-white/95 backdrop-blur px-5 py-4 flex items-center justify-between border-b border-stone-100">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-accent" />
+                    <h3 className="font-extrabold text-brand text-base">اطلب لي</h3>
+                  </div>
+                  <button
+                    onClick={() => !ofmLoading && setOfmOpen(false)}
+                    className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 font-bold"
+                    aria-label="إغلاق"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="p-5 space-y-4">
+                  {!ofmResult && (
+                    <>
+                      <p className="text-sm text-stone-500 font-medium leading-relaxed">
+                        قلّي كم شخص وميزانيتك وشنو تحبون، وأنا أرتّب لك اقتراح سلة كامل بالسعر — وتقدر تعدّله قبل ما يدخل طلبك.
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-bold text-stone-500 mb-1 block">عدد الأشخاص</label>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            min={1}
+                            value={ofmPartySize}
+                            onChange={(e) => setOfmPartySize(e.target.value)}
+                            placeholder="مثال: ٦"
+                            className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm font-bold text-brand outline-none focus:border-accent"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-stone-500 mb-1 block">الميزانية (د.ك)</label>
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            min={0}
+                            value={ofmBudget}
+                            onChange={(e) => setOfmBudget(e.target.value)}
+                            placeholder="اختياري"
+                            className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm font-bold text-brand outline-none focus:border-accent"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-stone-500 mb-1 block">تفضيلات (اختياري)</label>
+                        <textarea
+                          value={ofmPrefs}
+                          onChange={(e) => setOfmPrefs(e.target.value)}
+                          rows={2}
+                          placeholder="مثال: بدون عيش، شي حار، وتحلية للعيال"
+                          className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm font-bold text-brand outline-none focus:border-accent resize-none"
+                        />
+                      </div>
+                      {ofmError && (
+                        <p className="text-xs font-bold text-red-500 text-center">{ofmError}</p>
+                      )}
+                      <button
+                        onClick={runOrderForMe}
+                        disabled={ofmLoading}
+                        className="w-full rounded-2xl bg-gradient-to-r from-brand to-accent text-white font-extrabold py-3 disabled:opacity-60 flex items-center justify-center gap-2"
+                      >
+                        {ofmLoading ? (
+                          <>
+                            <Sparkles className="w-4 h-4 animate-[spin_3s_linear_infinite]" />
+                            <span>المضيف يرتّب طلبك...</span>
+                          </>
+                        ) : (
+                          <span>رتّب لي الطلب</span>
+                        )}
+                      </button>
+                    </>
+                  )}
+
+                  {ofmResult && (
+                    <>
+                      {ofmResult.message && (
+                        <div className="bg-brand/5 rounded-xl p-3">
+                          <p className="text-sm font-bold text-brand leading-relaxed">{ofmResult.message}</p>
+                        </div>
+                      )}
+                      <div className="space-y-2">
+                        {ofmResult.items.map((line: any, i: number) => (
+                          <div key={i} className="flex items-start justify-between gap-3 bg-stone-50 rounded-xl px-3 py-2.5">
+                            <div className="flex-1">
+                              <p className="text-sm font-extrabold text-brand">
+                                {line.quantity}× {line.name}
+                              </p>
+                              {line.reason && (
+                                <p className="text-xs text-stone-500 font-medium mt-0.5">{line.reason}</p>
+                              )}
+                            </div>
+                            <span className="text-sm font-extrabold text-accent whitespace-nowrap">
+                              {Number(line.lineTotal).toFixed(3)} د.ك
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      {Array.isArray(ofmResult.assumptions) && ofmResult.assumptions.length > 0 && (
+                        <ul className="text-xs text-stone-400 font-medium list-disc pr-4 space-y-0.5">
+                          {ofmResult.assumptions.map((a: string, i: number) => (
+                            <li key={i}>{a}</li>
+                          ))}
+                        </ul>
+                      )}
+                      <div className="flex items-center justify-between border-t border-stone-100 pt-3">
+                        <span className="text-sm font-bold text-stone-500">الإجمالي التقديري</span>
+                        <span className="text-lg font-extrabold text-brand">
+                          {Number(ofmResult.subtotal).toFixed(3)} د.ك
+                        </span>
+                      </div>
+                      {!ofmResult.withinBudget && ofmBudget && (
+                        <p className="text-xs font-bold text-amber-600 text-center">
+                          الاقتراح أعلى شوي من ميزانيتك — تقدر تعدّل بعد الإضافة.
+                        </p>
+                      )}
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={() => {
+                            setOfmResult(null);
+                            setOfmError(null);
+                          }}
+                          className="rounded-2xl border border-stone-200 text-stone-600 font-extrabold py-3"
+                        >
+                          عدّل الطلب
+                        </button>
+                        <button
+                          onClick={confirmOrderForMe}
+                          className="rounded-2xl bg-gradient-to-r from-brand to-accent text-white font-extrabold py-3"
+                        >
+                          أضف الكل للسلة
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
           )}
         </AnimatePresence>
 
@@ -6086,6 +6439,121 @@ export default function CustomerSite() {
             >
               <Check className="w-4 h-4" />
               <strong>{cartMoment}</strong>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Order Support sheet — grounded on the customer's real orders */}
+        <AnimatePresence>
+          {supportOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
+              onClick={(e) => {
+                if (e.target === e.currentTarget && !supportLoading) setSupportOpen(false);
+              }}
+            >
+              <motion.div
+                initial={{ y: 40, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 40, opacity: 0 }}
+                dir="rtl"
+                className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="font-extrabold text-brand text-base">مساعد الطلبات</h3>
+                  <button
+                    onClick={() => !supportLoading && setSupportOpen(false)}
+                    className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 font-bold"
+                    aria-label="إغلاق"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <p className="text-xs text-stone-400 font-medium">
+                  أجاوبك من حالة طلبك الفعلية فقط — وين وصل، الحالة، الإجمالي.
+                </p>
+                <textarea
+                  value={supportQuestion}
+                  onChange={(e) => setSupportQuestion(e.target.value)}
+                  rows={2}
+                  placeholder="مثال: وين وصل طلبي؟"
+                  className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm font-bold text-brand outline-none focus:border-accent resize-none"
+                />
+                {supportAnswer && (
+                  <div className="bg-brand/5 rounded-xl p-3">
+                    <p className="text-sm font-bold text-brand leading-relaxed">{supportAnswer}</p>
+                  </div>
+                )}
+                <button
+                  onClick={runOrderSupport}
+                  disabled={supportLoading || !supportQuestion.trim()}
+                  className="w-full rounded-2xl bg-gradient-to-r from-brand to-accent text-white font-extrabold py-3 disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {supportLoading ? (
+                    <>
+                      <Sparkles className="w-4 h-4 animate-[spin_3s_linear_infinite]" />
+                      <span>أتحقّق من طلبك...</span>
+                    </>
+                  ) : (
+                    <span>اسأل</span>
+                  )}
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Smart upsell — non-intrusive, dismissible */}
+        <AnimatePresence>
+          {upsell && cart.length > 0 && !isCheckout && !orderSuccess && !selectedProduct && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              dir="rtl"
+              className="fixed bottom-24 inset-x-0 z-[55] px-4 flex justify-center pointer-events-none"
+            >
+              <div className="pointer-events-auto bg-white shadow-lg border border-stone-100 rounded-2xl px-3 py-2 flex items-center gap-2 max-w-md w-full">
+                <Sparkles className="w-4 h-4 text-accent shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-extrabold text-brand truncate">{upsell.name}</p>
+                  <p className="text-[11px] text-stone-400 font-medium truncate">{upsell.reason}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const prod = products.find((p) => String(p.id) === String(upsell.productId));
+                    if (prod) {
+                      addToCart({
+                        id: Math.random().toString(36).substr(2, 9),
+                        productId: String(prod.id),
+                        name: prod.name,
+                        quantity: 1,
+                        price: Number(prod.price) || 0,
+                        selectedExtras: [],
+                        product: prod,
+                        image: (prod as any).image,
+                      } as OrderItem);
+                    }
+                    setUpsell(null);
+                  }}
+                  className="text-xs font-extrabold text-white bg-gradient-to-r from-brand to-accent rounded-xl px-3 py-1.5 shrink-0"
+                >
+                  أضف
+                </button>
+                <button
+                  onClick={() => {
+                    setUpsell(null);
+                    setUpsellDismissed(true);
+                  }}
+                  className="text-stone-300 font-bold px-1 shrink-0"
+                  aria-label="تجاهل"
+                >
+                  ✕
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
