@@ -82,7 +82,7 @@ describe('Customer Ordering Application Audit', () => {
       });
 
       it('should reject valid ordinary user tokens without admin claims', async () => {
-        admin.auth().verifyIdToken.mockResolvedValueOnce({ uid: 'user123', admin: false, role: 'user' });
+        (admin.auth().verifyIdToken as any).mockResolvedValueOnce({ uid: 'user123', admin: false, role: 'user' });
         const res = await request(app).post('/api/admin/promocodes')
           .set('Authorization', 'Bearer user-token')
           .send({ code: 'TEST', discount: 10 });
@@ -90,7 +90,7 @@ describe('Customer Ordering Application Audit', () => {
       });
 
       it('should allow valid admin tokens', async () => {
-        admin.auth().verifyIdToken.mockResolvedValueOnce({ uid: 'admin123', admin: true, role: 'admin' });
+        (admin.auth().verifyIdToken as any).mockResolvedValueOnce({ uid: 'admin123', admin: true, role: 'admin' });
         const res = await request(app).post('/api/admin/promocodes')
           .set('Authorization', 'Bearer admin-token')
           .send({ code: 'TEST', type: 'percentage', value: 10 });
