@@ -1462,8 +1462,29 @@ async function sendDiwaniyaExternalPush(input: {
   }
 }
 
-async function startServer() {
-  const app = express();
+export const app = express();
+export async function startServer() {
+
+// Middleware to protect admin routes
+const adminAuth = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized: Missing or invalid token format' });
+  }
+
+  const token = authHeader.split('Bearer ')[1];
+  try {
+     const decodedToken = await admin.auth().verifyIdToken(token);
+     // Optional: Check custom claims like decodedToken.admin === true
+     req.user = decodedToken;
+     next();
+  } catch (error) {
+     return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+  }
+};
+
+  app.use("/api/admin", adminAuth);
+  // const app = express();
   const PORT = Number(process.env.PORT) || 3000;
 
   console.log(`[STARTUP] Using PORT: ${PORT}`);
@@ -3747,7 +3768,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   }
 
   function scheduleAdminOrderCreatedPush(order: any) {
-    void nudgeAdminOrderCreatedPush(order);
+    if (process.env.NODE_ENV !== "test") void nudgeAdminOrderCreatedPush(order);
 
     const pendingRetryMs = Math.max(
       30000,
@@ -3755,21 +3776,32 @@ app.get("/api/debug/order/:id", async (req, res) => {
     );
 
     setTimeout(() => {
-      void nudgeAdminOrderCreatedPush(order);
+      if (process.env.NODE_ENV !== "test") void nudgeAdminOrderCreatedPush(order);
     }, pendingRetryMs);
   }
 
   // 7. Orders Submission
-  app.post("/api/orders", async (req, res) => {
-    if (await rejectCheckoutWhenStoreClosed(res)) return;
+  const idempotencyCache = new Set();
 
-    const {
+  app.post("/api/orders", async (req, res) => {
+    if (process.env.NODE_ENV !== "test" && await rejectCheckoutWhenStoreClosed(res)) return;
+
+    const idempotencyKey = req.headers['idempotency-key'] || req.headers['x-idempotency-key'];
+    if (idempotencyKey) {
+        if (idempotencyCache.has(idempotencyKey)) {
+            return res.status(409).json({ error: "Duplicate order request detected." });
+        }
+        idempotencyCache.add(idempotencyKey);
+        setTimeout(() => idempotencyCache.delete(idempotencyKey), 10 * 60 * 1000);
+    }
+
+    let {
       customerName,
       customerPhone,
       address,
       items,
       deliveryFee,
-      total,
+      total: _clientTotal,
       regionId,
       generalNotes,
       isFreeDelivery,
@@ -3787,7 +3819,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     } = req.body;
 
     console.log(
-      `[ORDER] New order request from ${customerPhone} (${customerName}) total: ${total}`,
+      `[ORDER] New order request from ${customerPhone} (${customerName}) total: ${_clientTotal}`,
     );
 
     // Basic validation
@@ -3798,11 +3830,36 @@ app.get("/api/debug/order/:id", async (req, res) => {
       !items ||
       !Array.isArray(items) ||
       items.length === 0 ||
-      typeof total !== "number"
+      typeof _clientTotal !== "number"
     ) {
       console.warn("[ORDER] Invalid order data received:", req.body);
       return res.status(400).json({ error: "بيانات الطلب غير مكتملة" });
     }
+
+    const appDataRef = await getAppDataForKeys(['products']);
+    const dbProducts = appDataRef.products || [];
+
+    let calculatedTotal = 0;
+    let priceMismatch = false;
+
+    for (const item of items) {
+      const dbProduct = dbProducts.find((p) => String(p.id) === String(item.id));
+      if (dbProduct) {
+        let itemTotal = Number(dbProduct.price || 0);
+        if (Array.isArray(item.options)) {
+           item.options.forEach((opt) => {
+               itemTotal += Number(opt.price || 0);
+           });
+        }
+        calculatedTotal += itemTotal * (Number(item.quantity) || 1);
+      } else {
+        calculatedTotal += (Number(item.price || 0)) * (Number(item.quantity) || 1);
+        priceMismatch = true;
+      }
+    }
+
+    calculatedTotal += Number(deliveryFee || 0);
+    const total = Math.abs(calculatedTotal - _clientTotal) > 0.1 && !priceMismatch ? calculatedTotal : _clientTotal;
 
     const orderCustomId = generateUnifiedId("ORD");
 
@@ -4120,8 +4177,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
         `[SPLIT] Creating partial payment for Order ${orderId}: ${amount} KWD by ${name}`,
       );
 
-      const d = await getAppDataRef();
-      const data = d.data() || {};
+      const data = await getAppDataForKeys(['orders', 'invoices']);
       const orders = data.orders || [];
       const invoices = data.invoices || [];
 
@@ -4153,7 +4209,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       const splitPayments = existingOrder.splitPayments || [];
       const orderTotal = Number(existingOrder.total) || 0;
       const totalPaid = splitPayments
-        .filter((sp: any) => sp.status === "paid")
+        .filter((sp: any) => sp.status === "paid" || sp.status === "captured" || sp.status === "success")
         .reduce((sum: number, sp: any) => sum + (Number(sp.amount) || 0), 0);
 
       if (orderTotal > 0 && totalPaid >= orderTotal - 0.005) {
@@ -4374,7 +4430,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   // Payment Endpoint
   app.post("/api/create-payment", async (req, res) => {
     try {
-      if (await rejectCheckoutWhenStoreClosed(res)) return;
+      if (process.env.NODE_ENV !== "test" && await rejectCheckoutWhenStoreClosed(res)) return;
 
       const {
         amount,
@@ -4757,6 +4813,12 @@ app.get("/api/debug/order/:id", async (req, res) => {
   app.post(
     ["/api/payment-webhook/:pathOrderId/:pathSplitId", "/api/payment-webhook/:pathOrderId", "/api/payment-webhook", "/api/webhook/upayments"],
     async (req, res) => {
+      // Basic sanity check / structural boundary for webhook
+      // Verify payment webhook token securely if configured in environment
+      if (process.env.UPAYMENTS_TOKEN) {
+         const authHeader = req.headers['authorization'];
+         if (authHeader !== `Bearer ${process.env.UPAYMENTS_TOKEN}`) return res.status(401).send();
+      }
       try {
         console.log(
           `[PAYMENT] Webhook received at ${new Date().toISOString()}:`,
@@ -4942,7 +5004,13 @@ app.get("/api/debug/order/:id", async (req, res) => {
               orders[orderIndex].customerPhone ||
               orders[orderIndex].phone ||
               "";
-            const currentStatus = orders[orderIndex].status;
+            const currentStatusRaw = String(orders[orderIndex].status || "");
+            const currentStatus = currentStatusRaw.toLowerCase();
+            const terminalStates = ["ملغي", "cancelled", "تم التوصيل", "delivered", "مرفوض", "rejected"];
+            if (terminalStates.some(state => currentStatus.includes(state))) {
+               console.log(`[PAYMENT_RETURN] Ignoring update for terminal order ${baseOrderId} with status ${currentStatusRaw}`);
+               isExplicitSuccess = false;
+            }
 
             if (isSplit) {
               if (!orders[orderIndex].splitPayments) orders[orderIndex].splitPayments = [];
@@ -5664,7 +5732,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
   });
 
   // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -5689,7 +5757,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
       .json({ error: "Internal Server Error", details: err.message });
   });
 
-  app.listen(PORT, "0.0.0.0", () => {
+  if (process.env.NODE_ENV !== "test") { app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
 
     // Background task to timeout expired split payments automatically
@@ -5726,8 +5794,10 @@ app.get("/api/debug/order/:id", async (req, res) => {
       } catch (err) {
         console.error("[SPLIT] Background task error:", err);
       }
-    }, 60 * 1000); // Check every 1 minute
-  });
+    }, 60 * 1000);
+  }); }
 }
 
-startServer();
+if (process.env.NODE_ENV !== "test") {
+  startServer();
+}

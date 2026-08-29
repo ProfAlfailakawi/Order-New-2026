@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect, useCallback } from "react";
 
 const GUIDANCE_STORAGE_PREFIX = "alturath_icon_guidance_v1_";
