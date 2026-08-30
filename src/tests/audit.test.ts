@@ -1,4 +1,3 @@
-import { getFirestore } from 'firebase-admin/firestore';
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import request from 'supertest';
 import { app, startServer } from '../../server';
@@ -29,7 +28,12 @@ vi.mock('firebase/firestore', async (importOriginal) => {
             data: () => ({
                 products: [{ id: "1", price: 10, options: [{ name: "Hack Addon", price: 5 }] }],
                 settings: { deliveryFee: 0 },
-                zones: []
+                zones: [],
+                orders: [
+                    { id: "TERM_1", status: "ملغي", total: 100, splitPayments: [{ id: "SPLIT_1", status: "pending", amount: 100, phone: "12345678" }] },
+                    { id: "TERM_2", status: "تم التوصيل", total: 100, splitPayments: [] },
+                    { id: "TERM_3", status: "مرفوض", total: 100, splitPayments: [] }
+                ]
             })
         }),
         getDocs: vi.fn().mockResolvedValue({ docs: [] }),
@@ -37,7 +41,8 @@ vi.mock('firebase/firestore', async (importOriginal) => {
         doc: vi.fn(),
         setDoc: vi.fn(),
         updateDoc: vi.fn(),
-        addDoc: vi.fn()
+        addDoc: vi.fn(),
+        runTransaction: vi.fn() // Add mock for runTransaction if used on client DB, wait client DB uses setDoc in updateAppDataAtomically usually!
     }
 });
 
@@ -174,20 +179,24 @@ describe('Customer Ordering Application Audit', () => {
       });
 
       it('should ignore order modifications if order is in a terminal state via payment webhook', async () => {
-         const firestoreMock = getFirestore();
-         const transactionSpy = firestoreMock.runTransaction as any;
-         if (transactionSpy.mockClear) transactionSpy.mockClear();
+         const firestoreMock = await import('firebase/firestore');
+         const setDocSpy = firestoreMock.setDoc as any;
 
-         const validRes = await request(app).post('/api/webhook/upayments')
-           .send({ status: 'SUCCESS', order_id: 'TERM_1' });
-         expect(validRes.status).toBe(200);
-         if (transactionSpy.mockClear) expect(transactionSpy).not.toHaveBeenCalled();
+         const terminalOrders = ['TERM_1', 'TERM_2', 'TERM_3'];
 
-         if (transactionSpy.mockClear) transactionSpy.mockClear();
+         for (const termId of terminalOrders) {
+             if (setDocSpy.mockClear) setDocSpy.mockClear();
+             const validRes = await request(app).post('/api/webhook/upayments')
+               .send({ status: 'SUCCESS', order_id: termId });
+             expect(validRes.status).toBe(200);
+             if (setDocSpy.mockClear) expect(setDocSpy).not.toHaveBeenCalled();
+         }
+
+         if (setDocSpy.mockClear) setDocSpy.mockClear();
          const splitRes = await request(app).post('/api/webhook/upayments')
            .send({ status: 'SUCCESS', order_id: 'TERM_1-S-SPLIT_1' });
          expect(splitRes.status).toBe(200);
-         if (transactionSpy.mockClear) expect(transactionSpy).not.toHaveBeenCalled();
+         if (setDocSpy.mockClear) expect(setDocSpy).not.toHaveBeenCalled();
       });
   });
 });
