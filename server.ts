@@ -897,6 +897,13 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
       let sId = splitId;
       let isSplit = !!sId;
       
+      if (baseId.includes("-S-")) {
+        isSplit = true;
+        const parts = baseId.split("-S-");
+        baseId = parts[0];
+        if (!sId) sId = parts[1];
+      }
+
       const oIdxTermCheck = orders.findIndex((o: any) => paymentRecordMatches(o, baseId));
       if (oIdxTermCheck !== -1) {
          const currentStatusRaw = String(orders[oIdxTermCheck].status || "").toLowerCase();
@@ -905,14 +912,6 @@ async function handlePaymentUpdate(orderId: string, splitId: string, isSuccess: 
              console.log(`[PAYMENT_UPDATE] Ignoring update (including split) for terminal order ${baseId}`);
              return null;
          }
-      }
-
-
-      if (baseId.includes("-S-")) {
-        isSplit = true;
-        const parts = baseId.split("-S-");
-        baseId = parts[0];
-        if (!sId) sId = parts[1];
       }
 
       let updated = false;
