@@ -42,7 +42,29 @@ vi.mock('firebase/firestore', async (importOriginal) => {
         setDoc: vi.fn(),
         updateDoc: vi.fn(),
         addDoc: vi.fn(),
-        runTransaction: vi.fn() // Add mock for runTransaction if used on client DB, wait client DB uses setDoc in updateAppDataAtomically usually!
+        runTransaction: vi.fn().mockImplementation(async (db, callback) => {
+                const transaction = {
+                    get: vi.fn().mockResolvedValue({
+                        exists: () => true,
+                        data: () => ({
+                           products: [{ id: "1", price: 10, options: [{ name: "Hack Addon", price: 5 }] }],
+                           settings: { deliveryFee: 0 },
+                           zones: [],
+                           orders: [
+                              { id: "TERM_1", status: "ملغي", total: 100, splitPayments: [{ id: "SPLIT_1", status: "pending", amount: 100, phone: "12345678" }] },
+                              { id: "TERM_2", status: "تم التوصيل", total: 100, splitPayments: [] },
+                              { id: "TERM_3", status: "مرفوض", total: 100, splitPayments: [] },
+                              { id: "TERM_4", status: "cancelled", total: 100, splitPayments: [] },
+                              { id: "TERM_5", status: "delivered", total: 100, splitPayments: [] },
+                              { id: "TERM_6", status: "rejected", total: 100, splitPayments: [] }
+                           ]
+                        })
+                    }),
+                    set: vi.fn(),
+                    update: vi.fn()
+                };
+                return callback(transaction);
+            }) // Add mock for runTransaction if used on client DB, wait client DB uses setDoc in updateAppDataAtomically usually!
     }
 });
 
@@ -53,7 +75,7 @@ vi.mock('firebase-admin/firestore', () => {
             collection: vi.fn().mockReturnThis(),
             doc: vi.fn().mockReturnThis(),
             get: vi.fn().mockResolvedValue({
-                exists: true,
+                exists: () => true,
                 data: () => ({
                    products: [{ id: "1", price: 10, options: [{ name: "Hack Addon", price: 5 }] }],
                    settings: { deliveryFee: 0 },
@@ -63,7 +85,29 @@ vi.mock('firebase-admin/firestore', () => {
                    ]
                 })
             }),
-            runTransaction: vi.fn()
+            runTransaction: vi.fn().mockImplementation(async (callback) => {
+                const transaction = {
+                    get: vi.fn().mockResolvedValue({
+                        exists: () => true,
+                        data: () => ({
+                           products: [{ id: "1", price: 10, options: [{ name: "Hack Addon", price: 5 }] }],
+                           settings: { deliveryFee: 0 },
+                           zones: [],
+                           orders: [
+                              { id: "TERM_1", status: "ملغي", total: 100, splitPayments: [{ id: "SPLIT_1", status: "pending", amount: 100, phone: "12345678" }] },
+                              { id: "TERM_2", status: "تم التوصيل", total: 100, splitPayments: [] },
+                              { id: "TERM_3", status: "مرفوض", total: 100, splitPayments: [] },
+                              { id: "TERM_4", status: "cancelled", total: 100, splitPayments: [] },
+                              { id: "TERM_5", status: "delivered", total: 100, splitPayments: [] },
+                              { id: "TERM_6", status: "rejected", total: 100, splitPayments: [] }
+                           ]
+                        })
+                    }),
+                    set: vi.fn(),
+                    update: vi.fn()
+                };
+                return callback(transaction);
+            })
         })
     }
 });
@@ -179,24 +223,44 @@ describe('Customer Ordering Application Audit', () => {
       });
 
       it('should ignore order modifications if order is in a terminal state via payment webhook', async () => {
-         const firestoreMock = await import('firebase/firestore');
-         const setDocSpy = firestoreMock.setDoc as any;
+         // We can extract the mock from where it was defined, or use the actual mock function imported if we mocked it.
+         // Let's import it directly:
+         const { getFirestore } = await import('firebase-admin/firestore');
+         const adminFirestoreMock = getFirestore();
 
-         const terminalOrders = ['TERM_1', 'TERM_2', 'TERM_3'];
+         const terminalOrders = ['TERM_1', 'TERM_2', 'TERM_3', 'TERM_4', 'TERM_5', 'TERM_6'];
 
          for (const termId of terminalOrders) {
-             if (setDocSpy.mockClear) setDocSpy.mockClear();
+             const firestoreMock = await import('firebase/firestore');
+             (firestoreMock.runTransaction as any).mockClear();
+
              const validRes = await request(app).post('/api/webhook/upayments')
                .send({ status: 'SUCCESS', order_id: termId });
+
              expect(validRes.status).toBe(200);
-             if (setDocSpy.mockClear) expect(setDocSpy).not.toHaveBeenCalled();
+             // Ensure runTransaction was called and executed the callback
+             expect(firestoreMock.runTransaction).toHaveBeenCalled();
+
+             const cb = (firestoreMock.runTransaction as any).mock.calls[0][1];
+             const fakeTx = { get: vi.fn().mockResolvedValue({ exists: () => true, data: () => ({ orders: [{ id: termId, status: termId.startsWith('TERM_1') ? 'ملغي' : 'مرفوض', total: 100, splitPayments: [] }] }) }), set: vi.fn(), update: vi.fn() };
+             await cb(fakeTx);
+             expect(fakeTx.set).not.toHaveBeenCalled();
+             expect(fakeTx.update).not.toHaveBeenCalled();
          }
 
-         if (setDocSpy.mockClear) setDocSpy.mockClear();
+         // Test split payment update
+         const firestoreMock = await import('firebase/firestore');
+         (firestoreMock.runTransaction as any).mockClear();
          const splitRes = await request(app).post('/api/webhook/upayments')
            .send({ status: 'SUCCESS', order_id: 'TERM_1-S-SPLIT_1' });
          expect(splitRes.status).toBe(200);
-         if (setDocSpy.mockClear) expect(setDocSpy).not.toHaveBeenCalled();
+         expect(firestoreMock.runTransaction).toHaveBeenCalled();
+
+         const cb = (firestoreMock.runTransaction as any).mock.calls[0][1];
+         const fakeTx = { get: vi.fn().mockResolvedValue({ exists: () => true, data: () => ({ orders: [{ id: 'TERM_1', status: 'ملغي', total: 100, splitPayments: [{ id: 'SPLIT_1', status: 'pending', amount: 100, phone: '12345678' }] }] }) }), set: vi.fn(), update: vi.fn() };
+         await cb(fakeTx);
+         expect(fakeTx.set).not.toHaveBeenCalled();
+         expect(fakeTx.update).not.toHaveBeenCalled();
       });
   });
 });
