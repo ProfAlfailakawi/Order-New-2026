@@ -1583,7 +1583,7 @@ const adminAuth = async (req, res, next) => {
   // API Routes
 
   // 1. Track Orders
-  app.get("/api/appdata", async (req, res) => {
+  app.get("/api/appdata", adminAuth, async (req, res) => {
   try {
     const d = await getAppDataRef();
     return await sendCompressedReadOnlyJson(req, res, d.exists() ? d.data() : {});
@@ -1592,7 +1592,7 @@ const adminAuth = async (req, res, next) => {
   }
 });
 
-app.patch("/api/appdata", async (req, res) => {
+app.patch("/api/appdata", adminAuth, async (req, res) => {
   try {
     await updateAppData(req.body);
     res.json({ success: true });
@@ -1601,7 +1601,7 @@ app.patch("/api/appdata", async (req, res) => {
   }
 });
 
-app.get("/api/debug/order/:id", async (req, res) => {
+app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
     try {
       const dbData = await getAppDataRef();
       const data = dbData.exists() ? dbData.data() : {};
@@ -5632,7 +5632,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     }
   });
 
-  app.get("/api/debug-collections", async (req, res) => {
+  app.get("/api/debug-collections", adminAuth, async (req, res) => {
     try {
       const q = await getDocs(collection(db, "appData"));
       const docs = q.docs.map(d => ({ id: d.id, data: d.data() }));
@@ -5642,7 +5642,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     }
   });
 
-  app.get("/api/debug-docs", async (req, res) => {
+  app.get("/api/debug-docs", adminAuth, async (req, res) => {
     try {
       const data = await getAppData();
       res.json(data);
@@ -5651,7 +5651,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     }
   });
 
-  app.get("/api/debug-search", async (req, res) => {
+  app.get("/api/debug-search", adminAuth, async (req, res) => {
     try {
       const d = await getAppDataRef();
       const data = d.data() || {};
@@ -5681,7 +5681,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     }
   });
 
-  app.get("/api/debug-squads", async (req, res) => {
+  app.get("/api/debug-squads", adminAuth, async (req, res) => {
     try {
       const d = await getAppDataRef();
       const data = d.data() || {};
@@ -5696,7 +5696,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     }
   });
 
-  app.get("/api/debug-loyalty", async (req, res) => {
+  app.get("/api/debug-loyalty", adminAuth, async (req, res) => {
     try {
       const d = await getAppDataRef();
       const data = d.data() || {};
@@ -5706,7 +5706,7 @@ app.get("/api/debug/order/:id", async (req, res) => {
     }
   });
 
-  app.get("/api/debug", async (req, res) => {
+  app.get("/api/debug", adminAuth, async (req, res) => {
     try {
       const d = await getAppDataRef();
       const data = d.data() || {};
