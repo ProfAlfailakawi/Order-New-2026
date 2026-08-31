@@ -117,7 +117,7 @@ try {
     ? admin.app()
     : admin.initializeApp({ projectId: firebaseConfig.projectId });
   adminMessaging = getMessaging(adminApp);
-  adminDb = process.env.NODE_ENV === "test" ? null : getAdminFirestore(adminApp, firebaseConfig.firestoreDatabaseId || "(default)");
+  adminDb = (process.env.NODE_ENV === "test" || process.env.VITEST === "true") ? null : getAdminFirestore(adminApp, firebaseConfig.firestoreDatabaseId || "(default)");
 } catch (error: any) {
   console.warn("[DIWANIYA_PUSH] Firebase Admin messaging disabled:", error?.message || String(error));
 }
@@ -1473,7 +1473,10 @@ async function sendDiwaniyaExternalPush(input: {
 }
 
 export const app = express();
+let serverStarted = false;
 export async function startServer() {
+  if (serverStarted) return app;
+  serverStarted = true;
 
 // Middleware to protect admin routes
 const adminAuth = async (req, res, next) => {
@@ -5777,14 +5780,16 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
     next(); // Pass to Vite/React if not a bot or order not found
   });
 
+  const isTest = process.env.NODE_ENV === "test" || process.env.VITEST === "true";
+
   // Vite middleware for development
-  if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") {
+  if (process.env.NODE_ENV !== "production" && !isTest) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
-  } else {
+  } else if (!isTest) {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath, { index: false }));
     app.get("*", (req, res) => {
@@ -5803,47 +5808,49 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
       .json({ error: "Internal Server Error", details: err.message });
   });
 
-  if (process.env.NODE_ENV !== "test") { app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on port ${PORT}`);
+  if (!isTest) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on port ${PORT}`);
 
-    // Background task to timeout expired split payments automatically
-    setInterval(async () => {
-      try {
-        const d = await getAppDataRef();
-        const appData = d.data() || {};
-        const allOrders = appData.orders || [];
-        const now = Date.now();
-        const TIMEOUT = 120 * 60 * 1000;
-        let expiredIds: string[] = [];
+      // Background task to timeout expired split payments automatically
+      setInterval(async () => {
+        try {
+          const d = await getAppDataRef();
+          const appData = d.data() || {};
+          const allOrders = appData.orders || [];
+          const now = Date.now();
+          const TIMEOUT = 120 * 60 * 1000;
+          let expiredIds: string[] = [];
 
-        allOrders.forEach((o: any) => {
-          if (o.status === "قيد تجميع القطية" && o.createdAt) {
-            const created = new Date(o.createdAt).getTime();
-            if (now - created > TIMEOUT) {
-              expiredIds.push(o.id);
-            }
-          }
-        });
-
-        if (expiredIds.length > 0) {
-          console.log(`[SPLIT_BG] Expired: ${expiredIds.join(", ")}`);
-          await updateAppDataAtomically((current) => {
-            const updatedOrders = (current.orders || []).map((o: any) => {
-              if (expiredIds.includes(o.id) && o.status === "قيد تجميع القطية") {
-                 return { ...o, status: "ملغي - انتهى وقت القطية" };
+          allOrders.forEach((o: any) => {
+            if (o.status === "قيد تجميع القطية" && o.createdAt) {
+              const created = new Date(o.createdAt).getTime();
+              if (now - created > TIMEOUT) {
+                expiredIds.push(o.id);
               }
-              return o;
-            });
-            return { orders: updatedOrders };
+            }
           });
+
+          if (expiredIds.length > 0) {
+            console.log(`[SPLIT_BG] Expired: ${expiredIds.join(", ")}`);
+            await updateAppDataAtomically((current) => {
+              const updatedOrders = (current.orders || []).map((o: any) => {
+                if (expiredIds.includes(o.id) && o.status === "قيد تجميع القطية") {
+                   return { ...o, status: "ملغي - انتهى وقت القطية" };
+                }
+                return o;
+              });
+              return { orders: updatedOrders };
+            });
+          }
+        } catch (err) {
+          console.error("[SPLIT] Background task error:", err);
         }
-      } catch (err) {
-        console.error("[SPLIT] Background task error:", err);
-      }
-    }, 60 * 1000);
-  }); }
+      }, 60 * 1000);
+    });
+  }
 }
 
-if (process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV !== "test" && process.env.VITEST !== "true") {
   startServer();
 }
