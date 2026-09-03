@@ -5224,9 +5224,9 @@ export default function CustomerSite() {
                   {goldenHourTheme.name}
                 </span>
               </div>
-              <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[8px] sm:text-[9px] font-light text-stone-300 leading-[1.55]">
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-xs font-normal text-stone-500 leading-[1.55]">
                 <span>الاسم التجاري: {LEGAL_TRADE_NAME_AR}</span>
-                <span className="text-stone-200">•</span>
+                <span className="text-stone-400">•</span>
                 <span>رقم السجل التجاري: {COMMERCIAL_REGISTRATION_NUMBER}</span>
               </div>
             </div>
@@ -8293,12 +8293,12 @@ function ProductModal({
                   } catch (e) {}
                   setQuantity(Math.max(1, quantity - 1));
                 }}
-                className="p-4 sm:p-4 text-stone-400 hover:text-accent transition-colors shrink-0 active:scale-90"
+                className="p-2.5 sm:p-4 text-stone-400 hover:text-accent transition-colors shrink-0 active:scale-90"
                 aria-label="Decrease quantity"
               >
-                <Minus className="w-6 h-6" />
+                <Minus className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
-              <span className="w-10 sm:w-12 text-center font-bold text-xl text-brand shrink-0">
+              <span className="w-8 sm:w-12 text-center font-bold text-lg sm:text-xl text-brand shrink-0">
                 {quantity}
               </span>
               <button
@@ -8308,10 +8308,10 @@ function ProductModal({
                   } catch (e) {}
                   setQuantity(quantity + 1);
                 }}
-                className="p-4 sm:p-4 text-stone-400 hover:text-accent transition-colors shrink-0 active:scale-90"
+                className="p-2.5 sm:p-4 text-stone-400 hover:text-accent transition-colors shrink-0 active:scale-90"
                 aria-label="Increase quantity"
               >
-                <Plus className="w-6 h-6" />
+                <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
             <motion.button
@@ -8345,11 +8345,11 @@ function ProductModal({
                   e,
                 );
               }}
-              className="flex-grow bg-brand text-white p-5 sm:p-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all shadow-xl text-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-grow min-w-0 bg-brand text-white px-4 py-4 sm:p-6 rounded-2xl font-bold flex items-center justify-center gap-2 sm:gap-3 whitespace-nowrap transition-all shadow-xl text-lg sm:text-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>حطه بالسلة</span>
-              <span className="w-px h-6 bg-white/30"></span>
-              <span className="font-bold">
+              <span className="whitespace-nowrap">حطه بالسلة</span>
+              <span className="w-px h-6 bg-white/30 shrink-0"></span>
+              <span className="font-bold whitespace-nowrap">
                 {calculateItemTotalWithAddons({
                     id: "",
                     productId: product.id,
