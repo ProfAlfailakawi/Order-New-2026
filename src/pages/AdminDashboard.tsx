@@ -479,7 +479,7 @@ export default function AdminDashboard() {
         {/* Topbar */}
         <header className="sticky top-4 z-40 w-full max-w-[1600px] px-8 pt-4">
           <div className="glass-panel p-4 flex justify-between items-center rounded-[2rem] shadow-sm">
-            <div className="flex items-center gap-4 bg-white/60 px-6 py-3 rounded-2xl w-[400px] border border-stone-100 focus-within:border-accent/40 focus-within:bg-white transition-all group shadow-inner">
+            <div className="flex items-center gap-4 bg-white/60 px-6 py-3 rounded-2xl w-full max-w-[400px] min-w-0 border border-stone-100 focus-within:border-accent/40 focus-within:bg-white transition-all group shadow-inner">
               <Search className="w-5 h-5 text-stone-300 group-focus-within:text-accent" />
               <input 
                 type="text" 
@@ -554,7 +554,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Loyalty Distribution Summary */}
-              <div className="grid grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {LOYALTY_TIERS.map(tier => {
                   const count = customers.filter(c => getLoyaltyTier(getCustomerPoints(c.phone)).id === tier.id).length;
                   return (
