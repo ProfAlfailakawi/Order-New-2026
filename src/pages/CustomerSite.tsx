@@ -1059,6 +1059,7 @@ import {
   isCoverageRangeAddon,
 } from "../utils/priceCalculation";
 import { ZenSplashScreen } from "../components/ZenSplashScreen";
+import OrderWelcome from "../components/OrderWelcome";
 import { DynamicEnvironment } from "../components/DynamicEnvironment";
 import { redirectToPayment } from "../utils/redirect";
 import { buildWhatsAppInvoiceText, buildWhatsAppPaymentLinkText } from "../utils/invoiceShare";
@@ -4896,6 +4897,13 @@ export default function CustomerSite() {
           />
         )}
       </AnimatePresence>
+
+      {/* Light, one-screen welcome — shown once, never on payment return. */}
+      {!isLoading && (
+        <OrderWelcome
+          logo={settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO}
+        />
+      )}
 
       <AnimatePresence>
         {!isLoading && showAppetiteTheatre && (

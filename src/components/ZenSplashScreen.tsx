@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { DEFAULT_GLOBAL_LOGO } from "../constants";
 
 const SPLASH_LINES = [
@@ -18,6 +18,7 @@ interface ZenSplashScreenProps {
 }
 
 export const ZenSplashScreen: React.FC<ZenSplashScreenProps> = ({ logo }) => {
+  const reduce = useReducedMotion();
   const [line, setLine] = useState(SPLASH_LINES[0]);
 
   useEffect(() => {
@@ -37,8 +38,8 @@ export const ZenSplashScreen: React.FC<ZenSplashScreenProps> = ({ logo }) => {
       <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: "linear-gradient(135deg, #153b2a 10%, transparent 10%, transparent 50%, #153b2a 50%, #153b2a 60%, transparent 60%, transparent)", backgroundSize: "72px 72px" }} />
       <motion.div
         className="absolute -top-20 h-64 w-64 rounded-full bg-[#ffd36d]/35 blur-3xl"
-        animate={{ x: [0, 18, 0], y: [0, 12, 0], opacity: [0.55, 0.85, 0.55] }}
-        transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
+        animate={reduce ? { opacity: 0.7 } : { x: [0, 18, 0], y: [0, 12, 0], opacity: [0.55, 0.85, 0.55] }}
+        transition={reduce ? { duration: 0 } : { duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
       />
 
       <motion.div
@@ -56,14 +57,15 @@ export const ZenSplashScreen: React.FC<ZenSplashScreenProps> = ({ logo }) => {
                 className="absolute left-1/2 top-0 h-12 w-3 rounded-full bg-[#d7a642]/25 blur-sm"
                 style={{ marginLeft: `${(item - 1) * 18}px` }}
                 initial={{ opacity: 0, y: 14, scaleY: 0.6 }}
-                animate={{ opacity: [0, 0.75, 0], y: [-2, -24, -42], scaleY: [0.65, 1.2, 0.7] }}
-                transition={{ duration: 2.4, repeat: Infinity, delay: item * 0.28, ease: "easeOut" }}
+                animate={reduce ? { opacity: 0 } : { opacity: [0, 0.75, 0], y: [-2, -24, -42], scaleY: [0.65, 1.2, 0.7] }}
+                transition={reduce ? { duration: 0 } : { duration: 2.4, repeat: Infinity, delay: item * 0.28, ease: "easeOut" }}
               />
             ))}
             <motion.div
               className="absolute inset-0 rounded-[2.4rem] bg-gradient-to-br from-[#0f3d2e] via-[#17543d] to-[#d69a23] p-[3px] shadow-[0_24px_70px_rgba(15,61,46,0.22)]"
-              animate={{ rotate: [0, 0.4, 0], scale: [1, 1.025, 1] }}
-              transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+              initial={reduce ? false : { scale: 0.9, opacity: 0 }}
+              animate={reduce ? { scale: 1, opacity: 1 } : { rotate: [0, 0.4, 0], scale: [1, 1.025, 1], opacity: 1 }}
+              transition={reduce ? { duration: 0 } : { duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
             >
               <div className="flex h-full w-full items-center justify-center rounded-[2.25rem] bg-[#fff8ea] p-3">
                 <img
@@ -106,9 +108,9 @@ export const ZenSplashScreen: React.FC<ZenSplashScreenProps> = ({ logo }) => {
           >
             <motion.div
               className="h-full rounded-full bg-gradient-to-l from-[#0f3d2e] via-[#d7a642] to-[#ba3f31]"
-              initial={{ x: "110%" }}
-              animate={{ x: "-110%" }}
-              transition={{ duration: 1.25, repeat: Infinity, ease: "easeInOut" }}
+              initial={reduce ? { x: "0%" } : { x: "110%" }}
+              animate={reduce ? { x: "0%" } : { x: "-110%" }}
+              transition={reduce ? { duration: 0 } : { duration: 1.25, repeat: Infinity, ease: "easeInOut" }}
             />
           </motion.div>
 

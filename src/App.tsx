@@ -8,6 +8,27 @@ const OrderPage = lazy(() => import("./pages/OrderPage"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const SplitPayment = lazy(() => import("./pages/SplitPayment"));
 
+function BrandedFallback() {
+  return (
+    <div
+      dir="rtl"
+      className="min-h-screen flex flex-col items-center justify-center gap-5 bg-[#fff7e8] px-6"
+    >
+      <div className="h-24 w-24 rounded-[26px] bg-white ring-1 ring-[#eadcbb] shadow-[0_16px_44px_rgba(24,51,38,0.14)] flex items-center justify-center overflow-hidden animate-pulse">
+        <img
+          src="/logo-optimized.png"
+          alt="شركة مطبخ التراث الكويتي"
+          className="h-full w-full object-contain p-2.5"
+        />
+      </div>
+      <div className="h-1.5 w-36 overflow-hidden rounded-full bg-[#ead8b5]">
+        <div className="h-full w-1/2 rounded-full bg-gradient-to-l from-[#0f3d2e] via-[#d7a642] to-[#ba3f31] animate-[loaderSlide_1.2s_ease-in-out_infinite]" />
+      </div>
+      <style>{`@keyframes loaderSlide{0%{transform:translateX(-120%)}100%{transform:translateX(240%)}}`}</style>
+    </div>
+  );
+}
+
 function NotFoundFoodPage() {
   return (
     <div dir="rtl" className="min-h-screen flex items-center justify-center bg-[#fff8ef] p-6">
@@ -33,7 +54,7 @@ export default function App() {
     <Router>
       <div className="min-h-screen font-sans w-full max-w-full overflow-x-hidden">
         <OfflineModal isOpen={!isOnline} />
-        <Suspense fallback={<div dir="rtl" className="min-h-screen flex items-center justify-center bg-[#fff8ef] text-[#183326] font-bold">جاري التحميل...</div>}>
+        <Suspense fallback={<BrandedFallback />}>
           <Routes>
             <Route path="/" element={<CustomerSite />} />
             <Route path="/track" element={<OrderPage />} />
