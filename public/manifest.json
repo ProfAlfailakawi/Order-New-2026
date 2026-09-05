@@ -24,6 +24,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/maskable-icon-v7-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
@@ -32,7 +38,11 @@
       "short_name": "تتبّع",
       "url": "/track",
       "icons": [
-        { "src": "/ios-icon-192-v7.png", "sizes": "192x192", "type": "image/png" }
+        {
+          "src": "/ios-icon-192-v7.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
       ]
     },
     {
@@ -40,7 +50,11 @@
       "short_name": "المنيو",
       "url": "/",
       "icons": [
-        { "src": "/ios-icon-192-v7.png", "sizes": "192x192", "type": "image/png" }
+        {
+          "src": "/ios-icon-192-v7.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
       ]
     }
   ],
@@ -52,5 +66,21 @@
     "food",
     "shopping",
     "lifestyle"
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/cover-narrow.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "مطبخ التراث الكويتي"
+    },
+    {
+      "src": "/screenshots/cover-wide.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "مطبخ التراث الكويتي"
+    }
   ]
 }
