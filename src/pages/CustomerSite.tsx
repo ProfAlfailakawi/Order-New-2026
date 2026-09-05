@@ -5519,7 +5519,7 @@ export default function CustomerSite() {
                   <div className="text-right min-w-0 flex-1 space-y-1">
                     <span className="inline-flex items-center text-[9px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100/50 rounded-full px-2.5 py-0.5">توليفة تكمّل سلتك 🍲</span>
                     <p className="text-xs sm:text-sm font-black text-brand line-clamp-1 group-hover:text-amber-950 transition-colors">
-                      وش رايك نكمّلها مع <span className="text-amber-800 font-extrabold">{suggestion.name}</span>؟
+                      شنو رأيك نكمّلها مع <span className="text-amber-800 font-extrabold">{suggestion.name}</span>؟
                     </p>
                   </div>
                 </div>
@@ -8201,7 +8201,7 @@ function ProductModal({
                   `مزيج مذهل! الكثير يفضلون إضافة "${recommendedAddonName}" لتعزيز النكهة 😋`,
                   // عبارات فيها تفاعل
                   `ناقصك شيء واحد عشان يكمل الطلب.. "${recommendedAddonName}"! 😉`,
-                  `وش رأيك تكملها وتضيف "${recommendedAddonName}"؟ ماراح تندم 😍`,
+                  `شنو رأيك تكملها وتضيف "${recommendedAddonName}"؟ ماراح تندم 😍`,
                   `الأغلبية يطلبون "${recommendedAddonName}" مع هذا الطلب.. جربه! 👍`,
                   // عبارات وصفية ومغرية
                   `غوص في بحر النكهات المتناغمة مع "${recommendedAddonName}" 🌊`,
