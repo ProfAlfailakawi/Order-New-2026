@@ -3465,6 +3465,46 @@ export default function CustomerSite() {
     () => !hasCustomerCache("cached_products"),
   );
 
+  // Splash timing. The rule is: show it properly or not at all — never a
+  // sub-second flicker, which reads as a glitch. index.html paints an inline
+  // branded splash on the very first frame no matter how warm the cache is, so
+  // the React splash ALWAYS runs too and takes that handover over seamlessly;
+  // together they are perceived as one continuous brand moment rather than two
+  // quick flashes. Dismissal is max(floor, data ready), and the 0.42s exit fade
+  // sits on top of the floor, never inside it.
+  //
+  // 2400ms lets the card rise, the logo settle and a full steam/shimmer cycle
+  // complete, then leaves a beat to actually read the Arabic line before the
+  // dissolve — ~2.8s door to door. Erring long is deliberate: the reference
+  // splash the owner likes runs ~3.5s, and a clipped or sub-second splash reads
+  // as a glitch, which is worse than showing none at all.
+  const SPLASH_FLOOR_MS = 2400;
+  // Reduced motion is not an excuse to flash by: ZenSplashScreen renders its
+  // finished, still end-state and we simply hold that calm frame long enough to
+  // register as an intentional brand moment.
+  const SPLASH_FLOOR_REDUCED_MS = 1200;
+
+  const [splashFloorDone, setSplashFloorDone] = useState(false);
+
+  useEffect(() => {
+    let reduce = false;
+    try {
+      reduce =
+        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    } catch {
+      // Treat an unavailable matchMedia as "motion is fine".
+    }
+    const timer = window.setTimeout(
+      () => setSplashFloorDone(true),
+      reduce ? SPLASH_FLOOR_REDUCED_MS : SPLASH_FLOOR_MS,
+    );
+    return () => window.clearTimeout(timer);
+    // Runs once: splashFloorDone only ever flips false -> true.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const showSplash = isLoading || !splashFloorDone;
+
   useEffect(() => {
     let dismissedForSession = false;
     try {
@@ -4889,7 +4929,7 @@ export default function CustomerSite() {
   return (
     <>
       <AnimatePresence>
-        {isLoading && (
+        {showSplash && (
           <ZenSplashScreen
             logo={
               settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO
@@ -4899,14 +4939,14 @@ export default function CustomerSite() {
       </AnimatePresence>
 
       {/* Light, one-screen welcome — shown once, never on payment return. */}
-      {!isLoading && (
+      {!showSplash && (
         <OrderWelcome
           logo={settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO}
         />
       )}
 
       <AnimatePresence>
-        {!isLoading && showAppetiteTheatre && (
+        {!showSplash && showAppetiteTheatre && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

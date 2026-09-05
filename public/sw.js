@@ -41,8 +41,15 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Everything on the money path is network-only: the gateway return
+// (?payment=...), a resumed checkout (?checkout=payment), order tracking and
+// the split-payment route. None of these may ever be answered from a cache.
 const isPaymentFlow = (url) =>
-  url.searchParams.has('payment') || url.pathname === '/track';
+  url.searchParams.has('payment') ||
+  url.searchParams.has('checkout') ||
+  url.pathname === '/track' ||
+  url.pathname.startsWith('/track/') ||
+  url.pathname.startsWith('/split');
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;

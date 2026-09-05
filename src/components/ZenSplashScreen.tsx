@@ -63,8 +63,11 @@ export const ZenSplashScreen: React.FC<ZenSplashScreenProps> = ({ logo }) => {
             ))}
             <motion.div
               className="absolute inset-0 rounded-[2.4rem] bg-gradient-to-br from-[#0f3d2e] via-[#17543d] to-[#d69a23] p-[3px] shadow-[0_24px_70px_rgba(15,61,46,0.22)]"
-              initial={reduce ? false : { scale: 0.9, opacity: 0 }}
-              animate={reduce ? { scale: 1, opacity: 1 } : { rotate: [0, 0.4, 0], scale: [1, 1.025, 1], opacity: 1 }}
+              // Ambient breathing only. The entrance fade belongs to the parent
+              // card: mixing a scalar `opacity: 1` into a `repeat: Infinity`
+              // transition would restart the fade from 0 on every 2.6s cycle
+              // and make the logo flash.
+              animate={reduce ? { rotate: 0, scale: 1 } : { rotate: [0, 0.4, 0], scale: [1, 1.025, 1] }}
               transition={reduce ? { duration: 0 } : { duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
             >
               <div className="flex h-full w-full items-center justify-center rounded-[2.25rem] bg-[#fff8ea] p-3">

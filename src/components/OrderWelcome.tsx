@@ -36,9 +36,20 @@ const writeOnboarded = () => {
   }
 };
 
-const isPaymentReturn = (): boolean => {
+/**
+ * True for any URL that is part of the payment / checkout path, where the sheet
+ * must never appear:
+ *   - `?payment=success|failed|error` — the gateway return/callback, which this
+ *     page immediately re-navigates to `/track`
+ *   - `?checkout=payment` — a resumed checkout (payment step re-entry)
+ *   - `/track` and `/split/*` — order tracking and split-payment routes
+ */
+const isPaymentOrCheckoutContext = (): boolean => {
   try {
-    return new URLSearchParams(window.location.search).has("payment");
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("payment") || params.has("checkout")) return true;
+    const path = window.location.pathname;
+    return path.startsWith("/track") || path.startsWith("/split");
   } catch {
     return false;
   }
@@ -58,13 +69,25 @@ interface OrderWelcomeProps {
 
 const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart }) => {
   const [open, setOpen] = useState(false);
+  const [showReplay] = useState(() => !isPaymentOrCheckoutContext());
   const reduce = useReducedMotion();
 
   // Decide on mount only. Never gate the UI while data loads: default hidden.
   useEffect(() => {
-    if (isPaymentReturn()) return; // never interrupt a payment return
+    if (isPaymentOrCheckoutContext()) return; // never interrupt paying
     if (!readOnboarded()) setOpen(true);
   }, []);
+
+  // Escape always dismisses — the sheet is never a trap.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") dismiss(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const dismiss = (fromStart?: boolean) => {
     writeOnboarded();
@@ -73,7 +96,7 @@ const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart }) => {
   };
 
   const replay = () => {
-    if (isPaymentReturn()) return;
+    if (isPaymentOrCheckoutContext()) return;
     setOpen(true);
   };
 
@@ -209,14 +232,15 @@ const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart }) => {
         )}
       </AnimatePresence>
 
-      {/* Small, unobtrusive replay affordance — never gates the UI. */}
-      {!open && (
+      {/* Small, unobtrusive replay affordance — never gates the UI, sits below
+          every modal/sheet layer, and stays out of the payment path entirely. */}
+      {!open && showReplay && (
         <button
           type="button"
           onClick={replay}
           aria-label="إعادة عرض الترحيب"
           title="كيف يشتغل التطبيق؟"
-          className="fixed left-4 z-[60] flex h-9 w-9 items-center justify-center rounded-full border border-[#e8d6ad] bg-white/90 font-black text-[#183326] shadow-md backdrop-blur transition active:scale-95"
+          className="fixed left-4 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-[#e8d6ad] bg-white/90 font-black text-[#183326] shadow-md backdrop-blur transition active:scale-95"
           style={{ bottom: "calc(16px + env(safe-area-inset-bottom))" }}
         >
           ؟
