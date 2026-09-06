@@ -5749,9 +5749,11 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
         if (order) {
           const title = "قطية عشا بمطبخ التراث! 🍽️";
           const desc = `عشانا بـ ${order.total.toFixed(3)} د.ك.. قط قطيتك بالرابط والحق على الأكل! 🥘`;
-          // Thumbnail image - ideally a generic "Order" or "Food" image
-          const image =
-            "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?q=80&w=1287&auto=format&fit=crop";
+          // Branded 1200x630 social card served from the site root (public/),
+          // absolute URL so crawlers (WhatsApp/Twitter/…) can fetch it.
+          const origin = "https://alturathkw.shop";
+          const image = `${origin}/og-order-v8.jpg`;
+          const pageUrl = `${origin}/split/${id}`;
 
           return res.send(`
               <!DOCTYPE html>
@@ -5760,11 +5762,20 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
                 <meta charset="utf-8">
                 <title>${title}</title>
                 <meta name="description" content="${desc}">
+                <meta property="og:site_name" content="شركة مطبخ التراث الكويتي">
                 <meta property="og:title" content="${title}">
                 <meta property="og:description" content="${desc}">
+                <meta property="og:url" content="${pageUrl}">
                 <meta property="og:image" content="${image}">
+                <meta property="og:image:secure_url" content="${image}">
+                <meta property="og:image:type" content="image/jpeg">
+                <meta property="og:image:width" content="1200">
+                <meta property="og:image:height" content="630">
                 <meta property="og:type" content="website">
                 <meta name="twitter:card" content="summary_large_image">
+                <meta name="twitter:title" content="${title}">
+                <meta name="twitter:description" content="${desc}">
+                <meta name="twitter:image" content="${image}">
               </head>
               <body>
                 <h1>جاري تحويلك...</h1>
