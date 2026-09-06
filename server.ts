@@ -62,6 +62,20 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Escapes a value for safe interpolation into server-rendered HTML responses.
+// Also neutralizes breakout from HTML attributes and (because browsers do not
+// HTML-decode inside <script>) from JavaScript string literals embedded in the
+// same markup. Legitimate order IDs / URLs (alphanumerics, dashes, slashes,
+// query separators) are left visually unchanged in the rendered page.
+function escapeHtml(value: unknown): string {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // Fallback in-memory DB
 let localFallbackDB: any = {
   products: [],
@@ -5278,6 +5292,12 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
            } catch(e) {}
         }
         
+        // Neutralize any HTML/JS breakout characters before these
+        // request-controlled values are interpolated into the HTML response
+        // below. Legitimate order IDs (alphanumerics + dashes) and base URLs
+        // are unaffected.
+        baseOrderId = baseOrderId.replace(/[^A-Za-z0-9_-]/g, "");
+        baseUrl = baseUrl.replace(/[<>"'`\\\s]/g, "");
         let trackUrl = `${baseUrl}/track?order_id=${baseOrderId}&payment=${paymentParam}`;
         if (isSplit) {
            trackUrl = `${baseUrl}/split/${baseOrderId}?payment=${paymentParam}`;
@@ -5365,6 +5385,9 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
         let fallbackBaseUrl = req.get("origin") || rProtocol + "://" + rHost;
         if (!fallbackBaseUrl || fallbackBaseUrl.includes("undefined"))
           fallbackBaseUrl = "https://alturathkw.shop";
+        // Strip HTML/JS breakout characters from the request-controlled base URL
+        // before it is interpolated into the redirect HTML below.
+        fallbackBaseUrl = String(fallbackBaseUrl).replace(/[<>"'`\\\s]/g, "");
         let trackFallback = `${fallbackBaseUrl}/track`;
         const possibleOrderId =
           req.params.orderId ||
@@ -5373,9 +5396,10 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
           req.body?.reference?.id;
         if (possibleOrderId) {
           const cleanId =
-            typeof possibleOrderId === "string"
+            (typeof possibleOrderId === "string"
               ? possibleOrderId.split("?")[0]
-              : possibleOrderId;
+              : String(possibleOrderId)
+            ).replace(/[^A-Za-z0-9_-]/g, "");
           trackFallback += `?order_id=${cleanId}`;
           res.type("html")
             .send(`<html><head><title>Redirecting...</title></head><body><script>
@@ -5740,7 +5764,10 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
 
     if (isBot) {
       try {
-        const { id } = req.params;
+        // Sanitize the request-controlled id before it is interpolated into
+        // the crawler HTML below (og:url + redirect script). Order IDs are
+        // alphanumerics + dashes, so legitimate lookups are unaffected.
+        const id = String(req.params.id || "").replace(/[^A-Za-z0-9_-]/g, "");
         const d = await getAppDataRef();
         const data = d.data() || {};
         const orders = data.orders || [];
