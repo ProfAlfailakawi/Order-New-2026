@@ -10,7 +10,11 @@
  *   - Hashed build assets (/assets/*) are cache-first (immutable).
  */
 
-const VERSION = 'v1';
+/* بصمة البناء تُطبع هنا عند البناء (scripts/build-stamp.mjs). بايتات هذا الملف يجب أن
+   تتغيّر مع كل إصدار، وإلا لم يرَ المتصفح تحديثاً أصلاً ولم تعلم التبويبات المفتوحة بشيء. */
+const VERSION = '__BUILD_ID__';
+/* الأصول المبصومة بهاش في اسمها وحدها تُقدَّم من الكاش مباشرة. */
+const HASHED = /\/assets\/.+[-.][A-Za-z0-9_]{8,}\.[a-z0-9]+$/i;
 const SHELL_CACHE = `alturath-shell-${VERSION}`;
 const ASSET_CACHE = `alturath-assets-${VERSION}`;
 
@@ -65,8 +69,8 @@ self.addEventListener('fetch', (event) => {
   // Never intervene on the API or the payment return/callback path.
   if (url.pathname.startsWith('/api') || isPaymentFlow(url)) return;
 
-  // Hashed build assets are immutable: cache-first.
-  if (url.pathname.startsWith('/assets/')) {
+  // Hashed build assets are immutable: cache-first — the name changes with the bytes.
+  if (HASHED.test(url.pathname)) {
     event.respondWith(
       caches.match(request).then(
         (cached) =>
@@ -81,10 +85,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigations: network-first, fall back to the cached app shell offline.
+  /* Navigations (HTML) always come from the network with cache: "no-store" — a stored
+     shell names hashed bundles the next deploy removed. Cache is an offline fallback only. */
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      fetch(url.pathname + url.search, {cache: 'no-store', credentials: 'same-origin'})
         .then((res) => {
           const copy = res.clone();
           caches.open(SHELL_CACHE).then((c) => c.put('/', copy));

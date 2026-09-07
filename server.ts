@@ -1599,6 +1599,24 @@ const adminAuth = async (req, res, next) => {
 
   // API Routes
 
+  /*
+   * نقطة خفيفة تعرض بصمة البناء الحالية: هي الحقيقة الوحيدة التي يقارنها العميل بثابت
+   * الحزمة (__BUILD_ID__)، وتُكتب في dist/build-id.json عند البناء.
+   */
+  let cachedBuildId = "";
+  const currentBuildId = () => {
+    if (cachedBuildId) return cachedBuildId;
+    try {
+      cachedBuildId = String(JSON.parse(fs.readFileSync(path.join(process.cwd(), "dist", "build-id.json"), "utf8")).build || "");
+    } catch { cachedBuildId = ""; }
+    if (!cachedBuildId) cachedBuildId = process.env.BUILD_ID || "dev";
+    return cachedBuildId;
+  };
+  app.get("/api/version", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+    res.json({ build: currentBuildId() });
+  });
+
   // 1. Track Orders
   app.get("/api/appdata", adminAuth, async (req, res) => {
   try {
@@ -5829,7 +5847,17 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
     app.use(vite.middlewares);
   } else if (!isTest) {
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath, { index: false }));
+    app.use(express.static(distPath, {
+      index: false,
+      setHeaders(res, filePath) {
+        // الغلاف وعامل الخدمة وبصمة البناء لا تُخزَّن؛ الأصول المبصومة بهاش للأبد.
+        if (filePath.endsWith(".html") || filePath.endsWith("sw.js") || filePath.endsWith("build-id.json")) {
+          res.setHeader("Cache-Control", "no-cache, must-revalidate");
+        } else if (/[-.][A-Za-z0-9_-]{8,}\.[a-z0-9]+$/i.test(filePath)) {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        }
+      },
+    }));
     app.get("*", (req, res) => {
       res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       res.setHeader("Pragma", "no-cache");
