@@ -16,10 +16,11 @@ import {
   Users,
   Crown,
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { cn, normalizePhone, normalizeDigits, formatKuwaitiDate } from "../utils";
 import { redirectToPayment } from "../utils/redirect";
+import OrderFormation from "../components/OrderFormation";
 
 interface TrackedOrder {
   id: string;
@@ -826,6 +827,69 @@ export default function OrderPage() {
     }
   };
 
+  // --- Order Formation cinematic (purely visual, once per order) ---
+  // 'pending': waiting briefly for the paid order's real data to arrive.
+  // 'run': play the formation scene with the real order.
+  // 'skip': fall back to the classic static confirmation card.
+  const prefersReducedMotion = useReducedMotion();
+  const [formationState, setFormationState] = useState<"pending" | "run" | "skip">("pending");
+  const [formationOrder, setFormationOrder] = useState<any>(null);
+
+  useEffect(() => {
+    if (urlPayment !== "success") return;
+    if (formationState !== "pending") return;
+
+    // Reduced motion: skip the scene entirely, go straight to the tracking view.
+    if (prefersReducedMotion) {
+      setFormationState("skip");
+      return;
+    }
+
+    let handoffId = String(urlOrderId || searchOrderIdInput || "").trim().toUpperCase();
+    if (handoffId.startsWith("#")) handoffId = handoffId.substring(1);
+    if (handoffId.includes("-S-")) handoffId = handoffId.split("-S-")[0];
+
+    const matched = handoffId
+      ? orders.find(
+          (o: any) =>
+            String(o.id).toUpperCase() === handoffId ||
+            (o.invoiceId && String(o.invoiceId).toUpperCase() === handoffId) ||
+            ((o as any).linkedInvoiceId &&
+              String((o as any).linkedInvoiceId).toUpperCase() === handoffId),
+        )
+      : null;
+
+    if (matched) {
+      // Once per order: never replay the formation for an order that already saw it.
+      let seen: string[] = [];
+      try {
+        seen = JSON.parse(localStorage.getItem("order_formation_seen") || "[]");
+      } catch (e) {}
+      const seenKey = String(matched.id || handoffId).toUpperCase();
+      if (Array.isArray(seen) && seen.includes(seenKey)) {
+        setFormationState("skip");
+      } else {
+        try {
+          localStorage.setItem(
+            "order_formation_seen",
+            JSON.stringify([...(Array.isArray(seen) ? seen : []), seenKey].slice(-20)),
+          );
+        } catch (e) {}
+        setFormationOrder(matched);
+        setFormationState("run");
+      }
+    }
+  }, [urlPayment, orders, urlOrderId, searchOrderIdInput, formationState, prefersReducedMotion]);
+
+  // If the order data never shows up quickly, fall back to the classic card.
+  useEffect(() => {
+    if (urlPayment !== "success") return;
+    const timer = window.setTimeout(() => {
+      setFormationState((prev) => (prev === "pending" ? "skip" : prev));
+    }, 1400);
+    return () => window.clearTimeout(timer);
+  }, [urlPayment]);
+
   const clearPaymentStatus = () => {
     setUrlPayment(null);
     const newParams = new URLSearchParams(searchParams);
@@ -857,7 +921,26 @@ export default function OrderPage() {
       <main className="max-w-2xl mx-auto p-6 space-y-8">
         {/* Payment Status Alerts */}
         <AnimatePresence>
-          {paymentStatusQuery === "success" && (
+          {paymentStatusQuery === "success" && formationState === "run" && formationOrder && (
+            <OrderFormation
+              order={formationOrder}
+              orderReference={getOrderReference(formationOrder)}
+              onDone={clearPaymentStatus}
+            />
+          )}
+
+          {paymentStatusQuery === "success" && formationState === "pending" && (
+            <motion.div
+              key="formation-pending"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="fixed inset-0 z-[200] bg-brand/70 backdrop-blur-md pointer-events-auto"
+            />
+          )}
+
+          {paymentStatusQuery === "success" && formationState === "skip" && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
