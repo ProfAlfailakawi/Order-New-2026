@@ -1529,10 +1529,7 @@ const adminAuthOnly = async (req, res, next) => {
   }
 };
 
-// Rate limit + auth, applied together everywhere an admin surface is exposed.
-const adminAuth = [adminRateLimit, adminAuthOnly];
-
-  app.use("/api/admin", adminAuth);
+  app.use("/api/admin", adminRateLimit, adminAuthOnly);
   // const app = express();
   const PORT = Number(process.env.PORT) || 3000;
 
@@ -1634,7 +1631,7 @@ const adminAuth = [adminRateLimit, adminAuthOnly];
   });
 
   // 1. Track Orders
-  app.get("/api/appdata", adminAuth, async (req, res) => {
+  app.get("/api/appdata", adminRateLimit, adminAuthOnly, async (req, res) => {
   try {
     const d = await getAppDataRef();
     return await sendCompressedReadOnlyJson(req, res, d.exists() ? d.data() : {});
@@ -1643,7 +1640,7 @@ const adminAuth = [adminRateLimit, adminAuthOnly];
   }
 });
 
-app.patch("/api/appdata", adminAuth, async (req, res) => {
+app.patch("/api/appdata", adminRateLimit, adminAuthOnly, async (req, res) => {
   try {
     await updateAppData(req.body);
     res.json({ success: true });
@@ -1652,7 +1649,7 @@ app.patch("/api/appdata", adminAuth, async (req, res) => {
   }
 });
 
-app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
+app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) => {
     try {
       const dbData = await getAppDataRef();
       const data = dbData.exists() ? dbData.data() : {};
@@ -4252,7 +4249,7 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
   });
 
   // Test/debug surface: creates a fake order in live data. Admin-only.
-  app.get("/api/create-test-split-order", adminAuth, async (req, res) => {
+  app.get("/api/create-test-split-order", adminRateLimit, adminAuthOnly, async (req, res) => {
     try {
       const d = await getAppDataRef();
       const data = d.data() || {};
@@ -5705,7 +5702,7 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
     }
   });
 
-  app.get("/api/debug-collections", adminAuth, async (req, res) => {
+  app.get("/api/debug-collections", adminRateLimit, adminAuthOnly, async (req, res) => {
     try {
       const q = await getDocs(collection(db, "appData"));
       const docs = q.docs.map(d => ({ id: d.id, data: d.data() }));
@@ -5715,7 +5712,7 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
     }
   });
 
-  app.get("/api/debug-docs", adminAuth, async (req, res) => {
+  app.get("/api/debug-docs", adminRateLimit, adminAuthOnly, async (req, res) => {
     try {
       const data = await getAppData();
       res.json(data);
@@ -5724,7 +5721,7 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
     }
   });
 
-  app.get("/api/debug-search", adminAuth, async (req, res) => {
+  app.get("/api/debug-search", adminRateLimit, adminAuthOnly, async (req, res) => {
     try {
       const d = await getAppDataRef();
       const data = d.data() || {};
@@ -5754,7 +5751,7 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
     }
   });
 
-  app.get("/api/debug-squads", adminAuth, async (req, res) => {
+  app.get("/api/debug-squads", adminRateLimit, adminAuthOnly, async (req, res) => {
     try {
       const d = await getAppDataRef();
       const data = d.data() || {};
@@ -5769,7 +5766,7 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
     }
   });
 
-  app.get("/api/debug-loyalty", adminAuth, async (req, res) => {
+  app.get("/api/debug-loyalty", adminRateLimit, adminAuthOnly, async (req, res) => {
     try {
       const d = await getAppDataRef();
       const data = d.data() || {};
@@ -5779,7 +5776,7 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
     }
   });
 
-  app.get("/api/debug", adminAuth, async (req, res) => {
+  app.get("/api/debug", adminRateLimit, adminAuthOnly, async (req, res) => {
     try {
       const d = await getAppDataRef();
       const data = d.data() || {};
