@@ -1,3 +1,4 @@
+import OrderMicroLoader from "./OrderMicroLoader";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
@@ -220,7 +221,7 @@ export function RouletteSplit({
                 دفعك تم بنجاح، مبروك فوزك بلقب الكريم اليوم!<br/>استمتعوا بالعشاء الهني وبالعافية عليكم! ✨
               </p>
               <div className="mt-6 flex items-center justify-center gap-2 text-sm text-green-100/80 bg-black/10 py-2 px-4 rounded-full w-fit mx-auto">
-                <span className="animate-spin inline-block">⏳</span> نحوّلك للطلب...
+                <OrderMicroLoader size={16} tone="onDark" delay={0} label="جاري التحويل للطلب" /> نحوّلك للطلب...
               </div>
             </div>
           </motion.div>
