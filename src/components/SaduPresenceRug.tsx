@@ -1165,7 +1165,7 @@ export function SaduPresenceRug({
               {isPouringCoffee && (
                 <div className="relative h-20 w-full overflow-hidden flex items-center justify-center bg-amber-950/20 rounded-2xl border border-amber-500/20">
                   <div className="absolute inset-0 flex items-center justify-center opacity-60">
-                    <div className="w-12 h-12 rounded-full border-t border-amber-500/30 animate-spin" />
+                    <div className="w-12 h-12 rounded-full bg-amber-500/15 animate-pulse motion-reduce:animate-none" />
                   </div>
                   <div className="absolute top-1 flex flex-col items-center">
                     <div className="flex flex-col gap-1 items-center mt-1">

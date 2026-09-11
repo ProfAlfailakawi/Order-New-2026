@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Compass, Loader2, MapPin } from 'lucide-react';
+import { Compass, MapPin } from 'lucide-react';
 import { robustGetCurrentPosition } from '../utils/geolocation';
 import { SmartIconGuidance } from './SmartIconGuidance';
 
@@ -188,7 +188,13 @@ const LeafletLocationPicker: React.FC<{
           placement="bottom"
         >
           <button type="button" onClick={useCurrentLocation} className="shrink-0 inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700 border border-emerald-100 active:scale-95 transition">
-            {isResolvingAddress ? <Loader2 className="w-4 h-4 animate-spin" /> : <Compass className="w-4 h-4" />} حدد موقعي
+            {isResolvingAddress ? (
+              <span role="status" aria-label="جاري تحديد الموقع" className="inline-flex w-4 h-4 items-center justify-center">
+                <span aria-hidden="true" className="w-2 h-2 rounded-full bg-current animate-pulse motion-reduce:animate-none" />
+              </span>
+            ) : (
+              <Compass className="w-4 h-4" />
+            )} حدد موقعي
           </button>
         </SmartIconGuidance>
       </div>

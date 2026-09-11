@@ -48,6 +48,7 @@ import { restoreCustomerMenuProducts } from "../lib/customerMenuTransport";
 import { robustGetCurrentPosition } from "../utils/geolocation";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { OfflineModal } from "../components/OfflineModal";
+import OrderMicroLoader from "../components/OrderMicroLoader";
 
 // --- Soft entrance accent without the old curtain effect ---
 function ZariBishtGate() {
@@ -1078,10 +1079,11 @@ const SquadModalContent = React.lazy(() =>
 
 const DeferredFeatureFallback = ({ label }: { label: string }) => (
   <div
-    className="flex min-h-28 w-full items-center justify-center rounded-2xl border border-stone-100 bg-stone-50/80 px-4 py-6 text-center text-xs font-black text-stone-500"
+    className="flex min-h-28 w-full flex-col items-center justify-center gap-2.5 rounded-2xl border border-stone-100 bg-stone-50/80 px-4 py-6 text-center text-xs font-black text-stone-500"
     role="status"
     aria-live="polite"
   >
+    <OrderMicroLoader size={24} tone="brand" label={label} />
     {label}
   </div>
 );
