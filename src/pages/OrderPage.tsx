@@ -1429,7 +1429,7 @@ export default function OrderPage() {
                                       <div className="px-4 pb-4 space-y-2 max-h-[300px] overflow-y-auto pr-1">
                                         {visibleOrders.length > 0 ? visibleOrders.map((item) => (
                                           <div key={`${item.label}-${getOrderReference(item.order)}`} className="rounded-[18px] bg-stone-50 border border-stone-100 p-3 flex items-center justify-between gap-3">
-                                            <strong className="text-sm font-black text-brand truncate">{item.label}</strong>
+                                            <strong className="text-sm font-black text-brand truncate min-w-0">{item.label}</strong>
                                             <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-stone-500">{getOrderReference(item.order)}</span>
                                           </div>
                                         )) : (
@@ -1445,7 +1445,7 @@ export default function OrderPage() {
 
                                     {lastOrder && (
                                       <div className="rounded-[24px] bg-white border border-stone-100 p-4 flex items-center justify-between gap-3 text-sm font-bold text-stone-500 shadow-sm">
-                                        <span className="truncate">آخر طلب: {getOrderReference(lastOrder)}</span>
+                                        <span className="truncate min-w-0">آخر طلب: {getOrderReference(lastOrder)}</span>
                                         <span className="text-emerald-600 shrink-0">{Math.round(Number(getDisplayTotal(lastOrder) || 0))} د.ك</span>
                                       </div>
                                     )}
@@ -1470,7 +1470,7 @@ export default function OrderPage() {
                                         {visibleAddresses.length > 0 ? visibleAddresses.map((label) => (
                                           <div key={label} className="rounded-[18px] bg-stone-50 border border-stone-100 p-3 flex items-center gap-2 text-sm font-bold text-brand">
                                             <MapPin className="w-4 h-4 text-accent shrink-0" />
-                                            <span className="truncate">{label}</span>
+                                            <span className="truncate min-w-0">{label}</span>
                                           </div>
                                         )) : (
                                           <div className="rounded-[18px] bg-stone-50 border border-stone-100 p-4 text-center text-xs font-bold text-stone-400">تظهر عناوينك بعد أول طلب مكتمل</div>
@@ -1485,7 +1485,7 @@ export default function OrderPage() {
 
                                     {squadInfo ? (
                                       <div className="rounded-[24px] bg-white border border-stone-100 p-4 flex items-center justify-between gap-3 text-sm font-bold text-brand shadow-sm">
-                                        <span className="truncate">ديوانيتك: {squadInfo.name}</span>
+                                        <span className="truncate min-w-0">ديوانيتك: {squadInfo.name}</span>
                                         <span className="shrink-0 text-accent">{squadInfo.rank ? `#${squadInfo.rank}` : squadInfo.tier}</span>
                                       </div>
                                     ) : (
@@ -1649,7 +1649,7 @@ export default function OrderPage() {
                       {order.address && (
                         <div className="flex items-center gap-2 text-[10px] text-stone-400 bg-stone-50/50 p-3 rounded-xl border border-stone-50 overflow-hidden">
                           <MapPin className="w-3 h-3 text-accent shrink-0" />
-                          <span className="truncate">
+                          <span className="truncate min-w-0">
                             {typeof order.address === "object"
                               ? `${order.address.region}، ق ${order.address.block}${order.address.street ? `، ش ${order.address.street}` : ""}${order.address.building ? `، م ${order.address.building}` : ""}`
                               : order.address}
@@ -2530,7 +2530,7 @@ export default function OrderPage() {
                         </h4>
                         <div className="track-v15-address-card bg-white border border-stone-100 p-6 rounded-[32px] space-y-4 font-medium text-brand text-sm shadow-sm">
                           <div className="flex items-center justify-between font-bold border-b border-stone-100 pb-4">
-                            <span className="truncate pr-2">
+                            <span className="truncate min-w-0 pr-2">
                               {selectedOrder.customerName}
                             </span>
                             <span
