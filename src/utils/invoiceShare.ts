@@ -33,6 +33,15 @@ const clean = (value: any) => {
   return String(value).trim();
 };
 
+// HTML-escape user-derived values before interpolating them into the printable
+// invoice document (prevents stored XSS via customer name / notes / item names).
+const esc = (value: any) => clean(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
 const formatKwd = (value: any) => `${toEnglishDigits(Number(value || 0).toFixed(3))} د.ك`;
 
 const getOrderAddress = (order: any) => {
@@ -180,16 +189,16 @@ const buildInvoiceHTML = (order: any, products: any[] = []) => {
   const status = getInvoiceStatus(order);
   const normalizedStatus = String(status || '').toLowerCase();
   const statusClass = normalizedStatus.includes('pending') || String(status).includes('انتظار') ? 'pending-status' : normalizedStatus.includes('paid') || String(status).includes('مدفوع') || String(status).includes('مدفوعة') || String(status).includes('تم الدفع') ? 'paid-status' : 'other-status';
-  const customerName = clean(order?.customerName || order?.name) || 'عميل';
-  const customerPhone = clean(order?.customerPhone || order?.phone);
-  const address = getOrderAddress(order) || 'غير محدد';
+  const customerName = esc(order?.customerName || order?.name) || 'عميل';
+  const customerPhone = esc(order?.customerPhone || order?.phone);
+  const address = esc(getOrderAddress(order)) || 'غير محدد';
 
   let productsSubtotal = 0;
   let addonsSubtotal = 0;
 
   const itemsHtml = ((order as any).items || []).map((item: any, index: number) => {
     const product = products.find(p => p.id === item.productId) || item.product || {};
-    const name = clean(item.name || item.productName || product.name) || 'منتج غير معروف';
+    const name = esc(item.name || item.productName || product.name) || 'منتج غير معروف';
     const qty = Number(item.quantity || 1);
     const unitPrice = Number(item.priceAtTime ?? item.price ?? product.price ?? 0);
     const productTotal = unitPrice * qty;
@@ -197,7 +206,7 @@ const buildInvoiceHTML = (order: any, products: any[] = []) => {
 
     const addons = normalizeOrderAddons(item);
     const addonsHtml = addons.map((addon: any) => {
-      const addonName = clean(addon?.name || addon?.title || addon?.label);
+      const addonName = esc(addon?.name || addon?.title || addon?.label);
       const addonQty = getAddonQty(addon, qty);
       const addonTotal = getAddonTotal(addon, qty);
       if (!addonName || addonQty <= 0) return '';
@@ -214,7 +223,7 @@ const buildInvoiceHTML = (order: any, products: any[] = []) => {
         <td class="product-cell">
           <div class="product-name"><span class="item-number">${index + 1}.</span> ${name}</div>
           ${addonsHtml ? `<div class="addons-wrap">${addonsHtml}</div>` : ''}
-          ${item.itemNotes || item.note ? `<div class="item-note">${item.itemNotes || item.note}</div>` : ''}
+          ${item.itemNotes || item.note ? `<div class="item-note">${esc(item.itemNotes || item.note)}</div>` : ''}
         </td>
         <td class="center">${toEnglishDigits(qty)}</td>
         <td class="money">${formatKwd(unitPrice)}</td>
@@ -230,7 +239,7 @@ const buildInvoiceHTML = (order: any, products: any[] = []) => {
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
-  <title>فاتورة ${(order as any).invoiceId || (order as any).id || ''}</title>
+  <title>فاتورة ${esc((order as any).invoiceId || (order as any).id || '')}</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     @page{size:A4;margin:10mm}
@@ -267,9 +276,9 @@ const buildInvoiceHTML = (order: any, products: any[] = []) => {
     <section class="cards">
       <div class="card">
         <h2><span class="icon">☰</span> تفاصيل الفاتورة</h2>
-        <div class="row"><span class="label">رقم الفاتورة</span><span class="value">${toEnglishDigits((order as any).invoiceId || (order as any).id || '-')}</span></div>
+        <div class="row"><span class="label">رقم الفاتورة</span><span class="value">${esc(toEnglishDigits((order as any).invoiceId || (order as any).id || '-'))}</span></div>
         <div class="row"><span class="label">التاريخ والوقت</span><span class="value">${toEnglishDigits(formatKuwaitiDate(invoiceDate).full)}</span></div>
-        <div class="row"><span class="label">الحالة</span><span class="value status ${statusClass}">${toEnglishDigits(status)}</span></div>
+        <div class="row"><span class="label">الحالة</span><span class="value status ${statusClass}">${esc(toEnglishDigits(status))}</span></div>
       </div>
       <div class="card">
         <h2><span class="icon">♡</span> معلومات العميل</h2>

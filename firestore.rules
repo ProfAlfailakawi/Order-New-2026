@@ -1,14 +1,20 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
+    // Deliberately-open legacy subtree: the live admin dashboard
+    // (onSnapshot/setDoc), the customer split-payment page, and server.ts's
+    // client-SDK fallback (root doc + shards/* subcollection) all access
+    // appData/* directly without a Firebase Auth session. Locking it requires
+    // the Phase B/C migration in SECURITY_MIGRATION.md.
     match /appData/{document=**} {
       allow read, write: if true;
     }
-    match /appData/shared_company_data {
-      allow read, write: if true;
+
+    // Everything else is server-only (Admin SDK bypasses rules).
+    // Previously the ENTIRE database was world-readable/writable via a
+    // global {document=**} allow-all wildcard.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

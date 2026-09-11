@@ -3956,8 +3956,19 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
       deliveryType: deliveryType || (isFreeDelivery ? "free" : null),
       total,
       regionId: regionId || null,
-      status: status || (total < 0.001 ? "تم الدفع بنجاح" : "جديد"),
-      paymentStatus: paymentStatus || (total < 0.001 ? "paid" : "pending"),
+      // Never trust paid-like state from the client at order creation.
+      // Payment state only transitions to "paid" via the payment webhook /
+      // admin endpoints. Clients may only choose from known unpaid statuses.
+      status: (() => {
+        const allowedClientStatuses = ["جديد", "بانتظار الدفع", "قيد تجميع القطية", "pending"];
+        if (total < 0.001) return "تم الدفع بنجاح";
+        return allowedClientStatuses.includes(String(status || "")) ? status : "جديد";
+      })(),
+      paymentStatus: (() => {
+        const allowedClientPaymentStatuses = ["pending", "split"];
+        if (total < 0.001) return "paid";
+        return allowedClientPaymentStatuses.includes(String(paymentStatus || "")) ? paymentStatus : "pending";
+      })(),
       createdAt: new Date().toISOString(),
       source: "customer_website",
       generalNotes: generalNotes || "",
@@ -4224,7 +4235,8 @@ app.get("/api/debug/order/:id", adminAuth, async (req, res) => {
     }
   });
 
-  app.get("/api/create-test-split-order", async (req, res) => {
+  // Test/debug surface: creates a fake order in live data. Admin-only.
+  app.get("/api/create-test-split-order", adminAuth, async (req, res) => {
     try {
       const d = await getAppDataRef();
       const data = d.data() || {};
