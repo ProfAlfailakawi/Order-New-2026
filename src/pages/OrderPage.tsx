@@ -1,3 +1,4 @@
+import OrderMicroLoader from "../components/OrderMicroLoader";
 import React, { useState, useEffect, useRef } from "react";
 import {
   Search,
@@ -1089,7 +1090,10 @@ export default function OrderPage() {
               className="mt-4 w-full py-5 bg-brand text-white rounded-[24px] font-extrabold shadow-xl shadow-brand/20 hover:scale-[0.98] active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-3"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <>
+                  <OrderMicroLoader size={20} tone="onDark" delay={0} label="جاري البحث" />
+                  <span>نبحث لك…</span>
+                </>
               ) : (
                 <>
                   <Search className="w-5 h-5" />

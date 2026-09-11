@@ -1,3 +1,4 @@
+import OrderMicroLoader from "./OrderMicroLoader";
 import React from "react";
 import { motion } from "motion/react";
 import { User, Landmark, Crown, Users, LogIn, DoorOpen, DoorClosed, Trophy, Star, Medal, Target, BrainCircuit } from "lucide-react";
@@ -1521,7 +1522,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                   {aiIsLearning ? (
                     <div className="py-4 flex flex-col items-center justify-center space-y-2 text-center">
-                      <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                      <OrderMicroLoader size={24} tone="amber" label="الذكاء الاصطناعي يفكر" />
                       <span className="text-[10px] font-black text-stone-500 animate-pulse">المعزب يعيد ضبط حساباته ويستخلص التفضيل التالي للربع...</span>
                     </div>
                   ) : (

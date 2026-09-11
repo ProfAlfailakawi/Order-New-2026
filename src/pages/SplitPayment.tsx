@@ -1,3 +1,4 @@
+import OrderMicroLoader from "../components/OrderMicroLoader";
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
@@ -545,7 +546,7 @@ export default function SplitPayment() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50 gap-4">
-        <span className="animate-spin text-4xl">⏳</span>
+        <OrderMicroLoader size={48} tone="brand" label="جاري تحميل صفحة القطية" />
         <p className="text-stone-500 font-bold">نحمّل صفحة القطيّة...</p>
         <p className="text-stone-400 text-xs">رقم الطلب: {id ? formatToDisplayOrderId(id) : "غير متوفر"}</p>
       </div>
@@ -565,7 +566,7 @@ export default function SplitPayment() {
   if (!order) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50 gap-4 text-center p-6">
-        <span className="animate-spin text-4xl">⏳</span>
+        <OrderMicroLoader size={48} tone="brand" label="جاري تجهيز صفحة القطية" />
         <p className="text-stone-500 font-bold">نجهز صفحة القطيّة...</p>
       </div>
     );
@@ -689,7 +690,7 @@ export default function SplitPayment() {
                 <h3 className="text-2xl font-extrabold mb-1">تسلم الأيادي{urlName ? ` يا ${urlName}` : ""}!</h3>
                 <p className="text-white/90 font-medium">وصل الدفع وتم تسجيل الدفعة بنجاح</p>
                 <div className="mt-4 flex items-center justify-center gap-2 text-xs text-green-100/90 bg-black/10 py-1.5 px-3 rounded-full w-fit mx-auto font-bold">
-                  <span className="animate-spin inline-block">⏳</span> نحدّث الطلب...
+                  <OrderMicroLoader size={16} tone="onDark" delay={0} label="جاري تحديث الطلب" /> نحدّث الطلب...
                 </div>
               </div>
             </motion.div>
