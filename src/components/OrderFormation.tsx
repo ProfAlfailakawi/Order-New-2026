@@ -8,7 +8,7 @@ import { CheckCircle2, MapPin, Package, Wallet } from "lucide-react";
  * before the tracking screen. The real order elements (product images,
  * quantities, the paid amount and the delivery address) drift fluidly toward
  * the center, fuse into a single order card carrying the real order number,
- * then that card dissolves into the tracking interface beneath it.
+ * then that card unfolds downward into the tracking interface beneath it.
  *
  * Purely visual: no payment/order/tracking logic lives here.
  * Animates transform + opacity only. ~2.4s total.
@@ -34,13 +34,15 @@ const formatAddressLine = (address: any): string => {
 };
 
 // Deterministic scatter positions (vw/vh-safe px offsets, tuned for ~400px wide screens).
-const SCATTER: { x: number; y: number }[] = [
-  { x: -118, y: -168 },
-  { x: 124, y: -138 },
-  { x: -136, y: 26 },
-  { x: 132, y: 62 },
-  { x: -74, y: 172 },
-  { x: 86, y: 186 },
+// `sweep` bends each satellite's approach sideways so it arcs into the fusion
+// point instead of flying in on a straight chord.
+const SCATTER: { x: number; y: number; sweep: number }[] = [
+  { x: -118, y: -168, sweep: 46 },
+  { x: 124, y: -138, sweep: -42 },
+  { x: -136, y: 26, sweep: 38 },
+  { x: 132, y: 62, sweep: -36 },
+  { x: -74, y: 172, sweep: 44 },
+  { x: 86, y: 186, sweep: -40 },
 ];
 
 const CONVERGE_EASE = [0.32, 0.72, 0, 1] as const;
@@ -161,28 +163,56 @@ export default function OrderFormation({ order, orderReference, onDone }: OrderF
       animate={{ opacity: phase === "merge" ? 0 : 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: phase === "merge" ? 0.42 : 0.28, ease: "easeOut" }}
-      className="fixed inset-0 z-[210] flex items-center justify-center bg-brand/75 backdrop-blur-md px-5 overflow-hidden"
+      className="fixed inset-0 z-[210] flex items-center justify-center bg-brand/80 backdrop-blur-md px-5 overflow-hidden"
       dir="rtl"
       aria-live="polite"
     >
-      {/* Drifting satellites: the order's real pieces gather toward the center */}
+      {/* Staged backdrop: a deep warm veil with a soft stage-light falling on
+          the fusion point. The gradient layers are static paint; only their
+          container's opacity/transform ever animates. */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 120% 90% at 50% 110%, rgba(30,12,4,0.55), transparent 60%), radial-gradient(ellipse 110% 80% at 50% -15%, rgba(35,16,6,0.45), transparent 55%)",
+        }}
+      />
+      <motion.div
+        aria-hidden
+        initial={{ opacity: 0, scale: 0.85 }}
+        animate={{ opacity: phase === "merge" ? 0 : 1, scale: 1 }}
+        transition={{ duration: 0.9, ease: "easeOut" }}
+        className="absolute inset-0 pointer-events-none will-change-transform"
+        style={{
+          background:
+            "radial-gradient(circle 300px at 50% 50%, rgba(255,236,214,0.20), rgba(255,224,190,0.07) 45%, transparent 70%)",
+        }}
+      />
+
+      {/* Drifting satellites: the order's real pieces arc gracefully toward the center */}
       {phase === "gather" &&
         satellites.map((sat, i) => {
           const from = SCATTER[i % SCATTER.length];
+          // Perpendicular sweep bends the path into a gentle arc.
+          const midX = from.x * 0.62 + from.sweep * (from.y >= 0 ? -0.9 : 0.9) * 0.35;
+          const midY = from.y * 0.62 + from.sweep * 0.5;
+          const lean = from.x > 0 ? -7 : 7;
           return (
             <motion.div
               key={sat.key}
-              initial={{ x: from.x, y: from.y, scale: 0.72, opacity: 0 }}
+              initial={{ x: from.x, y: from.y, scale: 0.72, opacity: 0, rotate: lean }}
               animate={{
-                x: [from.x, from.x * 0.82, 0],
-                y: [from.y, from.y * 0.82, 0],
+                x: [from.x, midX, 0],
+                y: [from.y, midY, 0],
                 scale: [0.72, 1, 0.3],
+                rotate: [lean, lean * 0.4, 0],
                 opacity: [0, 1, 1, 0],
               }}
               transition={{
                 duration: 1.3,
                 delay: i * 0.07,
-                times: [0, 0.42, 1],
+                times: [0, 0.48, 1],
                 opacity: { duration: 1.3, delay: i * 0.07, times: [0, 0.28, 0.82, 1] },
                 ease: CONVERGE_EASE,
               }}
@@ -203,22 +233,39 @@ export default function OrderFormation({ order, orderReference, onDone }: OrderF
         />
       )}
 
-      {/* The fused order card — then it dissolves into the tracking screen */}
+      {/* The fused order card — a calm breath as it is born, then it unfolds
+          downward into the tracking timeline beneath (transform+opacity only:
+          it stretches open from its top edge rather than dissolving in place). */}
       {phase !== "gather" && (
         <motion.div
           initial={{ scale: 0.62, opacity: 0, y: 6 }}
           animate={
             phase === "merge"
-              ? { scale: 1.1, opacity: 0, y: -10 }
-              : { scale: 1, opacity: 1, y: 0 }
+              ? { scaleX: 1.05, scaleY: 1.45, y: 34, opacity: 0 }
+              : {
+                  // Birth: swell slightly past rest, then a calm settling breath.
+                  scale: [0.62, 1.035, 0.992, 1],
+                  opacity: 1,
+                  y: [6, 0, 0, 0],
+                }
           }
           transition={
             phase === "merge"
-              ? { duration: 0.42, ease: "easeIn" }
-              : { type: "spring", stiffness: 210, damping: 20, mass: 0.85 }
+              ? { duration: 0.42, ease: [0.45, 0, 0.55, 1] }
+              : {
+                  duration: 0.72,
+                  times: [0, 0.42, 0.74, 1],
+                  ease: ["easeOut", "easeInOut", "easeInOut"],
+                  opacity: { duration: 0.3, ease: "easeOut" },
+                }
           }
+          style={{ transformOrigin: "50% 0%" }}
           className="relative w-full max-w-sm bg-white rounded-[32px] p-8 text-center shadow-2xl shadow-stone-900/25 will-change-transform"
         >
+          <motion.div
+            animate={{ opacity: phase === "merge" ? 0 : 1 }}
+            transition={{ duration: phase === "merge" ? 0.18 : 0.2, ease: "easeOut" }}
+          >
           <motion.div
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -257,6 +304,7 @@ export default function OrderFormation({ order, orderReference, onDone }: OrderF
           <p className="text-[11px] font-medium text-stone-400 mt-2">
             نفتح لك شاشة المتابعة…
           </p>
+          </motion.div>
         </motion.div>
       )}
     </motion.div>
