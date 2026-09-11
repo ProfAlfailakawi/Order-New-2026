@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import axios from "axios";
 import { createServer as createViteServer } from "vite";
 import path from "path";
@@ -1487,13 +1488,25 @@ async function sendDiwaniyaExternalPush(input: {
 }
 
 export const app = express();
+// One proxy hop (Cloud Run's load balancer) so req.ip resolves to the real
+// client for rate limiting instead of the proxy address.
+app.set("trust proxy", 1);
 let serverStarted = false;
 export async function startServer() {
   if (serverStarted) return app;
   serverStarted = true;
 
+// Per-IP rate limit in front of authenticated admin/debug surfaces so token
+// verification can't be hammered by anonymous callers.
+const adminRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Middleware to protect admin routes
-const adminAuth = async (req, res, next) => {
+const adminAuthOnly = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized: Missing or invalid token format' });
@@ -1515,6 +1528,9 @@ const adminAuth = async (req, res, next) => {
      return res.status(401).json({ error: 'Unauthorized: Invalid token' });
   }
 };
+
+// Rate limit + auth, applied together everywhere an admin surface is exposed.
+const adminAuth = [adminRateLimit, adminAuthOnly];
 
   app.use("/api/admin", adminAuth);
   // const app = express();
