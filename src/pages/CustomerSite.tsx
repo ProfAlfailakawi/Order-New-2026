@@ -5083,7 +5083,7 @@ export default function CustomerSite() {
         animate={{ opacity: isLoading ? 0 : 1 }}
         transition={{ duration: 1 }}
         className={cn(
-          "pb-24 max-w-2xl lg:max-w-6xl mx-auto min-h-screen shadow-sm text-brand overflow-x-hidden transition-colors duration-1000 customer-signature-shell",
+          "pb-24 max-w-2xl lg:max-w-6xl mx-auto min-h-screen shadow-sm text-brand overflow-x-clip transition-colors duration-1000 customer-signature-shell",
           goldenHourTheme.bg,
           goldenHourTheme.extraShadow || "",
         )}

@@ -52,7 +52,7 @@ export default function App() {
 
   return (
     <Router>
-      <div className="min-h-screen font-sans w-full max-w-full overflow-x-hidden">
+      <div className="min-h-screen font-sans w-full max-w-full overflow-x-clip">
         <OfflineModal isOpen={!isOnline} />
         <Suspense fallback={<BrandedFallback />}>
           <Routes>
