@@ -1496,11 +1496,33 @@ export async function startServer() {
   if (serverStarted) return app;
   serverStarted = true;
 
+  // Baseline security response headers. Conservative set that does not alter
+  // API/payload behavior: prevents MIME sniffing, clickjacking (same-origin
+  // framing is preserved so the app's own pages still work), and trims the
+  // referrer sent cross-origin. No CSP here to avoid breaking inline scripts /
+  // the payment-gateway redirect flow.
+  app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
+    next();
+  });
+
 // Per-IP rate limit in front of authenticated admin/debug surfaces so token
 // verification can't be hammered by anonymous callers.
 const adminRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Guards the 4-digit squad temp-code join (an OTP-style secret) against
+// per-IP brute force. Generous enough for legitimate retries.
+const tempCodeLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -2901,7 +2923,7 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
     res.json({ success: true, code, expiresAt });
   });
 
-  app.post("/api/squad-join-temp-code", async (req, res) => {
+  app.post("/api/squad-join-temp-code", tempCodeLimiter, async (req, res) => {
     const { code, phone, name } = req.body || {};
     if (!code || !phone) return res.status(400).json({ error: "Missing code or phone" });
     const cleanTarget = cleanPhone(phone);
@@ -5894,9 +5916,13 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
   // Global Error Handler to guarantee JSON response
   app.use((err: any, req: any, res: any, next: any) => {
     console.error("Global Express Error:", err);
-    res
-      .status(500)
-      .json({ error: "Internal Server Error", details: err.message });
+    // Avoid leaking internal error details (which can expose stack/impl info)
+    // to clients in production; keep them in dev for debugging.
+    const body: { error: string; details?: string } = { error: "Internal Server Error" };
+    if (process.env.NODE_ENV !== "production") {
+      body.details = err?.message;
+    }
+    res.status(500).json(body);
   });
 
   if (!isTest) {

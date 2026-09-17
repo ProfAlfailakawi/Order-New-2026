@@ -35,3 +35,53 @@
 
 > توصية: يُعالَج كل بند أعلاه في فرع مستقل مع بيئة اختبار (staging) وبموافقة المالك،
 > وليس ضمن جولة تنظيف.
+
+---
+
+## جولة تدقيق أمني (Security Audit) — 2026-09-17
+
+### إصلاحات مُطبَّقة (Fixed — safe, surgical, backwards-compatible)
+
+1. **Missing security headers** — `server.ts:1504` — *Severity: Medium*
+   أضيف middleware عام يضبط رؤوس أمان أساسية على كل الاستجابات:
+   `X-Content-Type-Options: nosniff` (منع MIME sniffing)،
+   `X-Frame-Options: SAMEORIGIN` (منع clickjacking مع إبقاء تأطير نفس المصدر)،
+   `Referrer-Policy: strict-origin-when-cross-origin`،
+   `X-Permitted-Cross-Domain-Policies: none`.
+   لم تُضَف CSP تجنباً لكسر السكربتات المضمّنة ومسار تحويل بوابة الدفع.
+
+2. **Missing rate limiting on OTP-style secret (squad temp-code brute force)** —
+   `server.ts:1523` (تعريف `tempCodeLimiter`) + `server.ts:2926` (تطبيقه على
+   `POST /api/squad-join-temp-code`) — *Severity: Medium*
+   كود انضمام الديوانية من 4 أرقام (1000–9999) كان قابلاً للتخمين بالقوة الغاشمة
+   بلا أي حد. أضيف حدّ لكل IP (30 محاولة / 10 دقائق) اعتماداً على `express-rate-limit`
+   الموجود مسبقاً — إضافة فقط، لا تكسر الاستخدام الشرعي.
+
+3. **Information disclosure via global error handler** — `server.ts:5919` —
+   *Severity: Low*
+   معالج الأخطاء العام كان يُرجع `details: err.message` للعميل دائماً (قد يكشف
+   تفاصيل داخلية). أصبح يُرجع `details` فقط خارج بيئة الإنتاج
+   (`NODE_ENV !== 'production'`)؛ في الإنتاج يعود فقط `{ error: "Internal Server Error" }`.
+
+> التحقق: `npm run lint` (tsc --noEmit) = 0 أخطاء، و`npm test` = 25/25 ناجحة.
+
+### تم التحقق منها ووُجدت سليمة (لا تغيير)
+- **حماية `/api/admin/*`**: `app.use("/api/admin", adminRateLimit, adminAuthOnly)` مُسجَّل
+  (server.ts ~1531) **قبل** كل مسارات `/api/admin/*` (2018+، 5501+) → محمية فعلاً. لا bypass.
+- نقاط `/api/appdata`, `/api/debug*`, `/api/debug/order/:id`, `/api/create-test-split-order`
+  تضيف `adminAuthOnly` صراحةً → محمية.
+- لا وجود لـ `dangerouslySetInnerHTML`/`innerHTML` مع بيانات مستخدم في `src/`.
+- `/split/:id` يُنقّى فيه `id` قبل الإدراج في HTML، و`total` رقمي → لا XSS.
+- لا CORS wildcard+credentials (لا يوجد إعداد CORS أصلاً).
+- استدعاءات axios/fetch الخارجية كلها ثابتة الوجهة (دفع/إشعارات) → لا SSRF.
+- قراءات الملفات بمسارات ثابتة → لا path traversal.
+
+### بنود تُركت عمداً (تحتاج قرار المالك)
+- **منطق الدفع** (webhooks، توقيع، `/api/create-payment`, `/api/create-split-payment`,
+  `/api/validate-promo`، KNET/UPayments) — لم يُلمَس (تعليمات المالك).
+- **الإشعارات/Push** (`/api/diwaniya-push/*`، FCM، service worker) — لم يُلمَس.
+- **قواعد Firestore لـ orders/invoices/pushTokens** و`appData/*` المفتوحة — لم تُلمَس.
+- **IDOR على lookup بالهاتف** (`/api/customers`, `/api/search-order/:phone`): مصمّمة
+  على أساس الهاتف كمُعرِّف لتطبيق طلب بلا تسجيل دخول. تخفيفها يتطلب طبقة مصادقة/OTP
+  للعميل — قرار منفصل مع اختبار كامل.
+- **رؤوس أقوى (CSP، HSTS)**: تحتاج اختباراً مع مسار الدفع وملفات vite قبل التطبيق.
