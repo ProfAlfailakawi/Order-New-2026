@@ -38,6 +38,7 @@ import { DEFAULT_GLOBAL_LOGO } from "../constants";
 import { cn, calculateItemsTotal, getDisplayTotal, normalizeDigits, formatKuwaitiDate } from "../utils";
 import { calculateItemTotalWithAddons } from "../utils/priceCalculation";
 import { NewInvoiceModal } from "../components/NewInvoiceModal";
+import { formatAdminWhatsAppAddress, getAddressMapUrl } from "../utils/kuwaitAddress";
 
 const sanitizeWhatsAppText = (text: string) =>
   String(text || "").replace(/[\u{1F000}-\u{1FAFF}]/gu, "").replace(/\uFFFD/g, "");
@@ -368,7 +369,7 @@ export default function AdminDashboard() {
 
     const formattedForWhatsApp = `+965${cleaned}`;
 
-    const addressDetails = order.address ? `\n\n\u2709\uFE0F العنوان:\nالمنطقة: ${order.address.region}\nقطعة: ${order.address.block}\nشارع: ${order.address.street}\nمنزل: ${order.address.building}` : "";
+    const addressDetails = order.address ? formatAdminWhatsAppAddress(order.address) : "";
     const message = encodeURIComponent(sanitizeWhatsAppText(`مرحباً ${order.customerName}، بخصوص طلبك رقم ${order.id}...${addressDetails}\n\nhttps://alturathkw.shop`));
     window.open(`https://api.whatsapp.com/send?phone=${formattedForWhatsApp}&text=${message}`, "_blank");
   };
@@ -1978,9 +1979,16 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
               <div className="p-8 bg-stone-50 rounded-[32px] border border-stone-100 space-y-5">
                 <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-[0.2em] flex items-center gap-2 justify-end">📍 عنوان التوصيل</label>
                 <div className="space-y-2 text-brand">
+                  {!order.address.region && !order.address.block && (order.address as any).full ? (
+                    <div className="text-xl font-extrabold">{(order.address as any).full}</div>
+                  ) : (
+                    <>
                   <div className="text-xl font-extrabold">{order.address.region} - قطعة {order.address.block}</div>
                   <div className="text-stone-500 font-bold">شارع {order.address.street} {order.address.avenue && ` - جادة ${order.address.avenue}`} - منزل {order.address.building}</div>
                   {(order.address.floor || order.address.apartment) && <div className="text-stone-500 font-bold">{order.address.floor && `الدور ${order.address.floor}`} {order.address.apartment && ` - شقة ${order.address.apartment}`}</div>}
+                    </>
+                  )}
+                  {getAddressMapUrl(order.address) && <a href={getAddressMapUrl(order.address)} target="_blank" rel="noopener noreferrer" className="inline-block text-accent text-xs font-extrabold underline underline-offset-4">📍 فتح موقع العميل على الخريطة</a>}
                   {order.address.deliveryNotes && <div className="mt-6 p-5 bg-white rounded-2xl text-[11px] text-stone-400 italic border-r-4 border-accent font-medium leading-relaxed">📝 {order.address.deliveryNotes}</div>}
                 </div>
               </div>
@@ -2118,7 +2126,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
         {(order.status === "جديد" || order.status?.startsWith("تم الدفع") || order.status === "فشل في عملية الدفع" || order.status === "قيد تجميع القطية") && (
           <div className="p-10 bg-stone-50/50 border-t border-stone-100 flex flex-col gap-6">
             <div className="grid grid-cols-2 gap-8">
-              <a href={`https://api.whatsapp.com/send?phone=${order.customerPhone?.replace(/\D/g, "")?.length === 8 ? "965" + order.customerPhone.replace(/\D/g, "") : order.customerPhone?.replace(/\D/g, "")}&text=${encodeURIComponent(sanitizeWhatsAppText(`مرحباً ${order.customerName}، بخصوص طلبك رقم ${order.id}...${order.address ? `\n\n\u2709\uFE0F العنوان:\nالمنطقة: ${order.address.region}\nقطعة: ${order.address.block}\nشارع: ${order.address.street}\nمنزل: ${order.address.building}` : ""}\n\nرابط مشاركة القطية: ${window.location.origin}/split/${order.id}\n\nhttps://alturathkw.shop`))}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-4 bg-white border border-stone-100 text-green-500 p-6 rounded-[32px] font-extrabold uppercase tracking-widest text-xs hover:bg-green-500 hover:text-white transition-all shadow-sm active:scale-95 group"><MessageCircle className="w-7 h-7 group-hover:animate-bounce" />تواصل عبر واتساب</a>
+              <a href={`https://api.whatsapp.com/send?phone=${order.customerPhone?.replace(/\D/g, "")?.length === 8 ? "965" + order.customerPhone.replace(/\D/g, "") : order.customerPhone?.replace(/\D/g, "")}&text=${encodeURIComponent(sanitizeWhatsAppText(`مرحباً ${order.customerName}، بخصوص طلبك رقم ${order.id}...${order.address ? formatAdminWhatsAppAddress(order.address) : ""}\n\nرابط مشاركة القطية: ${window.location.origin}/split/${order.id}\n\nhttps://alturathkw.shop`))}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-4 bg-white border border-stone-100 text-green-500 p-6 rounded-[32px] font-extrabold uppercase tracking-widest text-xs hover:bg-green-500 hover:text-white transition-all shadow-sm active:scale-95 group"><MessageCircle className="w-7 h-7 group-hover:animate-bounce" />تواصل عبر واتساب</a>
               {(order.status === "جديد" || order.status?.startsWith("تم الدفع")) ? (
                 <MagneticButton onClick={onPay} className="flex items-center justify-center gap-4 gold-gradient text-white p-6 rounded-[32px] font-extrabold uppercase tracking-widest text-xs shadow-xl shadow-accent/20 hover:scale-[1.02] transition-all active:scale-95 group"><CheckCircle2 className="w-7 h-7" />تأكيد استلام المبلغ 💰</MagneticButton>
               ) : (
