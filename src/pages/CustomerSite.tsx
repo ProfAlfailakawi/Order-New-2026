@@ -1064,6 +1064,15 @@ import OrderWelcome from "../components/OrderWelcome";
 import { DynamicEnvironment } from "../components/DynamicEnvironment";
 import { redirectToPayment } from "../utils/redirect";
 import { buildWhatsAppInvoiceText, buildWhatsAppPaymentLinkText } from "../utils/invoiceShare";
+import {
+  buildKuwaitAddressText,
+  getMissingAddressFields,
+  isValidKuwaitPhone,
+  REQUIRED_ADDRESS_FIELDS,
+  type RequiredAddressKey,
+} from "../utils/kuwaitAddress";
+
+const KUWAIT_PHONE_ERROR = "رقم التلفون لازم يكون كويتي: 8 أرقام يبدأ بـ 2 أو 4 أو 5 أو 6 أو 9";
 
 const LeafletLocationPicker = React.lazy(
   () => import("../components/LeafletLocationPicker"),
@@ -4326,6 +4335,11 @@ export default function CustomerSite() {
       return;
     }
 
+    if (!isValidKuwaitPhone(customerPhone)) {
+      setFormError(KUWAIT_PHONE_ERROR);
+      return;
+    }
+
     if (deliveryFee === -1) {
       setFormError(
         "المنطقة مو مضبوطة. اختار منطقة من القائمة.",
@@ -4368,7 +4382,9 @@ export default function CustomerSite() {
     const orderData: any = {
       customerName,
       customerPhone,
-      address,
+      // Structured fields stay as-is; `full` is the same address as one line
+      // for anything that only understands a free-text address.
+      address: { ...address, full: buildKuwaitAddressText(address) },
       items: cart.map(item => ({
         ...item,
         addons: calculateItemAddons(item)
@@ -8540,6 +8556,16 @@ function CheckoutOverlay({
 }: any) {
   const [regionSearch, setRegionSearch] = useState("");
   const [showRegions, setShowRegions] = useState(false);
+  const [showAddressErrors, setShowAddressErrors] = useState(false);
+  const missingAddressKeys = showAddressErrors
+    ? new Set(getMissingAddressFields(address).map((f) => f.key))
+    : new Set<string>();
+  const renderAddressError = (key: RequiredAddressKey) =>
+    missingAddressKeys.has(key) ? (
+      <p className="px-1 text-[11px] font-extrabold text-red-600">
+        {REQUIRED_ADDRESS_FIELDS.find((f) => f.key === key)?.error}
+      </p>
+    ) : null;
   const [step, setStep] = useState<"cart" | "delivery" | "payment">(initialStep);
   const [storeClock, setStoreClock] = useState(() => Date.now());
   const storeAvailability = useMemo(
@@ -9002,6 +9028,9 @@ function CheckoutOverlay({
                     className="w-full px-5 py-4 border-2 border-accent/10 focus:border-accent/40 bg-stone-50/50 hover:bg-stone-50 transition-colors rounded-xl focus:border-accent focus:ring-4 focus:ring-accent/10 outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-xl text-center tracking-[0.2em] shadow-sm"
                     dir="ltr"
                   />
+                  {customerPhone.length === 8 && !isValidKuwaitPhone(customerPhone) && (
+                    <p className="px-1 text-[11px] font-extrabold text-red-600">{KUWAIT_PHONE_ERROR}</p>
+                  )}
                 </div>
                 {customerPhone.length >= 8 && (
                   <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
@@ -9100,6 +9129,7 @@ function CheckoutOverlay({
                           <span>اختار منطقة صحيحة من القائمة عشان رسوم التوصيل تطلع صح.</span>
                         </div>
                       )}
+                      {!showRegions && <div className="mt-1.5">{renderAddressError("region")}</div>}
                     </div>
                   </div>
 
@@ -9170,6 +9200,7 @@ function CheckoutOverlay({
                         }
                         className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
                       />
+                      {renderAddressError("block")}
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
@@ -9186,6 +9217,7 @@ function CheckoutOverlay({
                         }
                         className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
                       />
+                      {renderAddressError("street")}
                     </div>
                   </div>
 
@@ -9224,6 +9256,7 @@ function CheckoutOverlay({
                         }
                         className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
                       />
+                      {renderAddressError("building")}
                     </div>
                   </div>
 
@@ -9538,10 +9571,17 @@ function CheckoutOverlay({
                   <button
                     disabled={!isOpen}
                     onClick={() => {
+                      const missingAddress = getMissingAddressFields(address);
                       if (customerPhone.length < 8) {
                         setFormError("اكتب رقم تلفون صحيح من 8 أرقام");
+                      } else if (!isValidKuwaitPhone(customerPhone)) {
+                        setFormError(KUWAIT_PHONE_ERROR);
                       } else if (deliveryFee === -1) {
+                        setShowAddressErrors(true);
                         setFormError("اختار منطقة صحيحة من القائمة");
+                      } else if (missingAddress.length > 0) {
+                        setShowAddressErrors(true);
+                        setFormError(`كمل العنوان: ${missingAddress.map((f) => f.label).join("، ")}`);
                       } else if (!customerName) {
                         setFormError("اكتب اسمك");
                       } else if (!isOpen) {
