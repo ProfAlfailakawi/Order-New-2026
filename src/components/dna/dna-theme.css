@@ -1,0 +1,35 @@
+/* Maps DNA kit tokens to the storefront palette (index.css @theme).
+   Single accent = brand green. Scoped resets neutralise legacy global rules. */
+:root:root {
+  --dna-canvas: #fafaf9;
+  --dna-surface: #ffffff;
+  --dna-surface-2: #f5f4f0;
+  --dna-ink: #1c1917;
+  --dna-muted: #6b6560;
+  --dna-accent: #0d3a22;
+  --dna-accent-soft: #e4efe8;
+  --dna-core: #0d3a22;
+  --dna-danger: #ab2b2c;
+  --dna-danger-soft: #f8e6e6;
+}
+.dna button { font-family: inherit; }
+.dna svg { flex-shrink: 0; }
+.dna-tile::before, .dna-tile::after { content: none !important; }
+.dna-tile.dna-pv-fill { inline-size: 100% !important; block-size: 100% !important; border-radius: inherit !important; }
+.dna-tile.dna-pv-fill svg { inline-size: 42% !important; block-size: 42% !important; max-inline-size: 56px; max-block-size: 56px; }
+
+/* Category tile grid (replaces the closed accordion bars) */
+.dna-cat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 640px) { .dna-cat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; } }
+.dna-cat-tile {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+  min-height: 120px; padding: 16px; text-align: start; cursor: pointer;
+  background: var(--dna-surface); border: 1px solid var(--dna-line) !important;
+  border-radius: 22px !important; box-shadow: var(--dna-shadow) !important;
+  transition: border-color .2s var(--dna-ease), box-shadow .2s var(--dna-ease);
+}
+.dna-cat-tile:hover { border-color: var(--dna-line-2) !important; }
+.dna-cat-tile[data-open='true'] { border-color: var(--dna-accent) !important; box-shadow: 0 0 0 1px var(--dna-accent), var(--dna-shadow) !important; }
+.dna-cat-tile:focus-visible { outline: 2px solid var(--dna-accent); outline-offset: 2px; }
+.dna-cat-name { font-size: 15px; font-weight: 800; color: var(--dna-ink); line-height: 1.35; margin-top: auto; }
+.dna-cat-meta { font-size: 12px; font-weight: 600; color: var(--dna-muted); margin-top: -6px; }

@@ -1061,6 +1061,8 @@ import {
 } from "../utils/priceCalculation";
 import { ZenSplashScreen } from "../components/ZenSplashScreen";
 import OrderWelcome from "../components/OrderWelcome";
+import { ProductVisual, CategoryTile } from "../components/dna/ProductVisual";
+import { DnaCount, DnaTimeline, DnaIconTile } from "../components/dna";
 import { DynamicEnvironment } from "../components/DynamicEnvironment";
 import { redirectToPayment } from "../utils/redirect";
 import { buildWhatsAppInvoiceText, buildWhatsAppPaymentLinkText } from "../utils/invoiceShare";
@@ -5475,8 +5477,6 @@ export default function CustomerSite() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
                   {liveSignal.items.map((p: any) => {
-                    const fallbackLogo = settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO;
-                    const imgUrl = p.imageUrl || p.image || fallbackLogo;
                     return (
                       <button
                         key={p.id || p.name}
@@ -5484,18 +5484,7 @@ export default function CustomerSite() {
                         className="group flex items-center gap-3.5 rounded-2xl border border-stone-200/40 bg-white p-3 text-right active:scale-[.98] hover:border-amber-300 hover:shadow-md transition-all duration-300 min-h-[92px]"
                       >
                         <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden shrink-0 bg-stone-50 border border-stone-100 shadow-sm">
-                          <img
-                            src={imgUrl}
-                            alt={p.name}
-                            loading="lazy"
-                            decoding="async"
-                            onError={(e) => {
-                              if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO)) {
-                                e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
-                              }
-                            }}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
+                          <ProductVisual product={p} imgClassName="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         </div>
                         <div className="min-w-0 flex-1 space-y-1">
                           <div className="text-xs sm:text-sm font-extrabold text-brand line-clamp-2 leading-snug break-words group-hover:text-amber-950 transition-colors duration-200">{p.name}</div>
@@ -5515,7 +5504,6 @@ export default function CustomerSite() {
             const liveSignal = getKuwaitiLiveMenuSignal(products, cart, squadInfo);
             const suggestion = liveSignal.items.find((p: any) => !cart.some((c: any) => c.productId === p.id || c.name === p.name));
             if (!suggestion) return null;
-            const fallbackLogo = settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO;
             return (
               <button
                 onClick={() => setSelectedProduct(suggestion)}
@@ -5523,18 +5511,7 @@ export default function CustomerSite() {
               >
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
                   <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 shadow-sm border border-amber-100 bg-stone-50">
-                    <img
-                      src={suggestion.imageUrl || suggestion.image || fallbackLogo}
-                      alt={suggestion.name}
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => {
-                        if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO)) {
-                          e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
-                        }
-                      }}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    <ProductVisual product={suggestion} imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
                   <div className="text-right min-w-0 flex-1 space-y-1">
                     <span className="inline-flex items-center text-[9px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100/50 rounded-full px-2.5 py-0.5">توليفة تكمّل سلتك 🍲</span>
@@ -5556,7 +5533,7 @@ export default function CustomerSite() {
             <section className="mb-2">
               <div className="best-seller-wow-head flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-brand flex items-center gap-2">
-                  <span className="text-accent text-xl">🔥</span> الأكثر طلباً
+                  <Flame className="w-5 h-5 text-brand" strokeWidth={1.6} aria-hidden="true" /> الأكثر طلباً
                 </h3>
               </div>
               <RoyalLazySusan
@@ -5688,54 +5665,55 @@ export default function CustomerSite() {
                       ))}
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
+                      <div className="dna-cat-grid" role="list">
+                        {groupedProducts.map((group) => {
+                          const isOpen = activeProductCategory === group.category;
+                          return (
+                            <button
+                              key={group.category}
+                              type="button"
+                              role="listitem"
+                              aria-expanded={isOpen}
+                              onClick={() => setActiveProductCategory(isOpen ? null : group.category)}
+                              className="dna-cat-tile"
+                              data-open={isOpen ? "true" : "false"}
+                            >
+                              <CategoryTile category={group.category} size="md" />
+                              <span className="dna-cat-name">{group.category}</span>
+                              <span className="dna-cat-meta">{group.items.length} منتج</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                       {groupedProducts.map((group) => {
                         const isOpen = activeProductCategory === group.category;
                         return (
-                          <div key={group.category} className="category-signature-card bg-white border border-stone-100 rounded-[28px] shadow-sm overflow-hidden">
-                            <button
-                              type="button"
-                              onClick={() => setActiveProductCategory(isOpen ? null : group.category)}
-                              className="w-full flex items-center justify-between gap-4 p-5 text-right"
-                            >
-                              <div className="flex flex-col items-start">
-                                <span className="text-lg font-extrabold text-brand">{group.category}</span>
-                                <span className="text-[11px] font-bold text-stone-400">{group.items.length} منتج</span>
-                              </div>
-                              <div className={cn(
-                                "w-10 h-10 rounded-2xl flex items-center justify-center transition-all",
-                                isOpen ? "bg-brand text-white rotate-180" : "bg-stone-50 text-brand"
-                              )}>
-                                <ArrowRight className="w-4 h-4 rotate-90" />
-                              </div>
-                            </button>
-
-                            <AnimatePresence initial={false}>
-                              {isOpen && (
-                                <motion.div
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: "auto", opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ duration: 0.22 }}
-                                  className="overflow-hidden"
-                                >
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 p-4 pt-0">
-                                    {group.items.slice(0, 48).map((product) => (
-                                      <motion.div
-                                        key={product.id}
-                                        initial={{ opacity: 0, y: 12 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="h-full flex flex-col"
-                                        style={{ minHeight: "120px" }}
-                                      >
-                                        <ChefWhisperCard product={product} settings={settings} onSelect={setSelectedProduct} />
-                                      </motion.div>
-                                    ))}
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
+                          <AnimatePresence initial={false} key={group.category}>
+                            {isOpen && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.22 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                                  {group.items.slice(0, 48).map((product) => (
+                                    <motion.div
+                                      key={product.id}
+                                      initial={{ opacity: 0, y: 12 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      className="h-full flex flex-col"
+                                      style={{ minHeight: "120px" }}
+                                    >
+                                      <ChefWhisperCard product={product} settings={settings} onSelect={setSelectedProduct} />
+                                    </motion.div>
+                                  ))}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         );
                       })}
                     </div>
@@ -7428,9 +7406,6 @@ const ChefWhisperCard = ({
     product.name?.includes("دياي");
   const whisperText = getWhisperText(product);
 
-  const fallbackLogo =
-    settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO;
-  const imgUrl = product.imageUrl || product.image || fallbackLogo;
 
   return (
     <div
@@ -7496,23 +7471,9 @@ const ChefWhisperCard = ({
             <>
               <div className="menu-product-image relative flex-shrink-0 overflow-hidden flex items-center justify-center rounded-[22px] w-20 h-20 mx-auto mb-2 shadow-[0_14px_28px_rgba(26,46,34,0.12)] ring-1 ring-white/70">
                 {isHot && <SizzlingSteam />}
-                <img
-                  referrerPolicy="no-referrer"
-                  src={imgUrl}
-                  loading={isHorizontal ? "eager" : "lazy"}
-                  decoding="async"
-                  fetchPriority={isHorizontal ? "high" : "auto"}
-                  onError={(e) => {
-                    if (e.currentTarget.src.includes(fallbackLogo)) {
-                      e.currentTarget.onerror = null;
-                      if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO))
-                        e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
-                    } else {
-                      e.currentTarget.src = fallbackLogo;
-                    }
-                  }}
-                  alt={product.name}
-                  className="menu-product-img orser-product-img w-full h-full object-cover bg-transparent relative z-0"
+                <ProductVisual
+                  product={product}
+                  imgClassName="menu-product-img orser-product-img w-full h-full object-cover bg-transparent relative z-0"
                 />
               </div>
               <div className="flex flex-col flex-grow text-center relative z-10">
@@ -7565,22 +7526,9 @@ const ChefWhisperCard = ({
                   {/* 2. Image */}
                   <div className="menu-product-image relative w-[150px] h-[86px] sm:w-[168px] sm:h-[94px] flex-shrink-0 overflow-hidden flex items-center justify-center z-10 mb-2 rounded-[22px] shadow-[0_16px_38px_rgba(26,46,34,0.16)] ring-1 ring-white/80">
                     {isHot && <SizzlingSteam />}
-                    <img
-                      referrerPolicy="no-referrer"
-                      src={imgUrl}
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => {
-                        if (e.currentTarget.src.includes(fallbackLogo)) {
-                          e.currentTarget.onerror = null;
-                          if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO))
-                            e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
-                        } else {
-                          e.currentTarget.src = fallbackLogo;
-                        }
-                      }}
-                      alt={product.name}
-                      className="menu-product-img orser-product-img w-full h-full object-cover bg-transparent relative z-0"
+                    <ProductVisual
+                      product={product}
+                      imgClassName="menu-product-img orser-product-img w-full h-full object-cover bg-transparent relative z-0"
                     />
                   </div>
 
