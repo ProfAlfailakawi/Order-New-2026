@@ -41,6 +41,10 @@ import {
   BellRing,
   LogIn,
   Clock,
+  Radar,
+  Coffee,
+  Hourglass,
+  UserPlus,
 } from "lucide-react";
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegroundPush, type DiwaniyaPushState } from "../lib/diwaniyaPush";
@@ -6625,153 +6629,6 @@ export default function CustomerSite() {
           )}
         </AnimatePresence>
 
-        {/* رادار التراث - إشعار جيو لوكيشن ذكي للديوانيات القريبة */}
-        <AnimatePresence>
-          {radarNearbySquads.length > 0 && (
-            isNearbyRadarPanelCollapsed ? (
-              <motion.button
-                key="collapsed-nearby-radar"
-                initial={{ opacity: 0, scale: 0.85, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.85, y: 20 }}
-                onClick={() => {
-                  setIsNearbyRadarPanelCollapsed(false);
-                  setIsOwnerJoinAlertCollapsed(true);
-                  setIsQatyaAlertCollapsed(true);
-                }}
-                className={cn(
-                  "customer-soft-alert-bubble customer-mobile-stable-alert-bubble fixed w-12 h-12 bg-slate-900/95 text-amber-100 rounded-full shadow-2xl z-[85] border border-amber-500/30 backdrop-blur-md flex items-center justify-center text-xs font-black",
-                  floatingAlertBubbleSide,
-                  floatingAlertBottom,
-                )}
-                title="فتح رادار الديوانيات القريبة"
-              >
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
-                </span>
-                <span className="text-base">📡</span>
-              </motion.button>
-            ) : (
-              <motion.div
-                key="expanded-nearby-radar"
-                initial={{ opacity: 0, y: 150, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 150, scale: 0.9 }}
-                className={cn(
-                  "customer-mobile-stable-alert fixed md:w-[400px] max-h-[min(420px,calc(100dvh-140px))] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-6 shadow-2xl z-[85] border-2 border-amber-500/20 text-right font-sans space-y-4",
-                  floatingAlertPanelSide,
-                  floatingAlertBottom,
-                )}
-              >
-                <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-3">
-                  <button
-                    onClick={() => setIsNearbyRadarPanelCollapsed(true)}
-                    className="w-8 h-8 rounded-full bg-white/10 text-slate-300 hover:text-white hover:bg-white/15 flex items-center justify-center transition-all shrink-0"
-                    title="تصغير رادار الديوانيات"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                  <div className="flex-1">
-                    <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار الديوانية 📡</span>
-                    <h4 className="font-black text-sm mt-2 text-amber-100">
-                      لقطنا دواوين قريبة منك 📍
-                    </h4>
-                  </div>
-                  <div className="relative flex h-3 w-3 mt-1.5 shrink-0">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
-                  </div>
-                </div>
-
-                <p className="text-[11px] font-bold text-slate-300 leading-normal">
-                  إذا هذي ديوانيتك بدّل لها، وإذا مو عضو دز طلب والمعزب يوافق عليك.
-                </p>
-
-                <React.Suspense fallback={<DeferredFeatureFallback label="جاري تجهيز الخريطة..." />}>
-                  <LeafletKuwaitMap
-                    markers={radarNearbySquads.filter((sq: any) => sq.lat !== undefined && sq.lng !== undefined).map((sq: any) => ({
-                      id: String(sq.id),
-                      name: `ديوانية ${sq.name}`,
-                      lat: Number(sq.lat),
-                      lng: Number(sq.lng),
-                      subtitle: `تبعد ${normalizeDigits(String(sq.distance))}م`,
-                      color: sq.isAlreadyMember ? '#10b981' : '#f59e0b',
-                      radiusMeters: Number(sq.geofenceDistance || 80),
-                      size: 28,
-                    }))}
-                    center={radarNearbySquads[0]?.lat && radarNearbySquads[0]?.lng ? { lat: Number(radarNearbySquads[0].lat), lng: Number(radarNearbySquads[0].lng) } : { lat: 29.3375, lng: 47.9774 }}
-                    zoom={15}
-                    dark
-                    showRange
-                    heightClassName="h-[220px]"
-                  />
-                </React.Suspense>
-
-                <div className="space-y-3">
-                  {radarNearbySquads.map((sq: any) => {
-                    const isLoading = radarLoadingMap[sq.id];
-                    const isSuccess = radarSuccessMap[sq.id];
-
-                    return (
-                      <div 
-                        key={sq.id} 
-                        className="p-3 bg-slate-800 rounded-2xl border border-slate-700/50 flex flex-col gap-2 transition-all hover:bg-slate-800/90"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-500/10 px-2 py-0.5 rounded-lg font-mono">
-                            تبعد {normalizeDigits(String(sq.distance))}م
-                          </span>
-                          <span className="text-xs font-black text-white">ديوانية {sq.name}</span>
-                        </div>
-
-                        {isSuccess ? (
-                          <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-1.5 px-3 rounded-xl text-[10px] font-black text-center animate-pulse">
-                            دزينا طلبك للمعزب! ناطرين موافقته 📡
-                          </div>
-                        ) : (
-                          <div className="flex gap-2 justify-end mt-1 flex-wrap">
-                            <button
-                              onClick={() => setIsNearbyRadarPanelCollapsed(true)}
-                              className="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-[10px] py-1.5 px-3 rounded-xl transition-all inline-flex items-center gap-1"
-                            >
-                              <X className="w-3 h-3" />
-                              تصغير
-                            </button>
-                            
-                            {sq.isAlreadyMember ? (
-                              <button
-                                onClick={() => handleSwitchToNearbySquad(sq)}
-                                className="bg-emerald-400 hover:bg-emerald-500 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
-                              >
-                                {sq.isOwnerOfNearby ? "فعّل ديوانيتك هنا 👑" : "أنا عضو هنا، خلّها الحالية ✅"}
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleSendRadarRequest(sq)}
-                                disabled={isLoading}
-                                className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 text-slate-950 font-black text-[10px] py-1.5 px-4 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
-                              >
-                                {isLoading ? "ندز الطلب..." : "دز طلب للمعزب 📡"}
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {!customerPhone && (
-                  <p className="text-[9px] font-bold text-amber-500/50 text-center pt-2">
-                    سجل رقمك عشان يوصل طلبك للمعزب باسمك ورقمك!
-                  </p>
-                )}
-              </motion.div>
-            )
-          )}
-        </AnimatePresence>
-
         <AnimatePresence>
           {radarJoinDraft && (
             <motion.div
@@ -6926,186 +6783,87 @@ export default function CustomerSite() {
           )}
         </AnimatePresence>
 
-        {/* تنبيه عام للمعزب عند وصول طلب انضمام حتى خارج صفحة الديوانية */}
-        <AnimatePresence>
-          {customerPhone && pendingGeofenceRequests.length > 0 && (
-            isOwnerJoinAlertCollapsed ? (
-              <motion.button
-                key="owner-join-alert-collapsed"
-                initial={{ opacity: 0, scale: 0.85, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.85, y: 20 }}
-                onClick={() => {
-                  setIsOwnerJoinAlertCollapsed(false);
-                  setIsNearbyRadarPanelCollapsed(true);
-                  setIsQatyaAlertCollapsed(true);
-                }}
-                className={cn(
-                  "customer-soft-alert-bubble customer-mobile-stable-alert-bubble is-amber fixed rounded-full relative bg-slate-900/95 text-amber-100 border border-amber-500/30 shadow-2xl z-[85] flex items-center justify-center backdrop-blur-md",
-                  floatingAlertBubbleSide,
-                  floatingAlertBottomMid,
-                )}
-                title="طلبات انضمام معلقة"
-              >
-                <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
-                </span>
-                <BellRing className="w-5 h-5" />
-                <span className="customer-soft-alert-count">{pendingGeofenceRequests.length}</span>
-              </motion.button>
-            ) : (
-              <motion.div
-                key="owner-join-alert-expanded"
-                initial={{ opacity: 0, y: 120, scale: 0.92 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 120, scale: 0.92 }}
-                className={cn(
-                  "customer-mobile-stable-alert fixed md:w-[390px] max-h-[min(410px,calc(100dvh-160px))] overflow-y-auto bg-slate-900 text-white rounded-[32px] p-5 shadow-2xl z-[85] border-2 border-amber-500/20 text-right font-sans space-y-4",
-                  floatingAlertPanelSide,
-                  floatingAlertBottom,
-                )}
-              >
-                <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
-                  <button
-                    onClick={() => setIsOwnerJoinAlertCollapsed(true)}
-                    className="w-8 h-8 rounded-full bg-white/10 text-slate-300 hover:text-white hover:bg-white/15 flex items-center justify-center transition-all shrink-0"
-                    title="تصغير طلبات الانضمام"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                  <div className="flex-1">
-                    <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20">رادار الديوانية 📡</span>
-                    <h4 className="font-black text-sm mt-2 text-amber-100">في واحد ناطر موافقة المعزب</h4>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1">اقبل أو ارفض من هني بدون لا تطلع من المنيو.</p>
-                  </div>
-                  <div className="relative flex h-3 w-3 mt-1.5 shrink-0">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {pendingGeofenceRequests.slice(0, 5).map((req: any, idx: number) => (
-                    <div key={`${req.phone}-${idx}`} className="p-3 bg-slate-800 rounded-2xl border border-slate-700/50 space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-500/10 px-2 py-0.5 rounded-lg">يبعد {req.distance ? normalizeDigits(String(req.distance)) : "قريب"}م</span>
-                        <div className="text-right">
-                          {req.squadName && <div className="text-[9px] font-black text-amber-300 mb-0.5">ديوانية {req.squadName}</div>}
-                          <div className="text-xs font-black text-white">{req.name || "عضو قريب"}</div>
-                          <div className="text-[10px] font-bold text-slate-400 font-mono">{req.phone}</div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 justify-end">
-                        <button
-                          onClick={() => handleOwnerJoinDecision(req.phone, false, req.squadId)}
-                          disabled={ownerJoinDecisionLoading[req.phone]}
-                          className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 text-[10px] font-black px-3 py-2 rounded-xl active:scale-95"
-                        >
-                          رفض
-                        </button>
-                        <button
-                          onClick={() => handleOwnerJoinDecision(req.phone, true, req.squadId)}
-                          disabled={ownerJoinDecisionLoading[req.phone]}
-                          className="bg-emerald-400 hover:bg-emerald-500 text-slate-950 text-[10px] font-black px-4 py-2 rounded-xl active:scale-95 shadow-sm"
-                        >
-                          {ownerJoinDecisionLoading[req.phone] ? "ثواني..." : "قبول"}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )
-          )}
-        </AnimatePresence>
-
-        {/* تنبيه قطية الديوانية للأعضاء حتى وهم يتصفحون المنيو */}
-        <AnimatePresence>
-          {customerPhone && qatyaAlertItems.length > 0 && (
-            isQatyaAlertCollapsed ? (
-              <motion.button
-                key="qatya-alert-collapsed"
-                initial={{ opacity: 0, scale: 0.85, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.85, y: 20 }}
-                onClick={() => {
-                  setIsQatyaAlertCollapsed(false);
-                  setIsNearbyRadarPanelCollapsed(true);
-                  setIsOwnerJoinAlertCollapsed(true);
-                }}
-                className={cn(
-                  "customer-soft-alert-bubble customer-mobile-stable-alert-bubble is-emerald fixed rounded-full bg-brand text-white border border-emerald-300/30 shadow-2xl z-[85] flex items-center justify-center backdrop-blur-md",
-                  floatingAlertBubbleSide,
-                  floatingAlertBottomHigh,
-                )}
-                title="قطية ديوانية"
-              >
-                <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-300"></span>
-                </span>
-                <CreditCard className="w-5 h-5" />
-                <span className="customer-soft-alert-count">{qatyaAlertItems.length}</span>
-              </motion.button>
-            ) : (
-              <motion.div
-                key="qatya-alert-expanded"
-                initial={{ opacity: 0, y: 120, scale: 0.92 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 120, scale: 0.92 }}
-                className={cn(
-                  "customer-mobile-stable-alert fixed md:w-[390px] max-h-[min(360px,calc(100dvh-160px))] overflow-y-auto bg-brand text-white rounded-[32px] p-5 shadow-2xl z-[85] border-2 border-emerald-300/20 text-right font-sans space-y-4",
-                  floatingAlertPanelSide,
-                  floatingAlertBottom,
-                )}
-              >
-                <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
-                  <button
-                    onClick={() => setIsQatyaAlertCollapsed(true)}
-                    className="w-8 h-8 rounded-full bg-white/10 text-white/80 hover:text-white hover:bg-white/15 flex items-center justify-center transition-all shrink-0"
-                    title="تصغير إشعار القطيّة"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                  <div className="flex-1">
-                    <span className="text-[10px] font-black bg-white/10 text-emerald-100 px-3 py-1 rounded-full border border-white/10">قطية الديوانية 💳</span>
-                    <h4 className="font-black text-sm mt-2 text-white">عندك قطية من الربع</h4>
-                    <p className="text-[10px] font-bold text-white/70 mt-1">الشباب بالديوانية ناطرينك تشارك بقطية الحساب.</p>
-                    <div className="qatya-command-ribbon mt-3">
-                      <span>{qatyaAlertItems.length} قطيّة نشطة</span>
-                      <span>ديوانية متصلة</span>
-                      <span>دخول مباشر</span>
-                    </div>
-                  </div>
-                </div>
-                {canUseDiwaniyaPush && diwaniyaPushState !== "saved" && (
-                  <button
-                    type="button"
-                    onClick={enableImportantDiwaniyaPush}
-                    disabled={isEnablingDiwaniyaPush}
-                    className="w-full rounded-2xl bg-white text-brand px-4 py-3 text-[11px] font-black shadow-sm active:scale-[0.98] transition-all disabled:opacity-60"
-                  >
-                    {isEnablingDiwaniyaPush ? "نفعّلها..." : "فعّل تنبيهات القطيّة ووهق غيرك المهمة"}
-                  </button>
-                )}
-                {diwaniyaPushState === "saved" && (
-                  <div className="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-[11px] font-black text-emerald-100">
-                    تنبيهات القطيّة ووهق غيرك مفعّلة على هالجهاز
-                  </div>
-                )}
-                <div className="space-y-3">
-                  {qatyaAlertItems.map((n: any) => (
-                    <div key={n.id} className="relative group/item">
+        {/* صندوق التنبيهات الموحّد: جرس واحد يجمع الرادار، طلبات الانضمام، القطيّة، نداء الدلة وطلبك المعلّق */}
+        {(() => {
+          const showNearby = radarNearbySquads.length > 0;
+          const showJoin = Boolean(customerPhone) && pendingGeofenceRequests.length > 0;
+          const showQatya = Boolean(customerPhone) && qatyaAlertItems.length > 0;
+          const showWobble = Boolean(customerPhone) && wobbleAlertItems.length > 0;
+          const showMyPending = myGeofenceRequests.some((r: any) => r.status === "pending");
+          const inboxCount =
+            (showNearby ? radarNearbySquads.length : 0) +
+            (showJoin ? pendingGeofenceRequests.length : 0) +
+            (showQatya ? qatyaAlertItems.length : 0) +
+            (showWobble ? wobbleAlertItems.length : 0) +
+            (showMyPending ? 1 : 0);
+          if (inboxCount === 0) return null;
+          const inboxOpen =
+            (showNearby && !isNearbyRadarPanelCollapsed) ||
+            (showJoin && !isOwnerJoinAlertCollapsed) ||
+            (showQatya && !isQatyaAlertCollapsed) ||
+            (showWobble && !isWobbleAlertCollapsed) ||
+            (showMyPending && !isRadarBannerCollapsed);
+          const setInboxOpen = (open: boolean) => {
+            setIsNearbyRadarPanelCollapsed(!open);
+            setIsOwnerJoinAlertCollapsed(!open);
+            setIsQatyaAlertCollapsed(!open);
+            setIsWobbleAlertCollapsed(!open);
+            setIsRadarBannerCollapsed(!open);
+          };
+          const events: any[] = [];
+          if (showMyPending) {
+            events.push({
+              key: "my-pending",
+              tone: "warn",
+              icon: <Hourglass />,
+              title: "ناطرين قبول صاحب الديوانية...",
+              meta: "طلبك قيد المراجعة الفورية بالرادار.",
+            });
+          }
+          if (showJoin) {
+            pendingGeofenceRequests.slice(0, 5).forEach((req: any, idx: number) => {
+              events.push({
+                key: `join-${req.phone}-${idx}`,
+                tone: "amber",
+                icon: <UserPlus />,
+                title: req.name || "عضو قريب",
+                date: `يبعد ${req.distance ? normalizeDigits(String(req.distance)) : "قريب"}م`,
+                meta: (
+                  <div className="dna-inbox-meta">
+                    <span>{req.squadName ? `ديوانية ${req.squadName} · ` : ""}<span dir="ltr" className="font-mono">{req.phone}</span></span>
+                    <div className="dna-inbox-acts">
                       <button
-                        type="button"
-                        onClick={() => handleOpenQatyaAlertItem(n)}
-                        className="w-full p-3 pl-12 bg-white/10 hover:bg-white/15 rounded-2xl border border-white/10 text-right active:scale-[0.98] transition-all"
+                        onClick={() => handleOwnerJoinDecision(req.phone, false, req.squadId)}
+                        disabled={ownerJoinDecisionLoading[req.phone]}
+                        className="dna-btn"
                       >
-                        <div className="text-[10px] font-black text-emerald-100 mb-1">{n.squadName ? `ديوانية ${n.squadName}` : "ديوانية الربع"}</div>
-                        <div className="text-xs font-black text-white">{n.title || "عندك قطيّة"}</div>
-                        <div className="text-[10px] font-bold text-white/70 mt-1">{n.message || "دش وحدد قطيتك وادفع مباشرة."}</div>
+                        رفض
                       </button>
+                      <button
+                        onClick={() => handleOwnerJoinDecision(req.phone, true, req.squadId)}
+                        disabled={ownerJoinDecisionLoading[req.phone]}
+                        className="dna-btn dna-btnp"
+                      >
+                        {ownerJoinDecisionLoading[req.phone] ? "ثواني..." : "قبول"}
+                      </button>
+                    </div>
+                  </div>
+                ),
+              });
+            });
+          }
+          if (showQatya) {
+            qatyaAlertItems.forEach((n: any) => {
+              events.push({
+                key: `qatya-${n.id}`,
+                tone: "accent",
+                icon: <CreditCard />,
+                title: n.title || "عندك قطيّة",
+                date: n.squadName ? `ديوانية ${n.squadName}` : "ديوانية الربع",
+                meta: (
+                  <div className="dna-inbox-meta">
+                    <span>{n.message || "دش وحدد قطيتك وادفع مباشرة."}</span>
+                    <div className="dna-inbox-acts">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -7116,91 +6874,32 @@ export default function CustomerSite() {
                             dismissQatya(n.meta.orderId);
                           }
                         }}
-                        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/20 hover:bg-rose-500/30 text-white hover:text-rose-200 flex items-center justify-center transition-all shadow-sm z-10"
+                        className="dna-btn"
                         title="إخفاء التنبيه"
                       >
-                        <X className="w-3.5 h-3.5" />
+                        إخفاء
+                      </button>
+                      <button type="button" onClick={() => handleOpenQatyaAlertItem(n)} className="dna-btn dna-btnp">
+                        فتح القطيّة
                       </button>
                     </div>
-                  ))}
-                </div>
-              </motion.div>
-            )
-          )}
-        </AnimatePresence>
-
-        {/* Wobble Alerts (نداء الدلة) */}
-        <AnimatePresence>
-          {customerPhone && wobbleAlertItems.length > 0 && (
-            isWobbleAlertCollapsed ? (
-              <motion.button
-                key="wobble-alert-collapsed"
-                initial={{ opacity: 0, scale: 0.85, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.85, y: 20 }}
-                onClick={() => {
-                  setIsWobbleAlertCollapsed(false);
-                  setIsQatyaAlertCollapsed(true);
-                  setIsNearbyRadarPanelCollapsed(true);
-                  setIsOwnerJoinAlertCollapsed(true);
-                }}
-                className={cn(
-                  "customer-soft-alert-bubble customer-mobile-stable-alert-bubble is-amber fixed rounded-full bg-stone-900 text-white border border-amber-500/30 shadow-2xl z-[86] flex items-center justify-center backdrop-blur-md left-20", // offset left to not overlap with qatya initially
-                  floatingAlertBottomHigh,
-                )}
-                title="نداء الديوانية"
-              >
-                <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
-                </span>
-                <span className="text-xl">☕</span>
-                <span className="customer-soft-alert-count bg-amber-500">{wobbleAlertItems.length}</span>
-              </motion.button>
-            ) : (
-              <motion.div
-                key="wobble-alert-expanded"
-                initial={{ opacity: 0, y: 120, scale: 0.92 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 120, scale: 0.92 }}
-                className={cn(
-                  "customer-mobile-stable-alert fixed md:w-[390px] max-h-[min(360px,calc(100dvh-160px))] overflow-y-auto bg-stone-900 border border-amber-500/40 text-white rounded-[32px] p-5 shadow-2xl z-[86] text-right font-sans space-y-4",
-                  floatingAlertPanelSide,
-                  floatingAlertBottom,
-                )}
-              >
-                <div className="flex items-start justify-between gap-3 border-b border-stone-800 pb-3">
-                  <button
-                    onClick={() => setIsWobbleAlertCollapsed(true)}
-                    className="w-8 h-8 rounded-full bg-white/5 text-white/80 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all shrink-0"
-                    title="تصغير إشعار النداء"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                  <div className="flex-1">
-                    <span className="text-[10px] font-black bg-amber-500/20 text-amber-300 px-3 py-1 rounded-full border border-amber-500/30 shadow-sm animate-pulse">فنجان لك ☕</span>
-                    <h4 className="font-black text-sm mt-2 text-white">نداء من الربع</h4>
-                    <p className="text-[10px] font-bold text-white/70 mt-1">أحد شباب الديوانية قاعد ينادي.</p>
                   </div>
-                </div>
-                
-                <div className="space-y-3">
-                  {wobbleAlertItems.map((n: any) => (
-                    <div key={n.id} className="relative group/item">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenWobbleItem(n)}
-                        className="w-full relative overflow-hidden p-3 pl-12 bg-amber-950/20 hover:bg-amber-900/30 rounded-2xl border border-amber-500/10 text-right active:scale-[0.98] transition-all"
-                      >
-                        <div className="absolute top-1 left-1 opacity-10 text-4xl pointer-events-none">🔊</div>
-                        <div className="text-[10px] font-black text-amber-400 mb-1">{n.squadName ? `ديوانية ${n.squadName}` : "ديوانية الربع"}</div>
-                        <div className="text-sm font-black text-white leading-relaxed whitespace-pre-wrap">{n.message || "ينادي الربع"}</div>
-                        <div className="text-[10px] font-bold text-white/50 mt-1.5 flex gap-1 items-center justify-end">
-                          <span>من {n.fromName || "عضو"}</span>
-                          <span className="text-amber-500">•</span>
-                          <span>الآن</span>
-                        </div>
-                      </button>
+                ),
+              });
+            });
+          }
+          if (showWobble) {
+            wobbleAlertItems.forEach((n: any) => {
+              events.push({
+                key: `wobble-${n.id}`,
+                tone: "amber",
+                icon: <Coffee />,
+                title: n.message || "ينادي الربع",
+                date: "الآن",
+                meta: (
+                  <div className="dna-inbox-meta">
+                    <span>من {n.fromName || "عضو"} · {n.squadName ? `ديوانية ${n.squadName}` : "ديوانية الربع"}</span>
+                    <div className="dna-inbox-acts">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -7208,71 +6907,126 @@ export default function CustomerSite() {
                           e.preventDefault();
                           dismissWobble(n.id);
                         }}
-                        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/20 hover:bg-rose-500/30 text-white hover:text-rose-200 flex items-center justify-center transition-all shadow-sm z-10"
+                        className="dna-btn"
                         title="إخفاء التنبيه"
                       >
-                        <X className="w-3.5 h-3.5" />
+                        إخفاء
+                      </button>
+                      <button type="button" onClick={() => handleOpenWobbleItem(n)} className="dna-btn dna-btnp">
+                        فتح
                       </button>
                     </div>
-                  ))}
-                </div>
-              </motion.div>
-            )
-          )}
-        </AnimatePresence>
-
-        {/* جاري انتظار القبول من صاحب الديوانية */}
-        <AnimatePresence>
-          {myGeofenceRequests.some(r => r.status === "pending") && (
-            isRadarBannerCollapsed ? (
-              <motion.button
-                key="collapsed-radar"
-                initial={{ opacity: 0, scale: 0.8, x: 50 }}
-                animate={{ opacity: 1, scale: 1, x: 0 }}
-                exit={{ opacity: 0, scale: 0.8, x: 50 }}
-                onClick={() => setIsRadarBannerCollapsed(false)}
-                className="customer-mobile-stable-alert-bubble fixed top-24 left-4 md:left-auto md:right-6 bg-slate-900/95 text-slate-100 rounded-full p-3.5 shadow-2xl z-50 border border-amber-500/40 text-right backdrop-blur-md flex items-center gap-2 hover:bg-slate-800 transition-all select-none group"
-                title="توسيع رادار الانضمام"
-              >
-                <div className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
-                </div>
-                <span className="text-[10px] font-black text-amber-400 hidden group-hover:inline max-w-0 group-hover:max-w-xs transition-with-duration duration-300 overflow-hidden whitespace-nowrap">
-                  نراجع الطلب بالرادار... 📡
-                </span>
-                <span className="text-xs">📡</span>
-              </motion.button>
-            ) : (
-              <motion.div
-                key="expanded-radar"
-                initial={{ opacity: 0, scale: 0.95, y: -50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -50 }}
-                className="customer-mobile-stable-alert fixed top-24 left-6 right-6 md:left-auto md:right-6 md:w-[350px] bg-slate-900/95 text-slate-100 rounded-3xl p-4 shadow-xl z-50 border border-amber-500/20 text-right backdrop-blur-md"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <button 
-                    onClick={() => setIsRadarBannerCollapsed(true)}
-                    className="text-stone-400 hover:text-white text-xs bg-white/10 w-6 h-6 rounded-full flex items-center justify-center transition-all"
-                  >
-                    ✕
-                  </button>
-                  <div className="flex-1 flex items-center justify-end gap-2.5">
-                    <div className="flex flex-col text-right">
-                      <p className="text-xs font-black text-slate-100">ناطرين قبول صاحب الديوانية... 📡</p>
-                      <p className="text-[10px] opacity-75 font-semibold text-slate-300 mt-0.5 animate-pulse">طلبك قيد المراجعة الفورية بالرادار.</p>
-                    </div>
-                    <div className="relative flex h-2.5 w-2.5 shrink-0 mt-1">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
-                    </div>
                   </div>
-                </div>
-              </motion.div>
-            )
-          )}
-        </AnimatePresence>
+                ),
+              });
+            });
+          }
+          if (showNearby) {
+            radarNearbySquads.forEach((sq: any) => {
+              const isLoading = radarLoadingMap[sq.id];
+              const isSuccess = radarSuccessMap[sq.id];
+              events.push({
+                key: `nearby-${sq.id}`,
+                tone: "sky",
+                icon: <Radar />,
+                title: `ديوانية ${sq.name}`,
+                date: `تبعد ${normalizeDigits(String(sq.distance))}م`,
+                meta: isSuccess ? (
+                  <span>دزينا طلبك للمعزب! ناطرين موافقته</span>
+                ) : (
+                  <div className="dna-inbox-acts">
+                    {sq.isAlreadyMember ? (
+                      <button onClick={() => handleSwitchToNearbySquad(sq)} className="dna-btn dna-btnp">
+                        {sq.isOwnerOfNearby ? "فعّل ديوانيتك هنا" : "أنا عضو هنا، خلّها الحالية"}
+                      </button>
+                    ) : (
+                      <button onClick={() => handleSendRadarRequest(sq)} disabled={isLoading} className="dna-btn dna-btnp">
+                        {isLoading ? "ندز الطلب..." : "دز طلب للمعزب"}
+                      </button>
+                    )}
+                  </div>
+                ),
+              });
+            });
+          }
+          return (
+            <>
+              <button
+                type="button"
+                onClick={() => setInboxOpen(!inboxOpen)}
+                className={cn("dna-inbox-bell fixed z-[86]", floatingAlertBubbleSide, floatingAlertBottom)}
+                aria-expanded={inboxOpen}
+                aria-label={`التنبيهات: ${inboxCount}`}
+                title="التنبيهات"
+              >
+                <BellRing className="w-5 h-5" strokeWidth={1.6} aria-hidden="true" />
+                <DnaCount value={inboxCount} label="التنبيهات" className="dna-inbox-pill" />
+              </button>
+              <AnimatePresence>
+                {inboxOpen && (
+                  <motion.div
+                    key="dna-inbox"
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 24 }}
+                    transition={{ duration: 0.2 }}
+                    className={cn("dna dna-inbox fixed md:w-[400px] z-[86]", floatingAlertPanelSide, floatingAlertBottomMid)}
+                    dir="rtl"
+                    role="dialog"
+                    aria-label="التنبيهات"
+                  >
+                    <div className="dna-inbox-head">
+                      <strong>التنبيهات</strong>
+                      <button type="button" onClick={() => setInboxOpen(false)} className="dna-ibtn" aria-label="إغلاق التنبيهات" title="تصغير">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {showQatya && canUseDiwaniyaPush && diwaniyaPushState !== "saved" && (
+                      <button
+                        type="button"
+                        onClick={enableImportantDiwaniyaPush}
+                        disabled={isEnablingDiwaniyaPush}
+                        className="dna-btn w-full"
+                      >
+                        {isEnablingDiwaniyaPush ? "نفعّلها..." : "فعّل تنبيهات القطيّة ووهق غيرك المهمة"}
+                      </button>
+                    )}
+                    {showQatya && diwaniyaPushState === "saved" && (
+                      <p className="dna-inbox-note">تنبيهات القطيّة ووهق غيرك مفعّلة على هالجهاز</p>
+                    )}
+                    <DnaTimeline items={events} wrapMeta ariaLabel="التنبيهات" />
+                    {showNearby && (
+                      <>
+                        <p className="dna-inbox-note">إذا هذي ديوانيتك بدّل لها، وإذا مو عضو دز طلب والمعزب يوافق عليك.</p>
+                        <React.Suspense fallback={<DeferredFeatureFallback label="جاري تجهيز الخريطة..." />}>
+                          <LeafletKuwaitMap
+                            markers={radarNearbySquads.filter((sq: any) => sq.lat !== undefined && sq.lng !== undefined).map((sq: any) => ({
+                              id: String(sq.id),
+                              name: `ديوانية ${sq.name}`,
+                              lat: Number(sq.lat),
+                              lng: Number(sq.lng),
+                              subtitle: `تبعد ${normalizeDigits(String(sq.distance))}م`,
+                              color: sq.isAlreadyMember ? '#10b981' : '#f59e0b',
+                              radiusMeters: Number(sq.geofenceDistance || 80),
+                              size: 28,
+                            }))}
+                            center={radarNearbySquads[0]?.lat && radarNearbySquads[0]?.lng ? { lat: Number(radarNearbySquads[0].lat), lng: Number(radarNearbySquads[0].lng) } : { lat: 29.3375, lng: 47.9774 }}
+                            zoom={15}
+                            showRange
+                            heightClassName="h-[180px]"
+                          />
+                        </React.Suspense>
+                        {!customerPhone && (
+                          <p className="dna-inbox-note">سجل رقمك عشان يوصل طلبك للمعزب باسمك ورقمك!</p>
+                        )}
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          );
+        })()}
       </motion.div>
     </>
   );

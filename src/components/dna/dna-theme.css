@@ -64,3 +64,21 @@
 .dna-diwan-wobbles span { color: var(--dna-ink); }
 .dna-diwan-ctrls { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .dna-diwan-ctrls .dna-btn { min-height: 44px; }
+
+/* Unified alerts inbox (one bell) */
+.dna-inbox-bell {
+  inline-size: 52px; block-size: 52px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--dna-surface); color: var(--dna-accent); border: 1px solid var(--dna-line-2);
+  box-shadow: 0 12px 30px -12px rgba(13, 58, 34, .35);
+}
+.dna-inbox-bell .dna-inbox-pill { position: absolute; inset-block-start: -4px; inset-inline-end: -4px; background: var(--dna-accent); color: #fff; box-shadow: 0 0 0 2px var(--dna-surface); }
+.dna-inbox {
+  max-block-size: min(460px, calc(100dvh - 180px)); overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  background: var(--dna-surface); border: 1px solid var(--dna-line); border-radius: 24px; box-shadow: 0 24px 60px -24px rgba(20, 32, 27, .35); text-align: start;
+}
+.dna-inbox-head { display: flex; align-items: center; justify-content: space-between; }
+.dna-inbox-head strong { font-size: 15px; font-weight: 800; color: var(--dna-ink); }
+.dna-inbox-meta { display: flex; flex-direction: column; gap: 8px; }
+.dna-inbox-acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.dna-inbox-acts .dna-btn { min-height: 38px; font-size: 12px; padding-inline: 14px; }
+.dna-inbox-note { margin: 0; font-size: 11.5px; color: var(--dna-muted); font-weight: 600; }
