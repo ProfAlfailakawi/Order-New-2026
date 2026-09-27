@@ -38,3 +38,15 @@
 #order-status-panel.dna-track-status { min-height: 0 !important; padding: 16px !important; background: transparent !important; box-shadow: none !important; border-radius: 0 !important; margin: 0 !important; }
 .dna-track-status .dna-head { background: var(--dna-surface); border: 1px solid var(--dna-line); border-radius: 24px; box-shadow: var(--dna-shadow); padding: 18px; }
 .dna-track-status .dna-headact button { min-height: 44px; white-space: nowrap; }
+
+/* /split qatya overview */
+.dna-qatya-main { display: flex; align-items: center; gap: 18px; }
+.dna-qatya-main .dna-ring { flex: 0 0 auto; }
+.dna-qatya-main .dna-ringc { display: flex; flex-direction: column; align-items: center; font-size: 22px; font-weight: 800; color: var(--dna-ink); line-height: 1.1; }
+.dna-qatya-main .dna-ringc small { font-size: 11px; font-weight: 600; color: var(--dna-muted); margin-top: 4px; }
+.dna-qatya-facts { display: flex; gap: 18px; margin-top: 12px; }
+.dna-qatya-facts span { display: flex; flex-direction: column; }
+.dna-qatya-facts small { font-size: 11px; color: var(--dna-muted); font-weight: 600; }
+.dna-qatya-facts strong { font-size: 16px; color: var(--dna-ink); font-weight: 800; }
+@media (max-width: 420px) { .dna-qatya-main { flex-direction: column; text-align: center; } .dna-qatya-facts { justify-content: center; } }
+.dna-letter { font-size: 13px; font-weight: 800; line-height: 1; }
