@@ -1064,7 +1064,7 @@ export default function OrderPage() {
                 onChange={(e) => setPhone(normalizePhone(e.target.value))}
                 dir="ltr"
                 pattern="[0-9]*"
-                className="w-full py-5 sm:py-6 px-12 sm:px-16 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-[13px] sm:text-base font-semibold text-brand placeholder:text-[12px] sm:placeholder:text-base placeholder:text-stone-300 placeholder:font-medium text-center tracking-[0.02em] sm:tracking-[0.05em]"
+                className="w-full py-5 sm:py-6 px-12 sm:px-16 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-base font-semibold text-brand placeholder:text-[14px] sm:placeholder:text-base placeholder:text-stone-300 placeholder:font-medium text-center tracking-[0.02em] sm:tracking-[0.05em]"
               />
             </div>
 
@@ -1078,7 +1078,7 @@ export default function OrderPage() {
                 value={searchOrderIdInput}
                 onChange={(e) => setSearchOrderIdInput(normalizeDigits(e.target.value))}
                 dir="ltr"
-                className="order-id-track-input w-full py-5 sm:py-6 px-16 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-base sm:text-lg font-semibold text-brand placeholder:text-stone-300 placeholder:font-medium text-center uppercase"
+                className="order-id-track-input w-full py-5 sm:py-6 px-12 sm:px-16 placeholder:text-[14px] sm:placeholder:text-lg bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-base sm:text-lg font-semibold text-brand placeholder:text-stone-300 placeholder:font-medium text-center uppercase"
               />
             </div>
 
@@ -1267,7 +1267,7 @@ export default function OrderPage() {
                             <Crown className="w-6 h-6" />
                           </div>
                           <div className="min-w-0">
-                            <h3 className="text-lg sm:text-xl font-black text-brand truncate">{customerFullName}</h3>
+                            <h3 className="text-lg sm:text-xl font-black text-brand truncate max-sm:whitespace-normal max-sm:break-words max-sm:leading-snug" title={customerFullName}>{customerFullName}</h3>
                             <div className="mt-2 flex items-center gap-2 min-w-0">
                               <span className={cn("shrink-0 rounded-full border px-3 py-1 text-[11px] font-black", getTierAccent(currentTier?.name))}>
                                 {currentTier?.name || "عضوية"}
@@ -1572,13 +1572,13 @@ export default function OrderPage() {
                         : "border-stone-100",
                     )}
                   >
-                    <div className="flex items-start justify-between mb-6">
+                    <div className="flex items-start justify-between mb-6 max-sm:flex-wrap max-sm:gap-3">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 max-sm:flex-wrap">
                           <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">
                             رقم الطلب
                           </span>
-                          <span className="text-xs font-extrabold text-brand bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-100">
+                          <span className="text-xs font-extrabold text-brand bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-100 whitespace-nowrap">
                             {getOrderReference(order)}
                           </span>
                           {(order.paymentStatus === "paid" ||
@@ -1595,8 +1595,9 @@ export default function OrderPage() {
                                     `/?reorder=${order.invoiceId || order.id}`,
                                   );
                                 }}
-                                className="w-6 h-6 flex items-center justify-center bg-brand/5 hover:bg-brand text-brand hover:text-white rounded-lg transition-colors group-hover:scale-105"
+                                className="w-6 h-6 max-sm:w-11 max-sm:h-11 max-sm:rounded-xl flex items-center justify-center bg-brand/5 hover:bg-brand text-brand hover:text-white rounded-lg transition-colors group-hover:scale-105"
                                 title="إعادة الطلب"
+                                aria-label="إعادة الطلب"
                               >
                                 <RefreshCcw className="w-3 h-3" />
                               </button>
@@ -1649,7 +1650,7 @@ export default function OrderPage() {
                       {order.address && (
                         <div className="flex items-center gap-2 text-[10px] text-stone-400 bg-stone-50/50 p-3 rounded-xl border border-stone-50 overflow-hidden">
                           <MapPin className="w-3 h-3 text-accent shrink-0" />
-                          <span className="truncate min-w-0">
+                          <span className="truncate min-w-0 max-sm:whitespace-normal max-sm:leading-relaxed">
                             {typeof order.address === "object"
                               ? `${order.address.region}، ق ${order.address.block}${order.address.street ? `، ش ${order.address.street}` : ""}${order.address.building ? `، م ${order.address.building}` : ""}`
                               : order.address}
@@ -1708,8 +1709,9 @@ export default function OrderPage() {
                                   `/?reorder=${selectedOrder.invoiceId || selectedOrder.id}`,
                                 );
                               }}
-                              className="bg-brand text-white w-8 h-8 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-sm group"
+                              className="bg-brand text-white w-8 h-8 max-sm:w-11 max-sm:h-11 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-sm group"
                               title="إعادة الطلب بنفس الأصناف"
+                              aria-label="إعادة الطلب بنفس الأصناف"
                             >
                               <RefreshCcw className="w-4 h-4 group-hover:-rotate-45 transition-transform" />
                             </button>
@@ -1722,6 +1724,7 @@ export default function OrderPage() {
                   </div>
                   <button
                     onClick={() => setSelectedOrder(null)}
+                    aria-label="إغلاق"
                     className="p-3 bg-stone-50 text-stone-400 rounded-2xl hover:bg-stone-100 transition-all"
                   >
                     <X className="w-5 h-5" />

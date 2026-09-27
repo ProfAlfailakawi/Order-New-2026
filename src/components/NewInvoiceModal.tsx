@@ -105,7 +105,7 @@ export function NewInvoiceModal({
             <span>اكتب المبلغ والبيانات، ثم أنشئ الرابط للعميل.</span>
           </div>
           <h2 className="text-2xl font-black text-brand tracking-tight">فاتورة جديدة</h2>
-          <button onClick={onClose} className="p-2 hover:bg-stone-50 rounded-full transition-colors">
+          <button onClick={onClose} aria-label="إغلاق" className="p-2 max-lg:w-11 max-lg:h-11 max-lg:flex max-lg:items-center max-lg:justify-center hover:bg-stone-50 rounded-full transition-colors">
             <X className="w-6 h-6 text-stone-400" />
           </button>
         </div>

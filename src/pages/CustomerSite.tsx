@@ -5254,7 +5254,7 @@ export default function CustomerSite() {
               />
             </div>
             <div className="flex flex-col min-w-0 flex-1 text-right overflow-visible py-1">
-              <h1 className="text-xl sm:text-2xl font-black text-brand leading-[1.45] tracking-tight flex items-center gap-2 min-w-0 whitespace-normal break-words overflow-visible">
+              <h1 className="text-xl sm:text-2xl font-black text-brand leading-[1.45] tracking-tight block sm:flex items-center gap-2 min-w-0 whitespace-normal break-words max-sm:[overflow-wrap:normal] overflow-visible">
                 {settings?.companyName ? (
                   settings.companyName
                 ) : (
@@ -5312,14 +5312,16 @@ export default function CustomerSite() {
                     } catch (e) {}
                   }
                 }}
-                className="p-2.5 bg-stone-900 text-white rounded-full hover:bg-stone-800 transition-all flex items-center justify-center shadow-md active:scale-95"
+                aria-label="تتبع الطلبات"
+                className="p-2.5 max-lg:w-11 max-lg:h-11 bg-stone-900 text-white rounded-full hover:bg-stone-800 transition-all flex items-center justify-center shadow-md active:scale-95"
               >
                 <Search className="w-4 h-4" />
               </Link>
               <div className="relative">
                 <button
                   onClick={() => setIsCheckout(true)}
-                  className="p-2 sm:p-2.5 bg-white rounded-xl hover:bg-stone-50/80 backdrop-blur-sm transition-all active:scale-95 relative shadow-sm border border-stone-100"
+                  aria-label="السلة"
+                  className="p-2 sm:p-2.5 max-lg:w-11 max-lg:h-11 max-lg:flex max-lg:items-center max-lg:justify-center bg-white rounded-xl hover:bg-stone-50/80 backdrop-blur-sm transition-all active:scale-95 relative shadow-sm border border-stone-100"
                 >
                   <ShoppingBag className="w-5 h-5 text-brand" />
                   {cart.length > 0 && (
@@ -7514,7 +7516,7 @@ const ChefWhisperCard = ({
                 />
               </div>
               <div className="flex flex-col flex-grow text-center relative z-10">
-                <h3 className="font-extrabold text-sm text-brand leading-tight tracking-tight mt-1 min-h-[2em] flex items-center justify-center" style={{ wordBreak: "break-word" }}>
+                <h3 title={product.name} className="font-extrabold text-sm text-brand leading-tight tracking-tight mt-1 min-h-[2em] flex items-center justify-center" style={{ wordBreak: "break-word" }}>
                   {product.name}
                 </h3>
                 {product.preparationInstructions && (
@@ -7554,7 +7556,7 @@ const ChefWhisperCard = ({
               {/* Center Content: Title over Image over Price over Notes */}
               <div className="orser-product-content flex-1 flex flex-col items-center justify-center text-center relative z-10 py-1 pl-4">
                 {/* 1. Title */}
-                <h3 className="product-title font-black text-[17px] sm:text-lg text-brand leading-snug tracking-tight mb-3" style={{ wordBreak: "break-word" }}>
+                <h3 title={product.name} className="product-title font-black text-[17px] sm:text-lg text-brand leading-snug tracking-tight mb-3" style={{ wordBreak: "break-word" }}>
                   {product.name}
                 </h3>
                 
@@ -8411,7 +8413,7 @@ function ProductModal({
                   e,
                 );
               }}
-              className="flex-grow min-w-0 bg-brand text-white px-4 py-4 sm:p-6 rounded-2xl font-bold flex items-center justify-center gap-2 sm:gap-3 whitespace-nowrap transition-all shadow-xl text-lg sm:text-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className="product-add-cta flex-grow min-w-0 bg-brand text-white px-4 py-4 sm:p-6 rounded-2xl font-bold flex items-center justify-center gap-2 sm:gap-3 whitespace-nowrap transition-all shadow-xl text-lg sm:text-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="whitespace-nowrap">حطه بالسلة</span>
               <span className="w-px h-6 bg-white/30 shrink-0"></span>

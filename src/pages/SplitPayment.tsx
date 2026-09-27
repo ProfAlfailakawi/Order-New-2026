@@ -943,7 +943,7 @@ export default function SplitPayment() {
                           <span className="text-xs select-none">{avatar.emoji}</span>
                         </div>
                         <div className="text-right min-w-0 flex-1">
-                          <div className="text-xs font-black text-brand truncate">{person.name || person.phone || "مشارك"}</div>
+                          <div className="text-xs font-black text-brand truncate max-lg:whitespace-normal max-lg:break-words max-lg:leading-snug" title={person.name || person.phone || "مشارك"}>{person.name || person.phone || "مشارك"}</div>
                           <div className="text-[9px] font-bold text-stone-400">{Number(person.amount || 0).toFixed(3)} د.ك</div>
                         </div>
                       </div>
@@ -960,7 +960,7 @@ export default function SplitPayment() {
                           <span className="text-xs select-none">{avatar.emoji}</span>
                         </div>
                         <div className="text-right min-w-0 flex-1">
-                          <div className="text-xs font-black text-brand truncate">{person.name || person.phone || "مشارك"}</div>
+                          <div className="text-xs font-black text-brand truncate max-lg:whitespace-normal max-lg:break-words max-lg:leading-snug" title={person.name || person.phone || "مشارك"}>{person.name || person.phone || "مشارك"}</div>
                           <div className="text-[9px] font-bold text-stone-400">لم يدفع بعد</div>
                         </div>
                       </div>
@@ -1000,7 +1000,7 @@ export default function SplitPayment() {
                   </div>
                   
                   <div className="text-right min-w-0">
-                    <span className="block font-black text-brand text-sm sm:text-base truncate">{person.name || person.phone || `مشارك ${idx+1}`}</span>
+                    <span className="block font-black text-brand text-sm sm:text-base truncate max-lg:whitespace-normal max-lg:break-words max-lg:leading-snug" title={person.name || person.phone || `مشارك ${idx+1}`}>{person.name || person.phone || `مشارك ${idx+1}`}</span>
                     <div className="flex items-center gap-2 mt-0.5">
                       {person.phone && <span className="text-[10px] font-bold text-stone-400 font-mono tracking-wider" dir="ltr">{String(person.phone).replace(/\D/g, '').slice(-8)}</span>}
                       {isMe && <span className="text-[9px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded-full scale-90">أنت</span>}
@@ -1195,7 +1195,8 @@ export default function SplitPayment() {
                             const val = (remainingAmount / n).toFixed(3);
                             setContributorAmount(val);
                           }}
-                          className="w-6 h-6 rounded bg-brand/10 text-brand text-[10px] font-extrabold hover:bg-brand hover:text-white transition-all border border-brand/20"
+                          aria-label={`قسمة على ${n}`}
+                          className="w-6 h-6 max-lg:w-11 max-lg:h-11 max-lg:rounded-lg max-lg:text-sm rounded bg-brand/10 text-brand text-[10px] font-extrabold hover:bg-brand hover:text-white transition-all border border-brand/20"
                         >
                           {n}
                         </button>

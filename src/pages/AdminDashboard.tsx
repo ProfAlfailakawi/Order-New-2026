@@ -18,6 +18,7 @@ import {
   Edit2,
   Save,
   X,
+  Menu,
   Settings as SettingsIcon,
   Users,
   PieChart,
@@ -93,6 +94,9 @@ export default function AdminDashboard() {
   const [newPromoValue, setNewPromoValue] = useState<number>(0);
   const [isAddingPromo, setIsAddingPromo] = useState(false);
   const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
+  // Phones/tablets: the sidebar becomes an off-canvas drawer (desktop layout unchanged).
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  useEffect(() => { setMobileNavOpen(false); }, [activeTab]);
 
 
   const LOYALTY_TIERS = loyaltyTiers.length > 0 ? loyaltyTiers : DEFAULT_LOYALTY_TIERS;
@@ -390,9 +394,12 @@ export default function AdminDashboard() {
     .slice(0, 5);
 
   return (
-    <div className="flex h-screen bg-[#fafaf9] text-brand selection:bg-brand selection:text-white" dir="rtl">
+    <div className="admin-shell flex h-screen bg-[#fafaf9] text-brand selection:bg-brand selection:text-white" dir="rtl">
+      {mobileNavOpen && (
+        <div className="admin-nav-backdrop lg:hidden" onClick={() => setMobileNavOpen(false)} aria-hidden="true" />
+      )}
       {/* Sidebar */}
-      <aside className="w-80 glass-panel flex flex-col p-8 space-y-12 z-50 rounded-r-[40px] my-4 ml-4 sticky top-4 h-[calc(100vh-2rem)]">
+      <aside id="admin-sidebar" className={`admin-sidebar ${mobileNavOpen ? "is-open" : ""} w-80 glass-panel flex flex-col p-8 space-y-12 z-50 rounded-r-[40px] my-4 ml-4 sticky top-4 h-[calc(100vh-2rem)]`}>
         <div className="flex items-center gap-4 px-2 group">
           <div className="w-14 h-14 flex items-center justify-center p-2.5 transition-transform group-hover:scale-105 shadow-md overflow-hidden bg-white border border-stone-100 rounded-2xl shrink-0">
             <img 
@@ -418,7 +425,10 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <nav className="flex-grow space-y-2">
+        <button type="button" onClick={() => setMobileNavOpen(false)} className="admin-nav-close lg:hidden" aria-label="إغلاق القائمة">
+          <X className="w-5 h-5" />
+        </button>
+        <nav className="flex-grow space-y-2" onClick={() => setMobileNavOpen(false)}>
           <NavItem 
             active={activeTab === "dashboard"} 
             onClick={() => setActiveTab("dashboard")}
@@ -478,9 +488,19 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="flex-grow overflow-y-auto flex flex-col no-scrollbar relative items-center">
         {/* Topbar */}
-        <header className="sticky top-4 z-40 w-full max-w-[1600px] px-8 pt-4">
-          <div className="glass-panel p-4 flex justify-between items-center rounded-[2rem] shadow-sm">
-            <div className="flex items-center gap-4 bg-white/60 px-6 py-3 rounded-2xl w-full max-w-[400px] min-w-0 border border-stone-100 focus-within:border-accent/40 focus-within:bg-white transition-all group shadow-inner">
+        <header className="admin-topbar sticky top-4 z-40 w-full max-w-[1600px] px-8 pt-4">
+          <div className="admin-topbar-panel glass-panel p-4 flex justify-between items-center rounded-[2rem] shadow-sm">
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(true)}
+              className="admin-menu-btn lg:hidden"
+              aria-label="فتح القائمة"
+              aria-controls="admin-sidebar"
+              aria-expanded={mobileNavOpen}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="admin-search flex items-center gap-4 bg-white/60 px-6 py-3 rounded-2xl w-full max-w-[400px] min-w-0 border border-stone-100 focus-within:border-accent/40 focus-within:bg-white transition-all group shadow-inner">
               <Search className="w-5 h-5 text-stone-300 group-focus-within:text-accent" />
               <input 
                 type="text" 
@@ -490,7 +510,7 @@ export default function AdminDashboard() {
                 className="bg-transparent border-none outline-none text-sm w-full text-brand placeholder:text-stone-400 font-medium font-sans" 
               />
             </div>
-            <div className="flex items-center gap-6 px-2">
+            <div className="admin-topbar-actions flex items-center gap-6 px-2">
               <button
                 onClick={() => setShowNewInvoiceModal(true)}
                 className="relative px-6 py-3.5 bg-brand text-white font-bold rounded-2xl hover:bg-brand/90 transition-all shadow-md active:scale-95 group flex items-center gap-2 text-xs"
@@ -498,12 +518,12 @@ export default function AdminDashboard() {
                 <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
                 فاتورة جديدة
               </button>
-              <button className="relative p-3.5 bg-white/50 border border-stone-100 rounded-2xl hover:bg-white transition-all shadow-sm active:scale-95 group">
+              <button aria-label="التنبيهات" className="relative p-3.5 bg-white/50 border border-stone-100 rounded-2xl hover:bg-white transition-all shadow-sm active:scale-95 group">
                 <Bell className="w-5 h-5 text-stone-500 group-hover:text-brand" />
                 {totalOrdersCount > 0 && <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-md animate-pulse" />}
               </button>
-              <div className="w-px h-8 bg-stone-200" />
-              <div className="flex items-center gap-4 group cursor-pointer hover:bg-white/50 p-2 rounded-2xl transition-all">
+              <div className="admin-topbar-divider w-px h-8 bg-stone-200" />
+              <div className="admin-profile flex items-center gap-4 group cursor-pointer hover:bg-white/50 p-2 rounded-2xl transition-all">
                 <div className="text-right">
                   <p className="text-sm font-bold text-brand tracking-tight">د. أحمد الفيلكاوي</p>
                   <p className="text-[10px] text-accent font-extrabold tracking-widest uppercase mt-0.5">مدير النظام</p>
@@ -516,7 +536,7 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        <div className="p-12 space-y-12 w-full max-w-[1600px]">
+        <div className="admin-content p-12 space-y-12 w-full max-w-[1600px]">
           {activeTab === "dashboard" && (
             <div className="space-y-12 animate-in fade-in duration-700">
               <div className="flex items-center justify-between">
@@ -588,7 +608,7 @@ export default function AdminDashboard() {
                   <MagneticButton onClick={() => setActiveTab("orders")} className="px-8 py-3 gold-gradient text-white rounded-2xl text-xs font-extrabold uppercase shadow-md shadow-accent/20 active:scale-95 transition-all">مراجعة الكل</MagneticButton>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="admin-rtable w-full">
                     <thead>
                       <tr className="text-right text-[10px] text-stone-400 font-extrabold uppercase tracking-[0.3em] border-b border-stone-50">
                         <th className="p-10">ID</th>
@@ -621,8 +641,8 @@ export default function AdminDashboard() {
                       ) : (
                         filteredOrders.slice(0, 5).map(order => (
                           <tr key={order.id} className="group hover:bg-stone-50/50 transition-all duration-500">
-                            <td className="p-10 font-mono text-[10px] text-stone-300 group-hover:text-brand">#{order.id.toUpperCase()}</td>
-                            <td className="p-10">
+                            <td data-label="ID" className="p-10 font-mono text-[10px] text-stone-300 group-hover:text-brand">#{order.id.toUpperCase()}</td>
+                            <td data-label="العميل" className="p-10">
                               <p className="font-extrabold text-brand text-lg">
                                 {order.customerName}
                                 {getCustomerPoints(order.customerPhone) > 0 && (
@@ -631,11 +651,11 @@ export default function AdminDashboard() {
                               </p>
                               <p className="text-xs text-stone-400 mt-1 font-medium italic">{order.customerPhone}</p>
                             </td>
-                            <td className="p-10 text-brand font-bold text-sm">
+                            <td data-label="المنطقة" className="p-10 text-brand font-bold text-sm">
                               {order.address?.region || "—"}
                             </td>
-                            <td className="p-10 text-2xl font-light text-brand italic">{getDisplayTotal(order).toFixed(3)} <span className="text-xs text-accent">د.ك</span></td>
-                            <td className="p-10">
+                            <td data-label="المبلغ" className="p-10 text-2xl font-light text-brand italic">{getDisplayTotal(order).toFixed(3)} <span className="text-xs text-accent">د.ك</span></td>
+                            <td data-label="الحالة" className="p-10">
                                 <span className={`px-4 py-1.5 rounded-xl text-[9px] font-extrabold uppercase tracking-widest inline-block border ${
                                   order.status === "جديد" || order.status === "بانتظار الدفع" ? "bg-amber-50 text-amber-600 border-amber-100" :
                                   order.status === "قيد تجميع القطية" ? "bg-purple-50 text-purple-600 border-purple-100" :
@@ -646,8 +666,8 @@ export default function AdminDashboard() {
                                 {order.status}
                               </span>
                             </td>
-                            <td className="p-10 text-center">
-                              <button onClick={() => setSelectedOrder(order)} className="p-4 bg-stone-50 border border-stone-100 rounded-2xl text-stone-400 hover:bg-brand hover:text-white transition-all shadow-sm active:scale-95">
+                            <td data-label="المعاينة" className="p-10 text-center">
+                              <button onClick={() => setSelectedOrder(order)} aria-label="معاينة الطلب" className="p-4 bg-stone-50 border border-stone-100 rounded-2xl text-stone-400 hover:bg-brand hover:text-white transition-all shadow-sm active:scale-95">
                                 <ExternalLink className="w-5 h-5" />
                               </button>
                             </td>
@@ -786,6 +806,7 @@ export default function AdminDashboard() {
                        <div className="text-3xl font-extrabold text-brand italic">{getDisplayTotal(order).toFixed(3)} <span className="text-sm text-accent not-italic">د.ك</span></div>
                        <button 
                         onClick={(e) => { e.stopPropagation(); contactCustomer(order); }}
+                        aria-label="مراسلة العميل واتساب"
                         className="w-14 h-14 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center hover:bg-green-500 hover:text-white transition-all shadow-sm"
                        >
                         <MessageCircle className="w-6 h-6" />
@@ -811,7 +832,7 @@ export default function AdminDashboard() {
 
               <div className="bg-white rounded-[48px] border border-stone-100 shadow-xl overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="admin-rtable w-full">
                     <thead>
                       <tr className="text-right text-[10px] text-stone-400 font-extrabold uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
                         <th className="p-10">المرجع المالي</th>
@@ -841,7 +862,7 @@ export default function AdminDashboard() {
                       ) : (
                         filteredInvoices.map(invoice => (
                           <tr key={invoice.invoiceId} className="hover:bg-stone-50/30 transition-all duration-300">
-                            <td className="p-10 font-mono text-[10px] text-accent font-extrabold tracking-widest flex items-center gap-2">
+                            <td data-label="المرجع المالي" className="p-10 font-mono text-[10px] text-accent font-extrabold tracking-widest flex items-center gap-2">
                              {invoice.invoiceId}
                              <button
                                onClick={(e) => {
@@ -857,7 +878,7 @@ export default function AdminDashboard() {
                                 </svg>
                              </button>
                           </td>
-                          <td className="p-10">
+                          <td data-label="العميل" className="p-10">
                             <p className="font-extrabold text-brand text-lg">
                               {invoice.customerName}
                               {getCustomerPoints(invoice.customerPhone) > 0 && (
@@ -866,11 +887,11 @@ export default function AdminDashboard() {
                             </p>
                             <p className="text-xs text-stone-400 mt-1 font-medium">{invoice.customerPhone}</p>
                           </td>
-                          <td className="p-10 text-sm text-stone-500 font-bold">
+                          <td data-label="التاريخ" className="p-10 text-sm text-stone-500 font-bold">
                             {formatKuwaitiDate(invoice.completedAt || invoice.createdAt || invoice.date || 0).date}
                           </td>
-                          <td className="p-10 text-2xl font-light text-brand italic">{getDisplayTotal(invoice).toFixed(3)} <span className="text-xs text-accent">د.ك</span></td>
-                          <td className="p-10">
+                          <td data-label="المبلغ" className="p-10 text-2xl font-light text-brand italic">{getDisplayTotal(invoice).toFixed(3)} <span className="text-xs text-accent">د.ك</span></td>
+                          <td data-label="الحالة" className="p-10">
                             <div className="flex items-center gap-3 text-green-600 font-extrabold text-[10px] uppercase tracking-widest">
                               <div className="w-4 h-4 rounded-full bg-green-50 flex items-center justify-center">
                                 <CheckCircle2 className="w-3 h-3" />
@@ -1383,7 +1404,7 @@ export default function AdminDashboard() {
                 </div>
                 
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="admin-rtable w-full">
                         <thead>
                           <tr className="text-right text-[10px] text-stone-400 font-extrabold uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
                             <th className="p-8">المستوى</th>
@@ -1418,21 +1439,21 @@ export default function AdminDashboard() {
                               const tier = getLoyaltyTier(points);
                               return (
                                 <tr key={customer.id || idx} className="hover:bg-stone-50/50 transition-all group">
-                                  <td className="p-8">
+                                  <td data-label="المستوى" className="p-8">
                                     <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full border w-fit font-black text-[10px]", tier.bg, tier.border, tier.color)}>
                                       <span>{tier.icon}</span>
                                       <span>{tier.name}</span>
                                     </div>
                                   </td>
-                                  <td className="p-8">
+                                  <td data-label="رقم التلفون" className="p-8">
                                     <span className="font-bold text-brand bg-stone-50 px-4 py-2 rounded-xl text-sm font-mono tracking-wider group-hover:bg-white transition-colors">{customer.phone}</span>
                                   </td>
-                                  <td className="p-8">
+                                  <td data-label="الاسم" className="p-8">
                                     <span className="font-bold text-stone-600">
                                         {customer.name || customer.customerName || "غير محدد"}
                                     </span>
                                   </td>
-                                  <td className="p-8 text-center">
+                                  <td data-label="النقاط المدفوعة" className="p-8 text-center">
                                     <div className="inline-flex items-center gap-2 bg-green-50 px-4 py-2 rounded-xl group-hover:bg-green-100/50 transition-colors">
                                         <span className="font-extrabold text-green-600 text-lg">{points}</span>
                                         <span className="text-[10px] text-green-500 font-bold uppercase tracking-widest">نقطة</span>
@@ -1622,7 +1643,7 @@ export default function AdminDashboard() {
 
               <div className="bg-white rounded-[48px] border border-stone-100 shadow-xl overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="admin-rtable w-full">
                     <thead>
                       <tr className="text-right text-[10px] text-stone-400 font-extrabold uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
                         <th className="p-10">المنطقة</th>
@@ -1651,7 +1672,7 @@ export default function AdminDashboard() {
                       ) : (
                         zones.map(zone => (
                           <tr key={zone.id} className="hover:bg-stone-50/30 transition-all duration-300">
-                            <td className="p-10">
+                            <td data-label="المنطقة" className="p-10">
                             {editingZoneId === zone.id ? (
                               <input 
                                 type="text"
@@ -1663,7 +1684,7 @@ export default function AdminDashboard() {
                               <p className="font-extrabold text-brand text-lg">{zone.name}</p>
                             )}
                           </td>
-                          <td className="p-10 text-xl font-light text-brand italic">
+                          <td data-label="سعر التوصيل" className="p-10 text-xl font-light text-brand italic">
                             {editingZoneId === zone.id ? (
                                 <input 
                                     type="text"
@@ -1678,12 +1699,12 @@ export default function AdminDashboard() {
                                 </>
                             )}
                           </td>
-                          <td className="p-10">
+                          <td data-label="الحالة" className="p-10">
                             <span className="px-4 py-1.5 rounded-xl text-[9px] font-extrabold uppercase tracking-widest inline-block border bg-green-50 text-green-600 border-green-100">
                               نشط
                             </span>
                           </td>
-                          <td className="p-10 text-center">
+                          <td data-label="الإجراءات" className="p-10 text-center">
                             {editingZoneId === zone.id ? (
                               <div className="flex items-center justify-center gap-2">
                                 <button 
@@ -1724,6 +1745,7 @@ export default function AdminDashboard() {
                                     setEditZoneName(zone.name);
                                     setEditZonePrice(zone.finalPrice ?? zone.deliveryPrice ?? zone.cost ?? zone.deliveryFee ?? zone.price ?? 0);
                                   }}
+                                  aria-label="تعديل المنطقة"
                                   className="p-4 bg-stone-50 border border-stone-100 rounded-2xl text-stone-400 hover:bg-brand hover:text-white transition-all shadow-sm active:scale-95"
                                 >
                                   <Edit2 className="w-5 h-5" />
@@ -1739,6 +1761,7 @@ export default function AdminDashboard() {
                                       alert("ما قدرنا نحذف");
                                     }
                                   }}
+                                  aria-label="حذف المنطقة"
                                   className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95"
                                 >
                                   <X className="w-5 h-5" />
@@ -1826,7 +1849,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="admin-rtable w-full">
                     <thead>
                       <tr className="text-right text-[10px] text-stone-400 font-extrabold uppercase tracking-[0.3em] border-b border-stone-50 bg-stone-50/30">
                         <th className="p-8">الكود</th>
@@ -1855,25 +1878,26 @@ export default function AdminDashboard() {
                       ) : (
                         promocodes.map((promo: any) => (
                           <tr key={promo.code} className="hover:bg-stone-50/50 transition-all">
-                            <td className="p-8">
+                            <td data-label="الكود" className="p-8">
                             <span className="font-extrabold text-brand">{promo.code}</span>
                           </td>
-                          <td className="p-8">
+                          <td data-label="النوع" className="p-8">
                             <span className="text-xs font-bold text-stone-500">
                               {promo.type === 'percentage' ? "نسبة مئوية" : "مبلغ ثابت"}
                             </span>
                           </td>
-                          <td className="p-8">
+                          <td data-label="القيمة" className="p-8">
                             <span className="font-extrabold text-brand">
                               {promo.type === 'percentage' ? `${promo.value}%` : `${promo.value.toFixed(3)} د.ك`}
                             </span>
                           </td>
-                          <td className="p-8 text-center">
+                          <td data-label="الإجراءات" className="p-8 text-center">
                             <button 
                               onClick={async () => {
                                 if (!confirm("هل أنت متأكد من حذف هذا الكوبون؟")) return;
                                 await fetch(`/api/admin/promocodes/${promo.code}`, { method: "DELETE" });
                               }}
+                              aria-label="حذف الكوبون"
                               className="p-3 bg-red-50 border border-red-100 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-all active:scale-95"
                             >
                               <X className="w-4 h-4" />
@@ -1942,11 +1966,11 @@ function StatCard({ title, value, trend, icon, isNew, color }: any) {
 
 function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDelivery, getCustomerPoints }: { order: Order, onClose: () => void, onContact: () => void, onPay: () => void, onCancel?: () => void, onFreeDelivery?: () => void, getCustomerPoints: (phone?: string) => number }) {
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-brand/40 backdrop-blur-md p-8" onClick={onClose}>
-      <motion.div initial={{ scale: 0.95, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 30 }} className="bg-white w-full max-w-4xl rounded-[48px] shadow-xl overflow-hidden flex flex-col border border-stone-100" onClick={e => e.stopPropagation()}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="admin-order-modal fixed inset-0 z-50 flex items-center justify-center bg-brand/40 backdrop-blur-md p-8" onClick={onClose}>
+      <motion.div initial={{ scale: 0.95, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 30 }} className="admin-order-sheet bg-white w-full max-w-4xl rounded-[48px] shadow-xl overflow-hidden flex flex-col border border-stone-100" onClick={e => e.stopPropagation()}>
         <div className="p-10 border-b border-stone-50 flex items-center justify-between bg-stone-50/30">
           <div className="flex items-center gap-6">
-            <button onClick={onClose} className="p-4 bg-white border border-stone-100 rounded-2xl hover:bg-brand hover:text-white transition-all shadow-sm"><ChevronLeft className="w-6 h-6" /></button>
+            <button onClick={onClose} aria-label="إغلاق" className="p-4 bg-white border border-stone-100 rounded-2xl hover:bg-brand hover:text-white transition-all shadow-sm"><ChevronLeft className="w-6 h-6" /></button>
             <div>
               <p className="text-[10px] text-stone-400 font-bold uppercase tracking-[0.3em] mb-1">Invoice Details</p>
               <h3 className="font-extrabold text-2xl text-brand">تفاصيل الفاتورة #{order.id.toUpperCase()}</h3>
@@ -2143,7 +2167,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
                   </h4>
                   <div className="flex gap-2 mb-2 bg-white rounded-lg p-3">
                      <span className="font-bold text-xs">رابط المشاركة:</span>
-                     <span className="text-xs text-stone-500 font-mono select-all truncate">{window.location.origin}/split/{order.id}</span>
+                     <span className="text-xs text-stone-500 font-mono select-all truncate" title={`${window.location.origin}/split/${order.id}`}>{window.location.origin}/split/{order.id}</span>
                   </div>
                   <div className="space-y-2 mt-4">
                     {order.splitPayments?.map((p, i) => (
