@@ -5667,26 +5667,26 @@ export default function CustomerSite() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <div className="dna-cat-grid" role="list">
+                      <ul className="dna-cat-grid">
                         {groupedProducts.map((group) => {
                           const isOpen = activeProductCategory === group.category;
                           return (
-                            <button
-                              key={group.category}
-                              type="button"
-                              role="listitem"
-                              aria-expanded={isOpen}
-                              onClick={() => setActiveProductCategory(isOpen ? null : group.category)}
-                              className="dna-cat-tile"
-                              data-open={isOpen ? "true" : "false"}
-                            >
-                              <CategoryTile category={group.category} size="md" />
-                              <span className="dna-cat-name">{group.category}</span>
-                              <span className="dna-cat-meta">{group.items.length} منتج</span>
-                            </button>
+                            <li key={group.category} className="dna-cat-cell">
+                              <button
+                                type="button"
+                                aria-expanded={isOpen}
+                                onClick={() => setActiveProductCategory(isOpen ? null : group.category)}
+                                className="dna-cat-tile"
+                                data-open={isOpen ? "true" : "false"}
+                              >
+                                <CategoryTile category={group.category} size="md" />
+                                <span className="dna-cat-name">{group.category}</span>
+                                <span className="dna-cat-meta">{group.items.length} منتج</span>
+                              </button>
+                            </li>
                           );
                         })}
-                      </div>
+                      </ul>
                       {groupedProducts.map((group) => {
                         const isOpen = activeProductCategory === group.category;
                         return (

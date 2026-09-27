@@ -94,3 +94,8 @@
 .dna-diwan { background: var(--dna-surface); border: 1px solid var(--dna-line); border-radius: 24px; box-shadow: var(--dna-shadow); padding: 8px 8px 14px; }
 .dna-diwan-wobbles li { background: var(--dna-surface-2); border: 0; }
 .dna-qatya-main h2 { font-size: 20px !important; line-height: 1.35 !important; }
+/* Category grid as a real list: <ul>/<li> wrap real <button>s */
+ul.dna-cat-grid { list-style: none; margin: 0; padding: 0; }
+.dna-cat-cell { display: flex; margin: 0; padding: 0; list-style: none; }
+.dna-cat-cell::before, .dna-cat-cell::marker { content: none; }
+.dna-cat-cell > .dna-cat-tile { inline-size: 100%; }
