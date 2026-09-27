@@ -728,7 +728,7 @@ export default function SplitPayment() {
               <DnaRing
                 value={paidAmount}
                 max={Number(order.total || 0)}
-                size={148}
+                size={168}
                 stroke={10}
                 label={remainingAmount.toFixed(3)}
                 sublabel="الباقي · د.ك"

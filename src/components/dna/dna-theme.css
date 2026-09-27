@@ -82,3 +82,15 @@
 .dna-inbox-acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .dna-inbox-acts .dna-btn { min-height: 38px; font-size: 12px; padding-inline: 14px; }
 .dna-inbox-note { margin: 0; font-size: 11.5px; color: var(--dna-muted); font-weight: 600; }
+
+/* Polish: calm white Qatya card, roomier ring centre */
+.qatya-hero-card.qatya-v14-hero { background: var(--dna-surface) !important; background-image: none !important; border: 1px solid var(--dna-line) !important; box-shadow: var(--dna-shadow) !important; border-radius: 24px !important; }
+.qatya-hero-card.qatya-v14-hero::before, .qatya-hero-card.qatya-v14-hero::after { display: none !important; }
+.dna-qatya-main .dna-ringc { font-size: 20px; letter-spacing: -.01em; padding: 0 18px; text-align: center; }
+.dna-qatya-main .dna-ringc small { font-size: 10.5px; }
+.dna-cat-tile { min-height: 0 !important; }
+.dna-cat-name { margin-top: 2px; }
+.dna-diwan .dna-hub { border: 0 !important; box-shadow: none !important; background: transparent !important; }
+.dna-diwan { background: var(--dna-surface); border: 1px solid var(--dna-line); border-radius: 24px; box-shadow: var(--dna-shadow); padding: 8px 8px 14px; }
+.dna-diwan-wobbles li { background: var(--dna-surface-2); border: 0; }
+.dna-qatya-main h2 { font-size: 20px !important; line-height: 1.35 !important; }

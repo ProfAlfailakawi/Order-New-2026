@@ -586,14 +586,14 @@ export function SaduPresenceRug({
             icon: <span className="dna-letter">{letterOf(displayName)}</span>,
             tone: isRadarGuest ? "neutral" : isHost ? "amber" : isMe ? "accent" : "mint",
             state: isRadarGuest ? "dashed" : !isOnline ? "off" : "ok",
-            value: isHost ? <Crown className="w-3 h-3" aria-hidden="true" /> : isMe ? "أنا" : undefined,
+            value: isHost ? <Crown className="w-3 h-3" aria-hidden="true" /> : undefined,
             label: (
               <>
                 <span className="dna-hub-name">{displayName}</span>
                 <span className="dna-hub-meta">{meta}</span>
               </>
             ),
-            ariaLabel: `${displayName}${isHost ? " — المعزب" : ""} — ${meta}`,
+            ariaLabel: `${displayName}${isHost ? " — المعزب" : ""}${isMe ? " — أنا" : ""} — ${meta}`,
             title: displayName,
             onClick: () => handleCupClick(entity),
           };
