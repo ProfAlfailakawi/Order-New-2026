@@ -22,6 +22,7 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { cn, normalizePhone, normalizeDigits, formatKuwaitiDate } from "../utils";
 import { redirectToPayment } from "../utils/redirect";
 import OrderFormation from "../components/OrderFormation";
+import { DnaStatusHeader, DnaStepper, type DnaStep } from "../components/dna";
 
 interface TrackedOrder {
   id: string;
@@ -1624,7 +1625,7 @@ export default function OrderPage() {
                             className={cn(
                               "w-10 h-10 rounded-xl flex items-center justify-center",
                               isOngoing
-                                ? "bg-accent/10 text-accent animate-pulse"
+                                ? "bg-accent/10 text-accent"
                                 : "bg-brand/5 text-brand",
                             )}
                           >
@@ -1753,402 +1754,37 @@ export default function OrderPage() {
               <div className="flex-1 overflow-y-auto p-0 sm:p-4 space-y-0 sm:space-y-8 no-scrollbar bg-stone-50/50">
                 {orderDetailsTab === "status" && (
                   <div className="order-status-tab-panel">
-                    {(getStatusDisplay(selectedOrder).text === "بانتظار الدفع" ||
-                      getStatusDisplay(selectedOrder).text === "فشل في عملية الدفع") && (
-                      <div className="order-status-pay-card" dir="rtl">
-                        <div>
-                          <span>خطوة الدفع</span>
-                          <strong>{newPaymentLink ? "رابط الدفع جاهز" : getStatusDisplay(selectedOrder).text === "فشل في عملية الدفع" ? "جرّب الدفع مرة ثانية" : "كمّل الدفع لاعتماد الطلب"}</strong>
-                        </div>
-                        {newPaymentLink ? (
-                          <button
-                            onClick={() => {
-                              redirectToPayment(newPaymentLink);
-                              setTimeout(() => setNewPaymentLink(""), 1000);
-                            }}
-                            className="order-status-pay-btn"
-                          >
-                            استكمال الدفع
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleRepay(selectedOrder as any)}
-                            disabled={processingPayment}
-                            className="order-status-pay-btn disabled:opacity-50"
-                          >
-                            {processingPayment ? "نجهز الرابط..." : getStatusDisplay(selectedOrder).text === "فشل في عملية الدفع" ? "الدفع مرة أخرى" : "ادفع الآن"}
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Story Card & Magical Compass */}
-                    <div id="order-status-panel" className="relative sm:rounded-[32px] overflow-hidden min-h-[450px] bg-stone-900 flex flex-col items-center justify-center p-8 shadow-xl">
-                  {/* Story Gradient Background */}
-                  <motion.div
-                    animate={{
-                      background: getStatusDisplay(selectedOrder).text.includes("ملغي")
-                        ? [
-                            "radial-gradient(circle at 50% 50%, #450a0a 0%, #1c1917 100%)",
-                            "radial-gradient(circle at 50% 50%, #7f1d1d 0%, #1c1917 100%)",
-                          ]
-                        : (isPaidVisualStatus(getStatusDisplay(selectedOrder).text))
-                        ? [
-                            "radial-gradient(circle at 50% 50%, #0d9488 0%, #1c1917 100%)",
-                            "radial-gradient(circle at 50% 50%, #115e59 0%, #1c1917 100%)",
-                          ]
-                        : getStatusDisplay(selectedOrder).text.includes("فشل")
-                          ? [
-                              "radial-gradient(circle at 50% 50%, #991b1b 0%, #1c1917 100%)",
-                              "radial-gradient(circle at 50% 50%, #7f1d1d 0%, #1c1917 100%)",
-                            ]
-                          : [
-                              "radial-gradient(circle at 50% 50%, #d97706 0%, #1c1917 100%)",
-                              "radial-gradient(circle at 50% 50%, #b45309 0%, #1c1917 100%)",
-                            ],
-                    }}
-                    transition={{
-                      duration: 4,
-                      repeat: Infinity,
-                      repeatType: "reverse",
-                    }}
-                    className="absolute inset-0 z-0 opacity-80"
-                  />
-
-                  {/* Progress indicators like Instagram stories (top layer) */}
-                  <div className="absolute top-4 left-4 right-4 flex gap-1 z-20">
-                    {["تم إنشاء الطلب", getStatusDisplay(selectedOrder).text.includes("فشل") ? "فشلت عملية الدفع" : "بانتظار الدفع", "تم الدفع بنجاح"].map((step, i) => {
-                      const currentStep = getStatusDisplay(selectedOrder).text;
-                      const isFailed = currentStep.includes("فشل");
-                      let progress = 0;
-
-                      if (
-                        isPaidVisualStatus(currentStep) ||
-                        currentStep.includes("مكتمل")
-                      ) {
-                        progress = 100;
-                      } else if (
-                        currentStep.includes("تجهيز") ||
-                        (currentStep.includes("دفع") &&
-                          !currentStep.includes("بانتظار") &&
-                          !isFailed)
-                      ) {
-                        if (step === "تم إنشاء الطلب") progress = 100;
-                        if (step === "بانتظار الدفع") progress = 100;
-                      } else {
-                        if (step === "تم إنشاء الطلب") progress = 100;
-                        if (step === "بانتظار الدفع") progress = 45;
-                      }
-                      if (isFailed) progress = 100; // red
-
+                    {(() => {
+                      const statusView = getStatusDisplay(selectedOrder);
+                      const statusText = statusView.text;
+                      const isCancelled = statusText.includes("ملغي");
+                      const isFailed = statusText.includes("فشل");
+                      const isDelivered = statusText === "تم التوصيل";
+                      const isPaid = isPaidVisualStatus(statusText) || isDelivered;
+                      const isQatya = statusText.includes("قطية") && !isCancelled;
+                      const needsPayment = statusText === "بانتظار الدفع" || statusText === "فشل في عملية الدفع";
+                      const payHint = newPaymentLink ? "رابط الدفع جاهز" : statusText === "فشل في عملية الدفع" ? "جرّب الدفع مرة ثانية" : "كمّل الدفع لاعتماد الطلب";
+                      const splits = Array.isArray((selectedOrder as any).splitPayments) ? (selectedOrder as any).splitPayments : [];
+                      const splitPaid = splits.filter((sp: any) => sp?.status === "paid").length;
+                      const steps: DnaStep[] = [
+                        { key: "created", label: "تم إنشاء الطلب", state: "done" },
+                        {
+                          key: "payment",
+                          label: "الدفع",
+                          state: isPaid ? "done" : isCancelled || isFailed ? "returned" : "current",
+                          badge: isQatya && splits.length > 0 ? `${splitPaid}/${splits.length}` : undefined,
+                        },
+                        { key: "paid", label: "تم الدفع بنجاح", state: isPaid ? "done" : "pending" },
+                      ];
+                      if (isDelivered) steps.push({ key: "delivered", label: "تم التوصيل", state: "done" });
                       return (
-                        <div
-                          key={i}
-                          className="h-1 flex-1 bg-white/20 rounded-full overflow-hidden"
-                        >
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{
-                              width: `${progress}%`,
-                              backgroundColor: currentStep.includes("فشل")
-                                ? "#ef4444"
-                                : "#fff",
-                            }}
-                            transition={{
-                              type: "spring",
-                              stiffness: 55,
-                              damping: 18,
-                              mass: 0.8
-                            }}
-                            className="h-full shadow-[0_0_15px_rgba(255,255,255,0.9)]"
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* The Magical Compass */}
-                  <div className="relative z-10 w-48 h-48 sm:w-56 sm:h-56">
-                    {/* Ghost car effect for delivery */}
-                    {isPaidVisualStatus(getStatusDisplay(selectedOrder).text) && (
-                      <motion.div
-                        animate={{ x: ["150%", "-150%"] }}
-                        transition={{
-                          duration: 3,
-                          repeat: Infinity,
-                          ease: "linear",
-                        }}
-                        className="absolute top-1/2 -translate-y-1/2 left-0 w-24 h-12 z-0 opacity-20 blur-[2px]"
-                      >
-                        <Truck className="w-full h-full text-teal-300 transform scale-x-[-1]" />
-                      </motion.div>
-                    )}
-
-                    {/* Split effect for gathering */}
-                    {getStatusDisplay(selectedOrder).text.includes("قطية") &&
-                      [...Array(3)].map((_, i) => (
-                        <motion.div
-                          key={`splitring-${i}`}
-                          animate={{ scale: [1, 1.6], opacity: [0.6, 0] }}
-                          transition={{
-                            duration: 2,
-                            delay: i * 0.6,
-                            repeat: Infinity,
-                            ease: "easeOut",
-                          }}
-                          className="absolute inset-4 rounded-full border-2 border-purple-400/50"
-                        />
-                      ))}
-
-                    {/* Steam effect for preparing */}
-                    {(getStatusDisplay(selectedOrder).text.includes("تجهيز") ||
-                      (getStatusDisplay(selectedOrder).text.includes("دفع") &&
-                        !getStatusDisplay(selectedOrder).text.includes(
-                          "بانتظار",
-                        ) &&
-                        !getStatusDisplay(selectedOrder).text.includes(
-                          "فشل",
-                        ))) &&
-                      [...Array(6)].map((_, i) => (
-                        <motion.div
-                          key={`steam-${i}`}
-                          initial={{
-                            opacity: 0,
-                            y: 20,
-                            scale: 0.5,
-                            x: (Math.random() - 0.5) * 40,
-                          }}
-                          animate={{
-                            opacity: [0, 0.6, 0],
-                            y: -100,
-                            scale: 2,
-                            x: (Math.random() - 0.5) * 60,
-                          }}
-                          transition={{
-                            duration: 2.5 + Math.random(),
-                            delay: i * 0.4,
-                            repeat: Infinity,
-                            ease: "easeOut",
-                          }}
-                          className="absolute bottom-4 left-1/2 w-4 h-4 bg-orange-300 rounded-full blur-md"
-                        />
-                      ))}
-
-                    {/* Ash/Spark effect for cancelled */}
-                    {getStatusDisplay(selectedOrder).text.includes("ملغي") &&
-                      [...Array(12)].map((_, i) => (
-                        <motion.div
-                          key={`ash-${i}`}
-                          initial={{
-                            opacity: 1,
-                            y: 0,
-                            scale: Math.random() * 1.5 + 0.5,
-                            x: 0,
-                          }}
-                          animate={{
-                            opacity: [1, 0.8, 0],
-                            y: 80 + Math.random() * 50,
-                            scale: 0,
-                            x: (Math.random() - 0.5) * 80,
-                            rotate: Math.random() * 360
-                          }}
-                          transition={{
-                            duration: 2 + Math.random(),
-                            delay: i * 0.15,
-                            repeat: Infinity,
-                            ease: "easeIn",
-                          }}
-                          className="absolute top-[40%] left-1/2 w-2 h-2 bg-red-500 rounded-sm blur-[1px]"
-                        />
-                      ))}
-
-                    {/* Glassmorphism Ring */}
-                    <div
-                      className={`absolute inset-0 rounded-full border border-white/20 backdrop-blur-sm shadow-[0_0_30px_rgba(255,255,255,0.05)] flex items-center justify-center transition-colors duration-1000 ${
-                        getStatusDisplay(selectedOrder).text.includes("ملغي") ? "bg-red-900/20 shadow-[0_0_50px_rgba(220,38,38,0.3)] border-red-500/20" : getStatusDisplay(selectedOrder).text.includes("تجهيز") || (getStatusDisplay(selectedOrder).text.includes("دفع") && !getStatusDisplay(selectedOrder).text.includes("بانتظار") && !getStatusDisplay(selectedOrder).text.includes("فشل")) ? "bg-orange-500/10 shadow-[0_0_50px_rgba(249,115,22,0.3)]" : "bg-white/5"
-                      }`}
-                    >
-                      <div className={`w-[85%] h-[85%] rounded-full border-[2px] border-dashed border-white/20 ${getStatusDisplay(selectedOrder).text.includes("ملغي") ? "animate-pulse border-red-500/30" : "animate-[spin_60s_linear_infinite]"}`} />
-                      <div className="absolute w-[60%] h-[60%] rounded-full border border-white/10 flex items-center justify-center bg-black/20 backdrop-blur-md">
-                        {/* Box closing animation for preparing */}
-                        {getStatusDisplay(selectedOrder).text.includes(
-                          "ملغي",
-                        ) ? (
-                          <motion.div
-                            animate={{ scale: [1, 0.9, 1], opacity: [1, 0.6, 1] }}
-                            transition={{
-                              duration: 2,
-                              repeat: Infinity,
-                              ease: "easeInOut",
-                            }}
-                            className="text-red-400"
-                          >
-                            <X className="w-8 h-8" />
-                          </motion.div>
-                        ) : getStatusDisplay(selectedOrder).text.includes(
-                          "تجهيز",
-                        ) ||
-                        (getStatusDisplay(selectedOrder).text.includes("دفع") &&
-                          !getStatusDisplay(selectedOrder).text.includes(
-                            "بانتظار",
-                          ) &&
-                          !getStatusDisplay(selectedOrder).text.includes(
-                            "فشل",
-                          )) ? (
-                          <motion.div
-                            animate={{ rotateX: [0, -180, 0] }}
-                            transition={{
-                              duration: 2,
-                              repeat: Infinity,
-                              repeatDelay: 1,
-                            }}
-                            className="text-orange-400"
-                          >
-                            {getStatusDisplay(selectedOrder).icon}
-                          </motion.div>
-                        ) : (
-                          getStatusDisplay(selectedOrder).icon
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Magical Needle */}
-                    <motion.div
-                      className="absolute inset-0 pointer-events-none"
-                      initial={{ rotate: -90 }}
-                      animate={{
-                        rotate: getStatusDisplay(selectedOrder).text.includes("ملغي")
-                          ? 180
-                          : isPaidVisualStatus(getStatusDisplay(selectedOrder).text)
-                          ? 45
-                          : getStatusDisplay(selectedOrder).text.includes(
-                                "تجهيز",
-                              ) ||
-                              (getStatusDisplay(selectedOrder).text.includes(
-                                "دفع",
-                              ) &&
-                                !getStatusDisplay(selectedOrder).text.includes(
-                                  "بانتظار",
-                                ) &&
-                                !getStatusDisplay(selectedOrder).text.includes(
-                                  "فشل",
-                                ))
-                            ? 0
-                            : [-60, -30, -60], // Gentle swing for new
-                      }}
-                      transition={{
-                        type:
-                          getStatusDisplay(selectedOrder).text.includes("ملغي") ||
-                          isPaidVisualStatus(getStatusDisplay(selectedOrder).text) ||
-                          getStatusDisplay(selectedOrder).text.includes(
-                            "تجهيز",
-                          ) ||
-                          (getStatusDisplay(selectedOrder).text.includes(
-                            "دفع",
-                          ) &&
-                            !getStatusDisplay(selectedOrder).text.includes(
-                              "بانتظار",
-                            ) &&
-                            !getStatusDisplay(selectedOrder).text.includes(
-                              "فشل",
-                            ))
-                            ? "spring"
-                            : "tween",
-                        damping: 12,
-                        stiffness: 60,
-                        duration:
-                          isPaidVisualStatus(getStatusDisplay(selectedOrder).text) ||
-                          getStatusDisplay(selectedOrder).text.includes(
-                            "تجهيز",
-                          ) ||
-                          (getStatusDisplay(selectedOrder).text.includes(
-                            "دفع",
-                          ) &&
-                            !getStatusDisplay(selectedOrder).text.includes(
-                              "بانتظار",
-                            ) &&
-                            !getStatusDisplay(selectedOrder).text.includes(
-                              "فشل",
-                            ))
-                            ? undefined
-                            : 2.5,
-                        repeat:
-                          isPaidVisualStatus(getStatusDisplay(selectedOrder).text) ||
-                          getStatusDisplay(selectedOrder).text.includes(
-                            "تجهيز",
-                          ) ||
-                          (getStatusDisplay(selectedOrder).text.includes(
-                            "دفع",
-                          ) &&
-                            !getStatusDisplay(selectedOrder).text.includes(
-                              "بانتظار",
-                            ) &&
-                            !getStatusDisplay(selectedOrder).text.includes(
-                              "فشل",
-                            ))
-                            ? 0
-                            : Infinity,
-                        ease: "easeInOut",
-                      }}
-                    >
-                      <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-1.5 h-[40%] bg-gradient-to-b from-white to-transparent rounded-full shadow-[0_0_10px_#fff]" />
-                    </motion.div>
-
-                    {/* Speed lines for delivery */}
-                    {isPaidVisualStatus(getStatusDisplay(selectedOrder).text) &&
-                      [...Array(8)].map((_, i) => (
-                        <motion.div
-                          key={`speedline-${i}`}
-                          animate={{ y: [-100, 100], opacity: [0, 1, 0] }}
-                          transition={{
-                            duration: 1,
-                            delay: i * 0.2,
-                            repeat: Infinity,
-                            ease: "linear",
-                          }}
-                          className="absolute left-1/2 -ml-0.5 w-1 h-10 bg-white/20 rounded-full"
-                          style={{
-                            transform: `rotate(${i * 45}deg) translateY(-80px)`,
-                          }}
-                        />
-                      ))}
-                  </div>
-
-                  {/* Story Text Content */}
-                  <div className="relative z-10 mt-8 text-center space-y-2">
-                    <motion.h4
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      className="text-white text-2xl font-extrabold drop-shadow-md"
-                    >
-                      {getStatusDisplay(selectedOrder).text.includes("ملغي")
-                        ? "تم إلغاء الطلب"
-                        : getStatusDisplay(selectedOrder).text.includes("فشل")
-                        ? "فشل الدفع"
-                        : isPaidVisualStatus(getStatusDisplay(selectedOrder).text)
-                          ? "تم الدفع بنجاح"
-                          : getStatusDisplay(selectedOrder).text.includes(
-                                "تجهيز",
-                              ) ||
-                              (getStatusDisplay(selectedOrder).text.includes(
-                                "دفع",
-                              ) &&
-                                !getStatusDisplay(selectedOrder).text.includes(
-                                  "بانتظار",
-                                ) &&
-                                !getStatusDisplay(selectedOrder).text.includes(
-                                  "فشل",
-                                ))
-                            ? "حب وتقدير... طلبك قاعدين نجهزه"
-                            : "ننتظر تأكيد الدفع..."}
-                    </motion.h4>
-                    <motion.p
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.1 }}
-                      className="text-white/70 text-sm font-medium px-4 leading-relaxed max-w-sm mx-auto"
-                    >
-                      {getStatusDisplay(selectedOrder).text.includes("ملغي")
+                        <div id="order-status-panel" className="dna-track-status" dir="rtl">
+                          <DnaStatusHeader
+                            icon={statusView.icon}
+                            tone={isCancelled || isFailed ? "danger" : isPaid ? "accent" : isQatya ? "accent" : "warn"}
+                            title={statusText}
+                            subtitle={
+                              (getStatusDisplay(selectedOrder).text.includes("ملغي")
                         ? "المعذرة، الفاتورة ملغية أو انتهى وقت القطية وما اكتمل المبلغ. للاستفسار تواصل معانا."
                         : getStatusDisplay(selectedOrder).text.includes("فشل")
                         ? "محاولة الدفع ما ضبطت. جرّب مرة ثانية."
@@ -2169,10 +1805,39 @@ export default function OrderPage() {
                             ? "تم الدفع بنجاح"
                             : getStatusDisplay(selectedOrder).text.includes("قطية")
                             ? "القطيّة شغالة والربع قاعدين يدفعون، الفاتورة ما تتأكد لين يكمل المبلغ!"
-                            : "استلمنا طلبك، بانتظار الدفع عشان نبلش التجهيز."}
-                    </motion.p>
-                  </div>
-                    </div>
+                            : "استلمنا طلبك، بانتظار الدفع عشان نبلش التجهيز.")
+                            }
+                            actions={
+                              needsPayment ? (
+                                newPaymentLink ? (
+                                  <button
+                                    onClick={() => {
+                                      redirectToPayment(newPaymentLink);
+                                      setTimeout(() => setNewPaymentLink(""), 1000);
+                                    }}
+                                    className="dna-btn dna-btnp"
+                                    title={payHint}
+                                  >
+                                    استكمال الدفع
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleRepay(selectedOrder as any)}
+                                    disabled={processingPayment}
+                                    className="dna-btn dna-btnp disabled:opacity-50"
+                                    title={payHint}
+                                  >
+                                    {processingPayment ? "نجهز الرابط..." : statusText === "فشل في عملية الدفع" ? "الدفع مرة أخرى" : "ادفع الآن"}
+                                  </button>
+                                )
+                              ) : undefined
+                            }
+                          >
+                            <DnaStepper steps={steps} size="sm" ariaLabel="مراحل الطلب" />
+                          </DnaStatusHeader>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 
@@ -2354,12 +2019,6 @@ export default function OrderPage() {
                   transition={{
                     height: { duration: 0.8, ease: "easeOut", delay: 0.2 },
                     opacity: { duration: 0.8, ease: "easeOut", delay: 0.2 },
-                    y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-                    rotate: {
-                      duration: 6,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    },
                   }}
                   id="order-invoice-panel"
                   className="track-v15-details-card track-wow-details-card relative bg-white sm:rounded-[32px] mx-0 sm:mx-0 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-20 overflow-hidden mt-6 scroll-mt-4"
@@ -2391,21 +2050,10 @@ export default function OrderPage() {
                       <div>الاسم التجاري: {LEGAL_TRADE_NAME_AR}</div>
                       <div>رقم السجل التجاري: {COMMERCIAL_REGISTRATION_NUMBER}</div>
                     </div>
-                    <motion.div
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      key={getStatusDisplay(selectedOrder).text}
-                      className="font-mono text-xs text-stone-400 border-b border-dashed border-stone-100 pb-2 flex justify-between"
-                    >
-                      <TypewriterText
-                        text={`> UPDATE: ${getStatusDisplay(selectedOrder).text}`}
-                        delay={0.3}
-                      />
-                      <TypewriterText
-                        text={formatKuwaitiDate(new Date()).time}
-                        delay={0.6}
-                      />
-                    </motion.div>
+                    <div className="text-xs font-bold text-stone-500 border-b border-dashed border-stone-100 pb-2 flex items-center gap-2">
+                      {getStatusDisplay(selectedOrder).icon}
+                      <span>{getStatusDisplay(selectedOrder).text}</span>
+                    </div>
 
                     {/* Items List */}
                     <div className="space-y-4">
