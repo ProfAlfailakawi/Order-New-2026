@@ -3997,3 +3997,11 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
     display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow-wrap:anywhere;
   }
 }
+
+/* Roulette orbit on every width: framer-motion's inline `transform` (scale)
+   overrode the rotate/translate placement and stacked all names in the
+   centre. Place cards with the independent `translate` property instead. */
+.wahag-pulse-orbit-card{
+  transform:none;
+  translate:calc(cos(var(--pulse-angle)) * var(--pulse-radius) - 50%) calc(sin(var(--pulse-angle)) * var(--pulse-radius) - 50%);
+}
