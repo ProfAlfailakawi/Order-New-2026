@@ -16,6 +16,8 @@ import {
   RefreshCcw,
   Users,
   Crown,
+  Receipt,
+  Share2,
 } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
@@ -1995,13 +1997,13 @@ export default function OrderPage() {
                         onClick={() => openPrintableInvoice(selectedOrder as any)}
                         className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl bg-white border border-emerald-100 text-brand font-extrabold text-sm hover:bg-emerald-50 transition-all shadow-sm outline-none"
                       >
-                        🧾 إنشاء / طباعة PDF
+                        <Receipt className="w-5 h-5" strokeWidth={1.6} aria-hidden="true" /> إنشاء / طباعة PDF
                       </button>
                       <button
                         onClick={() => shareOrPrintInvoice(selectedOrder as any)}
                         className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl bg-white border border-amber-100 text-amber-700 font-extrabold text-sm hover:bg-amber-50 transition-all shadow-sm outline-none"
                       >
-                        📤 مشاركة الفاتورة
+                        <Share2 className="w-5 h-5" strokeWidth={1.6} aria-hidden="true" /> مشاركة الفاتورة
                       </button>
                     </div>
                     </>

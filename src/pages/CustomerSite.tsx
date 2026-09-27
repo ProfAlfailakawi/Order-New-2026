@@ -45,6 +45,8 @@ import {
   Coffee,
   Hourglass,
   UserPlus,
+  DoorOpen,
+  UtensilsCrossed,
 } from "lucide-react";
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegroundPush, type DiwaniyaPushState } from "../lib/diwaniyaPush";
@@ -1568,7 +1570,7 @@ export default function CustomerSite() {
                       rotate: 360,
                       scale: [1, 1.2, 1]
                     }}
-                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                    transition={{ duration: 15, repeat: 0, ease: "linear" }}
                     className={cn(
                       "absolute -top-24 -right-24 w-64 h-64 blur-3xl opacity-30",
                       currentTier.id === 'gold' ? 'bg-yellow-400' : 'bg-sky-400'
@@ -3707,13 +3709,8 @@ export default function CustomerSite() {
         try {
           void fetchWithRetry("/api/recent-fomo", 1).then((data) => {
             if (!isMounted || !Array.isArray(data) || data.length === 0) return;
-            const enrichedFomo = data.map((item) => {
-              const randomValue = Math.random();
-              if (randomValue > 0.85) return { ...item, type: "insight" };
-              if (randomValue > 0.6) return { ...item, type: "trend" };
-              if (randomValue > 0.4) return { ...item, type: "scarcity" };
-              return { ...item, type: "normal" };
-            });
+            // Real orders only: no invented scarcity/trend/insight labels.
+            const enrichedFomo = data.map((item) => ({ ...item, type: "normal" }));
             setFomoPurchases(enrichedFomo);
           });
 
@@ -5001,7 +4998,7 @@ export default function CustomerSite() {
                   />
                 </div>
                 {/* Visual sparkles */}
-                <span className="absolute -top-1 -right-1 text-yellow-500 text-lg animate-bounce">✨</span>
+                <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-[#b28a41]" strokeWidth={1.6} aria-hidden="true" />
               </motion.div>
 
               {/* Clear, minimal choice for first-time visitors */}
@@ -5071,7 +5068,7 @@ export default function CustomerSite() {
             className="fixed top-4 inset-x-3 sm:left-1/2 sm:right-auto sm:w-[420px] sm:-translate-x-1/2 bg-slate-950/95 border border-orange-500/40 backdrop-blur-md text-right rounded-[22px] p-4 shadow-2xl z-[9999] text-white overflow-hidden shadow-orange-950/30"
           >
             {/* Pulsing Ember Background Glow */}
-            <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-orange-600/25 rounded-full blur-2xl animate-pulse pointer-events-none" />
+            <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-orange-600/25 rounded-full blur-2xl pointer-events-none" />
             
             <div className="flex items-start justify-between gap-4 relative z-10">
               <button
@@ -5212,7 +5209,7 @@ export default function CustomerSite() {
                       {isActive && (
                         <motion.div
                           animate={{ opacity: [0, 0.2, 0] }}
-                          transition={{ repeat: Infinity, duration: 2 }}
+                          transition={{ repeat: 0, duration: 2 }}
                           className="absolute inset-0 bg-accent/20"
                         />
                       )}
@@ -5357,7 +5354,7 @@ export default function CustomerSite() {
                 style={{ backgroundImage: `url(${themeContext.image})` }}
                 animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
                 transition={{
-                  repeat: Infinity,
+                  repeat: 0,
                   duration: 60,
                   ease: "linear",
                   repeatType: "reverse",
@@ -5413,7 +5410,7 @@ export default function CustomerSite() {
             <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-2 flex flex-col gap-2 relative z-20">
               <div className="flex items-center bg-stone-50/80 backdrop-blur-sm rounded-2xl px-4 py-3">
                 {aiSearchLoading ? (
-                  <Sparkles className="w-5 h-5 text-amber-500 animate-[spin_3s_linear_infinite]" />
+                  <Sparkles className="w-5 h-5 text-amber-500" />
                 ) : (
                   <Search className="w-5 h-5 text-accent mr-2" />
                 )}
@@ -5473,7 +5470,7 @@ export default function CustomerSite() {
                 <div className="flex items-center justify-between gap-4 mb-5 border-b border-amber-100/30 pb-4 relative z-10">
                   <div className="text-right">
                     <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-amber-200 bg-amber-50 text-[10px] sm:text-[11px] font-bold text-amber-900 mb-2">
-                      ✨ من اختياراتنا لكم
+                      <Sparkles className="w-3.5 h-3.5" strokeWidth={1.6} aria-hidden="true" /> من اختياراتنا لكم
                     </span>
                     <h3 className="text-base sm:text-lg font-black text-brand leading-snug">{liveSignal.title}</h3>
                   </div>
@@ -5518,7 +5515,7 @@ export default function CustomerSite() {
                     <ProductVisual product={suggestion} imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
                   <div className="text-right min-w-0 flex-1 space-y-1">
-                    <span className="inline-flex items-center text-[9px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100/50 rounded-full px-2.5 py-0.5">توليفة تكمّل سلتك 🍲</span>
+                    <span className="inline-flex items-center text-[9px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100/50 rounded-full px-2.5 py-0.5">توليفة تكمّل سلتك</span>
                     <p className="text-xs sm:text-sm font-black text-brand line-clamp-1 group-hover:text-amber-950 transition-colors">
                       شنو رأيك نكمّلها مع <span className="text-amber-800 font-extrabold">{suggestion.name}</span>؟
                     </p>
@@ -5636,7 +5633,7 @@ export default function CustomerSite() {
                     </div>
                   </div>
                   <div className="al-empty-state p-8 text-center border-2 border-dashed border-amber-100 rounded-[28px] bg-white/80">
-                    <div className="al-empty-icon">🍽️</div>
+                    <div className="al-empty-icon"><UtensilsCrossed className="w-7 h-7" strokeWidth={1.6} aria-hidden="true" /></div>
                     <strong>هالقسم فاضي الحين</strong>
                     <span>جرّب قسم ثاني أو اكتب اسم الطبق اللي تبيه.</span>
                   </div>
@@ -5826,7 +5823,7 @@ export default function CustomerSite() {
                 }}
                 transition={{
                   duration: 4,
-                  repeat: Infinity,
+                  repeat: 0,
                   ease: "easeInOut",
                 }}
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0"
@@ -5877,7 +5874,7 @@ export default function CustomerSite() {
                 className="relative rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.5)] max-w-sm w-full z-20"
               >
                 {/* Glassmorphism Glow (Rainbow Border equivalent) (Effect 6) */}
-                <div className="absolute inset-[-4px] rounded-[3rem] bg-gradient-to-r from-accent via-white to-brand animate-pulse opacity-60 blur-sm pointer-events-none" />
+                <div className="absolute inset-[-4px] rounded-[3rem] bg-gradient-to-r from-accent via-white to-brand opacity-60 blur-sm pointer-events-none" />
 
                 <div className="relative bg-brand/90 backdrop-blur-3xl border border-white/20 p-8 pt-12 pb-10 rounded-[3rem] flex flex-col items-center text-center gap-4 z-10 overflow-hidden">
                   {/* The Unboxing Lid (Flies up and fades) */}
@@ -6324,7 +6321,7 @@ export default function CustomerSite() {
                   setIsCheckout(true);
                 }}
               >
-                إتمام الطلب 🚀
+                إتمام الطلب <ArrowRight className="w-4 h-4 rotate-180 inline" strokeWidth={1.8} aria-hidden="true" />
               </button>
             </div>
           </motion.div>
@@ -6391,7 +6388,7 @@ export default function CustomerSite() {
                             aria-label="العودة للرئيسية داخل الديوانية"
                             title="الرئيسية"
                           >
-                            🏠
+                            <Home className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.6} aria-hidden="true" />
                           </button>
                         )}
                         {customerPhone && (
@@ -6407,7 +6404,7 @@ export default function CustomerSite() {
                             aria-label="تسجيل خروج من الديوانية"
                             title="تسجيل خروج"
                           >
-                            🚪
+                            <DoorOpen className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.6} aria-hidden="true" />
                           </button>
                         )}
                         <button
@@ -7224,7 +7221,6 @@ const ChefWhisperCard = ({
           {isHorizontal ? (
             <>
               <div className="menu-product-image relative flex-shrink-0 overflow-hidden flex items-center justify-center rounded-[22px] w-20 h-20 mx-auto mb-2 shadow-[0_14px_28px_rgba(26,46,34,0.12)] ring-1 ring-white/70">
-                {isHot && <SizzlingSteam />}
                 <ProductVisual
                   product={product}
                   imgClassName="menu-product-img orser-product-img w-full h-full object-cover bg-transparent relative z-0"
@@ -7279,8 +7275,7 @@ const ChefWhisperCard = ({
                 <div className="product-media-frame relative w-full max-w-[214px] flex flex-col items-center pt-1 pb-4">
                   {/* 2. Image */}
                   <div className="menu-product-image relative w-[150px] h-[86px] sm:w-[168px] sm:h-[94px] flex-shrink-0 overflow-hidden flex items-center justify-center z-10 mb-2 rounded-[22px] shadow-[0_16px_38px_rgba(26,46,34,0.16)] ring-1 ring-white/80">
-                    {isHot && <SizzlingSteam />}
-                    <ProductVisual
+                        <ProductVisual
                       product={product}
                       imgClassName="menu-product-img orser-product-img w-full h-full object-cover bg-transparent relative z-0"
                     />
@@ -8615,7 +8610,7 @@ function CheckoutOverlay({
                 })()}
 
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
                   <h3 className="text-xs font-bold text-stone-500">
                     المنتجات المختارة ({cart.length})
                   </h3>
@@ -9234,7 +9229,7 @@ function CheckoutOverlay({
             )}
 
             {step !== "payment" && cart.some((item) => item.preparationInstructions) && (
-              <div className="mt-2.5 p-2 bg-rose-50/40 border border-rose-100/20 rounded-xl flex items-center gap-1.5 text-rose-600 text-[10px] sm:text-xs font-semibold shadow-[0_1px_2px_rgba(244,63,94,0.01)] animate-pulse">
+              <div className="mt-2.5 p-2 bg-rose-50/40 border border-rose-100/20 rounded-xl flex items-center gap-1.5 text-rose-600 text-[10px] sm:text-xs font-semibold shadow-[0_1px_2px_rgba(244,63,94,0.01)]">
                 <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
                 <span>
                   تنبيه لطيف: الطلب يحتوي على أصناف تتطلب وقتاً إضافياً للتجهيز.
