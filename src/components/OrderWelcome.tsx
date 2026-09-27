@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { DEFAULT_GLOBAL_LOGO } from "../constants";
+import { UtensilsCrossed, Users, Receipt } from "lucide-react";
 
 /**
  * OrderWelcome — a light, single-screen welcome sheet for the customer home.
@@ -55,10 +56,10 @@ const isPaymentOrCheckoutContext = (): boolean => {
   }
 };
 
-const CHIPS: { icon: string; label: string }[] = [
-  { icon: "🍽️", label: "رتّب طلبك" },
-  { icon: "👥", label: "اعزم ربعك" },
-  { icon: "🧾", label: "قسّم وادفع" },
+const CHIPS: { icon: React.ReactNode; label: string }[] = [
+  { icon: <UtensilsCrossed className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />, label: "رتّب طلبك" },
+  { icon: <Users className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />, label: "اعزم ربعك" },
+  { icon: <Receipt className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />, label: "قسّم وادفع" },
 ];
 
 interface OrderWelcomeProps {
@@ -198,7 +199,7 @@ const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart }) => {
                       key={c.label}
                       className="flex flex-1 flex-col items-center gap-1.5 rounded-2xl border border-[#efe1c2] bg-white/70 px-2 py-3 shadow-[0_8px_22px_rgba(24,51,38,0.05)]"
                     >
-                      <span className="text-lg leading-none" aria-hidden>
+                      <span className="leading-none text-[#0d3a22]" aria-hidden>
                         {c.icon}
                       </span>
                       <span className="text-[11px] font-black text-[#4a5a4f]">

@@ -16,6 +16,7 @@ import {
   PartyPopper,
   Zap,
   MessageSquare,
+  MapPin,
 } from "lucide-react";
 import { Order } from "../types";
 import { cn, normalizePhone, normalizeDigits, getSaduAvatar, formatKuwaitiDate } from "../utils";
@@ -23,6 +24,7 @@ import confetti from "canvas-confetti";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { RouletteSplit } from "../components/RouletteSplit";
+import { DnaRing, DnaStepper, DnaTimeline } from "../components/dna";
 
 const getSafeSplitPayments = (order: any): any[] => {
   if (!order) return [];
@@ -604,36 +606,6 @@ export default function SplitPayment() {
       className="min-h-screen qatya-ultra-shell qatya-wow-shell pb-24 font-sans text-stone-800 selection:bg-brand/20"
       dir="rtl"
     >
-      {/* Floating Token Drop Canvas Container */}
-      <div className="fixed inset-0 pointer-events-none z-[999] overflow-hidden">
-        <AnimatePresence>
-          {tokenDrops.map((drop) => (
-            <motion.div
-              key={drop.id}
-              initial={{ y: -50, x: `${drop.x}vw`, opacity: 0, rotate: drop.rot, scale: 0.5 }}
-              animate={{ 
-                y: ["0vh", "85vh", "80vh", "85vh"],
-                opacity: [1, 1, 1, 0],
-                scale: [1, 1, 0.95, 0.8]
-              }}
-              exit={{ opacity: 0 }}
-              transition={{ 
-                duration: 2.2, 
-                times: [0, 0.7, 0.85, 1],
-                ease: "easeIn"
-              }}
-              style={{
-                position: "absolute",
-                fontSize: drop.size,
-                textShadow: "0 4px 10px rgba(0,0,0,0.35)",
-              }}
-            >
-              {drop.emoji}
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-
       <button
         type="button"
         onClick={() => navigate("/?checkout=payment")}
@@ -661,13 +633,13 @@ export default function SplitPayment() {
 
         {typeof order.address === "object" && order.address !== null && (
           <div className="text-[10px] text-stone-500 bg-stone-100 px-3 py-1 mt-2 rounded-full font-bold">
-            📍 {order.address.region}, ق {order.address.block}, ش{" "}
+            <MapPin className="w-3 h-3 inline -mt-0.5 me-1" strokeWidth={1.6} aria-hidden="true" />{order.address.region}, ق {order.address.block}, ش{" "}
             {order.address.street}, م {order.address.building}
           </div>
         )}
         {typeof order.address === "string" && (
           <div className="text-[10px] text-stone-500 bg-stone-100 px-3 py-1 mt-2 rounded-full font-bold">
-            📍 {order.address}
+            <MapPin className="w-3 h-3 inline -mt-0.5 me-1" strokeWidth={1.6} aria-hidden="true" />{order.address}
           </div>
         )}
       </header>
@@ -708,7 +680,7 @@ export default function SplitPayment() {
                 <AlertCircle className="w-8 h-8 text-red-500" strokeWidth={3} />
               </div>
               <div className="text-center relative z-10 w-full">
-                <h3 className="text-2xl font-extrabold mb-1">فشلت العملية{urlName ? ` يا ${urlName}` : ""} 💔</h3>
+                <h3 className="text-2xl font-extrabold mb-1">فشلت العملية{urlName ? ` يا ${urlName}` : ""}</h3>
                 <p className="text-white/90 font-medium mb-4">{errorMsg}</p>
                 <button 
                   onClick={() => {
@@ -717,7 +689,7 @@ export default function SplitPayment() {
                   disabled={isSubmitting}
                   className="bg-white/20 hover:bg-white/30 disabled:opacity-50 text-white w-full py-3 rounded-xl font-bold transition-colors border border-white/30"
                 >
-                  {isSubmitting ? "نحوّلك..." : "جرب مرة ثانية 🔄"}
+                  {isSubmitting ? "نحوّلك..." : "جرب مرة ثانية"}
                 </button>
               </div>
             </motion.div>
@@ -736,7 +708,7 @@ export default function SplitPayment() {
 
         {qatyaTab === "overview" && <div className="qatya-signature-stage qatya-v14-stage">
           <div className="qatya-hero-card qatya-v14-hero bg-white p-5 sm:p-6 rounded-[28px] shadow-sm border border-stone-100">
-            <div className="grid grid-cols-3 gap-2 mb-5" dir="rtl">
+            <div className="grid grid-cols-2 gap-2 mb-5" dir="rtl">
               <div className="rounded-2xl bg-stone-50 border border-stone-100 p-3 text-right">
                 <div className="text-[9px] font-black text-stone-400">دورك</div>
                 <div className="text-xs font-black text-brand mt-1">{currentPersonRole}</div>
@@ -745,10 +717,6 @@ export default function SplitPayment() {
                 <div className="text-[9px] font-black text-emerald-700">دفعوا</div>
                 <div className="text-xs font-black text-emerald-800 mt-1">{paidPeople.length} / {isDiwaniyaQatya ? (splitPeople.length || 1) : Math.max(paidPeople.length, 1)}</div>
               </div>
-              <div className="rounded-2xl bg-amber-50 border border-amber-100 p-3 text-right">
-                <div className="text-[9px] font-black text-amber-700">باقي</div>
-                <div className="text-xs font-black text-amber-800 mt-1">{remainingAmount.toFixed(3)} د.ك</div>
-              </div>
             </div>
             <div className="qatya-v14-topline relative z-10">
               <span className="qatya-v14-live-dot">مباشر</span>
@@ -756,173 +724,42 @@ export default function SplitPayment() {
               <span>{paidPeople.length} مساهم</span>
             </div>
 
-            <div className="qatya-council-mini" dir="rtl">
-              <div><strong>مجلس القطيّة</strong><span>اللمة واضحة من أول نظرة</span></div>
-              <ol>
-                <li>شارك الرابط</li>
-                <li>الربع يدفعون</li>
-                <li>تابع من دفع</li>
-              </ol>
-            </div>
-
-            <div className="qatya-v14-main relative z-10">
-              <div className="min-w-0">
-                <span className="text-stone-400 font-black text-[11px] mb-2 uppercase tracking-[0.2em] block">
-                  حالة القطيّة
-                </span>
-                <h2 className="text-2xl sm:text-4xl font-black text-stone-950 tracking-tight leading-tight">
+            <div className="dna-qatya-main" dir="rtl">
+              <DnaRing
+                value={paidAmount}
+                max={Number(order.total || 0)}
+                size={168}
+                stroke={10}
+                label={remainingAmount.toFixed(3)}
+                sublabel="الباقي · د.ك"
+                ariaLabel={`المندفع ${paidAmount.toFixed(3)} من ${Number(order.total || 0).toFixed(3)} د.ك، الباقي ${remainingAmount.toFixed(3)} د.ك`}
+              />
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg sm:text-2xl font-black text-stone-950 tracking-tight leading-tight" title="الصفحة تعرض قطيتكم أول بأول، والباقي واضح. ادفع قطيتك أو انسخ الرابط للربع.">
                   شدو حيلكم يا الربع ولا تبخلون علينا
                 </h2>
-                <p className="text-xs sm:text-sm text-stone-500 font-bold mt-2 leading-relaxed max-w-xl">
-                  الصفحة تعرض قطيتكم أول بأول، والباقي واضح. ادفع قطيتك أو انسخ الرابط للربع.
-                </p>
-                <div className="qatya-v14-quick mt-4">
-                  <span>الإجمالي {order.total.toFixed(3)} د.ك</span>
-                  <span>المندفع {paidAmount.toFixed(3)} د.ك</span>
-                </div>
-              </div>
-
-              <div className="qatya-v14-orb" style={{ background: `conic-gradient(#0f5130 ${Math.min(progressPercent, 100)}%, rgba(15,81,48,.10) 0)` }}>
-                <div className="qatya-v14-orb-inner">
-                  <span>الباقي</span>
-                  <strong>{remainingAmount.toFixed(3)}</strong>
-                  <small>د.ك</small>
+                <div className="dna-qatya-facts">
+                  <span><small>الإجمالي</small><strong>{order.total.toFixed(3)}</strong></span>
+                  <span><small>المندفع</small><strong>{paidAmount.toFixed(3)}</strong></span>
                 </div>
               </div>
             </div>
 
-            <div className="qatya-ledger-grid qatya-v14-ledger qatya-wow-ledger mt-6">
-              <div className="qatya-ledger-tile is-total">
-                <span>إجمالي الفاتورة</span>
-                <strong>{order.total.toFixed(3)}</strong>
-                <small>د.ك</small>
-              </div>
-              <div className="qatya-ledger-tile">
-                <span>المندفع</span>
-                <strong>{paidAmount.toFixed(3)}</strong>
-                <small>د.ك</small>
-              </div>
-              <div className="qatya-ledger-tile is-remaining">
-                <span>الباقي</span>
-                <strong>{remainingAmount.toFixed(3)}</strong>
-                <small>د.ك</small>
-              </div>
-            </div>
-
-            <div className="w-full mt-6 relative z-10 bg-amber-500/[0.04] p-5 rounded-[28px] border border-amber-500/10 shadow-inner flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 font-sans">
-                  <span className="w-2 h-2 rounded-full bg-[#128C7E] animate-ping" />
-                  <span className="text-xs font-black text-brand">عداد الامتلاء المتوهج (Liquid Sadu progress)</span>
-                </div>
-                <span className="text-xs font-black text-amber-600 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/15">
-                  أنجزنا: {Math.min(progressPercent, 100).toFixed(0)}%
-                </span>
-              </div>
-
-              <div className="flex items-center gap-4">
-                {/* 1. Sadu Thread Weaving Progress Bar */}
-                <div className="flex-1">
-                  <div className="relative h-7 w-full bg-stone-100 rounded-2xl border border-stone-200/60 overflow-hidden flex items-center shadow-inner">
-                    {/* Sadu Woven Line pattern static design background */}
-                    <div 
-                      className="absolute inset-0 opacity-15 pointer-events-none"
-                      style={{
-                        backgroundImage: "linear-gradient(45deg, #a71d22 25%, transparent 25%, transparent 50%, #a71d22 50%, #a71d22 75%, transparent 75%, transparent)",
-                        backgroundSize: "20px 20px"
-                      }}
-                    />
-                    
-                    {/* Active filling progress (Sadu pattern styled inside) */}
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-[#ca8a04] via-[#a71d22] to-[#b45309] relative shadow-lg"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progressPercent}%` }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
-                    >
-                      <div className="absolute inset-0 bg-white/20 animate-pulse pointer-events-none" style={{ backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.15) 10px, rgba(255,255,255,0.15) 20px)" }} />
-                    </motion.div>
-
-                    {/* Sadu Decorative Center diamonds overlay inside progress */}
-                    <div className="absolute inset-0 flex items-center justify-around pointer-events-none opacity-40">
-                      {[1, 2, 3, 4, 5].map((x) => (
-                        <div key={x} className="w-2.5 h-2.5 bg-yellow-400 rotate-45 border border-red-700 scale-75 shadow-xs" />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Beautiful Coffee Dallah filling up dynamically with golden coffee */}
-                <div className="relative shrink-0 flex items-center justify-center">
-                  {/* Glowing halo when 100% completed */}
-                  {progressPercent >= 100 && (
-                    <div className="absolute -top-3 w-16 h-16 bg-amber-400/25 blur-xl rounded-full animate-pulse" />
-                  )}
-
-                  {/* Dallah vector graphic inside */}
-                  <svg width="45" height="55" viewBox="0 0 100 120" className="drop-shadow-md">
-                    {/* Outer frame */}
-                    <path d="M35,110 L65,110 L70,118 L30,118 Z" fill="#b45309" />
-                    {/* Liquid fill bounding box that fills based on progress height */}
-                    <mask id="dallahMask">
-                      <path d="M35,35 L65,35 L60,110 L40,110 Z" fill="white" />
-                    </mask>
-
-                    {/* Masked coffee inside */}
-                    <g mask="url(#dallahMask)">
-                      <rect x="20" y="30" width="60" height="90" fill="#3e2723" />
-                      {/* Dynamic golden wave liquid filling up */}
-                      <motion.rect 
-                        x="20" 
-                        y="30" 
-                        width="60" 
-                        height="90" 
-                        fill="url(#goldCoffee)"
-                        animate={{ y: 90 - (progressPercent / 100) * 90 }}
-                        transition={{ duration: 0.8 }}
-                      />
-                    </g>
-
-                    {/* Dallah metallic overlay border to keep shape */}
-                    <path d="M35,35 L65,35 L60,110 L40,110 Z" fill="none" stroke="#ca8a04" strokeWidth="4" />
-                    {/* Spout */}
-                    <path d="M32,45 C22,40 10,25 10,25 C10,25 22,50 32,55 Z" fill="#eab308" />
-                    {/* Spout aroma bubbles when complete */}
-                    {progressPercent >= 100 && (
-                      <motion.g animate={{ y: -8, opacity: [0.3, 1, 0] }} transition={{ repeat: Infinity, duration: 2 }}>
-                        <text x="5" y="15" fontSize="12">♨️</text>
-                      </motion.g>
-                    )}
-
-                    <defs>
-                      <linearGradient id="goldCoffee" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#facc15" />
-                        <stop offset="50%" stopColor="#d97706" />
-                        <stop offset="100%" stopColor="#150a0a" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-
-                  {/* Aromatic Steam bubbles when 100% complete ("تفوح الدلة بنور ساطع") */}
-                  {progressPercent >= 100 && (
-                    <div className="absolute -top-10 flex flex-col items-center pointer-events-none">
-                      <span className="text-xs animate-bounce">♨️</span>
-                      <span className="text-[7px] font-black text-amber-500 bg-amber-100/95 px-1 py-0.5 rounded-full mt-1 animate-pulse border border-amber-300 shadow-xs">تفوح! ☕🔥</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Simulation triggers to allow tasting the drop physics! */}
-              <button
-                type="button"
-                onClick={triggerCoinsDroppingAndRing}
-                className="w-full bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500/20 text-[#a16207] text-[10.5px] font-extrabold py-2 px-3 rounded-2xl transition-all flex items-center justify-center gap-1.5 shadow-xs"
-              >
-                <span>🪙</span>
-                <span>استعرض رنّة الفنجان وسقوط العملات التراثية الحية</span>
-                <span>☕</span>
-              </button>
+            <div className="mt-5" aria-label="مجلس القطيّة">
+              <DnaStepper
+                size="sm"
+                ariaLabel="مجلس القطيّة"
+                steps={[
+                  { key: "share", label: "شارك الرابط", state: splitPeople.length > 0 || paidPeople.length > 0 || isFullyPaid ? "done" : "current" },
+                  {
+                    key: "pay",
+                    label: "الربع يدفعون",
+                    state: isFullyPaid ? "done" : "current",
+                    badge: !isFullyPaid && splitPeople.length > 0 ? `${paidPeople.length}/${splitPeople.length}` : undefined,
+                  },
+                  { key: "track", label: "تابع من دفع", state: isFullyPaid ? "done" : "pending" },
+                ]}
+              />
             </div>
 
             <div className="mt-5 rounded-[24px] bg-stone-50 border border-stone-100 p-4" dir="rtl">
@@ -996,7 +833,6 @@ export default function SplitPayment() {
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className={cn("w-12 h-12 rounded-full bg-gradient-to-tr shrink-0 flex flex-col items-center justify-center border-2 shadow-inner shadow-black/10 relative overflow-hidden", avatar.gradient)}>
                     <span className="text-xl filter drop-shadow-sm select-none">{avatar.emoji}</span>
-                    <span className="absolute bottom-0 inset-x-0 text-[7px] font-black tracking-tighter uppercase py-0.5 text-center bg-black/20 text-white leading-none scale-90 sm:scale-100">{avatar.label}</span>
                   </div>
                   
                   <div className="text-right min-w-0">
@@ -1031,16 +867,6 @@ export default function SplitPayment() {
             className="relative bg-gradient-to-br from-[#25D366] via-emerald-500 to-[#128C7E] text-white p-8 mt-6 rounded-[32px] shadow-2xl overflow-hidden text-center flex flex-col items-center gap-6"
           >
             {/* Animated background elements */}
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="absolute -top-32 -left-32 w-64 h-64 bg-white/10 rounded-full blur-3xl"
-            />
-            <motion.div
-              animate={{ rotate: -360 }}
-              transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-              className="absolute -bottom-32 -right-32 w-64 h-64 bg-black/10 rounded-full blur-3xl"
-            />
             
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
@@ -1155,8 +981,8 @@ export default function SplitPayment() {
                         dir="ltr"
                       />
                       {contributorPhone.length > 0 && contributorPhone.length < 8 && (
-                        <p className="text-rose-500 text-xs font-bold text-right mt-1.5 animate-pulse">
-                          ⚠️ الرقم يجب أن يتكون من 8 أرقام
+                        <p className="text-rose-500 text-xs font-bold text-right mt-1.5">
+                          الرقم يجب أن يتكون من 8 أرقام
                         </p>
                       )}
                     </div>
@@ -1273,69 +1099,27 @@ export default function SplitPayment() {
               <Users className="w-4 h-4 text-brand" />
               حائط الشرف
             </h3>
-            <div className="space-y-3 relative z-10">
-              <AnimatePresence initial={false}>
-                {getSafeSplitPayments(order).filter((p) => String(p.status || "").toLowerCase() === "paid")
-                  .reverse()
-                  .map((p, i) => {
-                    // Dynamic gamification text
-                    const phrases = [
-                      "كفو! 🔥",
-                      "سدّاد! 💸",
-                      "بطل! 👑",
-                      "زقرت! 🎯",
-                    ];
-                    const phrase =
-                      p.amount >= Math.max(order.total / 2, 10)
-                        ? "راعيها! 🤩"
-                        : phrases[(p.name.length + i) % phrases.length];
-
-                    return (
-                      <motion.div
-                        key={p.id || i}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        layout
-                        className="flex items-center justify-between p-3 rounded-xl bg-stone-50/80 border border-stone-100 shadow-sm"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-brand/80 flex items-center justify-center text-white font-extrabold text-xs shadow-sm">
-                            {p.name.charAt(0)}
-                          </div>
-                          <div className="flex flex-col">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-sm text-stone-800">
-                                {p.name}
-                              </span>
-                              <span className="text-[10px] text-stone-400 bg-stone-100 px-1.5 py-0.5 rounded font-bold">
-                                {phrase}
-                              </span>
-                            </div>
-                            {p.phone && (
-                              <span className="text-[10px] text-stone-400 font-mono">
-                                {p.phone.slice(0, 3)}****{p.phone.slice(-3)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <span className="font-extrabold text-brand block">
-                            {p.amount.toFixed(3)}{" "}
-                            <span className="text-[10px] text-stone-400">
-                              د.ك
-                            </span>
-                          </span>
-                          <span className="text-[8px] text-stone-400 font-bold uppercase">
-                            {p.date
-                              ? formatKuwaitiDate(p.date).time
-                              : "الآن"}
-                          </span>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-              </AnimatePresence>
-            </div>
+            <DnaTimeline
+              className="relative z-10"
+              ariaLabel="حائط الشرف"
+              items={getSafeSplitPayments(order)
+                .filter((p) => String(p.status || "").toLowerCase() === "paid")
+                .reverse()
+                .map((p, i) => ({
+                  key: String(p.id || i),
+                  icon: <span className="dna-letter">{Array.from(String(p.name || "").trim())[0] || "•"}</span>,
+                  title: p.name,
+                  date: p.date ? formatKuwaitiDate(p.date).time : "الآن",
+                  meta: (
+                    <>
+                      <strong className="text-brand">{Number(p.amount || 0).toFixed(3)} د.ك</strong>
+                      {p.phone && (
+                        <span className="font-mono" dir="ltr"> · {p.phone.slice(0, 3)}****{p.phone.slice(-3)}</span>
+                      )}
+                    </>
+                  ),
+                }))}
+            />
           </div>)}
       </div>
     </div>

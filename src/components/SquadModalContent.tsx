@@ -1,7 +1,7 @@
 import OrderMicroLoader from "./OrderMicroLoader";
 import React from "react";
 import { motion } from "motion/react";
-import { User, Landmark, Crown, Users, LogIn, DoorOpen, DoorClosed, Trophy, Star, Medal, Target, BrainCircuit } from "lucide-react";
+import { User, Landmark, Crown, Users, LogIn, DoorOpen, DoorClosed, Trophy, Star, Medal, Target, BrainCircuit, Tent, UtensilsCrossed, KeyRound, MapPin, Bell } from "lucide-react";
 import { cn } from "../utils";
 import { robustGetCurrentPosition } from "../utils/geolocation";
 import { SaduPresenceRug } from "./SaduPresenceRug";
@@ -1364,12 +1364,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
             <div className="squad-stable-tabs bg-white/90 border border-stone-100 rounded-[28px] p-2 shadow-sm relative z-10 backdrop-blur-xl">
               <div className="grid grid-cols-3 gap-1.5 text-center" dir="rtl">
                 {[
-                  { id: "manage", label: "دواويني", icon: "🛖" },
-                  { id: "orders", label: "الطلبات", icon: "🍽️" },
-                  { id: "trophies", label: "لوحة\nالشرف", icon: "🏆" },
-                  ...(isOwner ? [{ id: "code", label: "الكود", icon: "🔐" }] : []),
-                  { id: "location", label: "الموقع", icon: "📍" },
-                  { id: "notifications", label: "تنبيهات", icon: "🔔", badge: unreadDiwaniyaNotifications },
+                  { id: "manage", label: "دواويني", icon: <Tent className="w-5 h-5" strokeWidth={1.6} /> },
+                  { id: "orders", label: "الطلبات", icon: <UtensilsCrossed className="w-5 h-5" strokeWidth={1.6} /> },
+                  { id: "trophies", label: "لوحة\nالشرف", icon: <Trophy className="w-5 h-5" strokeWidth={1.6} /> },
+                  ...(isOwner ? [{ id: "code", label: "الكود", icon: <KeyRound className="w-5 h-5" strokeWidth={1.6} /> }] : []),
+                  { id: "location", label: "الموقع", icon: <MapPin className="w-5 h-5" strokeWidth={1.6} /> },
+                  { id: "notifications", label: "تنبيهات", icon: <Bell className="w-5 h-5" strokeWidth={1.6} />, badge: unreadDiwaniyaNotifications },
                 ].map((tab: any) => (
                   <button
                     key={tab.id}
@@ -1382,7 +1382,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         : "bg-stone-50/80 text-stone-500 border-stone-100 hover:bg-white"
                     )}
                   >
-                    <span className="block text-lg mb-1 leading-none">{tab.icon}</span>
+                    <span className="block mb-1 leading-none" aria-hidden="true">{tab.icon}</span>
                     <span className="whitespace-pre-line block max-w-full leading-[1.15]">{tab.label}</span>
                     {tab.badge > 0 && (
                       <span className="absolute -top-1 -left-1 min-w-4 h-4 px-0.5 rounded-full bg-amber-500 text-white text-[8px] flex items-center justify-center">
@@ -1451,7 +1451,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
           {myDiwaniyaTab === "notifications" && visibleNotifications.length === 0 && customerPhone && (
             <div className="bg-white rounded-[30px] border border-stone-100 shadow-sm p-6 text-center text-right font-sans">
-              <div className="text-3xl mb-2">🔔</div>
+              <Bell className="w-7 h-7 mx-auto mb-2 text-stone-400" strokeWidth={1.6} aria-hidden="true" />
               <h4 className="text-sm font-black text-brand">ما عندك إشعارات جديدة</h4>
               <p className="text-[11px] font-bold text-stone-400 mt-1">أي شي جديد من الربع يطلع هني بهدوء.</p>
             </div>

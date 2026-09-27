@@ -1,0 +1,101 @@
+/* Maps DNA kit tokens to the storefront palette (index.css @theme).
+   Single accent = brand green. Scoped resets neutralise legacy global rules. */
+:root:root {
+  --dna-canvas: #fafaf9;
+  --dna-surface: #ffffff;
+  --dna-surface-2: #f5f4f0;
+  --dna-ink: #1c1917;
+  --dna-muted: #6b6560;
+  --dna-accent: #0d3a22;
+  --dna-accent-soft: #e4efe8;
+  --dna-core: #0d3a22;
+  --dna-danger: #ab2b2c;
+  --dna-danger-soft: #f8e6e6;
+}
+.dna button { font-family: inherit; }
+.dna svg { flex-shrink: 0; }
+.dna-tile::before, .dna-tile::after { content: none !important; }
+.dna-tile.dna-pv-fill { inline-size: 100% !important; block-size: 100% !important; border-radius: inherit !important; }
+.dna-tile.dna-pv-fill svg { inline-size: 42% !important; block-size: 42% !important; max-inline-size: 56px; max-block-size: 56px; }
+
+/* Category tile grid (replaces the closed accordion bars) */
+.dna-cat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 640px) { .dna-cat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; } }
+.dna-cat-tile {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+  min-height: 120px; padding: 16px; text-align: start; cursor: pointer;
+  background: var(--dna-surface); border: 1px solid var(--dna-line) !important;
+  border-radius: 22px !important; box-shadow: var(--dna-shadow) !important;
+  transition: border-color .2s var(--dna-ease), box-shadow .2s var(--dna-ease);
+}
+.dna-cat-tile:hover { border-color: var(--dna-line-2) !important; }
+.dna-cat-tile[data-open='true'] { border-color: var(--dna-accent) !important; box-shadow: 0 0 0 1px var(--dna-accent), var(--dna-shadow) !important; }
+.dna-cat-tile:focus-visible { outline: 2px solid var(--dna-accent); outline-offset: 2px; }
+.dna-cat-name { font-size: 15px; font-weight: 800; color: var(--dna-ink); line-height: 1.35; margin-top: auto; }
+.dna-cat-meta { font-size: 12px; font-weight: 600; color: var(--dna-muted); margin-top: -6px; }
+
+/* /track status (replaces the animated compass) */
+#order-status-panel.dna-track-status { min-height: 0 !important; padding: 16px !important; background: transparent !important; box-shadow: none !important; border-radius: 0 !important; margin: 0 !important; }
+.dna-track-status .dna-head { background: var(--dna-surface); border: 1px solid var(--dna-line); border-radius: 24px; box-shadow: var(--dna-shadow); padding: 18px; }
+.dna-track-status .dna-headact button { min-height: 44px; white-space: nowrap; }
+
+/* /split qatya overview */
+.dna-qatya-main { display: flex; align-items: center; gap: 18px; }
+.dna-qatya-main .dna-ring { flex: 0 0 auto; }
+.dna-qatya-main .dna-ringc { display: flex; flex-direction: column; align-items: center; font-size: 22px; font-weight: 800; color: var(--dna-ink); line-height: 1.1; }
+.dna-qatya-main .dna-ringc small { font-size: 11px; font-weight: 600; color: var(--dna-muted); margin-top: 4px; }
+.dna-qatya-facts { display: flex; gap: 18px; margin-top: 12px; }
+.dna-qatya-facts span { display: flex; flex-direction: column; }
+.dna-qatya-facts small { font-size: 11px; color: var(--dna-muted); font-weight: 600; }
+.dna-qatya-facts strong { font-size: 16px; color: var(--dna-ink); font-weight: 800; }
+@media (max-width: 420px) { .dna-qatya-main { flex-direction: column; text-align: center; } .dna-qatya-facts { justify-content: center; } }
+.dna-letter { font-size: 13px; font-weight: 800; line-height: 1; }
+
+/* Diwaniya presence map */
+.dna-diwan { display: flex; flex-direction: column; gap: 12px; }
+.dna-diwan .dna-hub { background: var(--dna-surface); border: 1px solid var(--dna-line); border-radius: 24px; box-shadow: var(--dna-shadow); }
+.dna-hub-name { display: block; font-weight: 700; font-size: 12px; color: var(--dna-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dna-hub-meta { display: block; font-size: 10.5px; color: var(--dna-muted); font-weight: 500; }
+.dna-hubc .dna-hubcl { max-inline-size: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dna-diwan-empty { text-align: center; font-size: 12px; color: var(--dna-muted); font-weight: 600; margin: 0; }
+.dna-diwan-wobbles { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.dna-diwan-wobbles li { display: flex; gap: 8px; align-items: baseline; padding: 10px 14px; background: var(--dna-surface); border: 1px solid var(--dna-line); border-radius: 16px; font-size: 12px; }
+.dna-diwan-wobbles strong { color: var(--dna-accent); font-weight: 800; flex: 0 0 auto; }
+.dna-diwan-wobbles span { color: var(--dna-ink); }
+.dna-diwan-ctrls { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.dna-diwan-ctrls .dna-btn { min-height: 44px; }
+
+/* Unified alerts inbox (one bell) */
+.dna-inbox-bell {
+  inline-size: 52px; block-size: 52px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--dna-surface); color: var(--dna-accent); border: 1px solid var(--dna-line-2);
+  box-shadow: 0 12px 30px -12px rgba(13, 58, 34, .35);
+}
+.dna-inbox-bell .dna-inbox-pill { position: absolute; inset-block-start: -4px; inset-inline-end: -4px; background: var(--dna-accent); color: #fff; box-shadow: 0 0 0 2px var(--dna-surface); }
+.dna-inbox {
+  max-block-size: min(460px, calc(100dvh - 180px)); overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  background: var(--dna-surface); border: 1px solid var(--dna-line); border-radius: 24px; box-shadow: 0 24px 60px -24px rgba(20, 32, 27, .35); text-align: start;
+}
+.dna-inbox-head { display: flex; align-items: center; justify-content: space-between; }
+.dna-inbox-head strong { font-size: 15px; font-weight: 800; color: var(--dna-ink); }
+.dna-inbox-meta { display: flex; flex-direction: column; gap: 8px; }
+.dna-inbox-acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.dna-inbox-acts .dna-btn { min-height: 38px; font-size: 12px; padding-inline: 14px; }
+.dna-inbox-note { margin: 0; font-size: 11.5px; color: var(--dna-muted); font-weight: 600; }
+
+/* Polish: calm white Qatya card, roomier ring centre */
+.qatya-hero-card.qatya-v14-hero { background: var(--dna-surface) !important; background-image: none !important; border: 1px solid var(--dna-line) !important; box-shadow: var(--dna-shadow) !important; border-radius: 24px !important; }
+.qatya-hero-card.qatya-v14-hero::before, .qatya-hero-card.qatya-v14-hero::after { display: none !important; }
+.dna-qatya-main .dna-ringc { font-size: 20px; letter-spacing: -.01em; padding: 0 18px; text-align: center; }
+.dna-qatya-main .dna-ringc small { font-size: 10.5px; }
+.dna-cat-tile { min-height: 0 !important; }
+.dna-cat-name { margin-top: 2px; }
+.dna-diwan .dna-hub { border: 0 !important; box-shadow: none !important; background: transparent !important; }
+.dna-diwan { background: var(--dna-surface); border: 1px solid var(--dna-line); border-radius: 24px; box-shadow: var(--dna-shadow); padding: 8px 8px 14px; }
+.dna-diwan-wobbles li { background: var(--dna-surface-2); border: 0; }
+.dna-qatya-main h2 { font-size: 20px !important; line-height: 1.35 !important; }
+/* Category grid as a real list: <ul>/<li> wrap real <button>s */
+ul.dna-cat-grid { list-style: none; margin: 0; padding: 0; }
+.dna-cat-cell { display: flex; margin: 0; padding: 0; list-style: none; }
+.dna-cat-cell::before, .dna-cat-cell::marker { content: none; }
+.dna-cat-cell > .dna-cat-tile { inline-size: 100%; }
