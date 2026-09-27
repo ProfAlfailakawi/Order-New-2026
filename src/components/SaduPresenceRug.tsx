@@ -863,6 +863,7 @@ export function SaduPresenceRug({
                     key={`${entity.phone}-${entity.index}`}
                     type="button"
                     onClick={() => handleCupClick(entity)}
+                    title={displayName}
                     initial={{ y: -45, opacity: 0, scale: 0.8 }}
                     animate={{ y: 0, opacity: isOnline ? 1 : 0.65, scale: 1 }}
                     whileHover={{ scale: 1.05, y: -2, opacity: 1 }}
@@ -918,7 +919,7 @@ export function SaduPresenceRug({
                         )}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className={cn("text-[9.5px] sm:text-[10px] font-black truncate", isMe ? "text-stone-950" : "text-stone-100")}>
+                        <div className={cn("text-[12.5px] leading-snug whitespace-normal break-words sm:text-[10px] sm:leading-normal font-black lg:truncate", isMe ? "text-stone-950" : "text-stone-100")}>
                           {displayName}
                         </div>
                         <div className={cn(

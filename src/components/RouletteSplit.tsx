@@ -394,7 +394,7 @@ export function RouletteSplit({
                           <div className={cn("w-8 h-8 rounded-full bg-gradient-to-tr shrink-0 flex items-center justify-center border text-xs shadow-inner shadow-black/10 relative overflow-hidden", avatar.gradient)}>
                             <span className="text-sm select-none">{avatar.emoji}</span>
                           </div>
-                          <span className="text-xs font-black text-white truncate">{p.name}</span>
+                          <span className="text-xs font-black text-white truncate max-sm:text-[13px] max-sm:whitespace-normal max-sm:break-words max-sm:leading-snug min-w-0" title={p.name}>{p.name}</span>
                         </motion.span>
                       );
                     })}
@@ -477,7 +477,7 @@ export function RouletteSplit({
                     transition={{ duration: isSpinning ? 0.12 : 0.35, ease: "easeOut" }}
                   >
                     <span>{p.name?.charAt(0) || "؟"}</span>
-                    <strong>{p.name || "ضيف"}</strong>
+                    <strong title={p.name || "ضيف"}>{p.name || "ضيف"}</strong>
                   </motion.div>
                 );
               })}

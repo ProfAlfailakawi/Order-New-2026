@@ -240,7 +240,7 @@ const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart }) => {
           onClick={replay}
           aria-label="إعادة عرض الترحيب"
           title="كيف يشتغل التطبيق؟"
-          className="fixed left-4 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-[#e8d6ad] bg-white/90 font-black text-[#183326] shadow-md backdrop-blur transition active:scale-95"
+          className="fixed left-4 z-30 flex h-9 w-9 max-lg:h-11 max-lg:w-11 items-center justify-center rounded-full border border-[#e8d6ad] bg-white/90 font-black text-[#183326] shadow-md backdrop-blur transition active:scale-95"
           style={{ bottom: "calc(16px + env(safe-area-inset-bottom))" }}
         >
           ؟
