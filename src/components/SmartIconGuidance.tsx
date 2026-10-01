@@ -221,7 +221,7 @@ export function SmartIconGuidance({
                     <span className="bg-amber-500/20 text-amber-200 px-1.5 py-0.5 rounded-md flex items-center gap-1">
                       <span>اضغط مجدداً للتنفيذ</span>
                     </span>
-                    <span className="text-[9px] text-slate-400">إرشاد أول مرة</span>
+                    <span className="text-[10px] text-slate-400">إرشاد أول مرة</span>
                   </div>
                 )}
 

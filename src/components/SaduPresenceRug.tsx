@@ -793,13 +793,13 @@ export function SaduPresenceRug({
                   value={customMsg}
                   onChange={(e) => setCustomMsg(e.target.value)}
                   maxLength={45}
-                  placeholder="اكتب عبارة جديدة مخصوصة للربع... 🖊️"
+                  placeholder="اكتب عبارة جديدة مخصوصة للربع..."
                   className="flex-1 bg-stone-950 border border-stone-800 rounded-xl px-3 py-2.5 text-right text-xs font-black text-white focus:outline-none focus:border-amber-500/50"
                 />
               </div>
 
               <div className="bg-stone-950/40 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl text-[9.5px] sm:text-[10px] text-stone-400 text-center font-bold">
-                كل جديد يوصل للحضور مباشرة، والديوانية دايمًا على اتصال. 📡
+                كل جديد يوصل للحضور مباشرة، والديوانية دايمًا على اتصال.
               </div>
             </motion.div>
           </div>
@@ -891,7 +891,7 @@ export function SaduPresenceRug({
                   <span className="text-emerald-400 font-black text-xs block">
                     تم صب فنجان الضيافة بنجاح! ✅☕
                   </span>
-                  <span className="text-[9px] font-bold text-emerald-400/80 mt-1 block">
+                  <span className="text-[10px] font-bold text-emerald-400/80 mt-1 block">
                     وصل تنبيه الترحيب لصديقك بالثواني الحالية
                   </span>
                 </motion.div>

@@ -1395,7 +1395,7 @@ export default function OrderPage() {
                                                   <div className="min-w-0">
                                                     <div className="flex items-center gap-2">
                                                       <strong className={cn("block text-sm font-black truncate rounded-full border px-2.5 py-1", active ? "border-white/20 text-white" : getTierAccent(tier.name))}>{tier.name}</strong>
-                                                      {active && <span className="rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-black">الحالي</span>}
+                                                      {active && <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-black">الحالي</span>}
                                                     </div>
                                                     {tier.benefit && (
                                                       <p className={cn("mt-2 text-[11px] font-bold leading-relaxed", active ? "text-white/75" : "text-stone-500")}>{String(tier.benefit)}</p>
@@ -1902,13 +1902,13 @@ export default function OrderPage() {
                                         {p.name}
                                       </span>
                                       {p.phone && (
-                                        <span className="text-[9px] text-stone-400 font-mono">
+                                        <span className="text-[10px] text-stone-400 font-mono">
                                           {p.phone}
                                         </span>
                                       )}
                                     </div>
                                   </div>
-                                  <span className="text-[8px] bg-fuchsia-100 text-fuchsia-700 px-1.5 py-0.5 rounded-full font-bold">مشارك</span>
+                                  <span className="text-[10px] bg-fuchsia-100 text-fuchsia-700 px-1.5 py-0.5 rounded-full font-bold">مشارك</span>
                                 </div>
                               ))
                             ) : (
@@ -1933,15 +1933,15 @@ export default function OrderPage() {
                                           {p.name}
                                         </span>
                                         {p.phone && (
-                                          <span className="text-[9px] text-stone-400 font-mono">
+                                          <span className="text-[10px] text-stone-400 font-mono">
                                             {p.phone}
                                           </span>
                                         )}
                                       </div>
                                       {p.status === "paid" ? (
-                                        <span className="text-[8px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">مدفوع</span>
+                                        <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">مدفوع</span>
                                       ) : (
-                                        <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">بانتظار الدفع</span>
+                                        <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">بانتظار الدفع</span>
                                       )}
                                     </div>
                                     <span className="font-extrabold text-brand tracking-tight">
@@ -2048,7 +2048,7 @@ export default function OrderPage() {
                         {getOrderReference(selectedOrder)}
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-stone-100/70 bg-stone-50/40 px-3 py-2 text-right text-[9px] sm:text-[10px] font-light text-stone-400/80 leading-5">
+                    <div className="rounded-2xl border border-stone-100/70 bg-stone-50/40 px-3 py-2 text-right text-[10px] sm:text-[10px] font-light text-stone-400/80 leading-5">
                       <div>الاسم التجاري: {LEGAL_TRADE_NAME_AR}</div>
                       <div>رقم السجل التجاري: {COMMERCIAL_REGISTRATION_NUMBER}</div>
                     </div>

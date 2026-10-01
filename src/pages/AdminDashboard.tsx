@@ -420,7 +420,7 @@ export default function AdminDashboard() {
             <h2 className="font-extrabold text-2xl tracking-tighter leading-none text-brand">فخامة</h2>
             <div className="flex items-center gap-2 mt-2">
               <p className="text-[10px] text-stone-500 font-bold tracking-widest uppercase">نظام الإدارة</p>
-              <span className="text-[9px] px-1.5 py-0.5 bg-stone-100 text-stone-400 rounded-md font-mono">v2.6</span>
+              <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-400 rounded-md font-mono">v2.6</span>
             </div>
           </div>
         </div>
@@ -476,7 +476,7 @@ export default function AdminDashboard() {
 
         <div className="pt-8 border-t border-stone-50 space-y-6">
           <div className="p-5 bg-stone-50/50 border border-stone-100 rounded-[24px]">
-            <p className="text-[9px] text-stone-400 font-extrabold uppercase tracking-[0.2em] mb-3">حالة النظام</p>
+            <p className="text-[10px] text-stone-400 font-extrabold uppercase tracking-[0.2em] mb-3">حالة النظام</p>
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
               <p className="text-xs text-brand font-bold tracking-tight">متصل وآمن</p>
@@ -536,7 +536,7 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        <div className="admin-content p-12 space-y-12 w-full max-w-[1600px]">
+        <div className="admin-content p-4 sm:p-8 lg:p-12 space-y-8 lg:space-y-12 w-full max-w-[1600px]">
           {activeTab === "dashboard" && (
             <div className="space-y-12 animate-in fade-in duration-700">
               <div className="flex items-center justify-between">
@@ -549,11 +549,10 @@ export default function AdminDashboard() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-3 gap-10">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10">
                 <StatCard 
                   title="الدخل التراكمي" 
                   value={`${analytics?.totalRevenue || 0} د.ك`} 
-                  trend="+24.8%" 
                   icon={<TrendingUp className="w-8 h-8 text-accent" />}
                   color="accent"
                 />
@@ -656,7 +655,7 @@ export default function AdminDashboard() {
                             </td>
                             <td data-label="المبلغ" className="p-10 text-2xl font-light text-brand italic">{getDisplayTotal(order).toFixed(3)} <span className="text-xs text-accent">د.ك</span></td>
                             <td data-label="الحالة" className="p-10">
-                                <span className={`px-4 py-1.5 rounded-xl text-[9px] font-extrabold uppercase tracking-widest inline-block border ${
+                                <span className={`px-4 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-widest inline-block border ${
                                   order.status === "جديد" || order.status === "بانتظار الدفع" ? "bg-amber-50 text-amber-600 border-amber-100" :
                                   order.status === "قيد تجميع القطية" ? "bg-purple-50 text-purple-600 border-purple-100" :
                                   order.status?.startsWith("تم الدفع") ? "bg-green-50 text-green-600 border-green-100" :
@@ -754,12 +753,12 @@ export default function AdminDashboard() {
                     {order.source === "customer_website" && (
                       <div className="absolute top-6 left-6 flex items-center gap-2">
                         <span className="w-2 h-2 bg-accent rounded-full animate-pulse shadow-md shadow-accent/50" />
-                        <span className="text-[8px] font-extrabold uppercase text-accent tracking-widest bg-accent/5 px-2 py-1 rounded-lg">طلب من الموقع</span>
+                        <span className="text-[10px] font-extrabold uppercase text-accent tracking-widest bg-accent/5 px-2 py-1 rounded-lg">طلب من الموقع</span>
                       </div>
                     )}
                     
                     <div className="absolute top-6 right-6">
-                       <span className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-widest border shadow-sm ${
+                       <span className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-widest border shadow-sm ${
                          order.status === "جديد" || order.status === "بانتظار الدفع" ? "bg-amber-50 text-amber-600 border-amber-100" :
                          order.status === "قيد تجميع القطية" ? "bg-purple-50 text-purple-600 border-purple-100" :
                          order.status?.startsWith("تم الدفع") ? "bg-green-50 text-green-600 border-green-100" :
@@ -794,7 +793,7 @@ export default function AdminDashboard() {
                             <span className="text-stone-400 italic">{((item.price || 0) * (item.quantity || 1)).toFixed(2)} د.ك</span>
                           </div>
                           {item.preparationInstructions && (
-                            <div className="text-[9px] text-red-500 font-bold text-right flex items-center justify-end gap-1">
+                            <div className="text-[10px] text-red-500 font-bold text-right flex items-center justify-end gap-1">
                                <span>{item.preparationInstructions}</span> <AlertTriangle className="w-3 h-3" />
                             </div>
                           )}
@@ -1302,7 +1301,7 @@ export default function AdminDashboard() {
                                     </div>
                                     <div className="text-left">
                                        <div className="text-lg font-black text-accent font-mono">{Number(sq.teamPoints || 0)}</div>
-                                       <div className="text-[9px] font-black text-stone-400">نقطة</div>
+                                       <div className="text-[10px] font-black text-stone-400">نقطة</div>
                                     </div>
                                  </div>
                               ))}
@@ -1700,7 +1699,7 @@ export default function AdminDashboard() {
                             )}
                           </td>
                           <td data-label="الحالة" className="p-10">
-                            <span className="px-4 py-1.5 rounded-xl text-[9px] font-extrabold uppercase tracking-widest inline-block border bg-green-50 text-green-600 border-green-100">
+                            <span className="px-4 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-widest inline-block border bg-green-50 text-green-600 border-green-100">
                               نشط
                             </span>
                           </td>
@@ -1956,7 +1955,7 @@ function StatCard({ title, value, trend, icon, isNew, color }: any) {
       <div className="absolute top-0 right-0 w-40 h-40 bg-stone-50/50 rounded-full translate-x-12 -translate-y-12 group-hover:bg-accent/5 transition-colors duration-700" />
       <div className="flex justify-between items-start mb-10 relative z-10">
         <div className={`w-16 h-16 bg-stone-50 rounded-2xl border border-stone-100 shadow-sm flex items-center justify-center group-hover:scale-110 transition-all duration-500 ${isNew ? 'bg-accent/5 text-accent' : 'text-brand'}`}>{icon}</div>
-        <span className={`text-[10px] font-bold px-4 py-2 rounded-xl tracking-tight ${color === 'accent' ? "bg-accent/10 text-accent border border-accent/20" : color === 'red' ? "bg-red-50 text-red-500 border border-red-100" : "bg-green-50 text-green-600 border border-green-100"}`}>{trend}</span>
+        {trend && <span className={`text-[10px] font-bold px-4 py-2 rounded-xl tracking-tight ${color === 'accent' ? "bg-accent/10 text-accent border border-accent/20" : color === 'red' ? "bg-red-50 text-red-500 border border-red-100" : "bg-green-50 text-green-600 border border-green-100"}`}>{trend}</span>}
       </div>
       <p className="text-stone-400 text-sm font-medium mb-3 relative z-10">{title}</p>
       <h3 className="text-5xl font-black text-brand italic relative z-10 tracking-tighter leading-none">{value}</h3>
@@ -1987,7 +1986,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
             }`}>{order.status}</span>
           </div>
         </div>
-        <div className="p-12 flex-grow overflow-y-auto space-y-12 no-scrollbar">
+        <div className="p-4 sm:p-8 lg:p-12 flex-grow overflow-y-auto space-y-8 lg:space-y-12 no-scrollbar">
           <section className="grid grid-cols-1 md:grid-cols-2 gap-12">
             <div className="space-y-8 text-right">
               <div>
@@ -2103,7 +2102,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
                  <div className="bg-amber-50/40 p-3.5 sm:p-5 rounded-[20px] sm:rounded-[28px] border border-amber-100/30 flex gap-2.5 text-amber-900 text-xs sm:text-sm mb-3">
                      <MessageCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                      <div className="text-right w-full">
-                       <p className="font-extrabold text-[9px] sm:text-[10px] uppercase tracking-wider mb-0.5 text-amber-700/80">ملاحظات عامة</p>
+                       <p className="font-extrabold text-[10px] sm:text-[10px] uppercase tracking-wider mb-0.5 text-amber-700/80">ملاحظات عامة</p>
                        <p className="font-medium leading-relaxed text-[11px] sm:text-[13px]">{(order as any).notes || (order as any).generalNotes}</p>
                      </div>
                   </div>
@@ -2119,9 +2118,9 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
                            {item.preparationInstructions && <AlertTriangle className="w-3 h-3 text-red-500 animate-pulse shrink-0" />}
                         </h5>
                         <div className="mt-1 flex flex-wrap gap-1 justify-end">
-                          {item.selectedOption && <span className="text-[8px] sm:text-[9px] font-extrabold uppercase bg-stone-50 text-stone-400 px-2 py-0.5 rounded-md border border-stone-100">{item.selectedOption}</span>}
-                          {(item.selectedExtras || []).map((e: any, eIdx: number) => (<span key={eIdx} className="text-[8px] sm:text-[9px] font-extrabold uppercase bg-accent/5 text-accent px-2 py-0.5 rounded-md border border-accent/10">+{e.name}</span>))}
-                          {(item.addons || []).map((a: any, aIdx: number) => (<span key={`addon-${aIdx}`} className="text-[8px] sm:text-[9px] font-extrabold uppercase bg-accent/5 text-accent px-2 py-0.5 rounded-md border border-accent/10">+{a.quantity} {a.name} {(a.payableQuantity === 0 || a.price === 0) && !a.isHiddenPrice ? '(مجاني)' : ''}</span>))}
+                          {item.selectedOption && <span className="text-[10px] sm:text-[10px] font-extrabold uppercase bg-stone-50 text-stone-400 px-2 py-0.5 rounded-md border border-stone-100">{item.selectedOption}</span>}
+                          {(item.selectedExtras || []).map((e: any, eIdx: number) => (<span key={eIdx} className="text-[10px] sm:text-[10px] font-extrabold uppercase bg-accent/5 text-accent px-2 py-0.5 rounded-md border border-accent/10">+{e.name}</span>))}
+                          {(item.addons || []).map((a: any, aIdx: number) => (<span key={`addon-${aIdx}`} className="text-[10px] sm:text-[10px] font-extrabold uppercase bg-accent/5 text-accent px-2 py-0.5 rounded-md border border-accent/10">+{a.quantity} {a.name} {(a.payableQuantity === 0 || a.price === 0) && !a.isHiddenPrice ? '(مجاني)' : ''}</span>))}
                         </div>
                       </div>
                       <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg bg-stone-50 flex items-center justify-center font-extrabold text-accent text-xs sm:text-base border border-stone-100 shrink-0">{item.quantity}</div>
@@ -2139,8 +2138,8 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
                     )}
                   </div>
                   <div className="text-right sm:text-left text-xs sm:text-base font-bold text-brand italic shrink-0 order-1 sm:order-2 border-b sm:border-0 pb-1.5 sm:pb-0 border-stone-100/30 flex justify-between items-center sm:block w-full sm:w-auto">
-                    <span className="sm:hidden text-stone-400 text-[9px] not-italic font-extrabold uppercase tracking-wider">السعر الإجمالي</span>
-                    <span>{calculateItemTotalWithAddons(item).toFixed(2)} <span className="text-[9px] sm:text-xs text-stone-400 font-bold not-italic">د.ك</span></span>
+                    <span className="sm:hidden text-stone-400 text-[10px] not-italic font-extrabold uppercase tracking-wider">السعر الإجمالي</span>
+                    <span>{calculateItemTotalWithAddons(item).toFixed(2)} <span className="text-[10px] sm:text-xs text-stone-400 font-bold not-italic">د.ك</span></span>
                   </div>
                 </div>
               ))}
