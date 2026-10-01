@@ -7231,9 +7231,9 @@ const ChefWhisperCard = ({
                   {product.name}
                 </h3>
                 {product.preparationInstructions && (
-                  <div className="mt-1 flex items-center justify-center gap-1 py-0.5 px-2 bg-rose-50/40 border border-rose-100/20 rounded-full mx-auto w-max max-w-[95%] shadow-[0_1px_2px_rgba(244,63,94,0.01)] event-none select-none">
-                    <AlertTriangle className="w-2.5 h-2.5 text-rose-500 shrink-0" />
-                    <span className="text-[10px] sm:text-[9.5px] text-rose-600 font-bold leading-none text-center truncate max-w-[130px]" title={product.preparationInstructions}>
+                  <div className="mt-1 flex items-center justify-center gap-1 py-0.5 px-2 bg-[#b28a41]/[0.07] border border-[#b28a41]/20 rounded-full mx-auto w-max max-w-[95%] event-none select-none">
+                    <Clock className="w-3 h-3 text-[#8a6a2f] shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                    <span className="text-[11px] text-[#7a5d28] font-bold leading-none text-center truncate max-w-[130px]" title={product.preparationInstructions}>
                       {product.preparationInstructions}
                     </span>
                   </div>
@@ -7258,9 +7258,9 @@ const ChefWhisperCard = ({
               {/* Right Side: Add Button (first child in RTL renders on the right) */}
               <div className="flex-shrink-0 flex items-center justify-center relative z-10 w-12 h-full">
                 <div
-                  className={`w-12 h-12 flex items-center justify-center text-white rounded-2xl shadow-lg transition-all hover:scale-110 ${product.isOutOfStock ? "bg-stone-300" : "bg-gradient-to-tr from-accent to-amber-500 shadow-accent/30"}`}
+                  className={`w-12 h-12 flex items-center justify-center text-white rounded-2xl shadow-lg transition-all hover:scale-110 ${product.isOutOfStock ? "bg-stone-300" : "bg-brand shadow-brand/25"}`}
                 >
-                  <Plus className="w-5 h-5 stroke-[3]" />
+                  <Plus className="w-5 h-5" strokeWidth={2.2} />
                 </div>
               </div>
 
@@ -7300,9 +7300,9 @@ const ChefWhisperCard = ({
 
                 {/* 4. Notes */}
                 {product.preparationInstructions && (
-                  <div className="product-notes-soft mt-2.5 flex items-center justify-center gap-1 px-2.5 py-0.5 bg-rose-50/40 border border-rose-100/20 rounded-full mx-auto w-max max-w-[95%] z-10 text-center shadow-[0_1px_2px_rgba(244,63,94,0.01)] event-none select-none">
-                    <AlertTriangle className="w-2.5 h-2.5 text-rose-500 shrink-0" />
-                    <span className="text-[10px] sm:text-[9.5px] text-rose-600 font-bold leading-none text-center truncate max-w-[130px]" title={product.preparationInstructions}>
+                  <div className="product-notes-soft mt-2.5 flex items-center justify-center gap-1 px-2.5 py-0.5 bg-[#b28a41]/[0.07] border border-[#b28a41]/20 rounded-full mx-auto w-max max-w-[95%] z-10 text-center event-none select-none">
+                    <Clock className="w-3 h-3 text-[#8a6a2f] shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                    <span className="text-[11px] text-[#7a5d28] font-bold leading-none text-center truncate max-w-[130px]" title={product.preparationInstructions}>
                       {product.preparationInstructions}
                     </span>
                   </div>
@@ -7814,8 +7814,8 @@ function ProductModal({
               )}
             </p>
             {product.preparationInstructions && (
-              <div className="mt-2 text-[10px] sm:text-[10.5px] text-rose-600 font-bold flex items-center justify-center sm:justify-start gap-1 py-0.5 px-2 bg-rose-50/40 border border-rose-100/20 rounded-full max-w-max">
-                <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0" />{" "}
+              <div className="mt-2 text-[11px] text-[#7a5d28] font-bold flex items-center justify-center sm:justify-start gap-1 py-1 px-2.5 bg-[#b28a41]/[0.07] border border-[#b28a41]/20 rounded-full max-w-max">
+                <Clock className="w-3.5 h-3.5 text-[#8a6a2f] shrink-0" strokeWidth={1.8} aria-hidden="true" />{" "}
                 <span className="leading-none">
                   {product.preparationInstructions}
                 </span>
@@ -7938,15 +7938,15 @@ function ProductModal({
                 <div 
                   key={`ai-rec-${getAddonKey(recommendedAddon)}`}
                   onClick={() => toggleAddon(getAddonKey(recommendedAddon))}
-                  className="bg-indigo-50/50 border border-indigo-100 p-3 sm:p-4 rounded-xl flex gap-3 items-start cursor-pointer transition-all hover:bg-indigo-50"
+                  className="bg-[#b28a41]/[0.06] border border-[#b28a41]/20 p-3 sm:p-4 rounded-xl flex gap-3 items-start cursor-pointer transition-all hover:bg-[#b28a41]/10"
                 >
-                  <div className="text-xl">💡</div>
+                  <div className="w-8 h-8 rounded-full bg-white border border-[#b28a41]/25 flex items-center justify-center shrink-0"><Sparkles className="w-4 h-4 text-[#8a6a2f]" strokeWidth={1.6} aria-hidden="true" /></div>
                   <div>
-                    <h4 className="text-xs font-bold text-indigo-900 flex items-center gap-2 mb-1.5">
+                    <h4 className="text-xs font-bold text-[#0d3a22] flex items-center gap-2 mb-1.5">
                       ترشيح ذكي 
-                      <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">موصى به لك</span>
+                      <span className="text-[10px] bg-[#0d3a22]/[0.07] text-[#0d3a22] px-2 py-0.5 rounded-full font-bold">موصى به لك</span>
                     </h4>
-                    <p className="text-[11px] text-indigo-800/80 leading-relaxed font-medium">
+                    <p className="text-[12px] text-stone-600 leading-relaxed font-medium">
                       {message}
                     </p>
                   </div>
@@ -9229,8 +9229,8 @@ function CheckoutOverlay({
             )}
 
             {step !== "payment" && cart.some((item) => item.preparationInstructions) && (
-              <div className="mt-2.5 p-2 bg-rose-50/40 border border-rose-100/20 rounded-xl flex items-center gap-1.5 text-rose-600 text-[10px] sm:text-xs font-semibold shadow-[0_1px_2px_rgba(244,63,94,0.01)]">
-                <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
+              <div className="mt-2.5 p-2.5 bg-[#b28a41]/[0.07] border border-[#b28a41]/20 rounded-xl flex items-center gap-2 text-[#7a5d28] text-xs font-semibold">
+                <Clock className="w-4 h-4 text-[#8a6a2f] shrink-0" strokeWidth={1.8} aria-hidden="true" />
                 <span>
                   تنبيه لطيف: الطلب يحتوي على أصناف تتطلب وقتاً إضافياً للتجهيز.
                 </span>
