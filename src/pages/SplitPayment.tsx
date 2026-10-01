@@ -710,11 +710,11 @@ export default function SplitPayment() {
           <div className="qatya-hero-card qatya-v14-hero bg-white p-5 sm:p-6 rounded-[28px] shadow-sm border border-stone-100">
             <div className="grid grid-cols-2 gap-2 mb-5" dir="rtl">
               <div className="rounded-2xl bg-stone-50 border border-stone-100 p-3 text-right">
-                <div className="text-[9px] font-black text-stone-400">دورك</div>
+                <div className="text-[10px] font-black text-stone-400">دورك</div>
                 <div className="text-xs font-black text-brand mt-1">{currentPersonRole}</div>
               </div>
               <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-3 text-right">
-                <div className="text-[9px] font-black text-emerald-700">دفعوا</div>
+                <div className="text-[10px] font-black text-emerald-700">دفعوا</div>
                 <div className="text-xs font-black text-emerald-800 mt-1">{paidPeople.length} / {isDiwaniyaQatya ? (splitPeople.length || 1) : Math.max(paidPeople.length, 1)}</div>
               </div>
             </div>
@@ -781,10 +781,10 @@ export default function SplitPayment() {
                         </div>
                         <div className="text-right min-w-0 flex-1">
                           <div className="text-xs font-black text-brand truncate max-lg:whitespace-normal max-lg:break-words max-lg:leading-snug" title={person.name || person.phone || "مشارك"}>{person.name || person.phone || "مشارك"}</div>
-                          <div className="text-[9px] font-bold text-stone-400">{Number(person.amount || 0).toFixed(3)} د.ك</div>
+                          <div className="text-[10px] font-bold text-stone-400">{Number(person.amount || 0).toFixed(3)} د.ك</div>
                         </div>
                       </div>
-                      <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100/50 shrink-0">دفع</span>
+                      <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100/50 shrink-0">دفع</span>
                     </div>
                   );
                 })}
@@ -798,10 +798,10 @@ export default function SplitPayment() {
                         </div>
                         <div className="text-right min-w-0 flex-1">
                           <div className="text-xs font-black text-brand truncate max-lg:whitespace-normal max-lg:break-words max-lg:leading-snug" title={person.name || person.phone || "مشارك"}>{person.name || person.phone || "مشارك"}</div>
-                          <div className="text-[9px] font-bold text-stone-400">لم يدفع بعد</div>
+                          <div className="text-[10px] font-bold text-stone-400">لم يدفع بعد</div>
                         </div>
                       </div>
-                      <span className="text-[9px] font-black text-stone-550 bg-stone-50 px-2 py-0.5 rounded-full border border-stone-100/50 shrink-0">ينتظر</span>
+                      <span className="text-[10px] font-black text-stone-550 bg-stone-50 px-2 py-0.5 rounded-full border border-stone-100/50 shrink-0">ينتظر</span>
                     </div>
                   );
                 })}
@@ -839,7 +839,7 @@ export default function SplitPayment() {
                     <span className="block font-black text-brand text-sm sm:text-base truncate max-lg:whitespace-normal max-lg:break-words max-lg:leading-snug" title={person.name || person.phone || `مشارك ${idx+1}`}>{person.name || person.phone || `مشارك ${idx+1}`}</span>
                     <div className="flex items-center gap-2 mt-0.5">
                       {person.phone && <span className="text-[10px] font-bold text-stone-400 font-mono tracking-wider" dir="ltr">{String(person.phone).replace(/\D/g, '').slice(-8)}</span>}
-                      {isMe && <span className="text-[9px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded-full scale-90">أنت</span>}
+                      {isMe && <span className="text-[10px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded-full scale-90">أنت</span>}
                     </div>
                   </div>
                 </div>
@@ -1010,7 +1010,7 @@ export default function SplitPayment() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div className="bg-stone-100 rounded-xl px-2 py-1 flex flex-col items-center justify-center border border-stone-100/50">
-                    <span className="text-[9px] font-bold text-stone-400 mb-0.5">
+                    <span className="text-[10px] font-bold text-stone-400 mb-0.5">
                       قسمة سريعة
                     </span>
                     <div className="flex gap-1">

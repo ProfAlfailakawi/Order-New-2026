@@ -1385,7 +1385,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     <span className="block mb-1 leading-none" aria-hidden="true">{tab.icon}</span>
                     <span className="whitespace-pre-line block max-w-full leading-[1.15]">{tab.label}</span>
                     {tab.badge > 0 && (
-                      <span className="absolute -top-1 -left-1 min-w-4 h-4 px-0.5 rounded-full bg-amber-500 text-white text-[8px] flex items-center justify-center">
+                      <span className="absolute -top-1 -left-1 min-w-4 h-4 px-0.5 rounded-full bg-amber-500 text-white text-[10px] flex items-center justify-center">
                         {formatEnglishNumber(tab.badge)}
                       </span>
                     )}
@@ -1440,7 +1440,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     <div className="flex-1">
                       <div className="text-xs font-black text-brand">{n.title}</div>
                       <div className="text-[10px] font-bold text-stone-500 leading-relaxed mt-1">{n.message}</div>
-                      <div className="text-[9px] font-black text-stone-300 mt-1">{n.squadName ? `ديوانية ${cleanSquadName(n.squadName)}` : "تنبيه من الديوانية"}</div>
+                      <div className="text-[10px] font-black text-stone-300 mt-1">{n.squadName ? `ديوانية ${cleanSquadName(n.squadName)}` : "تنبيه من الديوانية"}</div>
                     </div>
                     {!n.readAt && <span className="w-2 h-2 rounded-full bg-amber-500 mt-1 shrink-0" />}
                   </button>
@@ -1509,7 +1509,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   {/* Header Row */}
                   <div className="flex items-center justify-between">
                     {/* Level / Learning status */}
-                    <span className="text-[9px] font-black text-amber-600 bg-amber-500/10 py-1 px-2.5 rounded-full animate-pulse">
+                    <span className="text-[10px] font-black text-amber-600 bg-amber-500/10 py-1 px-2.5 rounded-full animate-pulse">
                       {aiLearntCount === 0 ? "الذكاء يتعلم ذوقكم 🧬" : `تم استيعاب ${aiLearntCount} من تفضيلات الربع! 🧠`}
                     </span>
                     <div className="flex items-center gap-2">
@@ -1588,15 +1588,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <div className="rounded-2xl bg-white border border-stone-100 p-3">
-                      <div className="text-[9px] font-black text-stone-400">الديوانية</div>
+                      <div className="text-[10px] font-black text-stone-400">الديوانية</div>
                       <div className="text-xs font-black text-brand truncate">{cleanSquadName(squadInfo?.name)}</div>
                     </div>
                     <div className="rounded-2xl bg-white border border-stone-100 p-3">
-                      <div className="text-[9px] font-black text-stone-400">الأسماء الجاهزة</div>
+                      <div className="text-[10px] font-black text-stone-400">الأسماء الجاهزة</div>
                       <div className="text-xs font-black text-brand">{formatEnglishNumber(preparedQatyaPreview.length)}</div>
                     </div>
                     <div className="rounded-2xl bg-white border border-stone-100 p-3">
-                      <div className="text-[9px] font-black text-stone-400">الحالة</div>
+                      <div className="text-[10px] font-black text-stone-400">الحالة</div>
                       <div className="text-xs font-black text-brand">{activeGroupOrder ? "طلب مفتوح" : openQatyaOrder ? "قطية مفتوحة" : "جاهز"}</div>
                     </div>
                   </div>
@@ -1697,7 +1697,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               referrerPolicy="no-referrer"
                             />
                             <div className="absolute inset-0 bg-stone-900/40 rounded-[22px] opacity-0 group-hover/qr:opacity-100 flex items-center justify-center transition-all">
-                              <span className="bg-[#800020] border border-[#d4af37]/40 text-white text-[9px] font-black px-2.5 py-1.5 rounded-xl shadow-lg">إضغط لنسخ الرابط 📋</span>
+                              <span className="bg-[#800020] border border-[#d4af37]/40 text-white text-[10px] font-black px-2.5 py-1.5 rounded-xl shadow-lg">إضغط لنسخ الرابط 📋</span>
                             </div>
                           </button>
                           <p className="text-[10px] text-stone-300 font-bold mt-3 leading-relaxed max-w-[260px] mx-auto">
@@ -1760,8 +1760,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
               {myDiwaniyaTab === "orders" && hasRealBeautifulLog && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-3">
                 <h4 className="text-sm font-black text-brand">سجل الديوانية الجميل</h4>
                 <div className="grid grid-cols-2 gap-2 text-center">
-                  <div className="bg-stone-50 rounded-2xl p-3"><div className="text-lg font-black text-brand">{squadBeautifulLog.ordersCount || 0}</div><div className="text-[9px] font-bold text-stone-400">طلبات قريبة</div></div>
-                  <div className="bg-stone-50 rounded-2xl p-3"><div className="text-lg font-black text-brand">{squadBeautifulLog.presentCount || 0}</div><div className="text-[9px] font-bold text-stone-400">موجودين الآن</div></div>
+                  <div className="bg-stone-50 rounded-2xl p-3"><div className="text-lg font-black text-brand">{squadBeautifulLog.ordersCount || 0}</div><div className="text-[10px] font-bold text-stone-400">طلبات قريبة</div></div>
+                  <div className="bg-stone-50 rounded-2xl p-3"><div className="text-lg font-black text-brand">{squadBeautifulLog.presentCount || 0}</div><div className="text-[10px] font-bold text-stone-400">موجودين الآن</div></div>
                 </div>
                 <p className="text-[11px] font-bold text-stone-500">أكثر صنف محبوب: <b className="text-brand">{squadBeautifulLog.favoriteItemName || "يتحدد بعد أول طلبات أكثر"}</b></p>
               </div>}
@@ -1819,11 +1819,11 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             <div className="flex flex-col text-right">
                                <div className="flex items-center gap-1.5 justify-end flex-wrap">
                                   {isOwnerOfSq ? (
-                                     <span className="text-[8px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-sm">
+                                     <span className="text-[10px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-sm">
                                         👑 معزبها
                                      </span>
                                   ) : (
-                                     <span className="text-[8px] font-black bg-stone-500 text-white px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-sm">
+                                     <span className="text-[10px] font-black bg-stone-500 text-white px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-sm">
                                         👥 عضو فيها
                                      </span>
                                   )}
@@ -1831,7 +1831,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                      {cleanSquadName(sq.name)}
                                   </span>
                                </div>
-                               <span className="text-[9px] font-bold text-stone-400 mt-1.5">
+                               <span className="text-[10px] font-bold text-stone-400 mt-1.5">
                                   {(sq.lat ?? sq.location?.lat) !== undefined ? `📍 موقع الرادار: مثبت` : `⚠️ موقع الرادار غير مثبت`}
                                 </span>
                             </div>
@@ -1848,7 +1848,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                    >
                       + تأسيس ديوانية جديدة في موقع ثاني
                    </button>
-                   <p className="text-[9px] font-bold text-stone-400 text-right leading-relaxed">
+                   <p className="text-[10px] font-bold text-stone-400 text-right leading-relaxed">
                       تقدر تكون معزب بأكثر من ديوانية أو عضو عند ربعك، وتختار الديوانية الحالية وقت الطلب.
                    </p>
                 </div>
@@ -2073,7 +2073,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                       </span>
                                       <div className="flex flex-col text-right">
                                         <span className="text-xs font-black text-[#faf0d9] group-hover/item:text-red-300 transition-colors">{mem.name || "عضو الربع"}</span>
-                                        <span className="text-[9px] font-bold text-stone-400">
+                                        <span className="text-[10px] font-bold text-stone-400">
                                           {idx === 0 ? "امبراطور الوهقة الأبدي 👑" : "ضحية القرعة المعتمدة"}
                                         </span>
                                       </div>
@@ -2113,7 +2113,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                     </span>
                                     <div className="flex flex-col text-right">
                                       <span className="text-xs font-black text-[#faf0d9] group-hover/item:text-amber-300 transition-colors">{mem.name || "عضو الربع"}</span>
-                                      <span className="text-[9px] font-bold text-stone-400">
+                                      <span className="text-[10px] font-bold text-stone-400">
                                         {idx === 0 ? "أمير معازيب الدوانية 👑" : "عشرة عمر وراعي كرم"}
                                       </span>
                                     </div>
@@ -2138,7 +2138,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               <h5 className="font-black text-brand text-xs sm:text-sm flex items-center gap-1.5 leading-none">
                                 <span>📷</span> ذكريات لقطات الربع المعتقة
                               </h5>
-                              <span className="text-[9px] sm:text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-100/60 px-2.5 py-1 rounded-full font-black shrink-0">
+                              <span className="text-[10px] sm:text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-100/60 px-2.5 py-1 rounded-full font-black shrink-0">
                                 ألبوم اليمعة 📸
                               </span>
                             </div>
@@ -2277,7 +2277,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                   <span className="text-[8.5px] font-black uppercase tracking-wider text-[#b28a41] bg-amber-50 border border-amber-200/60 px-2 rounded-full inline-block">
                                     {selectedMemory.date}
                                   </span>
-                                  <span className="text-[8px] font-mono text-stone-400 font-bold">ذكريات اليمعة المعتقة</span>
+                                  <span className="text-[10px] font-mono text-stone-400 font-bold">ذكريات اليمعة المعتقة</span>
                                 </div>
                                 <h4 className="text-sm font-black text-brand leading-snug">{selectedMemory.title}</h4>
                                 <p className="text-[11px] text-stone-600 font-medium leading-relaxed">{selectedMemory.desc}</p>
@@ -2285,7 +2285,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                               <div className="diwaniya-memory-detail-actions border-t border-dashed border-stone-200 pt-3 flex items-center justify-between gap-3 mt-1">
                                 <span className={cn(
-                                  "text-[8px] font-black px-2 py-0.5 rounded-full transition-colors flex items-center gap-1",
+                                  "text-[10px] font-black px-2 py-0.5 rounded-full transition-colors flex items-center gap-1",
                                   isCuring ? "text-amber-700 bg-amber-50 animate-pulse border border-amber-200/50" : "text-emerald-700 bg-emerald-50 border border-emerald-200/50"
                                 )}>
                                   <span>{isCuring ? "🧪" : "❖"}</span>
@@ -2365,7 +2365,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                   <div className={cn("diwaniya-memory-frame aspect-square w-full flex flex-col items-center justify-center text-3xl bg-gradient-to-br border border-stone-200/60 relative overflow-hidden shadow-inner rounded-xs", album.bg)}>
                                     <span className="filter drop-shadow-sm select-none transform hover:scale-110 transition-transform duration-500">{album.icon}</span>
                                     <div className="absolute inset-0 bg-yellow-900/[0.03] mix-blend-color-burn pointer-events-none" />
-                                    <div className="absolute top-1.5 left-1.5 text-[8px] bg-white/80 border border-stone-100 px-1 rounded font-mono text-stone-500">
+                                    <div className="absolute top-1.5 left-1.5 text-[10px] bg-white/80 border border-stone-100 px-1 rounded font-mono text-stone-500">
                                       #{formatEnglishNumber(idx + 1)}
                                     </div>
                                   </div>
@@ -2418,7 +2418,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           }}
                           className="w-full accent-emerald-600"
                         />
-                        <div className="flex items-center justify-between text-[9px] font-black text-stone-400">
+                        <div className="flex items-center justify-between text-[10px] font-black text-stone-400">
                           <span>حتى {formatEnglishNumber(getSquadGeofenceDistance())}م</span>
                           <span>دقيق 10م</span>
                         </div>
@@ -2969,7 +2969,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       >
                         {tier.name}
                       </span>
-                      <span className="squad-tier-road-points text-[9px] font-bold text-stone-400 leading-tight">
+                      <span className="squad-tier-road-points text-[10px] font-bold text-stone-400 leading-tight">
                         {tier.minPoints}+ نقطة
                       </span>
                     </div>

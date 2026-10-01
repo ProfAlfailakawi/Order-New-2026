@@ -1395,7 +1395,7 @@ function StoreClosedWorkingHoursNotice({
         />
         <span className="font-black text-brand">{item.dayName}</span>
         {item.isToday && (
-          <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-[9px] font-black text-amber-900">اليوم</span>
+          <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-[10px] font-black text-amber-900">اليوم</span>
         )}
       </div>
       <span className={cn("shrink-0 font-bold", item.enabled ? "text-stone-600" : "text-stone-400")}>
@@ -5515,7 +5515,7 @@ export default function CustomerSite() {
                     <ProductVisual product={suggestion} imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
                   <div className="text-right min-w-0 flex-1 space-y-1">
-                    <span className="inline-flex items-center text-[9px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100/50 rounded-full px-2.5 py-0.5">توليفة تكمّل سلتك</span>
+                    <span className="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100/50 rounded-full px-2.5 py-0.5">توليفة تكمّل سلتك</span>
                     <p className="text-xs sm:text-sm font-black text-brand line-clamp-1 group-hover:text-amber-950 transition-colors">
                       شنو رأيك نكمّلها مع <span className="text-amber-800 font-extrabold">{suggestion.name}</span>؟
                     </p>
@@ -6616,10 +6616,10 @@ export default function CustomerSite() {
                     <span>{radarStatus === "denied" ? "اللوكيشن مقفّل فقط" : radarStatus === "weak" ? "الموقع تقريبي" : "رادار الديوانية"}</span>
                     {radarStatus === "denied" && <MapPin className="w-3.5 h-3.5 text-amber-500" />}
                   </div>
-                  <div className="text-[9px] font-bold text-stone-500 mt-0.5 leading-snug line-clamp-2">
+                  <div className="text-[10px] font-bold text-stone-500 mt-0.5 leading-snug line-clamp-2">
                     {radarStatus === "denied" ? "الموقع يعمل طبيعي. اللوكيشن مطلوب للرادار فقط." : radarStatusMsg}
                   </div>
-                  {radarAccuracy !== null && <div className="text-[8px] font-black text-stone-400 mt-0.5">الدقة: {radarAccuracy}م</div>}
+                  {radarAccuracy !== null && <div className="text-[10px] font-black text-stone-400 mt-0.5">الدقة: {radarAccuracy}م</div>}
                 </div>
               </div>
             </motion.div>
@@ -7233,7 +7233,7 @@ const ChefWhisperCard = ({
                 {product.preparationInstructions && (
                   <div className="mt-1 flex items-center justify-center gap-1 py-0.5 px-2 bg-rose-50/40 border border-rose-100/20 rounded-full mx-auto w-max max-w-[95%] shadow-[0_1px_2px_rgba(244,63,94,0.01)] event-none select-none">
                     <AlertTriangle className="w-2.5 h-2.5 text-rose-500 shrink-0" />
-                    <span className="text-[8px] sm:text-[9.5px] text-rose-600 font-bold leading-none text-center truncate max-w-[130px]" title={product.preparationInstructions}>
+                    <span className="text-[10px] sm:text-[9.5px] text-rose-600 font-bold leading-none text-center truncate max-w-[130px]" title={product.preparationInstructions}>
                       {product.preparationInstructions}
                     </span>
                   </div>
@@ -7244,7 +7244,7 @@ const ChefWhisperCard = ({
                       {Number(calculateItemBasePriceWithHiddenAddons({
                         id: "", productId: product.id, name: product.name, quantity: 1, price: product.price, selectedExtras: [], product: normalizeProductForAddons(product)
                       }) || 0).toFixed(3)}{" "}
-                      <span className="text-[9px] text-accent font-bold">د.ك</span>
+                      <span className="text-[10px] text-accent font-bold">د.ك</span>
                     </>
                   ) : (
                     <span className="text-xs text-accent font-black">حسب سعر السوق</span>
@@ -7302,7 +7302,7 @@ const ChefWhisperCard = ({
                 {product.preparationInstructions && (
                   <div className="product-notes-soft mt-2.5 flex items-center justify-center gap-1 px-2.5 py-0.5 bg-rose-50/40 border border-rose-100/20 rounded-full mx-auto w-max max-w-[95%] z-10 text-center shadow-[0_1px_2px_rgba(244,63,94,0.01)] event-none select-none">
                     <AlertTriangle className="w-2.5 h-2.5 text-rose-500 shrink-0" />
-                    <span className="text-[8px] sm:text-[9.5px] text-rose-600 font-bold leading-none text-center truncate max-w-[130px]" title={product.preparationInstructions}>
+                    <span className="text-[10px] sm:text-[9.5px] text-rose-600 font-bold leading-none text-center truncate max-w-[130px]" title={product.preparationInstructions}>
                       {product.preparationInstructions}
                     </span>
                   </div>
@@ -7814,7 +7814,7 @@ function ProductModal({
               )}
             </p>
             {product.preparationInstructions && (
-              <div className="mt-2 text-[9px] sm:text-[10.5px] text-rose-600 font-bold flex items-center justify-center sm:justify-start gap-1 py-0.5 px-2 bg-rose-50/40 border border-rose-100/20 rounded-full max-w-max">
+              <div className="mt-2 text-[10px] sm:text-[10.5px] text-rose-600 font-bold flex items-center justify-center sm:justify-start gap-1 py-0.5 px-2 bg-rose-50/40 border border-rose-100/20 rounded-full max-w-max">
                 <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0" />{" "}
                 <span className="leading-none">
                   {product.preparationInstructions}
@@ -7944,7 +7944,7 @@ function ProductModal({
                   <div>
                     <h4 className="text-xs font-bold text-indigo-900 flex items-center gap-2 mb-1.5">
                       ترشيح ذكي 
-                      <span className="text-[9px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">موصى به لك</span>
+                      <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">موصى به لك</span>
                     </h4>
                     <p className="text-[11px] text-indigo-800/80 leading-relaxed font-medium">
                       {message}
@@ -8023,10 +8023,10 @@ function ProductModal({
                             <span className="text-[10px] font-bold text-green-600">أول {addon.freeQuantity} مجاناً</span>
                         )}
                         {isMandatory && (
-                            <span className="text-[9px] font-bold text-red-500 mr-2 border border-red-200 bg-red-50 px-1 rounded block sm:inline whitespace-nowrap">إلزامي</span>
+                            <span className="text-[10px] font-bold text-red-500 mr-2 border border-red-200 bg-red-50 px-1 rounded block sm:inline whitespace-nowrap">إلزامي</span>
                         )}
                         {!limits.available && (
-                            <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1 rounded block sm:inline whitespace-nowrap">متاحة من كمية {limits.minProductQty}+</span>
+                            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1 rounded block sm:inline whitespace-nowrap">متاحة من كمية {limits.minProductQty}+</span>
                         )}
                       </div>
                     </div>
@@ -8652,7 +8652,7 @@ function CheckoutOverlay({
                         </div>
                         <div className="flex flex-wrap gap-1.5 mb-2">
                           {item.selectedOption && (
-                            <span className="text-[9px] font-bold bg-stone-50 text-stone-500 px-1.5 py-0.5 rounded border border-stone-100">
+                            <span className="text-[10px] font-bold bg-stone-50 text-stone-500 px-1.5 py-0.5 rounded border border-stone-100">
                               {item.selectedOption}
                             </span>
                           )}
@@ -8660,7 +8660,7 @@ function CheckoutOverlay({
                             (e: any, idx: number) => (
                               <span
                                 key={`${e.name}-${idx}`}
-                                className="text-[9px] font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
+                                className="text-[10px] font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
                               >
                                 +{e.name}
                               </span>
@@ -8670,7 +8670,7 @@ function CheckoutOverlay({
                             (addon: any, idx: number) => (
                               <span
                                 key={`addon-${addon.addonId}-${idx}`}
-                                className="text-[9px] font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
+                                className="text-[10px] font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
                               >
                                 +{addon.quantity} {cleanCustomerAddonLabel(addon.name)}
                               </span>
@@ -9197,7 +9197,7 @@ function CheckoutOverlay({
                   <div className="flex flex-col gap-0.5">
                     <span>رصيد نقاطك</span>
                     {getLoyaltyTier(customerPoints).minPoints > 0 && (
-                       <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full w-fit">
+                       <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full w-fit">
                           مستوى {getLoyaltyTier(customerPoints).name}
                        </span>
                     )}
