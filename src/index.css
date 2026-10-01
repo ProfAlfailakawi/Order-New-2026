@@ -4028,3 +4028,30 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
 body:has(.al-cart-bar) .order-welcome-replay {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 100px) !important;
 }
+
+/* Landscape phones (short viewports): compact sticky header, checkout footer
+   and product sheet so content and primary actions stay in view.
+   Portrait and desktop are untouched. */
+@media (max-height: 500px) and (orientation: landscape) {
+  header.r3-menu-header { padding-top: 6px !important; padding-bottom: 6px !important; align-items: center !important; }
+  header.r3-menu-header > div:first-child { align-items: center !important; }
+  header.r3-menu-header > div:first-child > div:first-child { width: 2.25rem !important; height: 2.25rem !important; }
+  header.r3-menu-header > div:first-child > div:nth-child(2) { padding-block: 0 !important; }
+  header.r3-menu-header h1 { font-size: 1.125rem !important; line-height: 1.35 !important; }
+  header.r3-menu-header h1 + div { margin-top: 0 !important; padding-block: 0 !important; min-height: 0 !important; }
+  header.r3-menu-header h1 + div + div { margin-top: 0 !important; }
+
+  .checkout-wow-footer { padding: 10px 18px !important; }
+  .checkout-wow-footer > * + * { margin-top: 8px !important; }
+  .checkout-wow-footer .space-y-3 > * + * { margin-top: 6px !important; }
+  .checkout-wow-footer { display: flex !important; flex-wrap: wrap !important; align-items: center !important; column-gap: 20px !important; }
+  .checkout-wow-footer > * { flex: 1 1 100% !important; min-width: 0; }
+  .checkout-wow-footer > .space-y-3 { flex: 1 1 280px !important; }
+  .checkout-wow-footer > button.w-full { flex: 0 1 42% !important; width: auto !important; margin-top: 0 !important; padding-top: 12px !important; padding-bottom: 12px !important; font-size: 1rem !important; }
+
+  .product-detail-layer { padding-top: 14px !important; max-height: 94dvh !important; }
+  .product-detail-layer > .flex.justify-center.mb-6 { display: none !important; }
+  .product-detail-layer .flex.flex-col.sm\:flex-row { margin-top: 0 !important; margin-inline-start: 52px !important; margin-bottom: 14px !important; gap: 14px !important; }
+  .product-detail-layer .flex.flex-col.sm\:flex-row img,
+  .product-detail-layer .flex.flex-col.sm\:flex-row > div:first-child > div.flex { width: 80px !important; height: 80px !important; max-height: 30dvh !important; }
+}
