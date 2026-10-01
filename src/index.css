@@ -4007,3 +4007,18 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
 }
 
 @media (prefers-reduced-motion:reduce){.wahag-dark-stage:after{animation:none!important}}
+
+/* ===== Round 3 — brand harmony (scoped, visual only) ===== */
+/* Category / product fallback icons: one calm brass-on-ivory system instead of pastel rainbow */
+.customer-signature-shell [data-dna-tone]:not([data-dna-tone='warn']):not([data-dna-tone='danger']):not([data-dna-tone='info']) { --t-fg: #9a7432; --t-bgl: #f5eedf; }
+.customer-signature-shell .dna-cat-tile [data-dna-tone] { box-shadow: inset 0 0 0 1px rgba(178,138,65,.18); }
+/* Solid, calm sticky menu header (was translucent blur) */
+.customer-signature-shell header.r3-menu-header { box-shadow: 0 1px 0 rgba(13,58,34,.04); }
+/* Swipe-to-delete red layer no longer bleeds as a pink outline around cart items */
+.r3-cart-swipe { background: transparent !important; }
+.r3-cart-swipe::before { content: ""; position: absolute; inset: 6px; border-radius: 18px; background: #ef4444; pointer-events: none; }
+/* «وهّق غيرك» payment card: brand brass-ink instead of purple/fuchsia */
+.payment-method-card.payment-method-card-wahag {
+  background: linear-gradient(160deg, #4a3818, #6e5326) !important;
+  box-shadow: 0 10px 28px rgba(74,56,24,.16) !important;
+}
