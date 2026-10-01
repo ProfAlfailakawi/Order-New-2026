@@ -420,7 +420,6 @@ export default function AdminDashboard() {
             <h2 className="font-extrabold text-2xl tracking-tighter leading-none text-brand">فخامة</h2>
             <div className="flex items-center gap-2 mt-2">
               <p className="text-[10px] text-stone-500 font-bold tracking-widest uppercase">نظام الإدارة</p>
-              <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-400 rounded-md font-mono">v2.6</span>
             </div>
           </div>
         </div>
