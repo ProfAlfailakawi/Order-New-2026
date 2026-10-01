@@ -4022,3 +4022,9 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   background: linear-gradient(160deg, #4a3818, #6e5326) !important;
   box-shadow: 0 10px 28px rgba(74,56,24,.16) !important;
 }
+
+/* Mobile: keep the welcome "?" replay button above the fixed cart bar
+   instead of hidden underneath it (z-30 vs z-45). */
+body:has(.al-cart-bar) .order-welcome-replay {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 100px) !important;
+}
