@@ -5235,7 +5235,7 @@ export default function CustomerSite() {
             "sticky top-0 z-40 px-4 py-4 sm:px-6 sm:py-5 flex items-start justify-between gap-3 transition-all duration-500 overflow-visible",
             isCheckout
               ? "bg-white border-b border-stone-100 shadow-sm"
-              : "bg-white/70 backdrop-blur-2xl border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+              : "r3-menu-header bg-[#fbf9f4] border-b border-stone-200/70",
           )}
         >
           <div className="flex items-start gap-3 min-w-0 flex-1 overflow-visible">
@@ -5316,7 +5316,7 @@ export default function CustomerSite() {
                   }
                 }}
                 aria-label="تتبع الطلبات"
-                className="p-2.5 max-lg:w-11 max-lg:h-11 bg-stone-900 text-white rounded-full hover:bg-stone-800 transition-all flex items-center justify-center shadow-md active:scale-95"
+                className="p-2.5 max-lg:w-11 max-lg:h-11 bg-brand text-white rounded-full hover:bg-brand/90 transition-all flex items-center justify-center shadow-md active:scale-95"
               >
                 <Search className="w-4 h-4" />
               </Link>
@@ -5747,7 +5747,7 @@ export default function CustomerSite() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowFlashSale(false)}
-              className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[200] flex flex-col items-center justify-center p-6"
+              className="fixed inset-0 r3-flash-overlay bg-brand/95 backdrop-blur-md z-[200] flex flex-col items-center justify-center p-6"
             >
               <button
                 onClick={(e) => {
@@ -5794,7 +5794,7 @@ export default function CustomerSite() {
                     setShowFlashSale(false);
                     setSelectedProduct(smartPick?.item);
                   }}
-                  className="w-full bg-gradient-to-r from-accent to-brand text-white py-5 rounded-2xl font-extrabold text-xl hover:shadow-[0_0_40px_rgba(255,140,0,0.4)] transition-all active:scale-95 flex items-center justify-center gap-3"
+                  className="w-full bg-accent text-white py-5 rounded-2xl font-extrabold text-xl hover:brightness-105 transition-all active:scale-95 flex items-center justify-center gap-3"
                 >
                   <ShoppingCart className="w-6 h-6" />
                   ألقِ نظرة! ({smartPick?.item?.price} د.ك)
@@ -8618,7 +8618,7 @@ function CheckoutOverlay({
                 {cart.map((item: any, index: number) => (
                   <motion.div
                     key={`${item.id}-${index}`}
-                    className="relative bg-red-500 rounded-3xl overflow-hidden shadow-sm"
+                    className="r3-cart-swipe relative bg-red-500 rounded-3xl overflow-hidden shadow-sm"
                   >
                     <div className="absolute inset-y-0 right-0 w-24 flex items-center justify-center pointer-events-none">
                       <span className="text-white font-bold text-xs flex items-center gap-1">
