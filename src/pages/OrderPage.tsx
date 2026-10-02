@@ -1765,7 +1765,10 @@ export default function OrderPage() {
                       const statusText = statusView.text;
                       const isCancelled = statusText.includes("ملغي");
                       const isFailed = statusText.includes("فشل");
-                      const isDelivered = statusText === "تم التوصيل";
+                      const rawStatusText = String((selectedOrder as any).status || "");
+                      // Completion comes from the raw status too: getStatusDisplay folds the canonical
+                      // terminal "تم التوصيل" / "delivered" into the generic paid label.
+                      const isDelivered = statusText === "تم التوصيل" || rawStatusText.includes("تم التوصيل") || rawStatusText.toLowerCase().includes("delivered");
                       const isPaid = isPaidVisualStatus(statusText) || isDelivered;
                       const isQatya = statusText.includes("قطية") && !isCancelled;
                       const needsPayment = statusText === "بانتظار الدفع" || statusText === "فشل في عملية الدفع";
@@ -1781,7 +1784,6 @@ export default function OrderPage() {
                         { when: statusText.includes("قطية"), Icon: Users, line: "القطيّة شغالة والربع يدفعون، والفاتورة ما تتأكد لين يكمل المبلغ." },
                       ];
                       const note = noteRules.find((r) => r.when) || { Icon: Clock, line: "استلمنا طلبك، بانتظار الدفع عشان نبلش التجهيز." };
-                      const rawStatusText = String((selectedOrder as any).status || "");
                       const isPreparing = statusText.includes("تجهيز");
                       const isOnTheWay = rawStatusText.includes("جاري التوصيل");
                       const steps: DnaStep[] = [
