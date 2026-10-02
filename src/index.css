@@ -4172,3 +4172,17 @@ body:has(.al-cart-bar) .order-welcome-replay {
 .addon-lux-qty button { min-width: 44px !important; height: 44px !important; }
 .product-sheet-footer button[aria-label="Decrease quantity"],
 .product-sheet-footer button[aria-label="Increase quantity"] { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+
+/* Checkout footer: the promo field lives behind a summary row (collapsed by default)
+   and the delivery/data footer is tighter so the form keeps most of the phone screen. */
+.checkout-promo-summary::-webkit-details-marker { display: none; }
+.checkout-wow-footer.checkout-footer-delivery { padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px)) !important; }
+.checkout-wow-footer.checkout-footer-delivery > * + * { margin-top: .75rem; }
+.checkout-wow-footer.checkout-footer-delivery .space-y-3 > * + * { margin-top: .4rem !important; }
+.checkout-wow-footer.checkout-footer-delivery .space-y-3 > div.border-b { padding-bottom: 0 !important; border-bottom: 0 !important; }
+.checkout-wow-footer.checkout-footer-delivery .checkout-promo-details { border-bottom: 1px solid #f3efe6 !important; padding-bottom: .25rem !important; }
+@media (max-width: 639px) {
+  .checkout-wow-footer.checkout-footer-delivery > div.space-y-3 > div.pt-2 { padding-top: .25rem; }
+  .checkout-wow-footer.checkout-footer-delivery button.w-full { padding-block: .9rem !important; }
+}
+.checkout-summary-summary::-webkit-details-marker { display: none; }

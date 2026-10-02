@@ -54,6 +54,7 @@ import {
   Info,
   SlidersHorizontal,
   ChevronDown,
+  Tag,
 } from "lucide-react";
 // Display-only: renders decorative 👑 🤍 🍲 🍽️ inside message copy as thin lucide
 // outline icons. The source strings are untouched (copy/share/aria keep emoji).
@@ -9174,7 +9175,13 @@ function CheckoutOverlay({
             <div className="space-y-3 px-1">
               {/* Promo Code Input */}
               {step !== "cart" && (!appliedPromo ? (
-                <div className="flex flex-col gap-1.5 pb-4 border-b border-stone-50">
+                <details className="checkout-promo-details group pb-3 border-b border-stone-50">
+                  <summary className="checkout-promo-summary flex items-center gap-2 min-h-[44px] cursor-pointer list-none text-xs font-bold text-stone-500 select-none">
+                    <Tag className="w-4 h-4 text-accent shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                    <span className="flex-1">كود الخصم</span>
+                    <ChevronDown className="w-4 h-4 text-stone-400 transition-transform group-open:rotate-180" strokeWidth={1.75} aria-hidden="true" />
+                  </summary>
+                <div className="flex flex-col gap-1.5 pt-1">
                   <div className="flex gap-2">
                     <input
                       placeholder="كود الخصم (Promo Code)"
@@ -9182,12 +9189,12 @@ function CheckoutOverlay({
                       onChange={(e) =>
                         setPromoCodeInput(normalizeDigits(e.target.value).toUpperCase())
                       }
-                      className="flex-1 px-4 py-2 text-sm bg-stone-50/80 backdrop-blur-sm border border-stone-100 rounded-xl focus:border-accent outline-none placeholder:text-stone-300 font-bold"
+                      className="flex-1 min-h-[44px] px-4 py-2 text-sm bg-stone-50/80 backdrop-blur-sm border border-stone-100 rounded-xl focus:border-accent outline-none placeholder:text-stone-300 font-bold"
                     />
                     <button
                       onClick={validatePromo}
                       disabled={isValidatingPromo || !promoCodeInput.trim()}
-                      className="px-4 py-2 bg-brand text-white text-[10px] font-extrabold uppercase rounded-xl transition-all active:scale-95 disabled:opacity-50"
+                      className="min-h-[44px] px-4 py-2 bg-brand text-white text-[10px] font-extrabold uppercase rounded-xl transition-all active:scale-95 disabled:opacity-50"
                     >
                       {isValidatingPromo ? "..." : "تطبيق"}
                     </button>
@@ -9198,6 +9205,7 @@ function CheckoutOverlay({
                     </p>
                   )}
                 </div>
+                </details>
               ) : (
                 <div className="flex justify-between items-center bg-green-50 border border-green-100 p-3 rounded-xl mb-4">
                   <div className="flex flex-col gap-0.5">
@@ -9217,6 +9225,23 @@ function CheckoutOverlay({
                 </div>
               ))}
 
+              {step === "delivery" ? (
+                <details className="checkout-summary-details group">
+                  <summary className="checkout-summary-summary list-none cursor-pointer select-none min-h-[44px] flex items-center gap-2">
+                    <div className="flex-1">
+              <div className="flex items-center justify-between pt-0">
+                <span className="text-sm font-bold text-brand">
+                  حسابك طال عمرك
+                </span>
+                <div className="text-2xl font-bold text-brand">
+                  {Number(total || 0).toFixed(2)}{" "}
+                  <span className="text-sm text-accent font-medium">د.ك</span>
+                </div>
+              </div>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-stone-400 shrink-0 transition-transform group-open:rotate-180" strokeWidth={1.75} aria-hidden="true" />
+                  </summary>
+                  <div className="space-y-3 pt-2">
               <div className="flex justify-between items-center text-xs font-bold text-stone-500">
                 <span>مجموع طلباتك</span>
                 <span className="text-brand font-medium">
@@ -9237,7 +9262,7 @@ function CheckoutOverlay({
                 <span>رسوم التوصيل</span>
                 <span className="font-bold">
                   {!address.region ? (
-                    <span className="text-stone-300">ناطرين العنوان</span>
+                    <span className="text-stone-400">ناطرين العنوان</span>
                   ) : deliveryFee === -1 ? (
                     <span className="text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 flex items-center gap-1 text-[10px]">
                       <AlertCircle className="w-3 h-3" /> المنطقة يبيلها تأكيد
@@ -9269,7 +9294,71 @@ function CheckoutOverlay({
                 </div>
               )}
               {/* Expected Points */}
-              <div className="flex justify-between items-center text-xs font-bold text-brand/40 pb-3 border-b border-stone-50">
+              <div className="flex justify-between items-center text-xs font-bold text-brand/60 pb-3 border-b border-stone-50">
+                <span>النقاط المتوقعة من هذا الطلب</span>
+                <span className="flex items-center gap-1">
+                  + {Math.floor(itemsTotal)} ⚡
+                </span>
+              </div>
+                </>
+              )}
+                  </div>
+                </details>
+              ) : (
+                <>
+              <div className="flex justify-between items-center text-xs font-bold text-stone-500">
+                <span>مجموع طلباتك</span>
+                <span className="text-brand font-medium">
+                  {Number(itemsTotal || 0).toFixed(2)} د.ك
+                </span>
+              </div>
+
+              {appliedPromo && (
+                <div className="flex justify-between items-center text-xs font-bold text-green-600">
+                  <span>الخصم ({appliedPromo.code})</span>
+                  <span>- {discountAmount.toFixed(2)} د.ك</span>
+                </div>
+              )}
+
+              {step !== "cart" && (
+                <>
+              <div className="flex justify-between items-center text-xs font-bold text-stone-500 pb-3 border-b border-stone-50">
+                <span>رسوم التوصيل</span>
+                <span className="font-bold">
+                  {!address.region ? (
+                    <span className="text-stone-400">ناطرين العنوان</span>
+                  ) : deliveryFee === -1 ? (
+                    <span className="text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 flex items-center gap-1 text-[10px]">
+                      <AlertCircle className="w-3 h-3" /> المنطقة يبيلها تأكيد
+                    </span>
+                  ) : deliveryFee === 0 ? (
+                    <span className="text-green-500 bg-green-50 px-2 py-0.5 rounded-full border border-green-100 flex items-center gap-1">
+                      <Check className="w-3 h-3" /> التوصيل مجاني
+                    </span>
+                  ) : (
+                    <span className="text-accent">
+                      {Number(deliveryFee || 0).toFixed(2)} د.ك
+                    </span>
+                  )}
+                </span>
+              </div>
+              {customerPoints > 0 && (
+                <div className="flex justify-between items-center text-xs font-bold text-amber-600 pb-3 border-b border-stone-50">
+                  <div className="flex flex-col gap-0.5">
+                    <span>رصيد نقاطك</span>
+                    {getLoyaltyTier(customerPoints).minPoints > 0 && (
+                       <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full w-fit">
+                          مستوى {getLoyaltyTier(customerPoints).name}
+                       </span>
+                    )}
+                  </div>
+                  <span className="flex items-center gap-1">
+                    ⭐ {customerPoints} نقطة
+                  </span>
+                </div>
+              )}
+              {/* Expected Points */}
+              <div className="flex justify-between items-center text-xs font-bold text-brand/60 pb-3 border-b border-stone-50">
                 <span>النقاط المتوقعة من هذا الطلب</span>
                 <span className="flex items-center gap-1">
                   + {Math.floor(itemsTotal)} ⚡
@@ -9286,6 +9375,8 @@ function CheckoutOverlay({
                   <span className="text-sm text-accent font-medium">د.ك</span>
                 </div>
               </div>
+                </>
+              )}
             </div>
             )}
 
