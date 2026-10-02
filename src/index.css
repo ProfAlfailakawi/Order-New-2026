@@ -4063,3 +4063,12 @@ body:has(.al-cart-bar) .order-welcome-replay {
     top:calc(env(safe-area-inset-top, 0px) + 10px)!important;
   }
 }
+/* ---- Display-only polish pass (r42) ---- */
+/* Mobile: compact sticky header (the legal line lives behind the ⓘ button). */
+@media (max-width: 639px) {
+  header.r3-menu-header { padding-block: 10px; }
+  header.r3-menu-header h1 { font-size: 1.125rem; line-height: 1.4; }
+  header.r3-menu-header h1 + div { flex-wrap: nowrap; min-height: 0; margin-top: .25rem; }
+  header.r3-menu-header h1 + div > .text-stone-300 { display: none; }
+  header.r3-menu-header h1 + div > span { white-space: nowrap; }
+}

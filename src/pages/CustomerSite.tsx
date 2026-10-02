@@ -51,6 +51,7 @@ import {
   Heart,
   Soup,
   Utensils,
+  Info,
   SlidersHorizontal,
   ChevronDown,
 } from "lucide-react";
@@ -1826,6 +1827,7 @@ export default function CustomerSite() {
   const [diwaniyaNotifications, setDiwaniyaNotifications] = useState<any[]>([]);
   const [unreadDiwaniyaNotifications, setUnreadDiwaniyaNotifications] = useState(0);
   const [showSquadModal, setShowSquadModal] = useState(hasInitialDiwaniyaQrEntry);
+  const [showLegalMeta, setShowLegalMeta] = useState(false);
   const [isDirectDiwaniyaEntry, setIsDirectDiwaniyaEntry] = useState(hasInitialDiwaniyaQrEntry);
 
   const [showAppetiteTheatre, setShowAppetiteTheatre] = useState(() => {
@@ -5361,8 +5363,18 @@ export default function CustomerSite() {
                 <span className="text-[11px] font-bold text-stone-400 leading-[1.6] py-0.5">
                   {goldenHourTheme.name}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => setShowLegalMeta((v) => !v)}
+                  aria-expanded={showLegalMeta}
+                  aria-controls="legal-meta"
+                  aria-label="بيانات السجل التجاري"
+                  className="sm:hidden relative inline-flex items-center justify-center w-6 h-6 text-stone-400 after:absolute after:-inset-2.5 after:content-['']"
+                >
+                  <Info className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />
+                </button>
               </div>
-              <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-xs font-normal text-stone-500 leading-[1.55]">
+              <div id="legal-meta" className={cn("mt-0.5 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-xs font-normal text-stone-500 leading-[1.55] sm:flex", showLegalMeta ? "flex" : "hidden")}>
                 <span>الاسم التجاري: {LEGAL_TRADE_NAME_AR}</span>
                 <span className="text-stone-400">•</span>
                 <span>رقم السجل التجاري: {COMMERCIAL_REGISTRATION_NUMBER}</span>
