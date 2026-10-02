@@ -659,6 +659,7 @@ export default function AdminDashboard() {
                 newTrend={trendChip(paidOrdersWeek.cur, paidOrdersWeek.prev)}
                 newSeries={paidOrdersWeek.cur > 0 ? paidOrdersWeek.series : null}
                 paidCount={analytics?.completedCount || 0}
+                paidSeries={invCountWeek.cur > 0 ? invCountWeek.series : null}
                 paidTrend={trendChip(invCountWeek.cur, invCountWeek.prev)}
               />
 
@@ -2072,7 +2073,7 @@ function NavItem({ active, onClick, icon, label, badge }: any) {
 }
 
 // Compact one-row stat strip (display only; same numbers/series as before).
-function StatStrip({ revenue, revenueTrend, revenueSeries, newCount, newTrend, newSeries, paidCount, paidTrend }: any) {
+function StatStrip({ revenue, revenueTrend, revenueSeries, newCount, newTrend, newSeries, paidCount, paidSeries, paidTrend }: any) {
   const revNum = Number(revenue) || 0;
   const revShort = Math.abs(revNum) >= 100000 ? `${Math.round(revNum / 1000)}K` : Math.abs(revNum) >= 10000 ? `${(Math.round(revNum / 100) / 10)}K` : String(revenue);
   const Bars = ({ series, color, label }: { series: number[] | null; color: string; label: string }) => {
@@ -2088,8 +2089,6 @@ function StatStrip({ revenue, revenueTrend, revenueSeries, newCount, newTrend, n
   };
   const total = Number(newCount) || 0;
   const paid = Number(paidCount) || 0;
-  const frac = total > 0 ? Math.min(1, Math.max(0, paid / total)) : 0;
-  const C = 2 * Math.PI * 33.5;
   const tile = "min-w-0 flex flex-col gap-2 md:gap-3 p-3 md:px-6 md:py-5 rounded-[20px] md:rounded-3xl border border-stone-100 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]";
   const head = "flex items-center gap-1.5 md:gap-2 text-stone-500 text-[11px] md:text-sm font-bold leading-tight";
   const chip = (t: any, cls: string) => t ? <span className={`text-[10px] md:text-xs font-bold whitespace-nowrap ${cls}`}>{t}</span> : <span className={`text-[10px] md:text-xs font-bold ${cls}`}>—</span>;
@@ -2112,19 +2111,9 @@ function StatStrip({ revenue, revenueTrend, revenueSeries, newCount, newTrend, n
       </div>
       <div className={tile}>
         <div className={head}><CheckCircle2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-brand shrink-0" aria-hidden="true" /><span>فواتير مدفوعة</span></div>
-        <div className="flex flex-col md:flex-row items-center justify-center gap-1.5 md:gap-5 flex-1">
-          <div className="relative flex items-center justify-center" role="img" aria-label={`${paid} من ${total}`}>
-            <svg width="76" height="76" viewBox="0 0 76 76" className="-rotate-90 shrink-0" aria-hidden="true">
-              <circle cx="38" cy="38" r="33.5" fill="none" stroke="#f1efe9" strokeWidth="9" />
-              <circle cx="38" cy="38" r="33.5" fill="none" stroke="var(--color-brand)" strokeWidth="9" strokeLinecap="round" strokeDasharray={`${(frac * C).toFixed(1)} ${C.toFixed(1)}`} />
-            </svg>
-            <div className="absolute text-center leading-none">
-              <b className="block text-xl font-black text-brand">{paid}</b>
-              <small className="text-[9px] font-bold text-stone-400">من {total}</small>
-            </div>
-          </div>
-          {paidTrend && <span className="text-[10px] md:text-xs font-bold text-brand whitespace-nowrap">{paidTrend}</span>}
-        </div>
+        <div className="text-[22px] md:text-[38px] font-black tracking-tighter leading-none text-brand">{paid}</div>
+        <Bars series={paidSeries} color="var(--color-brand)" label="الفواتير المدفوعة آخر 7 أيام" />
+        {chip(paidTrend, "text-brand")}
       </div>
     </div>
   );
