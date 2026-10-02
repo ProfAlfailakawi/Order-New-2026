@@ -8696,7 +8696,7 @@ function CheckoutOverlay({
                       }}
                       className="flex gap-4 p-4 bg-white rounded-3xl border border-stone-100 relative group shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing w-full z-10"
                     >
-                      <div className="flex-grow relative">
+                      <div className="flex-grow relative pb-6">
                         <div className="flex justify-between items-start mb-2">
                           <h4 className="font-bold text-brand text-sm leading-tight max-w-[80%]">
                             {item.name}
@@ -8740,10 +8740,10 @@ function CheckoutOverlay({
                         </div>
                         <button
                           onClick={() => onRemove(item.id)}
-                          className="absolute -bottom-2 -right-1 text-red-400 hover:text-red-600 p-1 transition-colors"
+                          className="absolute -bottom-3 -left-3 w-11 h-11 flex items-center justify-center text-red-400 hover:text-red-600 transition-colors"
                           aria-label="إزالة"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="w-4 h-4" strokeWidth={1.75} />
                         </button>
                       </div>
                     </motion.div>
