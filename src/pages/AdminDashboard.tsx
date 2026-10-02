@@ -641,7 +641,7 @@ export default function AdminDashboard() {
         <div className="admin-content p-4 sm:p-8 lg:p-12 space-y-8 lg:space-y-12 w-full max-w-[1600px]">
           {activeTab === "dashboard" && (
             <div className="space-y-12 animate-in fade-in duration-700">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pt-4 sm:pt-0">
                 <div>
                   <h1 className="text-3xl sm:text-5xl font-extrabold text-brand leading-none">الإحصائيات المتقدمة</h1>
                   <p className="text-stone-400 text-sm mt-4 font-medium">تحليل العمليات الفورية</p>
