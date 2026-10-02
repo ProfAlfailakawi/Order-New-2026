@@ -651,33 +651,17 @@ export default function AdminDashboard() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10">
-                <StatCard 
-                  title="الدخل التراكمي" 
-                  value={`${analytics?.totalRevenue || 0} د.ك`} 
-                  trend={trendChip(revWeek.cur, revWeek.prev)}
-                  spark={revWeek.cur > 0 ? <DnaSpark values={revWeek.series} width={120} height={36} ariaLabel="الدخل آخر 7 أيام" /> : null}
-                  icon={<TrendingUp className="w-8 h-8 text-accent" />}
-                  color="accent"
-                />
-                <StatCard 
-                  title="فواتير جديدة" 
-                  value={totalOrdersCount.toString()} 
-                  trend={trendChip(paidOrdersWeek.cur, paidOrdersWeek.prev)}
-                  spark={paidOrdersWeek.cur > 0 ? <DnaSpark values={paidOrdersWeek.series} width={120} height={36} tone="coral" ariaLabel="الفواتير الجديدة آخر 7 أيام" /> : null}
-                  icon={<ShoppingCart className="w-8 h-8 text-red-500" />}
-                  isNew={totalOrdersCount > 0}
-                  color="red"
-                />
-                <StatCard 
-                  title="فواتير مدفوعة" 
-                  value={analytics?.completedCount.toString() || "0"} 
-                  trend={trendChip(invCountWeek.cur, invCountWeek.prev)}
-                  spark={invCountWeek.cur > 0 ? <DnaSpark values={invCountWeek.series} width={120} height={36} tone="mint" ariaLabel="الفواتير المدفوعة آخر 7 أيام" /> : null}
-                  icon={<CheckCircle2 className="w-8 h-8 text-green-500" />}
-                  color="green"
-                />
-              </div>
+              <StatStrip
+                revenue={analytics?.totalRevenue || 0}
+                revenueTrend={trendChip(revWeek.cur, revWeek.prev)}
+                revenueSeries={revWeek.cur > 0 ? revWeek.series : null}
+                newCount={totalOrdersCount}
+                newTrend={trendChip(paidOrdersWeek.cur, paidOrdersWeek.prev)}
+                newSeries={paidOrdersWeek.cur > 0 ? paidOrdersWeek.series : null}
+                paidCount={analytics?.completedCount || 0}
+                paidSeries={invCountWeek.cur > 0 ? invCountWeek.series : null}
+                paidTrend={trendChip(invCountWeek.cur, invCountWeek.prev)}
+              />
 
               {/* Loyalty distribution: one stacked bar */}
               {loyaltyTotal > 0 && (
@@ -1109,7 +1093,7 @@ export default function AdminDashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-xl font-extrabold text-brand flex items-center gap-2">
-                          <span>⏰</span> جدول أوقات عمل المطعم
+                          <Clock className="w-5 h-5 text-accent" aria-hidden="true" /> جدول أوقات عمل المطعم
                         </h3>
                         <p className="text-stone-400 text-xs font-medium mt-1">حدد ساعات العمل لكل يوم، ويتم تطبيق المنع التلقائي عند اتمام الطلب خارح أوقات العمل.</p>
                       </div>
@@ -1142,9 +1126,9 @@ export default function AdminDashboard() {
                             console.error(e);
                           }
                         }}
-                        className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-brand text-xs font-bold rounded-xl transition-all"
+                        className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-brand text-xs font-bold rounded-xl transition-all inline-flex items-center gap-1.5"
                       >
-                        ⚡ توقيت موحد لجميع الأيام (12:00 م - 11:30 م)
+                        <Zap className="w-3.5 h-3.5 text-accent" aria-hidden="true" /> توقيت موحد لجميع الأيام (12:00 م - 11:30 م)
                       </button>
                     </div>
 
@@ -1421,7 +1405,7 @@ export default function AdminDashboard() {
                                  <h3 className="text-lg font-black text-brand">صدارة الدواوين</h3>
                                  <p className="text-xs text-stone-500 font-bold mt-1">يُحسب تلقائياً من قاعدة البيانات المشتركة حسب نقاط أعضاء كل ديوانية.</p>
                               </div>
-                              <div className="w-12 h-12 rounded-2xl bg-white border border-amber-100 flex items-center justify-center text-2xl shadow-sm">🏆</div>
+                              <div className="w-12 h-12 rounded-2xl bg-white border border-amber-100 flex items-center justify-center text-2xl shadow-sm"><Trophy className="w-6 h-6 text-accent" aria-hidden="true" /></div>
                            </div>
                            <div className="space-y-3">
                               {strongestSquads.length === 0 && (
@@ -2085,6 +2069,53 @@ function NavItem({ active, onClick, icon, label, badge }: any) {
       </div>
       {badge && <span className="bg-accent text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-lg shadow-md shadow-accent/20 relative z-10">{badge}</span>}
     </button>
+  );
+}
+
+// Compact one-row stat strip (display only; same numbers/series as before).
+function StatStrip({ revenue, revenueTrend, revenueSeries, newCount, newTrend, newSeries, paidCount, paidSeries, paidTrend }: any) {
+  const revNum = Number(revenue) || 0;
+  const revShort = Math.abs(revNum) >= 100000 ? `${Math.round(revNum / 1000)}K` : Math.abs(revNum) >= 10000 ? `${(Math.round(revNum / 100) / 10)}K` : String(revenue);
+  const Bars = ({ series, color, label }: { series: number[] | null; color: string; label: string }) => {
+    const vals = (series && series.length ? series : Array.from({ length: 7 }, () => 0)).slice(-7);
+    const max = Math.max(...vals, 0);
+    return (
+      <div className="flex items-end gap-[3px] h-[34px]" dir="ltr" role="img" aria-label={label}>
+        {vals.map((v, i) => (
+          <i key={i} className="flex-1 max-w-[14px] md:max-w-[22px] rounded-[3px] not-italic" style={{ height: max > 0 ? `${Math.max(3, (v / max) * 34)}px` : "3px", background: color, opacity: i === vals.length - 1 ? 1 : 0.35 }} />
+        ))}
+      </div>
+    );
+  };
+  const total = Number(newCount) || 0;
+  const paid = Number(paidCount) || 0;
+  const tile = "min-w-0 flex flex-col gap-2 md:gap-3 p-3 md:px-6 md:py-5 rounded-[20px] md:rounded-3xl border border-stone-100 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]";
+  const head = "flex items-center gap-1.5 md:gap-2 text-stone-500 text-[11px] md:text-sm font-bold leading-tight";
+  const chip = (t: any, cls: string) => t ? <span className={`text-[10px] md:text-xs font-bold whitespace-nowrap ${cls}`}>{t}</span> : <span className={`text-[10px] md:text-xs font-bold ${cls}`}>—</span>;
+  return (
+    <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1.1fr)] gap-2.5 md:gap-6">
+      <div className={tile}>
+        <div className={head}><TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4 text-accent shrink-0" aria-hidden="true" /><span>الدخل التراكمي</span></div>
+        <div className="flex items-baseline gap-1 min-w-0" title={`${revenue} د.ك`}>
+          <b className="text-[22px] md:text-[38px] font-black tracking-tighter leading-none text-brand truncate">{revShort}</b>
+          <small className="text-[10px] md:text-sm font-bold text-stone-400 shrink-0">د.ك</small>
+        </div>
+        <Bars series={revenueSeries} color="var(--color-accent)" label="الدخل آخر 7 أيام" />
+        {chip(revenueTrend, "text-accent")}
+      </div>
+      <div className={tile}>
+        <div className={head}><ShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4 text-sadu-red shrink-0" aria-hidden="true" /><span>فواتير جديدة</span></div>
+        <div className="text-[22px] md:text-[38px] font-black tracking-tighter leading-none text-brand">{total}</div>
+        <Bars series={newSeries} color="var(--color-sadu-red)" label="الفواتير الجديدة آخر 7 أيام" />
+        {chip(newTrend, "text-sadu-red")}
+      </div>
+      <div className={tile}>
+        <div className={head}><CheckCircle2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-brand shrink-0" aria-hidden="true" /><span>فواتير مدفوعة</span></div>
+        <div className="text-[22px] md:text-[38px] font-black tracking-tighter leading-none text-brand">{paid}</div>
+        <Bars series={paidSeries} color="var(--color-brand)" label="الفواتير المدفوعة آخر 7 أيام" />
+        {chip(paidTrend, "text-brand")}
+      </div>
+    </div>
   );
 }
 
