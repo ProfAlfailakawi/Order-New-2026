@@ -4153,3 +4153,22 @@ body:has(.al-cart-bar) .order-welcome-replay {
   margin: 0 !important;
   width: auto;
 }
+
+/* Product sheet add-ons: one calm row (check · name · price) that wraps only when
+   the quantity stepper / chips need the room; clearer unchecked box; 44px steppers. */
+.addon-lux-card {
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 64px !important;
+  padding: .75rem 1rem !important;
+  gap: .5rem .75rem !important;
+}
+.product-addons-luxury .addon-lux-card .addon-lux-title { width: auto !important; flex: 1 1 8rem !important; }
+.product-addons-luxury .addon-lux-card .addon-lux-meta { width: auto !important; flex: 0 1 auto !important; justify-content: flex-end !important; }
+.addon-lux-card .addon-lux-title > div:first-child:not(.bg-accent) { border-color: #c9bfa8 !important; }
+.addon-lux-qty { height: 44px !important; }
+.addon-lux-qty button { min-width: 44px !important; height: 44px !important; }
+.product-sheet-footer button[aria-label="Decrease quantity"],
+.product-sheet-footer button[aria-label="Increase quantity"] { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
