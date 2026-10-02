@@ -4063,3 +4063,39 @@ body:has(.al-cart-bar) .order-welcome-replay {
     top:calc(env(safe-area-inset-top, 0px) + 10px)!important;
   }
 }
+
+/* ---- Display-only polish pass (r42) ---- */
+/* Desktop: the menu zone's corner tints ended in hard vertical edges at the
+   zone boundary; the shell already carries the same wash, so drop the seam. */
+@media (min-width: 1024px) {
+  .customer-wow-menu { background: none; }
+}
+/* Mobile: compact sticky header (the legal line lives behind the ⓘ button). */
+@media (max-width: 639px) {
+  header.r3-menu-header { padding-block: 10px; }
+  header.r3-menu-header h1 { font-size: 1.125rem; line-height: 1.4; }
+  header.r3-menu-header h1 + div { flex-wrap: nowrap; min-height: 0; margin-top: .25rem; }
+  header.r3-menu-header h1 + div > .text-stone-300 { display: none; }
+  header.r3-menu-header h1 + div > span { white-space: nowrap; }
+}
+/* Mobile: the «؟» replay button is a small gutter chip (44px hit area kept via
+   ::after) so it never covers card text or the sticky cart CTA. */
+@media (max-width: 1023px) {
+  .order-welcome-replay {
+    left: 3px !important;
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 13px;
+    opacity: .9;
+  }
+  .order-welcome-replay::after { content: ""; position: absolute; inset: -8px; }
+}
+/* Product sheet: sticky action bar fades into the sheet instead of a lighter slab. */
+.product-detail-layer .product-sheet-footer { backdrop-filter: none; }
+.product-detail-layer .product-sheet-footer::before {
+  content: ""; position: absolute; inset: 0 -40px; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,252,246,0), rgba(255,252,246,.5) 30%, rgba(255,252,246,.5) 65%, rgba(255,252,246,0));
+}
+@media (min-width: 640px) {
+  .product-detail-layer { padding-bottom: 28px !important; }
+}

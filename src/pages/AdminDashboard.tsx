@@ -2093,7 +2093,7 @@ function StatStrip({ revenue, revenueTrend, revenueSeries, newCount, newTrend, n
   const head = "flex items-center gap-1.5 md:gap-2 text-stone-500 text-[11px] md:text-sm font-bold leading-tight";
   const chip = (t: any, cls: string) => t ? <span className={`text-[10px] md:text-xs font-bold whitespace-nowrap ${cls}`}>{t}</span> : <span className={`text-[10px] md:text-xs font-bold ${cls}`}>—</span>;
   return (
-    <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1.1fr)] gap-2.5 md:gap-6">
+    <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1.1fr)] md:grid-cols-[repeat(3,minmax(0,1fr))] gap-2.5 md:gap-6">
       <div className={tile}>
         <div className={head}><TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4 text-accent shrink-0" aria-hidden="true" /><span>الدخل التراكمي</span></div>
         <div className="flex items-baseline gap-1 min-w-0" title={`${revenue} د.ك`}>

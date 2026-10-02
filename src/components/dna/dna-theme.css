@@ -99,3 +99,10 @@ ul.dna-cat-grid { list-style: none; margin: 0; padding: 0; }
 .dna-cat-cell { display: flex; margin: 0; padding: 0; list-style: none; }
 .dna-cat-cell::before, .dna-cat-cell::marker { content: none; }
 .dna-cat-cell > .dna-cat-tile { inline-size: 100%; }
+
+/* One or two categories: fill the row instead of leaving an empty column. */
+.dna-cat-grid:has(> .dna-cat-cell:only-child) { grid-template-columns: minmax(0, 1fr); }
+.dna-cat-grid:has(> .dna-cat-cell:nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dna-cat-grid > .dna-cat-cell:only-child > .dna-cat-tile { flex-direction: row; align-items: center; gap: 14px; }
+.dna-cat-grid > .dna-cat-cell:only-child .dna-cat-name { margin-top: 0; flex: 1; }
+.dna-cat-grid > .dna-cat-cell:only-child .dna-cat-meta { margin-top: 0; }

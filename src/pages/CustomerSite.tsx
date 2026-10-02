@@ -51,6 +51,9 @@ import {
   Heart,
   Soup,
   Utensils,
+  Info,
+  SlidersHorizontal,
+  ChevronDown,
 } from "lucide-react";
 // Display-only: renders decorative 👑 🤍 🍲 🍽️ inside message copy as thin lucide
 // outline icons. The source strings are untouched (copy/share/aria keep emoji).
@@ -78,6 +81,42 @@ const MessageWithIcons = ({ text }: { text: string }) => (
     })}
   </>
 );
+
+// Display-only: the second (refinement) search card. On phones it sits behind a
+// compact «تصفية» disclosure (collapsed by default); same input, same handler.
+const RefineSearchCard = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
+  const [open, setOpen] = useState(false);
+  const expanded = open || value.trim().length > 0;
+  return (
+    <div className="product-search-signature bg-white/90 border border-stone-100 rounded-3xl p-2 sm:p-4 shadow-sm">
+      <button
+        type="button"
+        aria-expanded={expanded}
+        aria-controls="quick-refine-field"
+        onClick={() => setOpen((o) => !o)}
+        className="sm:hidden flex w-full min-h-[44px] items-center justify-between gap-2 px-3 text-sm font-bold text-brand"
+      >
+        <span className="flex items-center gap-2">
+          <SlidersHorizontal className="w-4 h-4 text-accent" strokeWidth={1.6} aria-hidden="true" />
+          تصفية
+        </span>
+        <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform ${expanded ? "rotate-180" : ""}`} strokeWidth={1.6} aria-hidden="true" />
+      </button>
+      <div
+        id="quick-refine-field"
+        className={`flex items-center gap-3 bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3 ${expanded ? "max-sm:mt-2" : "max-sm:hidden"}`}
+      >
+        <Search className="w-4 h-4 text-stone-400" />
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="اكتب نيتك بأي طريقة: مشتهي بحري، حق ٦ أشخاص، مريض، ديوانية..."
+          className="bg-transparent outline-none w-full text-xs sm:text-sm font-medium sm:font-bold text-brand placeholder:text-stone-400"
+        />
+      </div>
+    </div>
+  );
+};
 
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegroundPush, type DiwaniyaPushState } from "../lib/diwaniyaPush";
@@ -1788,6 +1827,7 @@ export default function CustomerSite() {
   const [diwaniyaNotifications, setDiwaniyaNotifications] = useState<any[]>([]);
   const [unreadDiwaniyaNotifications, setUnreadDiwaniyaNotifications] = useState(0);
   const [showSquadModal, setShowSquadModal] = useState(hasInitialDiwaniyaQrEntry);
+  const [showLegalMeta, setShowLegalMeta] = useState(false);
   const [isDirectDiwaniyaEntry, setIsDirectDiwaniyaEntry] = useState(hasInitialDiwaniyaQrEntry);
 
   const [showAppetiteTheatre, setShowAppetiteTheatre] = useState(() => {
@@ -5323,8 +5363,18 @@ export default function CustomerSite() {
                 <span className="text-[11px] font-bold text-stone-400 leading-[1.6] py-0.5">
                   {goldenHourTheme.name}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => setShowLegalMeta((v) => !v)}
+                  aria-expanded={showLegalMeta}
+                  aria-controls="legal-meta"
+                  aria-label="بيانات السجل التجاري"
+                  className="sm:hidden relative inline-flex items-center justify-center w-6 h-6 text-stone-400 after:absolute after:-inset-2.5 after:content-['']"
+                >
+                  <Info className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />
+                </button>
               </div>
-              <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-xs font-normal text-stone-500 leading-[1.55]">
+              <div id="legal-meta" className={cn("mt-0.5 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-xs font-normal text-stone-500 leading-[1.55] sm:flex", showLegalMeta ? "flex" : "hidden")}>
                 <span>الاسم التجاري: {LEGAL_TRADE_NAME_AR}</span>
                 <span className="text-stone-400">•</span>
                 <span>رقم السجل التجاري: {COMMERCIAL_REGISTRATION_NUMBER}</span>
@@ -5437,7 +5487,7 @@ export default function CustomerSite() {
 
         {/* Faza'a Mood Search */}
         {!isCheckout && (
-          <div className="px-4 sm:px-6 mb-2">
+          <div className="px-4 sm:px-6 lg:px-8 lg:max-w-[1180px] lg:mx-auto mb-2">
             <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-2 flex flex-col gap-2 relative z-20">
               <div className="flex items-center bg-stone-50/80 backdrop-blur-sm rounded-2xl px-4 py-3">
                 {aiSearchLoading ? (
@@ -5652,17 +5702,7 @@ export default function CustomerSite() {
 
               return searchedProducts.length === 0 ? (
                 <div className="space-y-4">
-                  <div className="product-search-signature bg-white/90 border border-stone-100 rounded-3xl p-4 shadow-sm">
-                    <div className="flex items-center gap-3 bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3">
-                      <Search className="w-4 h-4 text-stone-400" />
-                      <input
-                        value={quickProductSearch}
-                        onChange={(e) => setQuickProductSearch(e.target.value)}
-                        placeholder="اكتب نيتك بأي طريقة: مشتهي بحري، حق ٦ أشخاص، مريض، ديوانية..."
-                        className="bg-transparent outline-none w-full text-xs sm:text-sm font-medium sm:font-bold text-brand placeholder:text-stone-400"
-                      />
-                    </div>
-                  </div>
+                  <RefineSearchCard value={quickProductSearch} onChange={setQuickProductSearch} />
                   <div className="al-empty-state p-8 text-center border-2 border-dashed border-amber-100 rounded-[28px] bg-white/80">
                     <div className="al-empty-icon"><UtensilsCrossed className="w-7 h-7" strokeWidth={1.6} aria-hidden="true" /></div>
                     <strong>هالقسم فاضي الحين</strong>
@@ -5671,17 +5711,7 @@ export default function CustomerSite() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="product-search-signature bg-white/90 border border-stone-100 rounded-3xl p-4 shadow-sm">
-                    <div className="flex items-center gap-3 bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3">
-                      <Search className="w-4 h-4 text-stone-400" />
-                      <input
-                        value={quickProductSearch}
-                        onChange={(e) => setQuickProductSearch(e.target.value)}
-                        placeholder="اكتب نيتك بأي طريقة: مشتهي بحري، حق ٦ أشخاص، مريض، ديوانية..."
-                        className="bg-transparent outline-none w-full text-xs sm:text-sm font-medium sm:font-bold text-brand placeholder:text-stone-400"
-                      />
-                    </div>
-                  </div>
+                  <RefineSearchCard value={quickProductSearch} onChange={setQuickProductSearch} />
                   {quickProductSearch.trim() ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                       {searchedProducts.slice(0, 60).map((product) => (
@@ -8080,7 +8110,7 @@ function ProductModal({
             />
           </div>
 
-          <div className="flex items-center gap-4 pt-6 sticky bottom-0 bg-white/90 backdrop-blur-xl pb-4 border-t border-stone-50 mt-6">
+          <div className="product-sheet-footer flex items-center gap-4 pt-2 sticky bottom-0 pb-4 mt-0">
             <div className="flex items-center bg-stone-50/80 backdrop-blur-sm border-2 border-stone-100 rounded-xl p-1 shrink-0">
               <button
                 onClick={() => {
