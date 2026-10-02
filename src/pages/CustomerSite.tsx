@@ -48,7 +48,37 @@ import {
   DoorOpen,
   UtensilsCrossed,
   ChevronLeft,
+  Heart,
+  Soup,
+  Utensils,
 } from "lucide-react";
+// Display-only: renders decorative 👑 🤍 🍲 🍽️ inside message copy as thin lucide
+// outline icons. The source strings are untouched (copy/share/aria keep emoji).
+const MESSAGE_ICONS: Record<string, { Icon: React.ComponentType<any>; cls: string }> = {
+  "👑": { Icon: Crown, cls: "text-[#b28a41]" },
+  "🤍": { Icon: Heart, cls: "text-[#ab2b2c]" },
+  "🍲": { Icon: Soup, cls: "text-[#b28a41]" },
+  "🍽️": { Icon: Utensils, cls: "text-[#b28a41]" },
+};
+const MESSAGE_ICON_RE = /(👑|🤍|🍲|🍽\uFE0F?)/;
+const MessageWithIcons = ({ text }: { text: string }) => (
+  <>
+    {text.split(MESSAGE_ICON_RE).map((part, i) => {
+      const m = MESSAGE_ICONS[part.replace("\uFE0F", "") === "🍽" ? "🍽️" : part];
+      if (!m) return part;
+      const { Icon, cls } = m;
+      return (
+        <Icon
+          key={i}
+          aria-hidden="true"
+          strokeWidth={1.6}
+          className={`inline-block w-[1.1em] h-[1.1em] align-[-0.2em] mx-0.5 ${cls}`}
+        />
+      );
+    })}
+  </>
+);
+
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegroundPush, type DiwaniyaPushState } from "../lib/diwaniyaPush";
 import { restoreCustomerMenuProducts } from "../lib/customerMenuTransport";
@@ -5146,7 +5176,7 @@ export default function CustomerSite() {
                        <Crown className="w-5 h-5" />
                     </div>
                     <div className="flex flex-col">
-                       <p className="text-[10px] text-stone-500 font-bold leading-tight">صدارة الدواوين 👑</p>
+                       <p className="text-[10px] text-stone-500 font-bold leading-tight">صدارة الدواوين <MessageWithIcons text="👑" /></p>
                        <p className="text-sm font-black text-brand leading-tight flex items-center gap-1.5">
                          {topSquads.length > 0 ? `${topSquads[0].name} بالصدارة!` : "ادخل التحدي مع ديوانيتك!"} 
                        </p>
@@ -5390,7 +5420,7 @@ export default function CustomerSite() {
                   transition={{ delay: 0.2 }}
                   className="text-2xl sm:text-3xl font-extrabold text-white mb-1 drop-shadow-md"
                 >
-                  {themeContext.title}
+                  <MessageWithIcons text={themeContext.title} />
                 </motion.h2>
                 <motion.p
                   initial={{ y: 20, opacity: 0 }}
@@ -5444,7 +5474,7 @@ export default function CustomerSite() {
                   >
                     <div className="bg-gradient-to-r from-brand/5 via-brand/10 to-brand/5 rounded-xl p-3 inline-block">
                       <p className="text-sm font-bold text-brand leading-relaxed flex items-center justify-center gap-2">
-                        <span>{moodMessage}</span>
+                        <span><MessageWithIcons text={moodMessage} /></span>
                         {!aiSearchLoading && <Sparkles className="w-3.5 h-3.5 text-accent shrink-0" />}
                       </p>
                     </div>
@@ -7948,7 +7978,7 @@ function ProductModal({
                       <span className="text-[10px] bg-[#0d3a22]/[0.07] text-[#0d3a22] px-2 py-0.5 rounded-full font-bold">موصى به لك</span>
                     </h4>
                     <p className="text-[12px] text-stone-600 leading-relaxed font-medium">
-                      {message}
+                      <MessageWithIcons text={message} />
                     </p>
                   </div>
                 </div>
