@@ -3915,11 +3915,11 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   /* Tables → labelled cards */
   .admin-rtable,.admin-rtable tbody{display:block;width:100%;}
   .admin-rtable thead{display:none;}
-  .admin-rtable tr{display:block;padding:14px 16px;border-bottom:1px solid #f5f5f4;}
-  .admin-rtable td{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:7px 0!important;text-align:start!important;min-width:0;overflow-wrap:anywhere;}
-  .admin-rtable td[data-label]::before{content:attr(data-label);flex:0 0 96px;font-size:12px;font-weight:800;font-style:normal;color:#a8a29e;letter-spacing:.02em;}
+  .admin-rtable tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px;padding:12px 16px;border-bottom:1px solid #f5f5f4;}
+  .admin-rtable td{display:flex;flex-direction:column;flex-wrap:nowrap;align-items:flex-start;gap:3px;padding:7px 0!important;text-align:start!important;min-width:0;overflow-wrap:anywhere;}
+  .admin-rtable td[data-label]::before{content:attr(data-label);flex:0 0 auto;font-size:12px;font-weight:800;font-style:normal;color:#a8a29e;letter-spacing:.02em;}
   .admin-rtable td[data-label=""]::before{display:none;}
-  .admin-rtable td[colspan]{display:block;padding:40px 12px!important;text-align:center!important;}
+  .admin-rtable td[colspan]{grid-column:1/-1;display:block;padding:40px 12px!important;text-align:center!important;}
   .admin-rtable td.text-2xl,.admin-rtable td.text-xl{font-size:20px;}
   .admin-rtable td .justify-center{justify-content:flex-start;}
   .admin-rtable td button{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;}

@@ -892,7 +892,7 @@ export default function AdminDashboard() {
                        </span>
                     </div>
                     
-                    <div className="mb-10 mt-6 text-right">
+                    <div className="mb-10 mt-12 sm:mt-6 text-right">
                       <p className="text-xs text-stone-300 font-bold uppercase mb-3">Invoice #{order.id}</p>
                       <h4 className="text-3xl font-extrabold text-brand group-hover:text-accent transition-colors leading-none block">
                         {order.customerName}
