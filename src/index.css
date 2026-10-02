@@ -4099,3 +4099,57 @@ body:has(.al-cart-bar) .order-welcome-replay {
 @media (min-width: 640px) {
   .product-detail-layer { padding-bottom: 28px !important; }
 }
+
+/* List product card: calm row (image · name/price/note · add) instead of a tall
+   stack with a floating price. Display only; the DOM and handlers are unchanged. */
+.menu-product-card:not(.menu-product-card-horizontal) {
+  min-height: 0 !important;
+  padding: .9rem 1rem !important;
+  gap: .75rem !important;
+}
+.menu-product-card:not(.menu-product-card-horizontal) > .flex-shrink-0 { order: 3; width: auto; }
+.menu-product-card:not(.menu-product-card-horizontal) .orser-product-content {
+  display: grid !important;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  grid-template-areas: "img title" "img price" "img note";
+  align-items: center;
+  align-content: center;
+  justify-items: start;
+  column-gap: .85rem;
+  row-gap: .25rem;
+  padding: 0 !important;
+  text-align: start !important;
+  order: 1;
+}
+.menu-product-card:not(.menu-product-card-horizontal) .product-media-frame { display: contents; }
+.menu-product-card:not(.menu-product-card-horizontal) .menu-product-image {
+  grid-area: img;
+  width: 5rem !important;
+  height: 5rem !important;
+  flex-basis: auto !important;
+  margin: 0 !important;
+  border-radius: 20px !important;
+}
+.menu-product-card:not(.menu-product-card-horizontal) .product-title {
+  grid-area: title;
+  margin: 0 !important;
+  text-align: start;
+  font-size: 1rem !important;
+}
+.menu-product-card:not(.menu-product-card-horizontal) .product-media-frame > div:last-child {
+  grid-area: price;
+  position: static !important;
+  transform: none !important;
+  translate: none !important;
+  inset: auto !important;
+  justify-self: start;
+  padding: .2rem .65rem !important;
+  background: #fff7ed !important;
+  box-shadow: none !important;
+  border-color: rgba(200,148,47,.2) !important;
+}
+.menu-product-card:not(.menu-product-card-horizontal) .product-notes-soft {
+  grid-area: note;
+  margin: 0 !important;
+  width: auto;
+}
