@@ -82,19 +82,19 @@ const MessageWithIcons = ({ text }: { text: string }) => (
   </>
 );
 
-// Display-only: the second (refinement) search card. On phones it sits behind a
+// Display-only: the second (refinement) search card. It sits behind a
 // compact «تصفية» disclosure (collapsed by default); same input, same handler.
 const RefineSearchCard = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
   const [open, setOpen] = useState(false);
   const expanded = open || value.trim().length > 0;
   return (
-    <div className="product-search-signature bg-white/90 border border-stone-100 rounded-3xl p-2 sm:p-4 shadow-sm">
+    <div className="product-search-signature bg-white/90 border border-stone-100 rounded-3xl p-2 shadow-sm">
       <button
         type="button"
         aria-expanded={expanded}
         aria-controls="quick-refine-field"
         onClick={() => setOpen((o) => !o)}
-        className="sm:hidden flex w-full min-h-[44px] items-center justify-between gap-2 px-3 text-sm font-bold text-brand"
+        className="flex w-full min-h-[44px] items-center justify-between gap-2 px-3 text-sm font-bold text-brand"
       >
         <span className="flex items-center gap-2">
           <SlidersHorizontal className="w-4 h-4 text-accent" strokeWidth={1.6} aria-hidden="true" />
@@ -104,7 +104,7 @@ const RefineSearchCard = ({ value, onChange }: { value: string; onChange: (v: st
       </button>
       <div
         id="quick-refine-field"
-        className={`flex items-center gap-3 bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3 ${expanded ? "max-sm:mt-2" : "max-sm:hidden"}`}
+        className={`flex items-center gap-3 bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3 ${expanded ? "mt-2" : "hidden"}`}
       >
         <Search className="w-4 h-4 text-stone-400" />
         <input
@@ -5119,7 +5119,7 @@ export default function CustomerSite() {
                     <Users className="w-4 h-4 text-[#b28a41]" />
                     <span>دخول الديوانية</span>
                   </div>
-                  <span className="text-[10px] text-[#9a783d] font-bold">لأعضاء الديوانية فقط</span>
+                  <span className="text-[11px] text-[#9a783d] font-bold">لأعضاء الديوانية فقط</span>
                 </button>
               </motion.div>
             </div>
@@ -5224,7 +5224,7 @@ export default function CustomerSite() {
                  </div>
                  
                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="text-[10px] font-bold text-orange-600 bg-white px-2 py-1 rounded-full shadow-sm border border-orange-100 flex items-center gap-1">
+                    <div className="text-[11px] font-bold text-orange-600 bg-white px-2 py-1 rounded-full shadow-sm border border-orange-100 flex items-center gap-1">
                        <span>سجل دخول / أسس</span>
                     </div>
                     <ArrowRight className="w-4 h-4 text-stone-400 rotate-180" />
@@ -5359,7 +5359,7 @@ export default function CustomerSite() {
                 >
                   {tannourStatus.text}
                 </span>
-                <span className="text-[10px] text-stone-300 mx-1">•</span>
+                <span className="text-[11px] text-stone-300 mx-1">•</span>
                 <span className="text-[11px] font-bold text-stone-400 leading-[1.6] py-0.5">
                   {goldenHourTheme.name}
                 </span>
@@ -5369,12 +5369,12 @@ export default function CustomerSite() {
                   aria-expanded={showLegalMeta}
                   aria-controls="legal-meta"
                   aria-label="بيانات السجل التجاري"
-                  className="sm:hidden relative inline-flex items-center justify-center w-6 h-6 text-stone-400 after:absolute after:-inset-2.5 after:content-['']"
+                  className="relative inline-flex items-center justify-center w-6 h-6 text-stone-400 after:absolute after:-inset-2.5 after:content-['']"
                 >
                   <Info className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />
                 </button>
               </div>
-              <div id="legal-meta" className={cn("mt-0.5 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-xs font-normal text-stone-500 leading-[1.55] sm:flex", showLegalMeta ? "flex" : "hidden")}>
+              <div id="legal-meta" className={cn("mt-0.5 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-xs font-normal text-stone-500 leading-[1.55]", showLegalMeta ? "flex" : "hidden")}>
                 <span>الاسم التجاري: {LEGAL_TRADE_NAME_AR}</span>
                 <span className="text-stone-400">•</span>
                 <span>رقم السجل التجاري: {COMMERCIAL_REGISTRATION_NUMBER}</span>
@@ -5760,7 +5760,7 @@ export default function CustomerSite() {
                                 transition={{ duration: 0.22 }}
                                 className="overflow-hidden"
                               >
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pt-4">
                                   {group.items.slice(0, 48).map((product) => (
                                     <motion.div
                                       key={product.id}
@@ -6659,7 +6659,7 @@ export default function CustomerSite() {
                   <button
                     onClick={() => radarStatus === "denied" ? setShowRadarInstructionModal(true) : refreshRadarOnce()}
                     disabled={radarStatus === "checking"}
-                    className="bg-brand text-white rounded-2xl px-3.5 py-2 text-[10px] font-black active:scale-95 disabled:opacity-60"
+                    className="bg-brand text-white rounded-2xl px-3.5 py-2 text-[11px] font-black active:scale-95 disabled:opacity-60"
                   >
                     {radarStatus === "checking" ? "جاري الفحص" : radarStatus === "denied" ? "تفعيل الرادار" : radarStatus === "weak" ? "تحسين الدقة" : "تشغيل الرادار"}
                   </button>
@@ -6677,10 +6677,10 @@ export default function CustomerSite() {
                     <span>{radarStatus === "denied" ? "اللوكيشن مقفّل فقط" : radarStatus === "weak" ? "الموقع تقريبي" : "رادار الديوانية"}</span>
                     {radarStatus === "denied" && <MapPin className="w-3.5 h-3.5 text-amber-500" />}
                   </div>
-                  <div className="text-[10px] font-bold text-stone-500 mt-0.5 leading-snug line-clamp-2">
+                  <div className="text-[11px] font-bold text-stone-500 mt-0.5 leading-snug line-clamp-2">
                     {radarStatus === "denied" ? "الموقع يعمل طبيعي. اللوكيشن مطلوب للرادار فقط." : radarStatusMsg}
                   </div>
-                  {radarAccuracy !== null && <div className="text-[10px] font-black text-stone-400 mt-0.5">الدقة: {radarAccuracy}م</div>}
+                  {radarAccuracy !== null && <div className="text-[11px] font-black text-stone-400 mt-0.5">الدقة: {radarAccuracy}م</div>}
                 </div>
               </div>
             </motion.div>
@@ -7397,7 +7397,7 @@ const ChefWhisperCard = ({
           >
             "{whisperText}"
           </p>
-          <span className="text-[10px] text-accent font-bold mt-auto tracking-widest pt-3 border-t border-accent/20 w-full relative z-10">
+          <span className="text-[11px] text-accent font-bold mt-auto tracking-widest pt-3 border-t border-accent/20 w-full relative z-10">
             اضغط للعودة
           </span>
         </div>
