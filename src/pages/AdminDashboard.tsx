@@ -1092,7 +1092,7 @@ export default function AdminDashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-xl font-extrabold text-brand flex items-center gap-2">
-                          <span>⏰</span> جدول أوقات عمل المطعم
+                          <Clock className="w-5 h-5 text-accent" aria-hidden="true" /> جدول أوقات عمل المطعم
                         </h3>
                         <p className="text-stone-400 text-xs font-medium mt-1">حدد ساعات العمل لكل يوم، ويتم تطبيق المنع التلقائي عند اتمام الطلب خارح أوقات العمل.</p>
                       </div>
@@ -1125,9 +1125,9 @@ export default function AdminDashboard() {
                             console.error(e);
                           }
                         }}
-                        className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-brand text-xs font-bold rounded-xl transition-all"
+                        className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-brand text-xs font-bold rounded-xl transition-all inline-flex items-center gap-1.5"
                       >
-                        ⚡ توقيت موحد لجميع الأيام (12:00 م - 11:30 م)
+                        <Zap className="w-3.5 h-3.5 text-accent" aria-hidden="true" /> توقيت موحد لجميع الأيام (12:00 م - 11:30 م)
                       </button>
                     </div>
 
@@ -1404,7 +1404,7 @@ export default function AdminDashboard() {
                                  <h3 className="text-lg font-black text-brand">صدارة الدواوين</h3>
                                  <p className="text-xs text-stone-500 font-bold mt-1">يُحسب تلقائياً من قاعدة البيانات المشتركة حسب نقاط أعضاء كل ديوانية.</p>
                               </div>
-                              <div className="w-12 h-12 rounded-2xl bg-white border border-amber-100 flex items-center justify-center text-2xl shadow-sm">🏆</div>
+                              <div className="w-12 h-12 rounded-2xl bg-white border border-amber-100 flex items-center justify-center text-2xl shadow-sm"><Trophy className="w-6 h-6 text-accent" aria-hidden="true" /></div>
                            </div>
                            <div className="space-y-3">
                               {strongestSquads.length === 0 && (
