@@ -5119,7 +5119,7 @@ export default function CustomerSite() {
                     <Users className="w-4 h-4 text-[#b28a41]" />
                     <span>دخول الديوانية</span>
                   </div>
-                  <span className="text-[10px] text-[#9a783d] font-bold">لأعضاء الديوانية فقط</span>
+                  <span className="text-[11px] text-[#9a783d] font-bold">لأعضاء الديوانية فقط</span>
                 </button>
               </motion.div>
             </div>
@@ -5224,7 +5224,7 @@ export default function CustomerSite() {
                  </div>
                  
                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="text-[10px] font-bold text-orange-600 bg-white px-2 py-1 rounded-full shadow-sm border border-orange-100 flex items-center gap-1">
+                    <div className="text-[11px] font-bold text-orange-600 bg-white px-2 py-1 rounded-full shadow-sm border border-orange-100 flex items-center gap-1">
                        <span>سجل دخول / أسس</span>
                     </div>
                     <ArrowRight className="w-4 h-4 text-stone-400 rotate-180" />
@@ -5359,7 +5359,7 @@ export default function CustomerSite() {
                 >
                   {tannourStatus.text}
                 </span>
-                <span className="text-[10px] text-stone-300 mx-1">•</span>
+                <span className="text-[11px] text-stone-300 mx-1">•</span>
                 <span className="text-[11px] font-bold text-stone-400 leading-[1.6] py-0.5">
                   {goldenHourTheme.name}
                 </span>
@@ -6659,7 +6659,7 @@ export default function CustomerSite() {
                   <button
                     onClick={() => radarStatus === "denied" ? setShowRadarInstructionModal(true) : refreshRadarOnce()}
                     disabled={radarStatus === "checking"}
-                    className="bg-brand text-white rounded-2xl px-3.5 py-2 text-[10px] font-black active:scale-95 disabled:opacity-60"
+                    className="bg-brand text-white rounded-2xl px-3.5 py-2 text-[11px] font-black active:scale-95 disabled:opacity-60"
                   >
                     {radarStatus === "checking" ? "جاري الفحص" : radarStatus === "denied" ? "تفعيل الرادار" : radarStatus === "weak" ? "تحسين الدقة" : "تشغيل الرادار"}
                   </button>
@@ -6677,10 +6677,10 @@ export default function CustomerSite() {
                     <span>{radarStatus === "denied" ? "اللوكيشن مقفّل فقط" : radarStatus === "weak" ? "الموقع تقريبي" : "رادار الديوانية"}</span>
                     {radarStatus === "denied" && <MapPin className="w-3.5 h-3.5 text-amber-500" />}
                   </div>
-                  <div className="text-[10px] font-bold text-stone-500 mt-0.5 leading-snug line-clamp-2">
+                  <div className="text-[11px] font-bold text-stone-500 mt-0.5 leading-snug line-clamp-2">
                     {radarStatus === "denied" ? "الموقع يعمل طبيعي. اللوكيشن مطلوب للرادار فقط." : radarStatusMsg}
                   </div>
-                  {radarAccuracy !== null && <div className="text-[10px] font-black text-stone-400 mt-0.5">الدقة: {radarAccuracy}م</div>}
+                  {radarAccuracy !== null && <div className="text-[11px] font-black text-stone-400 mt-0.5">الدقة: {radarAccuracy}م</div>}
                 </div>
               </div>
             </motion.div>
@@ -7397,7 +7397,7 @@ const ChefWhisperCard = ({
           >
             "{whisperText}"
           </p>
-          <span className="text-[10px] text-accent font-bold mt-auto tracking-widest pt-3 border-t border-accent/20 w-full relative z-10">
+          <span className="text-[11px] text-accent font-bold mt-auto tracking-widest pt-3 border-t border-accent/20 w-full relative z-10">
             اضغط للعودة
           </span>
         </div>
