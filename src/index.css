@@ -4072,3 +4072,15 @@ body:has(.al-cart-bar) .order-welcome-replay {
   header.r3-menu-header h1 + div > .text-stone-300 { display: none; }
   header.r3-menu-header h1 + div > span { white-space: nowrap; }
 }
+/* Mobile: the «؟» replay button is a small gutter chip (44px hit area kept via
+   ::after) so it never covers card text or the sticky cart CTA. */
+@media (max-width: 1023px) {
+  .order-welcome-replay {
+    left: 3px !important;
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 13px;
+    opacity: .9;
+  }
+  .order-welcome-replay::after { content: ""; position: absolute; inset: -8px; }
+}
