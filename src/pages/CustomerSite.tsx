@@ -47,6 +47,7 @@ import {
   UserPlus,
   DoorOpen,
   UtensilsCrossed,
+  ChevronLeft,
 } from "lucide-react";
 import { Product, OrderItem, Order, Address, Region } from "../types";
 import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegroundPush, type DiwaniyaPushState } from "../lib/diwaniyaPush";
@@ -4992,7 +4993,7 @@ export default function CustomerSite() {
                 <div className="w-24 h-24 rounded-full bg-white shadow-xl flex items-center justify-center border-2 border-[#b28a41] p-2 mx-auto">
                   <img
                     src={settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO}
-                    alt="Logo"
+                    alt="شعار المتجر"
                     className="w-full h-full object-contain rounded-full"
                     referrerPolicy="no-referrer"
                   />
@@ -5252,7 +5253,7 @@ export default function CustomerSite() {
                     e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
                   }
                 }}
-                alt="Logo"
+                alt="شعار المتجر"
                 className="w-full h-full object-contain bg-white"
               />
             </div>
@@ -5522,7 +5523,7 @@ export default function CustomerSite() {
                   </div>
                 </div>
                 <div className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center text-amber-800 group-hover:bg-amber-100 group-hover:translate-x-1 transition-all shrink-0">
-                  <span className="text-sm font-black">←</span>
+                  <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                 </div>
               </button>
             );

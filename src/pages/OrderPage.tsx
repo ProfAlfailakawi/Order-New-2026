@@ -18,6 +18,10 @@ import {
   Crown,
   Receipt,
   Share2,
+  Coffee,
+  Handshake,
+  Target,
+  Dices,
 } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
@@ -1761,13 +1765,27 @@ export default function OrderPage() {
                       const statusText = statusView.text;
                       const isCancelled = statusText.includes("ملغي");
                       const isFailed = statusText.includes("فشل");
-                      const isDelivered = statusText === "تم التوصيل";
+                      const rawStatusText = String((selectedOrder as any).status || "");
+                      // Completion comes from the raw status too: getStatusDisplay folds the canonical
+                      // terminal "تم التوصيل" / "delivered" into the generic paid label.
+                      const isDelivered = statusText === "تم التوصيل" || rawStatusText.includes("تم التوصيل") || rawStatusText.toLowerCase().includes("delivered");
                       const isPaid = isPaidVisualStatus(statusText) || isDelivered;
                       const isQatya = statusText.includes("قطية") && !isCancelled;
                       const needsPayment = statusText === "بانتظار الدفع" || statusText === "فشل في عملية الدفع";
                       const payHint = newPaymentLink ? "رابط الدفع جاهز" : statusText === "فشل في عملية الدفع" ? "جرّب الدفع مرة ثانية" : "كمّل الدفع لاعتماد الطلب";
                       const splits = Array.isArray((selectedOrder as any).splitPayments) ? (selectedOrder as any).splitPayments : [];
                       const splitPaid = splits.filter((sp: any) => sp?.status === "paid").length;
+                      // status -> {icon, short line}. First match wins, same order/meaning as before.
+                      const noteRules: Array<{ when: boolean; Icon: React.ComponentType<any>; line: string }> = [
+                        { when: statusText.includes("ملغي"), Icon: X, line: "الفاتورة ملغية أو انتهى وقت القطية قبل اكتمال المبلغ. للاستفسار تواصل معانا." },
+                        { when: statusText.includes("فشل"), Icon: RefreshCcw, line: "محاولة الدفع ما ضبطت. جرّب مرة ثانية." },
+                        { when: isPaidVisualStatus(statusText), Icon: Truck, line: "تبي المندوب ينتبه لشي بالطريق أو الموقع؟ بلّغنا بالواتساب." },
+                        { when: statusText.includes("تجهيز") || (statusText.includes("دفع") && !statusText.includes("بانتظار") && !statusText.includes("فشل")), Icon: Package, line: "تم الدفع بنجاح" },
+                        { when: statusText.includes("قطية"), Icon: Users, line: "القطيّة شغالة والربع يدفعون، والفاتورة ما تتأكد لين يكمل المبلغ." },
+                      ];
+                      const note = noteRules.find((r) => r.when) || { Icon: Clock, line: "استلمنا طلبك، بانتظار الدفع عشان نبلش التجهيز." };
+                      const isPreparing = statusText.includes("تجهيز");
+                      const isOnTheWay = rawStatusText.includes("جاري التوصيل");
                       const steps: DnaStep[] = [
                         { key: "created", label: "تم إنشاء الطلب", state: "done" },
                         {
@@ -1778,7 +1796,11 @@ export default function OrderPage() {
                         },
                         { key: "paid", label: "تم الدفع بنجاح", state: isPaid ? "done" : "pending" },
                       ];
+                      // Prep / on-the-way appear only when the order's own status says so (no new states).
+                      if (isPreparing) steps.push({ key: "preparing", label: "التجهيز", state: isDelivered ? "done" : "current" });
+                      if (isOnTheWay) steps.push({ key: "on-the-way", label: "في الطريق", state: isDelivered ? "done" : "current" });
                       if (isDelivered) steps.push({ key: "delivered", label: "تم التوصيل", state: "done" });
+                      else if (!isCancelled && !isFailed) steps.push({ key: "delivered", label: "تم التوصيل", state: "pending" });
                       return (
                         <div id="order-status-panel" className="dna-track-status" dir="rtl">
                           <DnaStatusHeader
@@ -1786,28 +1808,10 @@ export default function OrderPage() {
                             tone={isCancelled || isFailed ? "danger" : isPaid ? "accent" : isQatya ? "accent" : "warn"}
                             title={statusText}
                             subtitle={
-                              (getStatusDisplay(selectedOrder).text.includes("ملغي")
-                        ? "المعذرة، الفاتورة ملغية أو انتهى وقت القطية وما اكتمل المبلغ. للاستفسار تواصل معانا."
-                        : getStatusDisplay(selectedOrder).text.includes("فشل")
-                        ? "محاولة الدفع ما ضبطت. جرّب مرة ثانية."
-                        : isPaidVisualStatus(getStatusDisplay(selectedOrder).text)
-                          ? "تبي المندوب ينتبه حق شي معين بالطريج أو الموقع؟ تواصل ويانا بالواتساب وبلغنا."
-                          : getStatusDisplay(selectedOrder).text.includes(
-                                "تجهيز",
-                              ) ||
-                              (getStatusDisplay(selectedOrder).text.includes(
-                                "دفع",
-                              ) &&
-                                !getStatusDisplay(selectedOrder).text.includes(
-                                  "بانتظار",
-                                ) &&
-                                !getStatusDisplay(selectedOrder).text.includes(
-                                  "فشل",
-                                ))
-                            ? "تم الدفع بنجاح"
-                            : getStatusDisplay(selectedOrder).text.includes("قطية")
-                            ? "القطيّة شغالة والربع قاعدين يدفعون، الفاتورة ما تتأكد لين يكمل المبلغ!"
-                            : "استلمنا طلبك، بانتظار الدفع عشان نبلش التجهيز.")
+                              <span className="inline-flex items-center gap-1.5">
+                                <note.Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                                {note.line}
+                              </span>
                             }
                             actions={
                               needsPayment ? (
@@ -1879,12 +1883,12 @@ export default function OrderPage() {
 	                      ).length > 0 || (((selectedOrder as any).splitType === "roulette" || isDiwaniyaQatyaOrder(selectedOrder)) && ((selectedOrder as any).splitParticipants || []).length > 0)) && (
                         <div className="track-v14-social-card track-wow-social-card bg-stone-50 p-4 rounded-2xl border border-stone-100">
                           <h4 className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                            <Users className="w-3 h-3" /> {(selectedOrder as any).splitType === 'roulette' ? 'المشاركون في وهق غيرك 🎰' : 'المساهمين في القطية'}
+                            {(selectedOrder as any).splitType === 'roulette' ? <><Dices className="w-3 h-3" aria-hidden="true" /> المشاركون في وهق غيرك</> : <><Users className="w-3 h-3" aria-hidden="true" /> المساهمين في القطية</>}
                           </h4>
                           {(selectedOrder as any).splitType === 'roulette' && (selectedOrder as any).rouletteLoser && (
                             <div className="mb-4 bg-fuchsia-50 border border-fuchsia-100 p-3 rounded-xl flex items-center justify-between">
                               <span className="text-fuchsia-600 font-bold text-xs flex items-center gap-2">
-                                🎯 بطل الليلة (صاحب الحظ اللي دفعها)
+                                <Target className="w-4 h-4 shrink-0" aria-hidden="true" /> بطل الليلة (صاحب الحظ اللي دفعها)
                               </span>
                               <span className="font-extrabold text-fuchsia-700 text-sm">{(selectedOrder as any).rouletteLoser}</span>
                             </div>
@@ -2146,13 +2150,13 @@ export default function OrderPage() {
                         >
                            <Users className="w-5 h-5 text-stone-400" />
                            <p className="text-xs font-extrabold text-stone-600">
-                             مو مشترك بديوانية للحين؟ ☕
+                             <span className="inline-flex items-center gap-1.5">مو مشترك بديوانية للحين؟ <Coffee className="w-4 h-4" aria-hidden="true" /></span>
                            </p>
                            <Link
                              to="/?showSquads=true"
-                             className="text-[10px] font-black text-accent bg-accent/5 px-3 py-1.5 rounded-xl border border-accent/10 hover:bg-accent/10 transition-colors"
+                             className="text-[10px] font-black text-accent bg-accent/5 px-3 py-1.5 rounded-xl border border-accent/10 hover:bg-accent/10 transition-colors inline-flex items-center gap-1.5"
                            >
-                             أسس ديوانيتك أو شارك ديوانية ربعك! 🤝
+                             أسس ديوانيتك أو شارك ديوانية ربعك! <Handshake className="w-4 h-4" aria-hidden="true" />
                            </Link>
                         </motion.div>
                       )}

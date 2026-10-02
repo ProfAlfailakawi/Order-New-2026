@@ -274,14 +274,28 @@ export interface DnaRingProps {
   sublabel?: React.ReactNode;
   ariaLabel?: string;
   className?: string;
+  /** Optional per-contributor arcs (same unit as `value`); when 2+ are given they replace the single arc. */
+  segments?: number[];
 }
 
-export function DnaRing({ value, max = 100, size = 52, stroke = 4, tone = 'accent', label, sublabel, ariaLabel, className }: DnaRingProps) {
+export function DnaRing({ value, max = 100, size = 52, stroke = 4, tone = 'accent', label, sublabel, ariaLabel, className, segments }: DnaRingProps) {
   const has = typeof value === 'number' && Number.isFinite(value) && max > 0;
   const fraction = has ? Math.min(1, Math.max(0, (value as number) / max)) : 0;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const mid = size / 2;
+  const segVals = (segments || []).filter((v) => Number.isFinite(v) && v > 0);
+  let segArcs: Array<{ start: number; len: number }> | null = null;
+  if (has && segVals.length >= 2) {
+    const gap = Math.min(3, c / segVals.length / 4);
+    let acc = 0;
+    segArcs = segVals.map((v) => {
+      const f = Math.min(1, v / max);
+      const arc = { start: (acc / c) * 360, len: Math.max(0.5, c * f - gap) };
+      acc += c * f;
+      return arc;
+    });
+  }
   return (
     <div
       className={cx('dna', 'dna-ring', className)}
@@ -292,7 +306,22 @@ export function DnaRing({ value, max = 100, size = 52, stroke = 4, tone = 'accen
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
         <circle className="dna-ringt" cx={mid} cy={mid} r={r} fill="none" strokeWidth={stroke} strokeDasharray={has ? undefined : '3 4'} />
-        {has && fraction > 0 && (
+        {has && segArcs && segArcs.map((a, i) => (
+          <circle
+            key={i}
+            className="dna-ringv"
+            cx={mid}
+            cy={mid}
+            r={r}
+            fill="none"
+            strokeWidth={stroke}
+            strokeLinecap="butt"
+            strokeOpacity={i % 2 === 0 ? 1 : 0.6}
+            strokeDasharray={`${a.len} ${c}`}
+            transform={`rotate(${-90 + a.start} ${mid} ${mid})`}
+          />
+        ))}
+        {has && !segArcs && fraction > 0 && (
           <circle
             className="dna-ringv"
             cx={mid}

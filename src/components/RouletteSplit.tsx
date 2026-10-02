@@ -2,7 +2,7 @@ import OrderMicroLoader from "./OrderMicroLoader";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Users, Crown, CreditCard, PartyPopper, ArrowRight, AlertCircle, Check, Trophy, ShieldCheck } from "lucide-react";
+import { Sparkles, Users, Crown, CreditCard, PartyPopper, ArrowRight, AlertCircle, Check, Trophy, ShieldCheck, Dices, Rocket, HeartCrack, RefreshCcw } from "lucide-react";
 import { normalizeDigits, getSaduAvatar, cn } from "../utils";
 
 const normalizeArabicName = (name: string) => {
@@ -216,9 +216,9 @@ export function RouletteSplit({
               <Check className="w-8 h-8 text-[#25D366]" strokeWidth={3} />
             </div>
             <div className="text-center relative z-10 w-full">
-              <h3 className="text-2xl font-extrabold mb-2">كفو يا {urlName || loser || "بطل"}! 🥳</h3>
+              <h3 className="text-2xl font-extrabold mb-2">كفو يا {urlName || loser || "بطل"}!</h3>
               <p className="text-white/90 font-medium leading-relaxed">
-                دفعك تم بنجاح، مبروك فوزك بلقب الكريم اليوم!<br/>استمتعوا بالعشاء الهني وبالعافية عليكم! ✨
+                دفعك تم بنجاح، مبروك فوزك بلقب الكريم اليوم!<br/>استمتعوا بالعشاء الهني وبالعافية عليكم! <Sparkles className="inline w-4 h-4 align-middle" aria-hidden="true" />
               </p>
               <div className="mt-6 flex items-center justify-center gap-2 text-sm text-green-100/80 bg-black/10 py-2 px-4 rounded-full w-fit mx-auto">
                 <OrderMicroLoader size={16} tone="onDark" delay={0} label="جاري التحويل للطلب" /> نحوّلك للطلب...
@@ -228,14 +228,14 @@ export function RouletteSplit({
         ) : (
           <div className="bg-green-500/20 border border-green-500/50 rounded-3xl p-8 max-w-md w-full space-y-4">
             <PartyPopper className="w-16 h-16 mx-auto text-green-400" />
-            <h2 className="text-3xl font-black text-green-400">انتهت اللعبة! 🎯</h2>
+            <h2 className="text-3xl font-black text-green-400">انتهت اللعبة!</h2>
             <p className="font-bold text-green-100">
               تم دفع الفاتورة بالكامل عن طريق{" "}
               <span className="text-white bg-black/30 px-2 py-1 rounded-md">
                 {loser || "صاحب الحظ"}
               </span>
             </p>
-            <p className="text-sm text-green-200 mt-4">الطلب قاعد يتجهز وبطريجه لكم 🚀</p>
+            <p className="text-sm text-green-200 mt-4">الطلب قاعد يتجهز وبطريجه لكم <Rocket className="inline w-4 h-4 align-middle" aria-hidden="true" /></p>
             <button
               onClick={() => navigate(`/track?order_id=${order.id}`)}
               className="mt-6 bg-white text-green-600 font-black py-4 px-6 rounded-xl w-full active:scale-95 transition-transform"
@@ -312,7 +312,7 @@ export function RouletteSplit({
           <div className="roulette-title-card">
             <span className="roulette-kicker">تحدي الربع</span>
             <h1 className="text-3xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-300 via-white to-violet-300">
-              وهق غيرك 🎰
+              وهق غيرك <Dices className="inline-block w-[0.8em] h-[0.8em] align-middle text-fuchsia-300" aria-hidden="true" />
             </h1>
             <p className="text-stone-300 font-bold mt-2 leading-relaxed max-w-xl mx-auto">
               أسماء الربع تدخل، والنبضة تختار واحد يشيل العشا. الفاتورة {order.total.toFixed(3)} د.ك
@@ -423,7 +423,7 @@ export function RouletteSplit({
                   className="w-full wahag-participant-chip bg-white/10 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 mt-4 hover:bg-white/20 transition-colors border border-white/10"
                 >
                   <Sparkles className="w-5 h-5 text-fuchsia-400" />
-                  دز الرابط للربع ووهق غيرك 🎰
+                  دز الرابط للربع ووهق غيرك
                 </button>
 
                 {participants.length >= 2 && (
@@ -431,7 +431,7 @@ export function RouletteSplit({
                     onClick={spin}
                     className="roulette-spin-button w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 font-black py-4 rounded-2xl shadow-lg shadow-fuchsia-500/20 active:scale-95 transition-transform mt-4"
                   >
-                    وهق غيرك 🎰
+                    <span className="inline-flex items-center justify-center gap-2">وهق غيرك <Dices className="w-5 h-5" aria-hidden="true" /></span>
                   </button>
                 )}
               </div>
@@ -543,7 +543,7 @@ export function RouletteSplit({
                               <AlertCircle className="w-7 h-7 text-red-500" strokeWidth={3} />
                             </div>
                             <div className="text-center relative z-10 w-full">
-                              <h3 className="text-xl font-extrabold mb-1">فشلت العملية يا {urlName || mySpinName || loser} 💔</h3>
+                              <h3 className="text-xl font-extrabold mb-1">فشلت العملية يا {urlName || mySpinName || loser} <HeartCrack className="inline w-5 h-5 align-middle" aria-hidden="true" /></h3>
                               <p className="text-white/90 font-medium text-sm leading-relaxed">{errorMsg}</p>
                             </div>
                           </motion.div>
@@ -576,7 +576,7 @@ export function RouletteSplit({
                           className="w-full bg-white text-violet-600 font-black py-4 rounded-xl mt-4 active:scale-95 transition-transform flex justify-center items-center gap-2 shadow-[0_0_25px_rgba(139,92,246,0.3)]"
                         >
                           <CreditCard className="w-5 h-5" />
-                          {paymentStatus === "failed" ? "جرب مرة ثانية 🔄" : `ادفع الغرامة`}
+                          {paymentStatus === "failed" ? <span className="inline-flex items-center gap-2">جرب مرة ثانية <RefreshCcw className="w-4 h-4" aria-hidden="true" /></span> : `ادفع الغرامة`}
                         </button>
                       </div>
                     );
