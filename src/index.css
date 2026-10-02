@@ -4186,3 +4186,6 @@ body:has(.al-cart-bar) .order-welcome-replay {
   .checkout-wow-footer.checkout-footer-delivery button.w-full { padding-block: .9rem !important; }
 }
 .checkout-summary-summary::-webkit-details-marker { display: none; }
+
+/* Payment step: the scroll hint sits below the divider chip instead of overlapping it. */
+.payment-wow-step:after { margin-top: .75rem !important; margin-bottom: .5rem !important; }

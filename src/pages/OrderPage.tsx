@@ -1573,13 +1573,13 @@ export default function OrderPage() {
                     transition={{ delay: index * 0.1 }}
                     onClick={() => setSelectedOrder(order)}
                     className={cn(
-                      "bg-white rounded-[32px] p-6 border shadow-sm hover:shadow-md transition-all group cursor-pointer active:scale-95",
+                      "bg-white rounded-[32px] p-5 sm:p-6 border shadow-sm hover:shadow-md transition-all group cursor-pointer active:scale-95",
                       isOngoing
                         ? "border-accent/40 shadow-accent/10"
                         : "border-stone-100",
                     )}
                   >
-                    <div className="flex items-start justify-between mb-6 max-sm:flex-wrap max-sm:gap-3">
+                    <div className="flex items-start justify-between mb-4 sm:mb-6 max-sm:flex-wrap max-sm:gap-3">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 max-sm:flex-wrap">
                           <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">
@@ -1624,7 +1624,7 @@ export default function OrderPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-4 border-t border-stone-50 pt-6">
+                    <div className="space-y-3 sm:space-y-4 border-t border-stone-50 pt-4 sm:pt-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div
@@ -1649,7 +1649,7 @@ export default function OrderPage() {
                             </p>
                           </div>
                         </div>
-                        <button className="p-3 bg-stone-50 text-stone-400 rounded-xl hover:bg-brand hover:text-white transition-all group-hover:scale-110">
+                        <button className="min-w-[44px] min-h-[44px] flex items-center justify-center bg-stone-50 text-stone-400 rounded-xl hover:bg-brand hover:text-white transition-all group-hover:scale-110" aria-label="تفاصيل الطلب">
                           <ChevronLeft className="w-4 h-4" />
                         </button>
                       </div>
@@ -1688,8 +1688,8 @@ export default function OrderPage() {
               layoutId={`order-${selectedOrder.id}`}
               className="track-details-modal-wow relative w-full max-w-lg bg-white rounded-t-[48px] sm:rounded-[48px] shadow-xl overflow-hidden max-h-[90vh] flex flex-col"
             >
-              <div className="p-8 border-b border-stone-50 flex flex-col">
-                <div className="flex items-center justify-between mb-4">
+              <div className="p-5 sm:p-8 border-b border-stone-50 flex flex-col">
+                <div className="flex items-center justify-between mb-2 sm:mb-4">
                   <div className="flex items-center gap-4">
                     <div>
                       <h3 className="text-2xl font-extrabold text-brand flex items-center gap-2">
@@ -1962,7 +1962,7 @@ export default function OrderPage() {
                   
                     {/* Split Payment Summary */}
                     {getSafeSplitPayments(selectedOrder).length > 0 && (selectedOrder as any).splitType !== 'roulette' && (
-                       <div className="track-v14-split-summary bg-brand/5 p-4 rounded-2xl border border-brand/10 mb-4 flex justify-between items-center text-sm">
+                       <div className="track-v14-split-summary bg-brand/5 p-4 rounded-2xl border border-brand/10 mb-4 flex flex-wrap gap-y-3 justify-between items-center text-sm">
                           <div className="flex flex-col text-center">
                              <span className="text-[10px] text-stone-500 font-bold mb-0.5">الإجمالي</span>
                              <span className="font-extrabold text-stone-700">{Number((selectedOrder as any).total).toFixed(3)} د.ك</span>
@@ -1979,6 +1979,14 @@ export default function OrderPage() {
                                 {Math.max(0, Number((selectedOrder as any).total) - getSafeSplitPayments(selectedOrder).filter((p: any) => p.status === "paid").reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0)).toFixed(3)} د.ك
                              </span>
                           </div>
+                          {Number((selectedOrder as any).total) > 0 && (
+                            <div className="basis-full h-1.5 rounded-full bg-stone-200/80 overflow-hidden" aria-hidden="true">
+                              <div
+                                className="h-full rounded-full bg-green-600"
+                                style={{ width: `${Math.min(100, Math.max(0, (getSafeSplitPayments(selectedOrder).filter((p: any) => p.status === "paid").reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0) / Number((selectedOrder as any).total)) * 100))}%` }}
+                              />
+                            </div>
+                          )}
                        </div>
                     )}
 
@@ -1989,23 +1997,23 @@ export default function OrderPage() {
                     <>
                     <button
                       onClick={() => openWhatsAppInvoiceText(selectedOrder as any)}
-                      className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl bg-[#25D366] text-white font-extrabold text-sm hover:bg-[#128C7E] transition-all shadow-md outline-none mb-6"
+                      className="flex items-center justify-center gap-3 w-full min-h-[52px] p-3 rounded-2xl bg-[#25D366] text-white font-extrabold text-sm hover:bg-[#128C7E] transition-all shadow-md outline-none mb-3"
                     >
                       <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.878-.788-1.46-1.761-1.633-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z" />
                       </svg>
                       حفظ كـ رسالة في واتس آب
                     </button>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                    <div className="grid grid-cols-2 gap-3 mb-6">
                       <button
                         onClick={() => openPrintableInvoice(selectedOrder as any)}
-                        className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl bg-white border border-emerald-100 text-brand font-extrabold text-sm hover:bg-emerald-50 transition-all shadow-sm outline-none"
+                        className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-3 w-full min-h-[64px] p-3 sm:p-4 text-center rounded-2xl bg-white border border-emerald-100 text-brand font-extrabold text-sm hover:bg-emerald-50 transition-all shadow-sm outline-none"
                       >
                         <Receipt className="w-5 h-5" strokeWidth={1.6} aria-hidden="true" /> إنشاء / طباعة PDF
                       </button>
                       <button
                         onClick={() => shareOrPrintInvoice(selectedOrder as any)}
-                        className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl bg-white border border-amber-100 text-amber-700 font-extrabold text-sm hover:bg-amber-50 transition-all shadow-sm outline-none"
+                        className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-3 w-full min-h-[64px] p-3 sm:p-4 text-center rounded-2xl bg-white border border-amber-100 text-amber-700 font-extrabold text-sm hover:bg-amber-50 transition-all shadow-sm outline-none"
                       >
                         <Share2 className="w-5 h-5" strokeWidth={1.6} aria-hidden="true" /> مشاركة الفاتورة
                       </button>
