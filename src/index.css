@@ -4055,3 +4055,11 @@ body:has(.al-cart-bar) .order-welcome-replay {
   .product-detail-layer .flex.flex-col.sm\:flex-row img,
   .product-detail-layer .flex.flex-col.sm\:flex-row > div:first-child > div.flex { width: 80px !important; height: 80px !important; max-height: 30dvh !important; }
 }
+
+/* Product sheet open on phones: lift the cart toast to the top so it never covers the add-ons list (display only). */
+@media(max-width:640px){
+  body:has(.product-detail-layer) .cart-moment-toast{
+    bottom:auto!important;
+    top:calc(env(safe-area-inset-top, 0px) + 10px)!important;
+  }
+}
