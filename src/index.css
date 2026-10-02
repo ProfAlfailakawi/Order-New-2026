@@ -4063,7 +4063,13 @@ body:has(.al-cart-bar) .order-welcome-replay {
     top:calc(env(safe-area-inset-top, 0px) + 10px)!important;
   }
 }
+
 /* ---- Display-only polish pass (r42) ---- */
+/* Desktop: the menu zone's corner tints ended in hard vertical edges at the
+   zone boundary; the shell already carries the same wash, so drop the seam. */
+@media (min-width: 1024px) {
+  .customer-wow-menu { background: none; }
+}
 /* Mobile: compact sticky header (the legal line lives behind the ⓘ button). */
 @media (max-width: 639px) {
   header.r3-menu-header { padding-block: 10px; }
