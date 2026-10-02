@@ -43,14 +43,16 @@ export interface DnaIconTileProps {
   badge?: React.ReactNode;
   label?: string;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export function DnaIconTile({ icon, tone = 'accent', size = 'md', badge, label, className }: DnaIconTileProps) {
+export function DnaIconTile({ icon, tone = 'accent', size = 'md', badge, label, className, style }: DnaIconTileProps) {
   return (
     <span
       className={cx('dna', 'dna-tile', className)}
       data-dna-tone={tone}
       data-size={size}
+      style={style}
       role={label ? 'img' : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
