@@ -4189,3 +4189,14 @@ body:has(.al-cart-bar) .order-welcome-replay {
 
 /* Payment step: the scroll hint sits below the divider chip instead of overlapping it. */
 .payment-wow-step:after { margin-top: .75rem !important; margin-bottom: .5rem !important; }
+
+/* `gold-gradient` is used by five admin buttons with white text but was never defined,
+   which left them as blank white pills. Dark brand-to-brass keeps white text readable. */
+.gold-gradient { background-image: linear-gradient(135deg, #0d3a22 0%, #1f4d36 55%, #8a6a2f 100%); }
+
+/* The shimmer rule above forces position:relative on every .animate-pulse, which pulled
+   absolutely-positioned pulse dots (e.g. the admin bell indicator) into the flow and
+   stretched their parents. Keep absolute/fixed pulses where they were put. */
+.animate-pulse.absolute { position: absolute; overflow: visible; }
+.animate-pulse.fixed { position: fixed; overflow: visible; }
+.animate-pulse.absolute:after, .animate-pulse.fixed:after { content: none; }

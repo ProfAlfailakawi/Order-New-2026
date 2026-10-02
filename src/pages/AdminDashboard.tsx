@@ -2075,7 +2075,7 @@ function NavItem({ active, onClick, icon, label, badge }: any) {
 // Compact one-row stat strip (display only; same numbers/series as before).
 function StatStrip({ revenue, revenueTrend, revenueSeries, newCount, newTrend, newSeries, paidCount, paidSeries, paidTrend }: any) {
   const revNum = Number(revenue) || 0;
-  const revShort = Math.abs(revNum) >= 100000 ? `${Math.round(revNum / 1000)}K` : Math.abs(revNum) >= 10000 ? `${(Math.round(revNum / 100) / 10)}K` : String(revenue);
+  const revShort = Math.abs(revNum) >= 100000 ? `${Math.round(revNum / 1000)}K` : Math.abs(revNum) >= 10000 ? `${(Math.round(revNum / 100) / 10)}K` : String(Math.round(revNum * 1000) / 1000);
   const Bars = ({ series, color, label }: { series: number[] | null; color: string; label: string }) => {
     const vals = (series && series.length ? series : Array.from({ length: 7 }, () => 0)).slice(-7);
     const max = Math.max(...vals, 0);
