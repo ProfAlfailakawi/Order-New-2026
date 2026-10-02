@@ -8110,7 +8110,7 @@ function ProductModal({
             />
           </div>
 
-          <div className="flex items-center gap-4 pt-6 sticky bottom-0 bg-white/90 backdrop-blur-xl pb-4 border-t border-stone-50 mt-6">
+          <div className="product-sheet-footer flex items-center gap-4 pt-2 sticky bottom-0 pb-4 mt-0">
             <div className="flex items-center bg-stone-50/80 backdrop-blur-sm border-2 border-stone-100 rounded-xl p-1 shrink-0">
               <button
                 onClick={() => {

@@ -4084,3 +4084,12 @@ body:has(.al-cart-bar) .order-welcome-replay {
   }
   .order-welcome-replay::after { content: ""; position: absolute; inset: -8px; }
 }
+/* Product sheet: sticky action bar fades into the sheet instead of a lighter slab. */
+.product-detail-layer .product-sheet-footer { backdrop-filter: none; }
+.product-detail-layer .product-sheet-footer::before {
+  content: ""; position: absolute; inset: 0 -40px; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,252,246,0), rgba(255,252,246,.5) 30%, rgba(255,252,246,.5) 65%, rgba(255,252,246,0));
+}
+@media (min-width: 640px) {
+  .product-detail-layer { padding-bottom: 28px !important; }
+}
