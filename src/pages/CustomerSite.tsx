@@ -5760,7 +5760,7 @@ export default function CustomerSite() {
                                 transition={{ duration: 0.22 }}
                                 className="overflow-hidden"
                               >
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pt-4">
                                   {group.items.slice(0, 48).map((product) => (
                                     <motion.div
                                       key={product.id}
