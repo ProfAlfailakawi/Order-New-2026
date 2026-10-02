@@ -82,19 +82,19 @@ const MessageWithIcons = ({ text }: { text: string }) => (
   </>
 );
 
-// Display-only: the second (refinement) search card. On phones it sits behind a
+// Display-only: the second (refinement) search card. It sits behind a
 // compact «تصفية» disclosure (collapsed by default); same input, same handler.
 const RefineSearchCard = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
   const [open, setOpen] = useState(false);
   const expanded = open || value.trim().length > 0;
   return (
-    <div className="product-search-signature bg-white/90 border border-stone-100 rounded-3xl p-2 sm:p-4 shadow-sm">
+    <div className="product-search-signature bg-white/90 border border-stone-100 rounded-3xl p-2 shadow-sm">
       <button
         type="button"
         aria-expanded={expanded}
         aria-controls="quick-refine-field"
         onClick={() => setOpen((o) => !o)}
-        className="sm:hidden flex w-full min-h-[44px] items-center justify-between gap-2 px-3 text-sm font-bold text-brand"
+        className="flex w-full min-h-[44px] items-center justify-between gap-2 px-3 text-sm font-bold text-brand"
       >
         <span className="flex items-center gap-2">
           <SlidersHorizontal className="w-4 h-4 text-accent" strokeWidth={1.6} aria-hidden="true" />
@@ -104,7 +104,7 @@ const RefineSearchCard = ({ value, onChange }: { value: string; onChange: (v: st
       </button>
       <div
         id="quick-refine-field"
-        className={`flex items-center gap-3 bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3 ${expanded ? "max-sm:mt-2" : "max-sm:hidden"}`}
+        className={`flex items-center gap-3 bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3 ${expanded ? "mt-2" : "hidden"}`}
       >
         <Search className="w-4 h-4 text-stone-400" />
         <input
