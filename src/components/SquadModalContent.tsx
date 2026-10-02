@@ -1,7 +1,15 @@
 import OrderMicroLoader from "./OrderMicroLoader";
 import React from "react";
 import { motion } from "motion/react";
-import { User, Landmark, Crown, Users, LogIn, DoorOpen, DoorClosed, Trophy, Star, Medal, Target, BrainCircuit, Tent, UtensilsCrossed, KeyRound, MapPin, Bell } from "lucide-react";
+import { User, Landmark, Crown, Users, LogIn, DoorOpen, DoorClosed, Trophy, Star, Medal, Target, BrainCircuit, Tent, UtensilsCrossed, KeyRound, MapPin, Bell, Coffee, Dices } from "lucide-react";
+
+// Built-in sample memories use "lucide:*" keys; user-picked memory icons stay emoji text.
+const MemoryIcon = ({ icon, className = "w-10 h-10" }: { icon?: string; className?: string }) => {
+  if (icon === "lucide:coffee") return <Coffee className={className} aria-hidden="true" />;
+  if (icon === "lucide:food") return <UtensilsCrossed className={className} aria-hidden="true" />;
+  if (icon === "lucide:dice") return <Dices className={className} aria-hidden="true" />;
+  return <>{icon}</>;
+};
 import { cn } from "../utils";
 import { robustGetCurrentPosition } from "../utils/geolocation";
 import { SaduPresenceRug } from "./SaduPresenceRug";
@@ -174,7 +182,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           title: "يمعة الربع الأولى بدوانيتنا",
           desc: "أول ليلة جمعتنا بالشرق القديم، تبادلنا السوالف والضحك وصبينا دلة القهوة بالهيل الطيبة.",
           date: "14 May 2026",
-          icon: "☕",
+          icon: "lucide:coffee",
           bg: "from-amber-100/60 to-amber-50"
         },
         {
@@ -182,7 +190,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           title: "عشاء سحور الربع العامر",
           desc: "طلبنا مجبوس لحم حاشي ومرق هامور معتبر، وكان بوفيه متكامل تم بالقطية الطيبة والذوق.",
           date: "28 May 2026",
-          icon: "🍛",
+          icon: "lucide:food",
           bg: "from-emerald-100/40 to-[#0d3a22]/5"
         },
         {
@@ -190,7 +198,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           title: "فوز بوعلي بقرعة المعزب",
           desc: "أقوى حماس لما دارت القرعة ووقفت على بوعلي، وكان هو معزب الليلة بالرضا والسرور والضحكة الي ما تفارقنا.",
           date: "3 June 2026",
-          icon: "🎲",
+          icon: "lucide:dice",
           bg: "from-yellow-100/50 to-[#faf8f5]"
         }
       ];
@@ -2264,7 +2272,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                   "filter drop-shadow-md select-none transition-all duration-700",
                                   isCuring ? "scale-90 rotate-6 blur-md grayscale sepia saturate-50 opacity-40 animate-pulse" : "scale-100 rotate-0 blur-0 grayscale-0 sepia-0 saturate-100 opacity-100"
                                 )}>
-                                  {selectedMemory.icon}
+                                  <MemoryIcon icon={selectedMemory.icon} className="w-20 h-20 text-amber-800" />
                                 </span>
                                 {isCuring && (
                                   <div className="absolute inset-0 bg-[#0d3a22]/5 mix-blend-color pointer-events-none" />
@@ -2363,7 +2371,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-12 h-5 bg-white/40 backdrop-blur-[1px] border-x border-dashed border-stone-400/25 rotate-1 shadow-sm opacity-85 mix-blend-multiply pointer-events-none z-10" />
 
                                   <div className={cn("diwaniya-memory-frame aspect-square w-full flex flex-col items-center justify-center text-3xl bg-gradient-to-br border border-stone-200/60 relative overflow-hidden shadow-inner rounded-xs", album.bg)}>
-                                    <span className="filter drop-shadow-sm select-none transform hover:scale-110 transition-transform duration-500">{album.icon}</span>
+                                    <span className="filter drop-shadow-sm select-none transform hover:scale-110 transition-transform duration-500"><MemoryIcon icon={album.icon} className="w-8 h-8 text-amber-800" /></span>
                                     <div className="absolute inset-0 bg-yellow-900/[0.03] mix-blend-color-burn pointer-events-none" />
                                     <div className="absolute top-1.5 left-1.5 text-[10px] bg-white/80 border border-stone-100 px-1 rounded font-mono text-stone-500">
                                       #{formatEnglishNumber(idx + 1)}

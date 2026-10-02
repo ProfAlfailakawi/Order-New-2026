@@ -17,6 +17,9 @@ import {
   Zap,
   MessageSquare,
   MapPin,
+  Crown,
+  Flame,
+  Eye,
 } from "lucide-react";
 import { Order } from "../types";
 import { cn, normalizePhone, normalizeDigits, getSaduAvatar, formatKuwaitiDate } from "../utils";
@@ -728,6 +731,9 @@ export default function SplitPayment() {
               <DnaRing
                 value={paidAmount}
                 max={Number(order.total || 0)}
+                segments={getSafeSplitPayments(order)
+                  .filter((p: any) => String(p.status || "").toLowerCase() === "paid")
+                  .map((p: any) => Number(p.amount) || 0)}
                 size={168}
                 stroke={10}
                 label={remainingAmount.toFixed(3)}
@@ -884,7 +890,7 @@ export default function SplitPayment() {
                 transition={{ delay: 0.3 }}
                 className="text-3xl font-black tracking-tight drop-shadow-md"
               >
-                كفو يا الربع! 👑
+                كفو يا الربع! <Crown className="inline w-7 h-7 -mt-1" aria-hidden="true" />
               </motion.h2>
               {paymentStatus === "success" && !isQatyaStillOpen && urlName && (
                 <motion.p
@@ -893,7 +899,7 @@ export default function SplitPayment() {
                   transition={{ delay: 0.35 }}
                   className="bg-black/10 text-white/90 text-sm font-bold px-4 py-1.5 rounded-full inline-block mb-2"
                 >
-                  تم تسجيل دفعة {urlName} 🙌
+                  تم تسجيل دفعة {urlName} <Check className="inline w-4 h-4 -mt-0.5" aria-hidden="true" />
                 </motion.p>
               )}
               <motion.p
@@ -902,7 +908,7 @@ export default function SplitPayment() {
                 transition={{ delay: 0.4 }}
                 className="text-emerald-50 text-base font-bold px-2 leading-relaxed"
               >
-                القطة اكتملت والطلب الحين بالمطبخ وقاعد يتجهز على نار هادية 🚀🔥
+                القطة اكتملت والطلب الحين بالمطبخ وقاعد يتجهز على نار هادية <Flame className="inline w-4 h-4 -mt-0.5" aria-hidden="true" />
               </motion.p>
             </div>
 
@@ -915,7 +921,7 @@ export default function SplitPayment() {
               onClick={() => navigate(`/track?order_id=${id}`)}
               className="relative z-10 mt-2 bg-white text-emerald-600 shadow-xl shadow-black/10 font-black text-lg py-4 px-8 rounded-2xl w-full transition-all border-b-4 border-emerald-100 hover:border-emerald-200"
             >
-              👀 تابع طلبك من هني
+              <span className="inline-flex items-center justify-center gap-2"><Eye className="w-5 h-5" aria-hidden="true" />تابع طلبك من هني</span>
             </motion.button>
           </motion.div>
         ) : localSuccess ? (
