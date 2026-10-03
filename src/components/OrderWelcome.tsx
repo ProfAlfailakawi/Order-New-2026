@@ -223,7 +223,7 @@ const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart }) => {
                 <button
                   type="button"
                   onClick={() => dismiss(false)}
-                  className="mt-1.5 px-3 py-2 text-xs font-bold text-[#9a8460] underline underline-offset-4 transition hover:text-[#7a684d]"
+                  className="mt-1 px-4 min-h-[44px] inline-flex items-center justify-center text-xs font-bold text-[#9a8460] underline underline-offset-4 transition hover:text-[#7a684d]"
                 >
                   تخطّي
                 </button>

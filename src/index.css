@@ -4213,3 +4213,29 @@ body:has(.al-cart-bar) .order-welcome-replay {
   .payment-choice-hint { padding: 10px 14px !important; }
   .payment-choice-hint span { font-size: 11px; line-height: 1.5; }
 }
+
+/* Split page, desktop: the copy-link button sits beside the form at its own height
+   instead of stretching into a 590px empty card. */
+@media (min-width: 1024px) {
+  .qatya-wow-action-grid .qatya-v14-share-button { align-self: start; }
+}
+
+/* Corner flip trigger on product cards: 32px visual, 44px phone hit area that grows only
+   inward (toward the card body) so it never extends past the card edge. */
+@media (max-width: 1023px) {
+  .menu-product-card:not(.menu-product-card-horizontal) .orser-flip-trigger::after { content: ""; position: absolute; top: 0; left: 0; width: 44px; height: 44px; }
+}
+
+/* Admin top bar (sticky): opaque enough that scrolling content never shows through its text. */
+.admin-topbar-panel.glass-panel { background: rgba(255,255,255,.97) !important; }
+
+/* Admin top bar at 320-360px: menu, actions and avatar share one row (search below). */
+@media (max-width: 380px) {
+  .admin-topbar { padding-inline: 8px; }
+  .admin-topbar-panel { gap: 8px; padding: 8px; }
+  .admin-topbar-actions { gap: 6px; margin-inline-start: 0; flex: 1 1 0; min-width: 0; justify-content: space-between; }
+  .admin-topbar-actions > button:first-child { padding: 12px 10px; gap: 4px; }
+  .admin-topbar-actions > button[aria-label="التنبيهات"] { padding: 0; width: 44px; justify-content: center; display: inline-flex; align-items: center; }
+  .admin-topbar-actions .admin-profile { padding: 0; }
+  .admin-topbar-actions .admin-profile > div:last-child { width: 40px; height: 40px; }
+}

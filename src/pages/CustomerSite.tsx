@@ -5528,7 +5528,7 @@ export default function CustomerSite() {
                     <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-amber-200 bg-amber-50 text-[11px] sm:text-[11px] font-bold text-amber-900 mb-2">
                       <Sparkles className="w-3.5 h-3.5" strokeWidth={1.6} aria-hidden="true" /> من اختياراتنا لكم
                     </span>
-                    <h3 className="text-base sm:text-lg font-black text-brand leading-snug">{liveSignal.title}</h3>
+                    <h3 className="text-base sm:text-lg font-black text-brand leading-snug"><MessageWithIcons text={String(liveSignal.title)} /></h3>
                   </div>
                 </div>
 
@@ -7243,7 +7243,7 @@ const ChefWhisperCard = ({
           {/* Golden Fold / Chef's Whisper trigger */}
           {!product.isOutOfStock && (
             <div
-              className="absolute top-0 left-0 w-8 h-8 cursor-pointer z-30 group"
+              className="orser-flip-trigger absolute top-0 left-0 w-8 h-8 cursor-pointer z-30 group"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsFlipped(true);
