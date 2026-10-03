@@ -1385,7 +1385,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     type="button"
                     onClick={() => setMyDiwaniyaTab(tab.id)}
                     className={cn(
-                      "relative rounded-2xl px-2 py-2.5 text-[11px] sm:text-[10.5px] font-black transition-all leading-tight min-h-[64px] flex flex-col items-center justify-center border active:scale-[0.98]",
+                      "relative rounded-2xl px-2 py-2.5 text-[11px] sm:text-[11px] font-black transition-all leading-tight min-h-[64px] flex flex-col items-center justify-center border active:scale-[0.98]",
                       myDiwaniyaTab === tab.id
                         ? "bg-[#0d3a22] text-white border-[#0d3a22] shadow-md shadow-brand/10"
                         : "bg-stone-50/80 text-stone-500 border-stone-100 hover:bg-white"
@@ -1537,7 +1537,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   ) : (
                     <>
                       {/* Short Recommendation Text */}
-                      <p className="text-[10.5px] text-stone-600 font-bold leading-relaxed">
+                      <p className="text-[11px] text-stone-600 font-bold leading-relaxed">
                         {activeRecommendation.text}
                       </p>
 
@@ -1554,8 +1554,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               />
                             )}
                             <div>
-                              <div className="text-[10.5px] font-black text-stone-850 line-clamp-1">{activeRecommendation.product.name}</div>
-                              <div className="text-[9.5px] font-bold text-amber-600">
+                              <div className="text-[11px] font-black text-stone-850 line-clamp-1">{activeRecommendation.product.name}</div>
+                              <div className="text-[11px] font-bold text-amber-600">
                                 {Number(activeRecommendation.product.price || 0).toFixed(3)} د.ك
                               </div>
                             </div>
@@ -1566,14 +1566,14 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             <button
                               type="button"
                               onClick={() => handleAddAiProductToCart(activeRecommendation.product)}
-                              className="bg-amber-500 hover:bg-amber-600 text-stone-950 px-3 py-1.5 rounded-xl text-[9.5px] font-black transition-all active:scale-95 shadow-sm"
+                              className="bg-amber-500 hover:bg-amber-600 text-stone-950 px-3 py-1.5 rounded-xl text-[11px] font-black transition-all active:scale-95 shadow-sm"
                             >
                               <MessageWithIcons text={"إضافة فوريّة 🛒"} />
 </button>
                             <button
                               type="button"
                               onClick={handleAiChange}
-                              className="bg-stone-50 hover:bg-stone-100 text-stone-400 p-1.5 rounded-xl border border-stone-200 text-[9.5px]"
+                              className="bg-stone-50 hover:bg-stone-100 text-stone-400 p-1.5 rounded-xl border border-stone-200 text-[11px]"
                               title="تخطي ليتعلم المعزب ذوقك"
                             >
                               <MessageWithIcons text={"🔄"} />

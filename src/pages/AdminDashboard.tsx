@@ -2293,7 +2293,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
                       <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg bg-stone-50 flex items-center justify-center font-extrabold text-accent text-xs sm:text-base border border-stone-100 shrink-0">{item.quantity}</div>
                     </div>
                     {item.preparationInstructions && (
-                      <div className="mt-1.5 p-1 px-2.5 bg-rose-50/30 border border-rose-100/20 rounded-full text-[8.5px] sm:text-[9.5px] text-rose-600 font-bold flex items-center justify-end gap-1 w-max ms-auto">
+                      <div className="mt-1.5 p-1 px-2.5 bg-rose-50/30 border border-rose-100/20 rounded-full text-[8.5px] sm:text-[11px] text-rose-600 font-bold flex items-center justify-end gap-1 w-max ms-auto">
                         <span>{item.preparationInstructions}</span>
                         <AlertTriangle className="w-2.5 h-2.5 text-rose-500 shrink-0" />
                       </div>

@@ -727,7 +727,7 @@ export function SaduPresenceRug({
 </h3>
               </div>
 
-              <p className="text-[10.5px] sm:text-xs text-stone-300 font-bold leading-relaxed">
+              <p className="text-[11px] sm:text-xs text-stone-300 font-bold leading-relaxed">
                 اختر عبارة ترحيب كويتية تقليدية أو اكتب عبارتك الخاصة بالديوانية، وفنجانك على سجادة السدو راح يهتز ويبث صوت رنة الفنجان على تليفونات ربعك المتواجدين حالياً!
               </p>
 
@@ -761,7 +761,7 @@ export function SaduPresenceRug({
                     <span className="text-xs"><MessageWithIcons text={"☕"} /></span>
                   </div>
                 </motion.div>
-                <span className="text-[8.5px] font-black text-amber-500 mt-2 animate-pulse">
+                <span className="text-[11px] font-black text-amber-500 mt-2 animate-pulse">
                   <MessageWithIcons text={"اسحب وهزّ الفنجان لمذاق الهيل وقرقعته اللمسية! 🫨🖐️"} />
 </span>
               </div>
@@ -799,7 +799,7 @@ export function SaduPresenceRug({
                 />
               </div>
 
-              <div className="bg-stone-950/40 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl text-[9.5px] sm:text-[11px] text-stone-400 text-center font-bold">
+              <div className="bg-stone-950/40 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl text-[11px] sm:text-[11px] text-stone-400 text-center font-bold">
                 كل جديد يوصل للحضور مباشرة، والديوانية دايمًا على اتصال.
               </div>
             </motion.div>
@@ -825,7 +825,7 @@ export function SaduPresenceRug({
                 >
                   <MessageWithIcons text={"✕"} />
 </button>
-                <span className="text-[9.5px] sm:text-[11px] font-black bg-amber-950/80 text-amber-500 px-3 py-1 rounded-full uppercase">
+                <span className="text-[11px] sm:text-[11px] font-black bg-amber-950/80 text-amber-500 px-3 py-1 rounded-full uppercase">
                   {selectedCupInfo.cupMeta.label}
                 </span>
               </div>
@@ -877,7 +877,7 @@ export function SaduPresenceRug({
                       ))}
                     </div>
                   </div>
-                  <div className="absolute bottom-1 text-[9.5px] font-black text-amber-400">
+                  <div className="absolute bottom-1 text-[11px] font-black text-amber-400">
                     <MessageWithIcons text={"جاري صب فنجان الكرم للضيف... 🛰️💨"} />
 </div>
                 </div>
