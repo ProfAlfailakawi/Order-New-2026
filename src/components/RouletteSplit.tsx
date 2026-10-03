@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Users, Crown, CreditCard, PartyPopper, ArrowRight, AlertCircle, Check, Trophy, ShieldCheck, Dices, Rocket, HeartCrack, RefreshCcw } from "lucide-react";
 import { normalizeDigits, getSaduAvatar, cn } from "../utils";
+import { MessageWithIcons } from "./MessageWithIcons";
 
 const normalizeArabicName = (name: string) => {
   return (name || "")
@@ -355,8 +356,8 @@ export function RouletteSplit({
                 />
                 {phone.length > 0 && phone.length < 8 && (
                   <p className="text-rose-400 text-xs font-bold text-center mt-1 animate-pulse">
-                    ⚠️ الرقم يجب أن يتكون من 8 أرقام
-                  </p>
+                    <MessageWithIcons text={"⚠️ الرقم يجب أن يتكون من 8 أرقام"} />
+</p>
                 )}
                 <button
                   onClick={join}

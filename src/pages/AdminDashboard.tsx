@@ -1186,20 +1186,20 @@ export default function AdminDashboard() {
                             </div>
 
                             {isEnabled && (
-                              <div className="flex items-center gap-3 text-xs font-bold text-stone-600">
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-bold text-stone-600 min-w-0">
                                 <span>من:</span>
                                 <input
                                   type="time"
                                   value={currentHours.open || "12:00"}
                                   onChange={(e) => updateDaySchedule({ ...currentHours, open: e.target.value })}
-                                  className="p-2 bg-stone-50 border border-stone-200 rounded-xl font-mono text-brand font-black"
+                                  className="p-2 min-h-[44px] min-w-0 bg-stone-50 border border-stone-200 rounded-xl font-mono text-brand font-black"
                                 />
                                 <span>إلى:</span>
                                 <input
                                   type="time"
                                   value={currentHours.close || "23:30"}
                                   onChange={(e) => updateDaySchedule({ ...currentHours, close: e.target.value })}
-                                  className="p-2 bg-stone-50 border border-stone-200 rounded-xl font-mono text-brand font-black"
+                                  className="p-2 min-h-[44px] min-w-0 bg-stone-50 border border-stone-200 rounded-xl font-mono text-brand font-black"
                                 />
                               </div>
                             )}
@@ -2091,14 +2091,14 @@ function StatStrip({ revenue, revenueTrend, revenueSeries, newCount, newTrend, n
   const paid = Number(paidCount) || 0;
   const tile = "min-w-0 flex flex-col gap-2 md:gap-3 p-3 md:px-6 md:py-5 rounded-[20px] md:rounded-3xl border border-stone-100 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]";
   const head = "flex items-center gap-1.5 md:gap-2 text-stone-500 text-[11px] md:text-sm font-bold leading-tight";
-  const chip = (t: any, cls: string) => t ? <span className={`text-[10px] md:text-xs font-bold whitespace-nowrap ${cls}`}>{t}</span> : <span className={`text-[10px] md:text-xs font-bold ${cls}`}>—</span>;
+  const chip = (t: any, cls: string) => t ? <span className={`text-[11px] md:text-xs font-bold whitespace-nowrap ${cls}`}>{t}</span> : <span className={`text-[11px] md:text-xs font-bold ${cls}`}>—</span>;
   return (
     <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1.1fr)] md:grid-cols-[repeat(3,minmax(0,1fr))] gap-2.5 md:gap-6">
       <div className={tile}>
         <div className={head}><TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4 text-accent shrink-0" aria-hidden="true" /><span>الدخل التراكمي</span></div>
         <div className="flex items-baseline gap-1 min-w-0" title={`${revenue} د.ك`}>
           <b className="text-[22px] md:text-[38px] font-black tracking-tighter leading-none text-brand truncate">{revShort}</b>
-          <small className="text-[10px] md:text-sm font-bold text-stone-400 shrink-0">د.ك</small>
+          <small className="text-[11px] md:text-sm font-bold text-stone-400 shrink-0">د.ك</small>
         </div>
         <Bars series={revenueSeries} color="var(--color-accent)" label="الدخل آخر 7 أيام" />
         {chip(revenueTrend, "text-accent")}
@@ -2293,7 +2293,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
                       <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg bg-stone-50 flex items-center justify-center font-extrabold text-accent text-xs sm:text-base border border-stone-100 shrink-0">{item.quantity}</div>
                     </div>
                     {item.preparationInstructions && (
-                      <div className="mt-1.5 p-1 px-2.5 bg-rose-50/30 border border-rose-100/20 rounded-full text-[8.5px] sm:text-[9.5px] text-rose-600 font-bold flex items-center justify-end gap-1 w-max ms-auto">
+                      <div className="mt-1.5 p-1 px-2.5 bg-rose-50/30 border border-rose-100/20 rounded-full text-[8.5px] sm:text-[11px] text-rose-600 font-bold flex items-center justify-end gap-1 w-max ms-auto">
                         <span>{item.preparationInstructions}</span>
                         <AlertTriangle className="w-2.5 h-2.5 text-rose-500 shrink-0" />
                       </div>
