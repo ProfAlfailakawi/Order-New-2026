@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn, formatKuwaitiDate } from "../utils";
 import confetti from "canvas-confetti";
 import { SmartIconGuidance } from "./SmartIconGuidance";
+import { MessageWithIcons } from "./MessageWithIcons";
 
 // -------------------------------------------------------------
 // Web Haptic Vibration API Wrapper (Haptic Finjan Resonance)
@@ -719,11 +720,11 @@ export function SaduPresenceRug({
                   onClick={() => setWobbleInputOpen(false)}
                   className="text-stone-400 hover:text-white bg-stone-800/60 rounded-full w-8 h-8 flex items-center justify-center text-xs font-black animate-pulse"
                 >
-                  ✕
-                </button>
+                  <MessageWithIcons text={"✕"} />
+</button>
                 <h3 className="text-sm sm:text-base font-black text-amber-500">
-                  هز فنجانك وخل ديوانيتك تهتز وتصوت للربع! ☕
-                </h3>
+                  <MessageWithIcons text={"هز فنجانك وخل ديوانيتك تهتز وتصوت للربع! ☕"} />
+</h3>
               </div>
 
               <p className="text-[10.5px] sm:text-xs text-stone-300 font-bold leading-relaxed">
@@ -752,17 +753,17 @@ export function SaduPresenceRug({
                 >
                   {/* Sadu patterned ring */}
                   <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-2 bg-gradient-to-r from-stone-900 via-amber-500 to-stone-900 flex justify-between px-1">
-                    <span className="text-[5px]">♣</span>
-                    <span className="text-[5px]">♣</span>
+                    <span className="text-[5px]"><MessageWithIcons text={"♣"} /></span>
+                    <span className="text-[5px]"><MessageWithIcons text={"♣"} /></span>
                   </div>
                   {/* Steaming hot liquid */}
                   <div className="absolute top-1.5 w-10 h-10 rounded-full border border-amber-900/10 bg-gradient-to-br from-amber-900 to-amber-950/90 flex items-center justify-center">
-                    <span className="text-xs">☕</span>
+                    <span className="text-xs"><MessageWithIcons text={"☕"} /></span>
                   </div>
                 </motion.div>
                 <span className="text-[8.5px] font-black text-amber-500 mt-2 animate-pulse">
-                  اسحب وهزّ الفنجان لمذاق الهيل وقرقعته اللمسية! 🫨🖐️
-                </span>
+                  <MessageWithIcons text={"اسحب وهزّ الفنجان لمذاق الهيل وقرقعته اللمسية! 🫨🖐️"} />
+</span>
               </div>
 
               {/* Quick Sadu Phrases List - Restricted max-height on phones to prevent dialog cutoff */}
@@ -798,7 +799,7 @@ export function SaduPresenceRug({
                 />
               </div>
 
-              <div className="bg-stone-950/40 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl text-[9.5px] sm:text-[10px] text-stone-400 text-center font-bold">
+              <div className="bg-stone-950/40 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl text-[9.5px] sm:text-[11px] text-stone-400 text-center font-bold">
                 كل جديد يوصل للحضور مباشرة، والديوانية دايمًا على اتصال.
               </div>
             </motion.div>
@@ -822,9 +823,9 @@ export function SaduPresenceRug({
                   onClick={handleCupModalClose}
                   className="text-stone-400 hover:text-white bg-stone-800/60 rounded-full w-8 h-8 flex items-center justify-center text-xs font-black"
                 >
-                  ✕
-                </button>
-                <span className="text-[9.5px] sm:text-[10px] font-black bg-amber-950/80 text-amber-500 px-3 py-1 rounded-full uppercase">
+                  <MessageWithIcons text={"✕"} />
+</button>
+                <span className="text-[9.5px] sm:text-[11px] font-black bg-amber-950/80 text-amber-500 px-3 py-1 rounded-full uppercase">
                   {selectedCupInfo.cupMeta.label}
                 </span>
               </div>
@@ -841,8 +842,8 @@ export function SaduPresenceRug({
                       animate={{ scale: 1 }}
                       className="absolute -top-6 -right-6 text-3xl"
                     >
-                      ☕
-                    </motion.div>
+                      <MessageWithIcons text={"☕"} />
+</motion.div>
                   )}
                 </div>
                 
@@ -877,8 +878,8 @@ export function SaduPresenceRug({
                     </div>
                   </div>
                   <div className="absolute bottom-1 text-[9.5px] font-black text-amber-400">
-                    جاري صب فنجان الكرم للضيف... 🛰️💨
-                  </div>
+                    <MessageWithIcons text={"جاري صب فنجان الكرم للضيف... 🛰️💨"} />
+</div>
                 </div>
               )}
 
@@ -889,9 +890,9 @@ export function SaduPresenceRug({
                   className="p-3 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl text-center"
                 >
                   <span className="text-emerald-400 font-black text-xs block">
-                    تم صب فنجان الضيافة بنجاح! ✅☕
-                  </span>
-                  <span className="text-[10px] font-bold text-emerald-400/80 mt-1 block">
+                    <MessageWithIcons text={"تم صب فنجان الضيافة بنجاح! ✅☕"} />
+</span>
+                  <span className="text-[11px] font-bold text-emerald-400/80 mt-1 block">
                     وصل تنبيه الترحيب لصديقك بالثواني الحالية
                   </span>
                 </motion.div>
@@ -918,7 +919,7 @@ export function SaduPresenceRug({
                   onClick={startCoffeePour}
                   className="w-full bg-amber-500 hover:bg-amber-600 text-stone-950 py-3.5 rounded-2xl text-xs font-black active:scale-95 transition-all text-center flex items-center justify-center gap-2"
                 >
-                  <span>☕</span>
+                  <span><MessageWithIcons text={"☕"} /></span>
                   <span>صب فنجان قهوة ترحيبي دافئ</span>
                 </button>
               )}
@@ -926,7 +927,7 @@ export function SaduPresenceRug({
               <button
                 type="button"
                 onClick={handleCupModalClose}
-                className="w-full bg-stone-800 hover:bg-stone-700 text-stone-300 py-2.5 rounded-2xl text-[10px] font-bold active:scale-95 transition-all text-center"
+                className="w-full bg-stone-800 hover:bg-stone-700 text-stone-300 py-2.5 rounded-2xl text-[11px] font-bold active:scale-95 transition-all text-center"
               >
                 إغلاق النافذة
               </button>
@@ -950,8 +951,8 @@ export function SaduPresenceRug({
                   onClick={() => setActiveMilestoneDesc(null)}
                   className="text-stone-400 hover:text-white bg-stone-900 rounded-full w-8 h-8 flex items-center justify-center text-xs font-black"
                 >
-                  ✕
-                </button>
+                  <MessageWithIcons text={"✕"} />
+</button>
                 <div className="flex items-center gap-2">
                   <span className="text-xl">{activeMilestoneDesc.icon}</span>
                   <h3 className="text-base font-black text-amber-400">
@@ -961,7 +962,7 @@ export function SaduPresenceRug({
               </div>
 
               <div className="p-4 bg-amber-950/20 rounded-2xl border border-amber-500/10 space-y-2">
-                <span className="text-[10px] font-black text-amber-400 block pb-1 border-b border-amber-500/10">المتطلب للارتقاء والوصول بمجد الديوانية:</span>
+                <span className="text-[11px] font-black text-amber-400 block pb-1 border-b border-amber-500/10">المتطلب للارتقاء والوصول بمجد الديوانية:</span>
                 <p className="text-xs font-black text-white">{activeMilestoneDesc.points}+ نقطة ديوانية تراكمية</p>
               </div>
 
@@ -969,16 +970,16 @@ export function SaduPresenceRug({
                 {activeMilestoneDesc.desc}
               </div>
 
-              <div className="bg-stone-900/60 p-3 rounded-2xl text-[10px] text-stone-400 text-center font-bold">
-                كل فنجان يصبّه الربع، وكل طلب ومشاركة تقربكم أكثر لدرب المجد! 🐪✨
-              </div>
+              <div className="bg-stone-900/60 p-3 rounded-2xl text-[11px] text-stone-400 text-center font-bold">
+                <MessageWithIcons text={"كل فنجان يصبّه الربع، وكل طلب ومشاركة تقربكم أكثر لدرب المجد! 🐪✨"} />
+</div>
 
               <button
                 onClick={() => setActiveMilestoneDesc(null)}
                 className="w-full bg-amber-500 hover:bg-amber-600 text-stone-950 py-3 rounded-2xl text-xs font-black active:scale-95 transition-all text-center"
               >
-                فهمت قصة درب السفر 👍
-              </button>
+                <MessageWithIcons text={"فهمت قصة درب السفر 👍"} />
+</button>
             </motion.div>
           </div>
         )}

@@ -28,6 +28,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { RouletteSplit } from "../components/RouletteSplit";
 import { DnaRing, DnaStepper, DnaTimeline } from "../components/dna";
+import { MessageWithIcons } from "../components/MessageWithIcons";
 
 const getSafeSplitPayments = (order: any): any[] => {
   if (!order) return [];
@@ -635,13 +636,13 @@ export default function SplitPayment() {
         </p>
 
         {typeof order.address === "object" && order.address !== null && (
-          <div className="text-[10px] text-stone-500 bg-stone-100 px-3 py-1 mt-2 rounded-full font-bold">
+          <div className="text-[11px] text-stone-500 bg-stone-100 px-3 py-1 mt-2 rounded-full font-bold">
             <MapPin className="w-3 h-3 inline -mt-0.5 me-1" strokeWidth={1.6} aria-hidden="true" />{order.address.region}, ق {order.address.block}, ش{" "}
             {order.address.street}, م {order.address.building}
           </div>
         )}
         {typeof order.address === "string" && (
-          <div className="text-[10px] text-stone-500 bg-stone-100 px-3 py-1 mt-2 rounded-full font-bold">
+          <div className="text-[11px] text-stone-500 bg-stone-100 px-3 py-1 mt-2 rounded-full font-bold">
             <MapPin className="w-3 h-3 inline -mt-0.5 me-1" strokeWidth={1.6} aria-hidden="true" />{order.address}
           </div>
         )}
@@ -713,11 +714,11 @@ export default function SplitPayment() {
           <div className="qatya-hero-card qatya-v14-hero bg-white p-5 sm:p-6 rounded-[28px] shadow-sm border border-stone-100">
             <div className="grid grid-cols-2 gap-2 mb-5" dir="rtl">
               <div className="rounded-2xl bg-stone-50 border border-stone-100 p-3 text-right">
-                <div className="text-[10px] font-black text-stone-400">دورك</div>
+                <div className="text-[11px] font-black text-stone-400">دورك</div>
                 <div className="text-xs font-black text-brand mt-1">{currentPersonRole}</div>
               </div>
               <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-3 text-right">
-                <div className="text-[10px] font-black text-emerald-700">دفعوا</div>
+                <div className="text-[11px] font-black text-emerald-700">دفعوا</div>
                 <div className="text-xs font-black text-emerald-800 mt-1">{paidPeople.length} / {isDiwaniyaQatya ? (splitPeople.length || 1) : Math.max(paidPeople.length, 1)}</div>
               </div>
             </div>
@@ -770,10 +771,10 @@ export default function SplitPayment() {
 
             <div className="mt-5 rounded-[24px] bg-stone-50 border border-stone-100 p-4" dir="rtl">
               <div className="flex items-center justify-between gap-3 mb-3">
-                <span className={cn("rounded-full border px-3 py-1 text-[10px] font-black", currentPersonTone)}>{currentPersonRole}</span>
+                <span className={cn("rounded-full border px-3 py-1 text-[11px] font-black", currentPersonTone)}>{currentPersonRole}</span>
                 <div className="text-right">
                   <div className="text-sm font-black text-brand">مجلس القطيّة الحي</div>
-                  <div className="text-[10px] font-bold text-stone-400">واضح من دفع ومن ناطرين عليه</div>
+                  <div className="text-[11px] font-bold text-stone-400">واضح من دفع ومن ناطرين عليه</div>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -787,10 +788,10 @@ export default function SplitPayment() {
                         </div>
                         <div className="text-right min-w-0 flex-1">
                           <div className="text-xs font-black text-brand truncate max-lg:whitespace-normal max-lg:break-words max-lg:leading-snug" title={person.name || person.phone || "مشارك"}>{person.name || person.phone || "مشارك"}</div>
-                          <div className="text-[10px] font-bold text-stone-400">{Number(person.amount || 0).toFixed(3)} د.ك</div>
+                          <div className="text-[11px] font-bold text-stone-400">{Number(person.amount || 0).toFixed(3)} د.ك</div>
                         </div>
                       </div>
-                      <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100/50 shrink-0">دفع</span>
+                      <span className="text-[11px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100/50 shrink-0">دفع</span>
                     </div>
                   );
                 })}
@@ -804,10 +805,10 @@ export default function SplitPayment() {
                         </div>
                         <div className="text-right min-w-0 flex-1">
                           <div className="text-xs font-black text-brand truncate max-lg:whitespace-normal max-lg:break-words max-lg:leading-snug" title={person.name || person.phone || "مشارك"}>{person.name || person.phone || "مشارك"}</div>
-                          <div className="text-[10px] font-bold text-stone-400">لم يدفع بعد</div>
+                          <div className="text-[11px] font-bold text-stone-400">لم يدفع بعد</div>
                         </div>
                       </div>
-                      <span className="text-[10px] font-black text-stone-550 bg-stone-50 px-2 py-0.5 rounded-full border border-stone-100/50 shrink-0">ينتظر</span>
+                      <span className="text-[11px] font-black text-stone-550 bg-stone-50 px-2 py-0.5 rounded-full border border-stone-100/50 shrink-0">ينتظر</span>
                     </div>
                   );
                 })}
@@ -827,7 +828,7 @@ export default function SplitPayment() {
         {qatyaTab === "people" && (
           <div className="qatya-pay-card bg-white p-5 sm:p-6 rounded-[24px] shadow-sm border border-stone-100 space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <span className="rounded-full bg-stone-50 border border-stone-100 px-3 py-1 text-[10px] font-black text-stone-500">{isDiwaniyaQatya ? `${paidPeople.length} دفعوا · ${waitingPeople.length} بانتظار · نصيب الفرد ${Number(shareAmount || 0).toFixed(3)} د.ك` : `${paidPeople.length} دفعوا · ${waitingPeople.length} بانتظار`}</span>
+              <span className="rounded-full bg-stone-50 border border-stone-100 px-3 py-1 text-[11px] font-black text-stone-500">{isDiwaniyaQatya ? `${paidPeople.length} دفعوا · ${waitingPeople.length} بانتظار · نصيب الفرد ${Number(shareAmount || 0).toFixed(3)} د.ك` : `${paidPeople.length} دفعوا · ${waitingPeople.length} بانتظار`}</span>
               <h3 className="font-black text-brand text-lg">المشاركون</h3>
             </div>
             {(isDiwaniyaQatya ? splitPeople : paidPeople).length ? (isDiwaniyaQatya ? splitPeople : paidPeople).map((person:any, idx:number) => {
@@ -844,8 +845,8 @@ export default function SplitPayment() {
                   <div className="text-right min-w-0">
                     <span className="block font-black text-brand text-sm sm:text-base truncate max-lg:whitespace-normal max-lg:break-words max-lg:leading-snug" title={person.name || person.phone || `مشارك ${idx+1}`}>{person.name || person.phone || `مشارك ${idx+1}`}</span>
                     <div className="flex items-center gap-2 mt-0.5">
-                      {person.phone && <span className="text-[10px] font-bold text-stone-400 font-mono tracking-wider" dir="ltr">{String(person.phone).replace(/\D/g, '').slice(-8)}</span>}
-                      {isMe && <span className="text-[10px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded-full scale-90">أنت</span>}
+                      {person.phone && <span className="text-[11px] font-bold text-stone-400 font-mono tracking-wider" dir="ltr">{String(person.phone).replace(/\D/g, '').slice(-8)}</span>}
+                      {isMe && <span className="text-[11px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded-full scale-90">أنت</span>}
                     </div>
                   </div>
                 </div>
@@ -854,7 +855,7 @@ export default function SplitPayment() {
                   <span className={cn("text-xs font-black px-2.5 py-1 rounded-full border shadow-sm block text-center", paid ? "bg-emerald-500 text-white border-emerald-400" : "bg-white text-stone-500 border-stone-200")}>
                     {paid ? 'تم الدفع' : 'بانتظار'}
                   </span>
-                  {person.amount && <span className="block text-[10px] font-extrabold text-stone-500 text-center mt-1">{Number(person.amount).toFixed(3)} د.ك</span>}
+                  {person.amount && <span className="block text-[11px] font-extrabold text-stone-500 text-center mt-1">{Number(person.amount).toFixed(3)} د.ك</span>}
                 </div>
               </div>
             )}) : <p className="text-sm font-bold text-stone-400">{isDiwaniyaQatya ? "أعضاء الديوانية يظهرون هنا حسب القطيّة." : "المساهمون يظهرون هنا بعد الدفع فقط."}</p>}
@@ -946,13 +947,13 @@ export default function SplitPayment() {
                 <div className="bg-brand/5 border border-brand/10 p-3 rounded-xl text-brand font-bold text-sm mb-4">
                   {isKnownDiwaniyaMember
                     ? `حيّاك ${mySplitRecord?.name || contributorName || "يا الغالي"}، اسمك ورقمك جاهزين من الديوانية. قطيتك متقسمة بالتساوي، ادفعها مباشرة.`
-                    : (urlName ? `ترا ناطرين تحويلك يا ${urlName} 💸😎` : "اذا ما دفعت قطيتك، ادفعها الحين ولا تصير البخيل باللمة! 💸😂")}
+                    : (urlName ? <MessageWithIcons text={`ترا ناطرين تحويلك يا ${urlName} 💸😎`} /> : <MessageWithIcons text={"اذا ما دفعت قطيتك، ادفعها الحين ولا تصير البخيل باللمة! 💸😂"} />)}
                 </div>
               )}
               <div className="space-y-4">
                 {isKnownDiwaniyaMember ? (
                   <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-4 text-right">
-                    <div className="text-[10px] font-black text-emerald-700 mb-1">تم التعرف عليك من أعضاء الديوانية ✅</div>
+                    <div className="text-[11px] font-black text-emerald-700 mb-1"><MessageWithIcons text={"تم التعرف عليك من أعضاء الديوانية ✅"} /></div>
                     <div className="font-black text-brand">{mySplitRecord?.name || contributorName}</div>
                     <div className="text-xs font-bold text-stone-500 font-mono mt-1" dir="ltr">{mySplitPhone}</div>
                   </div>
@@ -1016,7 +1017,7 @@ export default function SplitPayment() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div className="bg-stone-100 rounded-xl px-2 py-1 flex flex-col items-center justify-center border border-stone-100/50">
-                    <span className="text-[10px] font-bold text-stone-400 mb-0.5">
+                    <span className="text-[11px] font-bold text-stone-400 mb-0.5">
                       قسمة سريعة
                     </span>
                     <div className="flex gap-1">
@@ -1028,7 +1029,7 @@ export default function SplitPayment() {
                             setContributorAmount(val);
                           }}
                           aria-label={`قسمة على ${n}`}
-                          className="w-6 h-6 max-lg:w-11 max-lg:h-11 max-lg:rounded-lg max-lg:text-sm rounded bg-brand/10 text-brand text-[10px] font-extrabold hover:bg-brand hover:text-white transition-all border border-brand/20"
+                          className="w-6 h-6 max-lg:w-11 max-lg:h-11 max-lg:rounded-lg max-lg:text-sm rounded bg-brand/10 text-brand text-[11px] font-extrabold hover:bg-brand hover:text-white transition-all border border-brand/20"
                         >
                           {n}
                         </button>
@@ -1039,7 +1040,7 @@ export default function SplitPayment() {
                     onClick={() =>
                       setContributorAmount(remainingAmount.toFixed(3))
                     }
-                    className="bg-stone-100 text-stone-600 font-bold text-[10px] py-2 rounded-xl hover:bg-stone-200 transition-colors flex flex-col items-center justify-center gap-0.5 border border-stone-100/50"
+                    className="bg-stone-100 text-stone-600 font-bold text-[11px] py-2 rounded-xl hover:bg-stone-200 transition-colors flex flex-col items-center justify-center gap-0.5 border border-stone-100/50"
                   >
                     <Zap className="w-3.5 h-3.5 text-accent" />
                     كامل علي تستاهلون
