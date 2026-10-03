@@ -288,7 +288,7 @@
   block-size: var(--icon) !important;
 }
 .dna-num {
-  font-size: calc(var(--node) * 0.38);
+  font-size: max(11px, calc(var(--node) * 0.38));
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -357,7 +357,7 @@
   border-radius: 999px;
   background: var(--dna-surface);
   color: var(--dna-ink);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   box-shadow: 0 0 0 1px var(--dna-line-2);
@@ -562,7 +562,7 @@
 .dna-ringc small {
   display: block;
   margin-block-start: 1px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--dna-muted);
 }
