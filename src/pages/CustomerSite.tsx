@@ -56,33 +56,6 @@ import {
   ChevronDown,
   Tag,
 } from "lucide-react";
-// Display-only: renders decorative 👑 🤍 🍲 🍽️ inside message copy as thin lucide
-// outline icons. The source strings are untouched (copy/share/aria keep emoji).
-const MESSAGE_ICONS: Record<string, { Icon: React.ComponentType<any>; cls: string }> = {
-  "👑": { Icon: Crown, cls: "text-[#b28a41]" },
-  "🤍": { Icon: Heart, cls: "text-[#ab2b2c]" },
-  "🍲": { Icon: Soup, cls: "text-[#b28a41]" },
-  "🍽️": { Icon: Utensils, cls: "text-[#b28a41]" },
-};
-const MESSAGE_ICON_RE = /(👑|🤍|🍲|🍽\uFE0F?)/;
-const MessageWithIcons = ({ text }: { text: string }) => (
-  <>
-    {text.split(MESSAGE_ICON_RE).map((part, i) => {
-      const m = MESSAGE_ICONS[part.replace("\uFE0F", "") === "🍽" ? "🍽️" : part];
-      if (!m) return part;
-      const { Icon, cls } = m;
-      return (
-        <Icon
-          key={i}
-          aria-hidden="true"
-          strokeWidth={1.6}
-          className={`inline-block w-[1.1em] h-[1.1em] align-[-0.2em] mx-0.5 ${cls}`}
-        />
-      );
-    })}
-  </>
-);
-
 // Display-only: the second (refinement) search card. It sits behind a
 // compact «تصفية» disclosure (collapsed by default); same input, same handler.
 const RefineSearchCard = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
@@ -120,6 +93,7 @@ const RefineSearchCard = ({ value, onChange }: { value: string; onChange: (v: st
 };
 
 import { Product, OrderItem, Order, Address, Region } from "../types";
+import { MessageWithIcons } from "../components/MessageWithIcons";
 import { enableDiwaniyaImportantPush, isDiwaniyaPushReady, watchDiwaniyaForegroundPush, type DiwaniyaPushState } from "../lib/diwaniyaPush";
 import { restoreCustomerMenuProducts } from "../lib/customerMenuTransport";
 import { robustGetCurrentPosition } from "../utils/geolocation";
@@ -1354,11 +1328,11 @@ const renderAdminSquadTierBadge = (tier: any, sizeClass = "w-9 h-9") => {
     : iconType === "Crown" ? <Crown className={iconClass} />
     : iconType === "Trophy" ? <Trophy className={iconClass} />
     : iconType === "Target" ? <Target className={iconClass} />
-    : iconType === "Flame" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}>🔥</span>
-    : iconType === "Swords" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}>⚔️</span>
-    : iconType === "Diamond" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}>💎</span>
-    : iconType === "Rocket" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}>🚀</span>
-    : iconType === "Shield" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}>🛡️</span>
+    : iconType === "Flame" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}><MessageWithIcons text={"🔥"} /></span>
+    : iconType === "Swords" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}><MessageWithIcons text={"⚔️"} /></span>
+    : iconType === "Diamond" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}><MessageWithIcons text={"💎"} /></span>
+    : iconType === "Rocket" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}><MessageWithIcons text={"🚀"} /></span>
+    : iconType === "Shield" ? <span className={sizeClass.includes("w-16") ? "text-3xl" : "text-xl"}><MessageWithIcons text={"🛡️"} /></span>
     : <Target className={iconClass} />;
   return <span className={`${sizeClass} rounded-full flex items-center justify-center text-white bg-gradient-to-br ${gradient} shrink-0 shadow-sm`}>{content}</span>;
 };
@@ -1466,7 +1440,7 @@ function StoreClosedWorkingHoursNotice({
         />
         <span className="font-black text-brand">{item.dayName}</span>
         {item.isToday && (
-          <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-[10px] font-black text-amber-900">اليوم</span>
+          <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-[11px] font-black text-amber-900">اليوم</span>
         )}
       </div>
       <span className={cn("shrink-0 font-bold", item.enabled ? "text-stone-600" : "text-stone-400")}>
@@ -1484,7 +1458,7 @@ function StoreClosedWorkingHoursNotice({
               <Clock className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <span className="inline-flex rounded-full border border-stone-200 bg-white px-3 py-1 text-[10px] font-black text-stone-500">
+              <span className="inline-flex rounded-full border border-stone-200 bg-white px-3 py-1 text-[11px] font-black text-stone-500">
                 الطلب متوقف مؤقتاً
               </span>
               <h3 className="mt-3 text-xl font-black text-brand sm:text-2xl">المطعم مغلق حالياً</h3>
@@ -1498,10 +1472,10 @@ function StoreClosedWorkingHoursNotice({
         <div className="px-5 py-5 sm:px-7 sm:py-6">
           <div className="mb-4 flex items-end justify-between gap-3">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-700">أوقات العمل</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-700">أوقات العمل</p>
               <p className="mt-1 text-sm font-black text-brand">دوام اليوم</p>
             </div>
-            <span className="rounded-xl bg-stone-50 px-3 py-2 text-[10px] font-black text-stone-500">
+            <span className="rounded-xl bg-stone-50 px-3 py-2 text-[11px] font-black text-stone-500">
               بتوقيت الكويت
             </span>
           </div>
@@ -1670,7 +1644,7 @@ export default function CustomerSite() {
           </div>
           <div className="hidden sm:block">
              <div className="px-3 py-1 bg-white/60 rounded-full border border-white/40">
-                <span className="text-[10px] font-black uppercase tracking-tighter opacity-40 text-brand">رادار الولاء</span>
+                <span className="text-[11px] font-black uppercase tracking-tighter opacity-40 text-brand">رادار الولاء</span>
              </div>
           </div>
         </div>
@@ -1680,9 +1654,9 @@ export default function CustomerSite() {
              <>
                <div className="flex justify-between items-end mb-2.5 px-0.5">
                  <p className="text-xs font-bold text-brand">
-                    <span className="opacity-60">باقي لك</span> <span className="text-accent underline font-black mx-0.5">{nextTier.minPoints - customerPoints}</span> <span className="opacity-60">وتصير</span> <span className="font-black text-stone-800">{nextTier.name}!</span> 🚀
-                 </p>
-                 <span className="text-[10px] font-black text-stone-400">
+                    <span className="opacity-60">باقي لك</span> <span className="text-accent underline font-black mx-0.5">{nextTier.minPoints - customerPoints}</span> <span className="opacity-60">وتصير</span> <span className="font-black text-stone-800">{nextTier.name}!</span> <MessageWithIcons text={"🚀"} />
+</p>
+                 <span className="text-[11px] font-black text-stone-400">
                    {Math.round(progressPercent)}%
                  </span>
                </div>
@@ -1707,15 +1681,15 @@ export default function CustomerSite() {
                 </div>
                 <div className="text-right">
                   <h4 className="font-black text-sm text-sky-700">لقد وصلت لقمة الهرم!</h4>
-                  <p className="text-[10px] font-bold text-sky-600/80">أنت الحين أسطورة ماسيّة، كل الدلع لك.</p>
+                  <p className="text-[11px] font-bold text-sky-600/80">أنت الحين أسطورة ماسيّة، كل الدلع لك.</p>
                 </div>
              </div>
            )}
 
            <div className="mt-6 p-4 bg-white/40 backdrop-blur-sm rounded-2xl border border-white/20 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">🎁</div>
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm"><MessageWithIcons text={"🎁"} /></div>
               <div>
-                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-0.5">مكتسباتك</p>
+                <p className="text-[11px] font-bold text-stone-400 uppercase tracking-widest mb-0.5">مكتسباتك</p>
                 <p className="text-[11px] font-black text-brand leading-tight">{currentTier.benefit}</p>
               </div>
            </div>
@@ -5152,9 +5126,9 @@ export default function CustomerSite() {
               </button>
               
               <div className="flex-1 text-right">
-                <span className="text-[10px] font-black bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full border border-orange-500/25 tracking-wide">
-                  رادار الديوانية 📡
-                </span>
+                <span className="text-[11px] font-black bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full border border-orange-500/25 tracking-wide">
+                  <MessageWithIcons text={"رادار الديوانية 📡"} />
+</span>
                 
                 <h4 className="font-sans font-black text-sm text-amber-100 mt-2.5">
                   حياك الله يا <span className="text-orange-400">{zeroClickWelcome.name}</span>
@@ -5193,7 +5167,7 @@ export default function CustomerSite() {
                        <Crown className="w-5 h-5" />
                     </div>
                     <div className="flex flex-col">
-                       <p className="text-[10px] text-stone-500 font-bold leading-tight">ديوانيتك</p>
+                       <p className="text-[11px] text-stone-500 font-bold leading-tight">ديوانيتك</p>
                        <p className="text-sm font-black text-brand leading-tight flex items-center gap-1.5">
                          {squadInfo.name}
                        </p>
@@ -5210,14 +5184,14 @@ export default function CustomerSite() {
             ) : (
               <div 
                 onClick={() => { setActiveSquadTab("leaderboard"); setShowSquadModal(true); }}
-                className="bg-gradient-to-l from-orange-50 to-transparent border border-orange-100 rounded-xl p-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-orange-100/50 transition-all shadow-sm"
+                className="bg-gradient-to-l from-orange-50 to-transparent border border-orange-100 rounded-xl p-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 cursor-pointer hover:bg-orange-100/50 transition-all shadow-sm"
               >
-                 <div className="flex items-center gap-2.5">
+                 <div className="flex items-center gap-2.5 min-w-0 flex-1 basis-40">
                     <div className="w-9 h-9 rounded-full bg-white shadow-sm border border-orange-200 flex items-center justify-center text-orange-500 shrink-0 relative">
                        <Crown className="w-5 h-5" />
                     </div>
-                    <div className="flex flex-col">
-                       <p className="text-[10px] text-stone-500 font-bold leading-tight">صدارة الدواوين <MessageWithIcons text="👑" /></p>
+                    <div className="flex flex-col min-w-0">
+                       <p className="text-[11px] text-stone-500 font-bold leading-tight">صدارة الدواوين <MessageWithIcons text="👑" /></p>
                        <p className="text-sm font-black text-brand leading-tight flex items-center gap-1.5">
                          {topSquads.length > 0 ? `${topSquads[0].name} بالصدارة!` : "ادخل التحدي مع ديوانيتك!"} 
                        </p>
@@ -5289,7 +5263,7 @@ export default function CustomerSite() {
                   </div>
                   <span
                     className={cn(
-                      "text-[10px] font-bold text-center leading-tight line-clamp-2",
+                      "text-[11px] font-bold text-center leading-tight line-clamp-2",
                       isActive ? "text-brand" : "text-stone-500",
                     )}
                   >
@@ -5410,7 +5384,7 @@ export default function CustomerSite() {
                 >
                   <ShoppingBag className="w-5 h-5 text-brand" />
                   {cart.length > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-lg font-extrabold shadow-md">
+                    <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-[11px] w-5 h-5 flex items-center justify-center rounded-lg font-extrabold shadow-md">
                       {cart.length}
                     </span>
                   )}
@@ -5426,7 +5400,7 @@ export default function CustomerSite() {
             <motion.div
               whileHover={{ scale: 1.01 }}
               className={cn(
-                `orser-context-hero relative h-44 sm:h-52 rounded-[28px] overflow-hidden group shadow-xl shadow-accent/20`,
+                `orser-context-hero relative min-h-44 sm:min-h-52 rounded-[28px] overflow-hidden group shadow-xl shadow-accent/20`,
                 themeContext.colors,
               )}
             >
@@ -5461,7 +5435,7 @@ export default function CustomerSite() {
 
               <div
                 className={cn(
-                  "absolute inset-0 bg-gradient-to-t flex flex-col justify-end p-6 sm:p-8",
+                  "relative min-h-[inherit] bg-gradient-to-t flex flex-col justify-end p-6 sm:p-8",
                   themeContext.overlay,
                 )}
               >
@@ -5511,7 +5485,7 @@ export default function CustomerSite() {
               {aiSearchLoading && (
                 <div className="flex items-center justify-center gap-1.5 text-[#a88241] text-xs font-extrabold py-0.5 animate-pulse select-none">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>المستشار الذكي يحلل طريقتك ويختار أنسب الوجبات... 🧠✨</span>
+                  <span><MessageWithIcons text={"المستشار الذكي يحلل طريقتك ويختار أنسب الوجبات... 🧠✨"} /></span>
                 </div>
               )}
               
@@ -5551,7 +5525,7 @@ export default function CustomerSite() {
 
                 <div className="flex items-center justify-between gap-4 mb-5 border-b border-amber-100/30 pb-4 relative z-10">
                   <div className="text-right">
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-amber-200 bg-amber-50 text-[10px] sm:text-[11px] font-bold text-amber-900 mb-2">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-amber-200 bg-amber-50 text-[11px] sm:text-[11px] font-bold text-amber-900 mb-2">
                       <Sparkles className="w-3.5 h-3.5" strokeWidth={1.6} aria-hidden="true" /> من اختياراتنا لكم
                     </span>
                     <h3 className="text-base sm:text-lg font-black text-brand leading-snug">{liveSignal.title}</h3>
@@ -5597,7 +5571,7 @@ export default function CustomerSite() {
                     <ProductVisual product={suggestion} imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
                   <div className="text-right min-w-0 flex-1 space-y-1">
-                    <span className="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100/50 rounded-full px-2.5 py-0.5">توليفة تكمّل سلتك</span>
+                    <span className="inline-flex items-center text-[11px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100/50 rounded-full px-2.5 py-0.5">توليفة تكمّل سلتك</span>
                     <p className="text-xs sm:text-sm font-black text-brand line-clamp-1 group-hover:text-amber-950 transition-colors">
                       شنو رأيك نكمّلها مع <span className="text-amber-800 font-extrabold">{suggestion.name}</span>؟
                     </p>
@@ -6059,7 +6033,7 @@ export default function CustomerSite() {
                         <Star className="w-5 h-5 fill-current" />
                       </div>
                       <div className="text-right flex-1">
-                        <p className="text-[10px] text-white/50 font-bold mb-0.5">
+                        <p className="text-[11px] text-white/50 font-bold mb-0.5">
                           محفظة النقاط
                         </p>
                         <p className="text-xs text-white font-bold">
@@ -6198,7 +6172,7 @@ export default function CustomerSite() {
                     <p className="text-xs text-stone-500 mb-0.5 leading-snug">
                        {fomoPurchases[fomoIndex]?.type === 'scarcity' ? (
                           <>
-                             <span className="font-bold text-red-500">🔥 ألحق!</span> باقي {Math.floor(Math.random() * 4) + 1} حبات بس من <span className="font-bold text-stone-800">{fomoPurchases[fomoIndex]?.productName}</span> اليوم.
+                             <span className="font-bold text-red-500"><MessageWithIcons text={"🔥 ألحق!"} /></span> باقي {Math.floor(Math.random() * 4) + 1} حبات بس من <span className="font-bold text-stone-800">{fomoPurchases[fomoIndex]?.productName}</span> اليوم.
                           </>
                        ) : fomoPurchases[fomoIndex]?.type === 'trend' ? (
                           <>
@@ -6206,7 +6180,7 @@ export default function CustomerSite() {
                           </>
                        ) : fomoPurchases[fomoIndex]?.type === 'insight' ? (
                           <>
-                              <span className="font-bold text-accent">🤔 هل لاحظت؟</span> طلبات <span className="font-bold text-stone-800">{fomoPurchases[fomoIndex]?.area}</span> زادت 15% اليوم، شكل عندهم احتفال كبير!
+                              <span className="font-bold text-accent"><MessageWithIcons text={"🤔 هل لاحظت؟"} /></span> طلبات <span className="font-bold text-stone-800">{fomoPurchases[fomoIndex]?.area}</span> زادت 15% اليوم، شكل عندهم احتفال كبير!
                           </>
                        ) : (
                           <>
@@ -6220,8 +6194,8 @@ export default function CustomerSite() {
                           </>
                        )}
                     </p>
-                    <p className="text-[10px] text-stone-400 mt-1">
-                      {fomoPurchases[fomoIndex]?.type !== 'insight' && fomoPurchases[fomoIndex]?.type !== 'trend' ? getRelativeTime(fomoPurchases[fomoIndex]?.time) : "مؤشر الرادار الذكي 📡"}
+                    <p className="text-[11px] text-stone-400 mt-1">
+                      {fomoPurchases[fomoIndex]?.type !== 'insight' && fomoPurchases[fomoIndex]?.type !== 'trend' ? getRelativeTime(fomoPurchases[fomoIndex]?.time) : <MessageWithIcons text={"مؤشر الرادار الذكي 📡"} />}
                     </p>
                   </div>
                 </div>
@@ -6277,11 +6251,11 @@ export default function CustomerSite() {
                     transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
                     className="absolute left-6 right-6 h-0.5 bg-emerald-400 shadow-[0_0_15px_#34d399]"
                   />
-                  <div className="text-4xl relative z-10 filter drop-shadow">🧬</div>
+                  <div className="text-4xl relative z-10 filter drop-shadow"><MessageWithIcons text={"🧬"} /></div>
                 </div>
 
                 <div className="flex flex-col gap-2 relative z-10">
-                  <span className="text-[10px] uppercase font-black tracking-widest text-[#b28a41] bg-[#b28a41]/10 px-3 py-1 rounded-full w-fit mx-auto border border-[#b28a41]/20">بصمة الوجه الموثوقة والموقع 🧬</span>
+                  <span className="text-[11px] uppercase font-black tracking-widest text-[#b28a41] bg-[#b28a41]/10 px-3 py-1 rounded-full w-fit mx-auto border border-[#b28a41]/20"><MessageWithIcons text={"بصمة الوجه الموثوقة والموقع 🧬"} /></span>
                   <h3 className="text-lg font-black text-white">جاري الاتصال السحابي بالديوانية...</h3>
                   <p className="text-xs text-stone-400 font-medium leading-relaxed px-4">
                     تم اكتشاف وجودك الفعلي بجوار <strong className="text-emerald-400 font-black">"{biometricScanSquad.name}"</strong>. نربط جهازك بالقرعة والسدو تلقائياً.
@@ -6291,14 +6265,14 @@ export default function CustomerSite() {
                 {/* Dynamic authentic scan steps */}
                 <div className="w-full bg-stone-900 border border-stone-800 rounded-2xl p-4 flex flex-col gap-3 text-right text-xs text-stone-400 font-mono" dir="rtl">
                   <div className="flex items-center justify-between">
-                    <span className="text-emerald-400 font-bold">✓ تم بنجاح</span>
+                    <span className="text-emerald-400 font-bold"><MessageWithIcons text={"✓ تم بنجاح"} /></span>
                     <span className="font-sans font-bold text-stone-300">١. فحص تواجد الجيروسكوب والـ GPS</span>
                   </div>
                   <div className="flex items-center justify-between">
                     {biometricStep === "scanning" ? (
-                      <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="text-[#b28a41] font-black">جاري التعرف...🧬</motion.span>
+                      <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="text-[#b28a41] font-black"><MessageWithIcons text={"جاري التعرف...🧬"} /></motion.span>
                     ) : (
-                      <span className="text-emerald-400 font-bold">✓ تم التوثيق</span>
+                      <span className="text-emerald-400 font-bold"><MessageWithIcons text={"✓ تم التوثيق"} /></span>
                     )}
                     <span className="font-sans font-bold text-stone-300">٢. مسح بصمة الوجه والتحقق (FaceID)</span>
                   </div>
@@ -6306,14 +6280,14 @@ export default function CustomerSite() {
                     {biometricStep === "scanning" ? (
                       <span className="text-stone-600">بالانتظار...</span>
                     ) : (
-                      <span className="text-emerald-400 font-bold">✓ دخلت السدو</span>
+                      <span className="text-emerald-400 font-bold"><MessageWithIcons text={"✓ دخلت السدو"} /></span>
                     )}
                     <span className="font-sans font-bold text-stone-300">٣. وضع قدمك على سجادة مجلس الربع</span>
                   </div>
                 </div>
 
-                <p className="text-[10px] text-stone-500 font-bold uppercase tracking-widest mt-2 flex items-center gap-1.5 font-mono">
-                  <span>☕</span> Sadu Diwaniya Ecosystem • 100% Zero-Click
+                <p className="text-[11px] text-stone-500 font-bold uppercase tracking-widest mt-2 flex items-center gap-1.5 font-mono">
+                  <span><MessageWithIcons text={"☕"} /></span> Sadu Diwaniya Ecosystem • 100% Zero-Click
                 </p>
               </div>
             </motion.div>
@@ -6429,9 +6403,9 @@ export default function CustomerSite() {
                       <div className="flex flex-col text-right">
                          <h3 className="font-black text-lg sm:text-xl text-brand flex items-center gap-2">
                             <Crown className="w-5 h-5 text-accent" />
-                            {squadInfo ? squadInfo.name : "صدارة الدواوين 🏆"}
+                            {squadInfo ? squadInfo.name : <MessageWithIcons text={"صدارة الدواوين 🏆"} />}
                          </h3>
-                         <p className="text-stone-500 text-[10px] sm:text-xs font-bold mt-1">
+                         <p className="text-stone-500 text-[11px] sm:text-xs font-bold mt-1">
                            {squadInfo ? "ديوانيتك الحالية" : "سجل الحين وطور ديوانيتك!"}
                          </p>
                       </div>
@@ -6717,7 +6691,7 @@ export default function CustomerSite() {
                     <X className="w-4 h-4" />
                   </button>
                   <div>
-                    <p className="text-[10px] font-black text-amber-600">طلب دخول ديوانية</p>
+                    <p className="text-[11px] font-black text-amber-600">طلب دخول ديوانية</p>
                     <h3 className="text-lg font-black mt-1">اسمك ورقمك للمعزب</h3>
                     <p className="text-xs font-bold text-stone-500 mt-1 leading-6">
                       اكتب اسمك ورقم تلفونك 8 أرقام. الاثنين مطلوبين عشان ندز طلب الدخول.
@@ -6810,7 +6784,7 @@ export default function CustomerSite() {
 
                 <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50/45 px-3 py-3 text-right">
                   <p className="text-[11px] font-black text-brand mb-1">لتفعيل الرادار فقط</p>
-                  <ol className="space-y-1.5 text-[10px] font-bold text-stone-600 leading-relaxed list-decimal list-inside">
+                  <ol className="space-y-1.5 text-[11px] font-bold text-stone-600 leading-relaxed list-decimal list-inside">
                     <li>افتح إعدادات الموقع من المتصفح.</li>
                     <li>اختر سماح للّوكيشن.</li>
                     <li>ارجع واضغط جرّب الآن.</li>
@@ -7261,7 +7235,7 @@ const ChefWhisperCard = ({
             </div>
           )}
           {product.isNewProduct && !product.isOutOfStock && (
-            <span className="absolute top-0 right-0 bg-gradient-to-tr from-accent to-amber-500 text-white text-[10px] font-bold px-3 py-1.5 z-10 rounded-tr-[24px] rounded-bl-2xl shadow-[0_2px_10px_rgba(194,97,21,0.3)]">
+            <span className="absolute top-0 right-0 bg-gradient-to-tr from-accent to-amber-500 text-white text-[11px] font-bold px-3 py-1.5 z-10 rounded-tr-[24px] rounded-bl-2xl shadow-[0_2px_10px_rgba(194,97,21,0.3)]">
               جديد
             </span>
           )}
@@ -7293,9 +7267,9 @@ const ChefWhisperCard = ({
                   {product.name}
                 </h3>
                 {product.preparationInstructions && (
-                  <div className="mt-1 flex items-center justify-center gap-1 py-0.5 px-2 bg-[#b28a41]/[0.07] border border-[#b28a41]/20 rounded-full mx-auto w-max max-w-[95%] event-none select-none">
+                  <div className="mt-1 flex items-center justify-center gap-1 py-1 px-2 bg-[#b28a41]/[0.07] border border-[#b28a41]/20 rounded-2xl mx-auto w-max max-w-[95%] event-none select-none">
                     <Clock className="w-3 h-3 text-[#8a6a2f] shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                    <span className="text-[11px] text-[#7a5d28] font-bold leading-none text-center truncate max-w-[130px]" title={product.preparationInstructions}>
+                    <span className="text-[11px] text-[#7a5d28] font-bold leading-tight text-center" title={product.preparationInstructions}>
                       {product.preparationInstructions}
                     </span>
                   </div>
@@ -7306,7 +7280,7 @@ const ChefWhisperCard = ({
                       {Number(calculateItemBasePriceWithHiddenAddons({
                         id: "", productId: product.id, name: product.name, quantity: 1, price: product.price, selectedExtras: [], product: normalizeProductForAddons(product)
                       }) || 0).toFixed(3)}{" "}
-                      <span className="text-[10px] text-accent font-bold">د.ك</span>
+                      <span className="text-[11px] text-accent font-bold">د.ك</span>
                     </>
                   ) : (
                     <span className="text-xs text-accent font-black">حسب سعر السوق</span>
@@ -7362,9 +7336,9 @@ const ChefWhisperCard = ({
 
                 {/* 4. Notes */}
                 {product.preparationInstructions && (
-                  <div className="product-notes-soft mt-2.5 flex items-center justify-center gap-1 px-2.5 py-0.5 bg-[#b28a41]/[0.07] border border-[#b28a41]/20 rounded-full mx-auto w-max max-w-[95%] z-10 text-center event-none select-none">
+                  <div className="product-notes-soft mt-2.5 flex items-center justify-center gap-1 px-2.5 py-1 bg-[#b28a41]/[0.07] border border-[#b28a41]/20 rounded-2xl mx-auto w-max max-w-[95%] z-10 text-center event-none select-none">
                     <Clock className="w-3 h-3 text-[#8a6a2f] shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                    <span className="text-[11px] text-[#7a5d28] font-bold leading-none text-center truncate max-w-[130px]" title={product.preparationInstructions}>
+                    <span className="text-[11px] text-[#7a5d28] font-bold leading-tight text-center" title={product.preparationInstructions}>
                       {product.preparationInstructions}
                     </span>
                   </div>
@@ -7758,7 +7732,7 @@ function ProductModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-brand/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-brand/40 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -7794,7 +7768,7 @@ function ProductModal({
         <div className="flex flex-col sm:flex-row gap-6 mb-8 mt-2 group relative z-10">
           <div className="relative shrink-0 flex justify-center">
             {(product as any).isNewProduct && (
-              <span className="absolute top-1 right-1 sm:-right-3 sm:-top-2 bg-gradient-to-r from-red-500 to-rose-500 text-white text-[10px] sm:text-xs font-extrabold px-3 py-1 rounded-full z-20 shadow-[0_4px_15px_rgba(239,68,68,0.4)] border-2 border-white transform rotate-3">
+              <span className="absolute top-1 right-1 sm:-right-3 sm:-top-2 bg-gradient-to-r from-red-500 to-rose-500 text-white text-[11px] sm:text-xs font-extrabold px-3 py-1 rounded-full z-20 shadow-[0_4px_15px_rgba(239,68,68,0.4)] border-2 border-white transform rotate-3">
                 جديد
               </span>
             )}
@@ -7842,7 +7816,7 @@ function ProductModal({
               </button>
             ) : (
               <div className="w-[108px] h-[108px] sm:w-[126px] sm:h-[126px] flex items-center justify-center bg-stone-50/80 backdrop-blur-sm border border-stone-100 text-stone-400 rounded-[28px] shadow-md relative p-1">
-                <span className="text-[10px] font-medium p-1 text-center leading-tight">
+                <span className="text-[11px] font-medium p-1 text-center leading-tight">
                   صورة غير متوفرة
                 </span>
               </div>
@@ -8006,7 +7980,7 @@ function ProductModal({
                   <div>
                     <h4 className="text-xs font-bold text-[#0d3a22] flex items-center gap-2 mb-1.5">
                       ترشيح ذكي 
-                      <span className="text-[10px] bg-[#0d3a22]/[0.07] text-[#0d3a22] px-2 py-0.5 rounded-full font-bold">موصى به لك</span>
+                      <span className="text-[11px] bg-[#0d3a22]/[0.07] text-[#0d3a22] px-2 py-0.5 rounded-full font-bold">موصى به لك</span>
                     </h4>
                     <p className="text-[12px] text-stone-600 leading-relaxed font-medium">
                       <MessageWithIcons text={message} />
@@ -8076,19 +8050,19 @@ function ProductModal({
                         {addon.price > 0 && !addon.isHiddenPrice && (
                           <span className="text-xs font-bold text-accent">
                             {addon.freeQuantity && addon.freeQuantity > 0 ? (
-                              <span className="text-[10px] text-green-600 block sm:inline mb-1 sm:mb-0 sm:ml-1">(أول {addon.freeQuantity} مجاناً) </span>
+                              <span className="text-[11px] text-green-600 block sm:inline mb-1 sm:mb-0 sm:ml-1">(أول {addon.freeQuantity} مجاناً) </span>
                             ) : null}
                             +{addon.price} د.ك
                           </span>
                         )}
                         {(addon.price === 0 || addon.isHiddenPrice) && addon.freeQuantity && addon.freeQuantity > 0 && (
-                            <span className="text-[10px] font-bold text-green-600">أول {addon.freeQuantity} مجاناً</span>
+                            <span className="text-[11px] font-bold text-green-600">أول {addon.freeQuantity} مجاناً</span>
                         )}
                         {isMandatory && (
-                            <span className="text-[10px] font-bold text-red-500 mr-2 border border-red-200 bg-red-50 px-1 rounded block sm:inline whitespace-nowrap">إلزامي</span>
+                            <span className="text-[11px] font-bold text-red-500 mr-2 border border-red-200 bg-red-50 px-1 rounded block sm:inline whitespace-nowrap">إلزامي</span>
                         )}
                         {!limits.available && (
-                            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1 rounded block sm:inline whitespace-nowrap">متاحة من كمية {limits.minProductQty}+</span>
+                            <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1 rounded block sm:inline whitespace-nowrap">متاحة من كمية {limits.minProductQty}+</span>
                         )}
                       </div>
                     </div>
@@ -8545,16 +8519,16 @@ function CheckoutOverlay({
                     <div className="absolute -top-10 -left-10 h-28 w-28 rounded-full bg-amber-300/20 blur-3xl" />
                     <div className="relative z-10 flex items-start justify-between gap-3">
                       <div>
-                        <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10px] font-black text-amber-100">لحظة سينمائية مباشرة</div>
+                        <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-black text-amber-100">لحظة سينمائية مباشرة</div>
                         <h3 className="mt-2 text-lg font-black">الحضور اشتغل… والسفرة داخلة المشهد</h3>
                         <p className="mt-1 text-xs font-bold leading-6 text-white/70">{squadInfo.name} · {squadPresence?.length || 1} حاضر · {cart.length} صنف في السحب</p>
                       </div>
-                      <div className="grid h-14 w-14 place-items-center rounded-2xl bg-amber-300 text-2xl shadow-lg">🎬</div>
+                      <div className="grid h-14 w-14 place-items-center rounded-2xl bg-amber-300 text-2xl shadow-lg"><MessageWithIcons text={"🎬"} /></div>
                     </div>
                     <div className="relative z-10 mt-4 grid grid-cols-3 gap-2 text-center">
-                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">{squadPresence?.length || 1}</b><span className="text-[10px] font-bold text-white/55">الحضور</span></div>
-                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">{cart.reduce((s: number, i: any) => s + Number(i.quantity || 0), 0)}</b><span className="text-[10px] font-bold text-white/55">السحب</span></div>
-                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">لايف</b><span className="text-[10px] font-bold text-white/55">النتيجة</span></div>
+                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">{squadPresence?.length || 1}</b><span className="text-[11px] font-bold text-white/55">الحضور</span></div>
+                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">{cart.reduce((s: number, i: any) => s + Number(i.quantity || 0), 0)}</b><span className="text-[11px] font-bold text-white/55">السحب</span></div>
+                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">لايف</b><span className="text-[11px] font-bold text-white/55">النتيجة</span></div>
                     </div>
                   </div>
                 )}
@@ -8566,12 +8540,12 @@ function CheckoutOverlay({
                            <Crown className="w-6 h-6" />
                         </div>
                         <div className="flex flex-col relative z-10">
-                           <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">ديوانيتك الحالية</span>
+                           <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">ديوانيتك الحالية</span>
                            <span className="text-base font-black text-brand leading-tight">
                               {squadInfo.name}
                            </span>
                            {userSquads && userSquads.length > 1 && (
-                              <button onClick={() => setShowSquadModal(true)} className="text-[10px] text-accent underline text-right mt-0.5">
+                              <button onClick={() => setShowSquadModal(true)} className="text-[11px] text-accent underline text-right mt-0.5">
                                  تغيير الديوانية
                               </button>
                            )}
@@ -8663,7 +8637,7 @@ function CheckoutOverlay({
                         <h4 className="text-[11px] font-bold text-brand mb-0.5">
                           ذائقتك
                         </h4>
-                        <p className="text-[10px] text-stone-600 leading-relaxed font-medium">
+                        <p className="text-[11px] text-stone-600 leading-relaxed font-medium">
                           {msg}
                         </p>
                       </div>
@@ -8697,24 +8671,31 @@ function CheckoutOverlay({
                       }}
                       className="flex gap-4 p-4 bg-white rounded-3xl border border-stone-100 relative group shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing w-full z-10"
                     >
-                      <div className="flex-grow relative pb-6">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-bold text-brand text-sm leading-tight max-w-[80%]">
+                      <div className="flex-grow relative min-w-0">
+                        <div className="flex justify-between items-start gap-2 mb-2">
+                          <h4 className="font-bold text-brand text-sm leading-tight min-w-0 flex-1 pt-1">
                             {item.name}
                           </h4>
                           <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="text-[10px] font-bold text-white bg-brand px-1.5 py-0.5 rounded">
+                            <span className="text-[11px] font-bold text-white bg-brand px-1.5 py-0.5 rounded">
                               {item.quantity}×
                             </span>
                             <span className="text-sm font-bold text-brand whitespace-nowrap">
                                 {calculateItemTotalWithAddons(item)}{" "}
-                                <span className="text-[10px] text-accent">د.ك</span>
+                                <span className="text-[11px] text-accent">د.ك</span>
                             </span>
+                            <button
+                              onClick={() => onRemove(item.id)}
+                              className="-my-2 -ml-2 w-11 h-11 flex items-center justify-center text-red-400 hover:text-red-600 transition-colors"
+                              aria-label="إزالة"
+                            >
+                              <X className="w-4 h-4" strokeWidth={1.75} />
+                            </button>
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-1.5 mb-2">
+                        <div className="flex flex-wrap gap-1.5">
                           {item.selectedOption && (
-                            <span className="text-[10px] font-bold bg-stone-50 text-stone-500 px-1.5 py-0.5 rounded border border-stone-100">
+                            <span className="text-[11px] font-bold bg-stone-50 text-stone-500 px-1.5 py-0.5 rounded border border-stone-100">
                               {item.selectedOption}
                             </span>
                           )}
@@ -8722,7 +8703,7 @@ function CheckoutOverlay({
                             (e: any, idx: number) => (
                               <span
                                 key={`${e.name}-${idx}`}
-                                className="text-[10px] font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
+                                className="text-[11px] font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
                               >
                                 +{e.name}
                               </span>
@@ -8732,20 +8713,13 @@ function CheckoutOverlay({
                             (addon: any, idx: number) => (
                               <span
                                 key={`addon-${addon.addonId}-${idx}`}
-                                className="text-[10px] font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
+                                className="text-[11px] font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
                               >
                                 +{addon.quantity} {cleanCustomerAddonLabel(addon.name)}
                               </span>
                             ),
                           )}
                         </div>
-                        <button
-                          onClick={() => onRemove(item.id)}
-                          className="absolute -bottom-3 -left-3 w-11 h-11 flex items-center justify-center text-red-400 hover:text-red-600 transition-colors"
-                          aria-label="إزالة"
-                        >
-                          <X className="w-4 h-4" strokeWidth={1.75} />
-                        </button>
                       </div>
                     </motion.div>
                   </motion.div>
@@ -8986,7 +8960,7 @@ function CheckoutOverlay({
                     <div className="space-y-1.5">
                       <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
                         <Hash className="w-4 h-4" /> الجادة{" "}
-                        <span className="text-stone-300 font-normal text-[10px] sm:text-xs">
+                        <span className="text-stone-300 font-normal text-[11px] sm:text-xs">
                           (اختياري)
                         </span>
                       </label>
@@ -9025,7 +8999,7 @@ function CheckoutOverlay({
                     <div className="space-y-1.5">
                       <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
                         <Layers className="w-4 h-4" /> الدور{" "}
-                        <span className="text-stone-300 font-normal text-[10px] sm:text-xs">
+                        <span className="text-stone-300 font-normal text-[11px] sm:text-xs">
                           (اختياري)
                         </span>
                       </label>
@@ -9044,7 +9018,7 @@ function CheckoutOverlay({
                     <div className="space-y-1.5">
                       <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
                         <Hash className="w-4 h-4" /> الشقة{" "}
-                        <span className="text-stone-300 font-normal text-[10px] sm:text-xs">
+                        <span className="text-stone-300 font-normal text-[11px] sm:text-xs">
                           (اختياري)
                         </span>
                       </label>
@@ -9096,8 +9070,8 @@ function CheckoutOverlay({
                         </span>
                       </div>
                       {customerPoints > 0 && (
-                        <span className="bg-white/80 py-1 px-2 rounded-lg text-[10px] text-green-800 border border-green-200/50 shadow-sm flex items-center gap-1">
-                          <span className="text-sm">⭐</span> {customerPoints}{" "}
+                        <span className="bg-white/80 py-1 px-2 rounded-lg text-[11px] text-green-800 border border-green-200/50 shadow-sm flex items-center gap-1">
+                          <span className="text-sm"><MessageWithIcons text={"⭐"} /></span> {customerPoints}{" "}
                           نقطة
                         </span>
                       )}
@@ -9194,13 +9168,13 @@ function CheckoutOverlay({
                     <button
                       onClick={validatePromo}
                       disabled={isValidatingPromo || !promoCodeInput.trim()}
-                      className="min-h-[44px] px-4 py-2 bg-brand text-white text-[10px] font-extrabold uppercase rounded-xl transition-all active:scale-95 disabled:opacity-50"
+                      className="min-h-[44px] px-4 py-2 bg-brand text-white text-[11px] font-extrabold uppercase rounded-xl transition-all active:scale-95 disabled:opacity-50"
                     >
                       {isValidatingPromo ? "..." : "تطبيق"}
                     </button>
                   </div>
                   {promoError && (
-                    <p className="text-[10px] text-red-500 font-bold px-1">
+                    <p className="text-[11px] text-red-500 font-bold px-1">
                       {promoError}
                     </p>
                   )}
@@ -9209,7 +9183,7 @@ function CheckoutOverlay({
               ) : (
                 <div className="flex justify-between items-center bg-green-50 border border-green-100 p-3 rounded-xl mb-4">
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-green-600 font-bold uppercase tracking-wider">
+                    <span className="text-[11px] text-green-600 font-bold uppercase tracking-wider">
                       كود الخصم مفعل
                     </span>
                     <span className="text-xs font-extrabold text-green-800">
@@ -9264,7 +9238,7 @@ function CheckoutOverlay({
                   {!address.region ? (
                     <span className="text-stone-400">ناطرين العنوان</span>
                   ) : deliveryFee === -1 ? (
-                    <span className="text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 flex items-center gap-1 text-[10px]">
+                    <span className="text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 flex items-center gap-1 text-[11px]">
                       <AlertCircle className="w-3 h-3" /> المنطقة يبيلها تأكيد
                     </span>
                   ) : deliveryFee === 0 ? (
@@ -9283,13 +9257,13 @@ function CheckoutOverlay({
                   <div className="flex flex-col gap-0.5">
                     <span>رصيد نقاطك</span>
                     {getLoyaltyTier(customerPoints).minPoints > 0 && (
-                       <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full w-fit">
+                       <span className="text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full w-fit">
                           مستوى {getLoyaltyTier(customerPoints).name}
                        </span>
                     )}
                   </div>
                   <span className="flex items-center gap-1">
-                    ⭐ {customerPoints} نقطة
+                    <MessageWithIcons text={"⭐  "} />{customerPoints} نقطة
                   </span>
                 </div>
               )}
@@ -9297,8 +9271,8 @@ function CheckoutOverlay({
               <div className="flex justify-between items-center text-xs font-bold text-brand/60 pb-3 border-b border-stone-50">
                 <span>النقاط المتوقعة من هذا الطلب</span>
                 <span className="flex items-center gap-1">
-                  + {Math.floor(itemsTotal)} ⚡
-                </span>
+                  + {Math.floor(itemsTotal)} <MessageWithIcons text={"⚡"} />
+</span>
               </div>
                 </>
               )}
@@ -9328,7 +9302,7 @@ function CheckoutOverlay({
                   {!address.region ? (
                     <span className="text-stone-400">ناطرين العنوان</span>
                   ) : deliveryFee === -1 ? (
-                    <span className="text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 flex items-center gap-1 text-[10px]">
+                    <span className="text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 flex items-center gap-1 text-[11px]">
                       <AlertCircle className="w-3 h-3" /> المنطقة يبيلها تأكيد
                     </span>
                   ) : deliveryFee === 0 ? (
@@ -9347,13 +9321,13 @@ function CheckoutOverlay({
                   <div className="flex flex-col gap-0.5">
                     <span>رصيد نقاطك</span>
                     {getLoyaltyTier(customerPoints).minPoints > 0 && (
-                       <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full w-fit">
+                       <span className="text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full w-fit">
                           مستوى {getLoyaltyTier(customerPoints).name}
                        </span>
                     )}
                   </div>
                   <span className="flex items-center gap-1">
-                    ⭐ {customerPoints} نقطة
+                    <MessageWithIcons text={"⭐  "} />{customerPoints} نقطة
                   </span>
                 </div>
               )}
@@ -9361,8 +9335,8 @@ function CheckoutOverlay({
               <div className="flex justify-between items-center text-xs font-bold text-brand/60 pb-3 border-b border-stone-50">
                 <span>النقاط المتوقعة من هذا الطلب</span>
                 <span className="flex items-center gap-1">
-                  + {Math.floor(itemsTotal)} ⚡
-                </span>
+                  + {Math.floor(itemsTotal)} <MessageWithIcons text={"⚡"} />
+</span>
               </div>
                 </>
               )}
@@ -9536,7 +9510,7 @@ function CheckoutOverlay({
                           </div>
                           <div className="flex flex-col items-start gap-1">
                             <span className="text-[17px]">تبيها قطية؟</span>
-                            <span className="text-[10px] font-medium text-stone-500 uppercase tracking-widest">قسم الفاتورة بمبالغ على ربعك</span>
+                            <span className="text-[11px] font-medium text-stone-500 uppercase tracking-widest">قسم الفاتورة بمبالغ على ربعك</span>
                           </div>
                         </div>
                       </button>
@@ -9563,7 +9537,7 @@ function CheckoutOverlay({
                            </div>
                            <div className="flex flex-col items-start gap-1">
                              <span className="text-[17px]">وهّق غيرك</span>
-                             <span className="text-[10px] font-medium opacity-90 tracking-wide">دخلوا أسماءكم… والنظام يختار من يتحمّل الطلب</span>
+                             <span className="text-[11px] font-medium opacity-90 tracking-wide">دخلوا أسماءكم… والنظام يختار من يتحمّل الطلب</span>
                            </div>
                         </div>
                       </button>
