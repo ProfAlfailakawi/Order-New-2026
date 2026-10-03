@@ -611,14 +611,14 @@ export function DnaHubMap({
   const tile = narrow ? 44 : 54;
   const hub = narrow ? 66 : 84;
   const nodeW = narrow ? 92 : 116;
-  const rowGap = tile + (narrow ? 32 : 36);
+  const rowGap = tile + (narrow ? 44 : 48);
   const n = nodes.length;
   const startCount = Math.ceil(n / 2);
   const endCount = n - startCount;
   const rows = Math.max(startCount, 1);
   const hasCaption = Boolean(title || overline || action);
   const topPad = 56;
-  const bottomPad = hasCaption ? 74 : 30;
+  const bottomPad = hasCaption ? 96 : 44;
   const inner = Math.max(hub * 2.3, rows * rowGap);
   const height = Math.max(minHeight ?? 0, topPad + bottomPad + inner);
   const mx = w / 2;
