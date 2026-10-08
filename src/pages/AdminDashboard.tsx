@@ -13,6 +13,7 @@ import {
   Bell,
   Filter,
   CreditCard,
+  ReceiptText,
   ChevronLeft,
   MapPin,
   Edit2,
@@ -948,7 +949,7 @@ export default function AdminDashboard() {
                   <p className="text-stone-400 text-sm mt-4 font-medium">السجل المالي الكامل للمتجر</p>
                 </div>
                 <MagneticButton className="flex items-center gap-4 px-10 py-5 gold-gradient text-white rounded-[24px] text-xs font-extrabold shadow-xl shadow-accent/20 active:scale-95 uppercase">
-                  <CreditCard className="w-5 h-5" /> تصدير السجل الضريبي
+                  <ReceiptText className="w-5 h-5" aria-hidden="true" /> تصدير السجل الضريبي
                 </MagneticButton>
               </div>
 
