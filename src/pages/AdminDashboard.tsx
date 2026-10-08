@@ -1187,20 +1187,24 @@ export default function AdminDashboard() {
 
                             {isEnabled && (
                               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-bold text-stone-600 min-w-0">
-                                <span>من:</span>
-                                <input
-                                  type="time"
-                                  value={currentHours.open || "12:00"}
-                                  onChange={(e) => updateDaySchedule({ ...currentHours, open: e.target.value })}
-                                  className="p-2 min-h-[44px] min-w-0 bg-stone-50 border border-stone-200 rounded-xl font-mono text-brand font-black"
-                                />
-                                <span>إلى:</span>
-                                <input
-                                  type="time"
-                                  value={currentHours.close || "23:30"}
-                                  onChange={(e) => updateDaySchedule({ ...currentHours, close: e.target.value })}
-                                  className="p-2 min-h-[44px] min-w-0 bg-stone-50 border border-stone-200 rounded-xl font-mono text-brand font-black"
-                                />
+                                <div className="flex items-center gap-x-3 min-w-0">
+                                  <span>من:</span>
+                                  <input
+                                    type="time"
+                                    value={currentHours.open || "12:00"}
+                                    onChange={(e) => updateDaySchedule({ ...currentHours, open: e.target.value })}
+                                    className="p-2 min-h-[44px] min-w-0 bg-stone-50 border border-stone-200 rounded-xl font-mono text-brand font-black"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-x-3 min-w-0">
+                                  <span>إلى:</span>
+                                  <input
+                                    type="time"
+                                    value={currentHours.close || "23:30"}
+                                    onChange={(e) => updateDaySchedule({ ...currentHours, close: e.target.value })}
+                                    className="p-2 min-h-[44px] min-w-0 bg-stone-50 border border-stone-200 rounded-xl font-mono text-brand font-black"
+                                  />
+                                </div>
                               </div>
                             )}
                           </div>
@@ -1722,12 +1726,12 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="flex items-center justify-between p-8 bg-accent/5 rounded-[40px] border-2 border-accent/10 shadow-inner group transition-all hover:border-accent/30">
-                   <div className="flex items-center gap-6">
-                    <div className="p-4 bg-accent/10 rounded-2xl group-hover:scale-110 transition-transform">
+                   <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+                    <div className="p-4 bg-accent/10 rounded-2xl group-hover:scale-110 transition-transform shrink-0">
                       <MessageCircle className="w-8 h-8 text-accent" />
                     </div>
-                    <div>
-                      <h3 className="text-2xl font-extrabold text-brand mb-1">رقم استقبال طلبات الواتساب</h3>
+                    <div className="min-w-0">
+                      <h3 className="text-xl sm:text-2xl font-extrabold text-brand mb-1">رقم استقبال طلبات الواتساب</h3>
                       <p className="text-stone-400 text-xs font-medium">اكتب الرقم 8 أرقام (مثال: 92225308)، والنظام يضيف مفتاح الكويت تلقائياً.</p>
                       {(!settings.companyPhone && settings.restaurantNumbers?.[0]) && (
                         <p className="text-accent text-xs font-bold mt-2 flex items-center gap-2">

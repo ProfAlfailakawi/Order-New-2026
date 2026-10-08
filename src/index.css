@@ -3933,8 +3933,8 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   .admin-rtable td[colspan]{grid-column:1/-1;display:block;padding:40px 12px!important;text-align:center!important;}
   .admin-rtable td.text-2xl,.admin-rtable td.text-xl{font-size:20px;}
   /* amount cells: the currency unit sits beside the number instead of on its own line */
-  .admin-rtable td.text-2xl[data-label]{display:block;}
-  .admin-rtable td.text-2xl[data-label]::before{display:block;margin-bottom:3px;}
+  .admin-rtable :is(td.text-2xl,td.text-xl)[data-label]{display:block;}
+  .admin-rtable :is(td.text-2xl,td.text-xl)[data-label]::before{display:block;margin-bottom:3px;}
   .admin-rtable td .justify-center{justify-content:flex-start;}
   .admin-rtable td button{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;}
 
