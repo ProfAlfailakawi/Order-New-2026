@@ -2515,7 +2515,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                       {geoStatusMsg && (
                         <p className="text-[11px] font-black text-center text-accent animate-pulse">
-                          {geoStatusMsg}
+                          <MessageWithIcons text={geoStatusMsg} />
                         </p>
                       )}
                     </div>

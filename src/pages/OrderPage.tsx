@@ -1276,11 +1276,11 @@ export default function OrderPage() {
                           </div>
                           <div className="min-w-0">
                             <h3 className="text-lg sm:text-xl font-black text-brand truncate max-sm:whitespace-normal max-sm:break-words max-sm:leading-snug" title={customerFullName}>{customerFullName}</h3>
-                            <div className="mt-2 flex items-center gap-2 min-w-0">
+                            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
                               <span className={cn("shrink-0 rounded-full border px-3 py-1 text-[11px] font-black", getTierAccent(currentTier?.name))}>
                                 {currentTier?.name || "عضوية"}
                               </span>
-                              <span className="text-xs font-black text-stone-400">{points} نقطة</span>
+                              <span className="text-xs font-black text-stone-400 whitespace-nowrap">{points} نقطة</span>
                             </div>
                           </div>
                         </div>

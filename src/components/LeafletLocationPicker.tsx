@@ -187,7 +187,7 @@ const LeafletLocationPicker: React.FC<{
           description="التقاط موقع التوصيل الحالي من قمر صناعي GPS وتحديث العنوان فوراً"
           placement="bottom"
         >
-          <button type="button" onClick={useCurrentLocation} className="shrink-0 inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700 border border-emerald-100 active:scale-95 transition">
+          <button type="button" onClick={useCurrentLocation} className="shrink-0 whitespace-nowrap inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700 border border-emerald-100 active:scale-95 transition">
             {isResolvingAddress ? (
               <span role="status" aria-label="جاري تحديد الموقع" className="inline-flex w-4 h-4 items-center justify-center">
                 <span aria-hidden="true" className="w-2 h-2 rounded-full bg-current animate-pulse motion-reduce:animate-none" />
