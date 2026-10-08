@@ -4246,10 +4246,11 @@ body:has(.al-cart-bar) .order-welcome-replay {
   .payment-choice-hint span { font-size: 11px; line-height: 1.5; }
 }
 
-/* Split page, desktop: the copy-link button sits beside the form at its own height
-   instead of stretching into a 590px empty card. */
+/* Split page, desktop: the form and the copy-link button form one centered column
+   (button right under the form) instead of leaving an empty column beside the form. */
 @media (min-width: 1024px) {
-  .qatya-wow-action-grid .qatya-v14-share-button { align-self: start; }
+  .qatya-wow-action-grid.qatya-v14-action-grid { grid-template-columns: minmax(0, 680px) !important; justify-content: center; gap: 0; }
+  .qatya-wow-action-grid .qatya-v14-share-button { align-self: stretch; }
 }
 
 /* Corner flip trigger on product cards: 32px visual, 44px phone hit area that grows only
