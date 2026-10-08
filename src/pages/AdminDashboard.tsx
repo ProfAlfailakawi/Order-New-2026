@@ -736,7 +736,7 @@ export default function AdminDashboard() {
                   <MagneticButton onClick={() => setActiveTab("orders")} className="px-8 py-3 gold-gradient text-white rounded-2xl text-xs font-extrabold uppercase shadow-md shadow-accent/20 active:scale-95 transition-all">مراجعة الكل</MagneticButton>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="admin-rtable w-full">
+                  <table className="admin-rtable admin-rtable--compact admin-rtable--flows w-full">
                     <thead>
                       <tr className="text-right text-xs text-stone-400 font-extrabold uppercase border-b border-stone-50">
                         <th className="p-10">ID</th>
@@ -954,7 +954,7 @@ export default function AdminDashboard() {
 
               <div className="bg-white rounded-[48px] border border-stone-100 shadow-xl overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="admin-rtable w-full">
+                  <table className="admin-rtable admin-rtable--compact admin-rtable--archive w-full">
                     <thead>
                       <tr className="text-right text-xs text-stone-400 font-extrabold uppercase border-b border-stone-50 bg-stone-50/30">
                         <th className="p-10">المرجع المالي</th>

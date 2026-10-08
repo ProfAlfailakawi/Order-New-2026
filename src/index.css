@@ -3938,6 +3938,24 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   .admin-rtable td .justify-center{justify-content:flex-start;}
   .admin-rtable td button{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;}
 
+  /* Compact stat-style rows for the sales archive and the recent-flows list (phones/tablets only; same cells, same count) */
+  .admin-rtable--compact tr{grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:10px 16px 8px;align-items:center;}
+  .admin-rtable--compact td{padding:2px 0!important;gap:1px;}
+  .admin-rtable--compact td[data-label]::before{font-size:11px;line-height:1.2;}
+  .admin-rtable--compact td button{margin-block:-6px;}
+  .admin-rtable--flows td button{padding:10px;}
+  .admin-rtable--compact td[data-label="العميل"]{grid-column:1;grid-row:1;}
+  .admin-rtable--compact td[data-label="المبلغ"]{grid-column:2;grid-row:1;text-align:end!important;}
+  .admin-rtable--compact td[data-label="المبلغ"]::before{text-align:end;}
+  .admin-rtable--compact td[data-label="الحالة"]{flex-direction:row;align-items:center;gap:8px;}
+  .admin-rtable--archive td[data-label="المرجع المالي"]{grid-column:1;grid-row:2;flex-direction:row;flex-wrap:wrap;align-items:center;column-gap:6px;}
+  .admin-rtable--archive td[data-label="التاريخ"]{grid-column:2;grid-row:2;align-items:flex-end;}
+  .admin-rtable--archive td[data-label="الحالة"]{grid-column:1/-1;grid-row:3;}
+  .admin-rtable--flows td[data-label="ID"]{grid-column:1;grid-row:2;}
+  .admin-rtable--flows td[data-label="المنطقة"]{grid-column:2;grid-row:2;align-items:flex-end;}
+  .admin-rtable--flows td[data-label="الحالة"]{grid-column:1;grid-row:3;}
+  .admin-rtable--flows td[data-label="المعاينة"]{grid-column:2;grid-row:3;flex-direction:row;align-items:center;gap:8px;}
+
   /* Order details sheet */
   .admin-order-modal{padding:0!important;align-items:flex-end!important;}
   .admin-order-sheet{max-height:calc(100dvh - 8px);overflow-y:auto!important;overscroll-behavior:contain;border-radius:28px 28px 0 0!important;padding-bottom:env(safe-area-inset-bottom);}
