@@ -1015,7 +1015,7 @@ export default function SplitPayment() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 max-[359px]:grid-cols-1 gap-2">
                   <div className="bg-stone-100 rounded-xl px-2 py-1 flex flex-col items-center justify-center border border-stone-100/50">
                     <span className="text-[11px] font-bold text-stone-400 mb-0.5">
                       قسمة سريعة
