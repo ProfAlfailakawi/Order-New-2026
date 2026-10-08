@@ -356,7 +356,7 @@ section:not([class*="max-w-"]) {
 }
 
 .roulette-title-card { display:flex; flex-direction:column; align-items:center; gap:.25rem; }
-.roulette-kicker { font-size:.66rem; font-weight:950; letter-spacing:.18em; color:#f5d0fe; text-transform:uppercase; }
+.roulette-kicker { font-size:.6875rem; font-weight:950; letter-spacing:.18em; color:#f5d0fe; text-transform:uppercase; }
 .roulette-status-strip {
   display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:.45rem; max-width: 520px; margin: .8rem auto 0;
 }
@@ -483,7 +483,7 @@ section:not([class*="max-w-"]) {
   display: flex; justify-content: center; gap: .45rem; flex-wrap: wrap; margin-bottom: .55rem;
 }
 .roulette-v14-marquee span {
-  font-size: .63rem; font-weight: 950; color: rgba(255,255,255,.72);
+  font-size: .6875rem; font-weight: 950; color: rgba(255,255,255,.72);
   border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.055);
   border-radius: 999px; padding: .4rem .65rem;
 }
@@ -884,7 +884,7 @@ section:not([class*="max-w-"]) {
   border: 1px solid rgba(255,255,255,.16);
 }
 @media (max-width: 420px) {
-  .wahag-wow-hero { padding-top: 1.5rem !important; }
+  .wahag-wow-hero { padding-top: 3.6rem !important; }
   .roulette-v14-card { padding: 1rem !important; border-radius: 28px !important; }
   .roulette-v14-wheel { width: 16.75rem !important; height: 16.75rem !important; }
 }
@@ -1713,6 +1713,7 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
 .orser-product-card-row .menu-product-add{width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;border-radius:18px!important;align-self:end;margin-bottom:6px;}
 .orser-search-input{padding-inline-start:8px;line-height:1.9;text-align:right;}
 .orser-search-input::placeholder{direction:rtl;text-align:right;letter-spacing:0!important;}
+.orser-search-input{text-overflow:ellipsis;}
 .al-cart-bar{max-width:min(720px,calc(100vw - 28px));left:50%!important;right:auto!important;transform:translateX(-50%);bottom:14px!important;border-radius:26px!important;min-height:72px!important;padding:10px 12px!important;box-shadow:0 16px 38px rgba(15,46,34,.22)!important;border:1px solid rgba(255,255,255,.14)!important;}
 .al-cart-summary{gap:10px!important;min-width:0!important;}
 .al-cart-actions button{padding:11px 14px!important;border-radius:18px!important;font-size:13px!important;white-space:nowrap;}
@@ -1737,6 +1738,7 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
 .qatya-v14-quick{display:none!important;}
 .qatya-council-mini{margin-bottom:14px!important;}
 @media(max-width:640px){.qatya-tabs{top:6px;border-radius:20px}.qatya-tabs button{font-size:12px;padding:10px 4px}.qatya-v14-main{gap:18px!important}.qatya-v14-orb{width:136px!important;height:136px!important}.qatya-ledger-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}.qatya-ledger-tile{padding:14px 8px!important;border-radius:20px!important}.qatya-ledger-tile strong{font-size:19px!important}}
+@media(max-width:360px){.qatya-tabs{gap:4px;padding:6px}.qatya-tabs button{white-space:nowrap;padding-inline:2px}}
 .order-scroll-cue{display:flex;align-items:center;justify-content:center;gap:8px;margin:-8px auto 14px;color:#7c2d12;font-weight:900;font-size:12px;opacity:.85;animation:orserCue 1.5s ease-in-out infinite;}
 @keyframes orserCue{50%{transform:translateY(4px);opacity:.55}}
 
@@ -3251,6 +3253,8 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   letter-spacing:.02em!important;
   color:#a07020!important;
 }
+.diwaniya-memory-card span.text-\[7\.5px\]{font-size:11px!important;margin-bottom:34px!important;}
+.diwaniya-memory-card::after{font-size:11px!important;height:22px!important;}
 
 /* Order customer UI: responsive readability and touch polish only */
 .customer-signature-shell,
@@ -3653,6 +3657,8 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
 }
 
 /* Mobile-only fixes for order tracking and smart search stability */
+.order-id-track-input{text-overflow:ellipsis;}
+@media(max-width:360px){.order-id-track-input{padding-inline:2.5rem!important}.order-id-track-input::placeholder{font-size:13px!important}}
 .order-id-track-input::placeholder{
   direction:rtl;
   text-align:center;
