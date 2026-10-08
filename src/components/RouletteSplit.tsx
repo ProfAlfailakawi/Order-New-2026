@@ -211,7 +211,7 @@ export function RouletteSplit({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             className="bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white p-8 justify-center items-center rounded-[32px] flex flex-col gap-4 shadow-xl shadow-[#25D366]/20 border border-white/20 relative overflow-hidden max-w-md w-full"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 wahag-participant-chip bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full blur-xl -ml-12 -mb-12" />
             <div className="w-16 h-16 wahag-result-card bg-white rounded-full flex items-center justify-center shadow-inner relative z-10">
               <Check className="w-8 h-8 text-[#25D366]" strokeWidth={3} />
@@ -539,7 +539,7 @@ export function RouletteSplit({
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             className="bg-gradient-to-br from-red-500 to-rose-600 text-white p-6 justify-center items-center rounded-3xl flex flex-col gap-3 shadow-xl shadow-red-500/20 border border-white/20 relative overflow-hidden mb-4"
                           >
-                            <div className="absolute top-0 right-0 w-32 h-32 wahag-participant-chip bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
                             <div className="w-14 h-14 wahag-result-card bg-white rounded-full flex items-center justify-center shadow-inner relative z-10 shrink-0">
                               <AlertCircle className="w-7 h-7 text-red-500" strokeWidth={3} />
                             </div>
@@ -550,9 +550,9 @@ export function RouletteSplit({
                           </motion.div>
                         )}
                         <div className="roulette-v14-result-icon"><Trophy className="w-7 h-7" /></div>
-                        <h2 className="text-3xl font-black text-white">{resultContent.title}</h2>
+                        <h2 className="text-3xl font-black text-white"><MessageWithIcons text={resultContent.title} /></h2>
                         <p className="font-bold text-violet-200">
-                          {resultContent.desc}
+                          <MessageWithIcons text={resultContent.desc} />
                         </p>
                         <button
                           type="button"
@@ -586,9 +586,9 @@ export function RouletteSplit({
                   return (
                     <div className="roulette-result-card roulette-v14-result wahag-wow-result is-safe p-6 bg-fuchsia-500/20 border border-fuchsia-500/50 rounded-3xl text-fuchsia-100 space-y-4">
                       <div className="roulette-v14-result-icon is-safe"><ShieldCheck className="w-7 h-7" /></div>
-                      <h2 className="text-3xl font-black text-white">{resultContent.title}</h2>
+                      <h2 className="text-3xl font-black text-white"><MessageWithIcons text={resultContent.title} /></h2>
                       <p className="font-bold text-fuchsia-200">
-                        {resultContent.desc}
+                        <MessageWithIcons text={resultContent.desc} />
                       </p>
                       <button
                         type="button"

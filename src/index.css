@@ -503,7 +503,7 @@ section:not([class*="max-w-"]) {
 }
 .roulette-v14-lobby-head { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom: .9rem; }
 .roulette-v14-lobby-head span {
-  font-size:.65rem; font-weight:950; color:#f5d0fe; border:1px solid rgba(217,70,239,.20);
+  font-size:.6875rem; font-weight:950; color:#f5d0fe; border:1px solid rgba(217,70,239,.20);
   background:rgba(217,70,239,.12); padding:.35rem .6rem; border-radius:999px;
 }
 .roulette-v14-participants { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:.55rem; }
