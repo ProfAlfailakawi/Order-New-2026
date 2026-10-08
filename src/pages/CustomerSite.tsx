@@ -5053,7 +5053,6 @@ export default function CustomerSite() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2, duration: 0.6 }}
                 className="mb-8 w-full text-center"
-                dir="rtl"
               >
                 <h1 className="text-2xl sm:text-3xl font-black text-[#0d3a22] leading-relaxed px-2">
                   حيّاكم الله في مطبخ التراث الكويتي
