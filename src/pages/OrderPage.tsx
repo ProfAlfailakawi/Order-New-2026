@@ -2286,7 +2286,7 @@ export default function OrderPage() {
       </AnimatePresence>
 
       {/* Footer Decoration */}
-      <footer className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white to-transparent pointer-events-none -z-10">
+      <footer className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white to-transparent pointer-events-none z-0">
         <div className="max-w-2xl mx-auto flex flex-col items-center opacity-10">
           <div className="w-32 h-1 bg-brand rounded-full mb-2" />
         </div>
