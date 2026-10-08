@@ -3,6 +3,11 @@
    fetch WOFF2). Same families/weights/display=swap, now loaded in parallel. */
 @import "tailwindcss";
 
+/* Tier badge gradients arrive as class names inside admin-configured data
+   (e.g. "from-emerald-400 to-teal-600"), so the scanner never sees them in
+   source and the badge rendered white-on-white. Keep the common palette. */
+@source inline("{from,to}-{emerald,teal,orange,amber,yellow,red,rose,pink,fuchsia,violet,purple,indigo,blue,sky,cyan,green,lime,slate,stone}-{300,400,500,600,700,800,900}");
+
 @theme {
   --font-sans: "Tajawal", ui-sans-serif, system-ui, sans-serif;
   --color-brand: #0d3a22; /* Ancient Kuwaiti Palm Green */
@@ -3927,6 +3932,9 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   .admin-rtable td[data-label=""]::before{display:none;}
   .admin-rtable td[colspan]{grid-column:1/-1;display:block;padding:40px 12px!important;text-align:center!important;}
   .admin-rtable td.text-2xl,.admin-rtable td.text-xl{font-size:20px;}
+  /* amount cells: the currency unit sits beside the number instead of on its own line */
+  .admin-rtable td.text-2xl[data-label]{display:block;}
+  .admin-rtable td.text-2xl[data-label]::before{display:block;margin-bottom:3px;}
   .admin-rtable td .justify-center{justify-content:flex-start;}
   .admin-rtable td button{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;}
 
