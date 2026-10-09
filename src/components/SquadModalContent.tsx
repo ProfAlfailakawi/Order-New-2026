@@ -310,8 +310,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
   const currentUserRoleTone = isOwner
     ? "bg-amber-50 text-amber-700 border-amber-100"
     : isCurrentMember
-      ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-      : "bg-sky-50 text-sky-700 border-sky-100";
+      ? "bg-brand/5 text-brand border-brand/15"
+      : "bg-cream text-brass-ink border-cream-edge";
   const activeQatyaPaidAmount = Number(openQatyaOrder?.paidAmount || 0);
   const activeQatyaTotal = Number(openQatyaOrder?.total || 0);
   const activeQatyaRemaining = Math.max(0, Number(openQatyaOrder?.remainingAmount ?? (activeQatyaTotal - activeQatyaPaidAmount)) || 0);
@@ -1480,7 +1480,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           "inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-black border shadow-sm active:scale-95 disabled:opacity-50 transition-all shrink-0",
                           isPresentNow
                             ? "bg-white text-stone-700 border-stone-200"
-                            : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                            : "bg-brand/5 text-brand border-brand/15"
                         )}
                       >
                         {isPresentNow ? <DoorClosed className="w-4 h-4" /> : <DoorOpen className="w-4 h-4" />}
@@ -1512,26 +1512,26 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 <p className="text-xs font-bold text-stone-500 leading-relaxed">اختار الأصناف، وإذا وصلت للقطيّة تلقى الربع جاهزين بدون تكرار أسماء أو أرقام.</p>
                 
                 {/* 🧠 معزب الذكاء الاصطناعي الودود - مدمج بذكاء مع المنتجات الحقيقية ويتعلم من الاختيارات */}
-                <div className="bg-gradient-to-br from-amber-500/[0.06] via-amber-600/[0.01] to-stone-50/10 border border-amber-500/15 rounded-3xl p-4 text-right space-y-3 relative overflow-hidden shadow-inner">
-                  <div className="absolute top-0 left-0 w-24 h-24 bg-amber-500/5 blur-xl rounded-full pointer-events-none" />
+                <div className="bg-gradient-to-br from-cream via-white to-white border border-accent/30 rounded-3xl p-4 text-right space-y-3 relative overflow-hidden shadow-inner">
+                  <div className="absolute top-0 left-0 w-24 h-24 bg-accent/10 blur-xl rounded-full pointer-events-none" />
                   
                   {/* Header Row */}
                   <div className="flex items-center justify-between">
                     {/* Level / Learning status */}
-                    <span className="text-xs font-black text-amber-600 bg-amber-500/10 py-1 px-2.5 rounded-full animate-pulse">
+                    <span className="text-xs font-black text-brass-ink bg-cream ring-1 ring-cream-edge py-1 px-2.5 rounded-full">
                       {aiLearntCount === 0 ? <MessageWithIcons text={"الذكاء يتعلم ذوقكم 🧬"} /> : <MessageWithIcons text={`تم استيعاب ${aiLearntCount} من تفضيلات الربع! 🧠`} />}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="p-1 bg-amber-500/10 text-amber-600 rounded-lg">
+                      <span className="p-1 bg-cream text-brass-ink ring-1 ring-cream-edge rounded-lg">
                         <BrainCircuit className="w-4 h-4" />
                       </span>
-                      <span className="text-xs font-black text-amber-500">معزب الذكاء الاصطناعي</span>
+                      <span className="text-xs font-black text-brass-ink">معزب الذكاء الاصطناعي</span>
                     </div>
                   </div>
 
                   {aiIsLearning ? (
                     <div className="py-4 flex flex-col items-center justify-center space-y-2 text-center">
-                      <OrderMicroLoader size={24} tone="amber" label="الذكاء الاصطناعي يفكر" />
+                      <OrderMicroLoader size={24} tone="brand" label="الذكاء الاصطناعي يفكر" />
                       <span className="text-xs font-black text-stone-500 animate-pulse">المعزب يعيد ضبط حساباته ويستخلص التفضيل التالي للربع...</span>
                     </div>
                   ) : (
@@ -1543,7 +1543,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                       {/* Real Connected Product Banner */}
                       {activeRecommendation.product ? (
-                        <div className="flex items-center justify-between p-2.5 bg-white border border-amber-500/15 rounded-2xl gap-3">
+                        <div className="flex items-center justify-between p-2.5 bg-white border border-cream-edge rounded-2xl gap-3">
                           <div className="flex items-center gap-2 text-right">
                             {activeRecommendation.product.image && (
                               <img
@@ -1555,7 +1555,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             )}
                             <div>
                               <div className="text-xs font-black text-stone-850 line-clamp-1">{activeRecommendation.product.name}</div>
-                              <div className="text-xs font-bold text-amber-600">
+                              <div className="text-xs font-bold text-brass-ink">
                                 {Number(activeRecommendation.product.price || 0).toFixed(3)} د.ك
                               </div>
                             </div>
@@ -1566,7 +1566,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             <button
                               type="button"
                               onClick={() => handleAddAiProductToCart(activeRecommendation.product)}
-                              className="bg-amber-500 hover:bg-amber-600 text-stone-950 px-3 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95 shadow-sm"
+                              className="bg-brass-ink hover:bg-brand text-white px-3 py-2 min-h-9 rounded-xl text-xs font-black transition-all active:scale-95 shadow-sm"
                             >
                               <MessageWithIcons text={"إضافة فوريّة 🛒"} />
 </button>
@@ -1654,7 +1654,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         <div className="absolute bottom-3 left-3 w-5 h-5 border-b-2 border-l-2 border-[#d4af37]/40 rounded-bl-[8px] pointer-events-none" />
 
                         {/* Interactive Wax Seal Component */}
-                        <div className="absolute top-4 right-4 z-30">
+                        <div className="absolute top-2 right-2 z-30 origin-top-right scale-75">
                           {/* Wax Seal Container */}
                           <div className="relative w-12 h-12 rounded-full cursor-pointer select-none filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)] transform hover:scale-110 active:scale-95 transition-all duration-300">
                             {/* Outer molten organic wax ring */}
@@ -1674,7 +1674,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                         <div className="relative z-10 pt-2 pb-4">
                           <div className="text-xs font-black tracking-wider text-[#ecc94b] mb-3.5 uppercase"><MessageWithIcons text={"رقم تذكرة الدخول الملكية 🗝️"} /></div>
-                          <div className="inline-flex relative overflow-hidden bg-gradient-to-b from-[#1c0802] to-[#2c0f05] border border-[#d4af37]/30 rounded-2xl px-6 py-3.5 text-3xl font-black tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-[#ffe494] via-[#f3c25a] to-[#ffe494] shadow-[inset_0_2px_8px_rgba(0,0,0,0.7),0_1px_0_rgba(255,255,255,0.08)] filter drop-shadow-[0_2px_2px_rgba(0,0,0,0.6)]" dir="ltr">
+                          <div className="inline-flex relative overflow-hidden bg-gradient-to-b from-[#1c0802] to-[#2c0f05] border border-[#d4af37]/30 rounded-2xl px-4 sm:px-6 py-3.5 text-2xl sm:text-3xl whitespace-nowrap font-black tracking-[0.2em] sm:tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-[#ffe494] via-[#f3c25a] to-[#ffe494] shadow-[inset_0_2px_8px_rgba(0,0,0,0.7),0_1px_0_rgba(255,255,255,0.08)] filter drop-shadow-[0_2px_2px_rgba(0,0,0,0.6)]" dir="ltr">
                             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none animate-pulse" />
                             {activeTempCode?.code || tempCodes[0]?.code}
                           </div>
@@ -2283,7 +2283,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               {/* Contents in the bottom white margin of the Polaroid */}
                               <div className="space-y-1.5 mt-1 text-stone-800">
                                 <div className="flex items-center justify-between border-b border-stone-100 pb-1">
-                                  <span className="text-[8.5px] font-black uppercase tracking-wider text-accent bg-amber-50 border border-amber-200/60 px-2 rounded-full inline-block">
+                                  <span className="text-xs font-black uppercase tracking-wider text-accent bg-amber-50 border border-amber-200/60 px-2 rounded-full inline-block">
                                     {selectedMemory.date}
                                   </span>
                                   <span className="text-xs font-mono text-stone-500 font-bold">ذكريات اليمعة المعتقة</span>
@@ -2321,7 +2321,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                           console.error("Failed to delete memory:", e);
                                         }
                                       }}
-                                      className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 rounded-lg text-[8.5px] font-black transition-all"
+                                      className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 rounded-lg text-xs font-black transition-all"
                                       title="حذف الذكرى"
                                     >
                                       <MessageWithIcons text={"حذف 🗑️"} />
@@ -2333,7 +2333,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                       const shareText = `📸 من ذكريات دوانيتنا بالفندق التراثي القديم:\n\n*${selectedMemory.title}*\n"${selectedMemory.desc}"\n🗓️ تاريخ اليمعة: ${selectedMemory.date}\n\nشوف باقي ذكريات دوانيتنا وشاركنا بالقرعة هني:\n${link}`;
                                       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, "_blank");
                                     }}
-                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[8.5px] font-black flex items-center gap-0.5 transition-all shadow-sm"
+                                    className="px-3 py-1.5 bg-brand hover:bg-brand/90 text-white rounded-lg text-xs font-black flex items-center gap-0.5 transition-all shadow-sm"
                                   >
                                     <span><MessageWithIcons text={"واتساب 💬"} /></span>
                                   </button>
@@ -2381,7 +2381,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                   
                                   <div className="flex flex-col gap-0.5 text-center font-sans mt-0.5">
                                     <h6 className="text-xs sm:text-xs font-black text-brand truncate pr-0.5 leading-tight">{album.title}</h6>
-                                    <span className="text-[7.5px] font-extrabold text-accent font-mono leading-none">{album.date}</span>
+                                    <span className="text-xs font-extrabold text-accent font-mono leading-none">{album.date}</span>
                                   </div>
                                 </motion.div>
                               );
@@ -2396,7 +2396,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   {isOwner && myDiwaniyaTab === "location" && (
                     <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
                       <div className="flex items-center justify-between border-b border-stone-50 pb-3">
-                        <span className="text-xs font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase tracking-wider"><MessageWithIcons text={"رادار الديوانية 📡"} /></span>
+                        <span className="text-xs font-black bg-cream text-brass-ink ring-1 ring-cream-edge px-3 py-1 rounded-full uppercase tracking-wider"><MessageWithIcons text={"رادار الديوانية 📡"} /></span>
                         <h4 className="font-black text-brand text-sm">إرشاد الرادار الجغرافي</h4>
                       </div>
                       
@@ -2404,9 +2404,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         ثبّت موقع ديوانيتك واختر مدى ظهور بطاقة الدخول للربع القريبين منك، وخله على المسافة الأنسب لجلساتكم.
                       </p>
 
-                      <div className="rounded-[24px] bg-emerald-50/70 border border-emerald-100 p-4 space-y-3">
+                      <div className="rounded-[24px] bg-cream border border-cream-edge p-4 space-y-3">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-xs font-mono font-black bg-white text-emerald-700 px-3 py-1 rounded-full border border-emerald-100">
+                          <span className="text-xs font-mono font-black bg-white text-brass-ink px-3 py-1 rounded-full border border-cream-edge">
                             {formatEnglishNumber(localGeofenceDistance)} متر
                           </span>
                           <div className="text-right">
@@ -2425,7 +2425,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             setLocalGeofenceDistance(nextDistance);
                             try { localStorage.setItem(`squad_geofence_distance_${squadInfo?.id}`, String(nextDistance)); } catch(e) {}
                           }}
-                          className="w-full accent-emerald-600"
+                          className="w-full accent-brand"
                         />
                         <div className="flex items-center justify-between text-xs font-black text-stone-500">
                           <span>حتى {formatEnglishNumber(getSquadGeofenceDistance())}م</span>
@@ -2438,7 +2438,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           <p className="text-xs font-black text-sky-800 flex items-center gap-1 justify-end">
                             <span><MessageWithIcons text={"موقع الديوانية مسجّل ومفعّل حالياً بنجاح! ✅"} /></span>
                           </p>
-                          <p className="text-xs font-mono font-bold text-sky-600 tracking-tight">
+                          <p className="text-xs font-mono font-bold text-brass-ink tracking-tight">
                             إحداثيات: {registeredSquadLat?.toFixed(6)}, {registeredSquadLng?.toFixed(6)}
                           </p>
                           <button
@@ -2450,11 +2450,11 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 </button>
                         </div>
                       ) : (
-                        <div className="bg-orange-50 px-4 py-3 rounded-2xl border border-orange-100">
-                          <p className="text-xs font-black text-orange-850">
+                        <div className="bg-cream px-4 py-3 rounded-2xl border border-accent/30">
+                          <p className="text-xs font-black text-ink">
                             <MessageWithIcons text={"⚠️ موقع الديوانية غير مسجّل حتى الآن!"} />
 </p>
-                          <p className="text-xs font-bold text-orange-600/80 mt-1 leading-normal">
+                          <p className="text-xs font-bold text-brass-ink mt-1 leading-normal">
                             الربع القراب منك ما يقدرون يستقبلون إشعارات الرادار للانضمام السريع إلا بعد تعيين موقع ديوانيتكم.
                           </p>
                         </div>
@@ -2524,7 +2524,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   {!isOwner && myDiwaniyaTab === "location" && (
                     <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
                       <div className="flex items-center justify-between border-b border-stone-50 pb-3">
-                        <span className="text-xs font-black bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full">إرشادات فقط</span>
+                        <span className="text-xs font-black bg-cream text-brass-ink ring-1 ring-cream-edge px-3 py-1 rounded-full">إرشادات فقط</span>
                         <h4 className="font-black text-brand text-sm"><MessageWithIcons text={"موقع الديوانية 📍"} /></h4>
                       </div>
                       <p className="text-xs font-bold text-stone-500 leading-relaxed">
@@ -2551,7 +2551,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           {pendingGeofenceRequests.map((req: any, idx: number) => (
                             <div key={idx} className="p-3.5 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col gap-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">يبعد {req.distance ? formatEnglishNumber(req.distance) : formatEnglishNumber(getSquadGeofenceDistance())}م</span>
+                                <span className="text-xs font-black bg-cream text-brass-ink ring-1 ring-cream-edge px-2 py-0.5 rounded-full">يبعد {req.distance ? formatEnglishNumber(req.distance) : formatEnglishNumber(getSquadGeofenceDistance())}م</span>
                                 <span className="text-sm font-black text-brand">{req.name}</span>
                               </div>
                               <div className="flex items-center justify-between mt-1">
@@ -2567,7 +2567,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                   <button
                                     onClick={() => handleApproveRejectRequest(req.phone, true)}
                                     disabled={isApproving[req.phone]}
-                                    className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black px-4.5 py-1.5 rounded-xl shadow-sm active:scale-95 transition-all text-center"
+                                    className="bg-brand hover:bg-brand/90 text-white text-xs font-black px-4.5 py-1.5 rounded-xl shadow-sm active:scale-95 transition-all text-center"
                                   >
                                     {isApproving[req.phone] ? "ثواني..." : <MessageWithIcons text={"قبول ✅"} />}
                                   </button>
@@ -2719,9 +2719,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
               );
             })()
           ) : !isCreatingSquad ? (
-            <div className="bg-orange-50 rounded-[30px] p-6 border border-orange-100 shadow-sm flex flex-col gap-4 text-center">
+            <div className="bg-cream rounded-[30px] p-6 border border-cream-edge shadow-sm flex flex-col gap-4 text-center">
               <div className="flex flex-col items-center justify-center">
-                <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 mb-4 shadow-inner">
+                <div className="w-16 h-16 rounded-full bg-white ring-1 ring-cream-edge flex items-center justify-center text-accent mb-4 shadow-inner">
                   <Users className="w-8 h-8" />
                 </div>
                 <h4 className="font-black text-lg text-brand mb-2">
@@ -2732,7 +2732,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 </p>
               </div>
 
-              <div className="bg-white rounded-3xl p-4 border border-orange-100 space-y-3 text-right">
+              <div className="bg-white rounded-3xl p-4 border border-cream-edge space-y-3 text-right">
                 <label className="text-xs font-black text-stone-500 mr-2">
                   رقم تلفونك
                 </label>
@@ -2919,8 +2919,14 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       {activeSquadTab === "tiers" && (
         <div className="space-y-5 animate-in fade-in duration-500 text-right">
           {sortedTiers.length === 0 ? (
-            <div className="rounded-[28px] border border-stone-100 bg-white p-5 shadow-sm text-center text-xs font-black text-stone-500">
-              طريق الديوانية بانتظار إعداد مستوياته من لوحة الأدمن.
+            <div className="flex flex-col items-center gap-2 rounded-[28px] border border-cream-edge bg-cream px-5 py-7 text-center shadow-sm">
+              <span className="grid h-14 w-14 place-items-center rounded-full bg-white text-accent ring-1 ring-cream-edge" aria-hidden="true">
+                <Medal className="h-7 w-7" strokeWidth={1.6} />
+              </span>
+              <p className="text-sm font-extrabold text-ink">الطريق ينفتح قريب</p>
+              <p className="max-w-[260px] text-xs font-bold leading-relaxed text-stone-600">
+                طريق الديوانية بانتظار إعداد مستوياته من لوحة الأدمن.
+              </p>
             </div>
           ) : null}
           {sortedTiers.length > 0 ? (

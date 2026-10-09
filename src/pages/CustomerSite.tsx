@@ -5141,7 +5141,7 @@ export default function CustomerSite() {
             className="fixed top-4 inset-x-3 sm:left-1/2 sm:right-auto sm:w-[420px] sm:-translate-x-1/2 bg-slate-950/95 border border-orange-500/40 backdrop-blur-md text-right rounded-[22px] p-4 shadow-2xl z-[9999] text-white overflow-hidden shadow-orange-950/30"
           >
             {/* Pulsing Ember Background Glow */}
-            <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-orange-600/25 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-accent/25 rounded-full blur-2xl pointer-events-none" />
             
             <div className="flex items-start justify-between gap-4 relative z-10">
               <button aria-label="إغلاق"
@@ -5153,7 +5153,7 @@ export default function CustomerSite() {
               </button>
               
               <div className="flex-1 text-right">
-                <span className="text-xs font-black bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full border border-orange-500/25 tracking-wide">
+                <span className="text-xs font-black bg-accent/20 text-amber-200 px-3 py-1 rounded-full border border-accent/30 tracking-wide">
                   <MessageWithIcons text={"رادار الديوانية 📡"} />
 </span>
                 
@@ -5211,10 +5211,10 @@ export default function CustomerSite() {
             ) : (
               <div 
                 onClick={() => { setActiveSquadTab("leaderboard"); setShowSquadModal(true); }}
-                className="bg-gradient-to-l from-orange-50 to-transparent border border-orange-100 rounded-xl p-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 cursor-pointer hover:bg-orange-100/50 transition-all shadow-sm"
+                className="bg-gradient-to-l from-cream to-transparent border border-cream-edge rounded-xl p-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 cursor-pointer hover:bg-cream transition-all shadow-sm"
               >
                  <div className="flex items-center gap-2.5 min-w-0 flex-1 basis-40">
-                    <div className="w-9 h-9 rounded-full bg-white shadow-sm border border-orange-200 flex items-center justify-center text-orange-500 shrink-0 relative">
+                    <div className="w-9 h-9 rounded-full bg-white shadow-sm border border-cream-edge flex items-center justify-center text-accent shrink-0 relative">
                        <Crown className="w-5 h-5" />
                     </div>
                     <div className="flex flex-col min-w-0">
