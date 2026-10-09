@@ -1113,6 +1113,7 @@ import {
 import { ZenSplashScreen } from "../components/ZenSplashScreen";
 import OrderWelcome from "../components/OrderWelcome";
 import { ProductVisual, CategoryTile } from "../components/dna/ProductVisual";
+import { FoodPhoto, PriceChip } from "../components/FoodCard";
 import { DnaCount, DnaTimeline, DnaIconTile } from "../components/dna";
 import { DynamicEnvironment } from "../components/DynamicEnvironment";
 import { redirectToPayment } from "../utils/redirect";
@@ -1341,8 +1342,8 @@ const normalizeSquadTierForCustomer = (tier: any, index: number, all: any[]) => 
   const sortedMins = all.map((t: any) => parseAdminPoints(t?.minPoints ?? t?.points ?? t?.requiredPoints ?? 0)).sort((a, b) => a - b);
   const minPoints = parseAdminPoints(tier?.minPoints ?? tier?.points ?? tier?.requiredPoints ?? 0);
   const nextMin = sortedMins.find((v) => v > minPoints);
-  const safeColors = ["text-orange-700", "text-slate-700", "text-amber-700", "text-purple-700", "text-emerald-700", "text-sky-700"];
-  const safeBgs = ["bg-orange-50", "bg-slate-100", "bg-amber-50", "bg-purple-50", "bg-emerald-50", "bg-sky-50"];
+  const safeColors = ["text-orange-700", "text-slate-700", "text-amber-700", "text-brass-ink", "text-emerald-700", "text-sky-700"];
+  const safeBgs = ["bg-orange-50", "bg-slate-100", "bg-amber-50", "bg-amber-50", "bg-emerald-50", "bg-sky-50"];
   const iconType = String(tier?.iconType || tier?.icon || "");
   return {
     ...tier,
@@ -1397,6 +1398,26 @@ const cleanCustomerAddonLabel = (value: any): string => {
 
   return cleaned || original;
 };
+
+/** Presentational 3-step trail for checkout. Reads the current step only. */
+function CheckoutSteps({ step }: { step: string }) {
+  const steps = [
+    { id: "cart", label: "السلة" },
+    { id: "delivery", label: "العنوان" },
+    { id: "payment", label: "الدفع" },
+  ];
+  const current = Math.max(0, steps.findIndex((x) => x.id === step));
+  return (
+    <ol className="checkout-steps" aria-label="خطوات الطلب">
+      {steps.map((x, i) => (
+        <li key={x.id} className={cn("checkout-step", i < current && "is-done", i === current && "is-current")} aria-current={i === current ? "step" : undefined}>
+          <span className="checkout-step-dot" aria-hidden="true">{i < current ? <span className="step-tick" /> : i + 1}</span>
+          <span className="checkout-step-label">{x.label}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 function StoreClosedWorkingHoursNotice({
   status,
@@ -5140,7 +5161,7 @@ export default function CustomerSite() {
                   حياك الله يا <span className="text-orange-400">{zeroClickWelcome.name}</span>
                 </h4>
                 
-                <p className="font-sans font-bold text-xs text-stone-300 leading-relaxed mt-1.5">
+                <p className="font-sans font-bold text-xs text-stone-500 leading-relaxed mt-1.5">
                   تم تسجيل حضورك في ديوانية <span className="text-amber-100 font-black">{zeroClickWelcome.squadName}</span>.
                 </p>
               </div>
@@ -5340,7 +5361,7 @@ export default function CustomerSite() {
                 >
                   {tannourStatus.text}
                 </span>
-                <span className="text-xs text-stone-300 mx-1">•</span>
+                <span className="text-xs text-stone-500 mx-1">•</span>
                 <span className="text-xs font-bold text-stone-500 leading-[1.6] py-0.5">
                   {goldenHourTheme.name}
                 </span>
@@ -5546,12 +5567,10 @@ export default function CustomerSite() {
                         onClick={() => setSelectedProduct(p)}
                         className="group flex items-center gap-3.5 rounded-2xl border border-stone-200/40 bg-white p-3 text-right active:scale-[.98] hover:border-amber-300 hover:shadow-md transition-all duration-300 min-h-[92px]"
                       >
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden shrink-0 bg-stone-50 border border-stone-100 shadow-sm">
-                          <ProductVisual product={p} imgClassName="w-full h-full object-cover" />
-                        </div>
+                        <FoodPhoto product={p} className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-2xl shrink-0 border border-cream-edge shadow-sm" />
                         <div className="min-w-0 flex-1 space-y-1">
                           <div className="text-xs sm:text-sm font-extrabold text-brand line-clamp-2 leading-snug break-words group-hover:text-amber-950 transition-colors duration-200">{p.name}</div>
-                          <div className="inline-flex items-center text-xs font-black text-amber-800 bg-amber-50/50 px-2 py-0.5 rounded-md">{Number(p.price || 0).toFixed(3)} د.ك</div>
+                          <PriceChip>{Number(p.price || 0).toFixed(3)} <span className="text-xs font-bold text-accent">د.ك</span></PriceChip>
                         </div>
                       </button>
                     );
@@ -5573,9 +5592,7 @@ export default function CustomerSite() {
                 className="w-full text-right group flex items-center justify-between gap-4 rounded-3xl border border-amber-200/50 bg-[#faf8f4]/90 hover:bg-amber-50/40 p-4 shadow-sm active:scale-[.99] transition-all duration-300"
               >
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                  <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 shadow-sm border border-amber-100 bg-stone-50">
-                    <ProductVisual product={suggestion} imgClassName="w-full h-full object-cover" />
-                  </div>
+                  <FoodPhoto product={suggestion} className="w-16 h-16 rounded-2xl shrink-0 shadow-sm border border-cream-edge" />
                   <div className="text-right min-w-0 flex-1 space-y-1">
                     <span className="inline-flex items-center text-xs font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100/50 rounded-full px-2.5 py-0.5">توليفة تكمّل سلتك</span>
                     <p className="text-xs sm:text-sm font-black text-brand line-clamp-1 group-hover:text-amber-950 transition-colors">
@@ -5805,8 +5822,9 @@ export default function CustomerSite() {
                 animate={{ scale: 1, y: 0 }}
                 className="text-center w-full max-w-sm"
               >
-                <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl relative border-4 border-white overflow-hidden">
-                  <img alt={smartPick?.item?.name || "الطبق المقترح"}
+                <FoodPhoto className="w-28 h-28 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl border-4 border-white overflow-hidden">
+<img
+                    alt={smartPick?.item?.name || "الطبق المقترح"}
                     referrerPolicy="no-referrer"
                     src={
                       smartPick?.item?.imageUrl ||
@@ -5818,12 +5836,11 @@ export default function CustomerSite() {
                       e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
                     }}
                   />
-                  <div className="absolute inset-0 bg-accent/10 mix-blend-overlay"></div>
-                </div>
+                  </FoodPhoto>
                 <h2 className="text-3xl font-extrabold text-white mb-2 tracking-tight leading-tight">
                   {smartPick?.phrase || "اختيارنا لك"}
                 </h2>
-                <p className="text-stone-300 text-lg mb-8 leading-relaxed font-medium">
+                <p className="text-stone-500 text-lg mb-8 leading-relaxed font-medium">
                   شرايك تجرب{" "}
                   <span className="font-bold text-white">
                     {smartPick?.item?.name}
@@ -6165,7 +6182,7 @@ export default function CustomerSite() {
                         // Clearing the feed still dismisses it for this page.
                       }
                     }}
-                    className="absolute top-1 right-1 p-2 text-stone-500 hover:text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-full z-20 transition-colors"
+                    className="absolute top-1 left-1 p-2 text-stone-500 hover:text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-full z-20 transition-colors"
                     title="إغلاق"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -7262,7 +7279,7 @@ const ChefWhisperCard = ({
           {/* Horizontal Layout (Carousel) remains unchanged */}
           {isHorizontal ? (
             <>
-              <div className="menu-product-image relative flex-shrink-0 overflow-hidden flex items-center justify-center rounded-[22px] w-20 h-20 mx-auto mb-2 shadow-[0_14px_28px_rgba(26,46,34,0.12)] ring-1 ring-white/70">
+              <div className="menu-product-image food-photo relative flex-shrink-0 overflow-hidden flex items-center justify-center rounded-[22px] w-20 h-20 mx-auto mb-2 shadow-[0_14px_28px_rgba(26,46,34,0.12)] ring-1 ring-white/70">
                 <ProductVisual
                   product={product}
                   imgClassName="menu-product-img orser-product-img w-full h-full object-cover bg-transparent relative z-0"
@@ -7316,7 +7333,7 @@ const ChefWhisperCard = ({
                 {/* Image-first display: no white frame, just the food as the visual anchor */}
                 <div className="product-media-frame relative w-full max-w-[214px] flex flex-col items-center pt-1 pb-4">
                   {/* 2. Image */}
-                  <div className="menu-product-image relative w-[150px] h-[86px] sm:w-[168px] sm:h-[94px] flex-shrink-0 overflow-hidden flex items-center justify-center z-10 mb-2 rounded-[22px] shadow-[0_16px_38px_rgba(26,46,34,0.16)] ring-1 ring-white/80">
+                  <div className="menu-product-image food-photo relative w-[150px] h-[86px] sm:w-[168px] sm:h-[94px] flex-shrink-0 overflow-hidden flex items-center justify-center z-10 mb-2 rounded-[22px] shadow-[0_16px_38px_rgba(26,46,34,0.16)] ring-1 ring-white/80">
                         <ProductVisual
                       product={product}
                       imgClassName="menu-product-img orser-product-img w-full h-full object-cover bg-transparent relative z-0"
@@ -7794,6 +7811,7 @@ function ProductModal({
                 style={{ touchAction: "manipulation" }}
                 aria-label={`تكبير صورة ${product.name}`}
               >
+                <FoodPhoto className="w-[112px] h-[112px] sm:w-[132px] sm:h-[132px] rounded-[28px] bg-white shadow-[0_20px_48px_rgba(26,46,34,0.18)] ring-1 ring-white/80">
                 <img
                   referrerPolicy="no-referrer"
                   src={productImageSrc}
@@ -7815,8 +7833,9 @@ function ProductModal({
                       e.currentTarget.src = fallback;
                     }
                   }}
-                  className="w-[108px] h-[108px] sm:w-[126px] sm:h-[126px] object-contain bg-white p-2 rounded-[28px] shadow-[0_20px_48px_rgba(26,46,34,0.18)] relative ring-1 ring-white/80 transition-transform duration-200 active:scale-[0.98] select-none"
+                  className="w-full h-full object-contain bg-white p-2 relative transition-transform duration-200 active:scale-[0.98] select-none"
                 />
+                </FoodPhoto>
               </button>
             ) : (
               <div className="w-[108px] h-[108px] sm:w-[126px] sm:h-[126px] flex items-center justify-center bg-stone-50/80 backdrop-blur-sm border border-stone-100 text-stone-400 rounded-[28px] shadow-md relative p-1">
@@ -7894,7 +7913,7 @@ function ProductModal({
               <label className="text-xs font-bold text-stone-500 block">
                 إضافات حصرية
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 [&>*:only-child]:sm:col-span-2 gap-3 sm:gap-4">
                 {product.extras.map((extra) => {
                   const isSelected = selectedExtras.find(
                     (e) => e.name === extra.name,
@@ -7904,29 +7923,29 @@ function ProductModal({
                       key={extra.name}
                       onClick={() => toggleExtra(extra)}
                       className={cn(
-                        "flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 transition-all",
+                        "flex items-center justify-between min-h-14 p-3.5 sm:p-4 rounded-2xl border-2 transition-all",
                         isSelected
                           ? "border-accent bg-accent/5"
-                          : "border-stone-50 bg-stone-50/30 hover:border-stone-100",
+                          : "border-stone-200 bg-white hover:border-accent/40",
                       )}
                     >
                       <div className="flex items-center gap-3">
                         <div
                           className={cn(
-                            "w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all",
+                            "w-6 h-6 flex-shrink-0 rounded-lg border-2 flex items-center justify-center transition-all",
                             isSelected
                               ? "bg-accent border-accent text-white"
-                              : "border-stone-100 bg-white",
+                              : "border-stone-300 bg-white",
                           )}
                         >
                           {isSelected && (
-                            <Check className="w-3 h-3 stroke-[3]" />
+                            <Check className="w-3.5 h-3.5 stroke-[3]" />
                           )}
                         </div>
                         <span
                           className={cn(
-                            "text-xs sm:text-sm transition-colors font-bold",
-                            isSelected ? "text-brand" : "text-stone-500",
+                            "text-sm sm:text-base transition-colors font-bold",
+                            isSelected ? "text-brand" : "text-stone-700",
                           )}
                         >
                           {extra.name}
@@ -8012,7 +8031,7 @@ function ProductModal({
                       key={addonKey}
                       onClick={() => toggleAddon(addonKey)}
                       className={cn(
-                        "addon-lux-card flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer",
+                        "addon-lux-card min-h-14 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer",
                         !limits.available
                           ? "border-stone-100 bg-stone-50/70 opacity-60 cursor-not-allowed"
                           : effectiveSelected
@@ -8035,8 +8054,8 @@ function ProductModal({
                         </div>
                         <span
                           className={cn(
-                            "text-xs sm:text-sm transition-colors font-bold",
-                            effectiveSelected ? "text-brand" : "text-stone-500",
+                            "text-sm sm:text-base transition-colors font-bold",
+                            effectiveSelected ? "text-brand" : "text-stone-700",
                           )}
                         >
                           {addonDisplayName}
@@ -8046,9 +8065,9 @@ function ProductModal({
                       <div className="addon-lux-meta flex items-center gap-2">
                         {effectiveSelected && (
                            <div className="addon-lux-qty flex items-center gap-2 bg-white rounded-md border border-stone-200" onClick={e => e.stopPropagation()}>
-                              <button aria-label="تقليل الكمية" disabled={!limits.available || currentAddonQty <= 0 || (isMandatory && currentAddonQty <= limits.min)} className="px-2 text-stone-500 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addonKey, -1)}>-</button>
+                              <button aria-label="تقليل الكمية" disabled={!limits.available || currentAddonQty <= 0 || (isMandatory && currentAddonQty <= limits.min)} className="min-w-9 min-h-9 px-2 text-stone-600 hover:text-accent text-lg font-bold disabled:opacity-30" onClick={() => updateAddonQty(addonKey, -1)}>-</button>
                               <span className="addon-lux-qty-value text-xs font-bold w-4 text-center text-brand">{currentAddonQty}</span>
-                              <button aria-label="زيادة الكمية" disabled={!limits.available || currentAddonQty >= limits.max} className="px-2 text-stone-500 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addonKey, 1)}>+</button>
+                              <button aria-label="زيادة الكمية" disabled={!limits.available || currentAddonQty >= limits.max} className="min-w-9 min-h-9 px-2 text-stone-600 hover:text-accent text-lg font-bold disabled:opacity-30" onClick={() => updateAddonQty(addonKey, 1)}>+</button>
                            </div>
                         )}
                         {addon.price > 0 && !addon.isHiddenPrice && (
@@ -8085,7 +8104,7 @@ function ProductModal({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="اكتب ملاحظتك هنا..."
-              className="w-full p-4 bg-stone-50/80 backdrop-blur-sm border-2 border-stone-100 rounded-2xl focus:border-accent outline-none transition-all text-sm min-h-[100px] text-brand placeholder:text-stone-300 font-medium"
+              className="w-full p-4 bg-stone-50/80 backdrop-blur-sm border-2 border-stone-100 rounded-2xl focus:border-accent outline-none transition-all text-sm min-h-[100px] text-brand placeholder:text-stone-500 font-medium"
             />
           </div>
 
@@ -8498,13 +8517,15 @@ function CheckoutOverlay({
           </div>
         </div>
 
+        {storeAvailability.isOpen && cart.length > 0 && <CheckoutSteps step={step} />}
+        <hr className="brass-divider shrink-0" />
         <div className="checkout-wow-body flex-grow overflow-y-auto p-6 space-y-8 no-scrollbar bg-[#fafaf9]">
           {!storeAvailability.isOpen ? (
             <StoreClosedWorkingHoursNotice status={storeAvailability} onClose={onClose} />
           ) : cart.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-stone-500 space-y-6 pt-10">
               <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-stone-50">
-                <ShoppingCart className="w-12 h-12 text-stone-300 empty-state-art" />
+                <ShoppingCart className="w-12 h-12 text-stone-500 empty-state-art" />
               </div>
               <h3 className="text-2xl font-black text-brand mb-1">سلتك فاضية يالغالي!</h3>
               <p className="font-medium text-center text-sm max-w-[200px] mb-4">اطلب الحين وعيش تجربة مختلفة ومميزة مع أطباقنا</p>
@@ -8651,7 +8672,7 @@ function CheckoutOverlay({
 
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
-                  <h3 className="text-xs font-bold text-stone-500">
+                  <h3 className="text-sm font-bold text-stone-600">
                     المنتجات المختارة ({cart.length})
                   </h3>
                 </div>
@@ -8675,6 +8696,7 @@ function CheckoutOverlay({
                       }}
                       className="flex gap-4 p-4 bg-white rounded-3xl border border-stone-100 relative group shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing w-full z-10"
                     >
+                      <FoodPhoto product={(item.product as any) || item} className="w-16 h-16 shrink-0 rounded-2xl border border-cream-edge self-center" />
                       <div className="flex-grow relative min-w-0">
                         <div className="flex justify-between items-start gap-2 mb-2">
                           <h4 className="font-bold text-brand text-sm leading-tight min-w-0 flex-1 pt-1">
@@ -8764,7 +8786,7 @@ function CheckoutOverlay({
                         setCustomerPoints(0);
                       }
                     }}
-                    className="w-full px-5 py-4 border-2 border-accent/10 focus:border-accent/40 bg-stone-50/50 hover:bg-stone-50 transition-colors rounded-xl focus:border-accent focus:ring-4 focus:ring-accent/10 outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-xl text-center tracking-[0.2em] shadow-sm"
+                    className="w-full px-5 py-4 border-2 border-accent/10 focus:border-accent/40 bg-stone-50/50 hover:bg-stone-50 transition-colors rounded-xl focus:border-accent focus:ring-4 focus:ring-accent/10 outline-none transition-all placeholder:text-stone-500 text-brand font-bold text-xl text-center tracking-[0.2em] shadow-sm"
                     dir="ltr"
                   />
                   {customerPhone.length === 8 && !isValidKuwaitPhone(customerPhone) && (
@@ -8824,9 +8846,9 @@ function CheckoutOverlay({
                             setRegionSearch(e.target.value);
                             setShowRegions(true);
                           }}
-                          className="w-full px-5 py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-lg"
+                          className="w-full px-5 py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-500 text-brand font-bold text-lg"
                         />
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 pointer-events-none">
                           <Search className="w-3.5 h-3.5" />
                         </div>
                       </div>
@@ -8937,7 +8959,7 @@ function CheckoutOverlay({
                             block: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
+                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-500 text-brand font-bold text-sm sm:text-base"
                       />
                       {renderAddressError("block")}
                     </div>
@@ -8954,7 +8976,7 @@ function CheckoutOverlay({
                             street: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
+                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-500 text-brand font-bold text-sm sm:text-base"
                       />
                       {renderAddressError("street")}
                     </div>
@@ -8964,7 +8986,7 @@ function CheckoutOverlay({
                     <div className="space-y-1.5">
                       <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
                         <Hash className="w-4 h-4" /> الجادة{" "}
-                        <span className="text-stone-300 font-normal text-xs sm:text-xs">
+                        <span className="text-stone-500 font-normal text-xs sm:text-xs">
                           (اختياري)
                         </span>
                       </label>
@@ -8977,7 +8999,7 @@ function CheckoutOverlay({
                             avenue: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
+                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-500 text-brand font-bold text-sm sm:text-base"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -8993,7 +9015,7 @@ function CheckoutOverlay({
                             building: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
+                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-500 text-brand font-bold text-sm sm:text-base"
                       />
                       {renderAddressError("building")}
                     </div>
@@ -9003,7 +9025,7 @@ function CheckoutOverlay({
                     <div className="space-y-1.5">
                       <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
                         <Layers className="w-4 h-4" /> الدور{" "}
-                        <span className="text-stone-300 font-normal text-xs sm:text-xs">
+                        <span className="text-stone-500 font-normal text-xs sm:text-xs">
                           (اختياري)
                         </span>
                       </label>
@@ -9016,13 +9038,13 @@ function CheckoutOverlay({
                             floor: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
+                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-500 text-brand font-bold text-sm sm:text-base"
                       />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
                         <Hash className="w-4 h-4" /> الشقة{" "}
-                        <span className="text-stone-300 font-normal text-xs sm:text-xs">
+                        <span className="text-stone-500 font-normal text-xs sm:text-xs">
                           (اختياري)
                         </span>
                       </label>
@@ -9035,7 +9057,7 @@ function CheckoutOverlay({
                             apartment: normalizeDigits(e.target.value),
                           })
                         }
-                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-sm sm:text-base"
+                        className="w-full px-3 py-3 sm:px-4 sm:py-4 bg-white border border-stone-100 rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-500 text-brand font-bold text-sm sm:text-base"
                       />
                     </div>
                   </div>
@@ -9054,7 +9076,7 @@ function CheckoutOverlay({
                             setCustomerName(e.target.value);
                             if (isLocked) setIsLocked(false);
                           }}
-                          className={`w-full px-5 py-4 bg-white border ${isLocked ? "border-green-200" : "border-stone-100"} rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-bold text-lg`}
+                          className={`w-full px-5 py-4 bg-white border ${isLocked ? "border-green-200" : "border-stone-100"} rounded-xl focus:border-accent outline-none transition-all placeholder:text-stone-500 text-brand font-bold text-lg`}
                         />
                         {isLocked && customerName && (
                           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500 animate-in fade-in zoom-in duration-300">
@@ -9090,7 +9112,7 @@ function CheckoutOverlay({
                       placeholder="مثال: اتصل قبل الوصول بـ 5 دقائق"
                       value={generalNotes}
                       onChange={(e) => setGeneralNotes(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-white border border-stone-100 rounded-lg focus:border-accent outline-none transition-all placeholder:text-stone-300 text-brand font-medium text-sm min-h-[80px]"
+                      className="w-full px-3 py-2.5 bg-white border border-stone-100 rounded-lg focus:border-accent outline-none transition-all placeholder:text-stone-500 text-brand font-medium text-sm min-h-[80px]"
                     />
                   </div>
                   </div>
@@ -9167,7 +9189,7 @@ function CheckoutOverlay({
                       onChange={(e) =>
                         setPromoCodeInput(normalizeDigits(e.target.value).toUpperCase())
                       }
-                      className="flex-1 min-h-[44px] px-4 py-2 text-sm bg-stone-50/80 backdrop-blur-sm border border-stone-100 rounded-xl focus:border-accent outline-none placeholder:text-stone-300 font-bold"
+                      className="flex-1 min-h-[44px] px-4 py-2 text-sm bg-stone-50/80 backdrop-blur-sm border border-stone-100 rounded-xl focus:border-accent outline-none placeholder:text-stone-500 font-bold"
                     />
                     <button
                       onClick={validatePromo}
@@ -9533,7 +9555,7 @@ function CheckoutOverlay({
 	                          }
 	                          onSubmit("roulette");
 	                        }}
-                        className="payment-method-card payment-method-card-wahag w-full bg-fuchsia-600 text-white rounded-2xl p-4 sm:p-5 shadow-md active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-fuchsia-700 text-lg text-right"
+                        className="payment-method-card payment-method-card-wahag w-full bg-brass-ink text-white rounded-2xl p-4 sm:p-5 shadow-md active:scale-[0.98] transition-all flex items-center justify-between gap-3 font-bold hover:bg-brass-ink text-lg text-right"
                       >
                          <div className="flex items-center gap-4">
                            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">

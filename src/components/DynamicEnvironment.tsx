@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 
 export function DynamicEnvironment() {
+  const prefersReducedMotion = useReducedMotion();
   const [isRaining, setIsRaining] = useState(false);
   const [drops, setDrops] = useState<{ id: number; left: number; top: number; delay: number }[]>([]);
 
@@ -38,7 +39,7 @@ export function DynamicEnvironment() {
 
   return (
     <AnimatePresence>
-      {isRaining && (
+      {isRaining && !prefersReducedMotion && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

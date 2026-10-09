@@ -694,13 +694,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       "text-orange-700",
       "text-slate-600",
       "text-yellow-700",
-      "text-purple-700",
+      "text-brass-ink",
     ];
     const fallbackBg = [
       "bg-orange-50",
       "bg-slate-50",
       "bg-amber-50",
-      "bg-purple-50",
+      "bg-amber-50",
     ];
     const iconByType: Record<string, string> = {
       Medal: "🥉",
@@ -1449,7 +1449,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     <div className="flex-1">
                       <div className="text-xs font-black text-brand">{n.title}</div>
                       <div className="text-xs font-bold text-stone-500 leading-relaxed mt-1">{n.message}</div>
-                      <div className="text-xs font-black text-stone-300 mt-1">{n.squadName ? `ديوانية ${cleanSquadName(n.squadName)}` : "تنبيه من الديوانية"}</div>
+                      <div className="text-xs font-black text-stone-500 mt-1">{n.squadName ? `ديوانية ${cleanSquadName(n.squadName)}` : "تنبيه من الديوانية"}</div>
                     </div>
                     {!n.readAt && <span className="w-2 h-2 rounded-full bg-amber-500 mt-1 shrink-0" />}
                   </button>
@@ -1678,7 +1678,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none animate-pulse" />
                             {activeTempCode?.code || tempCodes[0]?.code}
                           </div>
-                          <p className="text-xs font-bold text-stone-300 mt-3">أرسل الكود للضيف، وهو صالح لمدة ساعتين.</p>
+                          <p className="text-xs font-bold text-stone-500 mt-3">أرسل الكود للضيف، وهو صالح لمدة ساعتين.</p>
                         </div>
                         
                         {/* QR Code Presentation */}
@@ -1709,7 +1709,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               <span className="bg-[#800020] border border-[#d4af37]/40 text-white text-xs font-black px-2.5 py-1.5 rounded-xl shadow-lg"><MessageWithIcons text={"إضغط لنسخ الرابط 📋"} /></span>
                             </div>
                           </button>
-                          <p className="text-xs text-stone-300 font-bold mt-3 leading-relaxed max-w-[260px] mx-auto">
+                          <p className="text-xs text-stone-500 font-bold mt-3 leading-relaxed max-w-[260px] mx-auto">
                             يقدر ضيفك يمسح الكود بكاميرا تلفونه ويدخل ديوانية "{cleanSquadName(squadInfo?.name)}" تلقائياً وبكرم من المعزب!
                           </p>
                         </div>
@@ -2067,7 +2067,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                 return (
                                   <div className="p-6 text-center text-stone-500 font-bold text-xs flex flex-col items-center justify-center gap-2">
                                     <span className="text-2xl"><MessageWithIcons text={"😎"} /></span>
-                                    <span className="text-stone-300">ماكو أحد توهق بالقرعة لي الحين! ديوانيتنا سالمة وربعنا مستانسين دايماً</span>
+                                    <span className="text-stone-500">ماكو أحد توهق بالقرعة لي الحين! ديوانيتنا سالمة وربعنا مستانسين دايماً</span>
                                   </div>
                                 );
                               }
@@ -2499,7 +2499,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               value={manualInput}
                               onChange={(e) => setManualInput(e.target.value)}
                               placeholder="مثال: 29.3759, 47.9774 أو رابط خرائط جوجل"
-                              className="w-full bg-white border border-stone-200 rounded-xl p-2.5 text-xs text-brand text-right focus:border-accent outline-none placeholder:text-stone-300 font-medium"
+                              className="w-full bg-white border border-stone-200 rounded-xl p-2.5 text-xs text-brand text-right focus:border-accent outline-none placeholder:text-stone-500 font-medium"
                             />
                             <button
                               type="button"
