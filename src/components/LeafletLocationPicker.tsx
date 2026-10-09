@@ -179,7 +179,7 @@ const LeafletLocationPicker: React.FC<{
       <div className="flex items-center justify-between gap-3" dir="rtl">
         <div>
           <div className="text-sm font-black text-brand flex items-center gap-2"><MapPin className="w-4 h-4 text-emerald-600" /> نقطة التوصيل الدقيقة</div>
-          <p className="text-[11px] text-stone-500 font-bold mt-1">اختياري لكنه يخلي التوصيل أدق من كتابة العنوان فقط.</p>
+          <p className="text-xs text-stone-500 font-bold mt-1">اختياري لكنه يخلي التوصيل أدق من كتابة العنوان فقط.</p>
         </div>
         <SmartIconGuidance
           id="geolocation_autopin"
@@ -187,7 +187,7 @@ const LeafletLocationPicker: React.FC<{
           description="التقاط موقع التوصيل الحالي من قمر صناعي GPS وتحديث العنوان فوراً"
           placement="bottom"
         >
-          <button type="button" onClick={useCurrentLocation} className="shrink-0 whitespace-nowrap inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700 border border-emerald-100 active:scale-95 transition">
+          <button type="button" onClick={useCurrentLocation} className="shrink-0 whitespace-nowrap inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700 border border-emerald-100 active:scale-95 transition">
             {isResolvingAddress ? (
               <span role="status" aria-label="جاري تحديد الموقع" className="inline-flex w-4 h-4 items-center justify-center">
                 <span aria-hidden="true" className="w-2 h-2 rounded-full bg-current animate-pulse motion-reduce:animate-none" />
@@ -201,7 +201,7 @@ const LeafletLocationPicker: React.FC<{
       <div className="relative h-[260px] overflow-hidden rounded-[24px] border border-stone-100 bg-stone-100" dir="ltr">
         <div ref={hostRef} className="absolute inset-0" />
       </div>
-      <div className="text-[11px] font-bold text-stone-500 leading-5" dir="rtl">{status}</div>
+      <div className="text-xs font-bold text-stone-500 leading-5" dir="rtl">{status}</div>
     </div>
   );
 };

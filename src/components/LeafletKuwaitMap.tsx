@@ -123,7 +123,7 @@ const LeafletKuwaitMap: React.FC<{
     <div className={`relative overflow-hidden rounded-[2rem] border ${dark ? 'border-white/10 bg-slate-900' : 'border-slate-200 bg-slate-100'} shadow-inner ${heightClassName}`} dir="ltr">
       <div ref={hostRef} className="absolute inset-0 z-0" />
       <div className="pointer-events-none absolute inset-0 z-[500] bg-[radial-gradient(circle_at_center,rgba(234,179,8,0.10)_0%,transparent_52%,rgba(15,23,42,0.10)_100%)]" />
-      <div className="pointer-events-none absolute top-3 right-3 z-[520] rounded-full bg-white/90 px-3 py-1 text-[11px] font-black text-slate-700 shadow border border-white/80" dir="rtl">خريطة تفاعلية دقيقة</div>
+      <div className="pointer-events-none absolute top-3 right-3 z-[520] rounded-full bg-white/90 px-3 py-1 text-xs font-black text-slate-700 shadow border border-white/80" dir="rtl">خريطة تفاعلية دقيقة</div>
     </div>
   );
 };

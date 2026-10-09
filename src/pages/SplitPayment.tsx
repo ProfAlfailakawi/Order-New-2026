@@ -1069,7 +1069,7 @@ export default function SplitPayment() {
                       alert("Simulating payment (this would call the webhook)");
                       // In a real simulation, we'd need a way to hit the webhook endpoint
                     }}
-                    className="w-full bg-purple-600 text-white p-3 rounded-xl font-bold mt-2 hover:bg-purple-700 transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-brass-ink text-white p-3 rounded-xl font-bold mt-2 hover:bg-brass-ink transition-all flex items-center justify-center gap-2"
                   >
                     Simulate Payment (Dev Mode)
                   </button>

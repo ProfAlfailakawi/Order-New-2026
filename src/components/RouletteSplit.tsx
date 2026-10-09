@@ -289,7 +289,7 @@ export function RouletteSplit({
 
   return (
     <div
-      className="min-h-screen roulette-ultra-shell wahag-wow-shell text-white font-sans selection:bg-fuchsia-500/30"
+      className="min-h-screen roulette-ultra-shell wahag-wow-shell text-white font-sans selection:bg-accent/30"
       dir="rtl"
     >
       <div className="max-w-md lg:max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-32 relative">
@@ -307,13 +307,13 @@ export function RouletteSplit({
             <span>وهق غيرك</span>
             <span>{participants.length} مشارك</span>
           </div>
-          <div className="roulette-ultra-orb roulette-v14-orb w-20 h-20 bg-gradient-to-tr from-violet-600 to-fuchsia-600 rounded-full flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(217,70,239,0.3)]">
+          <div className="roulette-ultra-orb roulette-v14-orb w-20 h-20 bg-gradient-to-tr from-brand to-accent rounded-full flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(217,70,239,0.3)]">
             <Sparkles className="w-10 h-10 text-white" />
           </div>
           <div className="roulette-title-card">
             <span className="roulette-kicker">تحدي الربع</span>
-            <h1 className="text-3xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-300 via-white to-violet-300">
-              وهق غيرك <Dices className="inline-block w-[0.8em] h-[0.8em] align-middle text-fuchsia-300" aria-hidden="true" />
+            <h1 className="text-3xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-white to-amber-100">
+              وهق غيرك <Dices className="inline-block w-[0.8em] h-[0.8em] align-middle text-amber-200" aria-hidden="true" />
             </h1>
             <p className="text-stone-300 font-bold mt-2 leading-relaxed max-w-xl mx-auto">
               أسماء الربع تدخل، والنبضة تختار واحد يشيل العشا. الفاتورة {order.total.toFixed(3)} د.ك
@@ -342,7 +342,7 @@ export function RouletteSplit({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="الاسم (مثال: محمد)"
-                  className="w-full bg-white text-slate-950 border border-white/20 rounded-2xl px-4 py-3.5 text-center font-bold focus:outline-none focus:ring-4 focus:ring-fuchsia-500/25 focus:border-fuchsia-400 mb-2"
+                  className="w-full bg-white text-slate-950 border border-white/20 rounded-2xl px-4 py-3.5 text-center font-bold focus:outline-none focus:ring-4 focus:ring-accent/25 focus:border-accent mb-2"
                 />
                 <input
                   type="tel"
@@ -351,7 +351,7 @@ export function RouletteSplit({
                   value={phone}
                   onChange={(e) => setPhone(normalizeDigits(e.target.value).replace(/[^0-9]/g, "").slice(0, 8))}
                   placeholder="رقم التلفون (مثال: 90000000)"
-                  className="w-full bg-white text-slate-950 border border-white/20 rounded-2xl px-4 py-3.5 text-center font-bold focus:outline-none focus:ring-4 focus:ring-fuchsia-500/25 focus:border-fuchsia-400"
+                  className="w-full bg-white text-slate-950 border border-white/20 rounded-2xl px-4 py-3.5 text-center font-bold focus:outline-none focus:ring-4 focus:ring-accent/25 focus:border-accent"
                   dir="ltr"
                 />
                 {phone.length > 0 && phone.length < 8 && (
@@ -371,7 +371,7 @@ export function RouletteSplit({
               <div className="text-center space-y-4">
                 <div className="text-stone-500 font-bold">
                   انت في اللوبي باسم:{" "}
-                  <span className="text-fuchsia-400">{mySpinName}</span>
+                  <span className="text-accent">{mySpinName}</span>
                 </div>
 
                 <div className="roulette-lobby-panel roulette-v14-lobby bg-black/40 rounded-2xl p-4 min-h-[100px]">
@@ -423,14 +423,14 @@ export function RouletteSplit({
                   }}
                   className="w-full wahag-participant-chip bg-white/10 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 mt-4 hover:bg-white/20 transition-colors border border-white/10"
                 >
-                  <Sparkles className="w-5 h-5 text-fuchsia-400" />
+                  <Sparkles className="w-5 h-5 text-accent" />
                   دز الرابط للربع ووهق غيرك
                 </button>
 
                 {participants.length >= 2 && (
                   <button
                     onClick={spin}
-                    className="roulette-spin-button w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 font-black py-4 rounded-2xl shadow-lg shadow-fuchsia-500/20 active:scale-95 transition-transform mt-4"
+                    className="roulette-spin-button w-full bg-gradient-to-r from-brand to-brass-ink font-black py-4 rounded-2xl shadow-lg shadow-accent/20 active:scale-95 transition-transform mt-4"
                   >
                     <span className="inline-flex items-center justify-center gap-2">وهق غيرك <Dices className="w-5 h-5" aria-hidden="true" /></span>
                   </button>
@@ -532,7 +532,7 @@ export function RouletteSplit({
 
                   if (isLoser) {
                     return (
-                      <div className="roulette-result-card roulette-v14-result wahag-wow-result is-loser p-6 bg-violet-500/20 border border-violet-500/50 rounded-3xl text-violet-100 space-y-4">
+                      <div className="roulette-result-card roulette-v14-result wahag-wow-result is-loser p-6 bg-sadu-red/20 border border-sadu-red/50 rounded-3xl text-amber-100 space-y-4">
                         {paymentStatus === "failed" && (
                           <motion.div
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -551,7 +551,7 @@ export function RouletteSplit({
                         )}
                         <div className="roulette-v14-result-icon"><Trophy className="w-7 h-7" /></div>
                         <h2 className="text-3xl font-black text-white"><MessageWithIcons text={resultContent.title} /></h2>
-                        <p className="font-bold text-violet-200">
+                        <p className="font-bold text-amber-100">
                           <MessageWithIcons text={resultContent.desc} />
                         </p>
                         <button
@@ -574,7 +574,7 @@ export function RouletteSplit({
 	                              String(order.total),
 	                            )
 	                          }
-                          className="w-full bg-white text-violet-600 font-black py-4 rounded-xl mt-4 active:scale-95 transition-transform flex justify-center items-center gap-2 shadow-[0_0_25px_rgba(139,92,246,0.3)]"
+                          className="w-full bg-white text-brand font-black py-4 rounded-xl mt-4 active:scale-95 transition-transform flex justify-center items-center gap-2 shadow-[0_0_25px_rgba(139,92,246,0.3)]"
                         >
                           <CreditCard className="w-5 h-5" />
                           {paymentStatus === "failed" ? <span className="inline-flex items-center gap-2">جرب مرة ثانية <RefreshCcw className="w-4 h-4" aria-hidden="true" /></span> : `ادفع الغرامة`}
@@ -584,10 +584,10 @@ export function RouletteSplit({
                   }
 
                   return (
-                    <div className="roulette-result-card roulette-v14-result wahag-wow-result is-safe p-6 bg-fuchsia-500/20 border border-fuchsia-500/50 rounded-3xl text-fuchsia-100 space-y-4">
+                    <div className="roulette-result-card roulette-v14-result wahag-wow-result is-safe p-6 bg-accent/20 border border-accent/50 rounded-3xl text-amber-100 space-y-4">
                       <div className="roulette-v14-result-icon is-safe"><ShieldCheck className="w-7 h-7" /></div>
                       <h2 className="text-3xl font-black text-white"><MessageWithIcons text={resultContent.title} /></h2>
-                      <p className="font-bold text-fuchsia-200">
+                      <p className="font-bold text-amber-100">
                         <MessageWithIcons text={resultContent.desc} />
                       </p>
                       <button
@@ -598,7 +598,7 @@ export function RouletteSplit({
                       >
                         أعد مشهد الوهقة
                       </button>
-                      <div className="pt-4 border-t border-fuchsia-500/30">
+                      <div className="pt-4 border-t border-accent/30">
                         <p className="text-sm opacity-80">تسكرت الحسبة حق هالطلب وننطر يدفع {loser}</p>
                       </div>
                     </div>

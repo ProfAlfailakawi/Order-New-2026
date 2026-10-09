@@ -43,10 +43,10 @@
 .dna-qatya-main { display: flex; align-items: center; gap: 18px; }
 .dna-qatya-main .dna-ring { flex: 0 0 auto; }
 .dna-qatya-main .dna-ringc { display: flex; flex-direction: column; align-items: center; font-size: 22px; font-weight: 800; color: var(--dna-ink); line-height: 1.1; }
-.dna-qatya-main .dna-ringc small { font-size: 11px; font-weight: 600; color: var(--dna-muted); margin-top: 4px; }
+.dna-qatya-main .dna-ringc small { font-size:12px; font-weight: 600; color: var(--dna-muted); margin-top: 4px; }
 .dna-qatya-facts { display: flex; gap: 18px; margin-top: 12px; }
 .dna-qatya-facts span { display: flex; flex-direction: column; }
-.dna-qatya-facts small { font-size: 11px; color: var(--dna-muted); font-weight: 600; }
+.dna-qatya-facts small { font-size:12px; color: var(--dna-muted); font-weight: 600; }
 .dna-qatya-facts strong { font-size: 16px; color: var(--dna-ink); font-weight: 800; }
 @media (max-width: 420px) { .dna-qatya-main { flex-direction: column; text-align: center; } .dna-qatya-facts { justify-content: center; } }
 .dna-letter { font-size: 13px; font-weight: 800; line-height: 1; }
@@ -55,7 +55,7 @@
 .dna-diwan { display: flex; flex-direction: column; gap: 12px; }
 .dna-diwan .dna-hub { background: var(--dna-surface); border: 1px solid var(--dna-line); border-radius: 24px; box-shadow: var(--dna-shadow); }
 .dna-hub-name { display: block; font-weight: 700; font-size: 12px; color: var(--dna-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dna-hub-meta { display: block; font-size: 11px; color: var(--dna-muted); font-weight: 500; }
+.dna-hub-meta { display: block; font-size:12px; color: var(--dna-muted); font-weight: 500; }
 .dna-hubc .dna-hubcl { max-inline-size: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dna-diwan-empty { text-align: center; font-size: 12px; color: var(--dna-muted); font-weight: 600; margin: 0; }
 .dna-diwan-wobbles { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -81,13 +81,13 @@
 .dna-inbox-meta { display: flex; flex-direction: column; gap: 8px; }
 .dna-inbox-acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .dna-inbox-acts .dna-btn { min-height: 38px; font-size: 12px; padding-inline: 14px; }
-.dna-inbox-note { margin: 0; font-size: 11.5px; color: var(--dna-muted); font-weight: 600; }
+.dna-inbox-note { margin: 0; font-size:12px; color: var(--dna-muted); font-weight: 600; }
 
 /* Polish: calm white Qatya card, roomier ring centre */
 .qatya-hero-card.qatya-v14-hero { background: var(--dna-surface) !important; background-image: none !important; border: 1px solid var(--dna-line) !important; box-shadow: var(--dna-shadow) !important; border-radius: 24px !important; }
 .qatya-hero-card.qatya-v14-hero::before, .qatya-hero-card.qatya-v14-hero::after { display: none !important; }
 .dna-qatya-main .dna-ringc { font-size: 20px; letter-spacing: -.01em; padding: 0 18px; text-align: center; }
-.dna-qatya-main .dna-ringc small { font-size: 11px; }
+.dna-qatya-main .dna-ringc small { font-size:12px; }
 .dna-cat-tile { min-height: 0 !important; }
 .dna-cat-name { margin-top: 2px; }
 .dna-diwan .dna-hub { border: 0 !important; box-shadow: none !important; background: transparent !important; }

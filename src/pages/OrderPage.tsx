@@ -590,7 +590,7 @@ export default function OrderPage() {
     if (s === "قيد تجميع القطية" || s === "بانتظار اكتمال القطية" || s === "split" || s === "partial")
       return {
         text: "قيد تجميع القطية",
-        color: "text-purple-600 bg-purple-50",
+        color: "text-brass-ink bg-amber-50",
         icon: <Users className="w-4 h-4" />,
       };
     if (s === "جديد" || s === "بانتظار الدفع" || s === "pending")
@@ -1061,7 +1061,7 @@ export default function OrderPage() {
 
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="relative group">
-              <div className="absolute right-6 top-1/2 -translate-y-1/2 text-stone-300 group-focus-within:text-accent transition-colors">
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 text-stone-500 group-focus-within:text-accent transition-colors">
                 <Phone className="w-5 h-5" />
               </div>
               <input
@@ -1072,12 +1072,12 @@ export default function OrderPage() {
                 onChange={(e) => setPhone(normalizePhone(e.target.value))}
                 dir="ltr"
                 pattern="[0-9]*"
-                className="w-full py-5 sm:py-6 px-12 sm:px-16 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-base font-semibold text-brand placeholder:text-[14px] sm:placeholder:text-base placeholder:text-stone-300 placeholder:font-medium text-center tracking-[0.02em] sm:tracking-[0.05em]"
+                className="w-full py-5 sm:py-6 px-12 sm:px-16 bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-base font-semibold text-brand placeholder:text-[14px] sm:placeholder:text-base placeholder:text-stone-500 placeholder:font-medium text-center tracking-[0.02em] sm:tracking-[0.05em]"
               />
             </div>
 
             <div className="relative group">
-              <div className="absolute right-6 top-1/2 -translate-y-1/2 text-stone-300 group-focus-within:text-accent transition-colors">
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 text-stone-500 group-focus-within:text-accent transition-colors">
                 <Package className="w-5 h-5" />
               </div>
               <input
@@ -1086,7 +1086,7 @@ export default function OrderPage() {
                 value={searchOrderIdInput}
                 onChange={(e) => setSearchOrderIdInput(normalizeDigits(e.target.value))}
                 dir="ltr"
-                className="order-id-track-input w-full py-5 sm:py-6 px-12 sm:px-16 placeholder:text-[14px] sm:placeholder:text-lg bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-base sm:text-lg font-semibold text-brand placeholder:text-stone-300 placeholder:font-medium text-center uppercase"
+                className="order-id-track-input w-full py-5 sm:py-6 px-12 sm:px-16 placeholder:text-[14px] sm:placeholder:text-lg bg-stone-50 border-2 border-transparent focus:border-accent rounded-[28px] outline-none transition-all text-base sm:text-lg font-semibold text-brand placeholder:text-stone-500 placeholder:font-medium text-center uppercase"
               />
             </div>
 
@@ -1310,7 +1310,7 @@ export default function OrderPage() {
                     </button>
 
                     {!squadInfo && (
-                      <div className="px-5 sm:px-6 pb-5 -mt-1">
+                      <div className="px-5 sm:px-6 pb-5 pt-4 border-t border-accent/25 bg-white">
                         <Link
                           to="/?showSquads=true"
                           className="group flex items-center justify-between gap-3 rounded-[24px] border border-amber-200/70 bg-gradient-to-l from-amber-50/90 via-white to-white px-4 py-3 shadow-[0_12px_32px_rgba(120,53,15,0.07)] transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_38px_rgba(120,53,15,0.11)]"
@@ -1611,7 +1611,7 @@ export default function OrderPage() {
                               </button>
                             )}
                         </div>
-                        <p className="text-xs text-stone-300 font-medium">
+                        <p className="text-xs text-stone-500 font-medium">
                           {order.createdAt || order.date
                             ? `${formatKuwaitiDate(order.createdAt || order.date).date} | ${formatKuwaitiDate(order.createdAt || order.date).time}`
                             : "تاريخ غير معروف"}
@@ -1857,7 +1857,7 @@ export default function OrderPage() {
                         <div className="flex flex-col gap-3">
                           <Link
                             to={`/split/${selectedOrder.id}`}
-                            className="w-full bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-200 p-4 rounded-2xl flex items-center justify-between text-sm font-bold transition-all shadow-sm outline-none"
+                            className="w-full bg-amber-50 hover:bg-amber-100 text-brass-ink border border-amber-200 p-4 rounded-2xl flex items-center justify-between text-sm font-bold transition-all shadow-sm outline-none"
                           >
                             <span>دش صفحة القطيّة</span>
                             <Users className="w-5 h-5" />
@@ -1887,11 +1887,11 @@ export default function OrderPage() {
                             {(selectedOrder as any).splitType === 'roulette' ? <><Dices className="w-3 h-3" aria-hidden="true" /> المشاركون في وهق غيرك</> : <><Users className="w-3 h-3" aria-hidden="true" /> المساهمين في القطية</>}
                           </h4>
                           {(selectedOrder as any).splitType === 'roulette' && (selectedOrder as any).rouletteLoser && (
-                            <div className="mb-4 bg-fuchsia-50 border border-fuchsia-100 p-3 rounded-xl flex items-center justify-between">
-                              <span className="text-fuchsia-600 font-bold text-xs flex items-center gap-2">
+                            <div className="mb-4 bg-amber-50 border border-amber-100 p-3 rounded-xl flex items-center justify-between">
+                              <span className="text-brass-ink font-bold text-xs flex items-center gap-2">
                                 <Target className="w-4 h-4 shrink-0" aria-hidden="true" /> بطل الليلة (صاحب الحظ اللي دفعها)
                               </span>
-                              <span className="font-extrabold text-fuchsia-700 text-sm">{(selectedOrder as any).rouletteLoser}</span>
+                              <span className="font-extrabold text-brass-ink text-sm">{(selectedOrder as any).rouletteLoser}</span>
                             </div>
                           )}
                           <div className="space-y-2">
@@ -1913,7 +1913,7 @@ export default function OrderPage() {
                                       )}
                                     </div>
                                   </div>
-                                  <span className="text-xs bg-fuchsia-100 text-fuchsia-700 px-1.5 py-0.5 rounded-full font-bold">مشارك</span>
+                                  <span className="text-xs bg-amber-100 text-brass-ink px-1.5 py-0.5 rounded-full font-bold">مشارك</span>
                                 </div>
                               ))
                             ) : (
