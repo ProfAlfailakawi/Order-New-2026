@@ -2178,7 +2178,7 @@ export default function OrderPage() {
                         <h4 className="text-xs font-extrabold text-stone-500 uppercase tracking-widest px-2">
                           ملاحظات عامة
                         </h4>
-                        <div className="bg-orange-50/50 border border-orange-100 p-4 rounded-2xl text-orange-800 text-sm flex gap-3">
+                        <div className="bg-cream border border-cream-edge p-4 rounded-2xl text-brass-ink text-sm flex gap-3">
                           <MessageCircle className="w-4 h-4 mt-0.5 shrink-0" />
                           <p>
                             {(selectedOrder as any).notes ||
