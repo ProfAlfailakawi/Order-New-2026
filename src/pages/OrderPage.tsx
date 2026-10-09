@@ -1611,7 +1611,7 @@ export default function OrderPage() {
                               </button>
                             )}
                         </div>
-                        <p className="text-xs text-stone-500 font-medium">
+                        <p className="text-xs text-stone-600 font-semibold">
                           {order.createdAt || order.date
                             ? `${formatKuwaitiDate(order.createdAt || order.date).date} | ${formatKuwaitiDate(order.createdAt || order.date).time}`
                             : "تاريخ غير معروف"}

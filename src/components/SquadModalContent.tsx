@@ -1654,7 +1654,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         <div className="absolute bottom-3 left-3 w-5 h-5 border-b-2 border-l-2 border-[#d4af37]/40 rounded-bl-[8px] pointer-events-none" />
 
                         {/* Interactive Wax Seal Component */}
-                        <div className="absolute top-4 right-4 z-30">
+                        <div className="absolute top-2 right-2 z-30 origin-top-right scale-75">
                           {/* Wax Seal Container */}
                           <div className="relative w-12 h-12 rounded-full cursor-pointer select-none filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)] transform hover:scale-110 active:scale-95 transition-all duration-300">
                             {/* Outer molten organic wax ring */}
@@ -1674,7 +1674,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                         <div className="relative z-10 pt-2 pb-4">
                           <div className="text-xs font-black tracking-wider text-[#ecc94b] mb-3.5 uppercase"><MessageWithIcons text={"رقم تذكرة الدخول الملكية 🗝️"} /></div>
-                          <div className="inline-flex relative overflow-hidden bg-gradient-to-b from-[#1c0802] to-[#2c0f05] border border-[#d4af37]/30 rounded-2xl px-6 py-3.5 text-3xl font-black tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-[#ffe494] via-[#f3c25a] to-[#ffe494] shadow-[inset_0_2px_8px_rgba(0,0,0,0.7),0_1px_0_rgba(255,255,255,0.08)] filter drop-shadow-[0_2px_2px_rgba(0,0,0,0.6)]" dir="ltr">
+                          <div className="inline-flex relative overflow-hidden bg-gradient-to-b from-[#1c0802] to-[#2c0f05] border border-[#d4af37]/30 rounded-2xl px-4 sm:px-6 py-3.5 text-2xl sm:text-3xl whitespace-nowrap font-black tracking-[0.2em] sm:tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-[#ffe494] via-[#f3c25a] to-[#ffe494] shadow-[inset_0_2px_8px_rgba(0,0,0,0.7),0_1px_0_rgba(255,255,255,0.08)] filter drop-shadow-[0_2px_2px_rgba(0,0,0,0.6)]" dir="ltr">
                             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none animate-pulse" />
                             {activeTempCode?.code || tempCodes[0]?.code}
                           </div>
@@ -2396,7 +2396,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   {isOwner && myDiwaniyaTab === "location" && (
                     <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
                       <div className="flex items-center justify-between border-b border-stone-50 pb-3">
-                        <span className="text-xs font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase tracking-wider"><MessageWithIcons text={"رادار الديوانية 📡"} /></span>
+                        <span className="text-xs font-black bg-cream text-brass-ink ring-1 ring-cream-edge px-3 py-1 rounded-full uppercase tracking-wider"><MessageWithIcons text={"رادار الديوانية 📡"} /></span>
                         <h4 className="font-black text-brand text-sm">إرشاد الرادار الجغرافي</h4>
                       </div>
                       
@@ -2919,8 +2919,14 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       {activeSquadTab === "tiers" && (
         <div className="space-y-5 animate-in fade-in duration-500 text-right">
           {sortedTiers.length === 0 ? (
-            <div className="rounded-[28px] border border-stone-100 bg-white p-5 shadow-sm text-center text-xs font-black text-stone-500">
-              طريق الديوانية بانتظار إعداد مستوياته من لوحة الأدمن.
+            <div className="flex flex-col items-center gap-2 rounded-[28px] border border-cream-edge bg-cream px-5 py-7 text-center shadow-sm">
+              <span className="grid h-14 w-14 place-items-center rounded-full bg-white text-accent ring-1 ring-cream-edge" aria-hidden="true">
+                <Medal className="h-7 w-7" strokeWidth={1.6} />
+              </span>
+              <p className="text-sm font-extrabold text-ink">الطريق ينفتح قريب</p>
+              <p className="max-w-[260px] text-xs font-bold leading-relaxed text-stone-600">
+                طريق الديوانية بانتظار إعداد مستوياته من لوحة الأدمن.
+              </p>
             </div>
           ) : null}
           {sortedTiers.length > 0 ? (

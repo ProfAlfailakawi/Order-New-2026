@@ -4356,7 +4356,7 @@ body:has(.al-cart-bar) .order-welcome-replay {
 
 /* Diwaniya presence map: resting members stay clearly readable (state is still shown by the dashed link + "مستريح") */
 .dna-hubn[data-state='off'] .dna-hubt{filter:grayscale(.35);opacity:.95;background:var(--color-cream);box-shadow:0 0 0 1.5px var(--color-cream-edge)}
-.dna-hubn[data-state='off'] .dna-letter,.dna-hubt .dna-letter{color:var(--color-ink);font-size:15px}
+.dna-hubn[data-state="off"] .dna-letter{color:var(--color-ink);font-size:15px}
 .dna-hubn .dna-hub-meta{color:#57534e}
 
 /* Cart dock primary action: one line, 13px, never wraps */
