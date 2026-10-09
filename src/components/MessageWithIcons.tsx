@@ -10,7 +10,7 @@ import {
 
 type IconDef = { Icon: React.ComponentType<any>; cls: string; label?: string };
 
-const GOLD = "text-[#b28a41]";
+const GOLD = "text-accent";
 const defs: Array<[string[], IconDef]> = [
   [["👑"], { Icon: Crown, cls: GOLD }],
   [["🤍", "❤️", "💛"], { Icon: Heart, cls: "text-[#ab2b2c]" }],

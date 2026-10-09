@@ -192,7 +192,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           desc: "طلبنا مجبوس لحم حاشي ومرق هامور معتبر، وكان بوفيه متكامل تم بالقطية الطيبة والذوق.",
           date: "28 May 2026",
           icon: "lucide:food",
-          bg: "from-emerald-100/40 to-[#0d3a22]/5"
+          bg: "from-emerald-100/40 to-brand/5"
         },
         {
           id: "default-3",
@@ -1385,16 +1385,16 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     type="button"
                     onClick={() => setMyDiwaniyaTab(tab.id)}
                     className={cn(
-                      "relative rounded-2xl px-2 py-2.5 text-[11px] sm:text-[11px] font-black transition-all leading-tight min-h-[64px] flex flex-col items-center justify-center border active:scale-[0.98]",
+                      "relative rounded-2xl px-2 py-2.5 text-xs sm:text-xs font-black transition-all leading-tight min-h-[64px] flex flex-col items-center justify-center border active:scale-[0.98]",
                       myDiwaniyaTab === tab.id
-                        ? "bg-[#0d3a22] text-white border-[#0d3a22] shadow-md shadow-brand/10"
+                        ? "bg-brand text-white border-brand shadow-md shadow-brand/10"
                         : "bg-stone-50/80 text-stone-500 border-stone-100 hover:bg-white"
                     )}
                   >
                     <span className="block mb-1 leading-none" aria-hidden="true">{tab.icon}</span>
                     <span className="whitespace-pre-line block max-w-full leading-[1.15]">{tab.label}</span>
                     {tab.badge > 0 && (
-                      <span className="absolute -top-1 -left-1 min-w-4 h-4 px-0.5 rounded-full bg-amber-500 text-white text-[11px] flex items-center justify-center">
+                      <span className="absolute -top-1 -left-1 min-w-4 h-4 px-0.5 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center">
                         {formatEnglishNumber(tab.badge)}
                       </span>
                     )}
@@ -1407,10 +1407,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           {myDiwaniyaTab === "home" && !isCreatingSquad && squadInfo && isCurrentMember && (
             <div className="rounded-[30px] border border-amber-100 bg-gradient-to-br from-white via-amber-50/40 to-white p-5 shadow-sm text-right font-sans mb-3" dir="rtl">
               <div className="flex items-start justify-between gap-3">
-                <span className="rounded-2xl bg-brand text-white px-3 py-1.5 text-[11px] font-black shadow-sm">ديوانيتك الحالية</span>
+                <span className="rounded-2xl bg-brand text-white px-3 py-1.5 text-xs font-black shadow-sm">ديوانيتك الحالية</span>
                 <div className="min-w-0">
                   <h3 className="text-xl font-black text-brand truncate">{cleanSquadName(squadInfo?.name)}</h3>
-                  <p className="mt-1 text-[11px] font-bold text-stone-400">المستوى: {currentTier?.name || 'مستوى الديوانية'} · رصيدك {formatEnglishNumber(customerPoints || 0)} نقطة</p>
+                  <p className="mt-1 text-xs font-bold text-stone-500">المستوى: {currentTier?.name || 'مستوى الديوانية'} · رصيدك {formatEnglishNumber(customerPoints || 0)} نقطة</p>
                 </div>
               </div>
             </div>
@@ -1421,7 +1421,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
               <div className="flex items-center justify-between gap-3">
                 <button
                   onClick={() => markDiwaniyaNotificationsRead()}
-                  className="text-[11px] font-black text-stone-400 bg-stone-50 px-3 py-1.5 rounded-xl active:scale-95"
+                  className="text-xs font-black text-stone-500 bg-stone-50 px-3 py-1.5 rounded-xl active:scale-95"
                 >
                   تحديد الكل كمقروء
                 </button>
@@ -1429,10 +1429,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   <h4 className="text-base font-black text-brand flex items-center justify-end gap-2">
                     تنبيهات الديوانية
                     {unreadDiwaniyaNotifications > 0 && (
-                      <span className="bg-amber-500 text-white text-[11px] px-2 py-0.5 rounded-full">{unreadDiwaniyaNotifications}</span>
+                      <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">{unreadDiwaniyaNotifications}</span>
                     )}
                   </h4>
-                  <p className="text-[11px] font-bold text-stone-400">كل شي يخص الربع والدخول والقطيّة، بدون زحمة.</p>
+                  <p className="text-xs font-bold text-stone-500">كل شي يخص الربع والدخول والقطيّة، بدون زحمة.</p>
                 </div>
               </div>
               <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
@@ -1448,8 +1448,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     <span className="text-xl shrink-0">{notificationIcon(n.type)}</span>
                     <div className="flex-1">
                       <div className="text-xs font-black text-brand">{n.title}</div>
-                      <div className="text-[11px] font-bold text-stone-500 leading-relaxed mt-1">{n.message}</div>
-                      <div className="text-[11px] font-black text-stone-300 mt-1">{n.squadName ? `ديوانية ${cleanSquadName(n.squadName)}` : "تنبيه من الديوانية"}</div>
+                      <div className="text-xs font-bold text-stone-500 leading-relaxed mt-1">{n.message}</div>
+                      <div className="text-xs font-black text-stone-300 mt-1">{n.squadName ? `ديوانية ${cleanSquadName(n.squadName)}` : "تنبيه من الديوانية"}</div>
                     </div>
                     {!n.readAt && <span className="w-2 h-2 rounded-full bg-amber-500 mt-1 shrink-0" />}
                   </button>
@@ -1460,9 +1460,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
           {myDiwaniyaTab === "notifications" && visibleNotifications.length === 0 && customerPhone && (
             <div className="bg-white rounded-[30px] border border-stone-100 shadow-sm p-6 text-center text-right font-sans">
-              <Bell className="w-7 h-7 mx-auto mb-2 text-stone-400" strokeWidth={1.6} aria-hidden="true" />
+              <Bell className="w-7 h-7 mx-auto mb-2 text-stone-500" strokeWidth={1.6} aria-hidden="true" />
               <h4 className="text-sm font-black text-brand">ما عندك إشعارات جديدة</h4>
-              <p className="text-[11px] font-bold text-stone-400 mt-1">أي شي جديد من الربع يطلع هني بهدوء.</p>
+              <p className="text-xs font-bold text-stone-500 mt-1">أي شي جديد من الربع يطلع هني بهدوء.</p>
             </div>
           )}
 
@@ -1487,7 +1487,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         <span>{isPresentNow ? "طلعت من الديوانية" : "وصلت الديوانية"}</span>
                       </button>
                       <div className="text-right min-w-0">
-                        <div className="text-[11px] font-black text-stone-400">حضورك الحالي</div>
+                        <div className="text-xs font-black text-stone-500">حضورك الحالي</div>
                       </div>
                     </div>
                   </div>
@@ -1506,10 +1506,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
               {myDiwaniyaTab === "orders" && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-4">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-[11px] font-black bg-accent/10 text-accent px-3 py-1 rounded-full">طلب الربع + قطية</span>
+                  <span className="text-xs font-black bg-accent/10 text-accent px-3 py-1 rounded-full">طلب الربع + قطية</span>
                   <h4 className="text-sm font-black text-brand">تنسيق طلب الربع</h4>
                 </div>
-                <p className="text-[11px] font-bold text-stone-500 leading-relaxed">اختار الأصناف، وإذا وصلت للقطيّة تلقى الربع جاهزين بدون تكرار أسماء أو أرقام.</p>
+                <p className="text-xs font-bold text-stone-500 leading-relaxed">اختار الأصناف، وإذا وصلت للقطيّة تلقى الربع جاهزين بدون تكرار أسماء أو أرقام.</p>
                 
                 {/* 🧠 معزب الذكاء الاصطناعي الودود - مدمج بذكاء مع المنتجات الحقيقية ويتعلم من الاختيارات */}
                 <div className="bg-gradient-to-br from-amber-500/[0.06] via-amber-600/[0.01] to-stone-50/10 border border-amber-500/15 rounded-3xl p-4 text-right space-y-3 relative overflow-hidden shadow-inner">
@@ -1518,7 +1518,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   {/* Header Row */}
                   <div className="flex items-center justify-between">
                     {/* Level / Learning status */}
-                    <span className="text-[11px] font-black text-amber-600 bg-amber-500/10 py-1 px-2.5 rounded-full animate-pulse">
+                    <span className="text-xs font-black text-amber-600 bg-amber-500/10 py-1 px-2.5 rounded-full animate-pulse">
                       {aiLearntCount === 0 ? <MessageWithIcons text={"الذكاء يتعلم ذوقكم 🧬"} /> : <MessageWithIcons text={`تم استيعاب ${aiLearntCount} من تفضيلات الربع! 🧠`} />}
                     </span>
                     <div className="flex items-center gap-2">
@@ -1532,12 +1532,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   {aiIsLearning ? (
                     <div className="py-4 flex flex-col items-center justify-center space-y-2 text-center">
                       <OrderMicroLoader size={24} tone="amber" label="الذكاء الاصطناعي يفكر" />
-                      <span className="text-[11px] font-black text-stone-500 animate-pulse">المعزب يعيد ضبط حساباته ويستخلص التفضيل التالي للربع...</span>
+                      <span className="text-xs font-black text-stone-500 animate-pulse">المعزب يعيد ضبط حساباته ويستخلص التفضيل التالي للربع...</span>
                     </div>
                   ) : (
                     <>
                       {/* Short Recommendation Text */}
-                      <p className="text-[11px] text-stone-600 font-bold leading-relaxed">
+                      <p className="text-xs text-stone-600 font-bold leading-relaxed">
                         {activeRecommendation.text}
                       </p>
 
@@ -1554,8 +1554,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               />
                             )}
                             <div>
-                              <div className="text-[11px] font-black text-stone-850 line-clamp-1">{activeRecommendation.product.name}</div>
-                              <div className="text-[11px] font-bold text-amber-600">
+                              <div className="text-xs font-black text-stone-850 line-clamp-1">{activeRecommendation.product.name}</div>
+                              <div className="text-xs font-bold text-amber-600">
                                 {Number(activeRecommendation.product.price || 0).toFixed(3)} د.ك
                               </div>
                             </div>
@@ -1566,14 +1566,14 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             <button
                               type="button"
                               onClick={() => handleAddAiProductToCart(activeRecommendation.product)}
-                              className="bg-amber-500 hover:bg-amber-600 text-stone-950 px-3 py-1.5 rounded-xl text-[11px] font-black transition-all active:scale-95 shadow-sm"
+                              className="bg-amber-500 hover:bg-amber-600 text-stone-950 px-3 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95 shadow-sm"
                             >
                               <MessageWithIcons text={"إضافة فوريّة 🛒"} />
 </button>
                             <button
                               type="button"
                               onClick={handleAiChange}
-                              className="bg-stone-50 hover:bg-stone-100 text-stone-400 p-1.5 rounded-xl border border-stone-200 text-[11px]"
+                              className="bg-stone-50 hover:bg-stone-100 text-stone-500 p-1.5 rounded-xl border border-stone-200 text-xs"
                               title="تخطي ليتعلم المعزب ذوقك"
                             >
                               <MessageWithIcons text={"🔄"} />
@@ -1581,7 +1581,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           </div>
                         </div>
                       ) : (
-                        <div className="text-[11px] font-bold text-stone-400 text-center py-2">لا توجد منتجات متاحة بالتوصية حالياً.</div>
+                        <div className="text-xs font-bold text-stone-500 text-center py-2">لا توجد منتجات متاحة بالتوصية حالياً.</div>
                       )}
                     </>
                   )}
@@ -1589,32 +1589,32 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                 <div className="rounded-[24px] border border-stone-100 bg-stone-50/80 p-4">
                   <div className="flex items-center justify-between gap-3 mb-3">
-                    <span className={cn("shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-black", currentUserRoleTone)}>{currentUserRoleLabel}</span>
+                    <span className={cn("shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-black", currentUserRoleTone)}>{currentUserRoleLabel}</span>
                     <div className="text-right">
                       <div className="text-sm font-black text-brand">مراجعة قبل القطيّة</div>
-                      <div className="text-[11px] font-bold text-stone-400">تأكيد سريع قبل فتح القطيّة، حتى تبدأ وأنت مرتّب.</div>
+                      <div className="text-xs font-bold text-stone-500">تأكيد سريع قبل فتح القطيّة، حتى تبدأ وأنت مرتّب.</div>
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <div className="rounded-2xl bg-white border border-stone-100 p-3">
-                      <div className="text-[11px] font-black text-stone-400">الديوانية</div>
+                      <div className="text-xs font-black text-stone-500">الديوانية</div>
                       <div className="text-xs font-black text-brand truncate">{cleanSquadName(squadInfo?.name)}</div>
                     </div>
                     <div className="rounded-2xl bg-white border border-stone-100 p-3">
-                      <div className="text-[11px] font-black text-stone-400">الأسماء الجاهزة</div>
+                      <div className="text-xs font-black text-stone-500">الأسماء الجاهزة</div>
                       <div className="text-xs font-black text-brand">{formatEnglishNumber(preparedQatyaPreview.length)}</div>
                     </div>
                     <div className="rounded-2xl bg-white border border-stone-100 p-3">
-                      <div className="text-[11px] font-black text-stone-400">الحالة</div>
+                      <div className="text-xs font-black text-stone-500">الحالة</div>
                       <div className="text-xs font-black text-brand">{activeGroupOrder ? "طلب مفتوح" : openQatyaOrder ? "قطية مفتوحة" : "جاهز"}</div>
                     </div>
                   </div>
                 </div>
                 {activeGroupOrder ? (
                   <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-3 space-y-2">
-                    <div className="flex items-center justify-between"><span className="text-[11px] font-black text-emerald-700">مفتوح الآن</span><strong className="text-xs text-brand">{activeGroupOrder.title || "طلب مفتوح"}</strong></div>
-                    <div className="text-[11px] font-bold text-stone-500">المشاركين الجاهزين للقطية: {(activeGroupOrder.participants || squadMembersForSplit).length}</div>
-                    <div className="flex gap-2"><button onClick={handlePrepareQatya} className="flex-1 bg-brand text-white rounded-xl py-2 text-[11px] font-black">جهّز القطية</button><button onClick={handleCloseGroupOrder} disabled={groupOrderLoading} className="flex-1 bg-stone-100 text-stone-500 rounded-xl py-2 text-[11px] font-black">إغلاق الطلب</button></div>
+                    <div className="flex items-center justify-between"><span className="text-xs font-black text-emerald-700">مفتوح الآن</span><strong className="text-xs text-brand">{activeGroupOrder.title || "طلب مفتوح"}</strong></div>
+                    <div className="text-xs font-bold text-stone-500">المشاركين الجاهزين للقطية: {(activeGroupOrder.participants || squadMembersForSplit).length}</div>
+                    <div className="flex gap-2"><button onClick={handlePrepareQatya} className="flex-1 bg-brand text-white rounded-xl py-2 text-xs font-black">جهّز القطية</button><button onClick={handleCloseGroupOrder} disabled={groupOrderLoading} className="flex-1 bg-stone-100 text-stone-500 rounded-xl py-2 text-xs font-black">إغلاق الطلب</button></div>
                   </div>
                 ) : <button onClick={handleOpenGroupOrder} disabled={groupOrderLoading} className="w-full bg-brand text-white rounded-2xl py-3 text-xs font-black shadow-md active:scale-95">افتح طلب للربع</button>}
                 {hasRealUsualOrder && <button onClick={() => alert("الطلب المعتاد جاهز كفكرة عرض داخل الديوانية، وربطه بالسلة يحتاج مسار إضافة الأصناف للسلة في صفحة الطلب.")} className="w-full bg-stone-50 text-brand border border-stone-100 rounded-2xl py-3 text-xs font-black">كرر الطلب المعتاد للديوانية ({usualOrder.items.length} أصناف)</button>}
@@ -1622,17 +1622,17 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
               {myDiwaniyaTab === "code" && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-4">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-[11px] font-black bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-100">صالح ساعتين</span>
+                  <span className="text-xs font-black bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-100">صالح ساعتين</span>
                   <div className="text-right">
                     <h4 className="text-base font-black text-brand">الكود السريع</h4>
-                    <p className="text-[11px] font-bold text-stone-400 mt-0.5">أنشئ كود للضيف أو دش كود ديوانية ثانية.</p>
+                    <p className="text-xs font-bold text-stone-500 mt-0.5">أنشئ كود للضيف أو دش كود ديوانية ثانية.</p>
                   </div>
                 </div>
 
                 {isOwner && (
                   <div className="rounded-[24px] border border-amber-100 bg-amber-50/45 p-4 space-y-3">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-[11px] font-black bg-white text-amber-700 px-2.5 py-1 rounded-full border border-amber-100">للمعزب</span>
+                      <span className="text-xs font-black bg-white text-amber-700 px-2.5 py-1 rounded-full border border-amber-100">للمعزب</span>
                       <h5 className="text-sm font-black text-brand">إنشاء كود دخول</h5>
                     </div>
                     <button onClick={handleCreateTempCode} disabled={tempCodeLoading} className="w-full bg-brand hover:bg-accent text-white rounded-2xl py-4 text-sm font-black shadow-md active:scale-95 transition-all">
@@ -1673,17 +1673,17 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         </div>
 
                         <div className="relative z-10 pt-2 pb-4">
-                          <div className="text-[11px] font-black tracking-wider text-[#ecc94b] mb-3.5 uppercase"><MessageWithIcons text={"رقم تذكرة الدخول الملكية 🗝️"} /></div>
+                          <div className="text-xs font-black tracking-wider text-[#ecc94b] mb-3.5 uppercase"><MessageWithIcons text={"رقم تذكرة الدخول الملكية 🗝️"} /></div>
                           <div className="inline-flex relative overflow-hidden bg-gradient-to-b from-[#1c0802] to-[#2c0f05] border border-[#d4af37]/30 rounded-2xl px-6 py-3.5 text-3xl font-black tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-[#ffe494] via-[#f3c25a] to-[#ffe494] shadow-[inset_0_2px_8px_rgba(0,0,0,0.7),0_1px_0_rgba(255,255,255,0.08)] filter drop-shadow-[0_2px_2px_rgba(0,0,0,0.6)]" dir="ltr">
                             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none animate-pulse" />
                             {activeTempCode?.code || tempCodes[0]?.code}
                           </div>
-                          <p className="text-[11px] font-bold text-stone-300 mt-3">أرسل الكود للضيف، وهو صالح لمدة ساعتين.</p>
+                          <p className="text-xs font-bold text-stone-300 mt-3">أرسل الكود للضيف، وهو صالح لمدة ساعتين.</p>
                         </div>
                         
                         {/* QR Code Presentation */}
                         <div className="border-t border-dashed border-[#d4af37]/20 pt-4 flex flex-col items-center relative z-10">
-                          <span className="text-[11px] font-black text-[#f3c25a] mb-2.5 flex items-center gap-1">
+                          <span className="text-xs font-black text-[#f3c25a] mb-2.5 flex items-center gap-1">
                             <MessageWithIcons text={"🎫 رمز الـ QR الملكي للدخول السريع"} />
 </span>
                           <button
@@ -1706,16 +1706,16 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               referrerPolicy="no-referrer"
                             />
                             <div className="absolute inset-0 bg-stone-900/40 rounded-[22px] opacity-0 group-hover/qr:opacity-100 flex items-center justify-center transition-all">
-                              <span className="bg-[#800020] border border-[#d4af37]/40 text-white text-[11px] font-black px-2.5 py-1.5 rounded-xl shadow-lg"><MessageWithIcons text={"إضغط لنسخ الرابط 📋"} /></span>
+                              <span className="bg-[#800020] border border-[#d4af37]/40 text-white text-xs font-black px-2.5 py-1.5 rounded-xl shadow-lg"><MessageWithIcons text={"إضغط لنسخ الرابط 📋"} /></span>
                             </div>
                           </button>
-                          <p className="text-[11px] text-stone-300 font-bold mt-3 leading-relaxed max-w-[260px] mx-auto">
+                          <p className="text-xs text-stone-300 font-bold mt-3 leading-relaxed max-w-[260px] mx-auto">
                             يقدر ضيفك يمسح الكود بكاميرا تلفونه ويدخل ديوانية "{cleanSquadName(squadInfo?.name)}" تلقائياً وبكرم من المعزب!
                           </p>
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-amber-50/25 border-2 border-dashed border-amber-200/50 rounded-[24px] p-5 text-center text-[11px] font-bold text-amber-900/70">
+                      <div className="bg-amber-50/25 border-2 border-dashed border-amber-200/50 rounded-[24px] p-5 text-center text-xs font-bold text-amber-900/70">
                         اضغط إنشاء كود وسيتولد رمز الـ QR الكود فوراً ومعه الرابط السريع للربع.
                       </div>
                     )}
@@ -1724,10 +1724,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                 <div className="rounded-[24px] border border-brand/10 bg-brand/[0.03] p-4 space-y-3">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-[11px] font-black bg-brand/10 text-brand px-2.5 py-1 rounded-full border border-brand/10">دخول سريع</span>
+                    <span className="text-xs font-black bg-brand/10 text-brand px-2.5 py-1 rounded-full border border-brand/10">دخول سريع</span>
                     <h5 className="text-sm font-black text-brand">عندك كود ديوانية؟</h5>
                   </div>
-                  <p className="text-[11px] font-bold text-stone-500 leading-relaxed">حتى لو أنت معزب في ديوانيتك، تقدر تدخل ديوانية ثانية أنت عضو فيها عن طريق الكود هنا.</p>
+                  <p className="text-xs font-bold text-stone-500 leading-relaxed">حتى لو أنت معزب في ديوانيتك، تقدر تدخل ديوانية ثانية أنت عضو فيها عن طريق الكود هنا.</p>
                   <div className="flex flex-col sm:flex-row gap-2 sm:items-stretch">
                     <input
                       inputMode="numeric"
@@ -1742,7 +1742,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   </div>
                   {tempCodeNeedsProfile && (
                     <div className="rounded-2xl bg-white border border-brand/10 p-3 space-y-2">
-                      <div className="text-[11px] font-black text-brand text-right">حط اسمك ورقم تلفونك ونكمل دخولك للديوانية</div>
+                      <div className="text-xs font-black text-brand text-right">حط اسمك ورقم تلفونك ونكمل دخولك للديوانية</div>
                       <input
                         value={tempJoinName}
                         onChange={(e)=>setTempJoinName(e.target.value)}
@@ -1769,10 +1769,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
               {myDiwaniyaTab === "orders" && hasRealBeautifulLog && <div className="bg-white p-5 rounded-[30px] border border-stone-100 shadow-sm space-y-3">
                 <h4 className="text-sm font-black text-brand">سجل الديوانية الجميل</h4>
                 <div className="grid grid-cols-2 gap-2 text-center">
-                  <div className="bg-stone-50 rounded-2xl p-3"><div className="text-lg font-black text-brand">{squadBeautifulLog.ordersCount || 0}</div><div className="text-[11px] font-bold text-stone-400">طلبات قريبة</div></div>
-                  <div className="bg-stone-50 rounded-2xl p-3"><div className="text-lg font-black text-brand">{squadBeautifulLog.presentCount || 0}</div><div className="text-[11px] font-bold text-stone-400">موجودين الآن</div></div>
+                  <div className="bg-stone-50 rounded-2xl p-3"><div className="text-lg font-black text-brand">{squadBeautifulLog.ordersCount || 0}</div><div className="text-xs font-bold text-stone-500">طلبات قريبة</div></div>
+                  <div className="bg-stone-50 rounded-2xl p-3"><div className="text-lg font-black text-brand">{squadBeautifulLog.presentCount || 0}</div><div className="text-xs font-bold text-stone-500">موجودين الآن</div></div>
                 </div>
-                <p className="text-[11px] font-bold text-stone-500">أكثر صنف محبوب: <b className="text-brand">{squadBeautifulLog.favoriteItemName || "يتحدد بعد أول طلبات أكثر"}</b></p>
+                <p className="text-xs font-bold text-stone-500">أكثر صنف محبوب: <b className="text-brand">{squadBeautifulLog.favoriteItemName || "يتحدد بعد أول طلبات أكثر"}</b></p>
               </div>}
             </div>
           )}
@@ -1781,12 +1781,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           {myDiwaniyaTab === "manage" && !isCreatingSquad && customerPhone && userSquads && userSquads.length > 0 && (
              <div className="flex flex-col gap-3 bg-stone-100/55 p-5 rounded-[28px] border border-stone-200/50 text-right font-sans">
                 <div className="flex items-center justify-between border-b border-stone-200/50 pb-2">
-                   <span className="text-[11px] font-black bg-stone-200 text-stone-600 px-2 py-0.5 rounded-full">{userSquads.length} مسجلة</span>
+                   <span className="text-xs font-black bg-stone-200 text-stone-600 px-2 py-0.5 rounded-full">{userSquads.length} مسجلة</span>
                    <h4 className="text-xs font-black text-brand uppercase tracking-widest flex items-center gap-1.5 justify-end">
                       <MessageWithIcons text={"إدارتي للدواوين والتنقل بينها 🛖"} />
 </h4>
                 </div>
-                <p className="text-[11px] font-bold text-stone-500 leading-relaxed">اختَر ديوانيتك الحالية، تنقّل بين دواوينك، أو أسّس ديوانية جديدة بهدوء.</p>
+                <p className="text-xs font-bold text-stone-500 leading-relaxed">اختَر ديوانيتك الحالية، تنقّل بين دواوينك، أو أسّس ديوانية جديدة بهدوء.</p>
                 
                 <div className="space-y-2 mt-1">
                    {userSquads.map((sq: any) => {
@@ -1815,7 +1815,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                   }}
                                   disabled={isActive}
                                   className={cn(
-                                     "text-[11px] font-black px-3.5 py-2 rounded-xl transition-all shadow-sm shrink-0",
+                                     "text-xs font-black px-3.5 py-2 rounded-xl transition-all shadow-sm shrink-0",
                                      isActive 
                                        ? "bg-accent/10 text-accent font-black border border-accent/20 cursor-default" 
                                        : "bg-brand text-white hover:bg-accent hover:shadow-md active:scale-95"
@@ -1828,11 +1828,11 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             <div className="flex flex-col text-right">
                                <div className="flex items-center gap-1.5 justify-end flex-wrap">
                                   {isOwnerOfSq ? (
-                                     <span className="text-[11px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-sm">
+                                     <span className="text-xs font-black bg-amber-500 text-white px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-sm">
                                         <MessageWithIcons text={"👑 معزبها"} />
 </span>
                                   ) : (
-                                     <span className="text-[11px] font-black bg-stone-500 text-white px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-sm">
+                                     <span className="text-xs font-black bg-stone-500 text-white px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-sm">
                                         <MessageWithIcons text={"👥 عضو فيها"} />
 </span>
                                   )}
@@ -1840,7 +1840,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                      {cleanSquadName(sq.name)}
                                   </span>
                                </div>
-                               <span className="text-[11px] font-bold text-stone-400 mt-1.5">
+                               <span className="text-xs font-bold text-stone-500 mt-1.5">
                                   {(sq.lat ?? sq.location?.lat) !== undefined ? <MessageWithIcons text={`📍 موقع الرادار: مثبت`} /> : <MessageWithIcons text={`⚠️ موقع الرادار غير مثبت`} />}
                                 </span>
                             </div>
@@ -1853,11 +1853,11 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                    <button
                       type="button"
                       onClick={startCreateNewSquad}
-                      className="w-full bg-accent text-white rounded-2xl py-3 text-[11px] font-black shadow-sm active:scale-95"
+                      className="w-full bg-accent text-white rounded-2xl py-3 text-xs font-black shadow-sm active:scale-95"
                    >
                       + تأسيس ديوانية جديدة في موقع ثاني
                    </button>
-                   <p className="text-[11px] font-bold text-stone-400 text-right leading-relaxed">
+                   <p className="text-xs font-bold text-stone-500 text-right leading-relaxed">
                       تقدر تكون معزب بأكثر من ديوانية أو عضو عند ربعك، وتختار الديوانية الحالية وقت الطلب.
                    </p>
                 </div>
@@ -1880,7 +1880,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
               </div>
               <div className="space-y-4">
                 <div className="flex flex-col gap-1 text-right">
-                  <label className="text-[11px] font-black text-stone-400 mr-2">
+                  <label className="text-xs font-black text-stone-500 mr-2">
                     اسم الديوانية
                   </label>
                   <input
@@ -1892,7 +1892,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   />
                 </div>
                 <div className="flex flex-col gap-1 text-right">
-                  <label className="text-[11px] font-black text-stone-400 mr-2">
+                  <label className="text-xs font-black text-stone-500 mr-2">
                     اسمك بالعربي
                   </label>
                   <input
@@ -1904,7 +1904,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   />
                 </div>
                 <div className="flex flex-col gap-1 text-right">
-                  <label className="text-[11px] font-black text-stone-400 mr-2">
+                  <label className="text-xs font-black text-stone-500 mr-2">
                     رقم تلفونك
                   </label>
                   <input
@@ -2034,13 +2034,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   {myDiwaniyaTab === "trophies" && (
                     <div className="flex flex-col gap-5 animate-in fade-in duration-300">
                       {/* Trophy Header */}
-                      <div className="rounded-[28px] bg-gradient-to-br from-[#fbf9f4] to-[#f4f1ea] border border-[#b28a41]/20 p-6 text-right flex flex-col gap-2 relative shadow-sm">
+                      <div className="rounded-[28px] bg-gradient-to-br from-[#fbf9f4] to-[#f4f1ea] border border-accent/20 p-6 text-right flex flex-col gap-2 relative shadow-sm">
                         <div className="absolute top-5 left-5 text-3xl opacity-20"><MessageWithIcons text={"🏆"} /></div>
-                        <span className="text-[11px] font-black uppercase tracking-widest text-[#b28a41] bg-[#b28a41]/10 self-start px-2.5 py-1 rounded-full border border-[#b28a41]/20">مجلس الصدارة والتوهيقات</span>
-                        <h4 className="font-extrabold text-[#0d3a22] text-sm flex items-center gap-1.5 self-start">
+                        <span className="text-xs font-black uppercase tracking-widest text-accent bg-accent/10 self-start px-2.5 py-1 rounded-full border border-accent/20">مجلس الصدارة والتوهيقات</span>
+                        <h4 className="font-extrabold text-brand text-sm flex items-center gap-1.5 self-start">
                           <MessageWithIcons text={"صدارتنا وحكايات وهقات الربع 🏆"} />
 </h4>
-                        <p className="text-[11px] text-[#4a3f35] font-bold leading-relaxed mt-1">
+                        <p className="text-xs text-[#4a3f35] font-bold leading-relaxed mt-1">
                           هني نسجّل وهقات دوانيتنا التاريخية بالقرعة، ومعازيب الشرف اللي ما يقصرون، مع ألبوم يمعات الربع اللي يجمعنا دايماً على الطيب!
                         </p>
                       </div>
@@ -2053,7 +2053,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[1.5s] ease-out pointer-events-none" />
 
                           <div className="flex items-center justify-between border-b border-red-950 pb-3 font-sans relative z-10">
-                            <span className="text-[11px] bg-red-950/80 text-red-400 border border-red-500/30 px-2.5 py-1 rounded-full font-black"><MessageWithIcons text={"وهقات الربع 💸"} /></span>
+                            <span className="text-xs bg-red-950/80 text-red-400 border border-red-500/30 px-2.5 py-1 rounded-full font-black"><MessageWithIcons text={"وهقات الربع 💸"} /></span>
                             <h5 className="font-black text-rose-305 text-xs flex items-center gap-1.5 leading-none text-[#faf0d9]">
                               <span><MessageWithIcons text={"💔"} /></span> ملك التوهيقات الأكبر
                             </h5>
@@ -2082,13 +2082,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                       </span>
                                       <div className="flex flex-col text-right">
                                         <span className="text-xs font-black text-[#faf0d9] group-hover/item:text-red-300 transition-colors">{mem.name || "عضو الربع"}</span>
-                                        <span className="text-[11px] font-bold text-stone-400">
+                                        <span className="text-xs font-bold text-stone-500">
                                           {idx === 0 ? <MessageWithIcons text={"امبراطور الوهقة الأبدي 👑"} /> : "ضحية القرعة المعتمدة"}
                                         </span>
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-1.5 font-mono">
-                                      <span className="text-[11px] font-black text-rose-400 bg-rose-950/60 px-2.5 py-1 rounded-full border border-red-500/25 flex items-center shadow-md">
+                                      <span className="text-xs font-black text-rose-400 bg-rose-950/60 px-2.5 py-1 rounded-full border border-red-500/25 flex items-center shadow-md">
                                         {formatEnglishNumber(mem.lossesCount)} وهقة
                                       </span>
                                     </div>
@@ -2104,7 +2104,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[1.5s] ease-out pointer-events-none" />
 
                           <div className="flex items-center justify-between border-b border-amber-950 pb-3 font-sans relative z-10">
-                            <span className="text-[11px] bg-amber-950/80 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-full font-black"><MessageWithIcons text={"معزب اليمعة ☕"} /></span>
+                            <span className="text-xs bg-amber-950/80 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-full font-black"><MessageWithIcons text={"معزب اليمعة ☕"} /></span>
                             <h5 className="font-black text-amber-305 text-xs flex items-center gap-1.5 leading-none text-[#faf0d9]">
                               <span><MessageWithIcons text={"👑"} /></span> معزب دوانيتنا الأسطوري
                             </h5>
@@ -2122,13 +2122,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                     </span>
                                     <div className="flex flex-col text-right">
                                       <span className="text-xs font-black text-[#faf0d9] group-hover/item:text-amber-300 transition-colors">{mem.name || "عضو الربع"}</span>
-                                      <span className="text-[11px] font-bold text-stone-400">
+                                      <span className="text-xs font-bold text-stone-500">
                                         {idx === 0 ? <MessageWithIcons text={"أمير معازيب الدوانية 👑"} /> : "عشرة عمر وراعي كرم"}
                                       </span>
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-1.5 font-mono">
-                                    <span className="text-[11px] font-black text-amber-400 bg-amber-950/60 px-2.5 py-1 rounded-full border border-amber-500/25 flex items-center shadow-md">
+                                    <span className="text-xs font-black text-amber-400 bg-amber-950/60 px-2.5 py-1 rounded-full border border-amber-500/25 flex items-center shadow-md">
                                       {formatEnglishNumber(mem.score || mem.points || (mem.orderCount * 125) || 120)} نقطة
                                     </span>
                                   </div>
@@ -2147,19 +2147,19 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               <h5 className="font-black text-brand text-xs sm:text-sm flex items-center gap-1.5 leading-none">
                                 <span><MessageWithIcons text={"📷"} /></span> ذكريات لقطات الربع المعتقة
                               </h5>
-                              <span className="text-[11px] sm:text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-100/60 px-2.5 py-1 rounded-full font-black shrink-0">
+                              <span className="text-xs sm:text-xs bg-emerald-50 text-emerald-700 border border-emerald-100/60 px-2.5 py-1 rounded-full font-black shrink-0">
                                 <MessageWithIcons text={"ألبوم اليمعة 📸"} />
 </span>
                             </div>
                             
                             {/* Bottom Subtitle/Button Row */}
                             <div className="flex items-center justify-between gap-2 pt-1 border-t border-stone-50">
-                              <span className="text-[11px] text-stone-400 font-bold">
+                              <span className="text-xs text-stone-500 font-bold">
                                 كل لحظة وجمعة في ديوانيتنا الكريمة
                               </span>
                               <button
                                 onClick={() => setIsAddingMemory(!isAddingMemory)}
-                                className="text-[11px] bg-[#0d3a22] text-white hover:bg-[#072414] px-3.5 py-1.5 rounded-full font-black transition-all flex items-center gap-1.5 shadow-sm shrink-0"
+                                className="text-xs bg-brand text-white hover:bg-[#072414] px-3.5 py-1.5 rounded-full font-black transition-all flex items-center gap-1.5 shadow-sm shrink-0"
                               >
                                 {isAddingMemory ? <MessageWithIcons text={"إلغاء ✕"} /> : "＋ سجّل ذكرى يديدة"}
                               </button>
@@ -2167,7 +2167,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           </div>
                         </div>
 
-                        <p className="diwaniya-memories-desc text-[11px] font-bold text-stone-500 leading-relaxed -mt-1 text-right">
+                        <p className="diwaniya-memories-desc text-xs font-bold text-stone-500 leading-relaxed -mt-1 text-right">
                           لقطات يمعاتنا، الحلو والمالح، مربوطة بطلباتنا التراثية القديمة من السدو عشان تظل سوالف دوانيتنا حية بكل زاوية!
                         </p>
 
@@ -2180,40 +2180,40 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             dir="rtl"
                           >
                             <div className="flex items-center justify-between border-b border-stone-100 pb-2">
-                              <span className="text-xs font-black text-[#0d3a22]"><MessageWithIcons text={"تخليد لحظة يديدة للربع 📸"} /></span>
+                              <span className="text-xs font-black text-brand"><MessageWithIcons text={"تخليد لحظة يديدة للربع 📸"} /></span>
                               <button 
                                 onClick={() => setIsAddingMemory(false)}
-                                className="text-stone-400 hover:text-stone-600 text-[11px] font-bold"
+                                className="text-stone-500 hover:text-stone-600 text-xs font-bold"
                               >
                                 إلغاء
                               </button>
                             </div>
 
                             <div className="space-y-1">
-                              <label className="text-[11px] font-black text-stone-500">اسم اليمعة / المناسبة *</label>
+                              <label className="text-xs font-black text-stone-500">اسم اليمعة / المناسبة *</label>
                               <input
                                 type="text"
                                 value={newMemoryTitle}
                                 onChange={(e) => setNewMemoryTitle(e.target.value)}
                                 placeholder="مثال: قط قطية كوت بوستة العودة"
-                                className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs text-brand font-bold focus:outline-none focus:border-[#b28a41]"
+                                className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs text-brand font-bold focus:outline-none focus:border-accent"
                               />
                             </div>
 
                             <div className="space-y-1">
-                              <label className="text-[11px] font-black text-stone-500">حكاية اليمقة / السالفة (الوهقة أو الضحك) *</label>
+                              <label className="text-xs font-black text-stone-500">حكاية اليمقة / السالفة (الوهقة أو الضحك) *</label>
                               <textarea
                                 value={newMemoryStory}
                                 onChange={(e) => setNewMemoryStory(e.target.value)}
                                 placeholder="اكتب سالفة هاليوم والبلعة والتحديات..."
                                 rows={2}
-                                className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs text-brand font-bold focus:outline-none focus:border-[#b28a41]"
+                                className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs text-brand font-bold focus:outline-none focus:border-accent"
                               />
                             </div>
 
                             <div className="flex items-center justify-between gap-4">
                               <div className="flex-1 space-y-1">
-                                <label className="text-[11px] font-black text-stone-500">رمز الوجبة لليمعة</label>
+                                <label className="text-xs font-black text-stone-500">رمز الوجبة لليمعة</label>
                                 <div className="flex gap-2 flex-wrap">
                                   {["🍖", "☕", "🎲", "🍲", "🐏", "🍢", "🍰"].map((emoji) => (
                                     <button
@@ -2223,7 +2223,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                       className={cn(
                                         "w-8 h-8 rounded-lg flex items-center justify-center text-sm border transition-all",
                                         newMemoryIcon === emoji 
-                                          ? "bg-[#0d3a22] text-white border-[#0d3a22] scale-110 shadow-sm" 
+                                          ? "bg-brand text-white border-brand scale-110 shadow-sm" 
                                           : "bg-white text-stone-600 border-stone-200 hover:bg-stone-50"
                                       )}
                                     >
@@ -2236,7 +2236,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               <button
                                 onClick={handleAddMemory}
                                 disabled={!newMemoryTitle.trim() || !newMemoryStory.trim()}
-                                className="px-5 py-2.5 bg-[#0d3a22] text-white rounded-xl text-xs font-black hover:bg-[#072414] disabled:opacity-40 transition-all self-end"
+                                className="px-5 py-2.5 bg-brand text-white rounded-xl text-xs font-black hover:bg-[#072414] disabled:opacity-40 transition-all self-end"
                               >
                                 <MessageWithIcons text={"سجّل ذكرى اليمعة 📸"} />
 </button>
@@ -2276,25 +2276,25 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                   <MemoryIcon icon={selectedMemory.icon} className="w-20 h-20 text-amber-800" />
                                 </span>
                                 {isCuring && (
-                                  <div className="absolute inset-0 bg-[#0d3a22]/5 mix-blend-color pointer-events-none" />
+                                  <div className="absolute inset-0 bg-brand/5 mix-blend-color pointer-events-none" />
                                 )}
                               </div>
 
                               {/* Contents in the bottom white margin of the Polaroid */}
                               <div className="space-y-1.5 mt-1 text-stone-800">
                                 <div className="flex items-center justify-between border-b border-stone-100 pb-1">
-                                  <span className="text-[8.5px] font-black uppercase tracking-wider text-[#b28a41] bg-amber-50 border border-amber-200/60 px-2 rounded-full inline-block">
+                                  <span className="text-[8.5px] font-black uppercase tracking-wider text-accent bg-amber-50 border border-amber-200/60 px-2 rounded-full inline-block">
                                     {selectedMemory.date}
                                   </span>
-                                  <span className="text-[11px] font-mono text-stone-400 font-bold">ذكريات اليمعة المعتقة</span>
+                                  <span className="text-xs font-mono text-stone-500 font-bold">ذكريات اليمعة المعتقة</span>
                                 </div>
                                 <h4 className="text-sm font-black text-brand leading-snug">{selectedMemory.title}</h4>
-                                <p className="text-[11px] text-stone-600 font-medium leading-relaxed">{selectedMemory.desc}</p>
+                                <p className="text-xs text-stone-600 font-medium leading-relaxed">{selectedMemory.desc}</p>
                               </div>
 
                               <div className="diwaniya-memory-detail-actions border-t border-dashed border-stone-200 pt-3 flex items-center justify-between gap-3 mt-1">
                                 <span className={cn(
-                                  "text-[11px] font-black px-2 py-0.5 rounded-full transition-colors flex items-center gap-1",
+                                  "text-xs font-black px-2 py-0.5 rounded-full transition-colors flex items-center gap-1",
                                   isCuring ? "text-amber-700 bg-amber-50 animate-pulse border border-amber-200/50" : "text-emerald-700 bg-emerald-50 border border-emerald-200/50"
                                 )}>
                                   <span>{isCuring ? <MessageWithIcons text={"🧪"} /> : <MessageWithIcons text={"❖"} />}</span>
@@ -2347,7 +2347,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           <div className="bg-stone-50 border border-stone-100/30 rounded-2xl p-8 text-center flex flex-col items-center justify-center gap-2.5">
                             <span className="text-3xl"><MessageWithIcons text={"📸"} /></span>
                             <span className="text-xs font-black text-stone-500">ماكو ذكريات مسجلة للحين بالديوانية...</span>
-                            <span className="text-[11px] font-bold text-stone-400"><MessageWithIcons text={"سجلوا يمعتكم الياية هني بالطيب! ✨"} /></span>
+                            <span className="text-xs font-bold text-stone-500"><MessageWithIcons text={"سجلوا يمعتكم الياية هني بالطيب! ✨"} /></span>
                           </div>
                         ) : (
                           <div className="diwaniya-memories-grid grid grid-cols-2 sm:grid-cols-3 gap-6 pt-4 pb-2" dir="rtl">
@@ -2365,7 +2365,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                   style={{ rotate: slantAngle }}
                                   className={cn(
                                     "diwaniya-memory-card bg-[#fafaf7] p-2.5 pb-6 border border-stone-200/80 shadow-md hover:shadow-2xl transition-all flex flex-col gap-2 cursor-pointer relative rounded-sm select-none",
-                                    selectedMemory?.id === album.id ? "ring-2 ring-[#b28a41] shadow-[#b28a41]/20 bg-amber-50/20" : ""
+                                    selectedMemory?.id === album.id ? "ring-2 ring-accent shadow-[#b28a41]/20 bg-amber-50/20" : ""
                                   )}
                                 >
                                   {/* Paper tape element sticking at the top of Polaroid */}
@@ -2374,14 +2374,14 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                   <div className={cn("diwaniya-memory-frame aspect-square w-full flex flex-col items-center justify-center text-3xl bg-gradient-to-br border border-stone-200/60 relative overflow-hidden shadow-inner rounded-xs", album.bg)}>
                                     <span className="filter drop-shadow-sm select-none transform hover:scale-110 transition-transform duration-500"><MemoryIcon icon={album.icon} className="w-8 h-8 text-amber-800" /></span>
                                     <div className="absolute inset-0 bg-yellow-900/[0.03] mix-blend-color-burn pointer-events-none" />
-                                    <div className="absolute top-1.5 left-1.5 text-[11px] bg-white/80 border border-stone-100 px-1 rounded font-mono text-stone-500">
+                                    <div className="absolute top-1.5 left-1.5 text-xs bg-white/80 border border-stone-100 px-1 rounded font-mono text-stone-500">
                                       #{formatEnglishNumber(idx + 1)}
                                     </div>
                                   </div>
                                   
                                   <div className="flex flex-col gap-0.5 text-center font-sans mt-0.5">
-                                    <h6 className="text-[11px] sm:text-[11px] font-black text-brand truncate pr-0.5 leading-tight">{album.title}</h6>
-                                    <span className="text-[7.5px] font-extrabold text-[#b28a41] font-mono leading-none">{album.date}</span>
+                                    <h6 className="text-xs sm:text-xs font-black text-brand truncate pr-0.5 leading-tight">{album.title}</h6>
+                                    <span className="text-[7.5px] font-extrabold text-accent font-mono leading-none">{album.date}</span>
                                   </div>
                                 </motion.div>
                               );
@@ -2396,7 +2396,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   {isOwner && myDiwaniyaTab === "location" && (
                     <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
                       <div className="flex items-center justify-between border-b border-stone-50 pb-3">
-                        <span className="text-[11px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase tracking-wider"><MessageWithIcons text={"رادار الديوانية 📡"} /></span>
+                        <span className="text-xs font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase tracking-wider"><MessageWithIcons text={"رادار الديوانية 📡"} /></span>
                         <h4 className="font-black text-brand text-sm">إرشاد الرادار الجغرافي</h4>
                       </div>
                       
@@ -2406,12 +2406,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                       <div className="rounded-[24px] bg-emerald-50/70 border border-emerald-100 p-4 space-y-3">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-[11px] font-mono font-black bg-white text-emerald-700 px-3 py-1 rounded-full border border-emerald-100">
+                          <span className="text-xs font-mono font-black bg-white text-emerald-700 px-3 py-1 rounded-full border border-emerald-100">
                             {formatEnglishNumber(localGeofenceDistance)} متر
                           </span>
                           <div className="text-right">
                             <div className="text-xs font-black text-brand">مدى ظهور بطاقة الدخول</div>
-                            <div className="text-[11px] font-bold text-stone-500 mt-0.5">اختر المسافة المناسبة لظهور بطاقة الدخول.</div>
+                            <div className="text-xs font-bold text-stone-500 mt-0.5">اختر المسافة المناسبة لظهور بطاقة الدخول.</div>
                           </div>
                         </div>
                         <input
@@ -2427,7 +2427,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           }}
                           className="w-full accent-emerald-600"
                         />
-                        <div className="flex items-center justify-between text-[11px] font-black text-stone-400">
+                        <div className="flex items-center justify-between text-xs font-black text-stone-500">
                           <span>حتى {formatEnglishNumber(getSquadGeofenceDistance())}م</span>
                           <span>دقيق 10م</span>
                         </div>
@@ -2438,13 +2438,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           <p className="text-xs font-black text-sky-800 flex items-center gap-1 justify-end">
                             <span><MessageWithIcons text={"موقع الديوانية مسجّل ومفعّل حالياً بنجاح! ✅"} /></span>
                           </p>
-                          <p className="text-[11px] font-mono font-bold text-sky-600 tracking-tight">
+                          <p className="text-xs font-mono font-bold text-sky-600 tracking-tight">
                             إحداثيات: {registeredSquadLat?.toFixed(6)}, {registeredSquadLng?.toFixed(6)}
                           </p>
                           <button
                             type="button"
                             onClick={() => { window.location.href = `https://www.google.com/maps/search/?api=1&query=${registeredSquadLat},${registeredSquadLng}`; }}
-                            className="inline-block text-[11px] font-black text-accent hover:underline"
+                            className="inline-block text-xs font-black text-accent hover:underline"
                           >
                             <MessageWithIcons text={"عرض على خرائط جوجل 🧭"} />
 </button>
@@ -2454,7 +2454,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           <p className="text-xs font-black text-orange-850">
                             <MessageWithIcons text={"⚠️ موقع الديوانية غير مسجّل حتى الآن!"} />
 </p>
-                          <p className="text-[11px] font-bold text-orange-600/80 mt-1 leading-normal">
+                          <p className="text-xs font-bold text-orange-600/80 mt-1 leading-normal">
                             الربع القراب منك ما يقدرون يستقبلون إشعارات الرادار للانضمام السريع إلا بعد تعيين موقع ديوانيتكم.
                           </p>
                         </div>
@@ -2484,14 +2484,14 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         <button
                           type="button"
                           onClick={() => setShowManualInput(!showManualInput)}
-                          className="w-full text-[11px] font-black text-stone-500 hover:text-accent transition-colors flex items-center justify-center gap-1"
+                          className="w-full text-xs font-black text-stone-500 hover:text-accent transition-colors flex items-center justify-center gap-1"
                         >
                           {showManualInput ? <MessageWithIcons text={"إخفاء الخيار اليدوي ✖️"} /> : <MessageWithIcons text={"أو إدخال الموقع يدويًا (إحداثيات أو خرائط جوجل) 📍"} />}
                         </button>
 
                         {showManualInput && (
                           <div className="space-y-2 bg-stone-50 p-3.5 rounded-2xl border border-stone-100">
-                            <label className="text-[11px] font-black text-stone-600 block text-right">
+                            <label className="text-xs font-black text-stone-600 block text-right">
                               ألصق رابط الموقع من خرائط جوجل أو الإحداثيات مباشرة:
                             </label>
                             <input
@@ -2505,7 +2505,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               type="button"
                               onClick={handleManualLocationSubmit}
                               disabled={isRegisteringGeo}
-                              className="w-full bg-accent hover:bg-accent/90 text-white font-black text-[11px] py-2 rounded-xl active:scale-95 transition-all text-center"
+                              className="w-full bg-accent hover:bg-accent/90 text-white font-black text-xs py-2 rounded-xl active:scale-95 transition-all text-center"
                             >
                               <MessageWithIcons text={"حفظ الإحداثيات يدويًا 💾"} />
 </button>
@@ -2514,7 +2514,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       </div>
 
                       {geoStatusMsg && (
-                        <p className="text-[11px] font-black text-center text-accent animate-pulse">
+                        <p className="text-xs font-black text-center text-accent animate-pulse">
                           <MessageWithIcons text={geoStatusMsg} />
                         </p>
                       )}
@@ -2524,13 +2524,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   {!isOwner && myDiwaniyaTab === "location" && (
                     <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
                       <div className="flex items-center justify-between border-b border-stone-50 pb-3">
-                        <span className="text-[11px] font-black bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full">إرشادات فقط</span>
+                        <span className="text-xs font-black bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full">إرشادات فقط</span>
                         <h4 className="font-black text-brand text-sm"><MessageWithIcons text={"موقع الديوانية 📍"} /></h4>
                       </div>
                       <p className="text-xs font-bold text-stone-500 leading-relaxed">
                         التحكم بتثبيت أو تغيير موقع الرادار للمعزب فقط. أنت كعضو تقدر تشغّل سماح الموقع من المتصفح حتى يظهر لك الرادار والتنقل بين الدواوين القريبة.
                       </p>
-                      <div className="bg-stone-50 rounded-2xl border border-stone-100 p-4 text-[11px] font-bold text-stone-500 leading-relaxed">
+                      <div className="bg-stone-50 rounded-2xl border border-stone-100 p-4 text-xs font-bold text-stone-500 leading-relaxed">
                         إذا ما ظهر لك إشعار القرب: فعّل صلاحية الموقع من المتصفح، قرّب من الديوانية، ثم افتح صفحة الديوانية أو اضغط تشغيل الرادار من التنبيه.
                       </div>
                     </div>
@@ -2540,7 +2540,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   {isOwner && myDiwaniyaTab === "location" && (
                     <div className="rounded-[28px] bg-white border border-stone-100 shadow-sm p-5 space-y-4 text-right">
                       <div className="flex items-center justify-between border-b border-stone-50 pb-3">
-                        <span className="text-[11px] font-mono font-black bg-accent/10 text-accent px-2.5 py-1 rounded-full">{formatEnglishNumber(pendingGeofenceRequests?.length || 0)} معلق</span>
+                        <span className="text-xs font-mono font-black bg-accent/10 text-accent px-2.5 py-1 rounded-full">{formatEnglishNumber(pendingGeofenceRequests?.length || 0)} معلق</span>
                         <h4 className="font-black text-brand text-sm flex items-center gap-1.5 justify-end">
                           <Users className="w-4 h-4 text-accent" /> طلبات الرادار المعلقة
                         </h4>
@@ -2551,23 +2551,23 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           {pendingGeofenceRequests.map((req: any, idx: number) => (
                             <div key={idx} className="p-3.5 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col gap-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">يبعد {req.distance ? formatEnglishNumber(req.distance) : formatEnglishNumber(getSquadGeofenceDistance())}م</span>
+                                <span className="text-xs font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">يبعد {req.distance ? formatEnglishNumber(req.distance) : formatEnglishNumber(getSquadGeofenceDistance())}م</span>
                                 <span className="text-sm font-black text-brand">{req.name}</span>
                               </div>
                               <div className="flex items-center justify-between mt-1">
-                                <span className="text-[11px] font-bold text-stone-400 font-mono">{req.phone}</span>
+                                <span className="text-xs font-bold text-stone-500 font-mono">{req.phone}</span>
                                 <div className="flex gap-2">
                                   <button
                                     onClick={() => handleApproveRejectRequest(req.phone, false)}
                                     disabled={isApproving[req.phone]}
-                                    className="bg-rose-50 hover:bg-rose-100 text-rose-600 text-[11px] font-black px-3 py-1.5 rounded-xl border border-rose-100 active:scale-95 transition-all text-center"
+                                    className="bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-black px-3 py-1.5 rounded-xl border border-rose-100 active:scale-95 transition-all text-center"
                                   >
                                     <MessageWithIcons text={"رفض ❌"} />
 </button>
                                   <button
                                     onClick={() => handleApproveRejectRequest(req.phone, true)}
                                     disabled={isApproving[req.phone]}
-                                    className="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-black px-4.5 py-1.5 rounded-xl shadow-sm active:scale-95 transition-all text-center"
+                                    className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black px-4.5 py-1.5 rounded-xl shadow-sm active:scale-95 transition-all text-center"
                                   >
                                     {isApproving[req.phone] ? "ثواني..." : <MessageWithIcons text={"قبول ✅"} />}
                                   </button>
@@ -2577,10 +2577,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                           ))}
                         </div>
                       ) : (
-                        <p className="text-xs font-bold text-stone-400 text-center py-4">
+                        <p className="text-xs font-bold text-stone-500 text-center py-4">
                           ماكو طلبات انضمام بالرادار حالياً. 
                           <br />
-                          <span className="text-[11px] opacity-75">تظهر هنا فوراً عندما يقترب كنعور من ديوانيتك!</span>
+                          <span className="text-xs opacity-75">تظهر هنا فوراً عندما يقترب كنعور من ديوانيتك!</span>
                         </p>
                       )}
                     </div>
@@ -2595,7 +2595,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                       <div className="rounded-[24px] border border-stone-100 bg-stone-50 p-4 space-y-3">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-[11px] font-black bg-white text-stone-500 px-2.5 py-1 rounded-full border border-stone-200">الخيار الأساسي</span>
+                          <span className="text-xs font-black bg-white text-stone-500 px-2.5 py-1 rounded-full border border-stone-200">الخيار الأساسي</span>
                           <h5 className="text-sm font-black text-brand">دخول برقمك</h5>
                         </div>
                         <input
@@ -2640,10 +2640,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                       <div className="rounded-[26px] border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-4 space-y-3">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-[11px] font-black bg-white text-amber-700 px-2.5 py-1 rounded-full border border-amber-100">ضيف + قطية</span>
+                          <span className="text-xs font-black bg-white text-amber-700 px-2.5 py-1 rounded-full border border-amber-100">ضيف + قطية</span>
                           <h5 className="text-sm font-black text-brand">افتح قطية داخل الديوانية</h5>
                         </div>
-                        <p className="text-[11px] font-bold text-stone-500 leading-relaxed">
+                        <p className="text-xs font-bold text-stone-500 leading-relaxed">
                           إذا أنت ضيف وتبي تطلب للربع، نربط الطلب باسم الديوانية ونجهز أسماء الأعضاء. اختار الأصناف وبعدها اختر القطيّة من الدفع.
                         </p>
                         <button
@@ -2653,17 +2653,17 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         >
                           جهز قطية كضيف
                         </button>
-                        <div className="text-[11px] font-bold text-amber-700 bg-white/70 border border-amber-100 rounded-2xl px-3 py-2 leading-relaxed">
+                        <div className="text-xs font-bold text-amber-700 bg-white/70 border border-amber-100 rounded-2xl px-3 py-2 leading-relaxed">
                           ما ندخلك كعضو تلقائياً، فقط نجهز القطيّة والطلب باسمك داخل هذه الديوانية.
                         </div>
                       </div>
 
                       <div className="rounded-[24px] border border-brand/10 bg-brand/[0.03] p-4 space-y-3">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-[11px] font-black bg-brand/10 text-brand px-2.5 py-1 rounded-full border border-brand/10">سريع ومباشر</span>
+                          <span className="text-xs font-black bg-brand/10 text-brand px-2.5 py-1 rounded-full border border-brand/10">سريع ومباشر</span>
                           <h5 className="text-sm font-black text-brand">عندك كود دخول ساعتين؟</h5>
                         </div>
-                        <p className="text-[11px] font-bold text-stone-500 leading-relaxed">إذا المعزب عطاك كود مؤقت، اكتب الكود هني ودش مباشرة بدون انتظار.</p>
+                        <p className="text-xs font-bold text-stone-500 leading-relaxed">إذا المعزب عطاك كود مؤقت، اكتب الكود هني ودش مباشرة بدون انتظار.</p>
                         <div className="flex flex-col sm:flex-row gap-2 sm:items-stretch">
                           <input
                             inputMode="numeric"
@@ -2682,7 +2682,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         </div>
                         {tempCodeNeedsProfile && (
                           <div className="rounded-2xl bg-white border border-brand/10 p-3 space-y-2">
-                            <div className="text-[11px] font-black text-brand text-right">حط اسمك ورقم تلفونك ونكمل دخولك للديوانية</div>
+                            <div className="text-xs font-black text-brand text-right">حط اسمك ورقم تلفونك ونكمل دخولك للديوانية</div>
                             <input
                               value={tempJoinName}
                               onChange={(e)=>setTempJoinName(e.target.value)}
@@ -2733,7 +2733,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
               </div>
 
               <div className="bg-white rounded-3xl p-4 border border-orange-100 space-y-3 text-right">
-                <label className="text-[11px] font-black text-stone-400 mr-2">
+                <label className="text-xs font-black text-stone-500 mr-2">
                   رقم تلفونك
                 </label>
                 <div className="flex gap-2">
@@ -2763,13 +2763,13 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     دخول
                   </button>
                 </div>
-                <p className="text-[11px] font-bold text-stone-400 leading-relaxed">
+                <p className="text-xs font-bold text-stone-500 leading-relaxed">
                   إذا الرقم مرتبط بدواوين، راح تظهر لك فوراً وتقدر تختار الحالية.
                 </p>
               </div>
 
               <div className="bg-white rounded-3xl p-4 border border-brand/10 space-y-3 text-right">
-                <label className="text-[11px] font-black text-stone-400 mr-2">
+                <label className="text-xs font-black text-stone-500 mr-2">
                   عندك كود من المعزب؟
                 </label>
                 <div className="flex gap-2">
@@ -2796,7 +2796,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 </div>
                 {tempCodeNeedsProfile && (
                   <div className="grid grid-cols-1 gap-2">
-                    <div className="text-[11px] font-black text-brand text-right">حط اسمك ورقم تلفونك ونكمل دخولك للديوانية</div>
+                    <div className="text-xs font-black text-brand text-right">حط اسمك ورقم تلفونك ونكمل دخولك للديوانية</div>
                     <input
                       value={tempJoinName}
                       onChange={(e)=>setTempJoinName(e.target.value)}
@@ -2829,7 +2829,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     />
                   </div>
                 )}
-                <p className="text-[11px] font-bold text-stone-400 leading-relaxed">
+                <p className="text-xs font-bold text-stone-500 leading-relaxed">
                   اكتب الكود، وإذا مو مسجل بنطلب اسمك ورقم تلفونك ونكمل دخولك.
                 </p>
               </div>
@@ -2852,7 +2852,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           </h4>
           <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden flex flex-col">
             {(!topSquads || topSquads.length === 0) && (
-              <div className="p-5 text-center text-xs font-black text-stone-400">
+              <div className="p-5 text-center text-xs font-black text-stone-500">
                 أول ديوانية تجمع نقاطها راح تظهر هنا ضمن صدارة الدواوين.
               </div>
             )}
@@ -2880,7 +2880,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         "w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shrink-0",
                         idx === 0
                           ? "bg-yellow-100 text-yellow-700"
-                          : "bg-stone-50 text-stone-400",
+                          : "bg-stone-50 text-stone-500",
                       )}
                     >
                       {idx + 1}
@@ -2889,7 +2889,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       <span className="text-sm font-black text-stone-700">
                         {sq.name}
                       </span>
-                      <span className="text-[11px] text-stone-400 font-bold">
+                      <span className="text-xs text-stone-500 font-bold">
                         {sqTier?.name || ""}
                       </span>
                     </div>
@@ -2913,7 +2913,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       {activeSquadTab === "tiers" && (
         <div className="space-y-5 animate-in fade-in duration-500 text-right">
           {sortedTiers.length === 0 ? (
-            <div className="rounded-[28px] border border-stone-100 bg-white p-5 shadow-sm text-center text-xs font-black text-stone-400">
+            <div className="rounded-[28px] border border-stone-100 bg-white p-5 shadow-sm text-center text-xs font-black text-stone-500">
               طريق الديوانية بانتظار إعداد مستوياته من لوحة الأدمن.
             </div>
           ) : null}
@@ -2924,11 +2924,11 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                 <h4 className="font-black text-brand text-lg">
                   طريق الديوانية
                 </h4>
-                <p className="text-[11px] font-bold text-stone-400">
+                <p className="text-xs font-bold text-stone-500">
                   طريق واضح يبين مستواكم وكم باقي للمستوى القادم
                 </p>
               </div>
-              <span className="px-3 py-1 rounded-full bg-accent/10 text-accent text-[11px] font-black">
+              <span className="px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-black">
                 {currentPoints} نقطة
               </span>
             </div>
@@ -2970,15 +2970,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       </div>
                       <span
                         className={cn(
-                          "squad-tier-road-name text-[11px] font-black leading-tight max-w-[92px] whitespace-normal break-words",
+                          "squad-tier-road-name text-xs font-black leading-tight max-w-[92px] whitespace-normal break-words",
                           reached
                             ? tier.color || "text-brand"
-                            : "text-stone-400",
+                            : "text-stone-500",
                         )}
                       >
                         {tier.name}
                       </span>
-                      <span className="squad-tier-road-points text-[11px] font-bold text-stone-400 leading-tight">
+                      <span className="squad-tier-road-points text-xs font-bold text-stone-500 leading-tight">
                         {tier.minPoints}+ نقطة
                       </span>
                     </div>
@@ -3024,15 +3024,15 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         >
                           {tier.name}
                         </h5>
-                        <span className="text-[11px] font-bold opacity-60 tracking-tighter shrink-0">
+                        <span className="text-xs font-bold opacity-60 tracking-tighter shrink-0">
                           {tier.minPoints}+ نقطة
                         </span>
                       </div>
-                      <p className="text-[11px] font-black text-stone-600 mt-1 leading-relaxed">
+                      <p className="text-xs font-black text-stone-600 mt-1 leading-relaxed">
                         {tier.benefit}
                       </p>
                       {isCurrent && (
-                        <span className="text-[11px] font-black text-accent mt-2">
+                        <span className="text-xs font-black text-accent mt-2">
                           <MessageWithIcons text={"هذا مستواكم الحالي ✨"} />
 </span>
                       )}

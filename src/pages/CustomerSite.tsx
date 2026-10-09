@@ -74,18 +74,18 @@ const RefineSearchCard = ({ value, onChange }: { value: string; onChange: (v: st
           <SlidersHorizontal className="w-4 h-4 text-accent" strokeWidth={1.6} aria-hidden="true" />
           تصفية
         </span>
-        <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform ${expanded ? "rotate-180" : ""}`} strokeWidth={1.6} aria-hidden="true" />
+        <ChevronDown className={`w-4 h-4 text-stone-500 transition-transform ${expanded ? "rotate-180" : ""}`} strokeWidth={1.6} aria-hidden="true" />
       </button>
       <div
         id="quick-refine-field"
         className={`flex items-center gap-3 bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3 ${expanded ? "mt-2" : "hidden"}`}
       >
-        <Search className="w-4 h-4 text-stone-400" />
+        <Search className="w-4 h-4 text-stone-500" />
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="اكتب نيتك بأي طريقة: مشتهي بحري، حق ٦ أشخاص، مريض، ديوانية..."
-          className="bg-transparent outline-none w-full text-xs sm:text-sm font-medium sm:font-bold text-brand placeholder:text-stone-400"
+          className="bg-transparent outline-none w-full text-xs sm:text-sm font-medium sm:font-bold text-brand placeholder:text-stone-500"
         />
       </div>
     </div>
@@ -1440,10 +1440,10 @@ function StoreClosedWorkingHoursNotice({
         />
         <span className="font-black text-brand">{item.dayName}</span>
         {item.isToday && (
-          <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-[11px] font-black text-amber-900">اليوم</span>
+          <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-xs font-black text-amber-900">اليوم</span>
         )}
       </div>
-      <span className={cn("shrink-0 font-bold", item.enabled ? "text-stone-600" : "text-stone-400")}>
+      <span className={cn("shrink-0 font-bold", item.enabled ? "text-stone-600" : "text-stone-500")}>
         {item.text}
       </span>
     </div>
@@ -1452,13 +1452,20 @@ function StoreClosedWorkingHoursNotice({
   return (
     <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col justify-center py-2 text-right" dir="rtl">
       <div className="overflow-hidden rounded-[2rem] border border-stone-200 bg-white shadow-[0_24px_70px_rgba(55,36,18,0.10)]">
-        <div className="border-b border-stone-100 bg-gradient-to-l from-[#fffaf1] via-white to-white px-5 py-6 sm:px-7">
+        <div className="border-b border-stone-100 bg-gradient-to-l from-cream via-white to-white px-5 py-6 sm:px-7">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-200/70 bg-amber-50 text-amber-700">
-              <Clock className="h-5 w-5" />
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl border border-cream-edge bg-cream">
+              <svg viewBox="0 0 48 48" className="h-11 w-11" aria-hidden="true" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M24 4v6" stroke="#b28a41" strokeWidth="2.2" />
+                <path d="M18 10h12l3 5v17a4 4 0 0 1-4 4H19a4 4 0 0 1-4-4V15z" fill="#0d3a22" />
+                <path d="M18 10h12" stroke="#b28a41" strokeWidth="2.2" />
+                <path d="M19 40h10" stroke="#b28a41" strokeWidth="2.2" />
+                <path d="M24 17c-3 4-4 6-4 8a4 4 0 0 0 8 0c0-2-1-4-4-8z" fill="#f6d27a" opacity=".55" />
+                <path d="M9 30c2-2 4-2 6 0M33 30c2-2 4-2 6 0" stroke="#b28a41" strokeWidth="1.6" opacity=".7" />
+              </svg>
             </div>
             <div className="min-w-0 flex-1">
-              <span className="inline-flex rounded-full border border-stone-200 bg-white px-3 py-1 text-[11px] font-black text-stone-500">
+              <span className="inline-flex rounded-full border border-stone-200 bg-white px-3 py-1 text-xs font-black text-stone-500">
                 الطلب متوقف مؤقتاً
               </span>
               <h3 className="mt-3 text-xl font-black text-brand sm:text-2xl">المطعم مغلق حالياً</h3>
@@ -1472,10 +1479,10 @@ function StoreClosedWorkingHoursNotice({
         <div className="px-5 py-5 sm:px-7 sm:py-6">
           <div className="mb-4 flex items-end justify-between gap-3">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-700">أوقات العمل</p>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">أوقات العمل</p>
               <p className="mt-1 text-sm font-black text-brand">دوام اليوم</p>
             </div>
-            <span className="rounded-xl bg-stone-50 px-3 py-2 text-[11px] font-black text-stone-500">
+            <span className="rounded-xl bg-stone-50 px-3 py-2 text-xs font-black text-stone-500">
               بتوقيت الكويت
             </span>
           </div>
@@ -1644,7 +1651,7 @@ export default function CustomerSite() {
           </div>
           <div className="hidden sm:block">
              <div className="px-3 py-1 bg-white/60 rounded-full border border-white/40">
-                <span className="text-[11px] font-black uppercase tracking-tighter opacity-40 text-brand">رادار الولاء</span>
+                <span className="text-xs font-black uppercase tracking-tighter opacity-40 text-brand">رادار الولاء</span>
              </div>
           </div>
         </div>
@@ -1656,7 +1663,7 @@ export default function CustomerSite() {
                  <p className="text-xs font-bold text-brand">
                     <span className="opacity-60">باقي لك</span> <span className="text-accent underline font-black mx-0.5">{nextTier.minPoints - customerPoints}</span> <span className="opacity-60">وتصير</span> <span className="font-black text-stone-800">{nextTier.name}!</span> <MessageWithIcons text={"🚀"} />
 </p>
-                 <span className="text-[11px] font-black text-stone-400">
+                 <span className="text-xs font-black text-stone-500">
                    {Math.round(progressPercent)}%
                  </span>
                </div>
@@ -1681,7 +1688,7 @@ export default function CustomerSite() {
                 </div>
                 <div className="text-right">
                   <h4 className="font-black text-sm text-sky-700">لقد وصلت لقمة الهرم!</h4>
-                  <p className="text-[11px] font-bold text-sky-600/80">أنت الحين أسطورة ماسيّة، كل الدلع لك.</p>
+                  <p className="text-xs font-bold text-sky-600/80">أنت الحين أسطورة ماسيّة، كل الدلع لك.</p>
                 </div>
              </div>
            )}
@@ -1689,8 +1696,8 @@ export default function CustomerSite() {
            <div className="mt-6 p-4 bg-white/40 backdrop-blur-sm rounded-2xl border border-white/20 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm"><MessageWithIcons text={"🎁"} /></div>
               <div>
-                <p className="text-[11px] font-bold text-stone-400 uppercase tracking-widest mb-0.5">مكتسباتك</p>
-                <p className="text-[11px] font-black text-brand leading-tight">{currentTier.benefit}</p>
+                <p className="text-xs font-bold text-stone-500 uppercase tracking-widest mb-0.5">مكتسباتك</p>
+                <p className="text-xs font-black text-brand leading-tight">{currentTier.benefit}</p>
               </div>
            </div>
         </div>
@@ -3032,7 +3039,7 @@ export default function CustomerSite() {
     const hour = new Date().getHours();
 
     if (!isOpen)
-      return { text: "في أمان الله", color: "text-stone-400", pulse: false };
+      return { text: "في أمان الله", color: "text-stone-500", pulse: false };
 
     const isPeak = (hour >= 12 && hour <= 15) || (hour >= 19 && hour <= 21);
     if (isPeak)
@@ -5018,14 +5025,14 @@ export default function CustomerSite() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[10000] flex flex-col items-center justify-center bg-[#faf8f5] overflow-hidden"
+            className="fixed inset-0 z-[10000] flex flex-col items-center justify-center bg-cream overflow-hidden"
           >
             {/* Elegant Background Patterns / Sadu aesthetics */}
-            <div className="absolute inset-0 bg-radial-gradient from-transparent to-[#f2ece2] opacity-80 pointer-events-none" />
+            <div className="absolute inset-0 bg-radial-gradient from-transparent to-cream-edge/40 opacity-80 pointer-events-none" />
             
             {/* Soft decorative traditional circles */}
-            <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-[#0d3a22]/5 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-[#b28a41]/10 blur-3xl pointer-events-none" />
+            <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-brand/5 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
 
             <div className="relative z-10 max-w-sm w-full px-6 text-center flex flex-col items-center justify-center h-full">
               {/* Logo / Emblems */}
@@ -5035,7 +5042,7 @@ export default function CustomerSite() {
                 transition={{ duration: 0.8, cubicBezier: [0.16, 1, 0.3, 1] }}
                 className="mb-8 relative"
               >
-                <div className="w-24 h-24 rounded-full bg-white shadow-xl flex items-center justify-center border-2 border-[#b28a41] p-2 mx-auto">
+                <div className="w-24 h-24 rounded-full bg-white shadow-xl flex items-center justify-center border-2 border-accent p-2 mx-auto">
                   <img
                     src={settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO}
                     alt="شعار المتجر"
@@ -5044,7 +5051,7 @@ export default function CustomerSite() {
                   />
                 </div>
                 {/* Visual sparkles */}
-                <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-[#b28a41]" strokeWidth={1.6} aria-hidden="true" />
+                <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-accent" strokeWidth={1.6} aria-hidden="true" />
               </motion.div>
 
               {/* Clear, minimal choice for first-time visitors */}
@@ -5054,7 +5061,7 @@ export default function CustomerSite() {
                 transition={{ delay: 0.2, duration: 0.6 }}
                 className="mb-8 w-full text-center"
               >
-                <h1 className="text-2xl sm:text-3xl font-black text-[#0d3a22] leading-relaxed px-2">
+                <h1 className="text-2xl sm:text-3xl font-black text-brand leading-relaxed px-2">
                   حيّاكم الله في مطبخ التراث الكويتي
                 </h1>
                 <p className="mt-3 text-sm sm:text-base text-stone-600 font-bold leading-relaxed px-3">
@@ -5074,7 +5081,7 @@ export default function CustomerSite() {
                     setShowAppetiteTheatre(false);
                     triggerHapticAndSound("click");
                   }}
-                  className="w-full bg-[#0d3a22] text-white py-[18px] px-6 rounded-2xl font-black text-base shadow-lg hover:bg-[#072414] transition-all flex items-center justify-center gap-2.5 border-b-4 border-[#061e11]"
+                  className="w-full bg-brand text-white py-[18px] px-6 rounded-2xl font-black text-base shadow-lg hover:bg-[#072414] transition-all flex items-center justify-center gap-2.5 border-b-4 border-[#061e11]"
                 >
                   <ShoppingBag className="w-5 h-5 text-[#cdaf78]" />
                   <span>دخول المنيو وطلب الأكل</span>
@@ -5087,13 +5094,13 @@ export default function CustomerSite() {
                     setShowSquadModal(true);
                     triggerHapticAndSound("click");
                   }}
-                  className="w-full bg-[#faf8f5] hover:bg-stone-100 text-[#0d3a22] py-3.5 px-6 rounded-2xl font-black text-sm transition-all flex flex-col items-center justify-center gap-1 border border-stone-200"
+                  className="w-full bg-[#faf8f5] hover:bg-stone-100 text-brand py-3.5 px-6 rounded-2xl font-black text-sm transition-all flex flex-col items-center justify-center gap-1 border border-stone-200"
                 >
                   <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-[#b28a41]" />
+                    <Users className="w-4 h-4 text-accent" />
                     <span>دخول الديوانية</span>
                   </div>
-                  <span className="text-[11px] text-[#9a783d] font-bold">لأعضاء الديوانية فقط</span>
+                  <span className="text-xs text-[#9a783d] font-bold">لأعضاء الديوانية فقط</span>
                 </button>
               </motion.div>
             </div>
@@ -5116,7 +5123,7 @@ export default function CustomerSite() {
             <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-orange-600/25 rounded-full blur-2xl pointer-events-none" />
             
             <div className="flex items-start justify-between gap-4 relative z-10">
-              <button
+              <button aria-label="إغلاق"
                 onClick={() => setZeroClickWelcome(null)}
                 className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/15 text-stone-300 hover:text-white flex items-center justify-center transition-all mt-0.5"
                 type="button"
@@ -5125,7 +5132,7 @@ export default function CustomerSite() {
               </button>
               
               <div className="flex-1 text-right">
-                <span className="text-[11px] font-black bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full border border-orange-500/25 tracking-wide">
+                <span className="text-xs font-black bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full border border-orange-500/25 tracking-wide">
                   <MessageWithIcons text={"رادار الديوانية 📡"} />
 </span>
                 
@@ -5166,18 +5173,18 @@ export default function CustomerSite() {
                        <Crown className="w-5 h-5" />
                     </div>
                     <div className="flex flex-col">
-                       <p className="text-[11px] text-stone-500 font-bold leading-tight">ديوانيتك</p>
+                       <p className="text-xs text-stone-500 font-bold leading-tight">ديوانيتك</p>
                        <p className="text-sm font-black text-brand leading-tight flex items-center gap-1.5">
                          {squadInfo.name}
                        </p>
-                       <p className="mt-1 text-[11px] font-extrabold text-amber-700/85 leading-tight">
+                       <p className="mt-1 text-xs font-extrabold text-amber-700/85 leading-tight">
                          {getSquadTier(getAnyPoints(squadInfo))?.name ? `${getSquadTier(getAnyPoints(squadInfo))?.name} + ` : ""}رصيدك {getAnyPoints(squadInfo)} نقطة
                        </p>
                     </div>
                  </div>
                  
                  <div className="flex items-center gap-2 shrink-0">
-                    <ArrowRight className="w-4 h-4 text-stone-400 rotate-180" />
+                    <ArrowRight className="w-4 h-4 text-stone-500 rotate-180" />
                  </div>
               </div>
             ) : (
@@ -5190,7 +5197,7 @@ export default function CustomerSite() {
                        <Crown className="w-5 h-5" />
                     </div>
                     <div className="flex flex-col min-w-0">
-                       <p className="text-[11px] text-stone-500 font-bold leading-tight">صدارة الدواوين <MessageWithIcons text="👑" /></p>
+                       <p className="text-xs text-stone-500 font-bold leading-tight">صدارة الدواوين <MessageWithIcons text="👑" /></p>
                        <p className="text-sm font-black text-brand leading-tight flex items-center gap-1.5">
                          {topSquads.length > 0 ? `${topSquads[0].name} بالصدارة!` : "ادخل التحدي مع ديوانيتك!"} 
                        </p>
@@ -5198,10 +5205,10 @@ export default function CustomerSite() {
                  </div>
                  
                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="text-[11px] font-bold text-orange-600 bg-white px-2 py-1 rounded-full shadow-sm border border-orange-100 flex items-center gap-1">
+                    <div className="text-xs font-bold text-orange-600 bg-white px-2 py-1 rounded-full shadow-sm border border-orange-100 flex items-center gap-1">
                        <span>سجل دخول / أسس</span>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-stone-400 rotate-180" />
+                    <ArrowRight className="w-4 h-4 text-stone-500 rotate-180" />
                  </div>
               </div>
             )}
@@ -5262,7 +5269,7 @@ export default function CustomerSite() {
                   </div>
                   <span
                     className={cn(
-                      "text-[11px] font-bold text-center leading-tight line-clamp-2",
+                      "text-xs font-bold text-center leading-tight line-clamp-2",
                       isActive ? "text-brand" : "text-stone-500",
                     )}
                   >
@@ -5327,14 +5334,14 @@ export default function CustomerSite() {
                 />
                 <span
                   className={cn(
-                    "text-[11px] font-extrabold uppercase tracking-wider leading-[1.6] py-0.5",
+                    "text-xs font-extrabold uppercase tracking-wider leading-[1.6] py-0.5",
                     tannourStatus.color,
                   )}
                 >
                   {tannourStatus.text}
                 </span>
-                <span className="text-[11px] text-stone-300 mx-1">•</span>
-                <span className="text-[11px] font-bold text-stone-400 leading-[1.6] py-0.5">
+                <span className="text-xs text-stone-300 mx-1">•</span>
+                <span className="text-xs font-bold text-stone-500 leading-[1.6] py-0.5">
                   {goldenHourTheme.name}
                 </span>
                 <button
@@ -5343,14 +5350,14 @@ export default function CustomerSite() {
                   aria-expanded={showLegalMeta}
                   aria-controls="legal-meta"
                   aria-label="بيانات السجل التجاري"
-                  className="relative inline-flex items-center justify-center w-6 h-6 text-stone-400 after:absolute after:-inset-2.5 after:content-['']"
+                  className="relative inline-flex items-center justify-center w-6 h-6 text-stone-500 after:absolute after:-inset-2.5 after:content-['']"
                 >
                   <Info className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />
                 </button>
               </div>
-              <div id="legal-meta" className={cn("mt-0.5 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-xs font-normal text-stone-500 leading-[1.55]", showLegalMeta ? "flex" : "hidden")}>
+              <div id="legal-meta" className={cn("mt-0.5 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs sm:text-xs font-normal text-stone-500 leading-[1.55]", showLegalMeta ? "flex" : "hidden")}>
                 <span>الاسم التجاري: {LEGAL_TRADE_NAME_AR}</span>
-                <span className="text-stone-400">•</span>
+                <span className="text-stone-500">•</span>
                 <span>رقم السجل التجاري: {COMMERCIAL_REGISTRATION_NUMBER}</span>
               </div>
             </div>
@@ -5383,7 +5390,7 @@ export default function CustomerSite() {
                 >
                   <ShoppingBag className="w-5 h-5 text-brand" />
                   {cart.length > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-[11px] w-5 h-5 flex items-center justify-center rounded-lg font-extrabold shadow-md">
+                    <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-xs w-5 h-5 flex items-center justify-center rounded-lg font-extrabold shadow-md">
                       {cart.length}
                     </span>
                   )}
@@ -5477,7 +5484,7 @@ export default function CustomerSite() {
                   placeholder={currentPlaceholder}
                   value={moodQuery}
                   onChange={(e) => setMoodQuery(normalizeDigits(e.target.value))}
-                  dir="rtl" className="orser-search-input bg-transparent w-full outline-none text-sm font-bold text-brand placeholder:text-stone-400 placeholder:font-medium"
+                  dir="rtl" className="orser-search-input bg-transparent w-full outline-none text-sm font-bold text-brand placeholder:text-stone-500 placeholder:font-medium"
                 />
               </div>
 
@@ -5524,7 +5531,7 @@ export default function CustomerSite() {
 
                 <div className="flex items-center justify-between gap-4 mb-5 border-b border-amber-100/30 pb-4 relative z-10">
                   <div className="text-right">
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-amber-200 bg-amber-50 text-[11px] sm:text-[11px] font-bold text-amber-900 mb-2">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-amber-200 bg-amber-50 text-xs sm:text-xs font-bold text-amber-900 mb-2">
                       <Sparkles className="w-3.5 h-3.5" strokeWidth={1.6} aria-hidden="true" /> من اختياراتنا لكم
                     </span>
                     <h3 className="text-base sm:text-lg font-black text-brand leading-snug"><MessageWithIcons text={String(liveSignal.title)} /></h3>
@@ -5540,11 +5547,11 @@ export default function CustomerSite() {
                         className="group flex items-center gap-3.5 rounded-2xl border border-stone-200/40 bg-white p-3 text-right active:scale-[.98] hover:border-amber-300 hover:shadow-md transition-all duration-300 min-h-[92px]"
                       >
                         <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden shrink-0 bg-stone-50 border border-stone-100 shadow-sm">
-                          <ProductVisual product={p} imgClassName="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                          <ProductVisual product={p} imgClassName="w-full h-full object-cover" />
                         </div>
                         <div className="min-w-0 flex-1 space-y-1">
                           <div className="text-xs sm:text-sm font-extrabold text-brand line-clamp-2 leading-snug break-words group-hover:text-amber-950 transition-colors duration-200">{p.name}</div>
-                          <div className="inline-flex items-center text-[11px] font-black text-amber-800 bg-amber-50/50 px-2 py-0.5 rounded-md">{Number(p.price || 0).toFixed(3)} د.ك</div>
+                          <div className="inline-flex items-center text-xs font-black text-amber-800 bg-amber-50/50 px-2 py-0.5 rounded-md">{Number(p.price || 0).toFixed(3)} د.ك</div>
                         </div>
                       </button>
                     );
@@ -5567,10 +5574,10 @@ export default function CustomerSite() {
               >
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
                   <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 shadow-sm border border-amber-100 bg-stone-50">
-                    <ProductVisual product={suggestion} imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <ProductVisual product={suggestion} imgClassName="w-full h-full object-cover" />
                   </div>
                   <div className="text-right min-w-0 flex-1 space-y-1">
-                    <span className="inline-flex items-center text-[11px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100/50 rounded-full px-2.5 py-0.5">توليفة تكمّل سلتك</span>
+                    <span className="inline-flex items-center text-xs font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100/50 rounded-full px-2.5 py-0.5">توليفة تكمّل سلتك</span>
                     <p className="text-xs sm:text-sm font-black text-brand line-clamp-1 group-hover:text-amber-950 transition-colors">
                       شنو رأيك نكمّلها مع <span className="text-amber-800 font-extrabold">{suggestion.name}</span>؟
                     </p>
@@ -5782,9 +5789,9 @@ export default function CustomerSite() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowFlashSale(false)}
-              className="fixed inset-0 r3-flash-overlay bg-brand/95 backdrop-blur-md z-[200] flex flex-col items-center justify-center p-6"
+              role="dialog" aria-modal="true" className="fixed inset-0 r3-flash-overlay bg-brand/95 backdrop-blur-md z-[200] flex flex-col items-center justify-center p-6"
             >
-              <button
+              <button aria-label="إغلاق العرض"
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowFlashSale(false);
@@ -5799,7 +5806,7 @@ export default function CustomerSite() {
                 className="text-center w-full max-w-sm"
               >
                 <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl relative border-4 border-white overflow-hidden">
-                  <img
+                  <img alt={smartPick?.item?.name || "الطبق المقترح"}
                     referrerPolicy="no-referrer"
                     src={
                       smartPick?.item?.imageUrl ||
@@ -6032,7 +6039,7 @@ export default function CustomerSite() {
                         <Star className="w-5 h-5 fill-current" />
                       </div>
                       <div className="text-right flex-1">
-                        <p className="text-[11px] text-white/50 font-bold mb-0.5">
+                        <p className="text-xs text-white/50 font-bold mb-0.5">
                           محفظة النقاط
                         </p>
                         <p className="text-xs text-white font-bold">
@@ -6061,9 +6068,9 @@ export default function CustomerSite() {
                     : "bottom-24 sm:bottom-28 left-4 right-4 sm:left-auto sm:right-6 sm:w-80",
               )}
             >
-              <button
+              <button aria-label="إغلاق الرسالة"
                 onClick={() => setPsychMessage(null)}
-                className="absolute top-4 left-4 text-stone-400 bg-stone-100 hover:bg-stone-200 rounded-full p-1.5 transition-colors"
+                className="absolute top-4 left-4 text-stone-500 bg-stone-100 hover:bg-stone-200 rounded-full p-1.5 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -6146,8 +6153,8 @@ export default function CustomerSite() {
                     : "bottom-6 sm:bottom-8",
                 )}
               >
-                <div className="bg-white/95 backdrop-blur-md border border-stone-100 shadow-xl rounded-2xl p-3 flex items-center gap-3 w-72 sm:w-80 relative overflow-hidden pr-8">
-                  <button
+                <div role="status" aria-live="polite" className="bg-white/95 backdrop-blur-md border border-stone-100 shadow-xl rounded-2xl p-3 flex items-center gap-3 w-72 sm:w-80 relative overflow-hidden pr-8">
+                  <button aria-label="إغلاق الإشعار"
                     onClick={(e) => {
                       e.stopPropagation();
                       setFomoPurchases([]);
@@ -6158,7 +6165,7 @@ export default function CustomerSite() {
                         // Clearing the feed still dismisses it for this page.
                       }
                     }}
-                    className="absolute top-2 right-2 p-1 text-stone-400 hover:text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-full z-20 transition-colors"
+                    className="absolute top-1 right-1 p-2 text-stone-500 hover:text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-full z-20 transition-colors"
                     title="إغلاق"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -6193,7 +6200,7 @@ export default function CustomerSite() {
                           </>
                        )}
                     </p>
-                    <p className="text-[11px] text-stone-400 mt-1">
+                    <p className="text-xs text-stone-500 mt-1">
                       {fomoPurchases[fomoIndex]?.type !== 'insight' && fomoPurchases[fomoIndex]?.type !== 'trend' ? getRelativeTime(fomoPurchases[fomoIndex]?.time) : <MessageWithIcons text={"مؤشر الرادار الذكي 📡"} />}
                     </p>
                   </div>
@@ -6229,7 +6236,7 @@ export default function CustomerSite() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-stone-950/95 text-stone-100 font-sans p-6 text-center backdrop-blur-md"
+              role="dialog" aria-modal="true" className="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-cream/98 text-ink font-sans p-6 text-center backdrop-blur-md"
             >
               <div className="flex flex-col items-center gap-6 max-w-sm w-full">
                 {/* Animated 3D Face scanner badge */}
@@ -6237,55 +6244,55 @@ export default function CustomerSite() {
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ repeat: Infinity, duration: 3.5, ease: "linear" }}
-                    className="absolute inset-0 rounded-full border-2 border-dashed border-[#b28a41] opacity-60"
+                    className="absolute inset-0 rounded-full border-2 border-dashed border-accent opacity-70"
                   />
                   <motion.div
                     animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.6, 0.3] }}
                     transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                    className="absolute inset-2 rounded-full border border-emerald-500 bg-emerald-500/10"
+                    className="absolute inset-2 rounded-full border border-accent/60 bg-accent/10"
                   />
                   {/* Futuristic Scan Lines */}
                   <motion.div
                     animate={{ y: [-45, 45, -45] }}
                     transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-                    className="absolute left-6 right-6 h-0.5 bg-emerald-400 shadow-[0_0_15px_#34d399]"
+                    className="absolute left-6 right-6 h-0.5 bg-accent shadow-[0_0_14px_rgba(178,138,65,.6)] rounded-full"
                   />
-                  <div className="text-4xl relative z-10 filter drop-shadow"><MessageWithIcons text={"🧬"} /></div>
+                  <svg viewBox="0 0 48 48" className="relative z-10 w-12 h-12 text-brand" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8c-2 3 2 4 0 7M24 6c-2 3 2 4 0 7M31 8c-2 3 2 4 0 7" stroke="#b28a41" /><path d="M12 22h24l-3 16a4 4 0 0 1-4 3H19a4 4 0 0 1-4-3z" fill="#fff7e8" /><path d="M36 25c5 0 6 8 0 8M12 24l-4-3" /></svg>
                 </div>
 
                 <div className="flex flex-col gap-2 relative z-10">
-                  <span className="text-[11px] uppercase font-black tracking-widest text-[#b28a41] bg-[#b28a41]/10 px-3 py-1 rounded-full w-fit mx-auto border border-[#b28a41]/20"><MessageWithIcons text={"بصمة الوجه الموثوقة والموقع 🧬"} /></span>
-                  <h3 className="text-lg font-black text-white">جاري الاتصال السحابي بالديوانية...</h3>
-                  <p className="text-xs text-stone-400 font-medium leading-relaxed px-4">
-                    تم اكتشاف وجودك الفعلي بجوار <strong className="text-emerald-400 font-black">"{biometricScanSquad.name}"</strong>. نربط جهازك بالقرعة والسدو تلقائياً.
+                  <span className="text-xs uppercase font-black tracking-widest text-accent bg-accent/10 px-3 py-1 rounded-full w-fit mx-auto border border-accent/20"><MessageWithIcons text={"بصمة الوجه الموثوقة والموقع 🧬"} /></span>
+                  <h3 className="text-lg font-extrabold text-ink">جاري الاتصال السحابي بالديوانية...</h3>
+                  <p className="text-xs text-stone-600 font-medium leading-relaxed px-4">
+                    تم اكتشاف وجودك الفعلي بجوار <strong className="text-brand font-extrabold">"{biometricScanSquad.name}"</strong>. نربط جهازك بالقرعة والسدو تلقائياً.
                   </p>
                 </div>
 
                 {/* Dynamic authentic scan steps */}
-                <div className="w-full bg-stone-900 border border-stone-800 rounded-2xl p-4 flex flex-col gap-3 text-right text-xs text-stone-400 font-mono" dir="rtl">
+                <div className="w-full bg-white border border-cream-edge shadow-sm rounded-2xl p-4 flex flex-col gap-3 text-right text-xs text-stone-600" dir="rtl">
                   <div className="flex items-center justify-between">
-                    <span className="text-emerald-400 font-bold"><MessageWithIcons text={"✓ تم بنجاح"} /></span>
-                    <span className="font-sans font-bold text-stone-300">١. فحص تواجد الجيروسكوب والـ GPS</span>
+                    <span className="text-brand font-bold"><MessageWithIcons text={"✓ تم بنجاح"} /></span>
+                    <span className="font-sans font-bold text-ink">١. فحص تواجد الجيروسكوب والـ GPS</span>
                   </div>
                   <div className="flex items-center justify-between">
                     {biometricStep === "scanning" ? (
-                      <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="text-[#b28a41] font-black"><MessageWithIcons text={"جاري التعرف...🧬"} /></motion.span>
+                      <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="text-accent font-black"><MessageWithIcons text={"جاري التعرف...🧬"} /></motion.span>
                     ) : (
-                      <span className="text-emerald-400 font-bold"><MessageWithIcons text={"✓ تم التوثيق"} /></span>
+                      <span className="text-brand font-bold"><MessageWithIcons text={"✓ تم التوثيق"} /></span>
                     )}
-                    <span className="font-sans font-bold text-stone-300">٢. مسح بصمة الوجه والتحقق (FaceID)</span>
+                    <span className="font-sans font-bold text-ink">٢. مسح بصمة الوجه والتحقق (FaceID)</span>
                   </div>
                   <div className="flex items-center justify-between">
                     {biometricStep === "scanning" ? (
-                      <span className="text-stone-600">بالانتظار...</span>
+                      <span className="text-stone-500">بالانتظار...</span>
                     ) : (
-                      <span className="text-emerald-400 font-bold"><MessageWithIcons text={"✓ دخلت السدو"} /></span>
+                      <span className="text-brand font-bold"><MessageWithIcons text={"✓ دخلت السدو"} /></span>
                     )}
-                    <span className="font-sans font-bold text-stone-300">٣. وضع قدمك على سجادة مجلس الربع</span>
+                    <span className="font-sans font-bold text-ink">٣. وضع قدمك على سجادة مجلس الربع</span>
                   </div>
                 </div>
 
-                <p className="text-[11px] text-stone-500 font-bold uppercase tracking-widest mt-2 flex items-center gap-1.5 font-mono">
+                <p className="text-xs text-stone-600 font-bold uppercase tracking-widest mt-2 flex items-center gap-1.5">
                   <span><MessageWithIcons text={"☕"} /></span> Sadu Diwaniya Ecosystem • 100% Zero-Click
                 </p>
               </div>
@@ -6332,7 +6339,7 @@ export default function CustomerSite() {
                 <strong className="block leading-tight">
                   سلتك جاهزة
                 </strong>
-                <span className="text-[11px] text-white/65">
+                <span className="text-xs text-white/65">
                   {!checkStoreStatus(settings?.storeStatus).isOpen && "لوقت الافتتاح · "}
                   {cart.length} منتجات · {total} د.ك
                 </span>
@@ -6404,7 +6411,7 @@ export default function CustomerSite() {
                             <Crown className="w-5 h-5 text-accent" />
                             {squadInfo ? squadInfo.name : <MessageWithIcons text={"صدارة الدواوين 🏆"} />}
                          </h3>
-                         <p className="text-stone-500 text-[11px] sm:text-xs font-bold mt-1">
+                         <p className="text-stone-500 text-xs sm:text-xs font-bold mt-1">
                            {squadInfo ? "ديوانيتك الحالية" : "سجل الحين وطور ديوانيتك!"}
                          </p>
                       </div>
@@ -6419,7 +6426,7 @@ export default function CustomerSite() {
                               setActiveSquadTab("overview");
                               window.dispatchEvent(new CustomEvent("alturath:diwaniya-home"));
                             }}
-                            className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-[#0d3a22] text-white flex items-center justify-center hover:bg-[#072414] transition-colors font-black text-base sm:text-lg active:scale-95 shadow-sm"
+                            className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-brand text-white flex items-center justify-center hover:bg-[#072414] transition-colors font-black text-base sm:text-lg active:scale-95 shadow-sm"
                             aria-label="العودة للرئيسية داخل الديوانية"
                             title="الرئيسية"
                           >
@@ -6473,7 +6480,7 @@ export default function CustomerSite() {
                             type="button"
                             onClick={() => setActiveSquadTab(tab.id as any)}
                             className={cn(
-                              "rounded-2xl px-3 py-3 text-[11px] font-black border transition-all",
+                              "rounded-2xl px-3 py-3 text-xs font-black border transition-all",
                               activeSquadTab === tab.id
                                 ? "bg-brand text-white border-brand shadow-md"
                                 : "bg-white text-stone-500 border-stone-100"
@@ -6633,28 +6640,28 @@ export default function CustomerSite() {
                   <button
                     onClick={() => radarStatus === "denied" ? setShowRadarInstructionModal(true) : refreshRadarOnce()}
                     disabled={radarStatus === "checking"}
-                    className="bg-brand text-white rounded-2xl px-3.5 py-2 text-[11px] font-black active:scale-95 disabled:opacity-60"
+                    className="bg-brand text-white rounded-2xl px-3.5 py-2 text-xs font-black active:scale-95 disabled:opacity-60"
                   >
                     {radarStatus === "checking" ? "جاري الفحص" : radarStatus === "denied" ? "تفعيل الرادار" : radarStatus === "weak" ? "تحسين الدقة" : "تشغيل الرادار"}
                   </button>
                   <button
                     type="button"
                     onClick={() => setRadarLocationNoticeDismissed(true)}
-                    className="h-8 w-8 rounded-full bg-stone-100 text-stone-400 flex items-center justify-center active:scale-95"
+                    className="h-8 w-8 rounded-full bg-stone-100 text-stone-500 flex items-center justify-center active:scale-95"
                     aria-label="إغلاق تنبيه اللوكيشن"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-end gap-1.5 text-[11px] font-black">
+                  <div className="flex items-center justify-end gap-1.5 text-xs font-black">
                     <span>{radarStatus === "denied" ? "اللوكيشن مقفّل فقط" : radarStatus === "weak" ? "الموقع تقريبي" : "رادار الديوانية"}</span>
                     {radarStatus === "denied" && <MapPin className="w-3.5 h-3.5 text-amber-500" />}
                   </div>
-                  <div className="text-[11px] font-bold text-stone-500 mt-0.5 leading-snug line-clamp-2">
+                  <div className="text-xs font-bold text-stone-500 mt-0.5 leading-snug line-clamp-2">
                     {radarStatus === "denied" ? "الموقع يعمل طبيعي. اللوكيشن مطلوب للرادار فقط." : radarStatusMsg}
                   </div>
-                  {radarAccuracy !== null && <div className="text-[11px] font-black text-stone-400 mt-0.5">الدقة: {radarAccuracy}م</div>}
+                  {radarAccuracy !== null && <div className="text-xs font-black text-stone-500 mt-0.5">الدقة: {radarAccuracy}م</div>}
                 </div>
               </div>
             </motion.div>
@@ -6668,7 +6675,7 @@ export default function CustomerSite() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[120] bg-slate-950/35 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+              role="dialog" aria-modal="true" className="fixed inset-0 z-[120] bg-slate-950/35 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
               onClick={(e) => {
                 if (e.target === e.currentTarget) setRadarJoinDraft(null);
               }}
@@ -6690,7 +6697,7 @@ export default function CustomerSite() {
                     <X className="w-4 h-4" />
                   </button>
                   <div>
-                    <p className="text-[11px] font-black text-amber-600">طلب دخول ديوانية</p>
+                    <p className="text-xs font-black text-amber-600">طلب دخول ديوانية</p>
                     <h3 className="text-lg font-black mt-1">اسمك ورقمك للمعزب</h3>
                     <p className="text-xs font-bold text-stone-500 mt-1 leading-6">
                       اكتب اسمك ورقم تلفونك 8 أرقام. الاثنين مطلوبين عشان ندز طلب الدخول.
@@ -6754,7 +6761,7 @@ export default function CustomerSite() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[140] bg-slate-950/55 backdrop-blur-md flex items-center justify-center p-4"
+              role="dialog" aria-modal="true" className="fixed inset-0 z-[140] bg-slate-950/55 backdrop-blur-md flex items-center justify-center p-4"
               onClick={(e) => {
                 if (e.target === e.currentTarget) setShowRadarInstructionModal(false);
               }}
@@ -6777,13 +6784,13 @@ export default function CustomerSite() {
 
                 <MapPin className="w-9 h-9 mx-auto text-amber-500 mb-3" />
                 <h3 className="text-lg font-black text-brand leading-tight">خدمة اللوكيشن مقفلة</h3>
-                <p className="mt-1.5 text-[11px] font-bold text-stone-500 leading-relaxed">
+                <p className="mt-1.5 text-xs font-bold text-stone-500 leading-relaxed">
                   الموقع يعمل طبيعي. تفعيل اللوكيشن مطلوب فقط لرادار الديوانيات القريبة.
                 </p>
 
                 <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50/45 px-3 py-3 text-right">
-                  <p className="text-[11px] font-black text-brand mb-1">لتفعيل الرادار فقط</p>
-                  <ol className="space-y-1.5 text-[11px] font-bold text-stone-600 leading-relaxed list-decimal list-inside">
+                  <p className="text-xs font-black text-brand mb-1">لتفعيل الرادار فقط</p>
+                  <ol className="space-y-1.5 text-xs font-bold text-stone-600 leading-relaxed list-decimal list-inside">
                     <li>افتح إعدادات الموقع من المتصفح.</li>
                     <li>اختر سماح للّوكيشن.</li>
                     <li>ارجع واضغط جرّب الآن.</li>
@@ -6796,7 +6803,7 @@ export default function CustomerSite() {
                     setShowRadarInstructionModal(false);
                     refreshRadarOnce();
                   }}
-                  className="mt-4 w-full py-3 rounded-2xl bg-brand hover:bg-brand/95 text-white text-[11px] font-black shadow-lg shadow-brand/15 active:scale-95 transition-all text-center"
+                  className="mt-4 w-full py-3 rounded-2xl bg-brand hover:bg-brand/95 text-white text-xs font-black shadow-lg shadow-brand/15 active:scale-95 transition-all text-center"
                 >
                   جرّب الآن
                 </button>
@@ -6806,7 +6813,7 @@ export default function CustomerSite() {
                     setShowRadarInstructionModal(false);
                     setRadarLocationNoticeDismissed(true);
                   }}
-                  className="mt-2 w-full py-2.5 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-500 text-[11px] font-bold transition-all text-center"
+                  className="mt-2 w-full py-2.5 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-500 text-xs font-bold transition-all text-center"
                 >
                   متابعة بدون لوكيشن
                 </button>
@@ -7085,7 +7092,7 @@ const FlyingPlate = ({ img, startX, startY, onComplete }: any) => {
       onAnimationComplete={onComplete}
       className="fixed z-[9999] pointer-events-none"
     >
-      <img src={img} className="w-12 h-12 rounded-full shadow-lg object-contain bg-white p-1 border border-stone-100" />
+      <img alt="" aria-hidden="true" src={img} className="w-12 h-12 rounded-full shadow-lg object-contain bg-white p-1 border border-stone-100" />
     </motion.div>
   );
 };
@@ -7220,7 +7227,7 @@ const ChefWhisperCard = ({
       >
         {/* Front Side */}
         <div
-          className={`menu-product-card relative w-full bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex ${isHorizontal ? "menu-product-card-horizontal flex-col justify-start p-4 pb-3 h-full" : "flex-row items-center p-4 gap-4 min-h-[120px]"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-white hover:border-accent/20 hover:shadow-[0_20px_50px_rgba(26,46,34,0.06)] hover:-translate-y-1"} transition-all duration-500 cursor-pointer`}
+          className={`menu-product-card relative w-full bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex ${isHorizontal ? "menu-product-card-horizontal flex-col justify-start p-4 pb-3 h-full" : "flex-row items-center p-4 gap-4 min-h-[120px]"} border ${product.isOutOfStock ? "border-stone-100 grayscale-[0.5] opacity-75" : "border-white hover:border-accent/20 hover:shadow-[0_20px_50px_rgba(26,46,34,0.06)]"} transition-all duration-500 cursor-pointer`}
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
@@ -7234,7 +7241,7 @@ const ChefWhisperCard = ({
             </div>
           )}
           {product.isNewProduct && !product.isOutOfStock && (
-            <span className="absolute top-0 right-0 bg-gradient-to-tr from-accent to-amber-500 text-white text-[11px] font-bold px-3 py-1.5 z-10 rounded-tr-[24px] rounded-bl-2xl shadow-[0_2px_10px_rgba(194,97,21,0.3)]">
+            <span className="absolute top-0 right-0 bg-gradient-to-tr from-accent to-amber-500 text-white text-xs font-bold px-3 py-1.5 z-10 rounded-tr-[24px] rounded-bl-2xl shadow-[0_2px_10px_rgba(194,97,21,0.3)]">
               جديد
             </span>
           )}
@@ -7266,9 +7273,9 @@ const ChefWhisperCard = ({
                   {product.name}
                 </h3>
                 {product.preparationInstructions && (
-                  <div className="mt-1 flex items-center justify-center gap-1 py-1 px-2 bg-[#b28a41]/[0.07] border border-[#b28a41]/20 rounded-2xl mx-auto w-max max-w-[95%] event-none select-none">
+                  <div className="mt-1 flex items-center justify-center gap-1 py-1 px-2 bg-accent/[0.07] border border-accent/20 rounded-2xl mx-auto w-max max-w-[95%] event-none select-none">
                     <Clock className="w-3 h-3 text-[#8a6a2f] shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                    <span className="text-[11px] text-[#7a5d28] font-bold leading-tight text-center" title={product.preparationInstructions}>
+                    <span className="text-xs text-[#7a5d28] font-bold leading-tight text-center" title={product.preparationInstructions}>
                       {product.preparationInstructions}
                     </span>
                   </div>
@@ -7279,7 +7286,7 @@ const ChefWhisperCard = ({
                       {Number(calculateItemBasePriceWithHiddenAddons({
                         id: "", productId: product.id, name: product.name, quantity: 1, price: product.price, selectedExtras: [], product: normalizeProductForAddons(product)
                       }) || 0).toFixed(3)}{" "}
-                      <span className="text-[11px] text-accent font-bold">د.ك</span>
+                      <span className="text-xs text-accent font-bold">د.ك</span>
                     </>
                   ) : (
                     <span className="text-xs text-accent font-black">حسب سعر السوق</span>
@@ -7325,19 +7332,19 @@ const ChefWhisperCard = ({
                             id: "", productId: product.id, name: product.name, quantity: 1, price: product.price, selectedExtras: [], product: normalizeProductForAddons(product)
                           }) || 0).toFixed(3)}
                         </span>
-                        <span className="text-[11px] text-accent font-bold mx-1">د.ك</span>
+                        <span className="text-xs text-accent font-bold mx-1">د.ك</span>
                       </>
                     ) : (
-                      <span className="text-[11px] text-[#0d3a22] font-extrabold mx-2">حسب سعر السوق</span>
+                      <span className="text-xs text-brand font-extrabold mx-2">حسب سعر السوق</span>
                     )}
                   </div>
                 </div>
 
                 {/* 4. Notes */}
                 {product.preparationInstructions && (
-                  <div className="product-notes-soft mt-2.5 flex items-center justify-center gap-1 px-2.5 py-1 bg-[#b28a41]/[0.07] border border-[#b28a41]/20 rounded-2xl mx-auto w-max max-w-[95%] z-10 text-center event-none select-none">
+                  <div className="product-notes-soft mt-2.5 flex items-center justify-center gap-1 px-2.5 py-1 bg-accent/[0.07] border border-accent/20 rounded-2xl mx-auto w-max max-w-[95%] z-10 text-center event-none select-none">
                     <Clock className="w-3 h-3 text-[#8a6a2f] shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                    <span className="text-[11px] text-[#7a5d28] font-bold leading-tight text-center" title={product.preparationInstructions}>
+                    <span className="text-xs text-[#7a5d28] font-bold leading-tight text-center" title={product.preparationInstructions}>
                       {product.preparationInstructions}
                     </span>
                   </div>
@@ -7371,7 +7378,7 @@ const ChefWhisperCard = ({
           >
             "{whisperText}"
           </p>
-          <span className="text-[11px] text-accent font-bold mt-auto tracking-widest pt-3 border-t border-accent/20 w-full relative z-10">
+          <span className="text-xs text-accent font-bold mt-auto tracking-widest pt-3 border-t border-accent/20 w-full relative z-10">
             اضغط للعودة
           </span>
         </div>
@@ -7731,7 +7738,7 @@ function ProductModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-brand/40 backdrop-blur-sm"
+      role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-brand/40 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -7753,12 +7760,10 @@ function ProductModal({
             backgroundPosition: "center",
           }}
         />
-        <button
+        <button aria-label="إغلاق"
           onClick={onClose}
           className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 bg-stone-50/80 backdrop-blur-sm hover:bg-stone-100 rounded-full text-stone-500 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        ><X className="w-5 h-5" /></button>
 
         <div className="flex justify-center mb-6">
           <div className="w-12 h-1 bg-stone-100 rounded-full" />
@@ -7767,7 +7772,7 @@ function ProductModal({
         <div className="flex flex-col sm:flex-row gap-6 mb-8 mt-2 group relative z-10">
           <div className="relative shrink-0 flex justify-center">
             {(product as any).isNewProduct && (
-              <span className="absolute top-1 right-1 sm:-right-3 sm:-top-2 bg-gradient-to-r from-red-500 to-rose-500 text-white text-[11px] sm:text-xs font-extrabold px-3 py-1 rounded-full z-20 shadow-[0_4px_15px_rgba(239,68,68,0.4)] border-2 border-white transform rotate-3">
+              <span className="absolute top-1 right-1 sm:-right-3 sm:-top-2 bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs sm:text-xs font-extrabold px-3 py-1 rounded-full z-20 shadow-[0_4px_15px_rgba(239,68,68,0.4)] border-2 border-white transform rotate-3">
                 جديد
               </span>
             )}
@@ -7815,18 +7820,18 @@ function ProductModal({
               </button>
             ) : (
               <div className="w-[108px] h-[108px] sm:w-[126px] sm:h-[126px] flex items-center justify-center bg-stone-50/80 backdrop-blur-sm border border-stone-100 text-stone-400 rounded-[28px] shadow-md relative p-1">
-                <span className="text-[11px] font-medium p-1 text-center leading-tight">
+                <span className="text-xs font-medium p-1 text-center leading-tight">
                   صورة غير متوفرة
                 </span>
               </div>
             )}
           </div>
           <div className="flex flex-col justify-center text-center sm:text-right">
-            {/* <span className="text-xs text-stone-400 font-bold mb-1">{product.category}</span> */}
+            {/* <span className="text-xs text-stone-500 font-bold mb-1">{product.category}</span> */}
             <h2 className="text-2xl font-bold text-brand leading-tight mb-1">
               {product.name}
             </h2>
-            <p className="text-xs text-stone-400 font-medium mb-3">
+            <p className="text-xs text-stone-500 font-medium mb-3">
               {product.nameEn}
             </p>
             <p className="text-2xl font-black text-brand">
@@ -7849,7 +7854,7 @@ function ProductModal({
               )}
             </p>
             {product.preparationInstructions && (
-              <div className="mt-2 text-[11px] text-[#7a5d28] font-bold flex items-center justify-center sm:justify-start gap-1 py-1 px-2.5 bg-[#b28a41]/[0.07] border border-[#b28a41]/20 rounded-full max-w-max">
+              <div className="mt-2 text-xs text-[#7a5d28] font-bold flex items-center justify-center sm:justify-start gap-1 py-1 px-2.5 bg-accent/[0.07] border border-accent/20 rounded-full max-w-max">
                 <Clock className="w-3.5 h-3.5 text-[#8a6a2f] shrink-0" strokeWidth={1.8} aria-hidden="true" />{" "}
                 <span className="leading-none">
                   {product.preparationInstructions}
@@ -7973,13 +7978,13 @@ function ProductModal({
                 <div 
                   key={`ai-rec-${getAddonKey(recommendedAddon)}`}
                   onClick={() => toggleAddon(getAddonKey(recommendedAddon))}
-                  className="bg-[#b28a41]/[0.06] border border-[#b28a41]/20 p-3 sm:p-4 rounded-xl flex gap-3 items-start cursor-pointer transition-all hover:bg-[#b28a41]/10"
+                  className="bg-accent/[0.06] border border-accent/20 p-3 sm:p-4 rounded-xl flex gap-3 items-start cursor-pointer transition-all hover:bg-accent/10"
                 >
-                  <div className="w-8 h-8 rounded-full bg-white border border-[#b28a41]/25 flex items-center justify-center shrink-0"><Sparkles className="w-4 h-4 text-[#8a6a2f]" strokeWidth={1.6} aria-hidden="true" /></div>
+                  <div className="w-8 h-8 rounded-full bg-white border border-accent/25 flex items-center justify-center shrink-0"><Sparkles className="w-4 h-4 text-[#8a6a2f]" strokeWidth={1.6} aria-hidden="true" /></div>
                   <div>
-                    <h4 className="text-xs font-bold text-[#0d3a22] flex items-center gap-2 mb-1.5">
+                    <h4 className="text-xs font-bold text-brand flex items-center gap-2 mb-1.5">
                       ترشيح ذكي 
-                      <span className="text-[11px] bg-[#0d3a22]/[0.07] text-[#0d3a22] px-2 py-0.5 rounded-full font-bold">موصى به لك</span>
+                      <span className="text-xs bg-brand/[0.07] text-brand px-2 py-0.5 rounded-full font-bold">موصى به لك</span>
                     </h4>
                     <p className="text-[12px] text-stone-600 leading-relaxed font-medium">
                       <MessageWithIcons text={message} />
@@ -8041,27 +8046,27 @@ function ProductModal({
                       <div className="addon-lux-meta flex items-center gap-2">
                         {effectiveSelected && (
                            <div className="addon-lux-qty flex items-center gap-2 bg-white rounded-md border border-stone-200" onClick={e => e.stopPropagation()}>
-                              <button disabled={!limits.available || currentAddonQty <= 0 || (isMandatory && currentAddonQty <= limits.min)} className="px-2 text-stone-400 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addonKey, -1)}>-</button>
+                              <button aria-label="تقليل الكمية" disabled={!limits.available || currentAddonQty <= 0 || (isMandatory && currentAddonQty <= limits.min)} className="px-2 text-stone-500 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addonKey, -1)}>-</button>
                               <span className="addon-lux-qty-value text-xs font-bold w-4 text-center text-brand">{currentAddonQty}</span>
-                              <button disabled={!limits.available || currentAddonQty >= limits.max} className="px-2 text-stone-400 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addonKey, 1)}>+</button>
+                              <button aria-label="زيادة الكمية" disabled={!limits.available || currentAddonQty >= limits.max} className="px-2 text-stone-500 hover:text-accent font-bold disabled:opacity-30" onClick={() => updateAddonQty(addonKey, 1)}>+</button>
                            </div>
                         )}
                         {addon.price > 0 && !addon.isHiddenPrice && (
                           <span className="text-xs font-bold text-accent">
                             {addon.freeQuantity && addon.freeQuantity > 0 ? (
-                              <span className="text-[11px] text-green-600 block sm:inline mb-1 sm:mb-0 sm:ml-1">(أول {addon.freeQuantity} مجاناً) </span>
+                              <span className="text-xs text-green-600 block sm:inline mb-1 sm:mb-0 sm:ml-1">(أول {addon.freeQuantity} مجاناً) </span>
                             ) : null}
                             +{addon.price} د.ك
                           </span>
                         )}
                         {(addon.price === 0 || addon.isHiddenPrice) && addon.freeQuantity && addon.freeQuantity > 0 && (
-                            <span className="text-[11px] font-bold text-green-600">أول {addon.freeQuantity} مجاناً</span>
+                            <span className="text-xs font-bold text-green-600">أول {addon.freeQuantity} مجاناً</span>
                         )}
                         {isMandatory && (
-                            <span className="text-[11px] font-bold text-red-500 mr-2 border border-red-200 bg-red-50 px-1 rounded block sm:inline whitespace-nowrap">إلزامي</span>
+                            <span className="text-xs font-bold text-red-500 mr-2 border border-red-200 bg-red-50 px-1 rounded block sm:inline whitespace-nowrap">إلزامي</span>
                         )}
                         {!limits.available && (
-                            <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1 rounded block sm:inline whitespace-nowrap">متاحة من كمية {limits.minProductQty}+</span>
+                            <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-100 px-1 rounded block sm:inline whitespace-nowrap">متاحة من كمية {limits.minProductQty}+</span>
                         )}
                       </div>
                     </div>
@@ -8093,7 +8098,7 @@ function ProductModal({
                   } catch (e) {}
                   setQuantity(Math.max(1, quantity - 1));
                 }}
-                className="p-2.5 sm:p-4 text-stone-400 hover:text-accent transition-colors shrink-0 active:scale-90"
+                className="p-2.5 sm:p-4 text-stone-500 hover:text-accent transition-colors shrink-0 active:scale-90"
                 aria-label="Decrease quantity"
               >
                 <Minus className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -8108,7 +8113,7 @@ function ProductModal({
                   } catch (e) {}
                   setQuantity(quantity + 1);
                 }}
-                className="p-2.5 sm:p-4 text-stone-400 hover:text-accent transition-colors shrink-0 active:scale-90"
+                className="p-2.5 sm:p-4 text-stone-500 hover:text-accent transition-colors shrink-0 active:scale-90"
                 aria-label="Increase quantity"
               >
                 <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -8296,7 +8301,7 @@ function CheckoutOverlay({
     : new Set<string>();
   const renderAddressError = (key: RequiredAddressKey) =>
     missingAddressKeys.has(key) ? (
-      <p className="px-1 text-[11px] font-extrabold text-red-600">
+      <p className="px-1 text-xs font-extrabold text-red-600">
         {REQUIRED_ADDRESS_FIELDS.find((f) => f.key === key)?.error}
       </p>
     ) : null;
@@ -8453,7 +8458,7 @@ function CheckoutOverlay({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-start justify-end bg-brand/50 backdrop-blur-md"
+      role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-start justify-end bg-brand/50 backdrop-blur-md"
       onClick={onClose}
     >
       <motion.div
@@ -8469,7 +8474,7 @@ function CheckoutOverlay({
 
         <div className="checkout-wow-header p-6 pt-[max(env(safe-area-inset-top,0px),1.5rem)] border-b border-stone-50 flex items-center justify-between bg-white shrink-0 shadow-[0_8px_30px_rgb(0,0,0,0.02)] z-10 rounded-b-3xl">
           <div className="flex items-center gap-4">
-            <button
+            <button aria-label="رجوع"
               onClick={() => {
                 if (!storeAvailability.isOpen) onClose();
                 else if (step === "payment") setStep("delivery");
@@ -8497,7 +8502,7 @@ function CheckoutOverlay({
           {!storeAvailability.isOpen ? (
             <StoreClosedWorkingHoursNotice status={storeAvailability} onClose={onClose} />
           ) : cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-6 pt-10">
+            <div className="h-full flex flex-col items-center justify-center text-stone-500 space-y-6 pt-10">
               <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-stone-50">
                 <ShoppingCart className="w-12 h-12 text-stone-300 empty-state-art" />
               </div>
@@ -8514,20 +8519,20 @@ function CheckoutOverlay({
             <div className="animate-in slide-in-from-right-4 fade-in duration-300">
               <div className="space-y-4">
                 {squadInfo && (
-                  <div className="relative overflow-hidden rounded-[1.75rem] border border-amber-200/70 bg-gradient-to-br from-[#1b1207] via-[#2f1e0a] to-[#0d3a22] p-4 text-white shadow-xl">
+                  <div className="relative overflow-hidden rounded-[1.75rem] border border-amber-200/70 bg-gradient-to-br from-[#1b1207] via-[#2f1e0a] to-brand p-4 text-white shadow-xl">
                     <div className="absolute -top-10 -left-10 h-28 w-28 rounded-full bg-amber-300/20 blur-3xl" />
                     <div className="relative z-10 flex items-start justify-between gap-3">
                       <div>
-                        <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-black text-amber-100">لحظة سينمائية مباشرة</div>
+                        <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-black text-amber-100">لحظة سينمائية مباشرة</div>
                         <h3 className="mt-2 text-lg font-black">الحضور اشتغل… والسفرة داخلة المشهد</h3>
                         <p className="mt-1 text-xs font-bold leading-6 text-white/70">{squadInfo.name} · {squadPresence?.length || 1} حاضر · {cart.length} صنف في السحب</p>
                       </div>
                       <div className="grid h-14 w-14 place-items-center rounded-2xl bg-amber-300 text-2xl shadow-lg"><MessageWithIcons text={"🎬"} /></div>
                     </div>
                     <div className="relative z-10 mt-4 grid grid-cols-3 gap-2 text-center">
-                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">{squadPresence?.length || 1}</b><span className="text-[11px] font-bold text-white/55">الحضور</span></div>
-                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">{cart.reduce((s: number, i: any) => s + Number(i.quantity || 0), 0)}</b><span className="text-[11px] font-bold text-white/55">السحب</span></div>
-                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">لايف</b><span className="text-[11px] font-bold text-white/55">النتيجة</span></div>
+                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">{squadPresence?.length || 1}</b><span className="text-xs font-bold text-white/55">الحضور</span></div>
+                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">{cart.reduce((s: number, i: any) => s + Number(i.quantity || 0), 0)}</b><span className="text-xs font-bold text-white/55">السحب</span></div>
+                      <div className="rounded-2xl bg-white/10 p-3"><b className="block text-lg">لايف</b><span className="text-xs font-bold text-white/55">النتيجة</span></div>
                     </div>
                   </div>
                 )}
@@ -8539,12 +8544,12 @@ function CheckoutOverlay({
                            <Crown className="w-6 h-6" />
                         </div>
                         <div className="flex flex-col relative z-10">
-                           <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">ديوانيتك الحالية</span>
+                           <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">ديوانيتك الحالية</span>
                            <span className="text-base font-black text-brand leading-tight">
                               {squadInfo.name}
                            </span>
                            {userSquads && userSquads.length > 1 && (
-                              <button onClick={() => setShowSquadModal(true)} className="text-[11px] text-accent underline text-right mt-0.5">
+                              <button onClick={() => setShowSquadModal(true)} className="text-xs text-accent underline text-right mt-0.5">
                                  تغيير الديوانية
                               </button>
                            )}
@@ -8633,10 +8638,10 @@ function CheckoutOverlay({
                     <div className="bg-accent/10 border border-accent/20 rounded-xl p-3 mb-2 flex items-start gap-2">
                       <Sparkles className="w-4 h-4 text-accent mt-0.5 shrink-0" />
                       <div>
-                        <h4 className="text-[11px] font-bold text-brand mb-0.5">
+                        <h4 className="text-xs font-bold text-brand mb-0.5">
                           ذائقتك
                         </h4>
-                        <p className="text-[11px] text-stone-600 leading-relaxed font-medium">
+                        <p className="text-xs text-stone-600 leading-relaxed font-medium">
                           {msg}
                         </p>
                       </div>
@@ -8676,12 +8681,12 @@ function CheckoutOverlay({
                             {item.name}
                           </h4>
                           <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="text-[11px] font-bold text-white bg-brand px-1.5 py-0.5 rounded">
+                            <span className="text-xs font-bold text-white bg-brand px-1.5 py-0.5 rounded">
                               {item.quantity}×
                             </span>
                             <span className="text-sm font-bold text-brand whitespace-nowrap">
                                 {calculateItemTotalWithAddons(item)}{" "}
-                                <span className="text-[11px] text-accent">د.ك</span>
+                                <span className="text-xs text-accent">د.ك</span>
                             </span>
                             <button
                               onClick={() => onRemove(item.id)}
@@ -8694,7 +8699,7 @@ function CheckoutOverlay({
                         </div>
                         <div className="flex flex-wrap gap-1.5">
                           {item.selectedOption && (
-                            <span className="text-[11px] font-bold bg-stone-50 text-stone-500 px-1.5 py-0.5 rounded border border-stone-100">
+                            <span className="text-xs font-bold bg-stone-50 text-stone-500 px-1.5 py-0.5 rounded border border-stone-100">
                               {item.selectedOption}
                             </span>
                           )}
@@ -8702,7 +8707,7 @@ function CheckoutOverlay({
                             (e: any, idx: number) => (
                               <span
                                 key={`${e.name}-${idx}`}
-                                className="text-[11px] font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
+                                className="text-xs font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
                               >
                                 +{e.name}
                               </span>
@@ -8712,7 +8717,7 @@ function CheckoutOverlay({
                             (addon: any, idx: number) => (
                               <span
                                 key={`addon-${addon.addonId}-${idx}`}
-                                className="text-[11px] font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
+                                className="text-xs font-bold bg-accent/5 text-accent px-1.5 py-0.5 rounded border border-accent/10"
                               >
                                 +{addon.quantity} {cleanCustomerAddonLabel(addon.name)}
                               </span>
@@ -8763,7 +8768,7 @@ function CheckoutOverlay({
                     dir="ltr"
                   />
                   {customerPhone.length === 8 && !isValidKuwaitPhone(customerPhone) && (
-                    <p className="px-1 text-[11px] font-extrabold text-red-600">{KUWAIT_PHONE_ERROR}</p>
+                    <p className="px-1 text-xs font-extrabold text-red-600">{KUWAIT_PHONE_ERROR}</p>
                   )}
                 </div>
                 {customerPhone.length >= 8 && (
@@ -8858,7 +8863,7 @@ function CheckoutOverlay({
                         </motion.div>
                       )}
                       {address.region && deliveryFee === -1 && !showRegions && (
-                        <div className="mt-2 rounded-xl border border-red-100 bg-red-50/80 px-3 py-2 text-[11px] font-extrabold text-red-600 flex items-center gap-2">
+                        <div className="mt-2 rounded-xl border border-red-100 bg-red-50/80 px-3 py-2 text-xs font-extrabold text-red-600 flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 shrink-0" />
                           <span>اختار منطقة صحيحة من القائمة عشان رسوم التوصيل تطلع صح.</span>
                         </div>
@@ -8959,7 +8964,7 @@ function CheckoutOverlay({
                     <div className="space-y-1.5">
                       <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
                         <Hash className="w-4 h-4" /> الجادة{" "}
-                        <span className="text-stone-300 font-normal text-[11px] sm:text-xs">
+                        <span className="text-stone-300 font-normal text-xs sm:text-xs">
                           (اختياري)
                         </span>
                       </label>
@@ -8998,7 +9003,7 @@ function CheckoutOverlay({
                     <div className="space-y-1.5">
                       <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
                         <Layers className="w-4 h-4" /> الدور{" "}
-                        <span className="text-stone-300 font-normal text-[11px] sm:text-xs">
+                        <span className="text-stone-300 font-normal text-xs sm:text-xs">
                           (اختياري)
                         </span>
                       </label>
@@ -9017,7 +9022,7 @@ function CheckoutOverlay({
                     <div className="space-y-1.5">
                       <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
                         <Hash className="w-4 h-4" /> الشقة{" "}
-                        <span className="text-stone-300 font-normal text-[11px] sm:text-xs">
+                        <span className="text-stone-300 font-normal text-xs sm:text-xs">
                           (اختياري)
                         </span>
                       </label>
@@ -9069,7 +9074,7 @@ function CheckoutOverlay({
                         </span>
                       </div>
                       {customerPoints > 0 && (
-                        <span className="bg-white/80 py-1 px-2 rounded-lg text-[11px] text-green-800 border border-green-200/50 shadow-sm flex items-center gap-1">
+                        <span className="bg-white/80 py-1 px-2 rounded-lg text-xs text-green-800 border border-green-200/50 shadow-sm flex items-center gap-1">
                           <span className="text-sm"><MessageWithIcons text={"⭐"} /></span> {customerPoints}{" "}
                           نقطة
                         </span>
@@ -9152,7 +9157,7 @@ function CheckoutOverlay({
                   <summary className="checkout-promo-summary flex items-center gap-2 min-h-[44px] cursor-pointer list-none text-xs font-bold text-stone-500 select-none">
                     <Tag className="w-4 h-4 text-accent shrink-0" strokeWidth={1.75} aria-hidden="true" />
                     <span className="flex-1">كود الخصم</span>
-                    <ChevronDown className="w-4 h-4 text-stone-400 transition-transform group-open:rotate-180" strokeWidth={1.75} aria-hidden="true" />
+                    <ChevronDown className="w-4 h-4 text-stone-500 transition-transform group-open:rotate-180" strokeWidth={1.75} aria-hidden="true" />
                   </summary>
                 <div className="flex flex-col gap-1.5 pt-1">
                   <div className="flex gap-2">
@@ -9167,13 +9172,13 @@ function CheckoutOverlay({
                     <button
                       onClick={validatePromo}
                       disabled={isValidatingPromo || !promoCodeInput.trim()}
-                      className="min-h-[44px] px-4 py-2 bg-brand text-white text-[11px] font-extrabold uppercase rounded-xl transition-all active:scale-95 disabled:opacity-50"
+                      className="min-h-[44px] px-4 py-2 bg-brand text-white text-xs font-extrabold uppercase rounded-xl transition-all active:scale-95 disabled:opacity-50"
                     >
                       {isValidatingPromo ? "..." : "تطبيق"}
                     </button>
                   </div>
                   {promoError && (
-                    <p className="text-[11px] text-red-500 font-bold px-1">
+                    <p className="text-xs text-red-500 font-bold px-1">
                       {promoError}
                     </p>
                   )}
@@ -9182,14 +9187,14 @@ function CheckoutOverlay({
               ) : (
                 <div className="flex justify-between items-center bg-green-50 border border-green-100 p-3 rounded-xl mb-4">
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[11px] text-green-600 font-bold uppercase tracking-wider">
+                    <span className="text-xs text-green-600 font-bold uppercase tracking-wider">
                       كود الخصم مفعل
                     </span>
                     <span className="text-xs font-extrabold text-green-800">
                       {appliedPromo.code}
                     </span>
                   </div>
-                  <button
+                  <button aria-label="إزالة كود الخصم"
                     onClick={() => setAppliedPromo(null)}
                     className="w-6 h-6 rounded-full bg-white text-red-500 border border-red-50 flex items-center justify-center shadow-sm"
                   >
@@ -9212,7 +9217,7 @@ function CheckoutOverlay({
                 </div>
               </div>
                     </div>
-                    <ChevronDown className="w-4 h-4 text-stone-400 shrink-0 transition-transform group-open:rotate-180" strokeWidth={1.75} aria-hidden="true" />
+                    <ChevronDown className="w-4 h-4 text-stone-500 shrink-0 transition-transform group-open:rotate-180" strokeWidth={1.75} aria-hidden="true" />
                   </summary>
                   <div className="space-y-3 pt-2">
               <div className="flex justify-between items-center text-xs font-bold text-stone-500">
@@ -9235,9 +9240,9 @@ function CheckoutOverlay({
                 <span>رسوم التوصيل</span>
                 <span className="font-bold">
                   {!address.region ? (
-                    <span className="text-stone-400">ناطرين العنوان</span>
+                    <span className="text-stone-500">ناطرين العنوان</span>
                   ) : deliveryFee === -1 ? (
-                    <span className="text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 flex items-center gap-1 text-[11px]">
+                    <span className="text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 flex items-center gap-1 text-xs">
                       <AlertCircle className="w-3 h-3" /> المنطقة يبيلها تأكيد
                     </span>
                   ) : deliveryFee === 0 ? (
@@ -9256,7 +9261,7 @@ function CheckoutOverlay({
                   <div className="flex flex-col gap-0.5">
                     <span>رصيد نقاطك</span>
                     {getLoyaltyTier(customerPoints).minPoints > 0 && (
-                       <span className="text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full w-fit">
+                       <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full w-fit">
                           مستوى {getLoyaltyTier(customerPoints).name}
                        </span>
                     )}
@@ -9299,9 +9304,9 @@ function CheckoutOverlay({
                 <span>رسوم التوصيل</span>
                 <span className="font-bold">
                   {!address.region ? (
-                    <span className="text-stone-400">ناطرين العنوان</span>
+                    <span className="text-stone-500">ناطرين العنوان</span>
                   ) : deliveryFee === -1 ? (
-                    <span className="text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 flex items-center gap-1 text-[11px]">
+                    <span className="text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 flex items-center gap-1 text-xs">
                       <AlertCircle className="w-3 h-3" /> المنطقة يبيلها تأكيد
                     </span>
                   ) : deliveryFee === 0 ? (
@@ -9320,7 +9325,7 @@ function CheckoutOverlay({
                   <div className="flex flex-col gap-0.5">
                     <span>رصيد نقاطك</span>
                     {getLoyaltyTier(customerPoints).minPoints > 0 && (
-                       <span className="text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full w-fit">
+                       <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full w-fit">
                           مستوى {getLoyaltyTier(customerPoints).name}
                        </span>
                     )}
@@ -9354,7 +9359,7 @@ function CheckoutOverlay({
             )}
 
             {step !== "payment" && cart.some((item) => item.preparationInstructions) && (
-              <div className="mt-2.5 p-2.5 bg-[#b28a41]/[0.07] border border-[#b28a41]/20 rounded-xl flex items-center gap-2 text-[#7a5d28] text-xs font-semibold">
+              <div className="mt-2.5 p-2.5 bg-accent/[0.07] border border-accent/20 rounded-xl flex items-center gap-2 text-[#7a5d28] text-xs font-semibold">
                 <Clock className="w-4 h-4 text-[#8a6a2f] shrink-0" strokeWidth={1.8} aria-hidden="true" />
                 <span>
                   تنبيه لطيف: الطلب يحتوي على أصناف تتطلب وقتاً إضافياً للتجهيز.
@@ -9381,7 +9386,7 @@ function CheckoutOverlay({
                     "w-full p-5 sm:p-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 text-lg group",
                     isOpen
                       ? "bg-brand text-white shadow-[0_20px_40px_-10px_rgba(212,175,55,0.4)]"
-                      : "bg-stone-100 border border-stone-100 text-stone-400 cursor-not-allowed",
+                      : "bg-stone-100 border border-stone-100 text-stone-500 cursor-not-allowed",
                   )}
                 >
                   {!isOpen ? (
@@ -9419,7 +9424,7 @@ function CheckoutOverlay({
                       "w-full p-5 sm:p-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 text-lg group",
                       customerPhone.length === 8 && deliveryFee !== -1 && customerName && isOpen
                         ? "bg-brand text-white shadow-[0_20px_40px_-10px_rgba(212,175,55,0.4)]"
-                        : "bg-stone-100 border border-stone-100 text-stone-400 cursor-not-allowed",
+                        : "bg-stone-100 border border-stone-100 text-stone-500 cursor-not-allowed",
                     )}
                   >
                     {!isOpen ? (
@@ -9458,7 +9463,7 @@ function CheckoutOverlay({
                       "payment-method-card payment-method-card-full w-full p-4 sm:p-5 rounded-2xl font-bold flex items-center justify-between gap-3 transition-all active:scale-[0.98] text-lg group text-right",
                       !isSubmitting
                         ? "bg-brand text-white shadow-[0_20px_40px_-10px_rgba(212,175,55,0.4)] hover:bg-brand/90"
-                        : "bg-stone-200 text-stone-400 cursor-not-allowed",
+                        : "bg-stone-200 text-stone-500 cursor-not-allowed",
                     )}
                   >
                     {isSubmitting ? (
@@ -9509,7 +9514,7 @@ function CheckoutOverlay({
                           </div>
                           <div className="flex flex-col items-start gap-1">
                             <span className="text-[17px]">تبيها قطية؟</span>
-                            <span className="text-[11px] font-medium text-stone-500 uppercase tracking-widest">قسم الفاتورة بمبالغ على ربعك</span>
+                            <span className="text-xs font-medium text-stone-500 uppercase tracking-widest">قسم الفاتورة بمبالغ على ربعك</span>
                           </div>
                         </div>
                       </button>
@@ -9536,7 +9541,7 @@ function CheckoutOverlay({
                            </div>
                            <div className="flex flex-col items-start gap-1">
                              <span className="text-[17px]">وهّق غيرك</span>
-                             <span className="text-[11px] font-medium opacity-90 tracking-wide">دخلوا أسماءكم… والنظام يختار من يتحمّل الطلب</span>
+                             <span className="text-xs font-medium opacity-90 tracking-wide">دخلوا أسماءكم… والنظام يختار من يتحمّل الطلب</span>
                            </div>
                         </div>
                       </button>

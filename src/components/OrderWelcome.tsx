@@ -137,7 +137,7 @@ const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart }) => {
               role="dialog"
               aria-modal="true"
               aria-label="حياكم في مطبخ التراث"
-              className="relative w-full max-w-[380px] max-h-full overflow-x-hidden overflow-y-auto overscroll-contain rounded-[32px] border border-white/70 bg-[#fff7e8] px-6 pt-8 pb-6 text-center shadow-[0_30px_90px_rgba(24,51,38,0.34)]"
+              className="relative w-full max-w-[380px] max-h-full overflow-x-hidden overflow-y-auto overscroll-contain rounded-[32px] border border-white/70 bg-cream px-6 pt-8 pb-6 text-center shadow-[0_30px_90px_rgba(24,51,38,0.34)]"
               initial={sheetInitial}
               animate={sheetAnimate}
               exit={sheetExit}
@@ -177,7 +177,7 @@ const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart }) => {
                   />
                 </div>
 
-                <span className="mb-3 inline-block text-[11px] font-black uppercase tracking-[0.22em] text-[#a9822f]">
+                <span className="mb-3 inline-block text-xs font-black uppercase tracking-[0.22em] text-[#a9822f]">
                   مطبخ التراث الكويتي
                 </span>
 
@@ -199,10 +199,10 @@ const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart }) => {
                       key={c.label}
                       className="flex flex-1 flex-col items-center gap-1.5 rounded-2xl border border-[#efe1c2] bg-white/70 px-2 py-3 shadow-[0_8px_22px_rgba(24,51,38,0.05)]"
                     >
-                      <span className="leading-none text-[#0d3a22]" aria-hidden>
+                      <span className="leading-none text-brand" aria-hidden>
                         {c.icon}
                       </span>
-                      <span className="text-[11px] font-black text-[#4a5a4f]">
+                      <span className="text-xs font-black text-[#4a5a4f]">
                         {c.label}
                       </span>
                     </div>
