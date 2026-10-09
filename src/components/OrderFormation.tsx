@@ -83,7 +83,7 @@ export default function OrderFormation({ order, orderReference, onDone }: OrderF
               </div>
             )}
             {qty > 1 && (
-              <span className="absolute -top-2 -left-2 min-w-6 h-6 px-1.5 rounded-full bg-brand text-white text-[11px] font-extrabold flex items-center justify-center shadow-md">
+              <span className="absolute -top-2 -left-2 min-w-6 h-6 px-1.5 rounded-full bg-brand text-white text-xs font-extrabold flex items-center justify-center shadow-md">
                 ×{qty}
               </span>
             )}
@@ -275,7 +275,7 @@ export default function OrderFormation({ order, orderReference, onDone }: OrderF
             <CheckCircle2 className="w-9 h-9" />
           </motion.div>
 
-          <p className="text-xs font-bold text-stone-400 mb-1">تم اعتماد الدفع · تكوّن طلبك</p>
+          <p className="text-xs font-bold text-stone-500 mb-1">تم اعتماد الدفع · تكوّن طلبك</p>
           <h2 className="text-2xl font-extrabold text-brand tracking-tight mb-3">
             {orderReference}
           </h2>
@@ -301,7 +301,7 @@ export default function OrderFormation({ order, orderReference, onDone }: OrderF
               {Number(snapshot.total).toFixed(2)} د.ك
             </p>
           )}
-          <p className="text-[11px] font-medium text-stone-400 mt-2">
+          <p className="text-xs font-medium text-stone-500 mt-2">
             نفتح لك شاشة المتابعة…
           </p>
           </motion.div>

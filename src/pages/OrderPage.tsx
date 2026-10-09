@@ -919,7 +919,7 @@ export default function OrderPage() {
           to="/"
           className="p-3 bg-stone-50 rounded-2xl hover:bg-stone-100 transition-all border border-stone-100"
         >
-          <ChevronLeft className="w-5 h-5 text-stone-400 rotate-180" />
+          <ChevronLeft className="w-5 h-5 text-stone-500 rotate-180" />
         </Link>
         <h1 className="text-xl font-extrabold text-brand tracking-tight">
           تتبع الطلبات
@@ -1054,7 +1054,7 @@ export default function OrderPage() {
         <section className="order-detail-card bg-white rounded-[40px] p-8 border border-stone-100 shadow-xl shadow-stone-200/50 space-y-6">
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-extrabold text-brand">وين طلبي؟</h2>
-            <p className="text-stone-400 text-sm font-medium">
+            <p className="text-stone-500 text-sm font-medium">
               حط رقم تليفونك أو رقم الطلب علشان تتابع حالة طلباتك
             </p>
           </div>
@@ -1126,7 +1126,7 @@ export default function OrderPage() {
               </div>
               <div className="space-y-1">
                 <h3 className="text-xl font-extrabold text-brand">ماكو طلبات</h3>
-                <p className="text-stone-400 font-medium">
+                <p className="text-stone-500 font-medium">
                   لم نجد أي طلبات مرتبطة بهذا الرقم حالياً
                 </p>
               </div>
@@ -1277,10 +1277,10 @@ export default function OrderPage() {
                           <div className="min-w-0">
                             <h3 className="text-lg sm:text-xl font-black text-brand truncate max-sm:whitespace-normal max-sm:break-words max-sm:leading-snug" title={customerFullName}>{customerFullName}</h3>
                             <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
-                              <span className={cn("shrink-0 rounded-full border px-3 py-1 text-[11px] font-black", getTierAccent(currentTier?.name))}>
+                              <span className={cn("shrink-0 rounded-full border px-3 py-1 text-xs font-black", getTierAccent(currentTier?.name))}>
                                 {currentTier?.name || "عضوية"}
                               </span>
-                              <span className="text-xs font-black text-stone-400 whitespace-nowrap">{points} نقطة</span>
+                              <span className="text-xs font-black text-stone-500 whitespace-nowrap">{points} نقطة</span>
                             </div>
                           </div>
                         </div>
@@ -1288,12 +1288,12 @@ export default function OrderPage() {
                           <span className={cn("w-10 h-10 rounded-full bg-white/85 border border-white flex items-center justify-center text-brand shadow-sm transition-transform", isProfileOpen && "rotate-90")}>
                             <ChevronLeft className="w-4 h-4" />
                           </span>
-                          <span className="text-[11px] font-black text-stone-400">{isProfileOpen ? "إغلاق" : "الملف"}</span>
+                          <span className="text-xs font-black text-stone-500">{isProfileOpen ? "إغلاق" : "الملف"}</span>
                         </div>
                       </div>
 
                       <div className="relative mt-5 space-y-2">
-                        <div className="flex items-center justify-between gap-3 text-[11px] font-black">
+                        <div className="flex items-center justify-between gap-3 text-xs font-black">
                           <span className="text-brand">
                             {nextTier ? (
                               <>
@@ -1301,7 +1301,7 @@ export default function OrderPage() {
                               </>
                             ) : "أعلى مستوى"}
                           </span>
-                          <span className="text-stone-400">{Math.round(progress)}%</span>
+                          <span className="text-stone-500">{Math.round(progress)}%</span>
                         </div>
                         <div className="h-2.5 rounded-full bg-white/80 border border-white overflow-hidden shadow-inner">
                           <div className="h-full rounded-full bg-gradient-to-l from-accent to-brand transition-all" style={{ width: `${progress}%` }} />
@@ -1321,7 +1321,7 @@ export default function OrderPage() {
                             </span>
                             <span className="min-w-0 text-right">
                               <span className="block text-sm font-black text-brand leading-tight">انضم لديوانية</span>
-                              <span className="block mt-0.5 text-[11px] font-medium text-stone-400 leading-tight">أو أسس ديوانيتك</span>
+                              <span className="block mt-0.5 text-xs font-medium text-stone-500 leading-tight">أو أسس ديوانيتك</span>
                             </span>
                           </div>
                           <ChevronLeft className="w-4 h-4 text-amber-700 transition-transform group-hover:-translate-x-1 shrink-0" />
@@ -1354,7 +1354,7 @@ export default function OrderPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -6 }}
                                     transition={{ duration: 0.18 }}
-                                    className="rounded-[24px] bg-white/80 border border-stone-100 p-4 text-center text-xs font-black text-stone-400"
+                                    className="rounded-[24px] bg-white/80 border border-stone-100 p-4 text-center text-xs font-black text-stone-500"
                                   >
                                     اختر قسمًا لعرض التفاصيل
                                   </motion.div>
@@ -1376,7 +1376,7 @@ export default function OrderPage() {
                                     >
                                       <div className="min-w-0">
                                         <span className="block text-sm font-black text-brand">مزايا العضوية</span>
-                                        <span className="block mt-1 text-[11px] font-bold text-stone-400">{normalizedTiers.length} مستويات</span>
+                                        <span className="block mt-1 text-xs font-bold text-stone-500">{normalizedTiers.length} مستويات</span>
                                       </div>
                                       <span className={cn("w-9 h-9 rounded-full bg-stone-50 border border-stone-100 flex items-center justify-center text-brand transition-transform shrink-0", showProfileBenefits && "rotate-90")}>
                                         <ChevronLeft className="w-4 h-4" />
@@ -1400,13 +1400,13 @@ export default function OrderPage() {
                                                   <div className="min-w-0">
                                                     <div className="flex items-center gap-2">
                                                       <strong className={cn("block text-sm font-black truncate rounded-full border px-2.5 py-1", active ? "border-white/20 text-white" : getTierAccent(tier.name))}>{tier.name}</strong>
-                                                      {active && <span className="rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-black">الحالي</span>}
+                                                      {active && <span className="rounded-full bg-white/15 px-2 py-0.5 text-xs font-black">الحالي</span>}
                                                     </div>
                                                     {tier.benefit && (
-                                                      <p className={cn("mt-2 text-[11px] font-bold leading-relaxed", active ? "text-white/75" : "text-stone-500")}>{String(tier.benefit)}</p>
+                                                      <p className={cn("mt-2 text-xs font-bold leading-relaxed", active ? "text-white/75" : "text-stone-500")}>{String(tier.benefit)}</p>
                                                     )}
                                                   </div>
-                                                  <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-[11px] font-black", active ? "bg-white/15 text-white" : "bg-stone-50 text-stone-500")}>{tier.minPoints}</span>
+                                                  <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-xs font-black", active ? "bg-white/15 text-white" : "bg-stone-50 text-stone-500")}>{tier.minPoints}</span>
                                                 </div>
                                               );
                                             })}
@@ -1430,18 +1430,18 @@ export default function OrderPage() {
                                       <div className="p-4 flex items-center justify-between gap-3">
                                         <div>
                                           <span className="block text-sm font-black text-brand">طلباتك الأخيرة</span>
-                                          <span className="block mt-1 text-[11px] font-bold text-stone-400">من سجل طلباتك</span>
+                                          <span className="block mt-1 text-xs font-bold text-stone-500">من سجل طلباتك</span>
                                         </div>
-                                        <span className="rounded-full bg-stone-50 px-3 py-1 text-[11px] font-black text-stone-500">{recentOrderChoices.length}</span>
+                                        <span className="rounded-full bg-stone-50 px-3 py-1 text-xs font-black text-stone-500">{recentOrderChoices.length}</span>
                                       </div>
                                       <div className="px-4 pb-4 space-y-2 max-h-[300px] overflow-y-auto pr-1">
                                         {visibleOrders.length > 0 ? visibleOrders.map((item) => (
                                           <div key={`${item.label}-${getOrderReference(item.order)}`} className="rounded-[18px] bg-stone-50 border border-stone-100 p-3 flex items-center justify-between gap-3">
                                             <strong className="text-sm font-black text-brand truncate min-w-0">{item.label}</strong>
-                                            <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-stone-500">{getOrderReference(item.order)}</span>
+                                            <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-black text-stone-500">{getOrderReference(item.order)}</span>
                                           </div>
                                         )) : (
-                                          <div className="rounded-[18px] bg-stone-50 border border-stone-100 p-4 text-center text-xs font-bold text-stone-400">تظهر طلباتك بعد أول طلب</div>
+                                          <div className="rounded-[18px] bg-stone-50 border border-stone-100 p-4 text-center text-xs font-bold text-stone-500">تظهر طلباتك بعد أول طلب</div>
                                         )}
                                         {recentOrderChoices.length > 3 && (
                                           <button type="button" onClick={() => setShowAllProfileOrders((v) => !v)} className="w-full rounded-[18px] bg-white border border-stone-100 py-3 text-xs font-black text-brand">
@@ -1472,7 +1472,7 @@ export default function OrderPage() {
                                     <div className="rounded-[26px] bg-white border border-stone-100 shadow-sm overflow-hidden">
                                       <div className="p-4 flex items-center justify-between gap-3">
                                         <span className="text-sm font-black text-brand">العناوين المستخدمة</span>
-                                        <span className="text-[11px] font-black text-stone-400">{addressLabels.length} عنوان</span>
+                                        <span className="text-xs font-black text-stone-500">{addressLabels.length} عنوان</span>
                                       </div>
                                       <div className="px-4 pb-4 space-y-2 max-h-[300px] overflow-y-auto pr-1">
                                         {visibleAddresses.length > 0 ? visibleAddresses.map((label) => (
@@ -1481,7 +1481,7 @@ export default function OrderPage() {
                                             <span className="truncate min-w-0">{label}</span>
                                           </div>
                                         )) : (
-                                          <div className="rounded-[18px] bg-stone-50 border border-stone-100 p-4 text-center text-xs font-bold text-stone-400">تظهر عناوينك بعد أول طلب مكتمل</div>
+                                          <div className="rounded-[18px] bg-stone-50 border border-stone-100 p-4 text-center text-xs font-bold text-stone-500">تظهر عناوينك بعد أول طلب مكتمل</div>
                                         )}
                                         {addressLabels.length > 3 && (
                                           <button type="button" onClick={() => setShowAllProfileAddresses((v) => !v)} className="w-full rounded-[18px] bg-white border border-stone-100 py-3 text-xs font-black text-brand">
@@ -1557,7 +1557,7 @@ export default function OrderPage() {
                   <LayoutDashboard className="w-4 h-4 text-accent" /> سجل
                   الطلبات الأخيرة
                 </h3>
-                <span className="px-3 py-1 bg-brand/5 text-brand text-[11px] font-extrabold rounded-full">
+                <span className="px-3 py-1 bg-brand/5 text-brand text-xs font-extrabold rounded-full">
                   {formatOrderWords(orders.length)}
                 </span>
               </div>
@@ -1583,7 +1583,7 @@ export default function OrderPage() {
                     <div className="flex items-start justify-between mb-4 sm:mb-6 max-sm:flex-wrap max-sm:gap-3">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 max-sm:flex-wrap">
-                          <span className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest">
+                          <span className="text-xs font-extrabold text-stone-500 uppercase tracking-widest">
                             رقم الطلب
                           </span>
                           <span className="text-xs font-extrabold text-brand bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-100 whitespace-nowrap">
@@ -1611,14 +1611,14 @@ export default function OrderPage() {
                               </button>
                             )}
                         </div>
-                        <p className="text-[11px] text-stone-300 font-medium">
+                        <p className="text-xs text-stone-300 font-medium">
                           {order.createdAt || order.date
                             ? `${formatKuwaitiDate(order.createdAt || order.date).date} | ${formatKuwaitiDate(order.createdAt || order.date).time}`
                             : "تاريخ غير معروف"}
                         </p>
                       </div>
                       <div
-                        className={`px-4 py-2 rounded-2xl flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest ${statusInfo.color}`}
+                        className={`px-4 py-2 rounded-2xl flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest ${statusInfo.color}`}
                       >
                         {statusInfo.icon}
                         {statusInfo.text}
@@ -1639,12 +1639,12 @@ export default function OrderPage() {
                             <Package className="w-5 h-5" />
                           </div>
                           <div>
-                            <p className="text-[11px] font-extrabold text-stone-400 uppercase">
+                            <p className="text-xs font-extrabold text-stone-500 uppercase">
                               المبلغ الإجمالي
                             </p>
                             <p className="text-lg font-extrabold text-brand italic">
                               {Number(getDisplayTotal(order) || 0).toFixed(3)}{" "}
-                              <span className="text-[11px] text-accent font-normal italic">
+                              <span className="text-xs text-accent font-normal italic">
                                 د.ك
                               </span>
                             </p>
@@ -1656,7 +1656,7 @@ export default function OrderPage() {
                       </div>
 
                       {order.address && (
-                        <div className="flex items-center gap-2 text-[11px] text-stone-400 bg-stone-50/50 p-3 rounded-xl border border-stone-50 overflow-hidden">
+                        <div className="flex items-center gap-2 text-xs text-stone-500 bg-stone-50/50 p-3 rounded-xl border border-stone-50 overflow-hidden">
                           <MapPin className="w-3 h-3 text-accent shrink-0" />
                           <span className="truncate min-w-0 max-sm:whitespace-normal max-sm:leading-relaxed">
                             {typeof order.address === "object"
@@ -1725,7 +1725,7 @@ export default function OrderPage() {
                             </button>
                           )}
                       </h3>
-                      <p className="text-stone-400 text-xs font-medium uppercase tracking-widest mt-1">
+                      <p className="text-stone-500 text-xs font-medium uppercase tracking-widest mt-1">
                         {getOrderReference(selectedOrder)}
                       </p>
                     </div>
@@ -1733,7 +1733,7 @@ export default function OrderPage() {
                   <button
                     onClick={() => setSelectedOrder(null)}
                     aria-label="إغلاق"
-                    className="p-3 bg-stone-50 text-stone-400 rounded-2xl hover:bg-stone-100 transition-all"
+                    className="p-3 bg-stone-50 text-stone-500 rounded-2xl hover:bg-stone-100 transition-all"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -1883,7 +1883,7 @@ export default function OrderPage() {
 	                        (p: any) => p.status === "paid" || (isDiwaniyaQatyaOrder(selectedOrder) && p.status === "pending")
 	                      ).length > 0 || (((selectedOrder as any).splitType === "roulette" || isDiwaniyaQatyaOrder(selectedOrder)) && ((selectedOrder as any).splitParticipants || []).length > 0)) && (
                         <div className="track-v14-social-card track-wow-social-card bg-stone-50 p-4 rounded-2xl border border-stone-100">
-                          <h4 className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                          <h4 className="text-xs font-extrabold text-stone-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                             {(selectedOrder as any).splitType === 'roulette' ? <><Dices className="w-3 h-3" aria-hidden="true" /> المشاركون في وهق غيرك</> : <><Users className="w-3 h-3" aria-hidden="true" /> المساهمين في القطية</>}
                           </h4>
                           {(selectedOrder as any).splitType === 'roulette' && (selectedOrder as any).rouletteLoser && (
@@ -1907,13 +1907,13 @@ export default function OrderPage() {
                                         {p.name}
                                       </span>
                                       {p.phone && (
-                                        <span className="text-[11px] text-stone-400 font-mono">
+                                        <span className="text-xs text-stone-500 font-mono">
                                           {p.phone}
                                         </span>
                                       )}
                                     </div>
                                   </div>
-                                  <span className="text-[11px] bg-fuchsia-100 text-fuchsia-700 px-1.5 py-0.5 rounded-full font-bold">مشارك</span>
+                                  <span className="text-xs bg-fuchsia-100 text-fuchsia-700 px-1.5 py-0.5 rounded-full font-bold">مشارك</span>
                                 </div>
                               ))
                             ) : (
@@ -1938,15 +1938,15 @@ export default function OrderPage() {
                                           {p.name}
                                         </span>
                                         {p.phone && (
-                                          <span className="text-[11px] text-stone-400 font-mono">
+                                          <span className="text-xs text-stone-500 font-mono">
                                             {p.phone}
                                           </span>
                                         )}
                                       </div>
                                       {p.status === "paid" ? (
-                                        <span className="text-[11px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">مدفوع</span>
+                                        <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">مدفوع</span>
                                       ) : (
-                                        <span className="text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">بانتظار الدفع</span>
+                                        <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">بانتظار الدفع</span>
                                       )}
                                     </div>
                                     <span className="font-extrabold text-brand tracking-tight">
@@ -1965,17 +1965,17 @@ export default function OrderPage() {
                     {getSafeSplitPayments(selectedOrder).length > 0 && (selectedOrder as any).splitType !== 'roulette' && (
                        <div className="track-v14-split-summary bg-brand/5 p-4 rounded-2xl border border-brand/10 mb-4 flex flex-wrap gap-y-3 justify-between items-center text-sm">
                           <div className="flex flex-col text-center">
-                             <span className="text-[11px] text-stone-500 font-bold mb-0.5">الإجمالي</span>
+                             <span className="text-xs text-stone-500 font-bold mb-0.5">الإجمالي</span>
                              <span className="font-extrabold text-stone-700">{Number((selectedOrder as any).total).toFixed(3)} د.ك</span>
                           </div>
                           <div className="flex flex-col text-center">
-                             <span className="text-[11px] text-green-600 font-bold mb-0.5">المدفوع</span>
+                             <span className="text-xs text-green-600 font-bold mb-0.5">المدفوع</span>
                              <span className="font-extrabold text-green-700">
                                 {getSafeSplitPayments(selectedOrder).filter((p: any) => p.status === "paid").reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0).toFixed(3)} د.ك
                              </span>
                           </div>
                           <div className="flex flex-col text-center">
-                             <span className="text-[11px] text-amber-600 font-bold mb-0.5">المتبقي</span>
+                             <span className="text-xs text-amber-600 font-bold mb-0.5">المتبقي</span>
                              <span className="font-extrabold text-amber-700">
                                 {Math.max(0, Number((selectedOrder as any).total) - getSafeSplitPayments(selectedOrder).filter((p: any) => p.status === "paid").reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0)).toFixed(3)} د.ك
                              </span>
@@ -2061,7 +2061,7 @@ export default function OrderPage() {
                         {getOrderReference(selectedOrder)}
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-stone-100/70 bg-stone-50/40 px-3 py-2 text-right text-[11px] sm:text-[11px] font-light text-stone-400/80 leading-5">
+                    <div className="rounded-2xl border border-stone-100/70 bg-stone-50/40 px-3 py-2 text-right text-xs sm:text-xs font-light text-stone-500/80 leading-5">
                       <div>الاسم التجاري: {LEGAL_TRADE_NAME_AR}</div>
                       <div>رقم السجل التجاري: {COMMERCIAL_REGISTRATION_NUMBER}</div>
                     </div>
@@ -2073,7 +2073,7 @@ export default function OrderPage() {
                     {/* Items List */}
                     <div className="space-y-4">
                       
-                      <h4 className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest px-2 font-mono border-b border-dashed border-stone-100 pb-2">
+                      <h4 className="text-xs font-extrabold text-stone-500 uppercase tracking-widest px-2 font-mono border-b border-dashed border-stone-100 pb-2">
                         الأصناف المطلوبة
                       </h4>
                       <div className="space-y-3 font-mono">
@@ -2086,7 +2086,7 @@ export default function OrderPage() {
                             className="track-v15-order-item flex items-center justify-between p-2 sm:p-4 bg-stone-50/50 border-b border-dashed border-stone-100 last:border-b-0"
                           >
                             <div className="flex items-center gap-3">
-                              <span className="text-xs font-extrabold text-stone-400 shrink-0">
+                              <span className="text-xs font-extrabold text-stone-500 shrink-0">
                                 {item.quantity}x
                               </span>
                               <div className="flex flex-col">
@@ -2097,7 +2097,7 @@ export default function OrderPage() {
                                   {item.productName || item.name}
                                 </span>
                                 {(item.itemNotes || item.note) && (
-                                  <span className="text-[11px] text-stone-400 italic flex items-center gap-1 mt-1">
+                                  <span className="text-xs text-stone-500 italic flex items-center gap-1 mt-1">
                                     <MessageCircle className="w-3 h-3" />
                                     <TypewriterText
                                       text={item.itemNotes || item.note}
@@ -2108,7 +2108,7 @@ export default function OrderPage() {
                                 {getActualItemAddons(item).length > 0 && (
                                   <div className="mt-2 space-y-1" dir="rtl">
                                     {getActualItemAddons(item).map((addon, addonIndex) => (
-                                      <div key={`${addon.name}-${addonIndex}`} className="flex items-center gap-2 text-[11px] font-extrabold text-amber-700 bg-amber-50/70 border border-amber-100 rounded-xl px-2 py-1 w-fit">
+                                      <div key={`${addon.name}-${addonIndex}`} className="flex items-center gap-2 text-xs font-extrabold text-amber-700 bg-amber-50/70 border border-amber-100 rounded-xl px-2 py-1 w-fit">
                                         <span>+ {addon.name}{addon.qty > 1 ? ` × ${addon.qty}` : ""}</span>
                                         <span className="text-amber-900">{addon.total.toFixed(3)} د.ك</span>
                                       </div>
@@ -2126,7 +2126,7 @@ export default function OrderPage() {
                               {Number(calculateItemTotalWithAddons(item) || 0).toFixed(
                                 3,
                               )}{" "}
-                              <span className="text-[11px] text-stone-400">
+                              <span className="text-xs text-stone-500">
                                 د.ك
                               </span>
                             </motion.span>
@@ -2157,13 +2157,13 @@ export default function OrderPage() {
                           transition={{ delay: 1 }}
                           className="mt-6 bg-stone-50 rounded-2xl p-4 border border-stone-150 flex flex-col items-center justify-center gap-2 text-center text-stone-500"
                         >
-                           <Users className="w-5 h-5 text-stone-400" />
+                           <Users className="w-5 h-5 text-stone-500" />
                            <p className="text-xs font-extrabold text-stone-600">
                              <span className="inline-flex items-center gap-1.5">مو مشترك بديوانية للحين؟ <Coffee className="w-4 h-4" aria-hidden="true" /></span>
                            </p>
                            <Link
                              to="/?showSquads=true"
-                             className="text-[11px] font-black text-accent bg-accent/5 px-3 py-1.5 rounded-xl border border-accent/10 hover:bg-accent/10 transition-colors inline-flex items-center gap-1.5"
+                             className="text-xs font-black text-accent bg-accent/5 px-3 py-1.5 rounded-xl border border-accent/10 hover:bg-accent/10 transition-colors inline-flex items-center gap-1.5"
                            >
                              أسس ديوانيتك أو شارك ديوانية ربعك! <Handshake className="w-4 h-4" aria-hidden="true" />
                            </Link>
@@ -2175,7 +2175,7 @@ export default function OrderPage() {
                     {(selectedOrder as any).notes ||
                     (selectedOrder as any).generalNotes ? (
                       <div className="space-y-4">
-                        <h4 className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest px-2">
+                        <h4 className="text-xs font-extrabold text-stone-500 uppercase tracking-widest px-2">
                           ملاحظات عامة
                         </h4>
                         <div className="bg-orange-50/50 border border-orange-100 p-4 rounded-2xl text-orange-800 text-sm flex gap-3">
@@ -2191,7 +2191,7 @@ export default function OrderPage() {
                     {/* Address Details */}
                     {selectedOrder.address && (
                       <div className="space-y-4">
-                        <h4 className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest px-2">
+                        <h4 className="text-xs font-extrabold text-stone-500 uppercase tracking-widest px-2">
                           معلومات العميل والتوصيل
                         </h4>
                         <div className="track-v15-address-card bg-white border border-stone-100 p-6 rounded-[32px] space-y-4 font-medium text-brand text-sm shadow-sm">
@@ -2246,7 +2246,7 @@ export default function OrderPage() {
                   <div className="track-v15-total-panel track-wow-total-panel p-8 bg-stone-50/50 border-t border-stone-100 flex flex-col gap-4">
                     {selectedOrder.deliveryFee !== undefined && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-stone-400 font-bold uppercase tracking-widest">
+                        <span className="text-stone-500 font-bold uppercase tracking-widest">
                           رسوم التوصيل
                         </span>
                         <span className="font-extrabold text-brand italic">
@@ -2265,7 +2265,7 @@ export default function OrderPage() {
                       </div>
                     )}
                     <div className="flex items-center justify-between pt-4 border-t border-stone-100/50">
-                      <span className="text-stone-400 font-extrabold text-xs uppercase tracking-widest">
+                      <span className="text-stone-500 font-extrabold text-xs uppercase tracking-widest">
                         إجمالي المبلغ
                       </span>
                       <span className="text-3xl font-extrabold text-brand italic">

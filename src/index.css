@@ -13,6 +13,10 @@
   --color-brand: #0d3a22; /* Ancient Kuwaiti Palm Green */
   --color-accent: #b28a41; /* Oxidized Brass Dallah Gold */
   --color-sadu-red: #ab2b2c; /* Nostalgic natural Sadu red */
+  --color-cream: #fff7e8; /* warm parchment surface */
+  --color-cream-edge: #ead8b5; /* parchment border / track */
+  --color-ink: #14291f; /* deep green-black text */
+  --color-brass-ink: #765622; /* brass text on cream (AA) */
   --color-background: #fafaf9; /* elegant warm off-white (stone-50) */
   
   --shadow-sm: 0 4px 14px 0 rgba(0, 0, 0, 0.02);
@@ -4279,3 +4283,37 @@ body:has(.al-cart-bar) .order-welcome-replay {
   .menu-product-card:not(.menu-product-card-horizontal) .orser-product-content { grid-template-columns: 4rem minmax(0, 1fr); column-gap: .6rem; }
   .menu-product-card:not(.menu-product-card-horizontal) .menu-product-image { width: 4rem !important; height: 4rem !important; border-radius: 16px !important; }
 }
+
+
+/* ===== Global reduced-motion safety net =====
+   Decorative infinite loops (FOMO, Smart Pick, scan overlay, steam, splash,
+   checkout shimmer, roulette) stop for people who ask the OS for less motion.
+   Opacity/colour state changes are kept; only movement/looping is clamped. */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-iteration-count:1!important;
+    animation-duration:.01ms!important;
+    animation-delay:0s!important;
+    scroll-behavior:auto!important;
+  }
+  .gentle-boil-btn{animation:none!important}
+}
+
+/* ===== Warm shimmer skeleton (shaped like real cards) ===== */
+.sk-shimmer{position:relative;overflow:hidden;background:var(--color-cream-edge);opacity:.55;border-radius:14px}
+.sk-shimmer::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:alShimmer 1.6s infinite}
+.brass-divider{height:1px;border:0;background:linear-gradient(90deg,transparent,rgba(178,138,65,.45),transparent)}
+
+/* Low-end phones: full-screen blur layers are the costliest paint on mobile. */
+@media (max-width:640px){
+  .backdrop-blur-2xl,.backdrop-blur-3xl{-webkit-backdrop-filter:blur(10px)!important;backdrop-filter:blur(10px)!important}
+  .blur-3xl{--tw-blur:blur(32px)!important}
+}
+
+/* ===== Shared food-photo treatment (menu cards, picks, Smart Pick, modal) =====
+   Warm vignette so any photo sits in the heritage palette; no hover-only motion
+   (touch users never see it) — only a soft shadow lift on real hover devices. */
+.menu-product-image{position:relative;isolation:isolate}
+.menu-product-image::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;border-radius:inherit;background:radial-gradient(ellipse at 50% 45%,transparent 58%,rgba(120,70,20,.16) 100%)}
+.menu-product-img{aspect-ratio:auto}
+.menu-product-card:hover,.product-card:hover,.chef-card:hover{transform:none!important}

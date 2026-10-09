@@ -369,7 +369,7 @@ export function RouletteSplit({
               </div>
             ) : (
               <div className="text-center space-y-4">
-                <div className="text-stone-400 font-bold">
+                <div className="text-stone-500 font-bold">
                   انت في اللوبي باسم:{" "}
                   <span className="text-fuchsia-400">{mySpinName}</span>
                 </div>

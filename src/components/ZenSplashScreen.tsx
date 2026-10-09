@@ -29,7 +29,7 @@ export const ZenSplashScreen: React.FC<ZenSplashScreenProps> = ({ logo }) => {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-[#fff7e8] px-5"
+      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-cream px-5"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 1.015, transition: { duration: 0.42, ease: "easeInOut" } }}
       dir="rtl"
@@ -62,7 +62,7 @@ export const ZenSplashScreen: React.FC<ZenSplashScreenProps> = ({ logo }) => {
               />
             ))}
             <motion.div
-              className="absolute inset-0 rounded-[2.4rem] bg-gradient-to-br from-[#0f3d2e] via-[#17543d] to-[#d69a23] p-[3px] shadow-[0_24px_70px_rgba(15,61,46,0.22)]"
+              className="absolute inset-0 rounded-[2.4rem] bg-gradient-to-br from-brand via-[#17543d] to-[#d69a23] p-[3px] shadow-[0_24px_70px_rgba(15,61,46,0.22)]"
               // Ambient breathing only. The entrance fade belongs to the parent
               // card: mixing a scalar `opacity: 1` into a `repeat: Infinity`
               // transition would restart the fade from 0 on every 2.6s cycle
@@ -85,7 +85,7 @@ export const ZenSplashScreen: React.FC<ZenSplashScreenProps> = ({ logo }) => {
           </div>
 
           <motion.div
-            className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-[#d7a642]/30 bg-white/70 px-4 py-2 text-xs font-black text-[#765622] shadow-sm"
+            className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-[#d7a642]/30 bg-white/70 px-4 py-2 text-xs font-black text-brass-ink shadow-sm"
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12, duration: 0.35 }}
@@ -95,7 +95,7 @@ export const ZenSplashScreen: React.FC<ZenSplashScreenProps> = ({ logo }) => {
           </motion.div>
 
           <motion.h1
-            className="text-2xl font-black leading-relaxed text-[#14291f] sm:text-[1.7rem]"
+            className="text-2xl font-black leading-relaxed text-ink sm:text-[1.7rem]"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.45 }}
@@ -104,13 +104,13 @@ export const ZenSplashScreen: React.FC<ZenSplashScreenProps> = ({ logo }) => {
           </motion.h1>
 
           <motion.div
-            className="mx-auto mt-5 h-1.5 overflow-hidden rounded-full bg-[#ead8b5]"
+            className="mx-auto mt-5 h-1.5 overflow-hidden rounded-full bg-cream-edge"
             initial={{ width: 110 }}
             animate={{ width: 150 }}
             transition={{ delay: 0.25, duration: 0.45, ease: "easeOut" }}
           >
             <motion.div
-              className="h-full rounded-full bg-gradient-to-l from-[#0f3d2e] via-[#d7a642] to-[#ba3f31]"
+              className="h-full rounded-full bg-gradient-to-l from-brand via-[#d7a642] to-[#ba3f31]"
               initial={reduce ? { x: "0%" } : { x: "110%" }}
               animate={reduce ? { x: "0%" } : { x: "-110%" }}
               transition={reduce ? { duration: 0 } : { duration: 1.25, repeat: Infinity, ease: "easeInOut" }}
