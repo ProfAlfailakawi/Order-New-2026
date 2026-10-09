@@ -4348,3 +4348,8 @@ body:has(.al-cart-bar) .order-welcome-replay {
 .product-addons-luxury{width:100%;min-width:0}
 .product-addons-luxury .addon-lux-card{width:100%;min-width:0}
 .product-addons-luxury .addon-lux-title span{overflow-wrap:anywhere}
+
+/* Diwaniya tiles: 5 tiles (non-owner) fill the last row instead of leaving a hole */
+.squad-stable-tabs>.grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+.squad-stable-tabs>.grid>button{grid-column:span 2}
+.squad-stable-tabs>.grid>button:nth-child(4):nth-last-child(2),.squad-stable-tabs>.grid>button:nth-child(5):last-child{grid-column:span 3}
