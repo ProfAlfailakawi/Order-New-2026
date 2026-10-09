@@ -1678,7 +1678,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none animate-pulse" />
                             {activeTempCode?.code || tempCodes[0]?.code}
                           </div>
-                          <p className="text-xs font-bold text-stone-500 mt-3">أرسل الكود للضيف، وهو صالح لمدة ساعتين.</p>
+                          <p className="text-xs font-bold text-stone-300 mt-3">أرسل الكود للضيف، وهو صالح لمدة ساعتين.</p>
                         </div>
                         
                         {/* QR Code Presentation */}
@@ -1709,7 +1709,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               <span className="bg-[#800020] border border-[#d4af37]/40 text-white text-xs font-black px-2.5 py-1.5 rounded-xl shadow-lg"><MessageWithIcons text={"إضغط لنسخ الرابط 📋"} /></span>
                             </div>
                           </button>
-                          <p className="text-xs text-stone-500 font-bold mt-3 leading-relaxed max-w-[260px] mx-auto">
+                          <p className="text-xs text-stone-300 font-bold mt-3 leading-relaxed max-w-[260px] mx-auto">
                             يقدر ضيفك يمسح الكود بكاميرا تلفونه ويدخل ديوانية "{cleanSquadName(squadInfo?.name)}" تلقائياً وبكرم من المعزب!
                           </p>
                         </div>
@@ -2065,9 +2065,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                               
                               if (membersWithLosses.length === 0) {
                                 return (
-                                  <div className="p-6 text-center text-stone-500 font-bold text-xs flex flex-col items-center justify-center gap-2">
+                                  <div className="p-6 text-center text-stone-300 font-bold text-xs flex flex-col items-center justify-center gap-2">
                                     <span className="text-2xl"><MessageWithIcons text={"😎"} /></span>
-                                    <span className="text-stone-500">ماكو أحد توهق بالقرعة لي الحين! ديوانيتنا سالمة وربعنا مستانسين دايماً</span>
+                                    <span className="text-stone-300">ماكو أحد توهق بالقرعة لي الحين! ديوانيتنا سالمة وربعنا مستانسين دايماً</span>
                                   </div>
                                 );
                               }
@@ -2082,7 +2082,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                       </span>
                                       <div className="flex flex-col text-right">
                                         <span className="text-xs font-black text-[#faf0d9] group-hover/item:text-red-300 transition-colors">{mem.name || "عضو الربع"}</span>
-                                        <span className="text-xs font-bold text-stone-500">
+                                        <span className="text-xs font-bold text-stone-300">
                                           {idx === 0 ? <MessageWithIcons text={"امبراطور الوهقة الأبدي 👑"} /> : "ضحية القرعة المعتمدة"}
                                         </span>
                                       </div>
@@ -2122,7 +2122,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                                     </span>
                                     <div className="flex flex-col text-right">
                                       <span className="text-xs font-black text-[#faf0d9] group-hover/item:text-amber-300 transition-colors">{mem.name || "عضو الربع"}</span>
-                                      <span className="text-xs font-bold text-stone-500">
+                                      <span className="text-xs font-bold text-stone-300">
                                         {idx === 0 ? <MessageWithIcons text={"أمير معازيب الدوانية 👑"} /> : "عشرة عمر وراعي كرم"}
                                       </span>
                                     </div>
@@ -2852,8 +2852,14 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
           </h4>
           <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden flex flex-col">
             {(!topSquads || topSquads.length === 0) && (
-              <div className="p-5 text-center text-xs font-black text-stone-500">
-                أول ديوانية تجمع نقاطها راح تظهر هنا ضمن صدارة الدواوين.
+              <div className="flex flex-col items-center gap-2 bg-cream px-5 py-7 text-center">
+                <span className="grid h-14 w-14 place-items-center rounded-full bg-white text-accent ring-1 ring-cream-edge" aria-hidden="true">
+                  <Trophy className="h-7 w-7" strokeWidth={1.6} />
+                </span>
+                <p className="text-sm font-extrabold text-ink">الصدارة تنطر أول ديوانية</p>
+                <p className="max-w-[260px] text-xs font-bold leading-relaxed text-stone-600">
+                  أول ديوانية تجمع نقاطها راح تظهر هنا ضمن صدارة الدواوين.
+                </p>
               </div>
             )}
             {topSquads?.slice(0, 5).map((sq: any, idx: number) => {

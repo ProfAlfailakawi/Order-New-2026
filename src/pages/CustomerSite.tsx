@@ -5813,7 +5813,7 @@ export default function CustomerSite() {
                   e.stopPropagation();
                   setShowFlashSale(false);
                 }}
-                className="absolute top-6 left-6 text-white/50 hover:text-white transition-colors bg-white/10 rounded-full p-2"
+                className="absolute top-6 left-6 text-white/85 hover:text-white transition-colors bg-white/10 rounded-full p-2"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -5840,7 +5840,7 @@ export default function CustomerSite() {
                 <h2 className="text-3xl font-extrabold text-white mb-2 tracking-tight leading-tight">
                   {smartPick?.phrase || "اختيارنا لك"}
                 </h2>
-                <p className="text-stone-500 text-lg mb-8 leading-relaxed font-medium">
+                <p className="text-stone-300 text-lg mb-8 leading-relaxed font-medium">
                   شرايك تجرب{" "}
                   <span className="font-bold text-white">
                     {smartPick?.item?.name}
@@ -6056,7 +6056,7 @@ export default function CustomerSite() {
                         <Star className="w-5 h-5 fill-current" />
                       </div>
                       <div className="text-right flex-1">
-                        <p className="text-xs text-white/50 font-bold mb-0.5">
+                        <p className="text-xs text-white/75 font-bold mb-0.5">
                           محفظة النقاط
                         </p>
                         <p className="text-xs text-white font-bold">
