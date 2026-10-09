@@ -1,19 +1,40 @@
+# Deploys the Order frontend to Firebase Hosting on every push to main
+# (trigger: order-main-deploy). The other trigger on this repo only updates the
+# Cloud Run API — if this one is disabled, the site silently freezes while every
+# build still looks green. That happened from 17 Sep to 9 Oct 2026.
 steps:
+  # npm ci, not npm install: CI already enforces the lockfile, so the deploy
+  # builds exactly what CI tested.
   - name: 'node:22'
     entrypoint: 'npm'
-    args: ['install', '--no-audit', '--no-fund']
+    args: ['ci', '--no-audit', '--no-fund']
 
+  # BUILD_SHA puts the real commit into dist/build-id.json, so anyone can tell
+  # which commit is live (the deploy watchdog workflow relies on this).
   - name: 'node:22'
     entrypoint: 'npm'
     args: ['run', 'build']
+    env: ['BUILD_SHA=$COMMIT_SHA']
 
+  # Pinned to a major version: an unpinned install picks up breaking majors
+  # (new Node requirements, changed flags) on the day they ship.
+  - name: 'node:22'
+    entrypoint: 'npx'
+    args: ['-y', 'firebase-tools@15', 'deploy', '--project=gen-lang-client-0200723670', '--only', 'hosting', '--non-interactive']
+
+  # A deploy that "succeeds" but is not what visitors get must fail the build.
   - name: 'node:22'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        npm install -g firebase-tools
-        firebase deploy --project=gen-lang-client-0200723670 --only hosting
+        want=$$(node -p "require('./dist/build-id.json').build")
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+          got=$$(curl -fsS "https://gen-lang-client-0200723670.web.app/build-id.json?t=$$(date +%s)" | node -pe "JSON.parse(require('fs').readFileSync(0,'utf8')).build" || true)
+          if [ "$$got" = "$$want" ]; then echo "Live: $$got"; exit 0; fi
+          echo "Waiting for live build ($$got != $$want)"; sleep 6
+        done
+        echo "Deploy finished but the live site is not serving build $$want"; exit 1
 
 options:
   logging: CLOUD_LOGGING_ONLY

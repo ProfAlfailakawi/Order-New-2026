@@ -1,0 +1,49 @@
+name: Deploy watchdog
+
+# Every push to main must reach the live site. Deploys run in Cloud Build
+# (trigger: order-main-deploy), outside GitHub, so a disabled trigger or a broken deploy
+# leaves every check here green while the site freezes. This compares the
+# commit the live site serves (build-id.json) with main and fails loudly —
+# GitHub then emails the failure.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '23 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-watchdog
+  cancel-in-progress: true
+
+jobs:
+  live-matches-main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SITE: https://gen-lang-client-0200723670.web.app
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Give Cloud Build time to deploy
+        if: github.event_name == 'push'
+        run: sleep 900
+
+      - name: Live site serves the latest main commit
+        run: |
+          head=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha + " " + .commit.committer.date')
+          sha=${head%% *}; when=${head#* }
+          age=$(( $(date +%s) - $(date -d "$when" +%s) ))
+          if [ "$age" -lt 600 ]; then
+            echo "main (${sha:0:8}) is only ${age}s old; a deploy may still be running. Skipping."
+            exit 0
+          fi
+          live=$(curl -fsS "$SITE/build-id.json?t=$(date +%s)" | jq -r .build)
+          if [ "${live##*-}" = "${sha:0:8}" ]; then
+            echo "Live site is on main (${sha:0:8})."
+            exit 0
+          fi
+          echo "::error::The live site is not on the latest main. Live build: $live, main: ${sha:0:8} ($when). Check that Cloud Build trigger 'order-main-deploy' is enabled and its last build passed: https://console.cloud.google.com/cloud-build/builds?project=gen-lang-client-0200723670"
+          exit 1
