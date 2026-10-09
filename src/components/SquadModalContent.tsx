@@ -1531,7 +1531,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                   {aiIsLearning ? (
                     <div className="py-4 flex flex-col items-center justify-center space-y-2 text-center">
-                      <OrderMicroLoader size={24} tone="amber" label="الذكاء الاصطناعي يفكر" />
+                      <OrderMicroLoader size={24} tone="brand" label="الذكاء الاصطناعي يفكر" />
                       <span className="text-xs font-black text-stone-500 animate-pulse">المعزب يعيد ضبط حساباته ويستخلص التفضيل التالي للربع...</span>
                     </div>
                   ) : (

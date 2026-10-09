@@ -33,7 +33,7 @@ const defs: Array<[string[], IconDef]> = [
   [["📡"], { Icon: Radar, cls: GOLD }],
   [["🛰️"], { Icon: Satellite, cls: GOLD }],
   [["📸"], { Icon: Camera, cls: GOLD }],
-  [["⚠️"], { Icon: TriangleAlert, cls: "text-brass-ink", label: "تنبيه" }],
+  [["⚠️"], { Icon: TriangleAlert, cls: "text-sadu-red", label: "تنبيه" }],
   [["📍"], { Icon: MapPin, cls: GOLD }],
   [["✅"], { Icon: CircleCheck, cls: "text-emerald-600", label: "تم" }],
   [["❌"], { Icon: CircleX, cls: "text-red-500", label: "خطأ" }],
