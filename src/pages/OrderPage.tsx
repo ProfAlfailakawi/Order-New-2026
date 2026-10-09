@@ -1798,8 +1798,8 @@ export default function OrderPage() {
                         { key: "paid", label: "تم الدفع بنجاح", state: isPaid ? "done" : "pending" },
                       ];
                       // Prep / on-the-way appear only when the order's own status says so (no new states).
-                      if (isPreparing) steps.push({ key: "preparing", label: "التجهيز", state: isDelivered ? "done" : "current" });
-                      if (isOnTheWay) steps.push({ key: "on-the-way", label: "في الطريق", state: isDelivered ? "done" : "current" });
+                      if (isPreparing) steps.push({ key: "preparing", label: "التجهيز", state: isDelivered ? "done" : "current", icon: isDelivered ? undefined : (<span className="dna-trk-ico dna-trk-prep"><Package aria-hidden="true" /><i /><i /><i /></span>) });
+                      if (isOnTheWay) steps.push({ key: "on-the-way", label: "في الطريق", state: isDelivered ? "done" : "current", icon: isDelivered ? undefined : (<span className="dna-trk-ico dna-trk-go"><Truck aria-hidden="true" /></span>) });
                       if (isDelivered) steps.push({ key: "delivered", label: "تم التوصيل", state: "done" });
                       else if (!isCancelled && !isFailed) steps.push({ key: "delivered", label: "تم التوصيل", state: "pending" });
                       return (
@@ -1840,7 +1840,7 @@ export default function OrderPage() {
                               ) : undefined
                             }
                           >
-                            <DnaStepper steps={steps} size="sm" ariaLabel="مراحل الطلب" />
+                            <DnaStepper steps={steps} size="sm" ariaLabel="مراحل الطلب" className="dna-trk" />
                           </DnaStatusHeader>
                         </div>
                       );
