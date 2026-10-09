@@ -2404,9 +2404,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         ثبّت موقع ديوانيتك واختر مدى ظهور بطاقة الدخول للربع القريبين منك، وخله على المسافة الأنسب لجلساتكم.
                       </p>
 
-                      <div className="rounded-[24px] bg-emerald-50/70 border border-emerald-100 p-4 space-y-3">
+                      <div className="rounded-[24px] bg-cream border border-cream-edge p-4 space-y-3">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-xs font-mono font-black bg-white text-emerald-700 px-3 py-1 rounded-full border border-emerald-100">
+                          <span className="text-xs font-mono font-black bg-white text-brass-ink px-3 py-1 rounded-full border border-cream-edge">
                             {formatEnglishNumber(localGeofenceDistance)} متر
                           </span>
                           <div className="text-right">
@@ -2425,7 +2425,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                             setLocalGeofenceDistance(nextDistance);
                             try { localStorage.setItem(`squad_geofence_distance_${squadInfo?.id}`, String(nextDistance)); } catch(e) {}
                           }}
-                          className="w-full accent-emerald-600"
+                          className="w-full accent-brand"
                         />
                         <div className="flex items-center justify-between text-xs font-black text-stone-500">
                           <span>حتى {formatEnglishNumber(getSquadGeofenceDistance())}م</span>
@@ -2450,11 +2450,11 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 </button>
                         </div>
                       ) : (
-                        <div className="bg-orange-50 px-4 py-3 rounded-2xl border border-orange-100">
-                          <p className="text-xs font-black text-orange-850">
+                        <div className="bg-cream px-4 py-3 rounded-2xl border border-accent/30">
+                          <p className="text-xs font-black text-ink">
                             <MessageWithIcons text={"⚠️ موقع الديوانية غير مسجّل حتى الآن!"} />
 </p>
-                          <p className="text-xs font-bold text-orange-600/80 mt-1 leading-normal">
+                          <p className="text-xs font-bold text-brass-ink mt-1 leading-normal">
                             الربع القراب منك ما يقدرون يستقبلون إشعارات الرادار للانضمام السريع إلا بعد تعيين موقع ديوانيتكم.
                           </p>
                         </div>
