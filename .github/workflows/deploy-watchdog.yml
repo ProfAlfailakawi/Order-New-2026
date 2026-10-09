@@ -5,11 +5,14 @@ name: Deploy watchdog
 # leaves every check here green while the site freezes. This compares the
 # commit the live site serves (build-id.json) with main and fails loudly —
 # GitHub then emails the failure.
+#
+# Hourly, not on push: a push-triggered run had to sleep 15 minutes for the
+# deploy and sat "in progress" on every commit. Broken deploys already fail
+# inside Cloud Build (last step of cloudbuild.yaml); this only has to catch a
+# trigger that never ran, and an hour is soon enough for that.
 on:
-  push:
-    branches: [main]
   schedule:
-    - cron: '23 */3 * * *'
+    - cron: '23 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -22,15 +25,11 @@ concurrency:
 jobs:
   live-matches-main:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 5
     env:
       SITE: https://gen-lang-client-0200723670.web.app
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Give Cloud Build time to deploy
-        if: github.event_name == 'push'
-        run: sleep 900
-
       - name: Live site serves the latest main commit
         run: |
           head=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha + " " + .commit.committer.date')
