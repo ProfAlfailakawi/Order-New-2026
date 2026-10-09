@@ -4339,3 +4339,12 @@ body:has(.al-cart-bar) .order-welcome-replay {
 .dna-qatya-main .dna-ringt{stroke:var(--color-cream-edge)}
 .dna-qatya-main .dna-ringc small{font-size:12px!important}
 @media (max-width:420px){.al-cart-actions .al-cart-checkout{white-space:nowrap;min-width:104px!important;padding-inline:10px!important}.al-cart-actions button:not(.al-cart-checkout){padding-inline:8px}}
+
+/* Checkout: one primary-button height/radius across cart, address and payment steps */
+.checkout-wow-footer button:not([aria-label]):not(.payment-method-card):not([class*="w-8"]):not([class*="w-10"]):not([class*="w-11"]):not([class*="w-12"]){min-height:56px;border-radius:18px}
+.checkout-wow-footer .payment-method-card{min-height:72px;border-radius:20px}
+
+/* Product modal add-ons must span the sheet (they collapsed to a sliver at 1280px) */
+.product-addons-luxury{width:100%;min-width:0}
+.product-addons-luxury .addon-lux-card{width:100%;min-width:0}
+.product-addons-luxury .addon-lux-title span{overflow-wrap:anywhere}

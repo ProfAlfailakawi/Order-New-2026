@@ -6182,7 +6182,7 @@ export default function CustomerSite() {
                         // Clearing the feed still dismisses it for this page.
                       }
                     }}
-                    className="absolute top-1 right-1 p-2 text-stone-500 hover:text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-full z-20 transition-colors"
+                    className="absolute top-1 left-1 p-2 text-stone-500 hover:text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-full z-20 transition-colors"
                     title="إغلاق"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -7913,7 +7913,7 @@ function ProductModal({
               <label className="text-xs font-bold text-stone-500 block">
                 إضافات حصرية
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 [&>*:only-child]:sm:col-span-2 gap-3 sm:gap-4">
                 {product.extras.map((extra) => {
                   const isSelected = selectedExtras.find(
                     (e) => e.name === extra.name,
@@ -7923,7 +7923,7 @@ function ProductModal({
                       key={extra.name}
                       onClick={() => toggleExtra(extra)}
                       className={cn(
-                        "flex items-center justify-between p-3 sm:p-4 rounded-xl border-2 transition-all",
+                        "flex items-center justify-between min-h-14 p-3.5 sm:p-4 rounded-2xl border-2 transition-all",
                         isSelected
                           ? "border-accent bg-accent/5"
                           : "border-stone-200 bg-white hover:border-accent/40",
@@ -7944,8 +7944,8 @@ function ProductModal({
                         </div>
                         <span
                           className={cn(
-                            "text-xs sm:text-sm transition-colors font-bold",
-                            isSelected ? "text-brand" : "text-stone-500",
+                            "text-sm sm:text-base transition-colors font-bold",
+                            isSelected ? "text-brand" : "text-stone-700",
                           )}
                         >
                           {extra.name}
