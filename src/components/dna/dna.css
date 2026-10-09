@@ -986,3 +986,44 @@ button.dna-hubn:focus-visible .dna-hubt { transform: translateY(-2px); }
   .dna-ringv,
   .dna-stepi + .dna-stepi::before { transition: none !important; }
 }
+
+/* ---------- order tracking: alive stepper (presentational only) ---------- */
+.dna-trk .dna-stepi[data-link='done']::before {
+  background: linear-gradient(var(--dna-accent), var(--dna-accent)) right center / 100% 100% no-repeat, var(--dna-line-2);
+  animation: dna-trk-fill 0.9s var(--dna-ease) both;
+}
+@keyframes dna-trk-fill {
+  from { background-size: 0% 100%, 100% 100%; }
+  to { background-size: 100% 100%, 100% 100%; }
+}
+.dna-trk-ico { position: relative; display: grid; place-items: center; }
+.dna-trk-ico > svg { inline-size: var(--icon); block-size: var(--icon); }
+.dna-trk-prep i {
+  position: absolute;
+  inset-block-start: -2px;
+  inline-size: 3px;
+  block-size: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+  animation: dna-trk-steam 2.2s ease-out infinite;
+}
+.dna-trk-prep i:nth-of-type(1) { inset-inline-start: 25%; }
+.dna-trk-prep i:nth-of-type(2) { inset-inline-start: 50%; animation-delay: 0.7s; }
+.dna-trk-prep i:nth-of-type(3) { inset-inline-start: 72%; animation-delay: 1.4s; }
+@keyframes dna-trk-steam {
+  0% { opacity: 0; transform: translateY(2px) scale(0.8); }
+  30% { opacity: 0.7; }
+  100% { opacity: 0; transform: translateY(-9px) scale(1.3); }
+}
+.dna-trk-go > svg { animation: dna-trk-go 1.8s ease-in-out infinite; }
+@keyframes dna-trk-go {
+  0%, 100% { transform: translateX(1.5px); }
+  50% { transform: translateX(-1.5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dna-trk .dna-stepi[data-link='done']::before,
+  .dna-trk-prep i,
+  .dna-trk-go > svg { animation: none !important; }
+  .dna-trk-prep i { display: none; }
+}
