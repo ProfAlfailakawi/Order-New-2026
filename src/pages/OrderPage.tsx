@@ -1843,7 +1843,7 @@ export default function OrderPage() {
                             {/* Journey intro plays once per order, after the post-payment formation scene (hold). Later live
                                 status changes animate only the step that changed (see DnaStepper reveal). */}
                             <DnaStepper
-                              steps={dnaSingleCurrent(steps)}
+                              steps={dnaSingleCurrent(steps, "last")}
                               size="sm"
                               ariaLabel="مراحل الطلب"
                               className="dna-trk"

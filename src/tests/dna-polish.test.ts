@@ -28,6 +28,12 @@ describe('dnaSingleCurrent (one active station per journey)', () => {
     expect(dnaSingleCurrent(mk('current', 'current', 'pending')).map((s) => s.state)).toEqual(['current', 'pending', 'pending']);
     expect(dnaSingleCurrent(mk('done', 'current', 'pending', 'current', 'pending')).map((s) => s.state)).toEqual(['done', 'current', 'pending', 'pending', 'pending']);
   });
+  it("keep:'last' keeps the most advanced current (tracking: preparing beats payment)", () => {
+    expect(dnaSingleCurrent(mk('done', 'current', 'pending', 'current', 'pending'), 'last').map((s) => s.state)).toEqual(['done', 'pending', 'pending', 'current', 'pending']);
+    expect(dnaSingleCurrent(mk('done', 'current', 'pending', 'current', 'current'), 'last').map((s) => s.state)).toEqual(['done', 'pending', 'pending', 'pending', 'current']);
+    const one = mk('done', 'current', 'pending');
+    expect(dnaSingleCurrent(one, 'last')).toBe(one);
+  });
   it('returns the same array when there is nothing to fix and never touches other states', () => {
     const ok = mk('done', 'current', 'pending');
     expect(dnaSingleCurrent(ok)).toBe(ok);
@@ -35,8 +41,9 @@ describe('dnaSingleCurrent (one active station per journey)', () => {
   });
   it('split with no people yet and a preparing order render exactly one aria-current', () => {
     // split: share + pay both current; /track: payment + preparing both current
-    for (const raw of [mk('current', 'current', 'pending'), mk('done', 'current', 'pending', 'current', 'pending')]) {
-      act(() => root.render(React.createElement(DnaStepper, { steps: dnaSingleCurrent(raw), ariaLabel: 't' } as any)));
+    const cases: Array<[DnaStep[], 'first' | 'last']> = [[mk('current', 'current', 'pending'), 'first'], [mk('done', 'current', 'pending', 'current', 'pending'), 'last']];
+    for (const [raw, keep] of cases) {
+      act(() => root.render(React.createElement(DnaStepper, { steps: dnaSingleCurrent(raw, keep), ariaLabel: 't' } as any)));
       expect(host.querySelectorAll('[aria-current="step"]').length).toBe(1);
       expect(host.querySelectorAll('li[data-state="current"]').length).toBe(1);
     }

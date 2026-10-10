@@ -117,21 +117,14 @@ const DEFAULT_STATE_TEXT: Record<DnaStepState, string> = {
   blocked: 'متوقفة',
 };
 
-/** Presentation helper: a journey has one active station. Keeps the first `current` and shows any later
-    `current` as `pending` (the status text/data are untouched). Returns the same array when nothing changes. */
-export function dnaSingleCurrent<T extends { state: DnaStepState }>(steps: T[]): T[] {
-  let seen = false;
-  let changed = false;
-  const out = steps.map((s) => {
-    if (s.state !== 'current') return s;
-    if (!seen) {
-      seen = true;
-      return s;
-    }
-    changed = true;
-    return { ...s, state: 'pending' as DnaStepState };
-  });
-  return changed ? out : steps;
+/** Presentation helper: a journey has one active station. Keeps one `current` (the first by default, or the
+    most advanced with `keep: 'last'`) and shows the other `current` stations as `pending` (status text and data
+    are untouched). Returns the same array when nothing changes. */
+export function dnaSingleCurrent<T extends { state: DnaStepState }>(steps: T[], keep: 'first' | 'last' = 'first'): T[] {
+  const idx = steps.map((s, i) => (s.state === 'current' ? i : -1)).filter((i) => i >= 0);
+  if (idx.length < 2) return steps;
+  const kept = keep === 'last' ? idx[idx.length - 1] : idx[0];
+  return steps.map((s, i) => (s.state === 'current' && i !== kept ? { ...s, state: 'pending' as DnaStepState } : s));
 }
 
 export interface DnaStepperProps {
