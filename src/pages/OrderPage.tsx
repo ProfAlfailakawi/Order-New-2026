@@ -1840,7 +1840,17 @@ export default function OrderPage() {
                               ) : undefined
                             }
                           >
-                            <DnaStepper steps={steps} size="sm" ariaLabel="مراحل الطلب" className="dna-trk" />
+                            {/* Journey intro plays once per order, after the post-payment formation scene (hold). Later live
+                                status changes animate only the step that changed (see DnaStepper reveal). */}
+                            <DnaStepper
+                              steps={steps}
+                              size="sm"
+                              ariaLabel="مراحل الطلب"
+                              className="dna-trk"
+                              reveal
+                              playKey={`order:${String(selectedOrder.id)}`}
+                              hold={paymentStatusQuery === "success"}
+                            />
                           </DnaStatusHeader>
                         </div>
                       );

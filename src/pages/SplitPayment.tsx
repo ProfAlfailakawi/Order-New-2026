@@ -590,6 +590,7 @@ export default function SplitPayment() {
   }
   if (isNaN(progressPercent)) progressPercent = 0;
   const splitPeople = getSafeSplitPayments(order);
+  const isCancelledQatya = /ملغي|cancel|مرفوض|rejected/i.test(String(order.status || ""));
   const isDiwaniyaQatya = isDiwaniyaQatyaOrder(order);
   const paidPeople = splitPeople.filter((p: any) => String(p.status || "").toLowerCase() === "paid");
   const waitingPeople = splitPeople.filter((p: any) => String(p.status || "").toLowerCase() !== "paid");
@@ -751,18 +752,23 @@ export default function SplitPayment() {
             </div>
 
             <div className="mt-5" aria-label="مجلس القطيّة">
+              {/* Journey mode: first view plays the intro only while the qatya is still open; a fully paid order
+                  renders complete. Live payments animate only the step that changed (no replay). */}
               <DnaStepper
                 size="sm"
                 ariaLabel="مجلس القطيّة"
+                reveal
+                intro={!isFullyPaid && !isCancelledQatya}
+                playKey={`split:${String(order.id)}`}
                 steps={[
                   { key: "share", label: "شارك الرابط", state: splitPeople.length > 0 || paidPeople.length > 0 || isFullyPaid ? "done" : "current" },
                   {
                     key: "pay",
                     label: "الربع يدفعون",
-                    state: isFullyPaid ? "done" : "current",
+                    state: isFullyPaid ? "done" : isCancelledQatya ? "returned" : "current",
                     badge: !isFullyPaid && splitPeople.length > 0 ? `${paidPeople.length}/${splitPeople.length}` : undefined,
                   },
-                  { key: "track", label: "تابع من دفع", state: isFullyPaid ? "done" : "pending" },
+                  ...(isCancelledQatya && !isFullyPaid ? [] : [{ key: "track", label: "تابع من دفع", state: isFullyPaid ? ("done" as const) : ("pending" as const) }]),
                 ]}
               />
             </div>
