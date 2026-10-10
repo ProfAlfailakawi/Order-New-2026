@@ -6,6 +6,7 @@
  */
 import * as React from 'react';
 import './dna.css';
+import { journeyDisplayState, journeyTarget, useJourneyReveal } from './useJourneyReveal';
 
 export type DnaTone =
   | 'accent'
@@ -123,24 +124,101 @@ export interface DnaStepperProps {
   ariaLabel?: string;
   stateText?: Partial<Record<DnaStepState, string>>;
   className?: string;
+  /** Opt-in journey mode: stations light up one after another when scrolled into view (once),
+      later state changes animate only the step that changed. Off by default. */
+  reveal?: boolean;
+  /** With `reveal`: set false to skip the scroll-triggered intro and animate state changes only
+      (e.g. a wizard that must not replay when it opens at a later step). */
+  intro?: boolean;
+  /** Remember (per tab session) that this entity already played its intro, e.g. an order id. */
+  playKey?: string;
+  /** Hold the intro until another animation is done. */
+  hold?: boolean;
+  stepMs?: number;
 }
 
-export function DnaStepper({ steps, size = 'md', showLabels = true, ariaLabel, stateText, className }: DnaStepperProps) {
+export function DnaStepper({
+  steps,
+  size = 'md',
+  showLabels = true,
+  ariaLabel,
+  stateText,
+  className,
+  reveal = false,
+  intro = true,
+  playKey,
+  hold = false,
+  stepMs,
+}: DnaStepperProps) {
   const text = { ...DEFAULT_STATE_TEXT, ...stateText };
   const labels = showLabels && size !== 'xs';
+  const {
+    ref,
+    lit,
+    just: introJust,
+  } = useJourneyReveal<HTMLOListElement>({
+    target: journeyTarget(steps.map((s) => s.state)),
+    count: steps.length,
+    stepMs,
+    enabled: reveal && intro,
+    hold,
+    playKey,
+  });
+
+  // After the intro, remember the last step that really changed so only it gets the one-shot halo.
+  const prevStates = React.useRef<Map<string, DnaStepState> | null>(null);
+  const [diffJust, setDiffJust] = React.useState<string | null>(null);
+  const signature = steps.map((s) => `${s.key}:${s.state}`).join('|');
+  React.useEffect(() => {
+    if (!reveal) return;
+    const prev = prevStates.current;
+    prevStates.current = new Map(steps.map((s) => [s.key, s.state] as const));
+    if (!prev || lit !== null) return;
+    let changed: string | null = null;
+    for (const s of steps) {
+      if ((s.state === 'done' || s.state === 'current') && prev.get(s.key) !== s.state) changed = s.key;
+    }
+    if (changed) setDiffJust(changed);
+    // steps is covered by signature
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature, lit, reveal]);
+  // Going backwards (a step un-completes) just snaps: no reverse animation.
+  const prevNow = prevStates.current;
+  const regressed =
+    reveal &&
+    lit === null &&
+    prevNow !== null &&
+    steps.some((s) => {
+      const before = prevNow.get(s.key);
+      return (before === 'done' && s.state !== 'done') || (before === 'current' && s.state === 'pending');
+    });
+  const justKey = reveal ? (diffJust ?? (introJust !== null ? steps[introJust]?.key : undefined)) : undefined;
+
+  const shown: DnaStepState[] = steps.map((s, i) => (reveal ? journeyDisplayState(s.state, i, lit) : s.state));
   return (
-    <ol className={cx('dna', 'dna-steps', className)} data-size={size} aria-label={ariaLabel}>
+    <ol
+      ref={ref}
+      className={cx('dna', 'dna-steps', className)}
+      data-size={size}
+      data-journey={reveal ? 'true' : undefined}
+      data-reveal={reveal ? (lit ?? 'done') : undefined}
+      data-snap={regressed ? 'true' : undefined}
+      aria-label={ariaLabel}
+    >
       {steps.map((step, i) => {
         const prev = i > 0 ? steps[i - 1] : null;
-        const link = !prev ? 'none' : step.state === 'returned' ? 'returned' : prev.state === 'done' ? 'done' : 'pending';
-        const stamped = Boolean(step.stamp) && step.state === 'done';
+        const state = shown[i];
+        const link = !prev ? 'none' : state === 'returned' ? 'returned' : shown[i - 1] === 'done' ? 'done' : 'pending';
+        const stamped = Boolean(step.stamp) && state === 'done';
         return (
           <li
             key={step.key}
             className="dna-stepi"
-            data-state={step.state}
+            data-state={state}
             data-link={link}
             data-stamp={stamped ? 'true' : undefined}
+            data-lit={reveal && (state === 'done' || state === 'current') ? 'true' : undefined}
+            data-just={justKey === step.key ? 'true' : undefined}
             aria-current={step.state === 'current' ? 'step' : undefined}
             title={step.title ?? (size === 'xs' && typeof step.label === 'string' ? step.label : undefined)}
           >
@@ -149,7 +227,7 @@ export function DnaStepper({ steps, size = 'md', showLabels = true, ariaLabel, s
                 <span className="dna-stamp">{step.stamp}</span>
               ) : step.icon ? (
                 step.icon
-              ) : step.state === 'done' ? (
+              ) : state === 'done' ? (
                 <CheckGlyph />
               ) : (
                 <span className="dna-num">{i + 1}</span>

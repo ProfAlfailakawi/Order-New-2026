@@ -1,0 +1,179 @@
+import { useEffect, useRef, useState, type RefObject } from 'react';
+
+/* Journey reveal: a one-shot, scroll-triggered intro for DnaStepper.
+   The real step states are always the truth; this hook only decides how many of the
+   already-lit stations are shown so far while the intro plays. */
+
+const SESSION_KEY = 'dna-journey-played';
+const played = new Set<string>();
+
+function readSession(): string[] {
+  try {
+    const raw = window.sessionStorage.getItem(SESSION_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list.filter((x) => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+export function hasJourneyPlayed(playKey?: string): boolean {
+  if (!playKey) return false;
+  if (played.has(playKey)) return true;
+  if (typeof window !== 'undefined' && readSession().includes(playKey)) {
+    played.add(playKey);
+    return true;
+  }
+  return false;
+}
+
+export function markJourneyPlayed(playKey?: string): void {
+  if (!playKey) return;
+  played.add(playKey);
+  try {
+    const list = readSession();
+    if (!list.includes(playKey)) {
+      // Keep the list short: only recent entities matter.
+      window.sessionStorage.setItem(SESSION_KEY, JSON.stringify([...list, playKey].slice(-60)));
+    }
+  } catch {
+    /* storage unavailable: the module-level Set still guards this page load */
+  }
+}
+
+/** Test helper: forget every remembered playKey. */
+export function resetJourneyPlayed(): void {
+  played.clear();
+  try {
+    window.sessionStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** ~0.55-0.75s per station on short rows, capped so the whole intro stays near 4s. */
+export function journeyStepMs(count: number): number {
+  const n = Math.max(1, count);
+  return Math.min(750, Math.max(350, Math.round(4000 / n)));
+}
+
+/** Index+1 of the last station that is really lit (done or current). */
+export function journeyTarget(states: ReadonlyArray<string>): number {
+  let target = 0;
+  states.forEach((s, i) => {
+    if (s === 'done' || s === 'current') target = i + 1;
+  });
+  return target;
+}
+
+/** State shown at index i while the intro has revealed `lit` stations (null = settled). */
+export function journeyDisplayState<T extends string>(state: T, i: number, lit: number | null): T | 'pending' {
+  if (lit === null) return state;
+  if (i < lit) return state;
+  // A returned/blocked station shows as soon as the station before it is lit.
+  if ((state === 'returned' || state === 'blocked') && i <= lit) return state;
+  return 'pending';
+}
+
+function prefersReducedMotion(): boolean {
+  try {
+    return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+  } catch {
+    return false;
+  }
+}
+
+function canArm(enabled: boolean, playKey?: string): boolean {
+  if (!enabled || typeof window === 'undefined') return false;
+  if (typeof IntersectionObserver === 'undefined') return false;
+  if (prefersReducedMotion()) return false;
+  return !hasJourneyPlayed(playKey);
+}
+
+export interface JourneyRevealOptions {
+  /** Number of steps that are really lit (see journeyTarget). */
+  target: number;
+  /** Total step count (used for pacing). */
+  count: number;
+  stepMs?: number;
+  threshold?: number;
+  enabled?: boolean;
+  /** While true the intro waits (stations stay unlit) - e.g. until another animation is done. */
+  hold?: boolean;
+  /** Remember (per tab session) that this entity already played its intro. */
+  playKey?: string;
+}
+
+export interface JourneyReveal<T extends HTMLElement> {
+  ref: RefObject<T | null>;
+  /** Stations revealed so far; null = settled, render the real states. */
+  lit: number | null;
+  /** Index of the station that just lit during an animated intro (kept after it settles). */
+  just: number | null;
+}
+
+export function useJourneyReveal<T extends HTMLElement = HTMLOListElement>({
+  target,
+  count,
+  stepMs,
+  threshold = 0.5,
+  enabled = true,
+  hold = false,
+  playKey,
+}: JourneyRevealOptions): JourneyReveal<T> {
+  const ref = useRef<T | null>(null);
+  const [armed] = useState(() => canArm(enabled, playKey));
+  const [lit, setLit] = useState<number | null>(armed ? 0 : null);
+  const [just, setJust] = useState<number | null>(null);
+  const targetRef = useRef(target);
+  targetRef.current = target;
+  const msRef = useRef(stepMs ?? journeyStepMs(count));
+  msRef.current = stepMs ?? journeyStepMs(count);
+  const litRef = useRef(0);
+
+  useEffect(() => {
+    if (!armed || hold) return;
+    const el = ref.current;
+    if (!el) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
+
+    const tick = (shown: number) => {
+      if (cancelled) return;
+      const goal = targetRef.current;
+      if (shown >= goal) {
+        // Let the last station finish its transition, then hand over to the real states.
+        timer = setTimeout(() => !cancelled && setLit(null), msRef.current);
+        return;
+      }
+      const next = shown + 1;
+      litRef.current = next;
+      setLit(next);
+      setJust(next - 1);
+      timer = setTimeout(() => tick(next), msRef.current);
+    };
+
+    const start = () => {
+      markJourneyPlayed(playKey);
+      timer = setTimeout(() => tick(litRef.current), 220);
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          io.disconnect();
+          start();
+        }
+      },
+      { threshold },
+    );
+    io.observe(el);
+    return () => {
+      cancelled = true;
+      io.disconnect();
+      if (timer) clearTimeout(timer);
+    };
+  }, [armed, hold, playKey, threshold]);
+
+  return { ref, lit, just };
+}
