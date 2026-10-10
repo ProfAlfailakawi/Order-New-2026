@@ -28,7 +28,7 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { cn, normalizePhone, normalizeDigits, formatKuwaitiDate } from "../utils";
 import { redirectToPayment } from "../utils/redirect";
 import OrderFormation from "../components/OrderFormation";
-import { DnaStatusHeader, DnaStepper, type DnaStep } from "../components/dna";
+import { DnaStatusHeader, DnaStepper, dnaSingleCurrent, type DnaStep } from "../components/dna";
 
 interface TrackedOrder {
   id: string;
@@ -1843,7 +1843,7 @@ export default function OrderPage() {
                             {/* Journey intro plays once per order, after the post-payment formation scene (hold). Later live
                                 status changes animate only the step that changed (see DnaStepper reveal). */}
                             <DnaStepper
-                              steps={steps}
+                              steps={dnaSingleCurrent(steps)}
                               size="sm"
                               ariaLabel="مراحل الطلب"
                               className="dna-trk"

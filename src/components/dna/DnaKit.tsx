@@ -117,6 +117,23 @@ const DEFAULT_STATE_TEXT: Record<DnaStepState, string> = {
   blocked: 'متوقفة',
 };
 
+/** Presentation helper: a journey has one active station. Keeps the first `current` and shows any later
+    `current` as `pending` (the status text/data are untouched). Returns the same array when nothing changes. */
+export function dnaSingleCurrent<T extends { state: DnaStepState }>(steps: T[]): T[] {
+  let seen = false;
+  let changed = false;
+  const out = steps.map((s) => {
+    if (s.state !== 'current') return s;
+    if (!seen) {
+      seen = true;
+      return s;
+    }
+    changed = true;
+    return { ...s, state: 'pending' as DnaStepState };
+  });
+  return changed ? out : steps;
+}
+
 export interface DnaStepperProps {
   steps: DnaStep[];
   size?: 'xs' | 'sm' | 'md' | 'lg';
@@ -385,6 +402,12 @@ export function DnaRing({ value, max = 100, size = 52, stroke = 4, tone = 'accen
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const mid = size / 2;
+  // a decrease (e.g. an overpay race corrected) snaps instead of animating the stroke backwards
+  const prevFraction = React.useRef(fraction);
+  const shrank = fraction < prevFraction.current;
+  React.useEffect(() => {
+    prevFraction.current = fraction;
+  }, [fraction]);
   const segVals = (segments || []).filter((v) => Number.isFinite(v) && v > 0);
   let segArcs: Array<{ start: number; len: number }> | null = null;
   if (has && segVals.length >= 2) {
@@ -401,6 +424,7 @@ export function DnaRing({ value, max = 100, size = 52, stroke = 4, tone = 'accen
     <div
       className={cx('dna', 'dna-ring', className)}
       data-dna-tone={tone}
+      data-snap={shrank ? 'true' : undefined}
       style={{ inlineSize: size, blockSize: size }}
       role="img"
       aria-label={ariaLabel}
