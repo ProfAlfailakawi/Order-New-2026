@@ -5342,7 +5342,7 @@ export default function CustomerSite() {
                   </>
                 )}
               </h1>
-              <div className="flex items-center gap-x-1.5 gap-y-1 mt-2 flex-wrap leading-[1.6] min-h-[24px] overflow-visible py-1">
+              <div className="ord-bp-status flex items-center gap-x-1.5 gap-y-1 mt-2 flex-wrap leading-[1.6] min-h-[24px] overflow-visible py-1">
                 <motion.div
                   animate={
                     tannourStatus.pulse
@@ -5373,7 +5373,7 @@ export default function CustomerSite() {
                   aria-expanded={showLegalMeta}
                   aria-controls="legal-meta"
                   aria-label="بيانات السجل التجاري"
-                  className="relative inline-flex items-center justify-center w-6 h-6 text-stone-500 after:absolute after:-inset-2.5 after:content-['']"
+                  className="ord-bp-info relative inline-flex items-center justify-center w-6 h-6 text-stone-500 after:absolute after:-inset-2.5 after:content-['']"
                 >
                   <Info className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />
                 </button>
@@ -8696,7 +8696,7 @@ function CheckoutOverlay({
                       onDragEnd={(e, info) => {
                         if (info.offset.x < -40) onRemove(item.id);
                       }}
-                      className="flex gap-4 p-4 bg-white rounded-3xl border border-stone-100 relative group shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing w-full z-10"
+                      className="ord-bp-cartitem flex gap-4 p-4 bg-white rounded-3xl border border-stone-100 relative group shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing w-full z-10"
                     >
                       <FoodPhoto product={(item.product as any) || item} className="w-16 h-16 shrink-0 rounded-2xl border border-cream-edge self-center" />
                       <div className="flex-grow relative min-w-0">
