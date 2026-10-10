@@ -169,6 +169,8 @@ export function DnaStepper({
   const prevStates = React.useRef<Map<string, { state: DnaStepState; badge: string }> | null>(null);
   const [pulse, setPulse] = React.useState(0);
   const [diffJust, setDiffJust] = React.useState<string | null>(null);
+  // once a later change (or a step back) happens, the intro's last-lit marker must not re-arm a halo
+  const [introDone, setIntroDone] = React.useState(false);
   const badgeText = (b: React.ReactNode) => (typeof b === 'string' || typeof b === 'number' ? String(b) : '');
   // badge is part of the signature so a partial payment (n/m changes while the step stays current) counts as a change
   const signature = steps.map((s) => `${s.key}:${s.state}:${badgeText(s.badge)}`).join('|');
@@ -176,14 +178,24 @@ export function DnaStepper({
     // a different entity (playKey) starts from a clean slate
     prevStates.current = null;
     setDiffJust(null);
+    setIntroDone(false);
   }, [playKey]);
   React.useEffect(() => {
     if (!reveal) return;
     const prev = prevStates.current;
     prevStates.current = new Map(steps.map((s) => [s.key, { state: s.state, badge: badgeText(s.badge) }] as const));
     if (!prev || lit !== null) return;
-    const changed = journeyChangedKey(prev, steps.map((s) => ({ key: s.key, state: s.state, badge: badgeText(s.badge) })));
-    if (changed) {
+    // A step that un-completes (user went back) snaps: no halo for it either.
+    const wentBack = steps.some((s) => {
+      const before = prev.get(s.key)?.state;
+      return (before === 'done' && s.state !== 'done') || (before === 'current' && s.state === 'pending');
+    });
+    const changed = wentBack ? null : journeyChangedKey(prev, steps.map((s) => ({ key: s.key, state: s.state, badge: badgeText(s.badge) })));
+    if (wentBack) {
+      setDiffJust(null);
+      setIntroDone(true);
+    } else if (changed) {
+      setIntroDone(true);
       setDiffJust(changed);
       setPulse((n) => n + 1);
     }
@@ -200,7 +212,7 @@ export function DnaStepper({
       const before = prevNow.get(s.key)?.state;
       return (before === 'done' && s.state !== 'done') || (before === 'current' && s.state === 'pending');
     });
-  const justKey = reveal ? (diffJust ?? (introJust !== null ? steps[introJust]?.key : undefined)) : undefined;
+  const justKey = reveal ? (diffJust ?? (!introDone && introJust !== null ? steps[introJust]?.key : undefined)) : undefined;
 
   const shown: DnaStepState[] = steps.map((s, i) => (reveal ? journeyDisplayState(s.state, i, lit) : s.state));
   return (

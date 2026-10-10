@@ -205,7 +205,8 @@ export function useJourneyReveal<T extends HTMLElement = HTMLOListElement>({
 
   const hasTarget = journeyHasTarget(target);
   useEffect(() => {
-    if (!armed || hold) return;
+    // `hold` only delays the START of an intro; one that already began finishes (never freezes half-lit).
+    if (!armed || (hold && !startedRef.current)) return;
     // Nothing is really lit yet (e.g. data still loading): wait, and arm when a station becomes lit.
     if (!hasTarget) {
       if (startedRef.current) {

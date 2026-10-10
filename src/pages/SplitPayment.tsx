@@ -590,7 +590,9 @@ export default function SplitPayment() {
   }
   if (isNaN(progressPercent)) progressPercent = 0;
   const splitPeople = getSafeSplitPayments(order);
-  const isCancelledQatya = /ملغي|cancel|مرفوض|rejected/i.test(String(order.status || ""));
+  // Same cancelled test the tracking page uses (OrderPage getStatusDisplay): presentation only.
+  const cancelledStatus = String(order.status || "").toLowerCase();
+  const isCancelledQatya = cancelledStatus.includes("ملغي") || cancelledStatus.includes("cancel");
   const isDiwaniyaQatya = isDiwaniyaQatyaOrder(order);
   const paidPeople = splitPeople.filter((p: any) => String(p.status || "").toLowerCase() === "paid");
   const waitingPeople = splitPeople.filter((p: any) => String(p.status || "").toLowerCase() !== "paid");
@@ -768,7 +770,7 @@ export default function SplitPayment() {
                     state: isFullyPaid ? "done" : isCancelledQatya ? "returned" : "current",
                     badge: !isFullyPaid && splitPeople.length > 0 ? `${paidPeople.length}/${splitPeople.length}` : undefined,
                   },
-                  ...(isCancelledQatya && !isFullyPaid ? [] : [{ key: "track", label: "تابع من دفع", state: isFullyPaid ? ("done" as const) : ("pending" as const) }]),
+                  { key: "track", label: "تابع من دفع", state: isFullyPaid ? "done" : "pending" },
                 ]}
               />
             </div>

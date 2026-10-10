@@ -4324,19 +4324,9 @@ body:has(.al-cart-bar) .order-welcome-replay {
 /* Checkout step trail (the old absolutely-positioned text pill is retired) */
 .checkout-wow-header:after{content:none!important;display:none!important}
 .checkout-steps{display:flex;align-items:center;justify-content:center;gap:6px;margin:0;padding:10px 16px;list-style:none;background:var(--color-cream);flex-shrink:0}
-.checkout-step{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#78716c}
-.checkout-step+.checkout-step::before{content:"";width:22px;height:2px;border-radius:2px;background:var(--color-cream-edge);margin-inline-end:4px}
-.checkout-step.is-done::before,.checkout-step.is-current::before{background:var(--color-accent)}
-.checkout-step-dot{width:24px;height:24px;border-radius:999px;display:grid;place-items:center;font-size:12px;font-weight:800;background:#fff;border:1.5px solid var(--color-cream-edge);color:#78716c}
-.checkout-step.is-current{color:var(--color-ink)}
-.checkout-step.is-current .checkout-step-dot{background:var(--color-brand);border-color:var(--color-brand);color:#fff}
-.checkout-step.is-done{color:var(--color-brass-ink)}
-.checkout-step.is-done .checkout-step-dot{background:var(--color-accent);border-color:var(--color-accent)}
-.step-tick{display:block;width:10px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) scale(.6);margin-top:-2px;animation:omlCheck .4s cubic-bezier(.22,1,.36,1) forwards}
 /* DnaStepper-based trail keeps the cream strip; the stepper sizes itself */
 .checkout-steps-dna{display:block;padding:10px 20px 8px}
 .checkout-steps-dna .dna-steps{max-inline-size:340px;margin-inline:auto}
-@media (max-width:360px){.checkout-step-label{font-size:12px}.checkout-step+.checkout-step::before{width:12px}}
 
 /* Qatya ring: warm parchment track instead of cold grey */
 .dna-qatya-main .dna-ringt{stroke:var(--color-cream-edge)}
