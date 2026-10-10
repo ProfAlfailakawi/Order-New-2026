@@ -27,7 +27,7 @@ import confetti from "canvas-confetti";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { RouletteSplit } from "../components/RouletteSplit";
-import { DnaRing, DnaStepper, DnaTimeline } from "../components/dna";
+import { DnaRing, DnaStepper, DnaTimeline, dnaSingleCurrent } from "../components/dna";
 import { MessageWithIcons } from "../components/MessageWithIcons";
 
 const getSafeSplitPayments = (order: any): any[] => {
@@ -762,7 +762,7 @@ export default function SplitPayment() {
                 reveal
                 intro={!isFullyPaid && !isCancelledQatya}
                 playKey={`split:${String(order.id)}`}
-                steps={[
+                steps={dnaSingleCurrent([
                   { key: "share", label: "شارك الرابط", state: splitPeople.length > 0 || paidPeople.length > 0 || isFullyPaid ? "done" : "current" },
                   {
                     key: "pay",
@@ -771,7 +771,7 @@ export default function SplitPayment() {
                     badge: !isFullyPaid && splitPeople.length > 0 ? `${paidPeople.length}/${splitPeople.length}` : undefined,
                   },
                   { key: "track", label: "تابع من دفع", state: isFullyPaid ? "done" : "pending" },
-                ]}
+                ])}
               />
             </div>
 
@@ -883,8 +883,8 @@ export default function SplitPayment() {
             
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: [0, 1.2, 1], rotate: 0 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 13 }}
               className="relative z-10 w-24 h-24 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border-4 border-white/30 shadow-inner"
             >
               <PartyPopper className="w-12 h-12 text-white drop-shadow-lg" />

@@ -117,6 +117,16 @@ const DEFAULT_STATE_TEXT: Record<DnaStepState, string> = {
   blocked: 'متوقفة',
 };
 
+/** Presentation helper: a journey has one active station. Keeps one `current` (the first by default, or the
+    most advanced with `keep: 'last'`) and shows the other `current` stations as `pending` (status text and data
+    are untouched). Returns the same array when nothing changes. */
+export function dnaSingleCurrent<T extends { state: DnaStepState }>(steps: T[], keep: 'first' | 'last' = 'first'): T[] {
+  const idx = steps.map((s, i) => (s.state === 'current' ? i : -1)).filter((i) => i >= 0);
+  if (idx.length < 2) return steps;
+  const kept = keep === 'last' ? idx[idx.length - 1] : idx[0];
+  return steps.map((s, i) => (s.state === 'current' && i !== kept ? { ...s, state: 'pending' as DnaStepState } : s));
+}
+
 export interface DnaStepperProps {
   steps: DnaStep[];
   size?: 'xs' | 'sm' | 'md' | 'lg';
@@ -385,6 +395,12 @@ export function DnaRing({ value, max = 100, size = 52, stroke = 4, tone = 'accen
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const mid = size / 2;
+  // a decrease (e.g. an overpay race corrected) snaps instead of animating the stroke backwards
+  const prevFraction = React.useRef(fraction);
+  const shrank = fraction < prevFraction.current;
+  React.useEffect(() => {
+    prevFraction.current = fraction;
+  }, [fraction]);
   const segVals = (segments || []).filter((v) => Number.isFinite(v) && v > 0);
   let segArcs: Array<{ start: number; len: number }> | null = null;
   if (has && segVals.length >= 2) {
@@ -401,6 +417,7 @@ export function DnaRing({ value, max = 100, size = 52, stroke = 4, tone = 'accen
     <div
       className={cx('dna', 'dna-ring', className)}
       data-dna-tone={tone}
+      data-snap={shrank ? 'true' : undefined}
       style={{ inlineSize: size, blockSize: size }}
       role="img"
       aria-label={ariaLabel}
