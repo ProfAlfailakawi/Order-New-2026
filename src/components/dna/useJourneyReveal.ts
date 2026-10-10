@@ -66,6 +66,11 @@ export function journeyTarget(states: ReadonlyArray<string>): number {
   return target;
 }
 
+/** The intro can only start once at least one station is really lit. */
+export function journeyHasTarget(target: number): boolean {
+  return target > 0;
+}
+
 /** State shown at index i while the intro has revealed `lit` stations (null = settled). */
 export function journeyDisplayState<T extends string>(state: T, i: number, lit: number | null): T | 'pending' {
   if (lit === null) return state;
@@ -93,6 +98,21 @@ export function journeyChangedKey(
   }
   return changed;
 }
+
+/** Threshold that the element can actually reach: a stepper taller than ~the viewport never hits 0.5. */
+export function journeyEffectiveThreshold(threshold: number, elementHeight: number, viewportHeight: number): number {
+  if (!(elementHeight > 0) || !(viewportHeight > 0)) return threshold;
+  return Math.max(0.05, Math.min(threshold, (0.9 * viewportHeight) / elementHeight));
+}
+
+/** isIntersecting is true with 1px visible; require the (attainable) ratio before starting. */
+export function journeyShouldStart(isIntersecting: boolean, ratio: number, wanted: number): boolean {
+  return isIntersecting && ratio >= wanted - 0.01;
+}
+
+/** Longest the real state may stay hidden waiting to start (ms): never hide the truth indefinitely. */
+export const JOURNEY_FAILSAFE_MS = 8000;
+export const JOURNEY_HOLD_FAILSAFE_MS = 15000;
 
 function prefersReducedMotion(): boolean {
   try {
@@ -161,8 +181,42 @@ export function useJourneyReveal<T extends HTMLElement = HTMLOListElement>({
   const msRef = useRef(stepMs ?? journeyStepMs(count));
   msRef.current = stepMs ?? journeyStepMs(count);
 
+  // Fail-safe: if the intro never starts (observer never fires, hold never released), show the real state.
+  const startedRef = useRef(false);
+  const settledRef = useRef(false);
+  useEffect(() => {
+    startedRef.current = false;
+    settledRef.current = false;
+  }, [playKey]);
+  useEffect(() => {
+    if (!armed) return;
+    const id = setTimeout(
+      () => {
+        if (!startedRef.current) {
+          startedRef.current = true;
+          settledRef.current = true;
+          setLit(null);
+        }
+      },
+      hold ? JOURNEY_HOLD_FAILSAFE_MS : JOURNEY_FAILSAFE_MS,
+    );
+    return () => clearTimeout(id);
+  }, [armed, hold, playKey]);
+
+  const hasTarget = journeyHasTarget(target);
   useEffect(() => {
     if (!armed || hold) return;
+    // Nothing is really lit yet (e.g. data still loading): wait, and arm when a station becomes lit.
+    if (!hasTarget) {
+      if (startedRef.current) {
+        settledRef.current = true;
+        setLit(null);
+      }
+      return;
+    }
+    // An intro that already ran for this key never restarts. One that is still running (its timers were
+    // cancelled by a dependency change) resumes from where it was, so lit always ends at null.
+    if (startedRef.current && settledRef.current) return;
     const el = ref.current;
     if (!el) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -173,7 +227,11 @@ export function useJourneyReveal<T extends HTMLElement = HTMLOListElement>({
       const goal = targetRef.current;
       if (shown >= goal) {
         // Let the last station finish its transition, then hand over to the real states.
-        timer = setTimeout(() => !cancelled && setLit(null), msRef.current);
+        timer = setTimeout(() => {
+          if (cancelled) return;
+          settledRef.current = true;
+          setLit(null);
+        }, msRef.current);
         return;
       }
       const next = shown + 1;
@@ -184,18 +242,28 @@ export function useJourneyReveal<T extends HTMLElement = HTMLOListElement>({
     };
 
     const start = () => {
+      startedRef.current = true;
       markJourneyPlayed(playKey);
       timer = setTimeout(() => tick(litRef.current), 220);
     };
 
+    if (startedRef.current) {
+      timer = setTimeout(() => tick(litRef.current), msRef.current);
+      return () => {
+        cancelled = true;
+        if (timer) clearTimeout(timer);
+      };
+    }
+
+    const wanted = journeyEffectiveThreshold(threshold, el.getBoundingClientRect().height, window.innerHeight);
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
+        if (entries.some((e) => journeyShouldStart(e.isIntersecting, e.intersectionRatio, wanted))) {
           io.disconnect();
           start();
         }
       },
-      { threshold },
+      { threshold: wanted },
     );
     io.observe(el);
     return () => {
@@ -203,7 +271,7 @@ export function useJourneyReveal<T extends HTMLElement = HTMLOListElement>({
       io.disconnect();
       if (timer) clearTimeout(timer);
     };
-  }, [armed, hold, playKey, threshold]);
+  }, [armed, hold, playKey, threshold, hasTarget]);
 
   return { ref, lit, just };
 }

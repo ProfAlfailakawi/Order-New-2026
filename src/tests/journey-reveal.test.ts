@@ -83,3 +83,34 @@ describe('journey change detection and entity switching', () => {
     expect(hasJourneyPlayed('order:B')).toBe(false);
   });
 });
+
+describe('journey reveal never hides the real state forever', () => {
+  it('uses an attainable threshold for tall elements, with a floor', async () => {
+    const { journeyEffectiveThreshold, JOURNEY_FAILSAFE_MS, JOURNEY_HOLD_FAILSAFE_MS } = await import('../components/dna/useJourneyReveal');
+    expect(journeyEffectiveThreshold(0.5, 100, 800)).toBe(0.5);
+    expect(journeyEffectiveThreshold(0.5, 1600, 800)).toBeCloseTo(0.45);
+    expect(journeyEffectiveThreshold(0.5, 4000, 500)).toBeCloseTo(0.1125);
+    expect(journeyEffectiveThreshold(0.5, 100000, 500)).toBe(0.05);
+    expect(journeyEffectiveThreshold(0.5, 0, 800)).toBe(0.5);
+    expect(JOURNEY_FAILSAFE_MS).toBeGreaterThan(0);
+    expect(JOURNEY_HOLD_FAILSAFE_MS).toBeGreaterThanOrEqual(JOURNEY_FAILSAFE_MS);
+  });
+});
+
+describe('journey arming on async data', () => {
+  it('waits while nothing is lit and arms when a station becomes lit', async () => {
+    const { journeyHasTarget, journeyTarget } = await import('../components/dna/useJourneyReveal');
+    expect(journeyHasTarget(journeyTarget(['pending', 'pending']))).toBe(false);
+    expect(journeyHasTarget(journeyTarget(['done', 'pending']))).toBe(true);
+  });
+});
+
+describe('journey observer start rule', () => {
+  it('does not start on a 1px intersection below the wanted ratio', async () => {
+    const { journeyShouldStart } = await import('../components/dna/useJourneyReveal');
+    expect(journeyShouldStart(true, 0.01, 0.5)).toBe(false);
+    expect(journeyShouldStart(false, 1, 0.5)).toBe(false);
+    expect(journeyShouldStart(true, 0.5, 0.5)).toBe(true);
+    expect(journeyShouldStart(true, 0.12, 0.1125)).toBe(true);
+  });
+});
