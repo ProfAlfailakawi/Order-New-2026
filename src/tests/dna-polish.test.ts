@@ -75,3 +75,47 @@ describe('spring keyframes (motion allows only two keyframes with a spring)', ()
     expect(bad).toEqual([]);
   });
 });
+
+import { trackPaymentDone } from '../utils/trackStepState';
+
+describe('tracking stepper: preparing / on-the-way are past payment', () => {
+  const base = { isPaid: false, isPreparing: false, isOnTheWay: false, isCancelled: false, isFailed: false };
+  // mirrors the steps array in OrderPage (created, payment, paid, [preparing], [on-the-way], delivered)
+  const build = (f: Partial<typeof base>) => {
+    const x = { ...base, ...f };
+    const payDone = trackPaymentDone(x);
+    const steps: DnaStep[] = [
+      { key: 'created', label: 'c', state: 'done' },
+      { key: 'payment', label: 'p', state: payDone ? 'done' : x.isCancelled || x.isFailed ? 'returned' : 'current' },
+      { key: 'paid', label: 'pd', state: payDone ? 'done' : 'pending' },
+    ];
+    if (x.isPreparing) steps.push({ key: 'preparing', label: 'pr', state: 'current' });
+    if (x.isOnTheWay) steps.push({ key: 'otw', label: 'o', state: 'current' });
+    steps.push({ key: 'delivered', label: 'd', state: 'pending' });
+    return dnaSingleCurrent(steps, 'last');
+  };
+  const st = (s: DnaStep[]) => s.map((x) => x.state);
+
+  it('preparing: done, done, done, current, pending (payment and paid read as done)', () => {
+    expect(st(build({ isPreparing: true }))).toEqual(['done', 'done', 'done', 'current', 'pending']);
+  });
+  it('on the way (already paid): done, done, done, current, pending', () => {
+    expect(st(build({ isPaid: true, isOnTheWay: true }))).toEqual(['done', 'done', 'done', 'current', 'pending']);
+    expect(st(build({ isOnTheWay: true }))).toEqual(['done', 'done', 'done', 'current', 'pending']);
+  });
+  it('plain pending order unchanged: payment current', () => {
+    expect(st(build({}))).toEqual(['done', 'current', 'pending', 'pending']);
+  });
+  it('cancelled / failed unchanged (payment returned, never forced to done)', () => {
+    expect(trackPaymentDone({ ...base, isCancelled: true, isPreparing: true })).toBe(false);
+    expect(trackPaymentDone({ ...base, isFailed: true, isOnTheWay: true })).toBe(false);
+    expect(trackPaymentDone({ ...base, isCancelled: true, isPaid: true })).toBe(true);
+    expect(st(build({ isCancelled: true }))).toEqual(['done', 'returned', 'pending', 'pending']);
+  });
+  it('exactly one aria-current in every case', () => {
+    for (const f of [{ isPreparing: true }, { isOnTheWay: true }, { isPreparing: true, isOnTheWay: true }, {}]) {
+      act(() => root.render(React.createElement(DnaStepper, { steps: build(f), ariaLabel: 't' } as any)));
+      expect(host.querySelectorAll('[aria-current="step"]').length).toBe(1);
+    }
+  });
+});

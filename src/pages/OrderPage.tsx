@@ -28,6 +28,7 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { cn, normalizePhone, normalizeDigits, formatKuwaitiDate } from "../utils";
 import { redirectToPayment } from "../utils/redirect";
 import OrderFormation from "../components/OrderFormation";
+import { trackPaymentDone } from "../utils/trackStepState";
 import { DnaStatusHeader, DnaStepper, dnaSingleCurrent, type DnaStep } from "../components/dna";
 
 interface TrackedOrder {
@@ -1787,15 +1788,16 @@ export default function OrderPage() {
                       const note = noteRules.find((r) => r.when) || { Icon: Clock, line: "استلمنا طلبك، بانتظار الدفع عشان نبلش التجهيز." };
                       const isPreparing = statusText.includes("تجهيز");
                       const isOnTheWay = rawStatusText.includes("جاري التوصيل");
+                      const payDone = trackPaymentDone({ isPaid, isPreparing, isOnTheWay, isCancelled, isFailed });
                       const steps: DnaStep[] = [
                         { key: "created", label: "تم إنشاء الطلب", state: "done" },
                         {
                           key: "payment",
                           label: "الدفع",
-                          state: isPaid ? "done" : isCancelled || isFailed ? "returned" : "current",
+                          state: payDone ? "done" : isCancelled || isFailed ? "returned" : "current",
                           badge: isQatya && splits.length > 0 ? `${splitPaid}/${splits.length}` : undefined,
                         },
-                        { key: "paid", label: "تم الدفع بنجاح", state: isPaid ? "done" : "pending" },
+                        { key: "paid", label: "تم الدفع بنجاح", state: payDone ? "done" : "pending" },
                       ];
                       // Prep / on-the-way appear only when the order's own status says so (no new states).
                       if (isPreparing) steps.push({ key: "preparing", label: "التجهيز", state: isDelivered ? "done" : "current", icon: isDelivered ? undefined : (<span className="dna-trk-ico dna-trk-prep"><Package aria-hidden="true" /><i /><i /><i /></span>) });
