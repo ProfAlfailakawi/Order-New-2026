@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import {MotionConfig} from 'motion/react';
 import App from './App.tsx';
 import './index.css';
+import './beauty-pass.css';
 import {installAppUpdate} from './lib/app-update';
 
 // التحديث الذاتي الصامت: بصمة الإصدار، منارتها، ثم التحديث والتصعيد عند اللزوم.

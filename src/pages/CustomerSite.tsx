@@ -5046,7 +5046,7 @@ export default function CustomerSite() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[10000] flex flex-col items-center justify-center bg-cream overflow-hidden"
+            className="ord-bp-theatre fixed inset-0 z-[10000] flex flex-col items-center justify-center bg-cream overflow-hidden"
           >
             {/* Elegant Background Patterns / Sadu aesthetics */}
             <div className="absolute inset-0 bg-radial-gradient from-transparent to-cream-edge/40 opacity-80 pointer-events-none" />
@@ -5063,7 +5063,7 @@ export default function CustomerSite() {
                 transition={{ duration: 0.8, cubicBezier: [0.16, 1, 0.3, 1] }}
                 className="mb-8 relative"
               >
-                <div className="w-24 h-24 rounded-full bg-white shadow-xl flex items-center justify-center border-2 border-accent p-2 mx-auto">
+                <div className="ord-bp-logo w-24 h-24 rounded-full bg-white shadow-xl flex items-center justify-center border-2 border-accent p-2 mx-auto">
                   <img
                     src={settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO}
                     alt="شعار المتجر"
