@@ -54,19 +54,29 @@
   pointer-events: none;
   z-index: 1;
 }
-.order-detail-card {
-  background-image: linear-gradient(90deg, transparent, var(--ord-bp-gold) 30%, var(--ord-bp-gold) 70%, transparent);
-  background-repeat: no-repeat;
-  background-size: 100% 3px;
-  background-position: top;
+.order-detail-card { position: relative; }
+.order-detail-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline: 28px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, transparent, var(--ord-bp-gold) 30%, var(--ord-bp-gold) 70%, transparent);
+  pointer-events: none;
 }
 
 /* ---- cart (checkout sheet): the empty middle gets a soft strip, item cards a warm gradient ---- */
-.checkout-wow-body {
-  background-image: var(--ord-bp-sadu-soft);
-  background-repeat: repeat-x;
-  background-position: center bottom;
-  background-size: 48px 24px;
+/* the body's own background is !important upstream, so the strip is a sticky pseudo-element at its foot */
+.checkout-wow-body::after {
+  content: "";
+  display: block;
+  position: sticky;
+  bottom: 0;
+  height: 24px;
+  flex: none;
+  background: var(--ord-bp-sadu-soft) repeat-x center / 48px 24px;
+  pointer-events: none;
 }
 .ord-bp-cartitem { background-image: linear-gradient(135deg, #fff, #fbf7ee); }
 
