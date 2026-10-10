@@ -1,0 +1,31 @@
+/* Beauty pass: the first-visit welcome stops being a bare cream page.
+   Presentation only; keyed to dedicated ord-bp-* classes. Motion is
+   opacity/transform inside prefers-reduced-motion: no-preference (no blur). */
+.ord-bp-theatre {
+  --bp-sadu: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'%3E%3Cpath d='M0 12 12 0 24 12 12 24Z' fill='%23c3192f' fill-opacity='.85'/%3E%3Cpath d='M12 12 18 6 24 12 18 18Z' fill='%23f4c95d'/%3E%3Cpath d='M24 12 36 0 48 12 36 24Z' fill='%230f3d1f' fill-opacity='.85'/%3E%3Cpath d='M36 12 42 6 48 12 42 18Z' fill='%23f4c95d'/%3E%3C/svg%3E");
+}
+.ord-bp-theatre::before,
+.ord-bp-theatre::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: 24px;
+  background: var(--bp-sadu) repeat-x center / 48px 24px;
+  opacity: 0.9;
+  pointer-events: none;
+}
+.ord-bp-theatre::before { top: 0; }
+.ord-bp-theatre::after { bottom: 0; }
+.ord-bp-logo {
+  box-shadow: 0 0 0 8px rgba(212, 175, 55, 0.12), 0 0 0 9px rgba(212, 175, 55, 0.35), 0 24px 40px -18px rgba(15, 61, 31, 0.5) !important;
+}
+.ord-bp-theatre h1 {
+  font-variant-numeric: lining-nums;
+  text-wrap: balance;
+}
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes ordBpBand { from { opacity: 0; transform: translateY(-8px); } to { opacity: 0.9; transform: none; } }
+  @keyframes ordBpBandB { from { opacity: 0; transform: translateY(8px); } to { opacity: 0.9; transform: none; } }
+  .ord-bp-theatre::before { animation: ordBpBand 0.7s 0.1s cubic-bezier(0.22, 0.78, 0.24, 1) backwards; }
+  .ord-bp-theatre::after { animation: ordBpBandB 0.7s 0.1s cubic-bezier(0.22, 0.78, 0.24, 1) backwards; }
+}
