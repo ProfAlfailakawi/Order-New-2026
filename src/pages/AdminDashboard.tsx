@@ -2094,7 +2094,7 @@ function StatStrip({ revenue, revenueTrend, revenueSeries, newCount, newTrend, n
   };
   const total = Number(newCount) || 0;
   const paid = Number(paidCount) || 0;
-  const tile = "min-w-0 flex flex-col gap-2 md:gap-3 p-3 md:px-6 md:py-5 rounded-[20px] md:rounded-3xl border border-stone-100 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]";
+  const tile = "ord-bp-admin-tile min-w-0 flex flex-col gap-2 md:gap-3 p-3 md:px-6 md:py-5 rounded-[20px] md:rounded-3xl border border-stone-100 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]";
   const head = "flex items-center gap-1.5 md:gap-2 text-stone-500 text-[11px] md:text-sm font-bold leading-tight";
   const chip = (t: any, cls: string) => t ? <span className={`text-[11px] md:text-xs font-bold whitespace-nowrap ${cls}`}>{t}</span> : <span className={`text-[11px] md:text-xs font-bold ${cls}`}>—</span>;
   return (
@@ -2103,7 +2103,7 @@ function StatStrip({ revenue, revenueTrend, revenueSeries, newCount, newTrend, n
         <div className={head}><TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4 text-accent shrink-0" aria-hidden="true" /><span>الدخل التراكمي</span></div>
         <div className="flex items-baseline gap-1 min-w-0" title={`${revenue} د.ك`}>
           <b className="text-[22px] md:text-[38px] font-black tracking-tighter leading-none text-brand truncate">{revShort}</b>
-          <small className="text-[11px] md:text-sm font-bold text-stone-400 shrink-0">د.ك</small>
+          <small className="text-[11px] md:text-sm font-bold text-stone-500 shrink-0">د.ك</small>
         </div>
         <Bars series={revenueSeries} color="var(--color-accent)" label="الدخل آخر 7 أيام" />
         {chip(revenueTrend, "text-accent")}

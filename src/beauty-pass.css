@@ -24,8 +24,70 @@
   text-wrap: balance;
 }
 @media (prefers-reduced-motion: no-preference) {
-  @keyframes ordBpBand { from { opacity: 0; transform: translateY(-8px); } to { opacity: 0.9; transform: none; } }
-  @keyframes ordBpBandB { from { opacity: 0; transform: translateY(8px); } to { opacity: 0.9; transform: none; } }
+  @keyframes ordBpBand { from { opacity: 0; transform: translateY(-8px); } }
+  @keyframes ordBpBandB { from { opacity: 0; transform: translateY(8px); } }
   .ord-bp-theatre::before { animation: ordBpBand 0.7s 0.1s cubic-bezier(0.22, 0.78, 0.24, 1) backwards; }
   .ord-bp-theatre::after { animation: ordBpBandB 0.7s 0.1s cubic-bezier(0.22, 0.78, 0.24, 1) backwards; }
+}
+
+/* ---- shared soft sadu strip + gold hairline tokens ---- */
+:root {
+  --ord-bp-gold: #d4af37;
+  --ord-bp-sadu-soft: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'%3E%3Cpath d='M0 12 12 0 24 12 12 24Z' fill='%23c3192f' fill-opacity='.22'/%3E%3Cpath d='M12 12 18 6 24 12 18 18Z' fill='%23f4c95d' fill-opacity='.5'/%3E%3Cpath d='M24 12 36 0 48 12 36 24Z' fill='%230f3d1f' fill-opacity='.2'/%3E%3Cpath d='M36 12 42 6 48 12 42 18Z' fill='%23f4c95d' fill-opacity='.5'/%3E%3C/svg%3E");
+}
+
+/* ---- menu header: the info button keeps its 44px hit area but no longer makes the status line 52px tall ---- */
+.ord-bp-status .ord-bp-info { margin-block: -10px; }
+
+/* ---- track page: warm wash instead of flat white, a soft sadu strip at the foot, gold hairline on the cards ---- */
+.track-signature {
+  background-image: radial-gradient(120% 420px at 50% -80px, rgba(212, 175, 55, 0.16), transparent 70%);
+  background-repeat: no-repeat;
+}
+.track-signature::after {
+  content: "";
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  height: 24px;
+  background: var(--ord-bp-sadu-soft) repeat-x center / 48px 24px;
+  pointer-events: none;
+  z-index: 1;
+}
+.order-detail-card {
+  background-image: linear-gradient(90deg, transparent, var(--ord-bp-gold) 30%, var(--ord-bp-gold) 70%, transparent);
+  background-repeat: no-repeat;
+  background-size: 100% 3px;
+  background-position: top;
+}
+
+/* ---- cart (checkout sheet): the empty middle gets a soft strip, item cards a warm gradient ---- */
+.checkout-wow-body {
+  background-image: var(--ord-bp-sadu-soft);
+  background-repeat: repeat-x;
+  background-position: center bottom;
+  background-size: 48px 24px;
+}
+.ord-bp-cartitem { background-image: linear-gradient(135deg, #fff, #fbf7ee); }
+
+/* ---- admin stat tiles: warm gradient + a brand edge, display numerals ---- */
+.ord-bp-admin-tile {
+  position: relative;
+  background-image: linear-gradient(160deg, #fff, #fbf8f1);
+}
+.ord-bp-admin-tile::before {
+  content: "";
+  position: absolute;
+  inset-block: 16px;
+  inset-inline-end: 0;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(var(--ord-bp-gold), #0f3d1f);
+}
+.ord-bp-admin-tile b { font-variant-numeric: lining-nums tabular-nums; }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes ordBpRise { from { opacity: 0; transform: translateY(10px); } }
+  .ord-bp-admin-tile { animation: ordBpRise 0.5s cubic-bezier(0.22, 0.78, 0.24, 1) backwards; }
+  .order-detail-card { animation: ordBpRise 0.5s cubic-bezier(0.22, 0.78, 0.24, 1) backwards; }
 }
