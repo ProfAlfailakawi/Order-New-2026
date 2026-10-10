@@ -1059,6 +1059,9 @@ button.dna-hubn:focus-visible .dna-hubt { transform: translateY(-2px); }
   background: color-mix(in srgb, var(--journey-fill) 16%, var(--dna-surface));
   color: var(--dna-ink);
   box-shadow: inset 0 0 0 2px var(--journey-fill), 0 0 0 4px color-mix(in srgb, var(--journey-fill) 14%, transparent);
+  animation: none; /* static ring; the one-shot halo below plays only for the station that just lit */
+}
+.dna-steps[data-journey] .dna-stepi[data-just][data-state='current'] .dna-node {
   animation: dna-journey-halo-cur 1.5s var(--dna-ease) 1;
 }
 /* the last-lit station that is not "current" (e.g. a finished journey) gets the same single ring */
@@ -1075,7 +1078,7 @@ button.dna-hubn:focus-visible .dna-hubt { transform: translateY(-2px); }
   100% { box-shadow: inset 0 0 0 2px var(--journey-fill), 0 0 0 4px color-mix(in srgb, var(--journey-fill) 14%, transparent); }
 }
 /* a change that keeps the same state (e.g. n/m badge) restarts the one-shot ring by swapping to an identical keyframe */
-.dna-steps[data-journey] .dna-stepi[data-pulse='1'][data-state='current'] .dna-node { animation-name: dna-journey-halo-cur-b; }
+.dna-steps[data-journey] .dna-stepi[data-pulse='1'][data-just][data-state='current'] .dna-node { animation-name: dna-journey-halo-cur-b; }
 .dna-steps[data-journey] .dna-stepi[data-pulse='1'][data-just][data-state='done'] .dna-node { animation-name: dna-journey-halo-b; }
 @keyframes dna-journey-halo-b {
   0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--journey-fill) 40%, transparent); }
