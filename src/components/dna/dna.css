@@ -1074,6 +1074,18 @@ button.dna-hubn:focus-visible .dna-hubt { transform: translateY(-2px); }
   60% { box-shadow: inset 0 0 0 2px var(--journey-fill), 0 0 0 9px color-mix(in srgb, var(--journey-fill) 0%, transparent); }
   100% { box-shadow: inset 0 0 0 2px var(--journey-fill), 0 0 0 4px color-mix(in srgb, var(--journey-fill) 14%, transparent); }
 }
+/* a change that keeps the same state (e.g. n/m badge) restarts the one-shot ring by swapping to an identical keyframe */
+.dna-steps[data-journey] .dna-stepi[data-pulse='1'][data-state='current'] .dna-node { animation-name: dna-journey-halo-cur-b; }
+.dna-steps[data-journey] .dna-stepi[data-pulse='1'][data-just][data-state='done'] .dna-node { animation-name: dna-journey-halo-b; }
+@keyframes dna-journey-halo-b {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--journey-fill) 40%, transparent); }
+  100% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--journey-fill) 0%, transparent); }
+}
+@keyframes dna-journey-halo-cur-b {
+  0% { box-shadow: inset 0 0 0 2px var(--journey-fill), 0 0 0 0 color-mix(in srgb, var(--journey-fill) 40%, transparent); }
+  60% { box-shadow: inset 0 0 0 2px var(--journey-fill), 0 0 0 9px color-mix(in srgb, var(--journey-fill) 0%, transparent); }
+  100% { box-shadow: inset 0 0 0 2px var(--journey-fill), 0 0 0 4px color-mix(in srgb, var(--journey-fill) 14%, transparent); }
+}
 /* labels darken as stations complete */
 .dna-steps[data-journey] .dna-lbl {
   transition: color 0.4s var(--dna-ease), opacity 0.4s var(--dna-ease);

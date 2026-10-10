@@ -6,7 +6,7 @@
  */
 import * as React from 'react';
 import './dna.css';
-import { journeyDisplayState, journeyTarget, useJourneyReveal } from './useJourneyReveal';
+import { journeyChangedKey, journeyDisplayState, journeyTarget, useJourneyReveal } from './useJourneyReveal';
 
 export type DnaTone =
   | 'accent'
@@ -166,22 +166,30 @@ export function DnaStepper({
   });
 
   // After the intro, remember the last step that really changed so only it gets the one-shot halo.
-  const prevStates = React.useRef<Map<string, DnaStepState> | null>(null);
+  const prevStates = React.useRef<Map<string, { state: DnaStepState; badge: string }> | null>(null);
+  const [pulse, setPulse] = React.useState(0);
   const [diffJust, setDiffJust] = React.useState<string | null>(null);
-  const signature = steps.map((s) => `${s.key}:${s.state}`).join('|');
+  const badgeText = (b: React.ReactNode) => (typeof b === 'string' || typeof b === 'number' ? String(b) : '');
+  // badge is part of the signature so a partial payment (n/m changes while the step stays current) counts as a change
+  const signature = steps.map((s) => `${s.key}:${s.state}:${badgeText(s.badge)}`).join('|');
+  React.useEffect(() => {
+    // a different entity (playKey) starts from a clean slate
+    prevStates.current = null;
+    setDiffJust(null);
+  }, [playKey]);
   React.useEffect(() => {
     if (!reveal) return;
     const prev = prevStates.current;
-    prevStates.current = new Map(steps.map((s) => [s.key, s.state] as const));
+    prevStates.current = new Map(steps.map((s) => [s.key, { state: s.state, badge: badgeText(s.badge) }] as const));
     if (!prev || lit !== null) return;
-    let changed: string | null = null;
-    for (const s of steps) {
-      if ((s.state === 'done' || s.state === 'current') && prev.get(s.key) !== s.state) changed = s.key;
+    const changed = journeyChangedKey(prev, steps.map((s) => ({ key: s.key, state: s.state, badge: badgeText(s.badge) })));
+    if (changed) {
+      setDiffJust(changed);
+      setPulse((n) => n + 1);
     }
-    if (changed) setDiffJust(changed);
     // steps is covered by signature
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signature, lit, reveal]);
+  }, [signature, lit, reveal, playKey]);
   // Going backwards (a step un-completes) just snaps: no reverse animation.
   const prevNow = prevStates.current;
   const regressed =
@@ -189,7 +197,7 @@ export function DnaStepper({
     lit === null &&
     prevNow !== null &&
     steps.some((s) => {
-      const before = prevNow.get(s.key);
+      const before = prevNow.get(s.key)?.state;
       return (before === 'done' && s.state !== 'done') || (before === 'current' && s.state === 'pending');
     });
   const justKey = reveal ? (diffJust ?? (introJust !== null ? steps[introJust]?.key : undefined)) : undefined;
@@ -219,6 +227,7 @@ export function DnaStepper({
             data-stamp={stamped ? 'true' : undefined}
             data-lit={reveal && (state === 'done' || state === 'current') ? 'true' : undefined}
             data-just={justKey === step.key ? 'true' : undefined}
+            data-pulse={justKey === step.key && diffJust === step.key ? pulse % 2 : undefined}
             aria-current={step.state === 'current' ? 'step' : undefined}
             title={step.title ?? (size === 'xs' && typeof step.label === 'string' ? step.label : undefined)}
           >

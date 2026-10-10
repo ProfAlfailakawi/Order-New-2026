@@ -75,6 +75,25 @@ export function journeyDisplayState<T extends string>(state: T, i: number, lit: 
   return 'pending';
 }
 
+export interface JourneySnap {
+  state: string;
+  badge: string;
+}
+
+/** Key of the last lit station whose state or badge differs from the previous snapshot (null = no change). */
+export function journeyChangedKey(
+  prev: ReadonlyMap<string, JourneySnap>,
+  next: ReadonlyArray<{ key: string; state: string; badge: string }>,
+): string | null {
+  let changed: string | null = null;
+  for (const s of next) {
+    if (s.state !== 'done' && s.state !== 'current') continue;
+    const before = prev.get(s.key);
+    if (before?.state !== s.state || before?.badge !== s.badge) changed = s.key;
+  }
+  return changed;
+}
+
 function prefersReducedMotion(): boolean {
   try {
     return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -122,14 +141,25 @@ export function useJourneyReveal<T extends HTMLElement = HTMLOListElement>({
   playKey,
 }: JourneyRevealOptions): JourneyReveal<T> {
   const ref = useRef<T | null>(null);
-  const [armed] = useState(() => canArm(enabled, playKey));
+  const [armed, setArmed] = useState(() => canArm(enabled, playKey));
   const [lit, setLit] = useState<number | null>(armed ? 0 : null);
   const [just, setJust] = useState<number | null>(null);
+  const [seenKey, setSeenKey] = useState(playKey);
+  const litRef = useRef(0);
+  // A mounted stepper can switch entity: re-derive the intro for the new playKey instead of
+  // inheriting the previous entity's armed/lit state (play-once-per-key still applies).
+  if (seenKey !== playKey) {
+    const nextArmed = canArm(enabled, playKey);
+    setSeenKey(playKey);
+    setArmed(nextArmed);
+    setLit(nextArmed ? 0 : null);
+    setJust(null);
+    litRef.current = 0;
+  }
   const targetRef = useRef(target);
   targetRef.current = target;
   const msRef = useRef(stepMs ?? journeyStepMs(count));
   msRef.current = stepMs ?? journeyStepMs(count);
-  const litRef = useRef(0);
 
   useEffect(() => {
     if (!armed || hold) return;

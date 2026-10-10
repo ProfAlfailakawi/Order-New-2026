@@ -46,3 +46,40 @@ describe('journey reveal helpers', () => {
     expect(hasJourneyPlayed(undefined)).toBe(false);
   });
 });
+
+describe('journey change detection and entity switching', () => {
+  beforeEach(() => resetJourneyPlayed());
+
+  it('a badge-only change on a current step counts as a change (partial payment)', async () => {
+    const { journeyChangedKey } = await import('../components/dna/useJourneyReveal');
+    const prev = new Map([
+      ['share', { state: 'done', badge: '' }],
+      ['pay', { state: 'current', badge: '1/5' }],
+      ['track', { state: 'pending', badge: '' }],
+    ]);
+    const same = [
+      { key: 'share', state: 'done', badge: '' },
+      { key: 'pay', state: 'current', badge: '1/5' },
+      { key: 'track', state: 'pending', badge: '' },
+    ];
+    expect(journeyChangedKey(prev, same)).toBeNull();
+    const paid = same.map((s) => (s.key === 'pay' ? { ...s, badge: '2/5' } : s));
+    expect(journeyChangedKey(prev, paid)).toBe('pay');
+  });
+
+  it('only lit stations count and only the changed one is reported', async () => {
+    const { journeyChangedKey } = await import('../components/dna/useJourneyReveal');
+    const prev = new Map([
+      ['a', { state: 'done', badge: '' }],
+      ['b', { state: 'current', badge: '' }],
+    ]);
+    expect(journeyChangedKey(prev, [{ key: 'a', state: 'done', badge: '' }, { key: 'b', state: 'done', badge: '' }])).toBe('b');
+    expect(journeyChangedKey(prev, [{ key: 'a', state: 'done', badge: '' }, { key: 'b', state: 'pending', badge: '' }])).toBeNull();
+  });
+
+  it('play-once memory is per key, so switching entity can still play the new one', () => {
+    markJourneyPlayed('order:A');
+    expect(hasJourneyPlayed('order:A')).toBe(true);
+    expect(hasJourneyPlayed('order:B')).toBe(false);
+  });
+});
