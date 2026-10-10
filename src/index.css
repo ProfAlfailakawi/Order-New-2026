@@ -4333,6 +4333,9 @@ body:has(.al-cart-bar) .order-welcome-replay {
 .checkout-step.is-done{color:var(--color-brass-ink)}
 .checkout-step.is-done .checkout-step-dot{background:var(--color-accent);border-color:var(--color-accent)}
 .step-tick{display:block;width:10px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) scale(.6);margin-top:-2px;animation:omlCheck .4s cubic-bezier(.22,1,.36,1) forwards}
+/* DnaStepper-based trail keeps the cream strip; the stepper sizes itself */
+.checkout-steps-dna{display:block;padding:10px 20px 8px}
+.checkout-steps-dna .dna-steps{max-inline-size:340px;margin-inline:auto}
 @media (max-width:360px){.checkout-step-label{font-size:12px}.checkout-step+.checkout-step::before{width:12px}}
 
 /* Qatya ring: warm parchment track instead of cold grey */

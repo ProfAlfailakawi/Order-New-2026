@@ -1114,7 +1114,7 @@ import { ZenSplashScreen } from "../components/ZenSplashScreen";
 import OrderWelcome from "../components/OrderWelcome";
 import { ProductVisual, CategoryTile } from "../components/dna/ProductVisual";
 import { FoodPhoto, PriceChip } from "../components/FoodCard";
-import { DnaCount, DnaTimeline, DnaIconTile } from "../components/dna";
+import { DnaCount, DnaTimeline, DnaIconTile, DnaStepper, type DnaStep } from "../components/dna";
 import { DynamicEnvironment } from "../components/DynamicEnvironment";
 import { redirectToPayment } from "../utils/redirect";
 import { buildWhatsAppInvoiceText, buildWhatsAppPaymentLinkText } from "../utils/invoiceShare";
@@ -1399,23 +1399,25 @@ const cleanCustomerAddonLabel = (value: any): string => {
   return cleaned || original;
 };
 
-/** Presentational 3-step trail for checkout. Reads the current step only. */
+/** Presentational 3-step trail for checkout. Reads the current step only.
+ *  Journey mode without the scroll intro: opening straight at "payment" (resume) shows the earlier
+ *  steps already done; moving forward animates the one step that changed, moving back just snaps. */
 function CheckoutSteps({ step }: { step: string }) {
-  const steps = [
+  const stages = [
     { id: "cart", label: "السلة" },
     { id: "delivery", label: "العنوان" },
     { id: "payment", label: "الدفع" },
   ];
-  const current = Math.max(0, steps.findIndex((x) => x.id === step));
+  const current = Math.max(0, stages.findIndex((x) => x.id === step));
+  const steps: DnaStep[] = stages.map((x, i) => ({
+    key: x.id,
+    label: x.label,
+    state: i < current ? "done" : i === current ? "current" : "pending",
+  }));
   return (
-    <ol className="checkout-steps" aria-label="خطوات الطلب">
-      {steps.map((x, i) => (
-        <li key={x.id} className={cn("checkout-step", i < current && "is-done", i === current && "is-current")} aria-current={i === current ? "step" : undefined}>
-          <span className="checkout-step-dot" aria-hidden="true">{i < current ? <span className="step-tick" /> : i + 1}</span>
-          <span className="checkout-step-label">{x.label}</span>
-        </li>
-      ))}
-    </ol>
+    <div className="checkout-steps checkout-steps-dna">
+      <DnaStepper steps={steps} size="sm" ariaLabel="خطوات الطلب" reveal intro={false} />
+    </div>
   );
 }
 
