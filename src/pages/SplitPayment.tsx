@@ -885,7 +885,7 @@ export default function SplitPayment() {
               stiffness: 260,
               damping: 20
             }}
-            className="relative bg-gradient-to-br from-[#25D366] via-emerald-500 to-[#128C7E] text-white p-8 mt-6 rounded-[32px] shadow-2xl overflow-hidden text-center flex flex-col items-center gap-6"
+            className="relative bg-gradient-to-br from-[#0d3a22] via-[#14502f] to-[#0d3a22] ring-1 ring-[#b28a41]/40 text-white p-8 mt-6 rounded-[32px] shadow-2xl overflow-hidden text-center flex flex-col items-center gap-6"
           >
             {/* Animated background elements */}
             
@@ -934,7 +934,7 @@ export default function SplitPayment() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
               onClick={() => navigate(`/track?order_id=${id}`)}
-              className="relative z-10 mt-2 bg-white text-emerald-600 shadow-xl shadow-black/10 font-black text-lg py-4 px-8 rounded-2xl w-full transition-all border-b-4 border-emerald-100 hover:border-emerald-200"
+              className="relative z-10 mt-2 bg-white text-[#0d3a22] shadow-xl shadow-black/10 font-black text-lg py-4 px-8 rounded-2xl w-full transition-all border-b-4 border-[#b28a41]/40 hover:border-[#b28a41]/60"
             >
               <span className="inline-flex items-center justify-center gap-2"><Eye className="w-5 h-5" aria-hidden="true" />تابع طلبك من هني</span>
             </motion.button>

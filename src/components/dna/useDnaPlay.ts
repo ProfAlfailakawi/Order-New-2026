@@ -107,9 +107,13 @@ export function useCountUp<T extends Element = HTMLElement>(
 ): { ref: RefObject<T | null>; shown: number; animating: boolean } {
   const { ref, phase } = useDnaPlay<T>({ playKey, enabled, threshold, settleMs: durationMs + 200 });
   const [shown, setShown] = useState<number | null>(null);
+  // true once the intro tween has reached its end; until then the 'play' phase must never show the final value
+  const [introDone, setIntroDone] = useState(false);
   const target = useRef(value);
   target.current = value;
   const lastValue = useRef(value);
+  // a new play key is a new intro: the 'play' phase must not show the final value for its first frame
+  useEffect(() => { setIntroDone(false); }, [playKey]);
 
   useEffect(() => {
     if (phase !== 'play') return;
@@ -121,6 +125,7 @@ export function useCountUp<T extends Element = HTMLElement>(
       if (k < 1) raf = requestAnimationFrame(step);
       else {
         setShown(null);
+        setIntroDone(true);
       }
     };
     raf = requestAnimationFrame(step);
@@ -149,6 +154,8 @@ export function useCountUp<T extends Element = HTMLElement>(
   }, [value, tweenChanges, phase, durationMs]);
 
   if (phase === 'pre') return { ref, shown: 0, animating: true };
+  // first 'play' render happens before the first animation frame: keep showing the start value, not the final one
+  if (phase === 'play' && shown === null && !introDone) return { ref, shown: 0, animating: true };
   if (shown === null) return { ref, shown: value, animating: false };
   return { ref, shown, animating: true };
 }
