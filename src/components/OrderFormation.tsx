@@ -112,7 +112,7 @@ export default function OrderFormation({ order, orderReference, onDone }: OrderF
           <div className="flex items-center gap-2 bg-white rounded-2xl border border-stone-100 shadow-lg shadow-stone-900/10 px-4 py-2.5">
             <Wallet className="w-4 h-4 text-emerald-600 shrink-0" />
             <span className="text-sm font-extrabold text-stone-700 whitespace-nowrap">
-              {total.toFixed(2)} د.ك
+              {total.toFixed(3)} د.ك
             </span>
           </div>
         ),
@@ -298,7 +298,7 @@ export default function OrderFormation({ order, orderReference, onDone }: OrderF
 
           {Number(snapshot?.total || 0) > 0 && (
             <p className="text-sm font-extrabold text-stone-600">
-              {Number(snapshot.total).toFixed(2)} د.ك
+              {Number(snapshot.total).toFixed(3)} د.ك
             </p>
           )}
           <p className="text-xs font-medium text-stone-500 mt-2">

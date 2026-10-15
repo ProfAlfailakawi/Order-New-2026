@@ -109,7 +109,7 @@ const LeafletKuwaitMap: React.FC<{
           }).addTo(layerRef.current);
         }
         const m = L.marker(point, { icon: buildIcon(L, marker), title: marker.name }).addTo(layerRef.current);
-        const valueLine = marker.value !== undefined ? `<div style="color:#d97706;font-weight:900;margin-top:2px">${Number(marker.value || 0).toFixed(2)} د.ك</div>` : '';
+        const valueLine = marker.value !== undefined ? `<div style="color:#d97706;font-weight:900;margin-top:2px">${Number(marker.value || 0).toFixed(3)} د.ك</div>` : '';
         m.bindTooltip(`<div dir="rtl" style="text-align:right;font-family:system-ui;font-weight:800">${marker.name}${marker.subtitle ? `<div style="color:#64748b;font-size:11px;margin-top:2px">${marker.subtitle}</div>` : ''}${valueLine}</div>`, { direction: 'top', offset: [0, -16], opacity: 0.96 });
         if (onMarkerClick) m.on('click', () => onMarkerClick(marker));
       });

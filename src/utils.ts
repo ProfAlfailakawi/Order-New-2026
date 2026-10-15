@@ -109,3 +109,10 @@ export const formatKuwaitiDate = (dateVal: any): { date: string; time: string; f
     full: `${dateStr} ${timeStr}`
   };
 };
+
+/** Single price formatter for display: always 3 decimals + "د.ك" (e.g. 1.500 د.ك). */
+export const formatKwdAmount = (value: unknown): string => {
+  const n = Number(value);
+  return (Number.isFinite(n) ? n : 0).toFixed(3);
+};
+export const formatKwd = (value: unknown): string => `${formatKwdAmount(value)} د.ك`;

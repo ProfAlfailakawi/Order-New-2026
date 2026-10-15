@@ -1099,6 +1099,8 @@ import {
   isValidPhone,
   checkStoreStatus,
   formatKuwaitiDate,
+  formatKwd,
+  formatKwdAmount,
 } from "../utils";
 import {
   calculateItemAddons,
@@ -3223,7 +3225,7 @@ export default function CustomerSite() {
           setPsychMessage({
             title,
             desc: `أكثر عملائنا حبو ${suggestion.name}، متوفر الحين وتقدر تطلبه.`,
-            actionText: `ألقِ نظرة! (${suggestion.price} د.ك)`,
+            actionText: `ألقِ نظرة! (${formatKwd(suggestion.price)})`,
             product: suggestion,
           });
           sessionStorage.setItem("hesitationSeen", "true");
@@ -5035,9 +5037,10 @@ export default function CustomerSite() {
         )}
       </AnimatePresence>
 
-      {/* Light, one-screen welcome — shown once, never on payment return. */}
+      {/* Entry screen above is the single first-visit welcome; this sheet only opens from the "؟" replay button. */}
       {!showSplash && (
         <OrderWelcome
+          autoOpen={false}
           logo={settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO}
         />
       )}
@@ -5572,7 +5575,7 @@ export default function CustomerSite() {
                         <FoodPhoto product={p} className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-2xl shrink-0 border border-cream-edge shadow-sm" />
                         <div className="min-w-0 flex-1 space-y-1">
                           <div className="text-xs sm:text-sm font-extrabold text-brand line-clamp-2 leading-snug break-words group-hover:text-amber-950 transition-colors duration-200">{p.name}</div>
-                          <PriceChip>{Number(p.price || 0).toFixed(3)} <span className="text-xs font-bold text-accent">د.ك</span></PriceChip>
+                          <PriceChip>{formatKwdAmount(p.price)} <span className="text-xs font-bold text-accent">د.ك</span></PriceChip>
                         </div>
                       </button>
                     );
@@ -5858,7 +5861,7 @@ export default function CustomerSite() {
                   className="w-full bg-accent text-white py-5 rounded-2xl font-extrabold text-xl hover:brightness-105 transition-all active:scale-95 flex items-center justify-center gap-3"
                 >
                   <ShoppingCart className="w-6 h-6" />
-                  ألقِ نظرة! ({smartPick?.item?.price} د.ك)
+                  ألقِ نظرة! ({formatKwd(smartPick?.item?.price)})
                 </button>
               </motion.div>
             </motion.div>
@@ -6360,7 +6363,7 @@ export default function CustomerSite() {
                 </strong>
                 <span className="text-xs text-white/65">
                   {!checkStoreStatus(settings?.storeStatus).isOpen && "لوقت الافتتاح · "}
-                  {cart.length} منتجات · {total} د.ك
+                  {cart.length} منتجات · {formatKwd(total)}
                 </span>
               </div>
             </button>
@@ -7955,7 +7958,7 @@ function ProductModal({
                       </div>
                       {extra.price > 0 && (
                         <span className="text-xs font-bold text-accent">
-                          +{extra.price} د.ك
+                          +{formatKwd(extra.price)}
                         </span>
                       )}
                     </button>
@@ -8077,7 +8080,7 @@ function ProductModal({
                             {addon.freeQuantity && addon.freeQuantity > 0 ? (
                               <span className="text-xs text-green-600 block sm:inline mb-1 sm:mb-0 sm:ml-1">(أول {addon.freeQuantity} مجاناً) </span>
                             ) : null}
-                            +{addon.price} د.ك
+                            +{formatKwd(addon.price)}
                           </span>
                         )}
                         {(addon.price === 0 || addon.isHiddenPrice) && addon.freeQuantity && addon.freeQuantity > 0 && (
@@ -8176,7 +8179,7 @@ function ProductModal({
               <span className="whitespace-nowrap">حطه بالسلة</span>
               <span className="w-px h-6 bg-white/30 shrink-0"></span>
               <span className="font-bold whitespace-nowrap">
-                {calculateItemTotalWithAddons({
+                {formatKwd(calculateItemTotalWithAddons({
                     id: "",
                     productId: product.id,
                     name: product.name,
@@ -8186,7 +8189,7 @@ function ProductModal({
                     selectedAddonsIds: selectedAddonsIds,
                     addonQuantities,
                     product: normalizeProductForAddons(product),
-                })} د.ك
+                }))}
               </span>
             </motion.button>
           </div>
@@ -8653,7 +8656,7 @@ function CheckoutOverlay({
                   if (freeDelThreshold && itemsTotal < freeDelThreshold) {
                     const diff = freeDelThreshold - itemsTotal;
                     if (diff > 0 && diff <= 5) {
-                      msg += ` (باقي لك ${diff} د.ك وتصير توصيلتك علينا!)`;
+                      msg += ` (باقي لك ${formatKwd(diff)} وتصير توصيلتك علينا!)`;
                     }
                   }
 
@@ -8709,7 +8712,7 @@ function CheckoutOverlay({
                               {item.quantity}×
                             </span>
                             <span className="text-sm font-bold text-brand whitespace-nowrap">
-                                {calculateItemTotalWithAddons(item)}{" "}
+                                {formatKwdAmount(calculateItemTotalWithAddons(item))}{" "}
                                 <span className="text-xs text-accent">د.ك</span>
                             </span>
                             <button
@@ -8813,7 +8816,7 @@ function CheckoutOverlay({
                           <strong>{customerName ? `حيّاك ${customerName}، نجهز نفس طلبك اللي فات؟` : "حيّاك، نجهز نفس طلبك اللي فات؟"}</strong>
                           <p>
                             اختصار جاهز من آخر طلب: {lastOrderItemsCount} أصناف
-                            {lastOrderTotal > 0 ? ` · ${lastOrderTotal.toFixed(3)} د.ك تقريباً` : ""}
+                            {lastOrderTotal > 0 ? ` · ${formatKwd(lastOrderTotal)} تقريباً` : ""}
                           </p>
                         </div>
                         <button
@@ -9236,7 +9239,7 @@ function CheckoutOverlay({
                   حسابك طال عمرك
                 </span>
                 <div className="text-2xl font-bold text-brand">
-                  {Number(total || 0).toFixed(2)}{" "}
+                  {Number(total || 0).toFixed(3)}{" "}
                   <span className="text-sm text-accent font-medium">د.ك</span>
                 </div>
               </div>
@@ -9247,14 +9250,14 @@ function CheckoutOverlay({
               <div className="flex justify-between items-center text-xs font-bold text-stone-500">
                 <span>مجموع طلباتك</span>
                 <span className="text-brand font-medium">
-                  {Number(itemsTotal || 0).toFixed(2)} د.ك
+                  {formatKwd(itemsTotal)}
                 </span>
               </div>
 
               {appliedPromo && (
                 <div className="flex justify-between items-center text-xs font-bold text-green-600">
                   <span>الخصم ({appliedPromo.code})</span>
-                  <span>- {discountAmount.toFixed(2)} د.ك</span>
+                  <span>- {formatKwd(discountAmount)}</span>
                 </div>
               )}
 
@@ -9275,7 +9278,7 @@ function CheckoutOverlay({
                     </span>
                   ) : (
                     <span className="text-accent">
-                      {Number(deliveryFee || 0).toFixed(2)} د.ك
+                      {formatKwd(deliveryFee)}
                     </span>
                   )}
                 </span>
@@ -9311,14 +9314,14 @@ function CheckoutOverlay({
               <div className="flex justify-between items-center text-xs font-bold text-stone-500">
                 <span>مجموع طلباتك</span>
                 <span className="text-brand font-medium">
-                  {Number(itemsTotal || 0).toFixed(2)} د.ك
+                  {formatKwd(itemsTotal)}
                 </span>
               </div>
 
               {appliedPromo && (
                 <div className="flex justify-between items-center text-xs font-bold text-green-600">
                   <span>الخصم ({appliedPromo.code})</span>
-                  <span>- {discountAmount.toFixed(2)} د.ك</span>
+                  <span>- {formatKwd(discountAmount)}</span>
                 </div>
               )}
 
@@ -9339,7 +9342,7 @@ function CheckoutOverlay({
                     </span>
                   ) : (
                     <span className="text-accent">
-                      {Number(deliveryFee || 0).toFixed(2)} د.ك
+                      {formatKwd(deliveryFee)}
                     </span>
                   )}
                 </span>
@@ -9373,7 +9376,7 @@ function CheckoutOverlay({
                   حسابك طال عمرك
                 </span>
                 <div className="text-2xl font-bold text-brand">
-                  {Number(total || 0).toFixed(2)}{" "}
+                  {Number(total || 0).toFixed(3)}{" "}
                   <span className="text-sm text-accent font-medium">د.ك</span>
                 </div>
               </div>

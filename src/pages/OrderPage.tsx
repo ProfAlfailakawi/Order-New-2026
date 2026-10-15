@@ -1455,7 +1455,7 @@ export default function OrderPage() {
                                     {lastOrder && (
                                       <div className="rounded-[24px] bg-white border border-stone-100 p-4 flex items-center justify-between gap-3 text-sm font-bold text-stone-500 shadow-sm">
                                         <span className="truncate min-w-0">آخر طلب: {getOrderReference(lastOrder)}</span>
-                                        <span className="text-emerald-600 shrink-0">{Math.round(Number(getDisplayTotal(lastOrder) || 0))} د.ك</span>
+                                        <span className="text-emerald-600 shrink-0">{Number(getDisplayTotal(lastOrder) || 0).toFixed(3)} د.ك</span>
                                       </div>
                                     )}
                                   </motion.div>

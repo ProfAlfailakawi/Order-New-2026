@@ -66,9 +66,14 @@ interface OrderWelcomeProps {
   logo?: string;
   /** Fired when the user taps the primary "ابدأ الطلب" button. */
   onStart?: () => void;
+  /**
+   * When false the sheet never opens by itself (another entry screen already
+   * welcomed the visitor); it stays available through the "؟" replay button.
+   */
+  autoOpen?: boolean;
 }
 
-const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart }) => {
+const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart, autoOpen = true }) => {
   const [open, setOpen] = useState(false);
   const [showReplay] = useState(() => !isPaymentOrCheckoutContext());
   const reduce = useReducedMotion();
@@ -76,6 +81,7 @@ const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart }) => {
   // Decide on mount only. Never gate the UI while data loads: default hidden.
   useEffect(() => {
     if (isPaymentOrCheckoutContext()) return; // never interrupt paying
+    if (!autoOpen) return;
     if (!readOnboarded()) setOpen(true);
   }, []);
 
