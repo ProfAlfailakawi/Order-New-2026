@@ -4368,3 +4368,7 @@ body:has(.al-cart-bar) .order-welcome-replay {
 
 /* Calm rule: operational pulse dots play a few times then rest (class is added next to animate-pulse). */
 .pulse-calm{animation-iteration-count:3!important}
+
+/* The shimmer sweep belongs to loading skeletons only: status dots that use .animate-pulse keep their
+   (finite) pulse but no longer carry an endless :after sweep. */
+.animate-pulse:not(.skeleton-card):not(.products-skeleton):after{animation:none;content:none}
