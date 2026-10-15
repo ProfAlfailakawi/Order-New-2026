@@ -112,6 +112,8 @@ export function useCountUp<T extends Element = HTMLElement>(
   const target = useRef(value);
   target.current = value;
   const lastValue = useRef(value);
+  // a new play key is a new intro: the 'play' phase must not show the final value for its first frame
+  useEffect(() => { setIntroDone(false); }, [playKey]);
 
   useEffect(() => {
     if (phase !== 'play') return;
