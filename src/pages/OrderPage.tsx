@@ -29,7 +29,7 @@ import { cn, normalizePhone, normalizeDigits, formatKuwaitiDate } from "../utils
 import { redirectToPayment } from "../utils/redirect";
 import OrderFormation from "../components/OrderFormation";
 import { trackPaymentDone } from "../utils/trackStepState";
-import { DnaStatusHeader, DnaStepper, dnaSingleCurrent, type DnaStep } from "../components/dna";
+import { DnaCountUp, DnaStatusHeader, DnaStepper, dnaSingleCurrent, useDnaPlay, type DnaStep } from "../components/dna";
 
 interface TrackedOrder {
   id: string;
@@ -42,15 +42,33 @@ interface TrackedOrder {
   address?: any;
 }
 
+// Membership progress bar: draws in once (scaleX from the inline-start edge) when it first scrolls into view.
+const TrackProgressBar = ({ progress }: { progress: number }) => {
+  const { ref, phase } = useDnaPlay<HTMLDivElement>({ playKey: "track:member-bar" });
+  return (
+    <div
+      ref={ref}
+      data-draw={phase !== "final" ? phase : undefined}
+      className="h-2.5 rounded-full bg-white/80 border border-white overflow-hidden shadow-inner"
+    >
+      <div className="dna-grow h-full rounded-full bg-gradient-to-l from-accent to-brand transition-all" style={{ width: `${progress}%` }} />
+    </div>
+  );
+};
+
 const TypewriterText = ({
   text,
   delay = 0,
   className = "",
+  instant = false,
 }: {
   text: string;
   delay?: number;
   className?: string;
+  /** Render the full text at once (notes must be readable immediately); the typing effect stays available. */
+  instant?: boolean;
 }) => {
+  if (instant) return <span className={className}>{text}</span>;
   return (
     <motion.span
       className={className}
@@ -985,8 +1003,23 @@ export default function OrderPage() {
               onClick={clearPaymentStatus}
             >
               <div className="relative flex flex-col items-center justify-center max-w-sm w-full mx-auto p-6">
-                {/* The burning paper */}
+                {/* Essential message: visible immediately and static; the burning paper below is only a backdrop. */}
+                <div
+                  role="alert"
+                  className="relative z-10 w-full bg-white/95 rounded-2xl p-8 shadow-xl text-center border border-red-100"
+                >
+                  <X className="w-12 h-12 text-red-800 mx-auto mb-4" />
+                  <h3 className="text-2xl font-extrabold text-red-900 mb-2">
+                    فشل الدفع!
+                  </h3>
+                  <p className="text-red-900/70 font-medium">
+                    العملية ما ضبطت، جرّب مرة ثانية.
+                  </p>
+                </div>
+
+                {/* The burning paper (decorative backdrop, short and non-blocking) */}
                 <motion.div
+                  aria-hidden="true"
                   initial={{
                     clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)",
                     rotate: -2,
@@ -1002,25 +1035,17 @@ export default function OrderPage() {
                     rotate: [-2, 5, -15, 30],
                     y: [0, -20, 50, 100],
                   }}
-                  transition={{ duration: 2.5, ease: "easeInOut", delay: 0.5 }}
-                  className="w-full bg-[#f4eeb8] rounded-lg p-8 shadow-xl relative border border-[#d4ca8e] text-center filter sepia-[0.3]"
+                  transition={{ duration: 1.4, ease: "easeInOut", delay: 0.1 }}
+                  className="absolute inset-6 z-0 opacity-40 pointer-events-none bg-[#f4eeb8] rounded-lg p-8 shadow-xl border border-[#d4ca8e] text-center filter sepia-[0.3]"
                 >
                   {/* The fire/ash overlay */}
                   <motion.div
                     animate={{ opacity: [0, 0.8, 1, 0] }}
-                    transition={{ duration: 2.5, delay: 0.5 }}
+                    transition={{ duration: 1.4, delay: 0.1 }}
                     className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_0%,_#3f0b0b_60%,_#000_100%)] mix-blend-multiply rounded-lg pointer-events-none"
                   />
-                  <X className="w-12 h-12 text-red-800 mx-auto mb-4" />
-                  <h3 className="text-2xl font-extrabold text-red-900 mb-2">
-                    فشل الدفع!
-                  </h3>
-                  <p className="text-red-900/70 font-medium">
-                    العملية ما ضبطت، جرّب مرة ثانية.
-                  </p>
-
                   {/* Embers flying up */}
-                  {[...Array(15)].map((_, i) => (
+                  {[...Array(8)].map((_, i) => (
                     <motion.div
                       key={`ember-${i}`}
                       initial={{ opacity: 0, x: 0, y: 0, scale: 0 }}
@@ -1031,8 +1056,8 @@ export default function OrderPage() {
                         scale: Math.random() * 1.5,
                       }}
                       transition={{
-                        duration: 1.5 + Math.random(),
-                        delay: 0.5 + Math.random(),
+                        duration: 1.1 + Math.random() * 0.5,
+                        delay: 0.1 + Math.random() * 0.4,
                         ease: "easeOut",
                       }}
                       className="absolute top-1/2 left-1/2 w-2 h-2 bg-orange-500 rounded-full blur-[1px] pointer-events-none"
@@ -1043,7 +1068,7 @@ export default function OrderPage() {
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 2.5 }}
+                  transition={{ delay: 0.3 }}
                   className="text-white/60 font-medium text-sm mt-8 text-center"
                 ></motion.p>
               </div>
@@ -1281,7 +1306,7 @@ export default function OrderPage() {
                               <span className={cn("shrink-0 rounded-full border px-3 py-1 text-xs font-black", getTierAccent(currentTier?.name))}>
                                 {currentTier?.name || "عضوية"}
                               </span>
-                              <span className="text-xs font-black text-stone-500 whitespace-nowrap">{points} نقطة</span>
+                              <span className="text-xs font-black text-stone-500 whitespace-nowrap"><DnaCountUp value={points} playKey="track:member-points" /> نقطة</span>
                             </div>
                           </div>
                         </div>
@@ -1304,9 +1329,7 @@ export default function OrderPage() {
                           </span>
                           <span className="text-stone-500">{Math.round(progress)}%</span>
                         </div>
-                        <div className="h-2.5 rounded-full bg-white/80 border border-white overflow-hidden shadow-inner">
-                          <div className="h-full rounded-full bg-gradient-to-l from-accent to-brand transition-all" style={{ width: `${progress}%` }} />
-                        </div>
+                        <TrackProgressBar progress={progress} />
                       </div>
                     </button>
 
@@ -1572,7 +1595,7 @@ export default function OrderPage() {
                     key={order.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
+                    transition={{ delay: Math.min(index, 8) * 0.05, duration: 0.3 }}
                     onClick={() => setSelectedOrder(order)}
                     className={cn(
                       "bg-white rounded-[32px] p-5 sm:p-6 border shadow-sm hover:shadow-md transition-all group cursor-pointer active:scale-95",
@@ -2094,7 +2117,7 @@ export default function OrderPage() {
                             key={i}
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.8 + i * 0.15 }}
+                            transition={{ delay: Math.min(i, 6) * 0.05, duration: 0.25 }}
                             className="track-v15-order-item flex items-center justify-between p-2 sm:p-4 bg-stone-50/50 border-b border-dashed border-stone-100 last:border-b-0"
                           >
                             <div className="flex items-center gap-3">
@@ -2113,7 +2136,7 @@ export default function OrderPage() {
                                     <MessageCircle className="w-3 h-3" />
                                     <TypewriterText
                                       text={item.itemNotes || item.note}
-                                      delay={1.2 + i * 0.15}
+                                      instant
                                     />
                                   </span>
                                 )}
@@ -2132,7 +2155,7 @@ export default function OrderPage() {
                             <motion.span
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
-                              transition={{ delay: 1 + i * 0.15 }}
+                              transition={{ delay: 0.1 + Math.min(i, 6) * 0.05, duration: 0.25 }}
                               className="text-sm font-bold text-stone-600 shrink-0"
                             >
                               {Number(calculateItemTotalWithAddons(item) || 0).toFixed(
@@ -2151,7 +2174,7 @@ export default function OrderPage() {
                         <motion.div
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 1 }}
+                          transition={{ delay: 0.25 }}
                           className="mt-6 bg-[#FFFBEB] rounded-2xl p-4 border border-[#FDE68A] flex flex-col items-center justify-center gap-2 text-center"
                         >
                            <Crown className="w-7 h-7 text-[#F59E0B]" strokeWidth={2} />
@@ -2166,7 +2189,7 @@ export default function OrderPage() {
                         <motion.div
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 1 }}
+                          transition={{ delay: 0.25 }}
                           className="mt-6 bg-stone-50 rounded-2xl p-4 border border-stone-150 flex flex-col items-center justify-center gap-2 text-center text-stone-500"
                         >
                            <Users className="w-5 h-5 text-stone-500" />

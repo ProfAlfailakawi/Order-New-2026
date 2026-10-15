@@ -3,7 +3,7 @@ import { COMMERCIAL_REGISTRATION_NUMBER, LEGAL_TRADE_NAME_AR } from "../lib/lega
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import {
   ShoppingCart,
   Plus,
@@ -118,6 +118,10 @@ function ZariBishtGate() {
 // categories are needed in the future they can be added via the admin UI.
 const sanitizeWhatsAppText = (text: string) =>
   String(text || "").replace(/[\u{1F000}-\u{1FAFF}]/gu, "").replace(/\uFFFD/g, "");
+
+// Order-success decoration is kept but lighter: it never delays the message, check mark or wallet card.
+const SUCCESS_RAIN_COUNT = 12;
+const SUCCESS_DUST_COUNT = 8;
 
 const DEFAULT_PRODUCT_CATEGORIES = ["الولائم", "اللحوم", "الدجاج", "البحري", "المقبلات"];
 const CUSTOMER_ENTRY_SEEN_KEY = "alturath_customer_entry_seen_v1";
@@ -1763,6 +1767,7 @@ export default function CustomerSite() {
   const [loginPhone, setLoginPhone] = useState("");
   const [isJoiningSquad, setIsJoiningSquad] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const reduceMotion = useReducedMotion();
   const [orderSuccessId, setOrderSuccessId] = useState("");
   const [whatsappLink, setWhatsappLink] = useState("");
   const [orderPaymentLink, setOrderPaymentLink] = useState("");
@@ -5359,7 +5364,7 @@ export default function CustomerSite() {
                       ? { scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }
                       : {}
                   }
-                  transition={{ duration: 2, repeat: Infinity }}
+                  transition={{ duration: 2, repeat: 2 }}
                   className={cn(
                     "w-1.5 h-1.5 rounded-full bg-current",
                     tannourStatus.color,
@@ -5698,7 +5703,7 @@ export default function CustomerSite() {
                 return (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {[1, 2, 3, 4].map((n) => (
-                      <div key={n} className="bg-white border border-stone-100 rounded-2xl p-4 h-32 animate-pulse flex flex-col justify-between">
+                      <div key={n} className="bg-white border border-stone-100 rounded-2xl p-4 h-32 animate-pulse skeleton-card flex flex-col justify-between">
                          <div className="w-1/2 h-6 bg-stone-200 rounded-lg"></div>
                          <div className="w-full flex justify-between items-end mt-4">
                             <div className="w-1/4 h-5 bg-stone-200 rounded-lg"></div>
@@ -5893,7 +5898,7 @@ export default function CustomerSite() {
                   x: [-20, 20, -20],
                 }}
                 transition={{
-                  duration: 4,
+                  duration: 2,
                   repeat: 0,
                   ease: "easeInOut",
                 }}
@@ -5903,7 +5908,7 @@ export default function CustomerSite() {
               </motion.div>
 
               {/* Points Rain (Effect 2) */}
-              {[...Array(30)].map((_, i) => (
+              {[...Array(reduceMotion ? 0 : SUCCESS_RAIN_COUNT)].map((_, i) => (
                 <motion.div
                   key={`point-${i}`}
                   initial={{
@@ -5914,33 +5919,33 @@ export default function CustomerSite() {
                   }}
                   animate={{
                     y: "110vh",
-                    opacity: [0, 1, 1, 0],
+                    opacity: [0, 0.7, 0.7, 0],
                     rotate: Math.random() * 360 + 360,
                   }}
                   transition={{
-                    duration: 2 + Math.random() * 2,
-                    delay: 0.1 + Math.random() * 1.5,
+                    duration: 1.6 + Math.random() * 1.2,
+                    delay: 0.05 + Math.random() * 0.5,
                     ease: "easeInOut",
                   }}
-                  className="absolute text-yellow-400 pointer-events-none drop-shadow-[0_0_10px_rgba(253,224,71,0.8)] z-0"
+                  className="absolute text-accent pointer-events-none z-0"
                 >
                   {i % 3 === 0 ? (
                     <Star fill="currentColor" className="w-5 h-5" />
                   ) : (
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full" />
+                    <div className="w-3 h-3 bg-accent rounded-full" />
                   )}
                 </motion.div>
               ))}
 
               {/* The Unboxing Effect Container (Effect 5) */}
               <motion.div
-                initial={{ scale: 0.5, y: 100, opacity: 0 }}
+                initial={{ scale: 0.92, y: 40, opacity: 0 }}
                 animate={{ scale: 1, y: 0, opacity: 1 }}
                 transition={{
                   type: "spring",
-                  damping: 15,
-                  stiffness: 100,
-                  delay: 0.1,
+                  damping: 18,
+                  stiffness: 140,
+                  delay: 0,
                 }}
                 className="relative rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.5)] max-w-sm w-full z-20"
               >
@@ -5950,11 +5955,11 @@ export default function CustomerSite() {
                 <div className="relative bg-brand/90 backdrop-blur-3xl border border-white/20 p-8 pt-12 pb-10 rounded-[3rem] flex flex-col items-center text-center gap-4 z-10 overflow-hidden">
                   {/* The Unboxing Lid (Flies up and fades) */}
                   <motion.div
-                    initial={{ y: 0, rotateZ: 0, opacity: 1 }}
+                    initial={{ y: 0, rotateZ: 0, opacity: 0.55 }}
                     animate={{ y: -120, x: -30, rotateZ: -15, opacity: 0 }}
                     transition={{
-                      delay: 0.7,
-                      duration: 1.2,
+                      delay: 0,
+                      duration: 0.5,
                       ease: [0.16, 1, 0.3, 1],
                     }}
                     className="absolute -inset-[2px] bg-gradient-to-br from-brand to-stone-800 border min-h-[300px] border-white/20 rounded-[3rem] z-30 flex flex-col items-center justify-center pointer-events-none shadow-[0_30px_70px_rgba(0,0,0,0.6)] origin-top-left"
@@ -5967,9 +5972,9 @@ export default function CustomerSite() {
 
                   {/* The Calligraphic Stroke (Gold lines) (Effect 1) */}
                   <motion.div
-                    initial={{ scale: 0 }}
+                    initial={{ scale: 0.6 }}
                     animate={{ scale: 1 }}
-                    transition={{ delay: 0.8, type: "spring" }}
+                    transition={{ delay: 0, type: "spring", stiffness: 220, damping: 18 }}
                     className="w-28 h-28 bg-gradient-to-br from-yellow-100 to-yellow-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(253,224,71,0.5)] relative z-10 shrink-0"
                   >
                     <svg
@@ -5978,12 +5983,27 @@ export default function CustomerSite() {
                       viewBox="0 0 100 100"
                       className="relative z-10 drop-shadow-md"
                     >
+                      {/* Ring first (0 - 0.4s), then the check (0.4 - 0.8s) */}
+                      <motion.circle
+                        initial={reduceMotion ? false : { pathLength: 0 }}
+                        animate={{ pathLength: 1 }}
+                        transition={{ duration: 0.4, delay: 0.05, ease: "easeInOut" }}
+                        cx="50"
+                        cy="50"
+                        r="46"
+                        fill="none"
+                        stroke="white"
+                        strokeOpacity="0.7"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        transform="rotate(-90 50 50)"
+                      />
                       <motion.path
-                        initial={{ pathLength: 0 }}
+                        initial={reduceMotion ? false : { pathLength: 0 }}
                         animate={{ pathLength: 1 }}
                         transition={{
-                          duration: 1.2,
-                          delay: 1,
+                          duration: 0.4,
+                          delay: 0.45,
                           ease: "easeInOut",
                         }}
                         fill="none"
@@ -5994,11 +6014,11 @@ export default function CustomerSite() {
                         d="M25,55 C30,40 40,35 45,55 C50,75 60,85 85,35"
                       />
                       <motion.path
-                        initial={{ pathLength: 0 }}
+                        initial={reduceMotion ? false : { pathLength: 0 }}
                         animate={{ pathLength: 1 }}
                         transition={{
-                          duration: 0.5,
-                          delay: 2,
+                          duration: 0.2,
+                          delay: 0.8,
                           ease: "easeInOut",
                         }}
                         fill="none"
@@ -6011,7 +6031,7 @@ export default function CustomerSite() {
                       <motion.circle
                         initial={{ opacity: 1, scale: 1 }}
                         animate={{ opacity: 0, scale: 2 }}
-                        transition={{ delay: 2.5 }}
+                        transition={{ delay: 1.1 }}
                         r="4"
                         cx="55"
                         cy="20"
@@ -6020,22 +6040,22 @@ export default function CustomerSite() {
                     </svg>
 
                     {/* Gold dust explosion */}
-                    {[...Array(16)].map((_, i) => (
+                    {[...Array(reduceMotion ? 0 : SUCCESS_DUST_COUNT)].map((_, i) => (
                       <motion.div
                         key={i}
                         initial={{ scale: 0, opacity: 1, x: 0, y: 0 }}
                         animate={{
                           scale: [0, 1.5, 0],
                           opacity: [1, 1, 0],
-                          x: Math.cos((i * (360 / 16) * Math.PI) / 180) * 120,
-                          y: Math.sin((i * (360 / 16) * Math.PI) / 180) * 120,
+                          x: Math.cos((i * (360 / SUCCESS_DUST_COUNT) * Math.PI) / 180) * 120,
+                          y: Math.sin((i * (360 / SUCCESS_DUST_COUNT) * Math.PI) / 180) * 120,
                         }}
                         transition={{
-                          duration: 1.2,
+                          duration: 0.9,
                           ease: "easeOut",
-                          delay: 2.2,
+                          delay: 0.85,
                         }}
-                        className="absolute w-2.5 h-2.5 bg-yellow-200 rounded-full shadow-[0_0_10px_rgba(253,224,71,1)] pointer-events-none"
+                        className="absolute w-2.5 h-2.5 bg-accent rounded-full pointer-events-none"
                       />
                     ))}
                   </motion.div>
@@ -6061,7 +6081,7 @@ export default function CustomerSite() {
                     <motion.div
                       initial={{ y: 50, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 2, type: "spring" }}
+                      transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 20 }}
                       className="mt-4 p-3 bg-white/10 rounded-2xl flex items-center gap-3 border border-white/20 w-full"
                     >
                       <div className="bg-yellow-400/20 p-2 rounded-xl text-yellow-400 shrink-0 shadow-[0_0_15px_rgba(253,224,71,0.3)]">
@@ -7127,7 +7147,7 @@ const FlyingPlate = ({ img, startX, startY, onComplete }: any) => {
 };
 
 const SizzlingSteam = () => (
-  <div className="absolute inset-x-0 -top-6 bottom-0 z-10 pointer-events-none flex justify-center opacity-70 mix-blend-screen overflow-hidden">
+  <div className="absolute inset-x-0 -top-6 bottom-0 z-10 pointer-events-none flex justify-center opacity-50 mix-blend-screen overflow-hidden">
     {[...Array(4)].map((_, i) => (
       <motion.div
         key={i}
@@ -7141,7 +7161,7 @@ const SizzlingSteam = () => (
         }}
         transition={{
           duration: 2.5 + Math.random() * 2,
-          repeat: Infinity,
+          repeat: 1,
           delay: i * 0.5,
           ease: "easeOut",
         }}
@@ -8642,10 +8662,12 @@ function CheckoutOverlay({
                   }
 
                   const freeDelThreshold = settings?.freeDeliveryThreshold;
+                  let freeDelProgress: number | null = null;
                   if (freeDelThreshold && itemsTotal < freeDelThreshold) {
                     const diff = freeDelThreshold - itemsTotal;
                     if (diff > 0 && diff <= 5) {
                       msg += ` (باقي لك ${formatKwd(diff)} وتصير توصيلتك علينا!)`;
+                      freeDelProgress = Math.min(1, Math.max(0, itemsTotal / freeDelThreshold));
                     }
                   }
 
@@ -8659,6 +8681,14 @@ function CheckoutOverlay({
                         <p className="text-xs text-stone-600 leading-relaxed font-medium">
                           {msg}
                         </p>
+                        {freeDelProgress !== null && (
+                          <div className="mt-2 h-1 w-full rounded-full bg-accent/15 overflow-hidden" aria-hidden="true">
+                            <div
+                              className="dna-grow h-full w-full rounded-full bg-accent transition-transform duration-500 ease-out motion-reduce:transition-none"
+                              style={{ transform: `scaleX(${freeDelProgress})` }}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -9486,7 +9516,7 @@ function CheckoutOverlay({
                     {isSubmitting ? (
                       <motion.div
                         animate={{ opacity: [1, 0.5, 1], scale: [1, 0.98, 1] }}
-                        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                        transition={{ repeat: 1, duration: 1.5, ease: "easeInOut" }}
                         className="flex items-center justify-center w-full gap-2"
                       >
                         <Sparkles className="w-5 h-5 opacity-80" />

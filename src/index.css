@@ -78,7 +78,7 @@
 }
 
 .gentle-boil-btn {
-  animation: gentle-boil 1.2s ease-in-out infinite;
+  animation: gentle-boil 1.2s ease-in-out 3;
   box-shadow: 
     0 0 25px rgba(205, 162, 80, 0.35),
     inset 0 0 10px rgba(253, 224, 71, 0.2) !important;
@@ -86,7 +86,7 @@
 }
 
 .ambient-steam-particle {
-  animation: steam-puff-ambient 4.5s ease-out infinite;
+  animation: steam-puff-ambient 4.5s ease-out 3;
 }
 
 @layer base {
@@ -290,7 +290,7 @@ section:not([class*="max-w-"]) {
   background-size: 34px 34px; mask-image: linear-gradient(180deg, transparent, #000 18%, #000 82%, transparent);
 }
 .roulette-ultra-hero, .roulette-ultra-card, .roulette-stage { position: relative; z-index: 1; }
-.roulette-ultra-orb { animation: heritageRoulettePulse 3.2s ease-in-out infinite; }
+.roulette-ultra-orb { animation: heritageRoulettePulse 3.2s ease-in-out 2; }
 @keyframes heritageRoulettePulse {
   0%,100% { transform: translateY(0) scale(1); box-shadow: 0 0 42px rgba(178,138,65,.28); }
   50% { transform: translateY(-2px) scale(1.035); box-shadow: 0 0 70px rgba(178,138,65,.45); }
@@ -305,7 +305,7 @@ section:not([class*="max-w-"]) {
 .roulette-spin-button::after {
   content: ''; position: absolute; inset: 0; transform: translateX(120%);
   background: linear-gradient(90deg, transparent, rgba(255,255,255,.24), transparent);
-  animation: heritageSpinSweep 2.8s linear infinite;
+  animation: heritageSpinSweep 2.8s linear 2;
 }
 @keyframes heritageSpinSweep { to { transform: translateX(-120%); } }
 .roulette-wheel {
@@ -422,7 +422,7 @@ section:not([class*="max-w-"]) {
 }
 .qatya-v14-live-dot::before {
   content: ''; width: .45rem; height: .45rem; border-radius: 999px; background: #25d366;
-  box-shadow: 0 0 0 0 rgba(37,211,102,.45); animation: qatyaV14Pulse 1.8s infinite;
+  box-shadow: 0 0 0 0 rgba(37,211,102,.45); animation: qatyaV14Pulse 1.8s 3; /* 3 pulses then rest */
 }
 @keyframes qatyaV14Pulse {
   70% { box-shadow: 0 0 0 9px rgba(37,211,102,0); }
@@ -534,7 +534,7 @@ section:not([class*="max-w-"]) {
     radial-gradient(circle, rgba(24,12,42,.95) 0%, rgba(5,7,17,.96) 58%, rgba(2,6,23,.98) 100%) !important;
   border-color: rgba(255,255,255,.08) !important;
 }
-.roulette-v14-wheel::before { animation: rouletteV14Sweep 5s linear infinite; }
+.roulette-v14-wheel::before { animation: rouletteV14Sweep 5s linear 1; }
 @keyframes rouletteV14Sweep { to { transform: rotate(360deg); } }
 .roulette-v14-result {
   position: relative; overflow: hidden;
@@ -983,7 +983,7 @@ section:not([class*="max-w-"]) {
 .al-cart-bar{will-change:transform}.al-cart-bar.scale-\[1\.03\]{filter:saturate(1.05)}
 @keyframes cartPulseSoft{0%{transform:translateY(10px) scale(.96);opacity:0}70%{transform:translateY(0) scale(1.02);opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}
 .wahag-wow-shell .roulette-v14-wheel:before{content:'';position:absolute;inset:-18px;border-radius:inherit;border:1px solid rgba(246,227,180,.18);box-shadow:0 0 60px rgba(178,138,65,.18);pointer-events:none}
-.wahag-silence-card{animation:wahagBreath 1s ease-in-out infinite alternate}
+.wahag-silence-card{animation:wahagBreath 1s ease-in-out 4 alternate}
 @keyframes wahagBreath{from{transform:translateY(0) scale(.99);box-shadow:0 20px 70px rgba(178,138,65,.14)}to{transform:translateY(-2px) scale(1.01);box-shadow:0 26px 90px rgba(178,138,65,.25)}}
 
 
@@ -1067,7 +1067,7 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
 .order-status-card,.tracking-card,.track-card{border-radius:34px!important;background:linear-gradient(145deg,#fff,#fff8ef)!important;border:1px solid rgba(200,148,47,.18)!important;box-shadow:0 28px 80px rgba(120,53,15,.10)!important}.order-status-card:before,.tracking-card:before,.track-card:before{content:"طلبك في الطريق";display:inline-flex;margin-bottom:10px;border-radius:999px;padding:7px 12px;background:#183326;color:#fde68a;font-size:12px;font-weight:950;box-shadow:0 10px 26px rgba(24,51,38,.18)}
 
 /* Global skeleton shimmer */
-.animate-pulse,.skeleton-card,.products-skeleton{position:relative;overflow:hidden!important}.animate-pulse:after,.skeleton-card:after,.products-skeleton:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.64),transparent);animation:alShimmer 1.65s ease-in-out infinite;pointer-events:none}@keyframes alShimmer{0%{transform:translateX(120%)}100%{transform:translateX(-120%)}}@keyframes alTinyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes alDockPop{from{opacity:0;transform:translateX(-50%) translateY(26px) scale(.96)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+.skeleton-card,.products-skeleton{position:relative;overflow:hidden!important}.skeleton-card:after,.products-skeleton:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.64),transparent);animation:alShimmer 1.65s ease-in-out infinite;pointer-events:none}@keyframes alShimmer{0%{transform:translateX(120%)}100%{transform:translateX(-120%)}}@keyframes alTinyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes alDockPop{from{opacity:0;transform:translateX(-50%) translateY(26px) scale(.96)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 
 @media(max-width:640px){.best-seller-wow-carousel{height:220px!important;padding:14px 0!important}.best-seller-wow-card{width:164px!important;height:204px!important}.best-seller-wow-card .menu-product-card{min-height:200px!important}.best-seller-wow-card .menu-product-image{width:80px!important;height:80px!important}.al-cart-bar{bottom:12px!important;border-radius:24px!important;padding:10px!important}.al-cart-actions button:first-child{display:none!important}.al-cart-actions .al-cart-checkout{min-width:118px!important;padding:13px 14px!important}.cart-moment-toast{bottom:92px!important;width:max-content;max-width:calc(100vw - 32px)}}
 
@@ -1470,7 +1470,7 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
   background:
     radial-gradient(circle, rgba(255,255,255,.22), rgba(178,138,65,.24) 34%, rgba(13,58,34,.12) 56%, transparent 72%);
   filter: blur(2px);
-  animation: wahagAuraBreath 2.2s ease-in-out infinite;
+  animation: wahagAuraBreath 2.2s ease-in-out 3;
 }
 .wahag-pulse-ring {
   position: absolute;
@@ -1478,9 +1478,9 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
   border: 1px solid rgba(255,255,255,.14);
   box-shadow: 0 0 30px rgba(178,138,65,.16), inset 0 0 30px rgba(13,58,34,.08);
 }
-.wahag-pulse-ring.ring-one { width: 42%; height: 42%; animation: wahagPulsePing 1.65s ease-out infinite; }
-.wahag-pulse-ring.ring-two { width: 64%; height: 64%; animation: wahagPulseSpin 10s linear infinite; border-style: dashed; opacity: .74; }
-.wahag-pulse-ring.ring-three { width: 86%; height: 86%; animation: wahagPulseSpin 16s linear reverse infinite; opacity: .56; }
+.wahag-pulse-ring.ring-one { width: 42%; height: 42%; animation: wahagPulsePing 1.65s ease-out 3; }
+.wahag-pulse-ring.ring-two { width: 64%; height: 64%; animation: wahagPulseSpin 10s linear 1; border-style: dashed; opacity: .74; }
+.wahag-pulse-ring.ring-three { width: 86%; height: 86%; animation: wahagPulseSpin 16s linear reverse 1; opacity: .56; }
 .wahag-pulse-orbit-card {
   position: absolute;
   top: 50%;
@@ -1568,8 +1568,11 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
   inset: -12px;
   border-radius: inherit;
   border: 1px solid rgba(244,114,182,.30);
-  animation: wahagPulsePing 1.4s ease-out infinite;
+  animation: wahagPulsePing 1.4s ease-out 3;
 }
+.wahag-pulse-core.is-scanning .wahag-pulse-aura,
+.wahag-pulse-core.is-scanning .wahag-pulse-ring,
+.wahag-pulse-core.is-scanning .wahag-pulse-line { animation-iteration-count: infinite; } /* busy indicator while spinning stays */
 .wahag-pulse-core.is-scanning .wahag-pulse-aura { animation-duration: .72s; }
 .wahag-pulse-core.is-scanning .wahag-pulse-ring.ring-two { animation-duration: 2.6s; }
 .wahag-pulse-core.is-scanning .wahag-pulse-ring.ring-three { animation-duration: 3.4s; }
@@ -1748,7 +1751,7 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
 .qatya-council-mini{margin-bottom:14px!important;}
 @media(max-width:640px){.qatya-tabs{top:6px;border-radius:20px}.qatya-tabs button{font-size:12px;padding:10px 4px}.qatya-v14-main{gap:18px!important}.qatya-v14-orb{width:136px!important;height:136px!important}.qatya-ledger-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}.qatya-ledger-tile{padding:14px 8px!important;border-radius:20px!important}.qatya-ledger-tile strong{font-size:19px!important}}
 @media(max-width:360px){.qatya-tabs{gap:4px;padding:6px}.qatya-tabs button{white-space:nowrap;padding-inline:2px}}
-.order-scroll-cue{display:flex;align-items:center;justify-content:center;gap:8px;margin:-8px auto 14px;color:#7c2d12;font-weight:900;font-size:12px;opacity:.85;animation:orserCue 1.5s ease-in-out infinite;}
+.order-scroll-cue{display:flex;align-items:center;justify-content:center;gap:8px;margin:-8px auto 14px;color:#7c2d12;font-weight:900;font-size:12px;opacity:.85;animation:orserCue 1.5s ease-in-out 3;}
 @keyframes orserCue{50%{transform:translateY(4px);opacity:.55}}
 
 /* === Final Orser fixes applied to Order2(3) only — Prof. Ahmad === */
@@ -2907,7 +2910,7 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   pointer-events:none;
   background:linear-gradient(110deg,transparent 0 36%,rgba(255,255,255,.22) 48%,transparent 60% 100%);
   transform:translateX(120%);
-  animation:diwaniyaChoiceSheen 5.2s ease-in-out infinite;
+  animation:diwaniyaChoiceSheen 5.2s ease-in-out 2;
 }
 .payment-method-card-qatya{
   background:
@@ -4392,3 +4395,10 @@ body:has(.al-cart-bar) .order-welcome-replay {
 .dna-hub[data-animate='true'] .dna-hubln,
 .dna-hub[data-animate='true'] .dna-hubc,
 .dna-stepi[data-state='current'] .dna-node { animation: none !important; }
+
+/* Calm rule: operational pulse dots play a few times then rest (class is added next to animate-pulse). */
+.pulse-calm{animation-iteration-count:3!important}
+
+/* The shimmer sweep belongs to loading skeletons only: status dots that use .animate-pulse keep their
+   (finite) pulse but no longer carry an endless :after sweep. */
+.animate-pulse:not(.skeleton-card):not(.products-skeleton):after{animation:none;content:none}

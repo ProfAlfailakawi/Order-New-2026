@@ -7,6 +7,7 @@
 import * as React from 'react';
 import './dna.css';
 import { journeyChangedKey, journeyDisplayState, journeyTarget, useJourneyReveal } from './useJourneyReveal';
+import { useChangeFlash, useCountUp, useDnaPlay } from './useDnaPlay';
 
 export type DnaTone =
   | 'accent'
@@ -90,6 +91,37 @@ export function DnaCount({
     <span className={cx('dna', 'dna-count', className)} title={label} aria-label={label ? `${label}: ${String(value)}` : undefined}>
       {icon}
       {value}
+    </span>
+  );
+}
+
+/* ------------------------------------------------------------ count-up */
+
+export interface DnaCountUpProps {
+  value: number;
+  /** The same formatter the screen already uses for this number (digits, separators, suffix). */
+  format?: (n: number) => React.ReactNode;
+  /** Counts 0 -> value once per playKey (per tab session); later changes snap. */
+  playKey?: string;
+  durationMs?: number;
+  /** After the first play, tween later changes (e.g. a remaining balance counting down). */
+  tweenChanges?: boolean;
+  /** Soft one-shot highlight when the value genuinely changes after first paint. */
+  flashOnChange?: boolean;
+  /** Set false to skip the first count-up (the value just shows) while still reacting to later changes. */
+  intro?: boolean;
+  className?: string;
+}
+
+export function DnaCountUp({ value, format, playKey, durationMs = 700, tweenChanges = false, flashOnChange = false, intro = true, className }: DnaCountUpProps) {
+  const fmt = format ?? ((n: number) => String(n));
+  const { ref, shown, animating } = useCountUp<HTMLSpanElement>(value, { playKey, durationMs, tweenChanges, enabled: intro });
+  const flash = useChangeFlash(value, flashOnChange);
+  const display = animating ? (Number.isInteger(value) ? Math.round(shown) : shown) : value;
+  return (
+    <span ref={ref} className={cx('dna-cu', flashOnChange && 'dna-flash', className)} data-flash={flashOnChange ? flash : undefined}>
+      <span aria-hidden={animating ? 'true' : undefined}>{fmt(display)}</span>
+      {animating && <span className="dna-cu-sr">{fmt(value)}</span>}
     </span>
   );
 }
@@ -296,22 +328,59 @@ export function DnaTimeline({
   maxHeight,
   wrapMeta = false,
   className,
+  reveal = false,
+  playKey,
+  highlightNew = false,
 }: {
   items: DnaEvent[];
   ariaLabel?: string;
   maxHeight?: number | string;
   wrapMeta?: boolean;
   className?: string;
+  /** Opt-in: dots and connectors reveal in order once per playKey (rows stay readable throughout). */
+  reveal?: boolean;
+  playKey?: string;
+  /** Opt-in: a row that arrives after first paint gets one soft fading highlight. */
+  highlightNew?: boolean;
 }) {
+  const { ref, phase } = useDnaPlay<HTMLOListElement>({ playKey, enabled: reveal && items.length > 0, settleMs: 1000 });
+  const known = React.useRef<Set<string> | null>(null);
+  const [fresh, setFresh] = React.useState<string[]>([]);
+  const sig = items.map((i) => i.key).join('|');
+  React.useEffect(() => {
+    known.current = null;
+    setFresh([]);
+  }, [playKey]);
+  React.useEffect(() => {
+    if (!highlightNew) return;
+    if (known.current === null) {
+      if (items.length > 0) known.current = new Set(items.map((i) => i.key));
+      return;
+    }
+    const added = items.map((i) => i.key).filter((k) => !known.current!.has(k));
+    if (added.length === 0) return;
+    added.forEach((k) => known.current!.add(k));
+    setFresh((f) => [...f, ...added]);
+    // items is covered by sig
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sig, highlightNew, playKey]);
   return (
     <ol
+      ref={ref}
       className={cx('dna', 'dna-tline', className)}
       aria-label={ariaLabel}
+      data-draw={reveal && phase !== 'final' ? phase : undefined}
       data-wrap={wrapMeta ? 'true' : undefined}
       style={maxHeight != null ? { maxHeight, overflowY: 'auto' } : undefined}
     >
-      {items.map((item) => (
-        <li key={item.key} className="dna-tli" data-dna-tone={item.tone ?? 'accent'}>
+      {items.map((item, idx) => (
+        <li
+          key={item.key}
+          className="dna-tli"
+          data-dna-tone={item.tone ?? 'accent'}
+          data-new={fresh.includes(item.key) ? 'true' : undefined}
+          style={reveal ? ({ ['--i' as string]: Math.min(idx, 8) } as React.CSSProperties) : undefined}
+        >
           <span className="dna-dot" aria-hidden="true">
             {item.icon ?? <span className="dna-pip" />}
           </span>
@@ -387,9 +456,14 @@ export interface DnaRingProps {
   className?: string;
   /** Optional per-contributor arcs (same unit as `value`); when 2+ are given they replace the single arc. */
   segments?: number[];
+  /** Opt-in: the arc(s) draw in once per playKey (segments one after another); later changes use the normal transition. */
+  draw?: boolean;
+  playKey?: string;
 }
 
-export function DnaRing({ value, max = 100, size = 52, stroke = 4, tone = 'accent', label, sublabel, ariaLabel, className, segments }: DnaRingProps) {
+export function DnaRing({ value, max = 100, size = 52, stroke = 4, tone = 'accent', label, sublabel, ariaLabel, className, segments, draw = false, playKey }: DnaRingProps) {
+  const { ref: drawRef, phase } = useDnaPlay<HTMLDivElement>({ playKey, enabled: draw, settleMs: 2200 });
+  const pre = draw && phase === 'pre';
   const has = typeof value === 'number' && Number.isFinite(value) && max > 0;
   const fraction = has ? Math.min(1, Math.max(0, (value as number) / max)) : 0;
   const r = (size - stroke) / 2;
@@ -415,8 +489,10 @@ export function DnaRing({ value, max = 100, size = 52, stroke = 4, tone = 'accen
   }
   return (
     <div
+      ref={drawRef}
       className={cx('dna', 'dna-ring', className)}
       data-dna-tone={tone}
+      data-draw={draw && phase !== 'final' ? phase : undefined}
       data-snap={shrank ? 'true' : undefined}
       style={{ inlineSize: size, blockSize: size }}
       role="img"
@@ -435,7 +511,8 @@ export function DnaRing({ value, max = 100, size = 52, stroke = 4, tone = 'accen
             strokeWidth={stroke}
             strokeLinecap="butt"
             strokeOpacity={i % 2 === 0 ? 1 : 0.6}
-            strokeDasharray={`${a.len} ${c}`}
+            strokeDasharray={pre ? `0 ${c}` : `${a.len} ${c}`}
+            style={draw ? ({ ['--i' as string]: Math.min(i, 7) } as React.CSSProperties) : undefined}
             transform={`rotate(${-90 + a.start} ${mid} ${mid})`}
           />
         ))}
@@ -448,7 +525,7 @@ export function DnaRing({ value, max = 100, size = 52, stroke = 4, tone = 'accen
             fill="none"
             strokeWidth={stroke}
             strokeLinecap="round"
-            strokeDasharray={`${c * fraction} ${c}`}
+            strokeDasharray={pre ? `0 ${c}` : `${c * fraction} ${c}`}
             transform={`rotate(-90 ${mid} ${mid})`}
           />
         )}
@@ -514,6 +591,8 @@ export function DnaSpark({
   tone = 'accent',
   ariaLabel,
   className,
+  draw = false,
+  playKey,
 }: {
   values: number[];
   width?: number;
@@ -521,7 +600,11 @@ export function DnaSpark({
   tone?: DnaTone;
   ariaLabel?: string;
   className?: string;
+  /** Opt-in: the line draws once per playKey, then the area and end dot fade in. */
+  draw?: boolean;
+  playKey?: string;
 }) {
+  const { ref: drawRef, phase } = useDnaPlay<SVGSVGElement>({ playKey, enabled: draw, settleMs: 1500 });
   const clean = values.filter((v) => Number.isFinite(v));
   if (clean.length < 2) return null;
   const min = Math.min(...clean);
@@ -537,8 +620,10 @@ export function DnaSpark({
   const last = pts[pts.length - 1];
   return (
     <svg
+      ref={drawRef}
       className={cx('dna', 'dna-spark', className)}
       data-dna-tone={tone}
+      data-draw={draw && phase !== 'final' ? phase : undefined}
       width={width}
       height={height}
       viewBox={`0 0 ${width} ${height}`}
@@ -547,7 +632,7 @@ export function DnaSpark({
       aria-hidden={ariaLabel ? undefined : true}
     >
       <path className="dna-sparka" d={area} />
-      <path className="dna-sparkl" d={line} />
+      <path className="dna-sparkl" d={line} pathLength={1} />
       <circle cx={last[0]} cy={last[1]} r={2.6} />
     </svg>
   );
@@ -592,6 +677,8 @@ export function DnaHeat({
   tone = 'accent',
   ariaLabel,
   className,
+  draw = false,
+  playKey,
 }: {
   cells: Array<{ key: string; value: number; label?: string }>;
   max?: number;
@@ -599,23 +686,29 @@ export function DnaHeat({
   tone?: DnaTone;
   ariaLabel?: string;
   className?: string;
+  /** Opt-in: cells fade in left to right once per playKey. */
+  draw?: boolean;
+  playKey?: string;
 }) {
+  const { ref: drawRef, phase } = useDnaPlay<HTMLDivElement>({ playKey, enabled: draw, settleMs: 1200 });
   const top = max ?? Math.max(0, ...cells.map((c) => c.value));
   return (
     <div
+      ref={drawRef}
       className={cx('dna', 'dna-heat', className)}
       data-dna-tone={tone}
+      data-draw={draw && phase !== 'final' ? phase : undefined}
       role="img"
       aria-label={ariaLabel}
       style={{ ['--cols' as string]: columns ?? cells.length } as React.CSSProperties}
     >
-      {cells.map((cell) => (
+      {cells.map((cell, idx) => (
         <span
           key={cell.key}
           className="dna-heatc"
           data-zero={cell.value <= 0 ? 'true' : undefined}
           title={cell.label}
-          style={{ ['--v' as string]: top > 0 ? Math.min(1, cell.value / top) : 0 } as React.CSSProperties}
+          style={{ ['--v' as string]: top > 0 ? Math.min(1, cell.value / top) : 0, ['--i' as string]: Math.min(idx, 20) } as React.CSSProperties}
         />
       ))}
     </div>
