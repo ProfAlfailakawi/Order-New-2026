@@ -503,7 +503,7 @@ export default function AdminDashboard() {
         <div className="admin-nav-backdrop lg:hidden" onClick={() => setMobileNavOpen(false)} aria-hidden="true" />
       )}
       {/* Sidebar */}
-      <aside id="admin-sidebar" className={`admin-sidebar ${mobileNavOpen ? "is-open" : ""} w-80 shrink-0 glass-panel flex flex-col p-8 space-y-12 z-50 rounded-r-[40px] my-4 ml-4 sticky top-4 h-[calc(100vh-2rem)]`}>
+      <aside id="admin-sidebar" className={`admin-sidebar ${mobileNavOpen ? "is-open" : ""} w-64 xl:w-80 shrink-0 glass-panel flex flex-col p-8 space-y-12 z-50 rounded-r-[40px] my-4 ml-4 sticky top-4 h-[calc(100vh-2rem)]`}>
         <div className="flex items-center gap-4 px-2 group">
           <div className="w-14 h-14 flex items-center justify-center p-2.5 transition-transform group-hover:scale-105 shadow-md overflow-hidden bg-white border border-stone-100 rounded-2xl shrink-0">
             <img 
@@ -592,7 +592,7 @@ export default function AdminDashboard() {
       <main className="flex-grow overflow-y-auto flex flex-col no-scrollbar relative items-center">
         {/* Topbar */}
         <header className="admin-topbar sticky top-4 z-40 w-full max-w-[1600px] px-8 pt-4">
-          <div className="admin-topbar-panel glass-panel p-4 flex justify-between items-center rounded-[2rem] shadow-sm">
+          <div className="admin-topbar-panel glass-panel p-4 gap-4 flex justify-between items-center rounded-[2rem] shadow-sm">
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
@@ -613,7 +613,7 @@ export default function AdminDashboard() {
                 className="bg-transparent border-none outline-none text-sm w-full text-brand placeholder:text-stone-400 font-medium font-sans" 
               />
             </div>
-            <div className="admin-topbar-actions flex items-center gap-6 px-2">
+            <div className="admin-topbar-actions flex items-center gap-3 xl:gap-5 px-2 shrink-0">
               <button
                 onClick={() => setShowNewInvoiceModal(true)}
                 className="relative px-6 py-3.5 bg-brand text-white font-bold rounded-2xl hover:bg-brand/90 transition-all shadow-md active:scale-95 group flex items-center gap-2 text-xs whitespace-nowrap shrink-0"
@@ -626,7 +626,7 @@ export default function AdminDashboard() {
                 {totalOrdersCount > 0 && <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-md animate-pulse pulse-calm" />}
               </button>
               <div className="admin-topbar-divider w-px h-8 bg-stone-200" />
-              <div className="admin-profile flex items-center gap-4 group cursor-pointer hover:bg-white/50 p-2 rounded-2xl transition-all">
+              <div className="admin-profile flex items-center gap-3 group cursor-pointer hover:bg-white/50 p-2 rounded-2xl transition-all">
                 <div className="text-right whitespace-nowrap">
                   <p className="text-sm font-bold text-brand tracking-tight">د. أحمد الفيلكاوي</p>
                   <p className="text-xs text-accent font-extrabold uppercase mt-0.5">مدير النظام</p>
@@ -896,7 +896,7 @@ export default function AdminDashboard() {
                        </span>
                     </div>
                     
-                    <div className="mb-10 mt-12 sm:mt-6 text-right">
+                    <div className="mb-10 mt-12 text-right">
                       <p className="text-xs text-stone-300 font-bold uppercase mb-3">فاتورة رقم {order.id}</p>
                       <h4 className="text-3xl font-extrabold text-brand group-hover:text-accent transition-colors leading-tight [overflow-wrap:anywhere] block">
                         {order.customerName}

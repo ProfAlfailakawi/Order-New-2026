@@ -1147,8 +1147,8 @@ export default function OrderPage() {
               exit={{ opacity: 0, y: -20 }}
               className="text-center py-20 space-y-4"
             >
-              <div className="inline-flex p-6 bg-stone-50 rounded-[32px] text-stone-200">
-                <Package className="w-12 h-12" />
+              <div className="inline-flex p-6 bg-stone-100 rounded-[32px] text-stone-400">
+                <Package className="w-12 h-12 empty-state-art" />
               </div>
               <div className="space-y-1">
                 <h3 className="text-xl font-extrabold text-brand">ماكو طلبات</h3>
