@@ -4362,3 +4362,6 @@ body:has(.al-cart-bar) .order-welcome-replay {
 
 /* Presence-map letters: brass darkened just enough for 4.5:1 on cream (was ~3.7:1) */
 .dna-hubn:not([data-state="off"]) .dna-hubt .dna-letter{color:#7a5a26}
+
+/* Calm rule: operational pulse dots play a few times then rest (class is added next to animate-pulse). */
+.pulse-calm{animation-iteration-count:3!important}

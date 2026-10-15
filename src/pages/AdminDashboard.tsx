@@ -43,7 +43,7 @@ import {
   Minus,
   Flame
 } from "lucide-react";
-import { DnaSpark, DnaHeat } from "../components/dna";
+import { DnaSpark, DnaHeat, DnaCountUp, useDnaPlay } from "../components/dna";
 import { Order, Analytics, Region } from "../types";
 import { db } from "../lib/firebase";
 import { collection, onSnapshot, doc, setDoc, getDoc, query, orderBy } from "firebase/firestore";
@@ -581,7 +581,7 @@ export default function AdminDashboard() {
           <div className="p-5 bg-stone-50/50 border border-stone-100 rounded-[24px]">
             <p className="text-xs text-stone-400 font-extrabold uppercase mb-3">حالة النظام</p>
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse pulse-calm shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
               <p className="text-xs text-brand font-bold tracking-tight">متصل وآمن</p>
             </div>
           </div>
@@ -623,7 +623,7 @@ export default function AdminDashboard() {
               </button>
               <button aria-label="التنبيهات" className="relative p-3.5 bg-white/50 border border-stone-100 rounded-2xl hover:bg-white transition-all shadow-sm active:scale-95 group">
                 <Bell className="w-5 h-5 text-stone-500 group-hover:text-brand" />
-                {totalOrdersCount > 0 && <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-md animate-pulse" />}
+                {totalOrdersCount > 0 && <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-md animate-pulse pulse-calm" />}
               </button>
               <div className="admin-topbar-divider w-px h-8 bg-stone-200" />
               <div className="admin-profile flex items-center gap-4 group cursor-pointer hover:bg-white/50 p-2 rounded-2xl transition-all">
@@ -662,6 +662,7 @@ export default function AdminDashboard() {
                 paidCount={analytics?.completedCount || 0}
                 paidSeries={invCountWeek.cur > 0 ? invCountWeek.series : null}
                 paidTrend={trendChip(invCountWeek.cur, invCountWeek.prev)}
+                ready={Boolean(analytics)}
               />
 
               {/* Loyalty distribution: one stacked bar */}
@@ -671,11 +672,11 @@ export default function AdminDashboard() {
                     <h3 className="text-lg font-extrabold text-brand flex items-center gap-3"><Trophy className="w-5 h-5 text-accent" aria-hidden="true" />مستويات العملاء</h3>
                     <span className="text-xs font-bold text-stone-400">{loyaltyTotal} عميل</span>
                   </div>
-                  <div className="flex h-3 w-full overflow-hidden rounded-full bg-stone-100" role="img" aria-label={`توزيع العملاء: ${loyaltyDist.map((d: any) => `${d.tier.name} ${d.count}`).join("، ")}`}>
+                  <LoyaltyBar className="flex h-3 w-full overflow-hidden rounded-full bg-stone-100" role="img" aria-label={`توزيع العملاء: ${loyaltyDist.map((d: any) => `${d.tier.name} ${d.count}`).join("، ")}`}>
                     {loyaltyDist.map((d: any, i: number) => d.count > 0 && (
-                      <div key={d.tier.id} className={LOYALTY_BAR_BG[i % LOYALTY_BAR_BG.length]} style={{ width: `${(d.count / loyaltyTotal) * 100}%` }} title={`${d.tier.name}: ${d.count}`} />
+                      <div key={d.tier.id} className={`dna-grow ${LOYALTY_BAR_BG[i % LOYALTY_BAR_BG.length]}`} style={{ width: `${(d.count / loyaltyTotal) * 100}%`, ["--i" as string]: i } as React.CSSProperties} title={`${d.tier.name}: ${d.count}`} />
                     ))}
-                  </div>
+                  </LoyaltyBar>
                   <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-4">
                     {loyaltyDist.map((d: any, i: number) => (
                       <div key={d.tier.id} className="flex items-center gap-3">
@@ -702,6 +703,8 @@ export default function AdminDashboard() {
                       <DnaHeat
                         cells={hourCounts.map((v, h) => ({ key: String(h), value: v, label: `${hourLabel(h)}: ${v}` }))}
                         columns={24}
+                        draw
+                        playKey="admin:peak-hours"
                         ariaLabel={`ساعات الذروة، الأعلى ${hourLabel(peakHour)}`}
                       />
                       <div className="mt-2 flex justify-between text-xs text-stone-400 font-medium" aria-hidden="true">
@@ -879,7 +882,7 @@ export default function AdminDashboard() {
                     >
                     {order.source === "customer_website" && (
                       <div className="absolute top-6 left-6 flex items-center gap-2">
-                        <span className="w-2 h-2 bg-accent rounded-full animate-pulse shadow-md shadow-accent/50" />
+                        <span className="w-2 h-2 bg-accent rounded-full animate-pulse pulse-calm shadow-md shadow-accent/50" />
                         <span className="text-xs font-extrabold uppercase text-accent bg-accent/5 px-2 py-1 rounded-lg">طلب من الموقع</span>
                       </div>
                     )}
@@ -1736,7 +1739,7 @@ export default function AdminDashboard() {
                       <p className="text-stone-400 text-xs font-medium">اكتب الرقم 8 أرقام (مثال: 92225308)، والنظام يضيف مفتاح الكويت تلقائياً.</p>
                       {(!settings.companyPhone && settings.restaurantNumbers?.[0]) && (
                         <p className="text-accent text-xs font-bold mt-2 flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
+                          <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse pulse-calm" />
                           يتم حالياً استخدام الرقم الاحتياطي: {settings.restaurantNumbers[0]}
                         </p>
                       )}
@@ -2077,21 +2080,34 @@ function NavItem({ active, onClick, icon, label, badge }: any) {
   );
 }
 
+// 7-day bars: grow once (scaleY from the baseline, newest bar first = reading order in RTL), then rest.
+function StatBars({ series, color, label, playKey, ready = true }: { series: number[] | null; color: string; label: string; playKey: string; ready?: boolean }) {
+  const vals = (series && series.length ? series : Array.from({ length: 7 }, () => 0)).slice(-7);
+  const max = Math.max(...vals, 0);
+  const { ref, phase } = useDnaPlay<HTMLDivElement>({ playKey, enabled: ready });
+  return (
+    <div ref={ref} data-draw={phase !== "final" ? phase : undefined} className="flex items-end gap-[3px] h-[34px]" dir="ltr" role="img" aria-label={label}>
+      {vals.map((v, i) => (
+        <i key={i} className="dna-growy flex-1 max-w-[14px] md:max-w-[22px] rounded-[3px] not-italic" style={{ height: max > 0 ? `${Math.max(3, (v / max) * 34)}px` : "3px", background: color, opacity: i === vals.length - 1 ? 1 : 0.35, ["--i" as string]: vals.length - 1 - i } as React.CSSProperties} />
+      ))}
+    </div>
+  );
+}
+
 // Compact one-row stat strip (display only; same numbers/series as before).
-function StatStrip({ revenue, revenueTrend, revenueSeries, newCount, newTrend, newSeries, paidCount, paidSeries, paidTrend }: any) {
+// Loyalty stacked bar: segments grow in order once; the bar element and aria label are unchanged.
+function LoyaltyBar({ children, ...rest }: React.HTMLAttributes<HTMLDivElement>) {
+  const { ref, phase } = useDnaPlay<HTMLDivElement>({ playKey: "admin:loyalty-bar" });
+  return <div ref={ref} data-draw={phase !== "final" ? phase : undefined} {...rest}>{children}</div>;
+}
+
+function StatStrip({ revenue, revenueTrend, revenueSeries, newCount, newTrend, newSeries, paidCount, paidSeries, paidTrend, ready = true }: any) {
   const revNum = Number(revenue) || 0;
-  const revShort = Math.abs(revNum) >= 100000 ? `${Math.round(revNum / 1000)}K` : Math.abs(revNum) >= 10000 ? `${(Math.round(revNum / 100) / 10)}K` : String(Math.round(revNum * 1000) / 1000);
-  const Bars = ({ series, color, label }: { series: number[] | null; color: string; label: string }) => {
-    const vals = (series && series.length ? series : Array.from({ length: 7 }, () => 0)).slice(-7);
-    const max = Math.max(...vals, 0);
-    return (
-      <div className="flex items-end gap-[3px] h-[34px]" dir="ltr" role="img" aria-label={label}>
-        {vals.map((v, i) => (
-          <i key={i} className="flex-1 max-w-[14px] md:max-w-[22px] rounded-[3px] not-italic" style={{ height: max > 0 ? `${Math.max(3, (v / max) * 34)}px` : "3px", background: color, opacity: i === vals.length - 1 ? 1 : 0.35 }} />
-        ))}
-      </div>
-    );
-  };
+  const fmtRev = (n: number) => Math.abs(n) >= 100000 ? `${Math.round(n / 1000)}K` : Math.abs(n) >= 10000 ? `${(Math.round(n / 100) / 10)}K` : String(Math.round(n * 1000) / 1000);
+  const revShort = fmtRev(revNum);
+  // count-up mounts only once the real numbers are loaded, so it never plays on placeholder zeros
+  const countUp = (value: number, playKey: string, format?: (n: number) => string) =>
+    ready ? <DnaCountUp value={value} playKey={playKey} format={format} /> : (format ? format(value) : value);
   const total = Number(newCount) || 0;
   const paid = Number(paidCount) || 0;
   const tile = "ord-bp-admin-tile min-w-0 flex flex-col gap-2 md:gap-3 p-3 md:px-6 md:py-5 rounded-[20px] md:rounded-3xl border border-stone-100 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]";
@@ -2102,22 +2118,22 @@ function StatStrip({ revenue, revenueTrend, revenueSeries, newCount, newTrend, n
       <div className={tile}>
         <div className={head}><TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4 text-accent shrink-0" aria-hidden="true" /><span>الدخل التراكمي</span></div>
         <div className="flex items-baseline gap-1 min-w-0" title={`${revenue} د.ك`}>
-          <b className="text-[22px] md:text-[38px] font-black tracking-tighter leading-none text-brand truncate">{revShort}</b>
+          <b className="text-[22px] md:text-[38px] font-black tracking-tighter leading-none text-brand truncate">{countUp(revNum, "admin:kpi-revenue", fmtRev)}</b>
           <small className="text-[11px] md:text-sm font-bold text-stone-500 shrink-0">د.ك</small>
         </div>
-        <Bars series={revenueSeries} color="var(--color-accent)" label="الدخل آخر 7 أيام" />
+        <React.Fragment key={ready ? "r" : "p"}><StatBars series={revenueSeries} color="var(--color-accent)" label="الدخل آخر 7 أيام" playKey="admin:bars-rev" ready={ready} /></React.Fragment>
         {chip(revenueTrend, "text-accent")}
       </div>
       <div className={tile}>
         <div className={head}><ShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4 text-sadu-red shrink-0" aria-hidden="true" /><span>فواتير جديدة</span></div>
-        <div className="text-[22px] md:text-[38px] font-black tracking-tighter leading-none text-brand">{total}</div>
-        <Bars series={newSeries} color="var(--color-sadu-red)" label="الفواتير الجديدة آخر 7 أيام" />
+        <div className="text-[22px] md:text-[38px] font-black tracking-tighter leading-none text-brand">{countUp(total, "admin:kpi-new")}</div>
+        <React.Fragment key={ready ? "r" : "p"}><StatBars series={newSeries} color="var(--color-accent)" label="الفواتير الجديدة آخر 7 أيام" playKey="admin:bars-new" ready={ready} /></React.Fragment>
         {chip(newTrend, "text-sadu-red")}
       </div>
       <div className={tile}>
         <div className={head}><CheckCircle2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-brand shrink-0" aria-hidden="true" /><span>فواتير مدفوعة</span></div>
-        <div className="text-[22px] md:text-[38px] font-black tracking-tighter leading-none text-brand">{paid}</div>
-        <Bars series={paidSeries} color="var(--color-brand)" label="الفواتير المدفوعة آخر 7 أيام" />
+        <div className="text-[22px] md:text-[38px] font-black tracking-tighter leading-none text-brand">{countUp(paid, "admin:kpi-paid")}</div>
+        <React.Fragment key={ready ? "r" : "p"}><StatBars series={paidSeries} color="var(--color-accent)" label="الفواتير المدفوعة آخر 7 أيام" playKey="admin:bars-paid" ready={ready} /></React.Fragment>
         {chip(paidTrend, "text-brand")}
       </div>
     </div>
@@ -2152,7 +2168,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
             </div>
           </div>
           <div className="flex items-center gap-4">
-            {order.source === "customer_website" && <span className="bg-accent/10 text-accent px-4 py-2 rounded-xl text-xs font-extrabold uppercase border border-accent/20 animate-pulse">جديد من الموقع</span>}
+            {order.source === "customer_website" && <span className="bg-accent/10 text-accent px-4 py-2 rounded-xl text-xs font-extrabold uppercase border border-accent/20 animate-pulse pulse-calm">جديد من الموقع</span>}
             <span className={`px-5 py-2 rounded-xl text-xs font-extrabold uppercase inline-flex items-center gap-1.5 border ${
               statusMeta(order.status).cls
             }`}><StatusIcon status={order.status} />{order.status}</span>
@@ -2287,7 +2303,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
                       <div className="text-right">
                         <h5 className="font-extrabold text-xs sm:text-base text-brand flex items-center justify-end gap-1 leading-tight">
                            {item.name || item.productName}
-                           {item.preparationInstructions && <AlertTriangle className="w-3 h-3 text-red-500 animate-pulse shrink-0" />}
+                           {item.preparationInstructions && <AlertTriangle className="w-3 h-3 text-red-500 animate-pulse pulse-calm shrink-0" />}
                         </h5>
                         <div className="mt-1 flex flex-wrap gap-1 justify-end">
                           {item.selectedOption && <span className="text-xs sm:text-xs font-extrabold uppercase bg-stone-50 text-stone-400 px-2 py-0.5 rounded-md border border-stone-100">{item.selectedOption}</span>}
@@ -2365,7 +2381,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
                   onClick={onCancel}
                   className="w-full bg-red-50 hover:bg-red-100 text-red-600 py-3.5 rounded-2xl font-black text-xs transition-colors border border-red-100 flex items-center justify-center gap-2 active:scale-95"
                 >
-                  <AlertTriangle className="w-4 h-4 animate-pulse" />
+                  <AlertTriangle className="w-4 h-4 animate-pulse pulse-calm" />
                   إلغاء وهق غيرك / القطيّة بالكامل لهذا الطلب ❌
                 </button>
               </div>
