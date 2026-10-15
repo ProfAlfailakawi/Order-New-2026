@@ -1081,7 +1081,7 @@ export default function OrderPage() {
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-extrabold text-brand">وين طلبي؟</h2>
             <p className="text-stone-500 text-sm font-medium">
-              حط رقم تليفونك أو رقم الطلب علشان تتابع حالة طلباتك
+              حط رقم تلفونك أو رقم الطلب حتى تتابع حالة طلباتك
             </p>
           </div>
 
