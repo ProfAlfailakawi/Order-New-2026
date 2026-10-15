@@ -7839,9 +7839,10 @@ function ProductModal({
                   if ((product as any).imageUrl || product.image) setIsImagePreviewOpen(true);
                 }}
                 onPointerDown={(event) => event.stopPropagation()}
-                className="relative z-10 block rounded-[28px] cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
+                disabled={!((product as any).imageUrl || product.image)}
+                className={`relative z-10 block rounded-[28px] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 ${(product as any).imageUrl || product.image ? "cursor-zoom-in" : "cursor-default"}`}
                 style={{ touchAction: "manipulation" }}
-                aria-label={`تكبير صورة ${product.name}`}
+                aria-label={(product as any).imageUrl || product.image ? `تكبير صورة ${product.name}` : product.name}
               >
                 <FoodPhoto className="w-[112px] h-[112px] sm:w-[132px] sm:h-[132px] rounded-[28px] bg-white shadow-[0_20px_48px_rgba(26,46,34,0.18)] ring-1 ring-white/80">
                 <ProductVisual
