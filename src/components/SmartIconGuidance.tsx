@@ -210,18 +210,18 @@ export function SmartIconGuidance({
 
                 {/* Description */}
                 {description && (
-                  <p className="text-[11px] leading-relaxed text-slate-300 font-normal mb-1.5">
+                  <p className="text-xs leading-relaxed text-slate-300 font-normal mb-1.5">
                     {description}
                   </p>
                 )}
 
                 {/* Mobile First-Time Hint Footer */}
                 {isMobileTooltipActive && (
-                  <div className="mt-1 pt-1 border-t border-amber-500/20 flex items-center justify-between text-[11px] text-amber-300/90 font-medium">
+                  <div className="mt-1 pt-1 border-t border-amber-500/20 flex items-center justify-between text-xs text-amber-300/90 font-medium">
                     <span className="bg-amber-500/20 text-amber-200 px-1.5 py-0.5 rounded-md flex items-center gap-1">
                       <span>اضغط مجدداً للتنفيذ</span>
                     </span>
-                    <span className="text-[11px] text-slate-400">إرشاد أول مرة</span>
+                    <span className="text-xs text-slate-400">إرشاد أول مرة</span>
                   </div>
                 )}
 

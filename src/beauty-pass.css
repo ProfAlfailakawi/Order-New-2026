@@ -46,13 +46,12 @@
 }
 .track-signature::after {
   content: "";
-  position: fixed;
-  inset-inline: 0;
-  bottom: 0;
+  display: block;
+  position: relative;
   height: 24px;
+  margin-top: 16px;
   background: var(--ord-bp-sadu-soft) repeat-x center / 48px 24px;
   pointer-events: none;
-  z-index: 1;
 }
 .order-detail-card { position: relative; }
 .order-detail-card::before {
@@ -67,13 +66,13 @@
 }
 
 /* ---- cart (checkout sheet): the empty middle gets a soft strip, item cards a warm gradient ---- */
-/* the body's own background is !important upstream, so the strip is a sticky pseudo-element at its foot */
+/* the strip sits in the flow at the foot of the content (never floats over cart/address fields) */
 .checkout-wow-body::after {
   content: "";
   display: block;
-  position: sticky;
-  bottom: 0;
+  position: relative;
   height: 24px;
+  margin-top: 12px;
   flex: none;
   background: var(--ord-bp-sadu-soft) repeat-x center / 48px 24px;
   pointer-events: none;

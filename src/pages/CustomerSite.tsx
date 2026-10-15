@@ -5093,6 +5093,13 @@ export default function CustomerSite() {
                 <p className="mt-3 text-sm sm:text-base text-stone-600 font-bold leading-relaxed px-3">
                   لطلب الأكل واختيار الأصناف، ادخل المنيو.
                 </p>
+                <div className="mt-4 flex items-center justify-center gap-2 text-xs font-black text-stone-600" aria-hidden="true">
+                  <span className="inline-flex items-center gap-1.5"><UtensilsCrossed className="w-4 h-4 text-accent" strokeWidth={1.6} />رتّب طلبك</span>
+                  <span className="text-stone-300">·</span>
+                  <span className="inline-flex items-center gap-1.5"><Users className="w-4 h-4 text-accent" strokeWidth={1.6} />اعزم ربعك</span>
+                  <span className="text-stone-300">·</span>
+                  <span className="inline-flex items-center gap-1.5"><Layers className="w-4 h-4 text-accent" strokeWidth={1.6} />قسّم وادفع</span>
+                </div>
               </motion.div>
 
               <motion.div
@@ -5428,7 +5435,7 @@ export default function CustomerSite() {
 
         {/* Hero Section - Context Aware Banners */}
         {!isCheckout && (
-          <div className="p-4 sm:p-6 mb-2">
+          <div className="px-4 pb-4 pt-3 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:max-w-[1180px] lg:mx-auto mb-2">
             <motion.div
               whileHover={{ scale: 1.01 }}
               className={cn(
