@@ -355,7 +355,7 @@ export default function AdminDashboard() {
     count: customers.filter(c => getLoyaltyTier(getCustomerPoints(c.phone)).id === tier.id).length,
   }));
   const loyaltyTotal = loyaltyDist.reduce((a: number, d: any) => a + d.count, 0);
-  const LOYALTY_BAR_BG = ["bg-amber-600", "bg-slate-400", "bg-yellow-500", "bg-sky-500"];
+  const LOYALTY_BAR_BG = ["bg-brand/25", "bg-brand/50", "bg-accent", "bg-brand"];
 
   const filteredOrders = orders.filter(o => {
     const matchesSearch = !searchTerm ? true : (
@@ -2086,9 +2086,9 @@ function StatBars({ series, color, label, playKey, ready = true }: { series: num
   const max = Math.max(...vals, 0);
   const { ref, phase } = useDnaPlay<HTMLDivElement>({ playKey, enabled: ready });
   return (
-    <div ref={ref} data-draw={phase !== "final" ? phase : undefined} className="flex items-end gap-[3px] h-[34px]" dir="ltr" role="img" aria-label={label}>
+    <div ref={ref} data-draw={phase !== "final" ? phase : undefined} className="flex items-end gap-[3px] h-[34px]" dir="rtl" role="img" aria-label={label}>
       {vals.map((v, i) => (
-        <i key={i} className="dna-growy flex-1 max-w-[14px] md:max-w-[22px] rounded-[3px] not-italic" style={{ height: max > 0 ? `${Math.max(3, (v / max) * 34)}px` : "3px", background: color, opacity: i === vals.length - 1 ? 1 : 0.35, ["--i" as string]: vals.length - 1 - i } as React.CSSProperties} />
+        <i key={i} className="dna-growy flex-1 max-w-[14px] md:max-w-[22px] rounded-[3px] not-italic" style={{ height: max > 0 ? `${Math.max(3, (v / max) * 34)}px` : "3px", background: color, opacity: i === vals.length - 1 ? 1 : 0.35, ["--i" as string]: i } as React.CSSProperties} />
       ))}
     </div>
   );
