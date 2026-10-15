@@ -521,7 +521,7 @@ export default function AdminDashboard() {
             />
           </div>
           <div>
-            <h2 className="font-extrabold text-2xl tracking-tighter leading-none text-brand">فخامة</h2>
+            <h2 className="font-extrabold text-xl tracking-normal leading-snug text-brand">مطبخ التراث الكويتي</h2>
             <div className="flex items-center gap-2 mt-2">
               <p className="text-xs text-stone-500 font-bold uppercase">نظام الإدارة</p>
             </div>
@@ -644,8 +644,8 @@ export default function AdminDashboard() {
             <div className="space-y-12 animate-in fade-in duration-700">
               <div className="flex items-center justify-between pt-4 sm:pt-0">
                 <div>
-                  <h1 className="text-3xl sm:text-5xl font-extrabold text-brand leading-none">الإحصائيات المتقدمة</h1>
-                  <p className="text-stone-400 text-sm mt-4 font-medium">تحليل العمليات الفورية</p>
+                  <h1 className="text-3xl sm:text-5xl font-extrabold text-brand leading-none">لوحة القيادة</h1>
+                  <p className="text-stone-400 text-sm mt-4 font-medium">أرقام مطبخك اليوم</p>
                 </div>
                 <div className="px-6 py-3 bg-white border border-stone-100 rounded-[20px] text-xs font-extrabold text-stone-500 shadow-sm">
                   {formatKuwaitiDate(new Date()).date}
@@ -897,7 +897,7 @@ export default function AdminDashboard() {
                     </div>
                     
                     <div className="mb-10 mt-12 sm:mt-6 text-right">
-                      <p className="text-xs text-stone-300 font-bold uppercase mb-3">Invoice #{order.id}</p>
+                      <p className="text-xs text-stone-300 font-bold uppercase mb-3">فاتورة رقم {order.id}</p>
                       <h4 className="text-3xl font-extrabold text-brand group-hover:text-accent transition-colors leading-none block">
                         {order.customerName}
                         {getCustomerPoints(order.customerPhone) > 0 && (
@@ -1062,7 +1062,7 @@ export default function AdminDashboard() {
                            console.error(e);
                          }
                       }}
-                      className={`w-16 h-8 rounded-full relative transition-all duration-500 ${settings?.storeStatus?.manualClose ? 'bg-red-500' : 'bg-stone-200'}`}
+                      className={`w-16 h-8 rounded-full relative before:content-[''] before:absolute before:-inset-2.5 transition-all duration-500 ${settings?.storeStatus?.manualClose ? 'bg-red-500' : 'bg-stone-200'}`}
                     >
                       <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-500 shadow-md ${settings?.storeStatus?.manualClose ? 'right-9' : 'right-1'}`} />
                     </button>
@@ -1179,7 +1179,7 @@ export default function AdminDashboard() {
                                 onClick={() => {
                                   updateDaySchedule({ ...currentHours, enabled: !isEnabled });
                                 }}
-                                className={`w-12 h-6 rounded-full relative transition-all duration-300 ${isEnabled ? 'bg-emerald-500' : 'bg-stone-300'}`}
+                                className={`w-12 h-6 rounded-full relative before:content-[''] before:absolute before:-inset-2.5 transition-all duration-300 ${isEnabled ? 'bg-emerald-500' : 'bg-stone-300'}`}
                               >
                                 <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all shadow-sm ${isEnabled ? 'right-6.5' : 'right-0.5'}`} />
                               </button>
@@ -1245,7 +1245,7 @@ export default function AdminDashboard() {
                {/* Diwaniya Geofencing Radar Settings */}
                <div id="radar-geofence-card" className="bg-white rounded-[40px] border border-stone-100 shadow-sm p-10 space-y-8 mt-8 text-right">
                  <div>
-                   <h2 className="text-xl font-black text-brand mb-1 font-sans">تحديد مدى الرادار الجغرافي للدواوين 📍</h2>
+                   <h2 className="text-xl font-black text-brand mb-1 font-sans">تحديد مدى الرادار الجغرافي للدواوين</h2>
                     <p className="text-stone-400 text-xs font-medium font-sans">الحد الأقصى للمسافة (بالمتر) لرصد العملاء وتنبيههم وإيصال إشعارات انضمام لهم تلقائياً.</p>
                   </div>
 
@@ -1696,7 +1696,7 @@ export default function AdminDashboard() {
                          console.error(e);
                        }
                     }}
-                    className={`w-16 h-8 rounded-full relative transition-all duration-500 ${settings.isFreeDelivery ? 'bg-green-500' : 'bg-stone-200'}`}
+                    className={`w-16 h-8 rounded-full relative before:content-[''] before:absolute before:-inset-2.5 transition-all duration-500 ${settings.isFreeDelivery ? 'bg-green-500' : 'bg-stone-200'}`}
                   >
                     <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-500 shadow-md ${settings.isFreeDelivery ? 'right-9' : 'right-1'}`} />
                   </button>
@@ -2111,15 +2111,15 @@ function StatStrip({ revenue, revenueTrend, revenueSeries, newCount, newTrend, n
   const total = Number(newCount) || 0;
   const paid = Number(paidCount) || 0;
   const tile = "ord-bp-admin-tile min-w-0 flex flex-col gap-2 md:gap-3 p-3 md:px-6 md:py-5 rounded-[20px] md:rounded-3xl border border-stone-100 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]";
-  const head = "flex items-center gap-1.5 md:gap-2 text-stone-500 text-[11px] md:text-sm font-bold leading-tight";
-  const chip = (t: any, cls: string) => t ? <span className={`text-[11px] md:text-xs font-bold whitespace-nowrap ${cls}`}>{t}</span> : <span className={`text-[11px] md:text-xs font-bold ${cls}`}>—</span>;
+  const head = "flex items-center gap-1.5 md:gap-2 text-stone-500 text-xs md:text-sm font-bold leading-tight";
+  const chip = (t: any, cls: string) => t ? <span className={`text-xs md:text-xs font-bold whitespace-nowrap ${cls}`}>{t}</span> : <span className={`text-xs md:text-xs font-bold ${cls}`}>—</span>;
   return (
     <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1.1fr)] md:grid-cols-[repeat(3,minmax(0,1fr))] gap-2.5 md:gap-6">
       <div className={tile}>
         <div className={head}><TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4 text-accent shrink-0" aria-hidden="true" /><span>الدخل التراكمي</span></div>
         <div className="flex items-baseline gap-1 min-w-0" title={`${revenue} د.ك`}>
           <b className="text-[22px] md:text-[38px] font-black tracking-tighter leading-none text-brand truncate">{countUp(revNum, "admin:kpi-revenue", fmtRev)}</b>
-          <small className="text-[11px] md:text-sm font-bold text-stone-500 shrink-0">د.ك</small>
+          <small className="text-xs md:text-sm font-bold text-stone-500 shrink-0">د.ك</small>
         </div>
         <React.Fragment key={ready ? "r" : "p"}><StatBars series={revenueSeries} color="var(--color-accent)" label="الدخل آخر 7 أيام" playKey="admin:bars-rev" ready={ready} /></React.Fragment>
         {chip(revenueTrend, "text-accent")}
@@ -2163,7 +2163,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
           <div className="flex items-center gap-6">
             <button onClick={onClose} aria-label="إغلاق" className="p-4 bg-white border border-stone-100 rounded-2xl hover:bg-brand hover:text-white transition-all shadow-sm"><ChevronLeft className="w-6 h-6" /></button>
             <div>
-              <p className="text-xs text-stone-400 font-bold uppercase mb-1">Invoice Details</p>
+              <p className="text-xs text-stone-400 font-bold uppercase mb-1">تفاصيل الفاتورة</p>
               <h3 className="font-extrabold text-2xl text-brand">تفاصيل الفاتورة #{order.id.toUpperCase()}</h3>
             </div>
           </div>
@@ -2188,7 +2188,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
                 <p className="text-accent text-xl font-light italic mt-1">{order.customerPhone}</p>
               </div>
               <div className="p-8 bg-stone-50 rounded-[32px] border border-stone-100 space-y-5">
-                <label className="text-xs font-extrabold text-stone-400 uppercase flex items-center gap-2 justify-end">📍 عنوان التوصيل</label>
+                <label className="text-xs font-extrabold text-stone-400 uppercase flex items-center gap-2 justify-end"><MapPin className="w-4 h-4 text-accent" aria-hidden="true" /> عنوان التوصيل</label>
                 <div className="space-y-2 text-brand">
                   {!order.address.region && !order.address.block && (order.address as any).full ? (
                     <div className="text-xl font-extrabold">{(order.address as any).full}</div>
@@ -2219,12 +2219,12 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
                  </div>
                  <div className="flex justify-between items-center text-xs font-bold text-stone-400 uppercase pt-4 border-t border-stone-50">
                     {/* If free, total already equals itemsTotal */}
-                    <span className="italic">{calculateItemsTotal(order.items).toFixed(3)} د.ك</span>
+                    <span>{calculateItemsTotal(order.items).toFixed(3)} د.ك</span>
                     <span>مجموع المنتجات</span>
                  </div>
                  <div className="pt-4 border-t border-stone-100 flex flex-col items-center">
-                    <p className="text-xs text-stone-400 font-extrabold uppercase mb-3">Gross Total</p>
-                    <div className="text-6xl font-extrabold text-brand italic tracking-tighter">{getDisplayTotal(order).toFixed(3)} <span className="text-xl text-accent not-italic">د.ك</span></div>
+                    <p className="text-xs text-stone-400 font-extrabold uppercase mb-3">الإجمالي</p>
+                    <div className="text-4xl sm:text-5xl font-extrabold text-brand tracking-tight">{getDisplayTotal(order).toFixed(3)} <span className="text-xl text-accent not-italic">د.ك</span></div>
                      {((order as any).discountAmount > 0 || (order as any).discount > 0) && (
                        <p className="text-xs font-bold text-red-500 mt-2">
                          الخصم {(order as any).promoCode && `(${(order as any).promoCode})`}: -{((order as any).discountAmount || (order as any).discount).toFixed(3)} د.ك
@@ -2314,13 +2314,13 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
                       <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg bg-stone-50 flex items-center justify-center font-extrabold text-accent text-xs sm:text-base border border-stone-100 shrink-0">{item.quantity}</div>
                     </div>
                     {item.preparationInstructions && (
-                      <div className="mt-1.5 p-1 px-2.5 bg-rose-50/30 border border-rose-100/20 rounded-full text-[8.5px] sm:text-[11px] text-rose-600 font-bold flex items-center justify-end gap-1 w-max ms-auto">
+                      <div className="mt-1.5 p-1 px-2.5 bg-rose-50/30 border border-rose-100/20 rounded-full text-xs sm:text-xs text-rose-600 font-bold flex items-center justify-end gap-1 w-max ms-auto">
                         <span>{item.preparationInstructions}</span>
                         <AlertTriangle className="w-2.5 h-2.5 text-rose-500 shrink-0" />
                       </div>
                     )}
                     {(item.itemNotes || item.note) && (
-                      <div className="mt-1.5 p-2 bg-stone-50/50 rounded-lg text-[8.5px] sm:text-xs text-stone-500 italic border-r-2 border-stone-200/50 font-medium leading-relaxed text-right w-full">
+                      <div className="mt-1.5 p-2 bg-stone-50/50 rounded-lg text-xs sm:text-xs text-stone-500 italic border-r-2 border-stone-200/50 font-medium leading-relaxed text-right w-full">
                         "{item.itemNotes || item.note}"
                       </div>
                     )}

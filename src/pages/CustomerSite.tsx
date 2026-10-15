@@ -1103,6 +1103,8 @@ import {
   isValidPhone,
   checkStoreStatus,
   formatKuwaitiDate,
+  formatKwd,
+  formatKwdAmount,
 } from "../utils";
 import {
   calculateItemAddons,
@@ -2916,13 +2918,13 @@ export default function CustomerSite() {
 
   const moodPlaceholders = useMemo(() => [
     "شلون مزاجك اليوم؟ أو عندك عزيمة؟ اكتب ونفزع لك! 👨‍🍳",
-    "بنتي مريضة وأبي شي يدفي صدرها.. 🤍",
+    "بنتي مريضة وأبي شي يدفي صدرها..",
     "تونا رادين من السفر والبيت فاضي وميتين يوع.. ✈️",
     "شنو بخاطرك اليوم؟ اكتب اللي بقلبك ومالك إلا يرضيك 🎯",
     "يوعان ومحتار? عطني وضعك وأنا أضبطك 🚀",
     "متوهق بضيوف فجأة؟ الفزعة عندي، بس اكتب 🏃‍♂️",
     "مشتهي شيء معين؟ لا تدور.. اكتب وأنا أجيبه لك 🌟",
-    "مزاجك يبي شيء خفيف والا دسم؟ سولف لي 🍔"
+    "مزاجك يبي شيء خفيف والا دسم؟ سولف لي"
   ], []);
 
   const [currentPlaceholder, setCurrentPlaceholder] = useState(moodPlaceholders[0]);
@@ -3228,7 +3230,7 @@ export default function CustomerSite() {
           setPsychMessage({
             title,
             desc: `أكثر عملائنا حبو ${suggestion.name}، متوفر الحين وتقدر تطلبه.`,
-            actionText: `ألقِ نظرة! (${suggestion.price} د.ك)`,
+            actionText: `ألقِ نظرة! (${formatKwd(suggestion.price)})`,
             product: suggestion,
           });
           sessionStorage.setItem("hesitationSeen", "true");
@@ -5040,9 +5042,10 @@ export default function CustomerSite() {
         )}
       </AnimatePresence>
 
-      {/* Light, one-screen welcome — shown once, never on payment return. */}
+      {/* Entry screen above is the single first-visit welcome; this sheet only opens from the "؟" replay button. */}
       {!showSplash && (
         <OrderWelcome
+          autoOpen={false}
           logo={settings?.companyLogo || settings?.logo || DEFAULT_GLOBAL_LOGO}
         />
       )}
@@ -5095,6 +5098,13 @@ export default function CustomerSite() {
                 <p className="mt-3 text-sm sm:text-base text-stone-600 font-bold leading-relaxed px-3">
                   لطلب الأكل واختيار الأصناف، ادخل المنيو.
                 </p>
+                <div className="mt-4 flex items-center justify-center gap-2 text-xs font-black text-stone-600" aria-hidden="true">
+                  <span className="inline-flex items-center gap-1.5"><UtensilsCrossed className="w-4 h-4 text-accent" strokeWidth={1.6} />رتّب طلبك</span>
+                  <span className="text-stone-300">·</span>
+                  <span className="inline-flex items-center gap-1.5"><Users className="w-4 h-4 text-accent" strokeWidth={1.6} />اعزم ربعك</span>
+                  <span className="text-stone-300">·</span>
+                  <span className="inline-flex items-center gap-1.5"><Layers className="w-4 h-4 text-accent" strokeWidth={1.6} />قسّم وادفع</span>
+                </div>
               </motion.div>
 
               <motion.div
@@ -5342,8 +5352,8 @@ export default function CustomerSite() {
                   settings.companyName
                 ) : (
                   <>
-                    شركة مطبخات{" "}
-                    <span className="text-accent">لكويتي</span>
+                    مطبخ{" "}
+                    <span className="text-accent">التراث الكويتي</span>
                   </>
                 )}
               </h1>
@@ -5430,7 +5440,7 @@ export default function CustomerSite() {
 
         {/* Hero Section - Context Aware Banners */}
         {!isCheckout && (
-          <div className="p-4 sm:p-6 mb-2">
+          <div className="px-4 pb-4 pt-3 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:max-w-[1180px] lg:mx-auto mb-2">
             <motion.div
               whileHover={{ scale: 1.01 }}
               className={cn(
@@ -5577,7 +5587,7 @@ export default function CustomerSite() {
                         <FoodPhoto product={p} className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-2xl shrink-0 border border-cream-edge shadow-sm" />
                         <div className="min-w-0 flex-1 space-y-1">
                           <div className="text-xs sm:text-sm font-extrabold text-brand line-clamp-2 leading-snug break-words group-hover:text-amber-950 transition-colors duration-200">{p.name}</div>
-                          <PriceChip>{Number(p.price || 0).toFixed(3)} <span className="text-xs font-bold text-accent">د.ك</span></PriceChip>
+                          <PriceChip>{formatKwdAmount(p.price)} <span className="text-xs font-bold text-accent">د.ك</span></PriceChip>
                         </div>
                       </button>
                     );
@@ -5863,7 +5873,7 @@ export default function CustomerSite() {
                   className="w-full bg-accent text-white py-5 rounded-2xl font-extrabold text-xl hover:brightness-105 transition-all active:scale-95 flex items-center justify-center gap-3"
                 >
                   <ShoppingCart className="w-6 h-6" />
-                  ألقِ نظرة! ({smartPick?.item?.price} د.ك)
+                  ألقِ نظرة! ({formatKwd(smartPick?.item?.price)})
                 </button>
               </motion.div>
             </motion.div>
@@ -6380,7 +6390,7 @@ export default function CustomerSite() {
                 </strong>
                 <span className="text-xs text-white/65">
                   {!checkStoreStatus(settings?.storeStatus).isOpen && "لوقت الافتتاح · "}
-                  {cart.length} منتجات · {total} د.ك
+                  {cart.length} منتجات · {formatKwd(total)}
                 </span>
               </div>
             </button>
@@ -7543,12 +7553,12 @@ const RoyalLazySusan = ({
       <button
         onClick={handlePrev}
         className="absolute left-0 top-0 bottom-0 w-12 z-[200] opacity-0"
-        aria-label="Previous"
+        aria-label="السابق"
       />
       <button
         onClick={handleNext}
         className="absolute right-0 top-0 bottom-0 w-12 z-[200] opacity-0"
-        aria-label="Next"
+        aria-label="التالي"
       />
     </div>
   );
@@ -7826,7 +7836,7 @@ function ProductModal({
                 onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
-                  setIsImagePreviewOpen(true);
+                  if ((product as any).imageUrl || product.image) setIsImagePreviewOpen(true);
                 }}
                 onPointerDown={(event) => event.stopPropagation()}
                 className="relative z-10 block rounded-[28px] cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
@@ -7834,28 +7844,10 @@ function ProductModal({
                 aria-label={`تكبير صورة ${product.name}`}
               >
                 <FoodPhoto className="w-[112px] h-[112px] sm:w-[132px] sm:h-[132px] rounded-[28px] bg-white shadow-[0_20px_48px_rgba(26,46,34,0.18)] ring-1 ring-white/80">
-                <img
-                  referrerPolicy="no-referrer"
-                  src={productImageSrc}
-                  alt={product.name}
-                  draggable={false}
-                  onError={(e) => {
-                    const fallback =
-                      settings?.companyLogo ||
-                      settings?.logo ||
-                      DEFAULT_GLOBAL_LOGO;
-                    if (
-                      e.currentTarget.src.includes(fallback) ||
-                      e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO)
-                    ) {
-                      e.currentTarget.onerror = null;
-                      if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO))
-                        e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
-                    } else {
-                      e.currentTarget.src = fallback;
-                    }
-                  }}
-                  className="w-full h-full object-contain bg-white p-2 relative transition-transform duration-200 active:scale-[0.98] select-none"
+                <ProductVisual
+                  product={{ imageUrl: (product as any).imageUrl || product.image || "", name: product.name, category: (product as any).category }}
+                  size="lg"
+                  imgClassName="w-full h-full object-contain bg-white p-2 relative transition-transform duration-200 active:scale-[0.98] select-none"
                 />
                 </FoodPhoto>
               </button>
@@ -7975,7 +7967,7 @@ function ProductModal({
                       </div>
                       {extra.price > 0 && (
                         <span className="text-xs font-bold text-accent">
-                          +{extra.price} د.ك
+                          +{formatKwd(extra.price)}
                         </span>
                       )}
                     </button>
@@ -8097,7 +8089,7 @@ function ProductModal({
                             {addon.freeQuantity && addon.freeQuantity > 0 ? (
                               <span className="text-xs text-green-600 block sm:inline mb-1 sm:mb-0 sm:ml-1">(أول {addon.freeQuantity} مجاناً) </span>
                             ) : null}
-                            +{addon.price} د.ك
+                            +{formatKwd(addon.price)}
                           </span>
                         )}
                         {(addon.price === 0 || addon.isHiddenPrice) && addon.freeQuantity && addon.freeQuantity > 0 && (
@@ -8140,7 +8132,7 @@ function ProductModal({
                   setQuantity(Math.max(1, quantity - 1));
                 }}
                 className="p-2.5 sm:p-4 text-stone-500 hover:text-accent transition-colors shrink-0 active:scale-90"
-                aria-label="Decrease quantity"
+                aria-label="نقّص الكمية"
               >
                 <Minus className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
@@ -8155,7 +8147,7 @@ function ProductModal({
                   setQuantity(quantity + 1);
                 }}
                 className="p-2.5 sm:p-4 text-stone-500 hover:text-accent transition-colors shrink-0 active:scale-90"
-                aria-label="Increase quantity"
+                aria-label="زيّد الكمية"
               >
                 <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
@@ -8196,7 +8188,7 @@ function ProductModal({
               <span className="whitespace-nowrap">حطه بالسلة</span>
               <span className="w-px h-6 bg-white/30 shrink-0"></span>
               <span className="font-bold whitespace-nowrap">
-                {calculateItemTotalWithAddons({
+                {formatKwd(calculateItemTotalWithAddons({
                     id: "",
                     productId: product.id,
                     name: product.name,
@@ -8206,7 +8198,7 @@ function ProductModal({
                     selectedAddonsIds: selectedAddonsIds,
                     addonQuantities,
                     product: normalizeProductForAddons(product),
-                })} د.ك
+                }))}
               </span>
             </motion.button>
           </div>
@@ -8674,7 +8666,7 @@ function CheckoutOverlay({
                   if (freeDelThreshold && itemsTotal < freeDelThreshold) {
                     const diff = freeDelThreshold - itemsTotal;
                     if (diff > 0 && diff <= 5) {
-                      msg += ` (باقي لك ${diff} د.ك وتصير توصيلتك علينا!)`;
+                      msg += ` (باقي لك ${formatKwd(diff)} وتصير توصيلتك علينا!)`;
                       freeDelProgress = Math.min(1, Math.max(0, itemsTotal / freeDelThreshold));
                     }
                   }
@@ -8739,7 +8731,7 @@ function CheckoutOverlay({
                               {item.quantity}×
                             </span>
                             <span className="text-sm font-bold text-brand whitespace-nowrap">
-                                {calculateItemTotalWithAddons(item)}{" "}
+                                {formatKwdAmount(calculateItemTotalWithAddons(item))}{" "}
                                 <span className="text-xs text-accent">د.ك</span>
                             </span>
                             <button
@@ -8843,7 +8835,7 @@ function CheckoutOverlay({
                           <strong>{customerName ? `حيّاك ${customerName}، نجهز نفس طلبك اللي فات؟` : "حيّاك، نجهز نفس طلبك اللي فات؟"}</strong>
                           <p>
                             اختصار جاهز من آخر طلب: {lastOrderItemsCount} أصناف
-                            {lastOrderTotal > 0 ? ` · ${lastOrderTotal.toFixed(3)} د.ك تقريباً` : ""}
+                            {lastOrderTotal > 0 ? ` · ${formatKwd(lastOrderTotal)} تقريباً` : ""}
                           </p>
                         </div>
                         <button
@@ -9216,7 +9208,7 @@ function CheckoutOverlay({
                 <div className="flex flex-col gap-1.5 pt-1">
                   <div className="flex gap-2">
                     <input
-                      placeholder="كود الخصم (Promo Code)"
+                      placeholder="كود الخصم"
                       value={promoCodeInput}
                       onChange={(e) =>
                         setPromoCodeInput(normalizeDigits(e.target.value).toUpperCase())
@@ -9266,7 +9258,7 @@ function CheckoutOverlay({
                   حسابك طال عمرك
                 </span>
                 <div className="text-2xl font-bold text-brand">
-                  {Number(total || 0).toFixed(2)}{" "}
+                  {Number(total || 0).toFixed(3)}{" "}
                   <span className="text-sm text-accent font-medium">د.ك</span>
                 </div>
               </div>
@@ -9277,14 +9269,14 @@ function CheckoutOverlay({
               <div className="flex justify-between items-center text-xs font-bold text-stone-500">
                 <span>مجموع طلباتك</span>
                 <span className="text-brand font-medium">
-                  {Number(itemsTotal || 0).toFixed(2)} د.ك
+                  {formatKwd(itemsTotal)}
                 </span>
               </div>
 
               {appliedPromo && (
                 <div className="flex justify-between items-center text-xs font-bold text-green-600">
                   <span>الخصم ({appliedPromo.code})</span>
-                  <span>- {discountAmount.toFixed(2)} د.ك</span>
+                  <span>- {formatKwd(discountAmount)}</span>
                 </div>
               )}
 
@@ -9305,7 +9297,7 @@ function CheckoutOverlay({
                     </span>
                   ) : (
                     <span className="text-accent">
-                      {Number(deliveryFee || 0).toFixed(2)} د.ك
+                      {formatKwd(deliveryFee)}
                     </span>
                   )}
                 </span>
@@ -9341,14 +9333,14 @@ function CheckoutOverlay({
               <div className="flex justify-between items-center text-xs font-bold text-stone-500">
                 <span>مجموع طلباتك</span>
                 <span className="text-brand font-medium">
-                  {Number(itemsTotal || 0).toFixed(2)} د.ك
+                  {formatKwd(itemsTotal)}
                 </span>
               </div>
 
               {appliedPromo && (
                 <div className="flex justify-between items-center text-xs font-bold text-green-600">
                   <span>الخصم ({appliedPromo.code})</span>
-                  <span>- {discountAmount.toFixed(2)} د.ك</span>
+                  <span>- {formatKwd(discountAmount)}</span>
                 </div>
               )}
 
@@ -9369,7 +9361,7 @@ function CheckoutOverlay({
                     </span>
                   ) : (
                     <span className="text-accent">
-                      {Number(deliveryFee || 0).toFixed(2)} د.ك
+                      {formatKwd(deliveryFee)}
                     </span>
                   )}
                 </span>
@@ -9403,7 +9395,7 @@ function CheckoutOverlay({
                   حسابك طال عمرك
                 </span>
                 <div className="text-2xl font-bold text-brand">
-                  {Number(total || 0).toFixed(2)}{" "}
+                  {Number(total || 0).toFixed(3)}{" "}
                   <span className="text-sm text-accent font-medium">د.ك</span>
                 </div>
               </div>
@@ -9513,6 +9505,7 @@ function CheckoutOverlay({
                   <button
                     disabled={isSubmitting}
                     onClick={() => onSubmit(false)}
+                    aria-label="ادفع الفاتورة كاملة"
                     className={cn(
                       "payment-method-card payment-method-card-full w-full p-4 sm:p-5 rounded-2xl font-bold flex items-center justify-between gap-3 transition-all active:scale-[0.98] text-lg group text-right",
                       !isSubmitting
@@ -9537,6 +9530,7 @@ function CheckoutOverlay({
                            </div>
                            <div className="flex flex-col items-start gap-1">
                              <span className="text-[17px]">تبي تدفعه كامل؟</span>
+                             <span className="text-xs font-medium opacity-90">ادفع الفاتورة كاملة الحين</span>
                            </div>
                         </div>
                       </>

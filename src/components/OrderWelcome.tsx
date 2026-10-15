@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { DEFAULT_GLOBAL_LOGO } from "../constants";
-import { UtensilsCrossed, Users, Receipt } from "lucide-react";
+import { UtensilsCrossed, Users, Layers } from "lucide-react";
 
 /**
  * OrderWelcome — a light, single-screen welcome sheet for the customer home.
@@ -59,16 +59,21 @@ const isPaymentOrCheckoutContext = (): boolean => {
 const CHIPS: { icon: React.ReactNode; label: string }[] = [
   { icon: <UtensilsCrossed className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />, label: "رتّب طلبك" },
   { icon: <Users className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />, label: "اعزم ربعك" },
-  { icon: <Receipt className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />, label: "قسّم وادفع" },
+  { icon: <Layers className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />, label: "قسّم وادفع" },
 ];
 
 interface OrderWelcomeProps {
   logo?: string;
   /** Fired when the user taps the primary "ابدأ الطلب" button. */
   onStart?: () => void;
+  /**
+   * When false the sheet never opens by itself (another entry screen already
+   * welcomed the visitor); it stays available through the "؟" replay button.
+   */
+  autoOpen?: boolean;
 }
 
-const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart }) => {
+const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart, autoOpen = true }) => {
   const [open, setOpen] = useState(false);
   const [showReplay] = useState(() => !isPaymentOrCheckoutContext());
   const reduce = useReducedMotion();
@@ -76,6 +81,7 @@ const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart }) => {
   // Decide on mount only. Never gate the UI while data loads: default hidden.
   useEffect(() => {
     if (isPaymentOrCheckoutContext()) return; // never interrupt paying
+    if (!autoOpen) return;
     if (!readOnboarded()) setOpen(true);
   }, []);
 
@@ -241,7 +247,7 @@ const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart }) => {
           onClick={replay}
           aria-label="إعادة عرض الترحيب"
           title="كيف يشتغل التطبيق؟"
-          className="order-welcome-replay fixed left-4 z-30 flex h-9 w-9 max-lg:h-11 max-lg:w-11 items-center justify-center rounded-full border border-[#e8d6ad] bg-white/90 font-black text-[#183326] shadow-md backdrop-blur transition active:scale-95"
+          className="order-welcome-replay fixed left-4 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-[#e8d6ad] bg-white/90 font-black text-[#183326] shadow-md backdrop-blur transition active:scale-95"
           style={{ bottom: "calc(16px + env(safe-area-inset-bottom))" }}
         >
           ؟

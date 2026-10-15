@@ -730,7 +730,7 @@ export function SaduPresenceRug({
 </h3>
               </div>
 
-              <p className="text-[11px] sm:text-xs text-stone-300 font-bold leading-relaxed">
+              <p className="text-xs sm:text-xs text-stone-300 font-bold leading-relaxed">
                 اختر عبارة ترحيب كويتية تقليدية أو اكتب عبارتك الخاصة بالديوانية، وفنجانك على سجادة السدو راح يهتز ويبث صوت رنة الفنجان على تليفونات ربعك المتواجدين حالياً!
               </p>
 
@@ -757,15 +757,15 @@ export function SaduPresenceRug({
                 >
                   {/* Sadu patterned ring */}
                   <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-2 bg-gradient-to-r from-stone-900 via-amber-500 to-stone-900 flex justify-between px-1">
-                    <span className="text-[5px]"><MessageWithIcons text={"♣"} /></span>
-                    <span className="text-[5px]"><MessageWithIcons text={"♣"} /></span>
+                    <span className="text-xs"><MessageWithIcons text={"♣"} /></span>
+                    <span className="text-xs"><MessageWithIcons text={"♣"} /></span>
                   </div>
                   {/* Steaming hot liquid */}
                   <div className="absolute top-1.5 w-10 h-10 rounded-full border border-amber-900/10 bg-gradient-to-br from-amber-900 to-amber-950/90 flex items-center justify-center">
                     <span className="text-xs"><MessageWithIcons text={"☕"} /></span>
                   </div>
                 </motion.div>
-                <span className="text-[11px] font-black text-amber-500 mt-2 animate-pulse">
+                <span className="text-xs font-black text-amber-500 mt-2 animate-pulse">
                   <MessageWithIcons text={"اسحب وهزّ الفنجان لمذاق الهيل وقرقعته اللمسية! 🫨🖐️"} />
 </span>
               </div>
@@ -777,7 +777,7 @@ export function SaduPresenceRug({
                     key={pi}
                     onClick={() => triggerMyWobble(phrase)}
                     disabled={isSubmittingWobble}
-                    className="w-full text-right p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-stone-950/60 border border-stone-800/60 hover:border-amber-500/35 hover:bg-stone-950 text-[11px] sm:text-xs font-black text-amber-100/90 active:scale-[0.98] transition-all"
+                    className="w-full text-right p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-stone-950/60 border border-stone-800/60 hover:border-amber-500/35 hover:bg-stone-950 text-xs sm:text-xs font-black text-amber-100/90 active:scale-[0.98] transition-all"
                   >
                     {phrase}
                   </button>
@@ -803,7 +803,7 @@ export function SaduPresenceRug({
                 />
               </div>
 
-              <div className="bg-stone-950/40 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl text-[11px] sm:text-[11px] text-stone-400 text-center font-bold">
+              <div className="bg-stone-950/40 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl text-xs sm:text-xs text-stone-400 text-center font-bold">
                 كل جديد يوصل للحضور مباشرة، والديوانية دايمًا على اتصال.
               </div>
             </motion.div>
@@ -829,7 +829,7 @@ export function SaduPresenceRug({
                 >
                   <MessageWithIcons text={"✕"} />
 </button>
-                <span className="text-[11px] sm:text-[11px] font-black bg-amber-950/80 text-amber-500 px-3 py-1 rounded-full uppercase">
+                <span className="text-xs sm:text-xs font-black bg-amber-950/80 text-amber-500 px-3 py-1 rounded-full uppercase">
                   {selectedCupInfo.cupMeta.label}
                 </span>
               </div>
@@ -881,7 +881,7 @@ export function SaduPresenceRug({
                       ))}
                     </div>
                   </div>
-                  <div className="absolute bottom-1 text-[11px] font-black text-amber-400">
+                  <div className="absolute bottom-1 text-xs font-black text-amber-400">
                     <MessageWithIcons text={"جاري صب فنجان الكرم للضيف... 🛰️💨"} />
 </div>
                 </div>
@@ -896,7 +896,7 @@ export function SaduPresenceRug({
                   <span className="text-emerald-400 font-black text-xs block">
                     <MessageWithIcons text={"تم صب فنجان الضيافة بنجاح! ✅☕"} />
 </span>
-                  <span className="text-[11px] font-bold text-emerald-400/80 mt-1 block">
+                  <span className="text-xs font-bold text-emerald-400/80 mt-1 block">
                     وصل تنبيه الترحيب لصديقك بالثواني الحالية
                   </span>
                 </motion.div>
@@ -931,7 +931,7 @@ export function SaduPresenceRug({
               <button
                 type="button"
                 onClick={handleCupModalClose}
-                className="w-full bg-stone-800 hover:bg-stone-700 text-stone-300 py-2.5 rounded-2xl text-[11px] font-bold active:scale-95 transition-all text-center"
+                className="w-full bg-stone-800 hover:bg-stone-700 text-stone-300 py-2.5 rounded-2xl text-xs font-bold active:scale-95 transition-all text-center"
               >
                 إغلاق النافذة
               </button>
@@ -966,7 +966,7 @@ export function SaduPresenceRug({
               </div>
 
               <div className="p-4 bg-amber-950/20 rounded-2xl border border-amber-500/10 space-y-2">
-                <span className="text-[11px] font-black text-amber-400 block pb-1 border-b border-amber-500/10">المتطلب للارتقاء والوصول بمجد الديوانية:</span>
+                <span className="text-xs font-black text-amber-400 block pb-1 border-b border-amber-500/10">المتطلب للارتقاء والوصول بمجد الديوانية:</span>
                 <p className="text-xs font-black text-white">{activeMilestoneDesc.points}+ نقطة ديوانية تراكمية</p>
               </div>
 
@@ -974,7 +974,7 @@ export function SaduPresenceRug({
                 {activeMilestoneDesc.desc}
               </div>
 
-              <div className="bg-stone-900/60 p-3 rounded-2xl text-[11px] text-stone-400 text-center font-bold">
+              <div className="bg-stone-900/60 p-3 rounded-2xl text-xs text-stone-400 text-center font-bold">
                 <MessageWithIcons text={"كل فنجان يصبّه الربع، وكل طلب ومشاركة تقربكم أكثر لدرب المجد! 🐪✨"} />
 </div>
 

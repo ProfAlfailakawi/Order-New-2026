@@ -184,7 +184,7 @@ const LeafletLocationPicker: React.FC<{
         <SmartIconGuidance
           id="geolocation_autopin"
           title="تحديد موقعك تلقائياً (GPS)"
-          description="التقاط موقع التوصيل الحالي من قمر صناعي GPS وتحديث العنوان فوراً"
+          description="نحدد موقعك الحالي ونعبّي العنوان لك"
           placement="bottom"
         >
           <button type="button" onClick={useCurrentLocation} className="shrink-0 whitespace-nowrap inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700 border border-emerald-100 active:scale-95 transition">

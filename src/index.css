@@ -371,7 +371,7 @@ section:not([class*="max-w-"]) {
 }
 .roulette-status-strip span {
   border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.065); color:rgba(255,255,255,.78);
-  border-radius:999px; padding:.58rem .5rem; font-size:.72rem; font-weight:900; backdrop-filter: blur(18px);
+  border-radius:999px; padding:.58rem .5rem; font-size:.75rem; font-weight:900; backdrop-filter: blur(18px);
 }
 .roulette-ultra-hero { padding: 2.25rem 1rem 1rem; border-radius: 34px; }
 .roulette-ultra-card { border-radius: 34px !important; border-color: rgba(255,255,255,.14) !important; }
@@ -432,7 +432,7 @@ section:not([class*="max-w-"]) {
 .qatya-v14-quick { display: flex; flex-wrap: wrap; gap: .45rem; }
 .qatya-v14-quick span {
   background: rgba(15,81,48,.06); border: 1px solid rgba(15,81,48,.08); color: #0f5130;
-  border-radius: 999px; padding: .46rem .7rem; font-size: .72rem; font-weight: 950;
+  border-radius: 999px; padding: .46rem .7rem; font-size: .75rem; font-weight: 950;
 }
 .qatya-v14-orb {
   width: 116px; height: 116px; border-radius: 999px; padding: 8px;
@@ -558,7 +558,7 @@ section:not([class*="max-w-"]) {
 }
 @media (max-width: 420px) {
   .roulette-v14-participants { grid-template-columns: 1fr; }
-  .roulette-v14-marquee span { font-size:.58rem; padding:.34rem .5rem; }
+  .roulette-v14-marquee span { font-size:.75rem; padding:.34rem .5rem; }
 }
 
 .track-v14-social-card {
@@ -657,7 +657,7 @@ section:not([class*="max-w-"]) {
     border-radius: 22px;
   }
   .track-v15-details-head h3 { font-size: .92rem; }
-  .track-v15-invoice-chip { font-size: .7rem; padding: .5rem .65rem; }
+  .track-v15-invoice-chip { font-size: .75rem; padding: .5rem .65rem; }
 }
 
 /* ======================================================================
@@ -1552,7 +1552,7 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
 }
 .wahag-pulse-name span {
   color: rgba(255,255,255,.58);
-  font-size: .74rem;
+  font-size: .75rem;
   font-weight: 900;
   letter-spacing: .02em;
 }
@@ -1596,7 +1596,7 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
   .wahag-pulse-core { --pulse-size: min(90vw, 326px); }
   .wahag-pulse-orbit-card { min-width: 66px; max-width: 82px; padding: 7px; border-radius: 18px; }
   .wahag-pulse-orbit-card span { width: 24px; height: 24px; border-radius: 10px; }
-  .wahag-pulse-orbit-card strong { font-size: .7rem; }
+  .wahag-pulse-orbit-card strong { font-size: .75rem; }
   .wahag-pulse-center { min-width: 128px; }
 }
 
@@ -2000,7 +2000,7 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
   align-items:center!important;
 }
 .orser-product-card-row .orser-product-content [class*="bg-red-50"] p{
-  font-size:.7rem!important;
+  font-size:.75rem!important;
   line-height:1.25!important;
 }
 .orser-product-card-row .orser-product-add-wrap{
@@ -2029,7 +2029,7 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
   .orser-product-card-row .orser-product-title{font-size:.96rem!important;line-height:1.32!important;}
   .orser-product-card-row .orser-product-content > p{font-size:.95rem!important;padding:.3rem .62rem!important;}
   .orser-product-card-row .menu-product-add{width:50px!important;height:50px!important;border-radius:17px!important;}
-  .orser-product-card-row span.absolute.top-0.right-0{font-size:.62rem!important;padding:.28rem .7rem!important;}
+  .orser-product-card-row span.absolute.top-0.right-0{font-size:.75rem!important;padding:.28rem .7rem!important;}
 }
 
 /* Cart dock: lighter, smaller, and clear on phone/tablet/desktop */
@@ -2047,14 +2047,14 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
 }
 .al-cart-summary strong:before{content:""!important;display:none!important;}
 .al-cart-summary strong{font-size:.98rem!important;white-space:nowrap!important;}
-.al-cart-summary span{font-size:.7rem!important;white-space:nowrap!important;}
+.al-cart-summary span{font-size:.75rem!important;white-space:nowrap!important;}
 .al-cart-actions{gap:7px!important;margin-inline-start:auto!important;}
 .al-cart-actions button{
   min-height:38px!important;
   min-width:76px!important;
   padding:0 .7rem!important;
   border-radius:15px!important;
-  font-size:.72rem!important;
+  font-size:.75rem!important;
   white-space:nowrap!important;
 }
 .al-cart-actions .al-cart-checkout{min-width:108px!important;}
@@ -2070,9 +2070,9 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
   .al-cart-summary{max-width:38%!important;gap:6px!important;}
   .al-cart-summary > div:first-child{padding:.36rem .56rem!important;border-radius:14px!important;font-size:.75rem!important;}
   .al-cart-summary strong{font-size:.82rem!important;}
-  .al-cart-summary span{font-size:.62rem!important;}
+  .al-cart-summary span{font-size:.75rem!important;}
   .al-cart-actions{gap:5px!important;}
-  .al-cart-actions button{min-height:34px!important;min-width:62px!important;padding:0 .52rem!important;font-size:.66rem!important;border-radius:13px!important;}
+  .al-cart-actions button{min-height:34px!important;min-width:62px!important;padding:0 .52rem!important;font-size:.75rem!important;border-radius:13px!important;}
   .al-cart-actions .al-cart-checkout{min-width:86px!important;}
 }
 
@@ -2241,7 +2241,7 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
   .orser-product-card-row .orser-product-title{font-size:.94rem!important;line-height:1.28!important;-webkit-line-clamp:2!important;}
   .orser-product-card-row .orser-product-content > p{font-size:.92rem!important;padding:.32rem .58rem!important;margin-top:.38rem!important;}
   .orser-product-card-row .orser-product-content [class*="bg-red-50"]{padding:.34rem .45rem!important;margin-top:.38rem!important;border-radius:13px!important;}
-  .orser-product-card-row .orser-product-content [class*="bg-red-50"] p{font-size:.66rem!important;line-height:1.22!important;}
+  .orser-product-card-row .orser-product-content [class*="bg-red-50"] p{font-size:.75rem!important;line-height:1.22!important;}
   .orser-product-card-row .menu-product-add{width:46px!important;height:46px!important;border-radius:16px!important;}
   .orser-product-card-row span.absolute.top-0.right-0{right:4px!important;top:4px!important;border-radius:999px!important;padding:.22rem .58rem!important;}
 
@@ -2254,13 +2254,13 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
     gap:7px!important;
   }
   .al-cart-summary{gap:6px!important;}
-  .al-cart-summary > div:first-child{padding:.32rem .48rem!important;font-size:.72rem!important;}
+  .al-cart-summary > div:first-child{padding:.32rem .48rem!important;font-size:.75rem!important;}
   .al-cart-summary strong{font-size:.8rem!important;}
-  .al-cart-summary span{font-size:.58rem!important;}
+  .al-cart-summary span{font-size:.75rem!important;}
   .al-cart-actions{gap:5px!important;}
   .al-cart-actions button,
-  .al-cart-actions button:not(.al-cart-checkout){min-width:58px!important;min-height:36px!important;padding:0 .42rem!important;font-size:.62rem!important;border-radius:13px!important;}
-  .al-cart-actions .al-cart-checkout{min-width:78px!important;font-size:.64rem!important;}
+  .al-cart-actions button:not(.al-cart-checkout){min-width:58px!important;min-height:36px!important;padding:0 .42rem!important;font-size:.75rem!important;border-radius:13px!important;}
+  .al-cart-actions .al-cart-checkout{min-width:78px!important;font-size:.75rem!important;}
 }
 @media(max-width:370px){
   .al-cart-summary > div:first-child{display:none!important;}
@@ -4115,17 +4115,24 @@ body:has(.al-cart-bar) .order-welcome-replay {
   header.r3-menu-header h1 + div > .text-stone-300 { display: none; }
   header.r3-menu-header h1 + div > span { white-space: nowrap; }
 }
-/* Mobile: the «؟» replay button is a small gutter chip (44px hit area kept via
-   ::after) so it never covers card text or the sticky cart CTA. */
+/* Mobile: the «؟» replay button keeps a small 28px visible chip but its real
+   box is 44px (touch target); the chip is drawn by ::before. */
 @media (max-width: 1023px) {
   .order-welcome-replay {
-    left: 3px !important;
-    width: 28px !important;
-    height: 28px !important;
+    left: 10px !important;
+    width: 44px !important;
+    height: 44px !important;
     font-size: 13px;
-    opacity: .9;
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
-  .order-welcome-replay::after { content: ""; position: absolute; inset: -8px; }
+  .order-welcome-replay::before {
+    content: ""; position: absolute; inset: 8px; z-index: -1; border-radius: 999px;
+    background: rgba(255,255,255,.92); border: 1px solid #e8d6ad; box-shadow: 0 2px 6px rgba(24,51,38,.12); opacity: .9;
+  }
 }
 /* Product sheet: sticky action bar fades into the sheet instead of a lighter slab. */
 .product-detail-layer .product-sheet-footer { backdrop-filter: none; }
@@ -4365,6 +4372,29 @@ body:has(.al-cart-bar) .order-welcome-replay {
 
 /* Presence-map letters: brass darkened just enough for 4.5:1 on cream (was ~3.7:1) */
 .dna-hubn:not([data-state="off"]) .dna-hubt .dna-letter{color:#7a5a26}
+
+/* ===== Animation diet =====
+   Of the infinite decorative loops only the ones that tell the user something
+   keep running (skeleton shimmer, live dots, tracking steam/go, active stepper
+   halo, waiting breath, roulette ping). Purely decorative ones are static. */
+.gentle-boil-btn,
+.ambient-steam-particle,
+.wahag-silence-card,
+.wahag-pulse-aura,
+.wahag-pulse-ring.ring-two,
+.wahag-pulse-ring.ring-three,
+.wahag-dark-stage:after,
+.roulette-ultra-orb,
+.smart-return-glow,
+.invoice-reveal-orbit-one,
+.invoice-reveal-orbit-two,
+.checkout-ready-card:after,
+.payment-wow-step:after,
+.payment-method-wow-grid .payment-method-card:after,
+.order-scroll-cue,
+.dna-hub[data-animate='true'] .dna-hubln,
+.dna-hub[data-animate='true'] .dna-hubc,
+.dna-stepi[data-state='current'] .dna-node { animation: none !important; }
 
 /* Calm rule: operational pulse dots play a few times then rest (class is added next to animate-pulse). */
 .pulse-calm{animation-iteration-count:3!important}
