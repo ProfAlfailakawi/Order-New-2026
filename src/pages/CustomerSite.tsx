@@ -2919,7 +2919,7 @@ export default function CustomerSite() {
     "يوعان ومحتار? عطني وضعك وأنا أضبطك 🚀",
     "متوهق بضيوف فجأة؟ الفزعة عندي، بس اكتب 🏃‍♂️",
     "مشتهي شيء معين؟ لا تدور.. اكتب وأنا أجيبه لك 🌟",
-    "مزاجك يبي شيء خفيف والا دسم؟ سولف لي 🍔"
+    "مزاجك يبي شيء خفيف والا دسم؟ سولف لي"
   ], []);
 
   const [currentPlaceholder, setCurrentPlaceholder] = useState(moodPlaceholders[0]);
@@ -7526,12 +7526,12 @@ const RoyalLazySusan = ({
       <button
         onClick={handlePrev}
         className="absolute left-0 top-0 bottom-0 w-12 z-[200] opacity-0"
-        aria-label="Previous"
+        aria-label="السابق"
       />
       <button
         onClick={handleNext}
         className="absolute right-0 top-0 bottom-0 w-12 z-[200] opacity-0"
-        aria-label="Next"
+        aria-label="التالي"
       />
     </div>
   );
@@ -8123,7 +8123,7 @@ function ProductModal({
                   setQuantity(Math.max(1, quantity - 1));
                 }}
                 className="p-2.5 sm:p-4 text-stone-500 hover:text-accent transition-colors shrink-0 active:scale-90"
-                aria-label="Decrease quantity"
+                aria-label="نقّص الكمية"
               >
                 <Minus className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
@@ -8138,7 +8138,7 @@ function ProductModal({
                   setQuantity(quantity + 1);
                 }}
                 className="p-2.5 sm:p-4 text-stone-500 hover:text-accent transition-colors shrink-0 active:scale-90"
-                aria-label="Increase quantity"
+                aria-label="زيّد الكمية"
               >
                 <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
@@ -9486,6 +9486,7 @@ function CheckoutOverlay({
                   <button
                     disabled={isSubmitting}
                     onClick={() => onSubmit(false)}
+                    aria-label="ادفع الفاتورة كاملة"
                     className={cn(
                       "payment-method-card payment-method-card-full w-full p-4 sm:p-5 rounded-2xl font-bold flex items-center justify-between gap-3 transition-all active:scale-[0.98] text-lg group text-right",
                       !isSubmitting
@@ -9510,6 +9511,7 @@ function CheckoutOverlay({
                            </div>
                            <div className="flex flex-col items-start gap-1">
                              <span className="text-[17px]">تبي تدفعه كامل؟</span>
+                             <span className="text-xs font-medium opacity-90">ادفع الفاتورة كاملة الحين</span>
                            </div>
                         </div>
                       </>

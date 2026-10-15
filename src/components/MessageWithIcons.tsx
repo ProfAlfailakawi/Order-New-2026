@@ -5,7 +5,7 @@ import {
   FlaskConical, Footprints, Gem, Hand, Handshake, Heart, HeartCrack, Landmark, Leaf, Lock, Mail,
   MapPin, Medal, Megaphone, Moon, PartyPopper, Plane, Radar, RefreshCw, Rocket, Satellite, Save,
   Shield, Shirt, ShoppingCart, Smile, Soup, Sparkles, Star, Swords, Target, Tent, ThumbsUp,
-  TriangleAlert, Trophy, User, Utensils, Wind, X,
+  TriangleAlert, TreePine, Trophy, User, Utensils, Wind, X,
 } from "lucide-react";
 
 type IconDef = { Icon: React.ComponentType<any>; cls: string; label?: string };
@@ -16,7 +16,8 @@ const defs: Array<[string[], IconDef]> = [
   [["🤍", "❤️", "💛"], { Icon: Heart, cls: "text-[#ab2b2c]" }],
   [["💔"], { Icon: HeartCrack, cls: "text-red-500" }],
   [["🍲", "🍛"], { Icon: Soup, cls: GOLD }],
-  [["🍽️", "🍽"], { Icon: Utensils, cls: GOLD }],
+  [["🍽️", "🍽", "🍔"], { Icon: Utensils, cls: GOLD }],
+  [["🪵"], { Icon: TreePine, cls: GOLD }],
   [["🍳", "👨\u200D🍳"], { Icon: CookingPot, cls: GOLD }],
   [["✨", "🌟", "🌌"], { Icon: Sparkles, cls: GOLD }],
   [["⭐"], { Icon: Star, cls: GOLD }],

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { DEFAULT_GLOBAL_LOGO } from "../constants";
-import { UtensilsCrossed, Users, Receipt } from "lucide-react";
+import { UtensilsCrossed, Users, Layers } from "lucide-react";
 
 /**
  * OrderWelcome — a light, single-screen welcome sheet for the customer home.
@@ -59,7 +59,7 @@ const isPaymentOrCheckoutContext = (): boolean => {
 const CHIPS: { icon: React.ReactNode; label: string }[] = [
   { icon: <UtensilsCrossed className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />, label: "رتّب طلبك" },
   { icon: <Users className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />, label: "اعزم ربعك" },
-  { icon: <Receipt className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />, label: "قسّم وادفع" },
+  { icon: <Layers className="w-4 h-4" strokeWidth={1.6} aria-hidden="true" />, label: "قسّم وادفع" },
 ];
 
 interface OrderWelcomeProps {
