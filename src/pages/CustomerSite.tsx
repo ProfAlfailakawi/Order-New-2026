@@ -2141,9 +2141,9 @@ export default function CustomerSite() {
        const attempt = locationPromptAttemptsRef.current;
        setRadarStatusMsg(
          attempt === 1
-           ? "نحتاج موقعك الآن عشان نربطك بالديوانية القريبة."
+           ? "نحتاج موقعك الآن حتى نربطك بالديوانية القريبة."
            : attempt === 2
-             ? "نذكّرك مرة ثانية: فعّل اللوكيشن عشان تظهر لك ديوانيتك."
+             ? "نذكّرك مرة ثانية: فعّل اللوكيشن حتى تظهر لك ديوانيتك."
              : "آخر تذكير للّوكيشن؛ الديوانية تعتمد على الموقع."
        );
        refreshRadarOnce();
@@ -2700,7 +2700,7 @@ export default function CustomerSite() {
         type: "qatya_request",
         sourceKind: "active_order",
         title: "قطية مفتوحة للديوانية",
-        message: "اضغط هنا عشان تسجل اسمك وتدفع قطيتك بالكي نت 💰",
+        message: "اضغط هنا حتى تسجل اسمك وتدفع قطيتك بالكي نت 💰",
         squadName: o.squadName || squadInfo?.name || "",
         meta: { orderId: o.id, url: `/split/${o.id}` },
       }));
@@ -2827,7 +2827,7 @@ export default function CustomerSite() {
     const cleanJoinPhone = cleanPhoneForSquad(normalizeDigits(guestPhone || "")).slice(0, 8);
     const cleanJoinName = String(guestName || "").trim();
     if (cleanJoinPhone.length !== 8 || !cleanJoinName) {
-       alert("اكتب اسمك ورقم تلفونك 8 أرقام عشان نكمل");
+       alert("اكتب اسمك ورقم تلفونك 8 أرقام حتى نكمل");
        setGuestPhone(cleanJoinPhone);
        setGuestName(cleanJoinName);
        return;
@@ -3247,7 +3247,7 @@ export default function CustomerSite() {
             customerPoints > 0 ? "كل شي تمام يا بطل؟" : "خطوة وحدة وتخلص!";
           setPsychMessage({
             title,
-            desc: "طلبك جاهز بالمقادير اللي اخترتها، بس ناقص نأكده عشان نبدأ بالتجهيز فوراً.",
+            desc: "طلبك جاهز بالمقادير اللي اخترتها، بس ناقص نأكده حتى نبدأ بالتجهيز فوراً.",
           });
           sessionStorage.setItem("checkoutHesitationSeen", "true");
         }
@@ -3272,7 +3272,7 @@ export default function CustomerSite() {
     sick: [
       "يا بعد عيني وعسى ربي يشافي بنيتج الغالية ويبعد عنها كل مكروه.. هبيتلج وسويت لج شوربة الشفاء بالخضار العطرة تراثية دافية تدفي صدرها وترد عافيتها، أجر وعافية يا رب 🤍🍲",
       "سلامات يا بعد عمري، خطاك السوء 🌿.. أجر وعافية يا الغالية.. الشيف طبخ لج شوربة لسان عصفور بالهيل دافية وخفيفة تدفي الصدر وترد العافية 🥣🤍",
-      "أجر وعافية يا بعد طوايف أهلي.. هذي شورباتنا العريقة المطبوخة على نار هادئة وممزوجة بالخضار العطرة، رصيناها لج بالقمة عشان تدفي الصدر وتنعش الروح، عساها بالشفاء التام يا بنيتي 🍵✨"
+      "أجر وعافية يا بعد طوايف أهلي.. هذي شورباتنا العريقة المطبوخة على نار هادئة وممزوجة بالخضار العطرة، رصيناها لج بالقمة حتى تدفي الصدر وتنعش الروح، عساها بالشفاء التام يا بنيتي 🍵✨"
     ],
     travel: [
       "الحمد لله على السلامة يا بعد قلبي وتوّ ما نورت الديرة! ✈️ البيت فاضي وميتين يوع من السفر والدرب؟ فزعتنا الحين تجيكم! جربوا صوانينا السريعة المشبعة والساخنة اللي تترس العين والبطن وتتحضر فوراً وتنسيكم التعب ������💛",
@@ -4173,7 +4173,7 @@ export default function CustomerSite() {
           setTimeout(() => {
             setPsychMessage({
               title: "طلبك الأخير مو متوفر!",
-              desc: "أصناف طلبك الأخير متوقفة مؤقتاً، فعرضنا لك طلبك اللي قبله عشان ما تتأخر!",
+              desc: "أصناف طلبك الأخير متوقفة مؤقتاً، فعرضنا لك طلبك اللي قبله حتى ما تتأخر!",
             });
           }, 800);
         } else if (someItemsMissing) {
@@ -4243,7 +4243,7 @@ export default function CustomerSite() {
           setTimeout(() => {
             setPsychMessage({
               title: "مفاجأة الشيف لك!",
-              desc: "طلباتك السابقة مو متوفرة حالياً، فضفنا لك الأكثر طلباً ومبيعاً عشان ما تحتار وتجرب شيء جديد خطير!",
+              desc: "طلباتك السابقة مو متوفرة حالياً، فضفنا لك الأكثر طلباً ومبيعاً حتى ما تحتار وتجرب شيء جديد خطير!",
             });
           }, 800);
         } else {
@@ -4447,7 +4447,7 @@ export default function CustomerSite() {
     );
     if (!matchedRegion) {
       setFormError(
-        "اختار منطقة صحيحة من القائمة عشان نحسب التوصيل صح.",
+        "اختار منطقة صحيحة من القائمة حتى نحسب التوصيل صح.",
       );
       return;
     }
@@ -4965,7 +4965,7 @@ export default function CustomerSite() {
           "قصة الشيف اليوم غير..",
         ]),
         desc: getRand([
-          `ذوقك وقت الغدا مميز عندنا، واليوم الشيف حضّر وجبة ${product} بكمية محدودة عشان لا يطوفك هالطعم!`,
+          `ذوقك وقت الغدا مميز عندنا، واليوم الشيف حضّر وجبة ${product} بكمية محدودة حتى لا يطوفك هالطعم!`,
           `الشيف اليوم محصل نعيمي فرش وقرر يسوي 20 طلب ${product} بس.. لا يطوفك هاليوم الإستثنائي!`,
         ]),
         image:
@@ -4992,7 +4992,7 @@ export default function CustomerSite() {
       if (product.includes("مجبوس") || product.includes("لحم")) {
         desc = `تسهر بروحك؟ خلك معاي أدلعك بهالطبق (${product}) اللي ينسيك تعب اليوم كله ويفرش نومك راحة.`;
       } else {
-        desc = `ندري سهراتج يبي لها مزاج خفيف.. عشان جذي جهزنالك ${product} على المزاج وما يثقل عالنوم!`;
+        desc = `ندري سهراتج يبي لها مزاج خفيف.. ولهذا جهزنالك ${product} على المزاج وما يثقل عالنوم!`;
       }
 
       return {
@@ -6749,7 +6749,7 @@ export default function CustomerSite() {
                     <p className="text-xs font-black text-amber-600">طلب دخول ديوانية</p>
                     <h3 className="text-lg font-black mt-1">اسمك ورقمك للمعزب</h3>
                     <p className="text-xs font-bold text-stone-500 mt-1 leading-6">
-                      اكتب اسمك ورقم تلفونك 8 أرقام. الاثنين مطلوبين عشان ندز طلب الدخول.
+                      اكتب اسمك ورقم تلفونك 8 أرقام. الاثنين مطلوبين حتى ندز طلب الدخول.
                     </p>
                   </div>
                 </div>
@@ -6780,7 +6780,7 @@ export default function CustomerSite() {
                       const cleanPhone = normalizeEightDigitPhone(radarJoinDraft.phone);
                       const cleanName = String(radarJoinDraft.name || "").trim();
                       if (cleanPhone.length !== 8 || !cleanName) {
-                        alert("اكتب اسمك ورقم تلفونك 8 أرقام عشان نكمل طلب الدخول");
+                        alert("اكتب اسمك ورقم تلفونك 8 أرقام حتى نكمل طلب الدخول");
                         return;
                       }
                       setCustomerPhone(cleanPhone);
@@ -7105,7 +7105,7 @@ export default function CustomerSite() {
                           />
                         </React.Suspense>
                         {!customerPhone && (
-                          <p className="dna-inbox-note">سجل رقمك عشان يوصل طلبك للمعزب باسمك ورقمك!</p>
+                          <p className="dna-inbox-note">سجل رقمك حتى يوصل طلبك للمعزب باسمك ورقمك!</p>
                         )}
                       </>
                     )}
@@ -7175,7 +7175,7 @@ const getWhisperText = (product: any) => {
   const cat = product.category || "";
 
   if (name.includes("مجبوس") || name.includes("عيش") || name.includes("برياني"))
-    return "نطبخه على نار هادية وننطره يتشرب عدل عشان تاكل أحلى عيش!";
+    return "نطبخه على نار هادية وننطره يتشرب عدل حتى تاكل أحلى عيش!";
   if (name.includes("لحم"))
     return "لحم ترف وذايب بمكانه، مبهرينه بخلطتنا الخاصة ليوم كامل علشانك!";
   if (name.includes("دياي") || name.includes("دجاج"))
@@ -7186,14 +7186,14 @@ const getWhisperText = (product: any) => {
     name.includes("تبولة") ||
     name.includes("فتوش")
   )
-    return "خضرتنا نقصها فرش كل يوم بيومه، عشان تستمتع بالقرمشة الصح!";
+    return "خضرتنا نقصها فرش كل يوم بيومه، حتى تستمتع بالقرمشة الصح!";
   if (
     cat.includes("حلو") ||
     name.includes("حلو") ||
     name.includes("لقيمات") ||
     name.includes("كيك")
   )
-    return "نزبطها لك عشان تختم وجبتك بطعم يذوب بالحلج ويعدل مزاجك!";
+    return "نزبطها لك حتى تختم وجبتك بطعم يذوب بالحلج ويعدل مزاجك!";
   if (
     cat.includes("مشروب") ||
     name.includes("مشروب") ||
@@ -7206,7 +7206,7 @@ const getWhisperText = (product: any) => {
   if (name.includes("دقوس") || name.includes("صلصة") || name.includes("معبوج"))
     return "نطحنه ونجهزه ببهاراتنا السرية علشان يكمل نكهة وجبتك ويولعها!";
   if (name.includes("مشوي") || name.includes("شوي") || name.includes("شواية"))
-    return "نشويه على الراحة عشان ياخذ ريحة وطعم الشوي الصح والمقرمش!";
+    return "نشويه على الراحة حتى ياخذ ريحة وطعم الشوي الصح والمقرمش!";
   if (
     name.includes("بحري") ||
     name.includes("سمك") ||
@@ -7991,7 +7991,7 @@ function ProductModal({
                   `لا تفوت التجربة المتكاملة مع "${recommendedAddonName}" 🤌`,
                   `مزيج مذهل! الكثير يفضلون إضافة "${recommendedAddonName}" لتعزيز النكهة 😋`,
                   // عبارات فيها تفاعل
-                  `ناقصك شيء واحد عشان يكمل الطلب.. "${recommendedAddonName}"! 😉`,
+                  `ناقصك شيء واحد حتى يكمل الطلب.. "${recommendedAddonName}"! 😉`,
                   `شنو رأيك تكملها وتضيف "${recommendedAddonName}"؟ ماراح تندم 😍`,
                   `الأغلبية يطلبون "${recommendedAddonName}" مع هذا الطلب.. جربه! 👍`,
                   // عبارات وصفية ومغرية
@@ -8784,7 +8784,7 @@ function CheckoutOverlay({
             <div className={cn("address-wow-step animate-in slide-in-from-left-4 fade-in duration-300 space-y-6 pt-2", customerPhone.length >= 8 && "address-phone-complete")}>
                 <div className="space-y-2">
                   <label className="text-sm items-center gap-1.5 font-bold text-stone-700 flex px-1">
-                    <Phone className="w-4 h-4 text-accent" /> اكتب رقم تلفونك عشان نكمل الطلب
+                    <Phone className="w-4 h-4 text-accent" /> اكتب رقم تلفونك حتى نكمل الطلب
                   </label>
                   <input
                     type="tel"
@@ -8912,7 +8912,7 @@ function CheckoutOverlay({
                       {address.region && deliveryFee === -1 && !showRegions && (
                         <div className="mt-2 rounded-xl border border-red-100 bg-red-50/80 px-3 py-2 text-xs font-extrabold text-red-600 flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 shrink-0" />
-                          <span>اختار منطقة صحيحة من القائمة عشان رسوم التوصيل تطلع صح.</span>
+                          <span>اختار منطقة صحيحة من القائمة حتى رسوم التوصيل تطلع صح.</span>
                         </div>
                       )}
                       {!showRegions && <div className="mt-1.5">{renderAddressError("region")}</div>}

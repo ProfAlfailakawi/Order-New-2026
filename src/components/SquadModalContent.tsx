@@ -1003,7 +1003,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
   const handlePresenceToggle = async (action: "in" | "out") => {
     if (!squadInfo?.id || !currentMemberPhone) {
-      alert("حط رقم تلفونك أول عشان نثبت حضورك بالديوانية.");
+      alert("حط رقم تلفونك أول حتى نثبت حضورك بالديوانية.");
       return;
     }
     setIsPresenceLoading(true);
@@ -1206,7 +1206,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     const guestCleanName = String(guestName || customerName || "").trim();
 
     if (!guestCleanName || guestCleanPhone.length !== 8) {
-      alert("اكتب اسمك ورقمك 8 أرقام عشان نجهز قطية ضيف باسمك.");
+      alert("اكتب اسمك ورقمك 8 أرقام حتى نجهز قطية ضيف باسمك.");
       return;
     }
 
@@ -1899,7 +1899,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     type="text"
                     value={guestName}
                     onChange={(e) => setGuestName(e.target.value)}
-                    placeholder="عشان ربعك يعرفونك"
+                    placeholder="حتى ربعك يعرفونك"
                     className="w-full bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-bold text-brand focus:border-accent focus:outline-none transition-all text-right"
                   />
                 </div>
@@ -2168,7 +2168,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         </div>
 
                         <p className="diwaniya-memories-desc text-xs font-bold text-stone-500 leading-relaxed -mt-1 text-right">
-                          لقطات يمعاتنا، الحلو والمالح، مربوطة بطلباتنا التراثية القديمة من السدو عشان تظل سوالف دوانيتنا حية بكل زاوية!
+                          لقطات يمعاتنا، الحلو والمالح، مربوطة بطلباتنا التراثية القديمة من السدو حتى تظل سوالف دوانيتنا حية بكل زاوية!
                         </p>
 
                         {/* Inline Adding memory Form */}

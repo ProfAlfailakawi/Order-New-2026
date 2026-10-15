@@ -110,7 +110,7 @@ export function RouletteSplit({
   };
 
   const spin = async () => {
-    if (participants.length < 2) return alert("نحتاج شخصين عالأقل عشان نوهق واحد!");
+    if (participants.length < 2) return alert("نحتاج شخصين عالأقل حتى نوهق واحد!");
     try {
       const res = await fetch(`/api/orders/${order.id}/spin-roulette`, { method: "POST" });
       if (!res.ok) throw new Error('ما قدرنا نشغل لعبة وهق غيرك 🎰');
