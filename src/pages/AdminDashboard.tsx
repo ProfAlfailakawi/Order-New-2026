@@ -355,7 +355,7 @@ export default function AdminDashboard() {
     count: customers.filter(c => getLoyaltyTier(getCustomerPoints(c.phone)).id === tier.id).length,
   }));
   const loyaltyTotal = loyaltyDist.reduce((a: number, d: any) => a + d.count, 0);
-  const LOYALTY_BAR_BG = ["bg-amber-600", "bg-slate-400", "bg-yellow-500", "bg-sky-500"];
+  const LOYALTY_BAR_BG = ["bg-amber-700", "bg-slate-600", "bg-yellow-700", "bg-sky-700"];
 
   const filteredOrders = orders.filter(o => {
     const matchesSearch = !searchTerm ? true : (
@@ -521,7 +521,7 @@ export default function AdminDashboard() {
             />
           </div>
           <div>
-            <h2 className="font-extrabold text-2xl tracking-tighter leading-none text-brand">فخامة</h2>
+            <h2 className="font-extrabold text-2xl tracking-tighter leading-none text-brand">مطبخ التراث الكويتي</h2>
             <div className="flex items-center gap-2 mt-2">
               <p className="text-xs text-stone-500 font-bold uppercase">نظام الإدارة</p>
             </div>
@@ -644,8 +644,8 @@ export default function AdminDashboard() {
             <div className="space-y-12 animate-in fade-in duration-700">
               <div className="flex items-center justify-between pt-4 sm:pt-0">
                 <div>
-                  <h1 className="text-3xl sm:text-5xl font-extrabold text-brand leading-none">الإحصائيات المتقدمة</h1>
-                  <p className="text-stone-400 text-sm mt-4 font-medium">تحليل العمليات الفورية</p>
+                  <h1 className="text-3xl sm:text-5xl font-extrabold text-brand leading-none">لوحة القيادة</h1>
+                  <p className="text-stone-400 text-sm mt-4 font-medium">أرقام مطبخك اليوم</p>
                 </div>
                 <div className="px-6 py-3 bg-white border border-stone-100 rounded-[20px] text-xs font-extrabold text-stone-500 shadow-sm">
                   {formatKuwaitiDate(new Date()).date}
@@ -671,9 +671,9 @@ export default function AdminDashboard() {
                     <h3 className="text-lg font-extrabold text-brand flex items-center gap-3"><Trophy className="w-5 h-5 text-accent" aria-hidden="true" />مستويات العملاء</h3>
                     <span className="text-xs font-bold text-stone-400">{loyaltyTotal} عميل</span>
                   </div>
-                  <div className="flex h-3 w-full overflow-hidden rounded-full bg-stone-100" role="img" aria-label={`توزيع العملاء: ${loyaltyDist.map((d: any) => `${d.tier.name} ${d.count}`).join("، ")}`}>
+                  <div className="flex h-6 w-full overflow-hidden rounded-full bg-stone-100" role="img" aria-label={`توزيع العملاء: ${loyaltyDist.map((d: any) => `${d.tier.name} ${d.count}`).join("، ")}`}>
                     {loyaltyDist.map((d: any, i: number) => d.count > 0 && (
-                      <div key={d.tier.id} className={LOYALTY_BAR_BG[i % LOYALTY_BAR_BG.length]} style={{ width: `${(d.count / loyaltyTotal) * 100}%` }} title={`${d.tier.name}: ${d.count}`} />
+                      <div key={d.tier.id} className={LOYALTY_BAR_BG[i % LOYALTY_BAR_BG.length]} style={{ width: `${(d.count / loyaltyTotal) * 100}%` }} title={`${d.tier.name}: ${d.count}`}><span className="flex h-full items-center justify-center truncate px-2 text-xs font-black text-white">{(d.count / loyaltyTotal) >= 0.2 ? `${d.tier.name} ${Math.round((d.count / loyaltyTotal) * 100)}٪` : ""}</span></div>
                     ))}
                   </div>
                   <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-4">

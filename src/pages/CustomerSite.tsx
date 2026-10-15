@@ -5340,8 +5340,8 @@ export default function CustomerSite() {
                   settings.companyName
                 ) : (
                   <>
-                    شركة مطبخات{" "}
-                    <span className="text-accent">لكويتي</span>
+                    مطبخ{" "}
+                    <span className="text-accent">التراث الكويتي</span>
                   </>
                 )}
               </h1>
