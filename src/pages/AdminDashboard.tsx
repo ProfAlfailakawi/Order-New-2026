@@ -503,7 +503,7 @@ export default function AdminDashboard() {
         <div className="admin-nav-backdrop lg:hidden" onClick={() => setMobileNavOpen(false)} aria-hidden="true" />
       )}
       {/* Sidebar */}
-      <aside id="admin-sidebar" className={`admin-sidebar ${mobileNavOpen ? "is-open" : ""} w-80 glass-panel flex flex-col p-8 space-y-12 z-50 rounded-r-[40px] my-4 ml-4 sticky top-4 h-[calc(100vh-2rem)]`}>
+      <aside id="admin-sidebar" className={`admin-sidebar ${mobileNavOpen ? "is-open" : ""} w-64 xl:w-80 shrink-0 glass-panel flex flex-col p-8 space-y-12 z-50 rounded-r-[40px] my-4 ml-4 sticky top-4 h-[calc(100vh-2rem)]`}>
         <div className="flex items-center gap-4 px-2 group">
           <div className="w-14 h-14 flex items-center justify-center p-2.5 transition-transform group-hover:scale-105 shadow-md overflow-hidden bg-white border border-stone-100 rounded-2xl shrink-0">
             <img 
@@ -592,7 +592,7 @@ export default function AdminDashboard() {
       <main className="flex-grow overflow-y-auto flex flex-col no-scrollbar relative items-center">
         {/* Topbar */}
         <header className="admin-topbar sticky top-4 z-40 w-full max-w-[1600px] px-8 pt-4">
-          <div className="admin-topbar-panel glass-panel p-4 flex justify-between items-center rounded-[2rem] shadow-sm">
+          <div className="admin-topbar-panel glass-panel p-4 gap-4 flex justify-between items-center rounded-[2rem] shadow-sm">
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
@@ -613,10 +613,10 @@ export default function AdminDashboard() {
                 className="bg-transparent border-none outline-none text-sm w-full text-brand placeholder:text-stone-400 font-medium font-sans" 
               />
             </div>
-            <div className="admin-topbar-actions flex items-center gap-6 px-2">
+            <div className="admin-topbar-actions flex items-center gap-3 xl:gap-5 px-2 shrink-0">
               <button
                 onClick={() => setShowNewInvoiceModal(true)}
-                className="relative px-6 py-3.5 bg-brand text-white font-bold rounded-2xl hover:bg-brand/90 transition-all shadow-md active:scale-95 group flex items-center gap-2 text-xs"
+                className="relative px-6 py-3.5 bg-brand text-white font-bold rounded-2xl hover:bg-brand/90 transition-all shadow-md active:scale-95 group flex items-center gap-2 text-xs whitespace-nowrap shrink-0"
               >
                 <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
                 فاتورة جديدة
@@ -626,8 +626,8 @@ export default function AdminDashboard() {
                 {totalOrdersCount > 0 && <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-md animate-pulse pulse-calm" />}
               </button>
               <div className="admin-topbar-divider w-px h-8 bg-stone-200" />
-              <div className="admin-profile flex items-center gap-4 group cursor-pointer hover:bg-white/50 p-2 rounded-2xl transition-all">
-                <div className="text-right">
+              <div className="admin-profile flex items-center gap-3 group cursor-pointer hover:bg-white/50 p-2 rounded-2xl transition-all">
+                <div className="text-right whitespace-nowrap">
                   <p className="text-sm font-bold text-brand tracking-tight">د. أحمد الفيلكاوي</p>
                   <p className="text-xs text-accent font-extrabold uppercase mt-0.5">مدير النظام</p>
                 </div>
@@ -896,9 +896,9 @@ export default function AdminDashboard() {
                        </span>
                     </div>
                     
-                    <div className="mb-10 mt-12 sm:mt-6 text-right">
+                    <div className="mb-10 mt-12 text-right">
                       <p className="text-xs text-stone-300 font-bold uppercase mb-3">فاتورة رقم {order.id}</p>
-                      <h4 className="text-3xl font-extrabold text-brand group-hover:text-accent transition-colors leading-none block">
+                      <h4 className="text-3xl font-extrabold text-brand group-hover:text-accent transition-colors leading-tight [overflow-wrap:anywhere] block">
                         {order.customerName}
                         {getCustomerPoints(order.customerPhone) > 0 && (
                            <span className="inline-block mr-3 px-3 py-1 bg-accent/10 text-accent text-sm font-bold rounded-xl border border-accent/20 align-middle shadow-sm"><Star className="inline w-3.5 h-3.5 -mt-0.5 ml-1 fill-current" aria-hidden="true" />{getCustomerPoints(order.customerPhone)} نقطة</span>
@@ -915,9 +915,9 @@ export default function AdminDashboard() {
                     <div className="space-y-4 mb-10 border-t border-b border-stone-50 py-8">
                       {(order.items || []).map((item: any, idx: number) => (
                         <div key={idx} className="flex flex-col gap-1">
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="font-bold text-brand">{item.name || item.productName} <span className="text-stone-300 mx-1">×</span> {item.quantity || 1}</span>
-                            <span className="text-stone-400">{((item.price || 0) * (item.quantity || 1)).toFixed(3)} د.ك</span>
+                          <div className="flex justify-between items-start gap-3 text-xs">
+                            <span className="font-bold text-brand min-w-0 [overflow-wrap:anywhere]">{item.name || item.productName} <span className="text-stone-300 mx-1">×</span> {item.quantity || 1}</span>
+                            <span className="text-stone-400 whitespace-nowrap shrink-0">{((item.price || 0) * (item.quantity || 1)).toFixed(3)} د.ك</span>
                           </div>
                           {item.preparationInstructions && (
                             <div className="text-xs text-red-500 font-bold text-right flex items-center justify-end gap-1">
@@ -1331,7 +1331,7 @@ export default function AdminDashboard() {
                      <div className="p-8 space-y-6">
                         {LOYALTY_TIERS.map((tier: any, idx: number) => (
                            <div key={idx} className={`p-6 rounded-[32px] border-2 transition-all ${tier.bg} ${tier.border} flex items-center justify-between gap-6`}>
-                              <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-4 min-w-0">
                                  <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center text-2xl border border-stone-50">
                                     <input 
                                        value={tier.icon} 
@@ -1343,7 +1343,7 @@ export default function AdminDashboard() {
                                        className="w-full text-center bg-transparent border-none outline-none"
                                     />
                                  </div>
-                                 <div className="space-y-1">
+                                 <div className="space-y-1 min-w-0">
                                     <input 
                                        value={tier.name}
                                        onChange={(e) => {
@@ -1351,12 +1351,12 @@ export default function AdminDashboard() {
                                           newTiers[idx].name = e.target.value;
                                           setLoyaltyTiers(newTiers);
                                        }}
-                                       className="bg-transparent border-none font-black text-brand outline-none focus:ring-0 text-lg w-32"
+                                       className="bg-transparent border-none font-black text-brand outline-none focus:ring-0 text-lg w-full max-w-[8rem] min-w-0"
                                     />
                                     <p className="text-xs font-bold text-stone-400 tracking-tighter">يبدأ من: {tier.minPoints} د.ك</p>
                                  </div>
                               </div>
-                              <div className="flex flex-col items-end gap-2">
+                              <div className="flex flex-col items-end gap-2 shrink-0">
                                  <div className="flex items-center gap-2">
                                     <input 
                                        type="number"
@@ -1462,7 +1462,7 @@ export default function AdminDashboard() {
                                              newTiers[idx].name = e.target.value;
                                              setSquadTiers(newTiers);
                                           }}
-                                          className="bg-transparent border-none font-black text-brand outline-none focus:ring-0 text-lg w-32"
+                                          className="bg-transparent border-none font-black text-brand outline-none focus:ring-0 text-lg w-full max-w-[8rem] min-w-0"
                                        />
                                        <div className="flex items-center gap-2">
                                           <input 

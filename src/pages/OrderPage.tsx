@@ -1147,8 +1147,8 @@ export default function OrderPage() {
               exit={{ opacity: 0, y: -20 }}
               className="text-center py-20 space-y-4"
             >
-              <div className="inline-flex p-6 bg-stone-50 rounded-[32px] text-stone-200">
-                <Package className="w-12 h-12" />
+              <div className="inline-flex p-6 bg-stone-100 rounded-[32px] text-stone-400">
+                <Package className="w-12 h-12 empty-state-art" />
               </div>
               <div className="space-y-1">
                 <h3 className="text-xl font-extrabold text-brand">ماكو طلبات</h3>
@@ -1714,7 +1714,7 @@ export default function OrderPage() {
               className="track-details-modal-wow relative w-full max-w-lg bg-white rounded-t-[48px] sm:rounded-[48px] shadow-xl overflow-hidden max-h-[90vh] flex flex-col"
             >
               <div className="p-5 sm:p-8 border-b border-stone-50 flex flex-col">
-                <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div>
                       <h3 className="text-2xl font-extrabold text-brand flex items-center gap-2">
@@ -1998,7 +1998,7 @@ export default function OrderPage() {
                   
                     {/* Split Payment Summary */}
                     {getSafeSplitPayments(selectedOrder).length > 0 && (selectedOrder as any).splitType !== 'roulette' && (
-                       <div className="track-v14-split-summary bg-brand/5 p-4 rounded-2xl border border-brand/10 mb-4 flex flex-wrap gap-y-3 justify-between items-center text-sm">
+                       <div className="track-v14-split-summary bg-brand/5 p-4 rounded-2xl border border-brand/10 mt-3 sm:mt-0 mb-4 flex flex-wrap gap-y-3 justify-between items-center text-sm">
                           <div className="flex flex-col text-center">
                              <span className="text-xs text-stone-500 font-bold mb-0.5">الإجمالي</span>
                              <span className="font-extrabold text-stone-700">{Number((selectedOrder as any).total).toFixed(3)} د.ك</span>

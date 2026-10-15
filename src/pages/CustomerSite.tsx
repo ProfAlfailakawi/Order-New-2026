@@ -5707,7 +5707,7 @@ export default function CustomerSite() {
                          <div className="w-1/2 h-6 bg-stone-200 rounded-lg"></div>
                          <div className="w-full flex justify-between items-end mt-4">
                             <div className="w-1/4 h-5 bg-stone-200 rounded-lg"></div>
-                            <div className="w-10 h-10 bg-brand rounded-xl"></div>
+                            <div className="w-10 h-10 bg-stone-200 rounded-xl"></div>
                          </div>
                       </div>
                     ))}
@@ -7967,7 +7967,7 @@ function ProductModal({
                         </span>
                       </div>
                       {extra.price > 0 && (
-                        <span className="text-xs font-bold text-accent">
+                        <span className="text-xs font-bold text-accent whitespace-nowrap shrink-0 ms-2">
                           +{formatKwd(extra.price)}
                         </span>
                       )}
@@ -8723,11 +8723,11 @@ function CheckoutOverlay({
                     >
                       <FoodPhoto product={(item.product as any) || item} className="w-16 h-16 shrink-0 rounded-2xl border border-cream-edge self-center" />
                       <div className="flex-grow relative min-w-0">
-                        <div className="flex justify-between items-start gap-2 mb-2">
-                          <h4 className="font-bold text-brand text-sm leading-tight min-w-0 flex-1 pt-1">
+                        <div className="flex flex-wrap justify-between items-start gap-x-2 gap-y-1 mb-2">
+                          <h4 className="font-bold text-brand text-sm leading-tight min-w-0 flex-auto break-words pt-1">
                             {item.name}
                           </h4>
-                          <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="flex items-center gap-1.5 shrink-0 ms-auto">
                             <span className="text-xs font-bold text-white bg-brand px-1.5 py-0.5 rounded">
                               {item.quantity}×
                             </span>
@@ -8970,7 +8970,7 @@ function CheckoutOverlay({
                   </React.Suspense>
 
                   {/* Address Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
                         <Landmark className="w-4 h-4" /> القطعة
@@ -9007,7 +9007,7 @@ function CheckoutOverlay({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
                         <Hash className="w-4 h-4" /> الجادة{" "}
@@ -9046,7 +9046,7 @@ function CheckoutOverlay({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs sm:text-sm items-center gap-1.5 font-bold text-stone-500 flex px-1 mb-1">
                         <Layers className="w-4 h-4" /> الدور{" "}

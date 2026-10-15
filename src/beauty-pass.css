@@ -100,3 +100,10 @@
   .ord-bp-admin-tile { animation: ordBpRise 0.5s cubic-bezier(0.22, 0.78, 0.24, 1) backwards; }
   .order-detail-card { animation: ordBpRise 0.5s cubic-bezier(0.22, 0.78, 0.24, 1) backwards; }
 }
+
+/* ---- payment step: the hint card keeps a small gap above the method cards (a blanket margin reset had glued them together) ---- */
+.checkout-wow-footer.checkout-footer-payment .payment-choice-hint { margin-block-end: 10px !important; }
+
+/* ---- empty-state art: the unified .lucide 20px size was shrinking the hero icons the markup asks for (w-10 / w-12 / size 40) ---- */
+.lucide.empty-state-art { width: 2.5rem; height: 2.5rem; }
+.lucide.empty-state-art.w-12 { width: 3rem; height: 3rem; }
