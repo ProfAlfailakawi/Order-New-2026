@@ -27,8 +27,12 @@ import confetti from "canvas-confetti";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { RouletteSplit } from "../components/RouletteSplit";
-import { DnaRing, DnaStepper, DnaTimeline, dnaSingleCurrent } from "../components/dna";
+import { DnaCountUp, DnaRing, DnaStepper, DnaTimeline, dnaSingleCurrent } from "../components/dna";
 import { MessageWithIcons } from "../components/MessageWithIcons";
+
+// Brand confetti: one burst in green + brass (set the flag to false to restore the two side bursts).
+const QATYA_CONFETTI_COLORS = ["#0d3a22", "#b28a41"];
+const QATYA_CONFETTI_SINGLE_BURST = true;
 
 const getSafeSplitPayments = (order: any): any[] => {
   if (!order) return [];
@@ -358,25 +362,27 @@ export default function SplitPayment() {
 
   const triggerConfetti = () => {
     confetti({
-      particleCount: 150,
+      particleCount: 90,
       spread: 70,
       origin: { y: 0.6 },
-      colors: ["#FFD700", "#FFA500", "#FF4500", "#008000", "#0000FF"],
+      colors: QATYA_CONFETTI_COLORS,
     });
 
-    // Repeat for grand effect
-    setTimeout(() => {
+    // Single calm burst by default; the side bursts stay available behind the flag.
+    if (!QATYA_CONFETTI_SINGLE_BURST) setTimeout(() => {
       confetti({
         particleCount: 100,
         angle: 60,
         spread: 55,
         origin: { x: 0 },
+        colors: QATYA_CONFETTI_COLORS,
       });
       confetti({
         particleCount: 100,
         angle: 120,
         spread: 55,
         origin: { x: 1 },
+        colors: QATYA_CONFETTI_COLORS,
       });
     }, 500);
   };
@@ -720,7 +726,7 @@ export default function SplitPayment() {
               </div>
               <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-3 text-right">
                 <div className="text-xs font-black text-emerald-700">دفعوا</div>
-                <div className="text-xs font-black text-emerald-800 mt-1">{paidPeople.length} / {isDiwaniyaQatya ? (splitPeople.length || 1) : Math.max(paidPeople.length, 1)}</div>
+                <div className="text-xs font-black text-emerald-800 mt-1"><DnaCountUp value={paidPeople.length} playKey={`split:${id}:paid`} /> / {isDiwaniyaQatya ? (splitPeople.length || 1) : Math.max(paidPeople.length, 1)}</div>
               </div>
             </div>
             <div className="qatya-v14-topline relative z-10">
@@ -738,7 +744,9 @@ export default function SplitPayment() {
                   .map((p: any) => Number(p.amount) || 0)}
                 size={168}
                 stroke={10}
-                label={remainingAmount.toFixed(3)}
+                draw
+                playKey={`split:${id}`}
+                label={<DnaCountUp value={remainingAmount} format={(n) => n.toFixed(3)} intro={false} tweenChanges flashOnChange />}
                 sublabel="الباقي · د.ك"
                 ariaLabel={`المندفع ${paidAmount.toFixed(3)} من ${Number(order.total || 0).toFixed(3)} د.ك، الباقي ${remainingAmount.toFixed(3)} د.ك`}
               />
@@ -1114,6 +1122,9 @@ export default function SplitPayment() {
             </h3>
             <DnaTimeline
               className="relative z-10"
+              reveal
+              highlightNew
+              playKey={`split:${id}:honor`}
               ariaLabel="حائط الشرف"
               items={getSafeSplitPayments(order)
                 .filter((p) => String(p.status || "").toLowerCase() === "paid")

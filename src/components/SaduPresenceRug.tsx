@@ -4,6 +4,9 @@ import { DnaHubMap, type DnaHubNode } from "./dna";
 import { motion, AnimatePresence } from "motion/react";
 import { cn, formatKuwaitiDate } from "../utils";
 import confetti from "canvas-confetti";
+
+// Brand confetti (green + brass) for every single-burst celebration in this file.
+const RUG_CONFETTI_COLORS = ["#0d3a22", "#b28a41"];
 import { SmartIconGuidance } from "./SmartIconGuidance";
 import { MessageWithIcons } from "./MessageWithIcons";
 
@@ -239,7 +242,7 @@ export function SaduPresenceRug({
             confetti({
               particleCount: 50,
               spread: 60,
-              colors: ["#10b981", "#34d399", "#a7f3d0"],
+              colors: RUG_CONFETTI_COLORS,
               origin: { y: 0.8 }
             });
           }, 1500);
@@ -276,7 +279,7 @@ export function SaduPresenceRug({
       particleCount: 140,
       spread: 90,
       origin: { y: 0.5 },
-      colors: ["#fbbf24", "#f59e0b", "#d97706", "#ffffff"]
+      colors: RUG_CONFETTI_COLORS
     });
 
     setTimeout(() => {
@@ -304,7 +307,7 @@ export function SaduPresenceRug({
           particleCount: 80,
           spread: 80,
           origin: { y: 0.5 },
-          colors: ["#ef4444", "#fca5a5", "#b91c1c"] 
+          colors: RUG_CONFETTI_COLORS
         });
       }
     }, 2500);
@@ -321,7 +324,7 @@ export function SaduPresenceRug({
       particleCount: 60,
       spread: 70,
       origin: { y: 0.6 },
-      colors: ["#d97706", "#f59e0b", "#fcd34d"]
+      colors: RUG_CONFETTI_COLORS
     });
   };
 
@@ -744,7 +747,8 @@ export function SaduPresenceRug({
                     confetti({
                       particleCount: 50,
                       spread: 40,
-                      origin: { y: 0.6 }
+                      origin: { y: 0.6 },
+                      colors: RUG_CONFETTI_COLORS
                     });
                   }}
                   whileHover={{ scale: 1.12, rotate: [0, -5, 5, 0] }}

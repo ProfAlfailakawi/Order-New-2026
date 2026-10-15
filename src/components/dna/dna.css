@@ -1117,3 +1117,59 @@ button.dna-hubn:focus-visible .dna-hubt { transform: translateY(-2px); }
   transition: none !important;
   animation: none !important;
 }
+
+/* ---------- motion polish: count-up, draw-in, change highlight (play once, then rest) ---------- */
+.dna-cu { font-variant-numeric: tabular-nums; border-radius: 6px; }
+.dna-cu-sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ring: arcs draw in (segments one after another); the existing stroke-dasharray transition does the work */
+.dna-ring[data-draw='play'] .dna-ringv { transition: stroke-dasharray 0.9s var(--dna-ease) calc(var(--i, 0) * 0.28s); }
+
+/* sparkline: line draws, then area + end dot fade in */
+.dna-spark[data-draw='pre'] .dna-sparkl { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.dna-spark[data-draw='pre'] .dna-sparka,
+.dna-spark[data-draw='pre'] circle { opacity: 0; }
+.dna-spark[data-draw='play'] .dna-sparkl { stroke-dasharray: 1; stroke-dashoffset: 0; transition: stroke-dashoffset 0.9s var(--dna-ease); }
+.dna-spark[data-draw='play'] .dna-sparka,
+.dna-spark[data-draw='play'] circle { transition: opacity 0.5s var(--dna-ease) 0.7s; }
+
+/* heat strip: cells fade in one after another */
+.dna-heat[data-draw='pre'] .dna-heatc { opacity: 0; }
+.dna-heat[data-draw='play'] .dna-heatc { transition: opacity 0.4s var(--dna-ease) calc(var(--i, 0) * 0.03s); }
+
+/* timeline: dots and connectors reveal in order; row text stays readable throughout */
+.dna-tline[data-draw='pre'] .dna-dot { opacity: 0; transform: scale(0.6); }
+.dna-tline[data-draw='pre'] .dna-tli:not(:last-child)::after { transform: scaleY(0); }
+.dna-tline[data-draw='play'] .dna-dot { transition: opacity 0.3s var(--dna-ease) calc(var(--i, 0) * 0.06s), transform 0.3s var(--dna-ease) calc(var(--i, 0) * 0.06s); }
+.dna-tline[data-draw='play'] .dna-tli:not(:last-child)::after { transition: transform 0.35s var(--dna-ease) calc(var(--i, 0) * 0.06s + 0.1s); }
+.dna-tli:not(:last-child)::after { transform-origin: top center; }
+
+/* change highlight: one soft tint that fades to rest (two names so a repeat change restarts it) */
+.dna-flash[data-flash='0'] { animation: dna-flash-a 1.2s var(--dna-ease) 1; }
+.dna-flash[data-flash='1'] { animation: dna-flash-b 1.2s var(--dna-ease) 1; }
+.dna-tli[data-new='true'] { animation: dna-flash-a 1.2s var(--dna-ease) 1; border-radius: 12px; }
+@keyframes dna-flash-a { from { background-color: color-mix(in srgb, var(--dna-accent, #b28a41) 22%, transparent); } to { background-color: transparent; } }
+@keyframes dna-flash-b { from { background-color: color-mix(in srgb, var(--dna-accent, #b28a41) 22%, transparent); } to { background-color: transparent; } }
+
+/* generic bars (outside the kit's own components): scaleX from the inline-start edge, scaleY from the baseline */
+.dna-grow { transform-origin: left center; }
+[dir='rtl'] .dna-grow { transform-origin: right center; }
+.dna-growy { transform-origin: center bottom; }
+[data-draw='pre'] .dna-grow { transform: scaleX(0); }
+[data-draw='pre'] .dna-growy { transform: scaleY(0); }
+[data-draw='play'] .dna-grow,
+[data-draw='play'] .dna-growy { transition: transform 0.6s var(--dna-ease, cubic-bezier(0.22, 0.78, 0.24, 1)) calc(var(--i, 0) * 0.05s); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dna-flash, .dna-tli[data-new='true'] { animation: none !important; }
+  [data-draw] .dna-grow, [data-draw] .dna-growy, [data-draw] .dna-dot, [data-draw] .dna-heatc,
+  [data-draw] .dna-sparkl, [data-draw] .dna-sparka, [data-draw] .dna-spark circle, [data-draw] .dna-tli::after,
+  [data-draw] .dna-ringv { transition: none !important; }
+}

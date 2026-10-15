@@ -122,7 +122,7 @@ function prefersReducedMotion(): boolean {
   }
 }
 
-function canArm(enabled: boolean, playKey?: string): boolean {
+export function canArm(enabled: boolean, playKey?: string): boolean {
   if (!enabled || typeof window === 'undefined') return false;
   if (typeof IntersectionObserver === 'undefined') return false;
   if (prefersReducedMotion()) return false;
