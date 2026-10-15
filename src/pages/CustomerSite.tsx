@@ -2913,7 +2913,7 @@ export default function CustomerSite() {
 
   const moodPlaceholders = useMemo(() => [
     "شلون مزاجك اليوم؟ أو عندك عزيمة؟ اكتب ونفزع لك! 👨‍🍳",
-    "بنتي مريضة وأبي شي يدفي صدرها.. 🤍",
+    "بنتي مريضة وأبي شي يدفي صدرها..",
     "تونا رادين من السفر والبيت فاضي وميتين يوع.. ✈️",
     "شنو بخاطرك اليوم؟ اكتب اللي بقلبك ومالك إلا يرضيك 🎯",
     "يوعان ومحتار? عطني وضعك وأنا أضبطك 🚀",
@@ -9178,7 +9178,7 @@ function CheckoutOverlay({
                 <div className="flex flex-col gap-1.5 pt-1">
                   <div className="flex gap-2">
                     <input
-                      placeholder="كود الخصم (Promo Code)"
+                      placeholder="كود الخصم"
                       value={promoCodeInput}
                       onChange={(e) =>
                         setPromoCodeInput(normalizeDigits(e.target.value).toUpperCase())

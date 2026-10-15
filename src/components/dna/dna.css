@@ -1102,7 +1102,7 @@ button.dna-hubn:focus-visible .dna-hubt { transform: translateY(-2px); }
 .dna-steps[data-journey] .dna-bdg { inset-block-start: -12px; inset-inline-end: -24px; }
 @media (max-width: 640px) {
   .dna-steps[data-journey][data-size='sm'] { --node: 22px; }
-  .dna-steps[data-journey] .dna-lbl { font-size: 11.5px; }
+  .dna-steps[data-journey] .dna-lbl { font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dna-steps[data-journey] .dna-stepi + .dna-stepi::before,
