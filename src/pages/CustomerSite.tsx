@@ -5917,12 +5917,12 @@ export default function CustomerSite() {
                     delay: 0.05 + Math.random() * 0.5,
                     ease: "easeInOut",
                   }}
-                  className="absolute text-yellow-400 pointer-events-none drop-shadow-[0_0_10px_rgba(253,224,71,0.8)] z-0"
+                  className="absolute text-accent pointer-events-none z-0"
                 >
                   {i % 3 === 0 ? (
                     <Star fill="currentColor" className="w-5 h-5" />
                   ) : (
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full" />
+                    <div className="w-3 h-3 bg-accent rounded-full" />
                   )}
                 </motion.div>
               ))}
@@ -6045,7 +6045,7 @@ export default function CustomerSite() {
                           ease: "easeOut",
                           delay: 0.85,
                         }}
-                        className="absolute w-2.5 h-2.5 bg-yellow-200 rounded-full shadow-[0_0_10px_rgba(253,224,71,1)] pointer-events-none"
+                        className="absolute w-2.5 h-2.5 bg-accent rounded-full pointer-events-none"
                       />
                     ))}
                   </motion.div>
