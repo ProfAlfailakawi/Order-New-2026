@@ -18,7 +18,7 @@ function BrandedFallback() {
       aria-label="جاري التحميل"
       className="min-h-screen flex flex-col items-center justify-center gap-5 bg-cream px-6"
     >
-      <div className="h-24 w-24 rounded-[26px] bg-white ring-1 ring-cream-edge shadow-[0_16px_44px_rgba(24,51,38,0.14)] flex items-center justify-center overflow-hidden animate-pulse">
+      <div className="h-24 w-24 rounded-[26px] bg-white ring-1 ring-cream-edge shadow-[0_16px_44px_rgba(24,51,38,0.14)] flex items-center justify-center overflow-hidden animate-pulse skeleton-card">
         <img
           src="/logo-optimized.png"
           alt="شركة مطبخ التراث الكويتي"

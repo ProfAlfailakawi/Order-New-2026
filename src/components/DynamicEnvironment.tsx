@@ -42,7 +42,7 @@ export function DynamicEnvironment() {
       {isRaining && !prefersReducedMotion && (
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          animate={{ opacity: 0.45 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 2 }}
           className="fixed inset-0 pointer-events-none z-[50] overflow-hidden mix-blend-overlay"
