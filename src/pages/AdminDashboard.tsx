@@ -355,7 +355,7 @@ export default function AdminDashboard() {
     count: customers.filter(c => getLoyaltyTier(getCustomerPoints(c.phone)).id === tier.id).length,
   }));
   const loyaltyTotal = loyaltyDist.reduce((a: number, d: any) => a + d.count, 0);
-  const LOYALTY_BAR_BG = ["bg-brand/40", "bg-brand/65", "bg-accent", "bg-brand"];
+  const LOYALTY_BAR_BG = ["bg-brand", "bg-brand/75", "bg-[#7a5a26]", "bg-stone-600"];
 
   const filteredOrders = orders.filter(o => {
     const matchesSearch = !searchTerm ? true : (
@@ -672,9 +672,9 @@ export default function AdminDashboard() {
                     <h3 className="text-lg font-extrabold text-brand flex items-center gap-3"><Trophy className="w-5 h-5 text-accent" aria-hidden="true" />مستويات العملاء</h3>
                     <span className="text-xs font-bold text-stone-400">{loyaltyTotal} عميل</span>
                   </div>
-                  <LoyaltyBar className="flex h-3 w-full overflow-hidden rounded-full bg-stone-100" role="img" aria-label={`توزيع العملاء: ${loyaltyDist.map((d: any) => `${d.tier.name} ${d.count}`).join("، ")}`}>
+                  <LoyaltyBar className="flex h-6 w-full overflow-hidden rounded-full bg-stone-100" role="img" aria-label={`توزيع العملاء: ${loyaltyDist.map((d: any) => `${d.tier.name} ${d.count}`).join("، ")}`}>
                     {loyaltyDist.map((d: any, i: number) => d.count > 0 && (
-                      <div key={d.tier.id} className={`dna-grow ${LOYALTY_BAR_BG[i % LOYALTY_BAR_BG.length]}`} style={{ width: `${(d.count / loyaltyTotal) * 100}%`, ["--i" as string]: i } as React.CSSProperties} title={`${d.tier.name}: ${d.count}`} />
+                      <div key={d.tier.id} className={`dna-grow ${LOYALTY_BAR_BG[i % LOYALTY_BAR_BG.length]}`} style={{ width: `${(d.count / loyaltyTotal) * 100}%`, ["--i" as string]: i } as React.CSSProperties} title={`${d.tier.name}: ${d.count}`}><span className="flex h-full items-center justify-center truncate px-2 text-xs font-black text-white">{(d.count / loyaltyTotal) >= 0.2 ? `${d.tier.name} ${Math.round((d.count / loyaltyTotal) * 100)}٪` : ""}</span></div>
                     ))}
                   </LoyaltyBar>
                   <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -917,7 +917,7 @@ export default function AdminDashboard() {
                         <div key={idx} className="flex flex-col gap-1">
                           <div className="flex justify-between items-start gap-3 text-xs">
                             <span className="font-bold text-brand min-w-0 [overflow-wrap:anywhere]">{item.name || item.productName} <span className="text-stone-300 mx-1">×</span> {item.quantity || 1}</span>
-                            <span className="text-stone-400 italic whitespace-nowrap shrink-0">{((item.price || 0) * (item.quantity || 1)).toFixed(2)} د.ك</span>
+                            <span className="text-stone-400 whitespace-nowrap shrink-0">{((item.price || 0) * (item.quantity || 1)).toFixed(3)} د.ك</span>
                           </div>
                           {item.preparationInstructions && (
                             <div className="text-xs text-red-500 font-bold text-right flex items-center justify-end gap-1">
@@ -2164,7 +2164,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
             <button onClick={onClose} aria-label="إغلاق" className="p-4 bg-white border border-stone-100 rounded-2xl hover:bg-brand hover:text-white transition-all shadow-sm"><ChevronLeft className="w-6 h-6" /></button>
             <div>
               <p className="text-xs text-stone-400 font-bold uppercase mb-1">تفاصيل الفاتورة</p>
-              <h3 className="font-extrabold text-2xl text-brand">تفاصيل الفاتورة #{order.id.toUpperCase()}</h3>
+              <h3 className="font-extrabold text-2xl text-brand">فاتورة #{order.id.toUpperCase()}</h3>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -2185,7 +2185,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
                    )}
                    {order.customerName}
                 </h4>
-                <p className="text-accent text-xl font-light italic mt-1">{order.customerPhone}</p>
+                <p className="text-accent text-xl font-light mt-1" dir="ltr">{order.customerPhone}</p>
               </div>
               <div className="p-8 bg-stone-50 rounded-[32px] border border-stone-100 space-y-5">
                 <label className="text-xs font-extrabold text-stone-400 uppercase flex items-center gap-2 justify-end"><MapPin className="w-4 h-4 text-accent" aria-hidden="true" /> عنوان التوصيل</label>
@@ -2327,7 +2327,7 @@ function OrderDetailModal({ order, onClose, onContact, onPay, onCancel, onFreeDe
                   </div>
                   <div className="text-right sm:text-left text-xs sm:text-base font-bold text-brand italic shrink-0 order-1 sm:order-2 border-b sm:border-0 pb-1.5 sm:pb-0 border-stone-100/30 flex justify-between items-center sm:block w-full sm:w-auto">
                     <span className="sm:hidden text-stone-400 text-xs not-italic font-extrabold uppercase">السعر الإجمالي</span>
-                    <span>{calculateItemTotalWithAddons(item).toFixed(2)} <span className="text-xs sm:text-xs text-stone-400 font-bold not-italic">د.ك</span></span>
+                    <span>{calculateItemTotalWithAddons(item).toFixed(3)} <span className="text-xs sm:text-xs text-stone-400 font-bold not-italic">د.ك</span></span>
                   </div>
                 </div>
               ))}

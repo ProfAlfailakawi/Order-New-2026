@@ -572,7 +572,7 @@ export default function OrderPage() {
     const label = getStatusDisplay(order).text;
     if (label.includes("ملغي") || label.includes("إلغاء") || label.includes("الغاء")) return { title: "تم إلغاء الطلب", desc: "المعذرة، الفاتورة ملغية أو انتهى وقت القطيّة وما اكتمل المبلغ. للاستفسار تواصل معانا." };
     if (label.includes("قيد تجميع القطية")) return { title: "قيد تجميع القطية", desc: "اللمة ماشية، وكل دفعة تقرب الطلب من الاكتمال." };
-    if (label.includes("بانتظار")) return { title: "بانتظار الدفع", desc: "كمل الدفع عشان نعتمد الطلب ونمشيه لك." };
+    if (label.includes("بانتظار")) return { title: "بانتظار الدفع", desc: "كمل الدفع حتى نعتمد الطلب ونمشيه لك." };
     if (label.includes("فشل")) return { title: "فشلت عملية الدفع", desc: "ما عليه، جرب مرة ثانية أو اختار طريقة أنسب." };
     if (label.includes("تم الدفع") || label.includes("توصيل")) return { title: "تم الدفع بنجاح", desc: "طلبك معتمد وجاري توصيله بهدوء." };
     return { title: "تم إنشاء الطلب", desc: "وصلنا طلبك، وبانتظار الخطوة التالية." };
@@ -1081,7 +1081,7 @@ export default function OrderPage() {
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-extrabold text-brand">وين طلبي؟</h2>
             <p className="text-stone-500 text-sm font-medium">
-              حط رقم تليفونك أو رقم الطلب علشان تتابع حالة طلباتك
+              حط رقم تلفونك أو رقم الطلب حتى تتابع حالة طلباتك
             </p>
           </div>
 
@@ -1808,7 +1808,7 @@ export default function OrderPage() {
                         { when: statusText.includes("تجهيز") || (statusText.includes("دفع") && !statusText.includes("بانتظار") && !statusText.includes("فشل")), Icon: Package, line: "تم الدفع بنجاح" },
                         { when: statusText.includes("قطية"), Icon: Users, line: "القطيّة شغالة والربع يدفعون، والفاتورة ما تتأكد لين يكمل المبلغ." },
                       ];
-                      const note = noteRules.find((r) => r.when) || { Icon: Clock, line: "استلمنا طلبك، بانتظار الدفع عشان نبلش التجهيز." };
+                      const note = noteRules.find((r) => r.when) || { Icon: Clock, line: "استلمنا طلبك، بانتظار الدفع حتى نبلش التجهيز." };
                       const isPreparing = statusText.includes("تجهيز");
                       const isOnTheWay = rawStatusText.includes("جاري التوصيل");
                       const payDone = trackPaymentDone({ isPaid, isPreparing, isOnTheWay, isCancelled, isFailed });

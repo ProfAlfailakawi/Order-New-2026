@@ -4402,3 +4402,6 @@ body:has(.al-cart-bar) .order-welcome-replay {
 /* The shimmer sweep belongs to loading skeletons only: status dots that use .animate-pulse keep their
    (finite) pulse but no longer carry an endless :after sweep. */
 .animate-pulse:not(.skeleton-card):not(.products-skeleton):after{animation:none;content:none}
+
+/* Desktop checkout drawer: a calmer reading width instead of a 900px stretch */
+@media (min-width: 900px){ .checkout-wow-panel{ width:min(720px,92vw) !important; } }
