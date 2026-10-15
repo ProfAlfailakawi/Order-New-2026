@@ -5354,7 +5354,7 @@ export default function CustomerSite() {
                       ? { scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }
                       : {}
                   }
-                  transition={{ duration: 2, repeat: Infinity }}
+                  transition={{ duration: 2, repeat: 2 }}
                   className={cn(
                     "w-1.5 h-1.5 rounded-full bg-current",
                     tannourStatus.color,
@@ -5693,7 +5693,7 @@ export default function CustomerSite() {
                 return (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {[1, 2, 3, 4].map((n) => (
-                      <div key={n} className="bg-white border border-stone-100 rounded-2xl p-4 h-32 animate-pulse flex flex-col justify-between">
+                      <div key={n} className="bg-white border border-stone-100 rounded-2xl p-4 h-32 animate-pulse skeleton-card flex flex-col justify-between">
                          <div className="w-1/2 h-6 bg-stone-200 rounded-lg"></div>
                          <div className="w-full flex justify-between items-end mt-4">
                             <div className="w-1/4 h-5 bg-stone-200 rounded-lg"></div>
@@ -7137,7 +7137,7 @@ const FlyingPlate = ({ img, startX, startY, onComplete }: any) => {
 };
 
 const SizzlingSteam = () => (
-  <div className="absolute inset-x-0 -top-6 bottom-0 z-10 pointer-events-none flex justify-center opacity-70 mix-blend-screen overflow-hidden">
+  <div className="absolute inset-x-0 -top-6 bottom-0 z-10 pointer-events-none flex justify-center opacity-50 mix-blend-screen overflow-hidden">
     {[...Array(4)].map((_, i) => (
       <motion.div
         key={i}
@@ -7151,7 +7151,7 @@ const SizzlingSteam = () => (
         }}
         transition={{
           duration: 2.5 + Math.random() * 2,
-          repeat: Infinity,
+          repeat: 1,
           delay: i * 0.5,
           ease: "easeOut",
         }}
@@ -9523,7 +9523,7 @@ function CheckoutOverlay({
                     {isSubmitting ? (
                       <motion.div
                         animate={{ opacity: [1, 0.5, 1], scale: [1, 0.98, 1] }}
-                        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                        transition={{ repeat: 1, duration: 1.5, ease: "easeInOut" }}
                         className="flex items-center justify-center w-full gap-2"
                       >
                         <Sparkles className="w-5 h-5 opacity-80" />
