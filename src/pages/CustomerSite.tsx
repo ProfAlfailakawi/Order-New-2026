@@ -7809,7 +7809,7 @@ function ProductModal({
                 onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
-                  setIsImagePreviewOpen(true);
+                  if ((product as any).imageUrl || product.image) setIsImagePreviewOpen(true);
                 }}
                 onPointerDown={(event) => event.stopPropagation()}
                 className="relative z-10 block rounded-[28px] cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
@@ -7817,28 +7817,10 @@ function ProductModal({
                 aria-label={`تكبير صورة ${product.name}`}
               >
                 <FoodPhoto className="w-[112px] h-[112px] sm:w-[132px] sm:h-[132px] rounded-[28px] bg-white shadow-[0_20px_48px_rgba(26,46,34,0.18)] ring-1 ring-white/80">
-                <img
-                  referrerPolicy="no-referrer"
-                  src={productImageSrc}
-                  alt={product.name}
-                  draggable={false}
-                  onError={(e) => {
-                    const fallback =
-                      settings?.companyLogo ||
-                      settings?.logo ||
-                      DEFAULT_GLOBAL_LOGO;
-                    if (
-                      e.currentTarget.src.includes(fallback) ||
-                      e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO)
-                    ) {
-                      e.currentTarget.onerror = null;
-                      if (!e.currentTarget.src.includes(DEFAULT_GLOBAL_LOGO))
-                        e.currentTarget.src = DEFAULT_GLOBAL_LOGO;
-                    } else {
-                      e.currentTarget.src = fallback;
-                    }
-                  }}
-                  className="w-full h-full object-contain bg-white p-2 relative transition-transform duration-200 active:scale-[0.98] select-none"
+                <ProductVisual
+                  product={{ imageUrl: (product as any).imageUrl || product.image || "", name: product.name, category: (product as any).category }}
+                  size="lg"
+                  imgClassName="w-full h-full object-contain bg-white p-2 relative transition-transform duration-200 active:scale-[0.98] select-none"
                 />
                 </FoodPhoto>
               </button>

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BadgePercent, Beef, CookingPot, Drumstick, Fish, Salad, UtensilsCrossed, type LucideIcon } from 'lucide-react';
+import { BadgePercent, Beef, Cake, Coffee, CookingPot, Drumstick, Fish, Salad, Soup, Utensils, UtensilsCrossed, Wheat, type LucideIcon } from 'lucide-react';
 import { DnaIconTile, type DnaTone } from './index';
 
 const MAP: Array<[string, LucideIcon, DnaTone]> = [
@@ -9,6 +9,22 @@ const MAP: Array<[string, LucideIcon, DnaTone]> = [
   ['البحري', Fish, 'sky'],
   ['المقبلات', Salad, 'mint'],
   ['وجبات التوفير', BadgePercent, 'lilac'],
+  ['حلى', Cake, 'coral'],
+  ['حلا', Cake, 'coral'],
+  ['مشروب', Coffee, 'sky'],
+  ['قهوة', Coffee, 'sky'],
+  ['شوربة', Soup, 'amber'],
+  ['أرز', Wheat, 'sand'],
+  ['رز', Wheat, 'sand'],
+  ['مكبوس', Wheat, 'sand'],
+];
+
+// Unmapped categories: still a distinct icon + tone per category (stable hash), never one identical icon.
+const GENERIC: Array<[LucideIcon, DnaTone]> = [
+  [CookingPot, 'neutral'],
+  [Utensils, 'mint'],
+  [Soup, 'sand'],
+  [Salad, 'amber'],
 ];
 
 // Display only: calm brand-compatible tints (green, gold, clay, sage, olive), picked
@@ -33,7 +49,11 @@ export function categoryTint(category?: string | null): React.CSSProperties | un
 export function categoryVisual(category?: string | null): { Icon: LucideIcon; tone: DnaTone } {
   const c = String(category || '');
   const hit = MAP.find(([name]) => c.includes(name));
-  return hit ? { Icon: hit[1], tone: hit[2] } : { Icon: CookingPot, tone: 'neutral' };
+  if (hit) return { Icon: hit[1], tone: hit[2] };
+  let h = 0;
+  for (let i = 0; i < c.length; i++) h = (h * 31 + c.charCodeAt(i)) >>> 0;
+  const [Icon, tone] = GENERIC[h % GENERIC.length];
+  return { Icon, tone };
 }
 
 export function CategoryTile({ category, size = 'md', className }: { category?: string | null; size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'; className?: string }) {
