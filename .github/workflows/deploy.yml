@@ -26,12 +26,13 @@ concurrency:
 
 jobs:
   deploy:
+    # A manual run could otherwise deploy any branch or tag picked in the dialog.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       PROJECT: gen-lang-client-0200723670
       SITE: https://gen-lang-client-0200723670.web.app
-      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
     steps:
       - uses: actions/checkout@v4
 
@@ -57,6 +58,9 @@ jobs:
 
       - name: Deploy to Firebase Hosting
         id: deploy
+        # Only this step sees the key; npm ci and the build run third-party scripts.
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
           if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
             echo "::warning::FIREBASE_SERVICE_ACCOUNT is not set, so this workflow did not deploy. Add the secret (see the header of .github/workflows/deploy.yml) or fix Cloud Build trigger 'order-main-deploy'."
@@ -74,10 +78,13 @@ jobs:
       - name: Verify the live site serves this build
         if: steps.deploy.outputs.deployed == 'true'
         run: |
+          # Compare the commit suffix, not the whole id: the id starts with a build
+          # timestamp, so a second publisher of the same commit (Cloud Build) differs.
           want=$(node -p "require('./dist/build-id.json').build")
+          want_sha=${want##*-}
           for i in $(seq 1 10); do
             got=$(curl -fsS "$SITE/build-id.json?t=$(date +%s)" | jq -r .build || true)
-            if [ "$got" = "$want" ]; then echo "Live: $got"; exit 0; fi
+            if [ "${got##*-}" = "$want_sha" ]; then echo "Live: $got"; exit 0; fi
             echo "Waiting for live build ($got != $want)"; sleep 6
           done
           echo "::error::Deploy finished but the live site is not serving build $want"
