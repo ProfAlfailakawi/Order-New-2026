@@ -4369,6 +4369,12 @@ body:has(.al-cart-bar) .order-welcome-replay {
 .al-cart-bar .al-cart-actions .al-cart-checkout{min-width:132px!important;padding-inline:18px!important}
 @media (max-width:420px){.al-cart-bar .al-cart-actions .al-cart-checkout{min-width:96px!important;padding-inline:10px!important}.al-cart-bar .al-cart-actions .al-cart-checkout svg{display:none}.al-cart-bar .al-cart-summary{max-width:54%!important}}
 @media (max-width:420px){.al-cart-bar .al-cart-actions button:not(.al-cart-checkout){display:none!important}.al-cart-bar .al-cart-summary{max-width:none!important;flex:1 1 auto}}
+/* Cart dock: one cascade for the sub-line. Earlier rules fix the actions grid at 2x"1fr" and the checkout at 132px,
+   which left the summary ~100px and clipped "3 منتجات · 548.750 د.ك" with an ellipsis. Size the actions to their
+   content and let the sub-line wrap as a last resort. */
+@media (max-width:640px){.al-cart-bar .al-cart-summary span{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;max-width:100%!important;line-height:1.3!important}}
+@media (max-width:420px){.al-cart-bar .al-cart-actions{grid-template-columns:auto!important}}
+@media (min-width:421px) and (max-width:640px){.al-cart-bar .al-cart-actions{grid-template-columns:auto auto!important}.al-cart-bar .al-cart-actions .al-cart-checkout{min-width:104px!important;padding-inline:12px!important}.al-cart-bar .al-cart-actions button:not(.al-cart-checkout){min-width:72px!important;width:auto!important;padding-inline:10px!important}}
 
 /* Presence-map letters: brass darkened just enough for 4.5:1 on cream (was ~3.7:1) */
 .dna-hubn:not([data-state="off"]) .dna-hubt .dna-letter{color:#7a5a26}
