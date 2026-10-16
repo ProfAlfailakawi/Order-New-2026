@@ -1,0 +1,84 @@
+name: Deploy hosting
+
+# Second, independent route to production. The Cloud Build trigger
+# (order-main-deploy) is the only other thing that deploys, and it has frozen
+# the live site twice (17 Sep-9 Oct, and again from 10 Oct): the trigger stops
+# firing, nothing in GitHub notices, and every merge after that never goes live.
+# Deploying from here means a disabled trigger can no longer freeze the site.
+#
+# One-time setup (repo Settings -> Secrets and variables -> Actions):
+#   FIREBASE_SERVICE_ACCOUNT = JSON key of a service account with the
+#   "Firebase Hosting Admin" role on project gen-lang-client-0200723670.
+# Until the secret exists the deploy step is skipped with a visible warning, and
+# the hourly Deploy watchdog keeps reporting that the live site is behind.
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never cancel a deploy half-way; a newer push just waits its turn and ships the latest.
+concurrency:
+  group: deploy-hosting
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PROJECT: gen-lang-client-0200723670
+      SITE: https://gen-lang-client-0200723670.web.app
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck and test
+        run: |
+          npm run lint
+          npx vitest run
+
+      # BUILD_SHA puts the real commit into dist/build-id.json, which the
+      # watchdog and the verify step below compare against.
+      - name: Build
+        run: npm run build
+        env:
+          BUILD_SHA: ${{ github.sha }}
+
+      - name: Deploy to Firebase Hosting
+        id: deploy
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::warning::FIREBASE_SERVICE_ACCOUNT is not set, so this workflow did not deploy. Add the secret (see the header of .github/workflows/deploy.yml) or fix Cloud Build trigger 'order-main-deploy'."
+            echo "deployed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          key="$RUNNER_TEMP/firebase-key.json"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$key"
+          trap 'rm -f "$key"' EXIT
+          GOOGLE_APPLICATION_CREDENTIALS="$key" \
+            npx -y firebase-tools@15 deploy --project="$PROJECT" --only hosting --non-interactive
+          echo "deployed=true" >> "$GITHUB_OUTPUT"
+
+      # A deploy that "succeeds" but is not what visitors get must fail.
+      - name: Verify the live site serves this build
+        if: steps.deploy.outputs.deployed == 'true'
+        run: |
+          want=$(node -p "require('./dist/build-id.json').build")
+          for i in $(seq 1 10); do
+            got=$(curl -fsS "$SITE/build-id.json?t=$(date +%s)" | jq -r .build || true)
+            if [ "$got" = "$want" ]; then echo "Live: $got"; exit 0; fi
+            echo "Waiting for live build ($got != $want)"; sleep 6
+          done
+          echo "::error::Deploy finished but the live site is not serving build $want"
+          exit 1
