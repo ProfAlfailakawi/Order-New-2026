@@ -107,3 +107,13 @@
 /* ---- empty-state art: the unified .lucide 20px size was shrinking the hero icons the markup asks for (w-10 / w-12 / size 40) ---- */
 .lucide.empty-state-art { width: 2.5rem; height: 2.5rem; }
 .lucide.empty-state-art.w-12 { width: 3rem; height: 3rem; }
+
+/* ---- round 5: very narrow phones ---- */
+/* Invoice tab: the two action tiles keep their label on one line at 320px (it was breaking into three). */
+@media (max-width: 360px) {
+  .order-invoice-tab-panel .grid.grid-cols-2 > button {
+    padding-inline: 0.375rem;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+}
