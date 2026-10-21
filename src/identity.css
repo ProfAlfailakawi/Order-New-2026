@@ -1,0 +1,301 @@
+/* ==========================================================================
+   هوية «النول» — Sadu loom identity layer (presentation only).
+
+   Concept: the storefront reads like a piece of woven Sadu cloth. Surfaces are
+   undyed wool, edges are stitched seams, emphasis comes from dyed bands
+   (palm green, madder red, saffron, indigo) instead of glows and gradients.
+   Type: Reem Kufi (OFL, self-hosted) carries headings, prices and numerals —
+   its geometric strokes echo the woven diamonds; Tajawal stays for reading text.
+   Motion: one "weave-in" of the border bands on entry; presses feel like thread
+   tension (a 1-2px settle). Everything is off under prefers-reduced-motion.
+
+   Loaded after index.css and beauty-pass.css. It only restyles; no selector,
+   class, id, data-attribute or handler that scripts or tests use is touched.
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Reem Kufi Loom';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(/fonts/reem-kufi-arabic-wght-normal.woff2) format('woff2-variations'), url(/fonts/reem-kufi-arabic-wght-normal.woff2) format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: 'Reem Kufi Loom';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(/fonts/reem-kufi-latin-wght-normal.woff2) format('woff2-variations'), url(/fonts/reem-kufi-latin-wght-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  --sd-ink: #12301f;          /* palm-dyed wool: text + primary fills */
+  --sd-ink-2: #1d4a31;
+  --sd-madder: #a9262b;       /* madder red: alerts, the single hot accent */
+  --sd-saffron: #c8942f;      /* saffron: seams and price marks */
+  --sd-saffron-ink: #7a5614;  /* saffron as text on wool (AA) */
+  --sd-indigo: #2d4b63;       /* indigo dye: secondary / informational */
+  --sd-wool: #f7efde;         /* undyed wool: raised surfaces */
+  --sd-ivory: #fffaf0;        /* card face */
+  --sd-seam: rgba(18, 48, 31, .16);
+  --sd-seam-strong: rgba(18, 48, 31, .34);
+  --sd-display: 'Reem Kufi Loom', 'Tajawal', ui-sans-serif, system-ui, sans-serif;
+  --sd-ease: cubic-bezier(.22, .78, .24, 1);
+  /* woven band: red diamond / saffron core / green diamond / saffron core */
+  --sd-band: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='16' viewBox='0 0 32 16'%3E%3Cpath d='M0 8 8 0 16 8 8 16Z' fill='%23a9262b'/%3E%3Cpath d='M8 8 12 4 16 8 12 12Z' fill='%23e7bf5e'/%3E%3Cpath d='M16 8 24 0 32 8 24 16Z' fill='%2312301f'/%3E%3Cpath d='M24 8 28 4 32 8 28 12Z' fill='%23e7bf5e'/%3E%3C/svg%3E");
+  --sd-thread: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='4' viewBox='0 0 12 4'%3E%3Cpath d='M0 2h6' stroke='%23c8942f' stroke-width='1.4'/%3E%3C/svg%3E");
+}
+
+/* ---------- Typography: Kufi for the voice, Tajawal for the reading ---------- */
+html body .r3-menu-header h1,
+html body .ord-bp-theatre h1,
+html body .best-seller-wow-head h3 {
+  font-family: var(--sd-display) !important;
+  font-weight: 700;
+  letter-spacing: 0 !important;
+}
+/* small text stays in Tajawal (Kufi collides at <18px); numerals get lining figures */
+html body .menu-product-card p.text-brand,
+html body .food-price-chip,
+html body .dna-cat-meta,
+html body .al-cart-summary strong {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+html body .r3-menu-header h1 { font-size: clamp(20px, 5.2vw, 26px); line-height: 1.5; }
+html body .ord-bp-theatre h1 { font-size: clamp(26px, 6.6vw, 36px); line-height: 1.6; }
+
+/* ---------- Header: a cloth selvedge underneath, not a flat hairline ---------- */
+html body .r3-menu-header {
+  background: var(--sd-ivory) !important;
+  border-bottom: 0 !important;
+  position: sticky;
+  box-shadow: 0 1px 0 var(--sd-seam);
+}
+html body .r3-menu-header::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: -12px;
+  block-size: 12px;
+  background: var(--sd-band) repeat-x center / 24px 12px;
+  pointer-events: none;
+  opacity: .92;
+}
+html body .r3-menu-header h1 .text-accent { color: var(--sd-saffron-ink) !important; }
+html body .ord-bp-status { gap: 6px; }
+
+/* ---------- Category tiles: woven labels. Selected = dyed solid ---------- */
+html body .dna-cat-tile {
+  position: relative;
+  background: var(--sd-ivory) !important;
+  border: 1.5px solid var(--sd-seam) !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+  isolation: isolate;
+  transition: background-color .22s var(--sd-ease), border-color .22s var(--sd-ease), transform .16s var(--sd-ease), color .22s var(--sd-ease);
+}
+html body .dna-cat-tile::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px dashed var(--sd-seam);
+  border-radius: 13px;
+  pointer-events: none;
+  z-index: -1;
+}
+html body .dna-cat-tile:hover { border-color: var(--sd-seam-strong) !important; }
+html body .dna-cat-tile:active { transform: translateY(1px); }
+html body .dna-cat-tile[data-open='true'] {
+  background: var(--sd-ink) !important;
+  border-color: var(--sd-ink) !important;
+  box-shadow: 0 10px 22px -14px rgba(18, 48, 31, .7) !important;
+}
+html body .dna-cat-tile[data-open='true']::after { border-color: rgba(231, 191, 94, .55); }
+html body .dna-cat-tile[data-open='true'] .dna-cat-name { color: #fff8e6 !important; }
+html body .dna-cat-tile[data-open='true'] .dna-cat-meta { color: #e7bf5e !important; }
+html body .dna-cat-tile:focus-visible,
+html body .menu-product-card:focus-visible,
+html body .al-cart-bar button:focus-visible,
+html body .r3-menu-header a:focus-visible,
+html body .r3-menu-header button:focus-visible {
+  outline: 3px solid var(--sd-saffron);
+  outline-offset: 3px;
+}
+html body .dna-cat-name { font-size: 16px; }
+html body .dna-cat-meta { font-size: 12px; font-weight: 500; color: #5b564f; }
+
+/* ---------- Section heads ---------- */
+html body .best-seller-wow-head {
+  box-shadow: none !important;
+  background: transparent !important;
+  border: 0 !important;
+  padding-inline: 2px;
+  padding-block-end: 10px;
+  position: relative;
+}
+html body .best-seller-wow-head::after {
+  content: "" !important;
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  left: auto; bottom: 0;
+  block-size: 8px;
+  padding: 0; border: 0; border-radius: 0;
+  font-size: 0;
+  background: var(--sd-band) repeat-x right center / 16px 8px;
+  -webkit-mask-image: linear-gradient(to left, #000 0, #000 28%, transparent 100%);
+  mask-image: linear-gradient(to left, #000 0, #000 28%, transparent 100%);
+  display: block !important;
+}
+html body .best-seller-wow-head h3 { font-size: 20px; color: var(--sd-ink); }
+
+/* ---------- Product cards: flat wool, stitched seam, no glow-sweep ---------- */
+html body .menu-product-card {
+  background: var(--sd-ivory) !important;
+  border: 1.5px solid var(--sd-seam) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 8px 18px -14px rgba(18, 48, 31, .5) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: transform .18s var(--sd-ease), box-shadow .18s var(--sd-ease), border-color .18s var(--sd-ease) !important;
+}
+html body .menu-product-card::before {
+  content: "" !important;
+  inset: 5px !important;
+  border: 1px dashed var(--sd-seam) !important;
+  border-radius: 15px !important;
+  background: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: none;
+}
+html body .menu-product-card:hover,
+html body .menu-product-card:active {
+  transform: translateY(-2px) !important;
+  border-color: var(--sd-saffron) !important;
+  box-shadow: 0 14px 26px -16px rgba(18, 48, 31, .6) !important;
+}
+html body .menu-product-card:hover::before { border-color: rgba(200, 148, 47, .55) !important; }
+html body .menu-product-image {
+  border-radius: 16px !important;
+  border: 1px solid var(--sd-seam) !important;
+  box-shadow: none !important;
+  background: var(--sd-wool) !important;
+}
+/* price: a saffron-edged pennant tag rather than a floating pill */
+html body .menu-product-card p.text-brand.text-lg,
+html body .menu-product-card .rounded-full.shadow-\[0_8px_22px_rgba\(26\,46\,34\,0\.08\)\],
+html body .food-price-chip {
+  background: var(--sd-wool) !important;
+  border: 1px solid rgba(200, 148, 47, .55) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  color: var(--sd-ink) !important;
+}
+html body .menu-product-card .text-accent,
+html body .food-price-chip .text-accent { color: var(--sd-saffron-ink) !important; }
+/* the add affordance: dyed square with a stitched edge */
+html body .menu-product-card .bg-brand.rounded-2xl,
+html body .menu-product-card .bg-stone-300.rounded-2xl {
+  border-radius: 14px !important;
+  box-shadow: inset 0 0 0 2px var(--sd-ink), inset 0 0 0 3px rgba(231, 191, 94, .7) !important;
+}
+html body .menu-product-card .bg-brand.rounded-2xl { background: var(--sd-ink) !important; }
+
+/* ---------- Best-seller carousel: calmer stage ---------- */
+html body .best-seller-wow-carousel {
+  background: transparent !important;
+}
+html body .best-seller-wow-carousel::before { display: none !important; }
+
+/* ---------- Cart dock: woven strip ---------- */
+html body .al-cart-bar {
+  background: var(--sd-ink) !important;
+  border: 1.5px solid rgba(231, 191, 94, .55) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 18px 40px -12px rgba(8, 20, 14, .55) !important;
+  backdrop-filter: none !important;
+  overflow: hidden;
+}
+html body .al-cart-bar::before {
+  content: "" !important;
+  position: absolute; inset: auto 0 0 0 !important;
+  block-size: 6px; border-radius: 0 !important;
+  background: var(--sd-band) repeat-x center / 12px 6px !important;
+  opacity: .9 !important;
+}
+html body .al-cart-actions .al-cart-checkout {
+  background: #fff3d6 !important;
+  color: var(--sd-ink) !important;
+  border: 1px solid #e7bf5e !important;
+  border-radius: 14px !important;
+  min-block-size: 44px;
+}
+html body .al-cart-actions button { min-block-size: 44px; border-radius: 14px !important; }
+
+/* ---------- Welcome (first visit): a larger loom frame ---------- */
+html body .ord-bp-theatre {
+  background:
+    radial-gradient(90% 55% at 50% 0%, rgba(231, 191, 94, .22), transparent 70%),
+    var(--sd-ivory) !important;
+}
+html body .ord-bp-theatre::before,
+html body .ord-bp-theatre::after {
+  block-size: 32px;
+  background-size: 64px 32px;
+  opacity: 1;
+}
+html body .ord-bp-theatre h1 { color: var(--sd-ink); text-wrap: balance; }
+html body .ord-bp-theatre button[class*="bg-brand"],
+html body .ord-bp-theatre button[class*="bg-[#0"] {
+  border-radius: 16px !important;
+  box-shadow: inset 0 0 0 2px var(--sd-ink), inset 0 0 0 3px rgba(231, 191, 94, .75), 0 14px 26px -14px rgba(18, 48, 31, .7) !important;
+}
+
+/* ---------- Tracking ---------- */
+html body .track-signature h1,
+html body .track-signature h2 { color: var(--sd-ink); }
+html body .order-detail-card {
+  border-radius: 20px !important;
+  border: 1.5px solid var(--sd-seam) !important;
+  background: var(--sd-ivory) !important;
+  box-shadow: 0 10px 24px -18px rgba(18, 48, 31, .55) !important;
+}
+
+/* ---------- Checkout: ivory sheet, ink step markers ---------- */
+html body .checkout-wow-panel,
+html body .checkout-wow-body { background: var(--sd-ivory) !important; }
+
+/* ---------- Motion: one weave-in for the header selvedge ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes sdWeave { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
+  html body .r3-menu-header::after { animation: sdWeave .9s var(--sd-ease) .1s backwards; }
+  html body .best-seller-wow-head::after { animation: sdWeave .9s var(--sd-ease) .25s backwards; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html body .menu-product-card,
+  html body .dna-cat-tile { transition: none !important; }
+  html body .menu-product-card:hover { transform: none !important; }
+}
+
+/* ---------- Not-found page: same loom frame as the welcome ---------- */
+html body .bg-cream > .max-w-md.rounded-\[32px\] {
+  border-radius: 22px;
+  border: 1.5px solid var(--sd-seam);
+  background: var(--sd-ivory);
+  box-shadow: 0 18px 40px -26px rgba(18, 48, 31, .6);
+  position: relative;
+  overflow: hidden;
+}
+html body .bg-cream > .max-w-md.rounded-\[32px\]::before,
+html body .bg-cream > .max-w-md.rounded-\[32px\]::after {
+  content: "";
+  position: absolute; inset-inline: 0; block-size: 12px;
+  background: var(--sd-band) repeat-x center / 24px 12px;
+}
+html body .bg-cream > .max-w-md.rounded-\[32px\]::before { inset-block-start: 0; }
+html body .bg-cream > .max-w-md.rounded-\[32px\]::after { inset-block-end: 0; }
+html body .bg-cream > .max-w-md.rounded-\[32px\] a { border-radius: 14px; box-shadow: inset 0 0 0 2px var(--sd-ink), inset 0 0 0 3px rgba(231, 191, 94, .75); }
