@@ -3,6 +3,24 @@
    fetch WOFF2). Same families/weights/display=swap, now loaded in parallel. */
 @import "tailwindcss";
 
+/* Order's live kitchen desk: warm ticket-paper frame, limited to the admin workspace. */
+.order-kitchen-console .admin-content > .space-y-12 > .flex.items-center.justify-between {
+  position: relative;
+  padding: 1.35rem 1.5rem;
+  border: 1px solid rgba(178,138,65,.22);
+  border-radius: 26px;
+  background: radial-gradient(ellipse at 8% 0%,rgba(178,138,65,.13),transparent 48%),linear-gradient(115deg,#fffdf8,#f6f2e8 54%,#fff);
+  box-shadow: 0 16px 40px rgba(20,41,31,.055),inset 0 1px 0 rgba(255,255,255,.95);
+}
+.order-kitchen-console .admin-content > .space-y-12 > .flex.items-center.justify-between > div:last-child {
+  border-color: rgba(178,138,65,.24);
+  background: rgba(255,255,255,.78);
+  color: #765622;
+  box-shadow: 0 8px 22px rgba(120,86,34,.08);
+}
+@media(max-width:640px){.order-kitchen-console .admin-content > .space-y-12 > .flex.items-center.justify-between{padding:1rem;border-radius:21px}}
+@media(prefers-reduced-motion:reduce){.order-kitchen-console .admin-content > .space-y-12 > .flex.items-center.justify-between{transition:none!important}}
+
 /* Tier badge gradients arrive as class names inside admin-configured data
    (e.g. "from-emerald-400 to-teal-600"), so the scanner never sees them in
    source and the badge rendered white-on-white. Keep the common palette. */
@@ -4411,3 +4429,28 @@ body:has(.al-cart-bar) .order-welcome-replay {
 
 /* Desktop checkout drawer: a calmer reading width instead of a 900px stretch */
 @media (min-width: 900px){ .checkout-wow-panel{ width:min(720px,92vw) !important; } }
+
+/* Restaurant operations dashboard: service-ticket visual rhythm, scoped to the dashboard tab. */
+.admin-content > .space-y-12 > .flex.items-center.justify-between {
+  position: relative;
+  padding: 1.35rem 1.5rem;
+  border: 1px solid rgba(178, 138, 65, .22);
+  border-radius: 28px;
+  background:
+    radial-gradient(ellipse at 8% 0%, rgba(178, 138, 65, .13), transparent 48%),
+    linear-gradient(115deg, #fffdf8 0%, #f6f2e8 54%, #fff 100%);
+  box-shadow: 0 16px 40px rgba(20, 41, 31, .055), inset 0 1px 0 rgba(255,255,255,.95);
+}
+.admin-content > .space-y-12 > .flex.items-center.justify-between h1 {
+  letter-spacing: -.035em;
+}
+.admin-content > .space-y-12 > .flex.items-center.justify-between > div:last-child {
+  border-color: rgba(178, 138, 65, .24);
+  background: rgba(255,255,255,.78);
+  color: #765622;
+  box-shadow: 0 8px 22px rgba(120, 86, 34, .08);
+}
+@media (max-width: 640px) {
+  .admin-content > .space-y-12 > .flex.items-center.justify-between { padding: 1rem; border-radius: 22px; }
+  .admin-content > .space-y-12 > .flex.items-center.justify-between h1 { font-size: 1.75rem; }
+}

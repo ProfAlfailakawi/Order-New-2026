@@ -589,7 +589,7 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-grow overflow-y-auto flex flex-col no-scrollbar relative items-center">
+      <main className="order-kitchen-console flex-grow overflow-y-auto flex flex-col no-scrollbar relative items-center">
         {/* Topbar */}
         <header className="admin-topbar sticky top-4 z-40 w-full max-w-[1600px] px-8 pt-4">
           <div className="admin-topbar-panel glass-panel p-4 gap-4 flex justify-between items-center rounded-[2rem] shadow-sm">
