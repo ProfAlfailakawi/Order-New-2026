@@ -69,6 +69,9 @@ export function installReveal(): void {
 
   const hold = (el: Element) => {
     if (pending.has(el) || el.hasAttribute('data-m-in')) return;
+    // Only the first screenful is held; anything already below the fold or off to the side simply stays visible.
+    const r = el.getBoundingClientRect();
+    if (r.top >= window.innerHeight || r.left >= window.innerWidth || r.right <= 0) return;
     el.setAttribute('data-m-hold', '');
     pending.set(el, 0);
   };

@@ -6,6 +6,7 @@ import './index.css';
 import './beauty-pass.css';
 import './identity.css';
 import './motion.css';
+import './polish.css';
 import {installAppUpdate} from './lib/app-update';
 import {installReveal} from './lib/reveal';
 

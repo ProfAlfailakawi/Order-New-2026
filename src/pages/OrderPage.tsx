@@ -936,6 +936,7 @@ export default function OrderPage() {
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100 px-6 py-4 flex items-center justify-between">
         <Link
           to="/"
+          aria-label="الرجوع للمنيو"
           className="p-3 bg-stone-50 rounded-2xl hover:bg-stone-100 transition-all border border-stone-100"
         >
           <ChevronLeft className="w-5 h-5 text-stone-500 rotate-180" />

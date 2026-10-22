@@ -39,7 +39,7 @@ function BrandedFallback() {
 
 function NotFoundFoodPage() {
   return (
-    <div dir="rtl" className="min-h-screen flex items-center justify-center bg-cream p-6">
+    <main dir="rtl" className="min-h-screen flex items-center justify-center bg-cream p-6">
       <div className="max-w-md w-full bg-white border border-cream-edge rounded-[32px] p-8 text-center shadow-[0_24px_80px_rgba(120,53,15,0.10)]">
         <svg viewBox="0 0 120 120" className="w-28 h-28 mx-auto mb-3" aria-hidden="true">
           <circle cx="60" cy="62" r="46" fill="#fff7e8" stroke="#ead8b5" />
@@ -56,7 +56,7 @@ function NotFoundFoodPage() {
           الرجوع للمنيو
         </Link>
       </div>
-    </div>
+    </main>
   );
 }
 

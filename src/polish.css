@@ -1,0 +1,43 @@
+/* ==========================================================================
+   Round 3: visibility and accessibility polish (presentation only).
+   Loaded after motion.css. Colour/focus/tap-size rules only: no layout, no logic,
+   no motion. Every rule darkens or sharpens something that already exists.
+   ========================================================================== */
+
+/* Keyboard focus: one clear two-step ring on every interactive element (many inputs and buttons
+   removed the outline and showed nothing). Offset puts the ring on the surrounding surface. */
+html body :is(a[href], button, input, select, textarea, summary, [role='button'], [tabindex]:not([tabindex='-1'])):focus-visible {
+  outline: 2px solid #0d3a22 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 5px rgba(200, 148, 47, .35) !important;
+}
+/* Dark surfaces: flip the ring to gold + white so it still reads. */
+html body :is(.bg-brand, .checkout-ready-card, .wahag-dark-stage, .menu-product-shell [class*='absolute']) :is(a[href], button, input, select, textarea, [role='button']):focus-visible {
+  outline-color: #fde68a !important;
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, .25) !important;
+}
+/* Scrollable panels reached by keyboard */
+html body .checkout-wow-body:focus-visible { outline-offset: -3px !important; box-shadow: none !important; }
+
+/* Contrast: small coloured text that sat between 3:1 and 4.5:1 on its own background. */
+html body .text-orange-600 { color: #c2410c; }
+html body .text-emerald-600 { color: #047857; }
+html body .text-orange-500.text-xs { color: #c2410c; }
+html body .text-\[\#9a783d\] { color: #7a5a22; }
+html body .text-brand .text-accent { color: #85601c; }
+html body .text-green-600.bg-green-50 { color: #166534; }
+html body .text-amber-600.bg-amber-50 { color: #92400e; }
+html body .text-red-600.bg-red-50 { color: #b91c1c; }
+html body p.text-stone-400 { color: #6b6560; }
+/* Back face of the flipped product card is dark green: use the light gold there. */
+html body .menu-product-shell .text-accent { color: #e7c77f; }
+html body .menu-product-shell .text-brand .text-accent { color: #85601c; }
+/* Journey/step labels that have not been reached: dimmed with opacity before (2.7:1); now a solid mid-grey, still lighter than done steps. */
+html body .dna-steps[data-journey] .dna-stepi[data-state='pending'] .dna-lbl { opacity: 1; color: #5b544d; }
+
+/* Phones: inputs below 16px make iOS zoom the page on focus; page zoom is now allowed, so keep fields at 16px. */
+@media (pointer: coarse) {
+  html body input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  html body select,
+  html body textarea { font-size: max(16px, 1em); }
+}
