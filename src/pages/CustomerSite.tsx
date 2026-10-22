@@ -9160,7 +9160,7 @@ function CheckoutOverlay({
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <h3>الفاتورة ترتبت وجاهزة للاختيار</h3>
-                  <p>راجع الملخص، وبعدها اختار الطريقة المناسبة لك بدون تغيير على أي خطوة دفع.</p>
+                  <p>راجع الملخص ثم اختار طريقة الدفع.</p>
                   <div className="invoice-reveal-stats">
                     <div><b>{cart.length}</b><small>أصناف</small></div>
                     <div><b>{address.region || "العنوان"}</b><small>التوصيل</small></div>
@@ -9495,12 +9495,12 @@ function CheckoutOverlay({
                 {(squadInfo?.id || (typeof window !== "undefined" && localStorage.getItem("squadId"))) && (
                   <div className="diwaniya-checkout-strip" dir="rtl">
                     <strong>الديوانية جاهزة</strong>
-                    <span>القطيّة ووهق غيرك يشتغلون مع ربعك بدون إعادة إدخال الأسماء إذا كانت الديوانية متصلة.</span>
+                    <span>القطيّة ووهق غيرك مع ربعك.</span>
                   </div>
                 )}
                 <div className="payment-choice-hint" dir="rtl">
                   <strong>اختر طريقة الدفع المناسبة</strong>
-                  <span>اسحب أو انزل شوي: الدفع الكامل، القطيّة، ووهق غيرك كلها متاحة هنا.</span>
+                  <span>دفع كامل · قطيّة · وهق غيرك</span>
                 </div>
                 <div className="payment-method-wow-grid flex flex-col gap-3 animate-in slide-in-from-bottom-4 fade-in duration-500">
                   <button

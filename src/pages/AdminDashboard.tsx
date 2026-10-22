@@ -765,7 +765,7 @@ export default function AdminDashboard() {
                               </div>
                               <div className="space-y-2">
                                 <h3 className="text-xl font-bold text-brand">ماكو طلبات هني</h3>
-                                <p className="text-stone-400 font-medium max-w-sm mx-auto">لم يتم العثور على أي طلبات تطابق بحثك الحالي. جرب تغيير كلمات البحث.</p>
+                                <p className="text-stone-400 font-medium max-w-sm mx-auto">لا توجد طلبات مطابقة للبحث.</p>
                               </div>
                             </motion.div>
                           </td>
@@ -869,7 +869,7 @@ export default function AdminDashboard() {
                         <Ghost className="w-10 h-10 text-stone-300 empty-state-art" />
                       </div>
                       <h3 className="text-2xl font-black text-brand mb-3">الصندوق فارغ</h3>
-                      <p className="text-stone-400 font-medium max-w-sm mx-auto">لم تسجل أي طلبات جديدة بعد. ستظهر الطلبات الجديدة هنا فور وصولها.</p>
+                      <p className="text-stone-400 font-medium max-w-sm mx-auto">لا توجد طلبات جديدة بعد.</p>
                     </motion.div>
                   </div>
                 ) : (
@@ -981,7 +981,7 @@ export default function AdminDashboard() {
                                 <FileText className="w-10 h-10 text-stone-300 empty-state-art" />
                               </div>
                               <h3 className="text-2xl font-black text-brand mb-3">ماكو فواتير</h3>
-                              <p className="text-stone-400 font-medium max-w-sm mx-auto">لم يتم العثور على أي فواتير مطابقة لبحثك. هنا سيتم توثيق كل عملية دفع منجزة.</p>
+                              <p className="text-stone-400 font-medium max-w-sm mx-auto">لا توجد فواتير مطابقة للبحث.</p>
                             </motion.div>
                           </td>
                         </tr>
@@ -1795,7 +1795,7 @@ export default function AdminDashboard() {
                                 <MapPin className="w-10 h-10 text-stone-300 empty-state-art" />
                               </div>
                               <h3 className="text-2xl font-black text-brand mb-3">ماكو مناطق توصيل</h3>
-                              <p className="text-stone-400 font-medium max-w-sm mx-auto">قم بإضافة مناطق التوصيل ليتمكن عملاؤك من إتمام طلباتهم.</p>
+                              <p className="text-stone-400 font-medium max-w-sm mx-auto">أضف مناطق التوصيل لتبدأ الطلبات.</p>
                             </motion.div>
                           </td>
                         </tr>
@@ -2001,7 +2001,7 @@ export default function AdminDashboard() {
                                 <CreditCard className="w-10 h-10 text-stone-300 empty-state-art" />
                               </div>
                               <h3 className="text-2xl font-black text-brand mb-3">ماكو كوبونات ذكية</h3>
-                              <p className="text-stone-400 font-medium max-w-sm mx-auto">قم بإضافة كوبونات خصم لزيادة مبيعاتك وتفاعل العملاء.</p>
+                              <p className="text-stone-400 font-medium max-w-sm mx-auto">أضف كوبون خصم ليظهر هنا.</p>
                             </motion.div>
                           </td>
                         </tr>
