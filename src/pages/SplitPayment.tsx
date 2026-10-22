@@ -557,30 +557,30 @@ export default function SplitPayment() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50 gap-4">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-stone-50 gap-4">
         <OrderMicroLoader size={48} tone="brand" label="جاري تحميل صفحة القطية" />
-        <p className="text-stone-500 font-bold">نحمّل صفحة القطيّة...</p>
+        <h1 className="text-stone-500 font-bold">نحمّل صفحة القطيّة...</h1>
         <p className="text-stone-500 text-xs">رقم الطلب: {id ? formatToDisplayOrderId(id) : "غير متوفر"}</p>
-      </div>
+      </main>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-stone-50 p-6 flex-col text-center">
+      <main className="min-h-screen flex items-center justify-center bg-stone-50 p-6 flex-col text-center">
         <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
         <h1 className="text-xl font-bold mb-2">المعذرة</h1>
         <p className="text-stone-500">{error}</p>
-      </div>
+      </main>
     );
   }
 
   if (!order) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50 gap-4 text-center p-6">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-stone-50 gap-4 text-center p-6">
         <OrderMicroLoader size={48} tone="brand" label="جاري تجهيز صفحة القطية" />
-        <p className="text-stone-500 font-bold">نجهز صفحة القطيّة...</p>
-      </div>
+        <h1 className="text-stone-500 font-bold">نجهز صفحة القطيّة...</h1>
+      </main>
     );
   }
 
@@ -615,7 +615,7 @@ export default function SplitPayment() {
   }
 
   return (
-    <div
+    <main
       className="min-h-screen qatya-ultra-shell qatya-wow-shell pb-24 font-sans text-stone-800 selection:bg-brand/20"
       dir="rtl"
     >
@@ -751,9 +751,9 @@ export default function SplitPayment() {
                 ariaLabel={`المندفع ${paidAmount.toFixed(3)} من ${Number(order.total || 0).toFixed(3)} د.ك، الباقي ${remainingAmount.toFixed(3)} د.ك`}
               />
               <div className="min-w-0 flex-1">
-                <h2 className="text-lg sm:text-2xl font-black text-stone-950 tracking-tight leading-tight" title="الصفحة تعرض قطيتكم أول بأول، والباقي واضح. ادفع قطيتك أو انسخ الرابط للربع.">
+                <h1 className="text-lg sm:text-2xl font-black text-stone-950 tracking-tight leading-tight" title="الصفحة تعرض قطيتكم أول بأول، والباقي واضح. ادفع قطيتك أو انسخ الرابط للربع.">
                   شدو حيلكم يا الربع ولا تبخلون علينا
-                </h2>
+                </h1>
                 <div className="dna-qatya-facts">
                   <span><small>الإجمالي</small><strong>{order.total.toFixed(3)}</strong></span>
                   <span><small>المندفع</small><strong>{paidAmount.toFixed(3)}</strong></span>
@@ -1146,6 +1146,6 @@ export default function SplitPayment() {
             />
           </div>)}
       </div>
-    </div>
+    </main>
   );
 }

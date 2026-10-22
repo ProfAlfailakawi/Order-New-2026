@@ -5056,7 +5056,7 @@ export default function CustomerSite() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="ord-bp-theatre fixed inset-0 z-[10000] flex flex-col items-center justify-center bg-cream overflow-hidden"
+            role="region" aria-label="أهلاً بك" className="ord-bp-theatre fixed inset-0 z-[10000] flex flex-col items-center justify-center bg-cream overflow-hidden"
           >
             {/* Elegant Background Patterns / Sadu aesthetics */}
             <div className="absolute inset-0 bg-radial-gradient from-transparent to-cream-edge/40 opacity-80 pointer-events-none" />
@@ -5200,7 +5200,7 @@ export default function CustomerSite() {
       >
         {/* Squad Gamification Banner */}
         {!isCheckout && (
-          <div className="px-4 sm:px-6 pt-4 pb-2 bg-stone-50/80 backdrop-blur-sm border-b border-stone-100">
+          <div role="region" aria-label="الديوانية" className="px-4 sm:px-6 pt-4 pb-2 bg-stone-50/80 backdrop-blur-sm border-b border-stone-100">
             {squadInfo ? (
               <div 
                 onClick={() => { setActiveSquadTab("overview"); setShowSquadModal(true); }}
@@ -5428,7 +5428,7 @@ export default function CustomerSite() {
                 >
                   <ShoppingBag className="w-5 h-5 text-brand" />
                   {cart.length > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-xs w-5 h-5 flex items-center justify-center rounded-lg font-extrabold shadow-md">
+                    <span className="absolute -top-1.5 -right-1.5 bg-[#8a6420] text-white text-xs w-5 h-5 flex items-center justify-center rounded-lg font-extrabold shadow-md">
                       {cart.length}
                     </span>
                   )}
@@ -5440,7 +5440,7 @@ export default function CustomerSite() {
 
         {/* Hero Section - Context Aware Banners */}
         {!isCheckout && (
-          <div className="px-4 pb-4 pt-3 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:max-w-[1180px] lg:mx-auto mb-2">
+          <div role="region" aria-label="البحث والعروض" className="px-4 pb-4 pt-3 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:max-w-[1180px] lg:mx-auto mb-2">
             <motion.div
               whileHover={{ scale: 1.01 }}
               className={cn(
@@ -5506,7 +5506,7 @@ export default function CustomerSite() {
 
         {/* Faza'a Mood Search */}
         {!isCheckout && (
-          <div className="px-4 sm:px-6 lg:px-8 lg:max-w-[1180px] lg:mx-auto mb-2">
+          <div role="search" aria-label="بحث المنيو" className="px-4 sm:px-6 lg:px-8 lg:max-w-[1180px] lg:mx-auto mb-2">
             <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-2 flex flex-col gap-2 relative z-20">
               <div className="flex items-center bg-stone-50/80 backdrop-blur-sm rounded-2xl px-4 py-3">
                 {aiSearchLoading ? (
@@ -5823,7 +5823,7 @@ export default function CustomerSite() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowFlashSale(false)}
-              role="dialog" aria-modal="true" className="fixed inset-0 r3-flash-overlay bg-brand/95 backdrop-blur-md z-[200] flex flex-col items-center justify-center p-6"
+              role="dialog" aria-modal="true" aria-label="عرض خاص" className="fixed inset-0 r3-flash-overlay bg-brand/95 backdrop-blur-md z-[200] flex flex-col items-center justify-center p-6"
             >
               <button aria-label="إغلاق العرض"
                 onClick={(e) => {
@@ -6285,7 +6285,7 @@ export default function CustomerSite() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              role="dialog" aria-modal="true" className="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-cream/98 text-ink font-sans p-6 text-center backdrop-blur-md"
+              role="dialog" aria-modal="true" aria-label="التحقق قبل المتابعة" className="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-cream/98 text-ink font-sans p-6 text-center backdrop-blur-md"
             >
               <div className="flex flex-col items-center gap-6 max-w-sm w-full">
                 {/* Animated 3D Face scanner badge */}
@@ -6425,6 +6425,7 @@ export default function CustomerSite() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                role="dialog" aria-modal="true" aria-label="الديوانية"
                 className={cn(
                   "fixed inset-0 z-[100] flex justify-center overflow-x-hidden",
                   isDirectDiwaniyaQrOpen
@@ -6724,7 +6725,7 @@ export default function CustomerSite() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              role="dialog" aria-modal="true" className="fixed inset-0 z-[120] bg-slate-950/35 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+              role="dialog" aria-modal="true" aria-label="الانضمام للديوانية" className="fixed inset-0 z-[120] bg-slate-950/35 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
               onClick={(e) => {
                 if (e.target === e.currentTarget) setRadarJoinDraft(null);
               }}
@@ -6810,7 +6811,7 @@ export default function CustomerSite() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              role="dialog" aria-modal="true" className="fixed inset-0 z-[140] bg-slate-950/55 backdrop-blur-md flex items-center justify-center p-4"
+              role="dialog" aria-modal="true" aria-label="طريقة عمل الرادار" className="fixed inset-0 z-[140] bg-slate-950/55 backdrop-blur-md flex items-center justify-center p-4"
               onClick={(e) => {
                 if (e.target === e.currentTarget) setShowRadarInstructionModal(false);
               }}
@@ -7536,6 +7537,7 @@ const RoyalLazySusan = ({
               {/* Use the new ChefWhisperCard but constrained for the horizontal carousel */}
               <div
                 className={`w-full h-full ${!isCenter ? "pointer-events-none" : ""}`}
+                {...(!isCenter ? { inert: true, "aria-hidden": true } : {})}
               >
                 <ChefWhisperCard
                   product={product}
@@ -7787,7 +7789,7 @@ function ProductModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-brand/40 backdrop-blur-sm"
+      role="dialog" aria-modal="true" aria-label="تفاصيل المنتج" className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-brand/40 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -8492,7 +8494,7 @@ function CheckoutOverlay({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-start justify-end bg-brand/50 backdrop-blur-md"
+      role="dialog" aria-modal="true" aria-label="السلة وإتمام الطلب" className="fixed inset-0 z-50 flex items-start justify-end bg-brand/50 backdrop-blur-md"
       onClick={onClose}
     >
       <motion.div
@@ -8534,7 +8536,7 @@ function CheckoutOverlay({
 
         {storeAvailability.isOpen && cart.length > 0 && <CheckoutSteps step={step} />}
         <hr className="brass-divider shrink-0" />
-        <div className="checkout-wow-body flex-grow overflow-y-auto p-6 space-y-8 no-scrollbar bg-[#fafaf9]">
+        <div tabIndex={0} className="checkout-wow-body flex-grow overflow-y-auto p-6 space-y-8 no-scrollbar bg-[#fafaf9]">
           {!storeAvailability.isOpen ? (
             <StoreClosedWorkingHoursNotice status={storeAvailability} onClose={onClose} />
           ) : cart.length === 0 ? (
@@ -9219,7 +9221,7 @@ function CheckoutOverlay({
                     <button
                       onClick={validatePromo}
                       disabled={isValidatingPromo || !promoCodeInput.trim()}
-                      className="min-h-[44px] px-4 py-2 bg-brand text-white text-xs font-extrabold uppercase rounded-xl transition-all active:scale-95 disabled:opacity-50"
+                      className="min-h-[44px] px-4 py-2 bg-brand text-white text-xs font-extrabold uppercase rounded-xl transition-all active:scale-95 disabled:opacity-60"
                     >
                       {isValidatingPromo ? "..." : "تطبيق"}
                     </button>
@@ -9319,7 +9321,7 @@ function CheckoutOverlay({
                 </div>
               )}
               {/* Expected Points */}
-              <div className="flex justify-between items-center text-xs font-bold text-brand/60 pb-3 border-b border-stone-50">
+              <div className="flex justify-between items-center text-xs font-bold text-brand/75 pb-3 border-b border-stone-50">
                 <span>النقاط المتوقعة من هذا الطلب</span>
                 <span className="flex items-center gap-1">
                   + {Math.floor(itemsTotal)} <MessageWithIcons text={"⚡"} />
@@ -9383,7 +9385,7 @@ function CheckoutOverlay({
                 </div>
               )}
               {/* Expected Points */}
-              <div className="flex justify-between items-center text-xs font-bold text-brand/60 pb-3 border-b border-stone-50">
+              <div className="flex justify-between items-center text-xs font-bold text-brand/75 pb-3 border-b border-stone-50">
                 <span>النقاط المتوقعة من هذا الطلب</span>
                 <span className="flex items-center gap-1">
                   + {Math.floor(itemsTotal)} <MessageWithIcons text={"⚡"} />
