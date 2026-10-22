@@ -5506,7 +5506,7 @@ export default function CustomerSite() {
 
         {/* Faza'a Mood Search */}
         {!isCheckout && (
-          <div className="px-4 sm:px-6 lg:px-8 lg:max-w-[1180px] lg:mx-auto mb-2">
+          <div role="search" aria-label="بحث المنيو" className="px-4 sm:px-6 lg:px-8 lg:max-w-[1180px] lg:mx-auto mb-2">
             <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-2 flex flex-col gap-2 relative z-20">
               <div className="flex items-center bg-stone-50/80 backdrop-blur-sm rounded-2xl px-4 py-3">
                 {aiSearchLoading ? (
@@ -6425,6 +6425,7 @@ export default function CustomerSite() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                role="dialog" aria-modal="true" aria-label="الديوانية"
                 className={cn(
                   "fixed inset-0 z-[100] flex justify-center overflow-x-hidden",
                   isDirectDiwaniyaQrOpen
@@ -7536,6 +7537,7 @@ const RoyalLazySusan = ({
               {/* Use the new ChefWhisperCard but constrained for the horizontal carousel */}
               <div
                 className={`w-full h-full ${!isCenter ? "pointer-events-none" : ""}`}
+                {...(!isCenter ? { inert: true, "aria-hidden": true } : {})}
               >
                 <ChefWhisperCard
                   product={product}

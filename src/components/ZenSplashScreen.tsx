@@ -29,7 +29,7 @@ export const ZenSplashScreen: React.FC<ZenSplashScreenProps> = ({ logo }) => {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-cream px-5"
+      role="region" aria-label="مطبخ التراث الكويتي" className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-cream px-5"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 1.015, transition: { duration: 0.42, ease: "easeInOut" } }}
       dir="rtl"

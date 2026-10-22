@@ -1122,7 +1122,7 @@ export default function OrderPage() {
               disabled={
                 loading || (phone.length < 8 && searchOrderIdInput.length < 3)
               }
-              className="mt-4 w-full py-5 bg-brand text-white rounded-[24px] font-extrabold shadow-xl shadow-brand/20 hover:scale-[0.98] active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-3"
+              className="mt-4 w-full py-5 bg-brand text-white rounded-[24px] font-extrabold shadow-xl shadow-brand/20 hover:scale-[0.98] active:scale-95 transition-all disabled:opacity-60 disabled:hover:scale-100 flex items-center justify-center gap-3"
             >
               {loading ? (
                 <>
@@ -1702,7 +1702,7 @@ export default function OrderPage() {
       {/* Details Modal */}
       <AnimatePresence>
         {selectedOrder && (
-          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6">
+          <div role="dialog" aria-modal="true" aria-label="تفاصيل الطلب" className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
