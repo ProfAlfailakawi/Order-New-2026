@@ -41,3 +41,7 @@ html body .dna-steps[data-journey] .dna-stepi[data-state='pending'] .dna-lbl { o
   html body select,
   html body textarea { font-size: max(16px, 1em); }
 }
+
+/* Round 3b: remaining small labels that measured 2.6-4.0:1. Colour only. */
+html body tr.text-stone-400 { color: #6b6560; }
+html body :is(.checkout-ready-card, .invoice-reveal-stats) small { color: #6b5a3c; }
