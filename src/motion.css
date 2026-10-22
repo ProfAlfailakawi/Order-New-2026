@@ -1,0 +1,115 @@
+/* ==========================================================================
+   Round 2 — calm motion + last-layer polish (presentation only).
+
+   Loaded LAST (after index.css, beauty-pass.css, identity.css). It adds one
+   small shared token set and a handful of quiet micro-interactions; it does not
+   edit any shared rule and it never touches a price, amount, payment or
+   order-state element.
+
+   Rules this file keeps:
+   - only transform + opacity are animated; 120-260ms; never looped;
+   - keyframes carry a `from` frame only, so the end state is the element's own
+     static style (animation-fill-mode: backwards) and screenshots stay stable;
+   - every animation lives inside prefers-reduced-motion: no-preference, and the
+     reduce block at the bottom switches the rest off explicitly;
+   - if CSS animation never runs, content is simply visible (nothing is hidden
+     by JS or by a default `opacity: 0`).
+   ========================================================================== */
+
+:root {
+  --m-ease: cubic-bezier(.2, .7, .2, 1);
+  --m-fast: 120ms;
+  --m-med: 180ms;
+  --m-slow: 260ms;
+  --m-step: 40ms;
+  --m-rise: 8px;
+}
+
+/* ---------- Visual pollution: decoration that repeated what the screen already says ---------- */
+/* Payment step: the floating "scroll down to see the payment methods" pill (it bobbed forever and the
+   methods are already on screen), the divider pill that restated the next heading, and the one-line
+   hint that listed the three methods the cards underneath already name. */
+html body .payment-wow-step::after,
+html body .checkout-wow-header::after { display: none !important; }
+html body .invoice-payment-divider { display: none !important; }
+html body .payment-choice-hint span { display: none; }
+/* what is left is a quiet section label, not a second card competing with the three method cards */
+html body .payment-choice-hint {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 2px 6px 0 !important;
+  border-radius: 0 !important;
+}
+html body .payment-choice-hint strong {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: var(--sd-saffron-ink, #7a5614) !important;
+  letter-spacing: 0;
+}
+/* Decorative loops that never stop: the invoice orbits, the ready-card sheen and the wahag ring are held still. */
+html body .invoice-reveal-orbit,
+html body .checkout-ready-card::after,
+html body .wahag-dark-stage::after { animation: none !important; }
+
+/* ---------- Held frame: only ever applied by src/lib/reveal.ts, and only when JS is running ---------- */
+html[data-m-js] [data-m-hold] { opacity: 0; transform: translateY(var(--m-rise)); }
+
+/* ---------- Motion (opt-in by OS preference) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes mRise { from { opacity: 0; transform: translateY(var(--m-rise)); } }
+  @keyframes mFade { from { opacity: 0; } }
+  @keyframes mFadeUp { from { opacity: 0; transform: translateY(6px); } }
+
+  /* Category tiles (and any tile src/lib/reveal.ts marks): fade + rise once, first screenful only, stagger set
+     through --m-i (0-7 x 40ms). The <li> carries the motion so the tile's own hover / press transforms stay untouched. */
+  html body [data-m-in] { animation: mRise var(--m-slow) var(--m-ease) calc(var(--m-i, 0) * var(--m-step)) backwards; }
+
+  /* Empty states: a quiet fade + rise (the hero icon first, then its lines). */
+  html body .dna-void { animation: mRise var(--m-slow) var(--m-ease) backwards; }
+  html body .lucide.empty-state-art { animation: mFade var(--m-slow) var(--m-ease) backwards; }
+
+  /* Hover lift on category tiles: 1px and a softer shadow. The selected tile keeps its own dyed shadow. */
+  @media (hover: hover) {
+    html body .dna-cat-tile:not([data-open='true']):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px -16px rgba(18, 48, 31, .55) !important;
+    }
+  }
+
+  /* Press feedback: a 2% settle on the dock actions and the shared dna buttons. */
+  html body .al-cart-actions button,
+  html body .dna-btn,
+  html body .dna-btnp {
+    transition-property: transform, box-shadow, background-color, color, border-color, opacity;
+    transition-duration: var(--m-med);
+    transition-timing-function: var(--m-ease);
+  }
+  html body .al-cart-actions button:active:not(:disabled),
+  html body .dna-btn:active:not(:disabled),
+  html body .dna-btnp:active:not(:disabled) { transform: scale(.98); transition-duration: var(--m-fast); }
+
+  /* Track sheet: the two tab buttons settle in with the sheet (the tab panels below already cross-fade). */
+  html body .order-track-tabs { animation: mFadeUp var(--m-med) var(--m-ease) backwards; }
+
+  /* Order sheet tab panels share the same easing as the rest of the system. */
+  html body .order-status-tab-panel,
+  html body .order-invoice-tab-panel { animation-duration: var(--m-med); animation-timing-function: var(--m-ease); }
+}
+
+/* ---------- Reduced motion: everything above is switched off, content stays fully visible ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html[data-m-js] [data-m-hold] { opacity: 1; transform: none; }
+  html body [data-m-in],
+  html body .dna-void,
+  html body .lucide.empty-state-art,
+  html body .order-track-tabs,
+  html body .dna-btn,
+  html body .dna-btnp,
+  html body .al-cart-actions button,
+  html body .dna-cat-tile { animation: none !important; transition: none !important; }
+  html body .dna-cat-tile:hover,
+  html body .dna-btn:active,
+  html body .dna-btnp:active,
+  html body .al-cart-actions button:active { transform: none !important; }
+}
