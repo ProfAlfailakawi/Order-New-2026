@@ -1432,7 +1432,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">{unreadDiwaniyaNotifications}</span>
                     )}
                   </h4>
-                  <p className="text-xs font-bold text-stone-500">كل شي يخص الربع والدخول والقطيّة، بدون زحمة.</p>
+                  <p className="text-xs font-bold text-stone-500">الربع · الدخول · القطيّة</p>
                 </div>
               </div>
               <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
@@ -1509,7 +1509,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                   <span className="text-xs font-black bg-accent/10 text-accent px-3 py-1 rounded-full">طلب الربع + قطية</span>
                   <h4 className="text-sm font-black text-brand">تنسيق طلب الربع</h4>
                 </div>
-                <p className="text-xs font-bold text-stone-500 leading-relaxed">اختار الأصناف، وإذا وصلت للقطيّة تلقى الربع جاهزين بدون تكرار أسماء أو أرقام.</p>
+                <p className="text-xs font-bold text-stone-500 leading-relaxed">اختار الأصناف، والربع جاهزين بالقطيّة.</p>
                 
                 {/* 🧠 معزب الذكاء الاصطناعي الودود - مدمج بذكاء مع المنتجات الحقيقية ويتعلم من الاختيارات */}
                 <div className="bg-gradient-to-br from-cream via-white to-white border border-accent/30 rounded-3xl p-4 text-right space-y-3 relative overflow-hidden shadow-inner">
@@ -1592,7 +1592,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     <span className={cn("shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-black", currentUserRoleTone)}>{currentUserRoleLabel}</span>
                     <div className="text-right">
                       <div className="text-sm font-black text-brand">مراجعة قبل القطيّة</div>
-                      <div className="text-xs font-bold text-stone-500">تأكيد سريع قبل فتح القطيّة، حتى تبدأ وأنت مرتّب.</div>
+                      <div className="text-xs font-bold text-stone-500">تأكيد سريع قبل القطيّة.</div>
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
@@ -1727,7 +1727,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     <span className="text-xs font-black bg-brand/10 text-brand px-2.5 py-1 rounded-full border border-brand/10">دخول سريع</span>
                     <h5 className="text-sm font-black text-brand">عندك كود ديوانية؟</h5>
                   </div>
-                  <p className="text-xs font-bold text-stone-500 leading-relaxed">حتى لو أنت معزب في ديوانيتك، تقدر تدخل ديوانية ثانية أنت عضو فيها عن طريق الكود هنا.</p>
+                  <p className="text-xs font-bold text-stone-500 leading-relaxed">ادخل ديوانية ثانية بالكود.</p>
                   <div className="flex flex-col sm:flex-row gap-2 sm:items-stretch">
                     <input
                       inputMode="numeric"
@@ -1786,7 +1786,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       <MessageWithIcons text={"إدارتي للدواوين والتنقل بينها 🛖"} />
 </h4>
                 </div>
-                <p className="text-xs font-bold text-stone-500 leading-relaxed">اختَر ديوانيتك الحالية، تنقّل بين دواوينك، أو أسّس ديوانية جديدة بهدوء.</p>
+                <p className="text-xs font-bold text-stone-500 leading-relaxed">اختر ديوانية، تنقّل، أو أسّس جديدة.</p>
                 
                 <div className="space-y-2 mt-1">
                    {userSquads.map((sq: any) => {
