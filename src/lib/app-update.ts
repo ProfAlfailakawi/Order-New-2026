@@ -270,7 +270,15 @@ function installChunkRecovery(): void {
 
   window.addEventListener('error', (event) => {
     const target = event.target as HTMLElement | null;
-    if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK')) { void recoverFromStaleChunk(); return; }
+    if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
+      // الحزم المفقودة هي حزمنا فقط: فشل سكربت/ستايل من نطاق خارجي (مثل خريطة Leaflet من unpkg)
+      // لا يستدعي إعادة تحميل الصفحة، وإلا ضاع على العميل طلبه وهو في منتصف الدفع.
+      const assetUrl = (target as HTMLScriptElement).src || (target as HTMLLinkElement).href || '';
+      let sameOrigin = true;
+      try { sameOrigin = !assetUrl || new URL(assetUrl, window.location.href).origin === window.location.origin; } catch { /* نفترض أنه من نطاقنا */ }
+      if (sameOrigin) void recoverFromStaleChunk();
+      return;
+    }
     if (event.message && looksLikeStaleChunk(event.message)) void recoverFromStaleChunk();
   }, true);
 
