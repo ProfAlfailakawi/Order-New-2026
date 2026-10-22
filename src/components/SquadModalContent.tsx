@@ -2763,9 +2763,6 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     دخول
                   </button>
                 </div>
-                <p className="text-xs font-bold text-stone-500 leading-relaxed">
-                  إذا الرقم مرتبط بدواوين، راح تظهر لك فوراً وتقدر تختار الحالية.
-                </p>
               </div>
 
               <div className="bg-white rounded-3xl p-4 border border-brand/10 space-y-3 text-right">
@@ -2829,9 +2826,6 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                     />
                   </div>
                 )}
-                <p className="text-xs font-bold text-stone-500 leading-relaxed">
-                  اكتب الكود، وإذا مو مسجل بنطلب اسمك ورقم تلفونك ونكمل دخولك.
-                </p>
               </div>
 
               <button

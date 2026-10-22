@@ -5,10 +5,13 @@ import App from './App.tsx';
 import './index.css';
 import './beauty-pass.css';
 import './identity.css';
+import './motion.css';
 import {installAppUpdate} from './lib/app-update';
+import {installReveal} from './lib/reveal';
 
 // التحديث الذاتي الصامت: بصمة الإصدار، منارتها، ثم التحديث والتصعيد عند اللزوم.
 installAppUpdate();
+installReveal();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
