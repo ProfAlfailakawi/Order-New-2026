@@ -1559,7 +1559,8 @@ const adminAuthOnly = async (req, res, next) => {
   console.log(`[STARTUP] NODE_ENV: ${process.env.NODE_ENV}`);
   console.log(`[STARTUP] DEFAULT_APP_PORT: ${process.env.DEFAULT_APP_PORT}`);
 
-  app.use(express.json());
+  // 2mb: نسخ الواجهة القديمة المخزّنة عند العملاء ترسل صور المنتجات داخل الطلب.
+  app.use(express.json({ limit: "2mb" }));
   app.use("/api", (_req, res, next) => {
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     res.setHeader("Pragma", "no-cache");
@@ -1957,7 +1958,7 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
                   : prod
                     ? prod.price
                     : 0,
-            image: item.image || (prod ? prod.image : null),
+            image: item.image || (prod ? prod.image || prod.imageUrl : null),
           };
         });
 
@@ -3869,6 +3870,22 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
   // 7. Orders Submission
   const idempotencyCache = new Set();
 
+  // صور المنتجات مخزّنة كـ data URL (~70KB لكل صورة)؛ لا نحفظها داخل الطلب
+  // لأن كل الطلبات تعيش في مستند Firestore واحد. الصورة تُسترجع من المنتج عند العرض.
+  const isDataUrl = (v: any) => typeof v === "string" && v.startsWith("data:");
+  const stripHeavyItemFields = (item: any) => {
+    if (!item || typeof item !== "object") return item;
+    const clean: any = { ...item };
+    if (isDataUrl(clean.image)) delete clean.image;
+    if (clean.product && typeof clean.product === "object") {
+      const { imageUrl, image, ...product } = clean.product;
+      if (imageUrl && !isDataUrl(imageUrl)) product.imageUrl = imageUrl;
+      if (image && !isDataUrl(image)) product.image = image;
+      clean.product = product;
+    }
+    return clean;
+  };
+
   app.post("/api/orders", async (req, res) => {
     if (process.env.NODE_ENV !== "test" && await rejectCheckoutWhenStoreClosed(res)) return;
 
@@ -3985,7 +4002,7 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
       customerName: String(customerName).substring(0, 100),
       customerPhone: String(customerPhone).substring(0, 20),
       address: typeof address === "string" ? { full: address } : { ...address },
-      items,
+      items: items.map(stripHeavyItemFields),
       deliveryFee: deliveryFee || 0,
       isFreeDelivery: isFreeDelivery || false,
       deliveryType: deliveryType || (isFreeDelivery ? "free" : null),
@@ -5916,6 +5933,13 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
   // Global Error Handler to guarantee JSON response
   app.use((err: any, req: any, res: any, next: any) => {
     console.error("Global Express Error:", err);
+    // Body-parser errors (too large / bad JSON) are client errors, not 500s.
+    if (err?.type === "entity.too.large") {
+      return res.status(413).json({ error: "حجم الطلب كبير جداً. حدّث الصفحة وجرّب مرة ثانية." });
+    }
+    if (err?.type === "entity.parse.failed") {
+      return res.status(400).json({ error: "بيانات الطلب غير صالحة. حدّث الصفحة وجرّب مرة ثانية." });
+    }
     // Avoid leaking internal error details (which can expose stack/impl info)
     // to clients in production; keep them in dev for debugging.
     const body: { error: string; details?: string } = { error: "Internal Server Error" };

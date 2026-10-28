@@ -4471,10 +4471,18 @@ export default function CustomerSite() {
       // Structured fields stay as-is; `full` is the same address as one line
       // for anything that only understands a free-text address.
       address: { ...address, full: buildKuwaitAddressText(address) },
-      items: cart.map(item => ({
-        ...item,
-        addons: calculateItemAddons(item)
-      })),
+      // Product images are data URLs (~70KB each); sending them twice per item
+      // pushed the request past the server's body limit.
+      items: cart.map(item => {
+        const { image, product, ...rest } = item as any;
+        const { imageUrl, image: productImage, ...lightProduct } = product || {};
+        return {
+          ...rest,
+          ...(typeof image === "string" && !image.startsWith("data:") ? { image } : {}),
+          ...(product ? { product: lightProduct } : {}),
+          addons: calculateItemAddons(item)
+        };
+      }),
       deliveryFee,
       isFreeDelivery: deliveryFee === 0 || settings?.isFreeDelivery === true,
       deliveryType: "company",
