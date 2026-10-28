@@ -12,8 +12,6 @@ name: Deploy hosting
 # Until the secret exists the deploy step is skipped with a visible warning, and
 # the hourly Deploy watchdog keeps reporting that the live site is behind.
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 permissions:
