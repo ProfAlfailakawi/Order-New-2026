@@ -177,6 +177,14 @@ describe('Customer Ordering Application Audit', () => {
         expect(res.status).toBe(400);
       });
 
+      it('should find the product by productId when the cart line has its own random id', async () => {
+        const res = await request(app).post('/api/orders')
+          .set('idempotency-key', randomUUID())
+          .send(getBasePayload([{ id: "k3j9x2abc", productId: "1", price: 10, quantity: 2 }]));
+        expect(res.status).toBe(201);
+        expect(res.body.total).toBe(20);
+      });
+
       it('should reject order if an unknown or modified option/add-on is sent', async () => {
         const res = await request(app).post('/api/orders')
           .set('idempotency-key', randomUUID())

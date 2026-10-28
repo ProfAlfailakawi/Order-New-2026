@@ -26,6 +26,7 @@ import {
 } from "./src/lib/aiOrderService.ts";
 import { checkStoreStatus, getConfiguredStoreStatus } from "./src/lib/storeAvailability";
 import { packCustomerMenuProducts } from "./src/lib/customerMenuTransport.ts";
+import { calculateItemTotalWithAddons, normalizeAddons } from "./src/utils/priceCalculation";
 import {
   brotliCompress,
   constants as zlibConstants,
@@ -3939,7 +3940,7 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
       return res.status(400).json({ error: "بيانات الطلب غير مكتملة" });
     }
 
-    const appDataRef = await getAppDataForKeys(['products']);
+    const appDataRef = await getAppDataForKeys(['products', 'promocodes']);
     const dbProducts = appDataRef.products || [];
 
     const settingsRef = await getAppData();
@@ -3964,10 +3965,31 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
     let calculatedTotal = 0;
 
     for (const item of items) {
-      const dbProduct = dbProducts.find((p) => String(p.id) === String(item.id));
+      // Cart items carry a random cart-line `id`; the catalog id is `productId`.
+      const dbProduct =
+        dbProducts.find((p) => item.productId != null && String(p.id) === String(item.productId)) ||
+        dbProducts.find((p) => String(p.id) === String(item.id));
       if (!dbProduct) {
          return res.status(400).json({ error: "Product not found in catalog" });
       }
+
+      // Add-ons and extras priced from the catalog; only the customer's choices come from the client.
+      const trustedExtras: { name: string; price: number }[] = [];
+      for (const extra of Array.isArray(item.selectedExtras) ? item.selectedExtras : []) {
+        const dbExtra = normalizeAddons(dbProduct.extras).find((e: any) => e?.name === extra?.name);
+        if (!dbExtra) return res.status(400).json({ error: "Invalid option selected" });
+        trustedExtras.push({ name: dbExtra.name, price: Number(dbExtra.price || 0) });
+      }
+      const qty = Number(item.quantity) || 1;
+      const lineWithAddons = calculateItemTotalWithAddons({
+        ...item,
+        addons: undefined,
+        price: Number(dbProduct.price || 0),
+        quantity: qty,
+        selectedExtras: trustedExtras,
+        product: dbProduct,
+      });
+      calculatedTotal += lineWithAddons - Number(dbProduct.price || 0) * qty;
 
       let itemTotal = Number(dbProduct.price || 0);
       if (Array.isArray(item.options)) {
@@ -3990,8 +4012,29 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
       calculatedTotal += itemTotal * (Number(item.quantity) || 1);
     }
 
-    calculatedTotal += trustedDeliveryFee;
-    const total = calculatedTotal;
+    // Discounts: promo codes are re-validated here; the diwaniya tier discount
+    // (max 15%) is computed client-side, so accept the client's figure up to that cap.
+    const trustedItemsTotal = calculatedTotal;
+    let trustedDiscount = 0;
+    const promoCode = String(req.body.promoCode || "").trim().toUpperCase();
+    if (promoCode) {
+      const promo = (appDataRef.promocodes || []).find(
+        (p: any) => String(p?.code || "").toUpperCase() === promoCode && p.isActive,
+      );
+      if (promo) {
+        const value = Number(promo.value ?? promo.discountValue ?? 0);
+        trustedDiscount = promo.type === "percentage" ? trustedItemsTotal * (value / 100) : value;
+      }
+    } else if (squadId) {
+      const clientDiscount = trustedItemsTotal + trustedDeliveryFee - Number(_clientTotal);
+      trustedDiscount = Math.min(Math.max(0, clientDiscount), trustedItemsTotal * 0.15);
+    }
+
+    calculatedTotal = Math.max(0, trustedItemsTotal + trustedDeliveryFee - trustedDiscount);
+    const total = Number(calculatedTotal.toFixed(3));
+    if (Math.abs(total - Number(_clientTotal)) > 0.001) {
+      console.warn(`[ORDER] Client total ${_clientTotal} differs from server total ${total}`);
+    }
 
 
     const orderCustomId = generateUnifiedId("ORD");
