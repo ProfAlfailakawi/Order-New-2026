@@ -220,4 +220,19 @@ describe('Review 2026-10-28 regressions', () => {
       expect(html).toContain('2.500 د.ك');
     });
   });
+
+  describe('an /api path that does not exist', () => {
+    it('answers 404, not 500', async () => {
+      const res = await request(app).get('/api/v1/version');
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: 'Not found' });
+      const post = await request(app).post('/api/no-such-route').send({});
+      expect(post.status).toBe(404);
+    });
+
+    it('leaves real routes alone', async () => {
+      const res = await request(app).get('/api/version');
+      expect(res.status).toBe(200);
+    });
+  });
 });
