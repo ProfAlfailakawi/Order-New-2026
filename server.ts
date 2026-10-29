@@ -1811,17 +1811,27 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
             last4Match = qid;
           }
 
+          // Compare only ids the record actually has: String(undefined) is
+          // "UNDEFINED", so ?order_id=undefined used to match every order that has
+          // no invoice id and return all customers' names, phones and addresses.
+          const idOf = (value: any) =>
+            value === undefined || value === null ? "" : String(value).toUpperCase();
+          const itemId = idOf(item.id);
+          const linkedInvoiceId = idOf(item.linkedInvoiceId);
+          const invoiceId = idOf(item.invoiceId);
+
           match =
-            String(item.id).toUpperCase() === qid ||
-            String(item.linkedInvoiceId).toUpperCase() === qid ||
-            String(item.invoiceId).toUpperCase() === qid ||
-            (!!last4Match && String(item.id).toUpperCase().endsWith(last4Match)) ||
-            (!!last4Match && item.invoiceId && String(item.invoiceId).toUpperCase().endsWith(last4Match)) ||
-            (!!last4Match && item.linkedInvoiceId && String(item.linkedInvoiceId).toUpperCase().endsWith(last4Match));
+            !!qid &&
+            ((!!itemId && itemId === qid) ||
+              (!!linkedInvoiceId && linkedInvoiceId === qid) ||
+              (!!invoiceId && invoiceId === qid) ||
+              (!!last4Match && !!itemId && itemId.endsWith(last4Match)) ||
+              (!!last4Match && !!invoiceId && invoiceId.endsWith(last4Match)) ||
+              (!!last4Match && !!linkedInvoiceId && linkedInvoiceId.endsWith(last4Match)));
 
           if (!match && qid.includes("-S-")) {
             const base = qid.split("-S-")[0];
-            match = String(item.id).toUpperCase() === base;
+            match = !!base && !!itemId && itemId === base;
           }
         }
         return match;
@@ -3209,6 +3219,10 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
     }
     try {
       const cleanQueryPhone = cleanPhone(phone);
+      // A Kuwaiti number has 8 digits. Anything shorter (e.g. "?phone=x", which
+      // cleans to "") would match every invoice/order saved without a phone and
+      // hand out that person's name and address.
+      if (cleanQueryPhone.length !== 8) return res.json([]);
 
       const d = await getAppDataRef();
       const data = d.data() || {};
@@ -5554,6 +5568,9 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
 
     try {
       const cleanQueryPhone = cleanPhone(phone);
+      // Same guard as /api/customers: a phone with no digits would match every
+      // order saved without a phone.
+      if (cleanQueryPhone.length !== 8) return res.json([]);
       const d = await getAppDataRef();
       const appData = d.data() || {};
 
