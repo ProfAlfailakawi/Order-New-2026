@@ -242,8 +242,11 @@ describe('Customer Ordering Application Audit', () => {
              const firestoreMock = await import('firebase/firestore');
              (firestoreMock.runTransaction as any).mockClear();
 
+             // A body-only "SUCCESS" is no longer trusted (it must be confirmed with UPayments,
+             // see payment-verification.test.ts), so the terminal-state guard is exercised
+             // with a failure update, which still reaches handlePaymentUpdate.
              const validRes = await request(app).post('/api/webhook/upayments')
-               .send({ status: 'SUCCESS', order_id: termId });
+               .send({ status: 'FAILED', order_id: termId });
 
              expect(validRes.status).toBe(200);
              // Ensure runTransaction was called and executed the callback
@@ -260,7 +263,7 @@ describe('Customer Ordering Application Audit', () => {
          const firestoreMock = await import('firebase/firestore');
          (firestoreMock.runTransaction as any).mockClear();
          const splitRes = await request(app).post('/api/webhook/upayments')
-           .send({ status: 'SUCCESS', order_id: 'TERM_1-S-SPLIT_1' });
+           .send({ status: 'FAILED', order_id: 'TERM_1-S-SPLIT_1' });
          expect(splitRes.status).toBe(200);
          expect(firestoreMock.runTransaction).toHaveBeenCalled();
 
