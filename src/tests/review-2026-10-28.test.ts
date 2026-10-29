@@ -27,7 +27,8 @@ const DATA = vi.hoisted(() => ({
       customerPhone: '55667788',
       address: { region: 'حولي', block: '4', street: '5', building: '6' },
       status: 'بانتظار الدفع',
-      items: [],
+      squadId: 1,
+      items: [{ name: 'مجبوس', quantity: 1 }],
       total: 12,
       createdAt: '2026-10-02T10:00:00.000Z',
     },
@@ -41,6 +42,24 @@ const DATA = vi.hoisted(() => ({
       total: 8,
       createdAt: '2026-10-03T10:00:00.000Z',
     },
+  ],
+  squads: [
+    {
+      id: 1,
+      name: 'الفزعة',
+      phone: '99887766',
+      king: 'Alice',
+      membersList: [
+        { name: 'Alice', phone: '99887766' },
+        { name: 'Bob', phone: '55667788' },
+      ],
+      lat: 29.3,
+      lng: 47.9,
+      geofenceDistance: 80,
+    },
+  ],
+  squadTempCodes: [
+    { squadId: '1', code: '4321', ownerPhone: '99887766', expiresAt: '2999-01-01T00:00:00.000Z', usedBy: [] },
   ],
   invoices: [
     {
@@ -144,6 +163,44 @@ describe('Review 2026-10-28 regressions', () => {
     it('GET /api/search-order still finds orders for a real number', async () => {
       const res = await request(app).get('/api/search-order/55667788');
       expect(names(res.body)).toEqual(['Bob']);
+    });
+  });
+
+  describe('GET /api/squad-gamification keeps members private', () => {
+    it('the public leaderboard and radar carry no phones, names of members or join codes', async () => {
+      const res = await request(app).get('/api/squad-gamification');
+      expect(res.status).toBe(200);
+      const [top] = res.body.topSquads;
+      const [active] = res.body.activeSquads;
+      expect(top).toMatchObject({ id: 1, name: 'الفزعة' });
+      expect(active).toMatchObject({ id: 1, name: 'الفزعة', lat: 29.3, lng: 47.9, geofenceDistance: 80 });
+      for (const sq of [top, active]) {
+        expect(sq.phone).toBeUndefined();
+        expect(sq.membersList).toBeUndefined();
+        expect(sq.king).toBeUndefined();
+      }
+      expect(JSON.stringify(res.body)).not.toContain('55667788');
+    });
+
+    it('?squadId=N without the owner phone returns no join code and no raw orders', async () => {
+      const res = await request(app).get('/api/squad-gamification').query({ squadId: '1' });
+      expect(res.status).toBe(200);
+      expect(res.body.tempCodes).toEqual([]);
+      expect(res.body.squadBeautifulLog).toMatchObject({ ordersCount: 1, favoriteItemName: 'مجبوس' });
+      expect(res.body.squadBeautifulLog.recentOrders).toBeUndefined();
+    });
+
+    it('a member who is not the owner gets no join code', async () => {
+      const res = await request(app).get('/api/squad-gamification').query({ phone: '55667788', squadId: '1' });
+      expect(res.body.tempCodes).toEqual([]);
+      expect(res.body.userSquads.map((s: any) => s.id)).toEqual([1]);
+    });
+
+    it('the owner still gets the join code and sees the own diwaniya on the radar', async () => {
+      const res = await request(app).get('/api/squad-gamification').query({ phone: '99887766', squadId: '1' });
+      expect(res.body.tempCodes.map((c: any) => c.code)).toEqual(['4321']);
+      expect(res.body.activeSquads[0].phone).toBe('99887766');
+      expect(res.body.mySquad.membersList).toHaveLength(2);
     });
   });
 
