@@ -5999,6 +5999,12 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
 
   const isTest = process.env.NODE_ENV === "test" || process.env.VITEST === "true";
 
+  // An /api path no route above answers is a 404. Without this it fell through to the
+  // SPA fallback, which has no index.html in the Cloud Run image, and came back as a 500.
+  app.all("/api/*", (_req, res) => {
+    res.status(404).json({ error: "Not found" });
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production" && !isTest) {
     const vite = await createViteServer({
