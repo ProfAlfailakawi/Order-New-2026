@@ -1581,6 +1581,13 @@ export async function startServer() {
     next();
   });
 
+  // Liveness for the «نُحدّث البرنامج» page and the in-app notice: read-only, no auth,
+  // no datastore. Placed before every auth/rate-limit middleware on purpose.
+  app.get("/api/health", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ ok: true });
+  });
+
 // Per-IP rate limit in front of authenticated admin/debug surfaces so token
 // verification can't be hammered by anonymous callers.
 const adminRateLimit = rateLimit({

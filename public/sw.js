@@ -8,6 +8,8 @@
  *     /track page) is network-only — never served a cached/stale app shell.
  *   - Navigations are network-first with an offline fallback to the app shell.
  *   - Hashed build assets (/assets/*) are cache-first (immutable).
+ *   - A navigation answered 500/502/503/504 (or dropped while online) gets
+ *     /updating.html instead of Google's English error page.
  */
 
 /* بصمة البناء تُطبع هنا عند البناء (scripts/build-stamp.mjs). بايتات هذا الملف يجب أن
@@ -20,12 +22,50 @@ const ASSET_CACHE = `alturath-assets-${VERSION}`;
 
 const SHELL_URLS = ['/', '/index.html', '/manifest.json', '/logo-optimized.png'];
 
+/*
+ * «نُحدّث البرنامج» بدل صفحة Google الإنجليزية.
+ *
+ * أثناء النشر يتبدّل الخادم، فتجيب واجهةُ Google الأمامية بصفحة «Server Error»
+ * لا يكتبها خادمُنا. الصفحةُ البديلة (/updating.html) تُحفظ هنا عند التثبيت، وتُقدَّم
+ * للتنقّل وحده — لا لـ/api ولا لمسار الدفع ولا لغير GET ولا لجوابٍ ناجح — حين يعود
+ * 500/502/503/504 أو ينقطع الطلب والجهاز متصل. لا يُحفظ جوابُ 5xx في أيّ ذاكرة هنا.
+ */
+const UPDATING_PAGE = '/updating.html';
+const isUpdatingStatus = (status) => status === 500 || status === 502 || status === 503 || status === 504;
+
+/* إعادةُ الكتابة إلى index.html تجيب أيّ مسارٍ مفقود بـ200: نحفظ الصفحة بعلامتها وحدها. */
+const storeUpdatingPage = async () => {
+  const response = await fetch(UPDATING_PAGE, {cache: 'no-store'});
+  if (!response.ok) return;
+  const body = await response.clone().text();
+  if (!body.includes('<meta name="updating-page"')) return;
+  await (await caches.open(SHELL_CACHE)).put(UPDATING_PAGE, response);
+};
+
+/* مسحتها الاستعادةُ مع كل الذاكرة؟ تُعاد بعد أول تنقّلٍ ناجح، ولا يُنتظر ذلك. */
+const refillUpdatingPage = () =>
+  caches
+    .match(UPDATING_PAGE)
+    .then((hit) => (hit ? undefined : storeUpdatingPage()))
+    .catch(() => undefined);
+
+const updatingResponse = async () => {
+  const page = await caches.match(UPDATING_PAGE).catch(() => undefined);
+  if (!page) return null;
+  return new Response(await page.text(), {
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: {'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Retry-After': '5'},
+  });
+};
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(SHELL_CACHE)
       .then((cache) => cache.addAll(SHELL_URLS))
       .catch(() => undefined)
+      .then(() => storeUpdatingPage().catch(() => undefined))
       .then(() => self.skipWaiting()),
   );
 });
@@ -76,8 +116,11 @@ self.addEventListener('fetch', (event) => {
         (cached) =>
           cached ||
           fetch(request).then((res) => {
-            const copy = res.clone();
-            caches.open(ASSET_CACHE).then((c) => c.put(request, copy));
+            // Only a real asset is kept; a mid-deploy error page must never become "the file".
+            if (res.ok) {
+              const copy = res.clone();
+              caches.open(ASSET_CACHE).then((c) => c.put(request, copy));
+            }
             return res;
           }),
       ),
@@ -87,17 +130,28 @@ self.addEventListener('fetch', (event) => {
 
   /* Navigations (HTML) always come from the network with cache: "no-store" — a stored
      shell names hashed bundles the next deploy removed. Cache is an offline fallback only. */
+  /* A 5xx is the platform swapping servers mid-deploy: the updating page waits for the
+     server and reopens this same URL. A dropped request while the device says it is
+     online is the same moment; truly offline keeps the cached shell. */
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(url.pathname + url.search, {cache: 'no-store', credentials: 'same-origin'})
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(SHELL_CACHE).then((c) => c.put('/', copy));
+        .then(async (res) => {
+          if (isUpdatingStatus(res.status)) return (await updatingResponse()) || res;
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(SHELL_CACHE).then((c) => c.put('/', copy));
+            void refillUpdatingPage();
+          }
           return res;
         })
-        .catch(() =>
-          caches.match(request).then((cached) => cached || caches.match('/')),
-        ),
+        .catch(async () => {
+          if (self.navigator?.onLine !== false) {
+            const page = await updatingResponse();
+            if (page) return page;
+          }
+          return caches.match(request).then((cached) => cached || caches.match('/'));
+        }),
     );
   }
 });

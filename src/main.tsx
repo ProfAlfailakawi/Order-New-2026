@@ -9,7 +9,10 @@ import './motion.css';
 import './polish.css';
 import {installAppUpdate} from './lib/app-update';
 import {installReveal} from './lib/reveal';
+import {watchForPlatformUpdating} from './lib/updatingNotice';
 
+// أثناء النشر تجيب المنصّة /api بصفحة خطأ HTML: شريطٌ هادئ بدل خطأ غامض. يراقب ولا يبدّل الجواب.
+watchForPlatformUpdating();
 // التحديث الذاتي الصامت: بصمة الإصدار، منارتها، ثم التحديث والتصعيد عند اللزوم.
 installAppUpdate();
 installReveal();
