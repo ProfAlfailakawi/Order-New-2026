@@ -25,6 +25,7 @@ import {
   suggestUpsell,
 } from "./src/lib/aiOrderService.ts";
 import { checkStoreStatus, getConfiguredStoreStatus } from "./src/lib/storeAvailability";
+import { verifyUPaymentsPayment, cleanGatewayId, type PaymentVerdict } from "./src/lib/upaymentsVerify";
 import { packCustomerMenuProducts } from "./src/lib/customerMenuTransport.ts";
 import { calculateItemTotalWithAddons, normalizeAddons } from "./src/utils/priceCalculation";
 import {
@@ -891,6 +892,76 @@ async function syncRootPaymentDocsFast(orderId: string, isSuccess: boolean, prov
     ]);
   } catch (error: any) {
     console.warn("[PAYMENT_UPDATE] Fast root payment sync skipped:", error?.message || String(error));
+  }
+}
+
+// A success claim (return URL or webhook) is only believed once UPayments confirms it.
+// Free orders (server-side total of 0) need no gateway. See src/lib/upaymentsVerify.ts.
+function upaymentsApiKeyForVerification(): { apiKey: string; sandbox: boolean } {
+  let key = String(process.env.UPAYMENTS_API_KEY || "").replace(/[^\x20-\x7E]/g, "").trim();
+  if (key.toLowerCase().startsWith("bearer ")) key = key.substring(7).trim();
+  else if (key.toLowerCase().startsWith("token ")) key = key.substring(6).trim();
+  const sandbox =
+    String(process.env.UPAYMENTS_MODE || "").toLowerCase() === "sandbox" ||
+    String(process.env.UPAYMENTS_ENV || "").toLowerCase() === "sandbox" ||
+    key.toLowerCase().includes("sandbox") ||
+    key.startsWith("test_");
+  return { apiKey: key, sandbox };
+}
+
+export async function verifyGatewaySuccess(
+  orderId: string,
+  splitId: string,
+  gatewayParams: any,
+  verify: typeof verifyUPaymentsPayment = verifyUPaymentsPayment,
+): Promise<PaymentVerdict> {
+  try {
+    let baseId = String(orderId || "").toUpperCase();
+    let sId = String(splitId || "");
+    if (baseId.includes("-S-")) {
+      const parts = String(orderId).split("-S-");
+      baseId = parts[0].toUpperCase();
+      if (!sId) sId = parts[parts.length - 1];
+    }
+    const d = await getAppDataRef();
+    const data = d.data() || {};
+    const record = [...(data.orders || []), ...(data.invoices || [])].find((o: any) => paymentRecordMatches(o, baseId));
+    if (!record) return "unknown";
+
+    const p = gatewayParams || {};
+    const candidates: unknown[] = [
+      p.track_id, p.trackId, p.TrackID, p.payment_id, p.paymentId, p.PaymentID, p.tran_id, p.transaction_id,
+      p?.transaction?.track_id, p?.data?.transaction?.track_id,
+    ];
+    const expectedRefs: unknown[] = [];
+    let expectedAmount: number | null = null;
+
+    if (sId) {
+      const split = (record.splitPayments || []).find((sp: any) => String(sp.id || "").toUpperCase() === sId.toUpperCase() || String(sp.id || "").toUpperCase().endsWith(sId.toUpperCase()));
+      if (!split) return "unknown";
+      expectedRefs.push(split.id, sId, `${baseId}-S-${sId}`);
+      candidates.push(split.id, split.paymentId);
+      const amt = Number(split.amount);
+      expectedAmount = Number.isFinite(amt) ? amt : null;
+    } else {
+      const total = Number(record.total ?? record.totalAmount ?? record.finalTotal);
+      const due = Number(record.lastPaymentAmount);
+      // Free order: the server's own total is zero, so there is nothing to collect.
+      if (Number.isFinite(total) && total <= 0.001 && (!Number.isFinite(due) || due <= 0.001)) return "paid";
+      expectedRefs.push(record.id, baseId, record.paymentId);
+      candidates.push(record.paymentId);
+      expectedAmount = Number.isFinite(due) && due > 0 ? due : null;
+    }
+
+    const { apiKey, sandbox } = upaymentsApiKeyForVerification();
+    const verdict = await verify({ candidates, expectedRefs, expectedAmount, apiKey, sandbox });
+    if (verdict !== "paid") {
+      console.warn(`[PAYMENT_VERIFY] ${baseId}${sId ? ` split ${sId}` : ""}: gateway verdict ${verdict}; ids tried: ${candidates.map(cleanGatewayId).filter(Boolean).length}`);
+    }
+    return verdict;
+  } catch (error: any) {
+    console.error("[PAYMENT_VERIFY] verification error:", error?.message || error);
+    return "unknown";
   }
 }
 
@@ -5110,7 +5181,15 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
           String(req.body?.Status).toUpperCase() === "SUCCESS";
 
         if (orderId) {
-          await handlePaymentUpdate(orderId, splitId, status, req.body);
+          if (status) {
+            // A webhook body can be posted by anyone; confirm with UPayments first.
+            const verdict = await verifyGatewaySuccess(orderId, splitId, { ...req.query, ...req.body });
+            if (verdict !== "unknown") {
+              await handlePaymentUpdate(orderId, splitId, verdict === "paid", req.body);
+            }
+          } else {
+            await handlePaymentUpdate(orderId, splitId, status, req.body);
+          }
         }
         res.json({ success: true });
       } catch (e) {
@@ -5216,8 +5295,20 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
           isExplicitSuccess = false;
         }
 
+        // The URL alone is not proof of payment: anyone could open .../success by hand.
+        // Only UPayments' own answer marks the order paid; an unclear answer stays "pending".
+        let verificationPending = false;
+        if (orderId && isExplicitSuccess) {
+          const verdict = await verifyGatewaySuccess(String(orderId), splitId, { ...req.query, ...req.body });
+          isExplicitSuccess = verdict === "paid";
+          isExplicitFailure = verdict === "failed";
+          verificationPending = verdict === "unknown";
+        }
+
         let phone = "";
-        if (orderId) {
+        // Unconfirmed: leave the order as it is (pending) for the webhook or a later check,
+        // rather than writing it off as failed.
+        if (orderId && !verificationPending) {
           const callbackPayload = { ...req.body, ...req.query };
           if (!isSplit && (isExplicitSuccess || isExplicitFailure)) {
             await syncRootPaymentDocsFast(baseOrderId, isExplicitSuccess, callbackPayload);
