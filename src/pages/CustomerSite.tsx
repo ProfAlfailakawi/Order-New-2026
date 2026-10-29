@@ -5527,6 +5527,7 @@ export default function CustomerSite() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                   type="text"
+                  aria-label="ابحث عن طبق أو مناسبة"
                   placeholder={currentPlaceholder}
                   value={moodQuery}
                   onChange={(e) => setMoodQuery(normalizeDigits(e.target.value))}

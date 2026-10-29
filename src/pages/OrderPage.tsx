@@ -1094,6 +1094,7 @@ export default function OrderPage() {
               <input
                 type="tel"
                 inputMode="numeric"
+                aria-label="رقم الهاتف"
                 placeholder="رقم التلفون (مثل: 9999 9999)"
                 value={phone}
                 onChange={(e) => setPhone(normalizePhone(e.target.value))}
@@ -1109,6 +1110,7 @@ export default function OrderPage() {
               </div>
               <input
                 type="text"
+                aria-label="رقم الطلب"
                 placeholder="رقم الطلب (اختياري)"
                 value={searchOrderIdInput}
                 onChange={(e) => setSearchOrderIdInput(normalizeDigits(e.target.value))}
