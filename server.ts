@@ -1811,17 +1811,27 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
             last4Match = qid;
           }
 
+          // Compare only ids the record actually has: String(undefined) is
+          // "UNDEFINED", so ?order_id=undefined used to match every order that has
+          // no invoice id and return all customers' names, phones and addresses.
+          const idOf = (value: any) =>
+            value === undefined || value === null ? "" : String(value).toUpperCase();
+          const itemId = idOf(item.id);
+          const linkedInvoiceId = idOf(item.linkedInvoiceId);
+          const invoiceId = idOf(item.invoiceId);
+
           match =
-            String(item.id).toUpperCase() === qid ||
-            String(item.linkedInvoiceId).toUpperCase() === qid ||
-            String(item.invoiceId).toUpperCase() === qid ||
-            (!!last4Match && String(item.id).toUpperCase().endsWith(last4Match)) ||
-            (!!last4Match && item.invoiceId && String(item.invoiceId).toUpperCase().endsWith(last4Match)) ||
-            (!!last4Match && item.linkedInvoiceId && String(item.linkedInvoiceId).toUpperCase().endsWith(last4Match));
+            !!qid &&
+            ((!!itemId && itemId === qid) ||
+              (!!linkedInvoiceId && linkedInvoiceId === qid) ||
+              (!!invoiceId && invoiceId === qid) ||
+              (!!last4Match && !!itemId && itemId.endsWith(last4Match)) ||
+              (!!last4Match && !!invoiceId && invoiceId.endsWith(last4Match)) ||
+              (!!last4Match && !!linkedInvoiceId && linkedInvoiceId.endsWith(last4Match)));
 
           if (!match && qid.includes("-S-")) {
             const base = qid.split("-S-")[0];
-            match = String(item.id).toUpperCase() === base;
+            match = !!base && !!itemId && itemId === base;
           }
         }
         return match;
@@ -2423,7 +2433,17 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
       const squadPresence = mySquad ? allPresence.filter((p: any) => String(p.squadId) === String(mySquad.id)) : [];
       const allGroupOrders = Array.isArray(data.squadGroupOrders) ? data.squadGroupOrders : [];
       const activeGroupOrder = mySquad ? allGroupOrders.find((g: any) => String(g.squadId) === String(mySquad.id) && g.status === "open") || null : null;
-      const tempCodes = mySquad ? (Array.isArray(data.squadTempCodes) ? data.squadTempCodes : []).filter((c: any) => String(c.squadId) === String(mySquad.id) && new Date(c.expiresAt || 0).getTime() > Date.now()) : [];
+      // Join codes go to the owner only (the app shows them only on the owner's
+      // "الكود" tab). Anyone could pass ?squadId=N and read a live code, then join
+      // with it in one request, bypassing the brute-force limit on code guessing.
+      const isOwnerOfMySquad = Boolean(
+        mySquad && cleanQPhone && (
+          cleanPhone(mySquad.phone || "") === cleanQPhone ||
+          cleanPhone(mySquad.ownerPhone || "") === cleanQPhone ||
+          cleanPhone(mySquad.ownerPhoneLocal || "") === cleanQPhone
+        )
+      );
+      const tempCodes = mySquad && isOwnerOfMySquad ? (Array.isArray(data.squadTempCodes) ? data.squadTempCodes : []).filter((c: any) => String(c.squadId) === String(mySquad.id) && new Date(c.expiresAt || 0).getTime() > Date.now()) : [];
       const allSquadOrders = mySquad ? (Array.isArray(data.orders) ? data.orders : [])
         .filter((o: any) => String(o.squadId || o.squadID || "") === String(mySquad.id))
         .filter((o: any) => Array.isArray(o.items || o.cart) && (o.items || o.cart).length > 0) : [];
@@ -2475,7 +2495,34 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
       squadOrders.forEach((o: any) => (o.items || o.cart || []).forEach((it: any) => { const n = it.name || it.title; if (n) productCounter[n] = (productCounter[n] || 0) + Number(it.quantity || 1); }));
       const favoriteItemName = Object.entries(productCounter).sort((a:any,b:any)=>b[1]-a[1])[0]?.[0] || "";
       const usualOrder = squadOrders[0] ? { items: squadOrders[0].items || squadOrders[0].cart || [], total: squadOrders[0].total || squadOrders[0].totalAmount || 0, orderId: squadOrders[0].id || squadOrders[0].orderId } : null;
-      const squadBeautifulLog = mySquad ? { recentOrders: squadOrders.slice(0, 5), favoriteItemName, ordersCount: squadOrders.length, presentCount: squadPresence.length, savings: Number(mySquad.savings || mySquad.totalSavings || 0) } : null;
+      // No raw orders here: the app reads only the counts and the favourite item,
+      // and the orders carried customers' names, phones and addresses.
+      const squadBeautifulLog = mySquad ? { favoriteItemName, ordersCount: squadOrders.length, presentCount: squadPresence.length, savings: Number(mySquad.savings || mySquad.totalSavings || 0) } : null;
+      // The leaderboard and the nearby radar are shown to every visitor, so they
+      // carry only what those screens draw. The full record holds the owner's and
+      // every member's phone and name, and the phone is the key to order tracking.
+      const publicSquad = (sq: any) => ({
+        id: sq.id,
+        name: sq.name,
+        tier: sq.tier,
+        tierData: sq.tierData,
+        points: sq.points,
+        totalPoints: sq.totalPoints,
+        teamPoints: sq.teamPoints,
+        totalOrders: sq.totalOrders,
+        // The radar labels the owner's own diwaniya by comparing this phone.
+        ...(cleanQPhone && cleanPhone(sq.phone || "") === cleanQPhone ? { phone: sq.phone } : {}),
+      });
+      const publicActiveSquads = activeSquadsWithCoords.map((sq: any) => ({
+        ...publicSquad(sq),
+        lat: sq.lat,
+        lng: sq.lng,
+        location: { lat: sq.lat, lng: sq.lng, geofenceDistance: sq.location?.geofenceDistance },
+        geofenceDistance: sq.geofenceDistance,
+        squadGeofenceDistance: sq.squadGeofenceDistance,
+        diwaniyaGeofenceDistance: sq.diwaniyaGeofenceDistance,
+        radarDistance: sq.radarDistance,
+      }));
       const diwaniyaNotifications = cleanQPhone
         ? (Array.isArray(data.diwaniyaNotifications) ? data.diwaniyaNotifications : [])
             .filter((n: any) => cleanPhone(n.toPhone || "") === cleanQPhone)
@@ -2485,12 +2532,12 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
       const unreadDiwaniyaNotifications = diwaniyaNotifications.filter((n: any) => !n.readAt).length;
 
       return await sendCompressedReadOnlyJson(req, res, {
-         topSquads,
+         topSquads: topSquads.map(publicSquad),
          mySquad,
          myRank,
          myMemberData,
          userSquads,
-         activeSquads: activeSquadsWithCoords,
+         activeSquads: publicActiveSquads,
          pendingGeofenceRequests,
          myGeofenceRequests,
          squadPresence,
@@ -3209,6 +3256,10 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
     }
     try {
       const cleanQueryPhone = cleanPhone(phone);
+      // A Kuwaiti number has 8 digits. Anything shorter (e.g. "?phone=x", which
+      // cleans to "") would match every invoice/order saved without a phone and
+      // hand out that person's name and address.
+      if (cleanQueryPhone.length !== 8) return res.json([]);
 
       const d = await getAppDataRef();
       const data = d.data() || {};
@@ -5554,6 +5605,9 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
 
     try {
       const cleanQueryPhone = cleanPhone(phone);
+      // Same guard as /api/customers: a phone with no digits would match every
+      // order saved without a phone.
+      if (cleanQueryPhone.length !== 8) return res.json([]);
       const d = await getAppDataRef();
       const appData = d.data() || {};
 
