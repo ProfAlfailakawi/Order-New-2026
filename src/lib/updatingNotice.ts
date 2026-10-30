@@ -14,7 +14,9 @@
 
 const UPDATING_STATUSES = new Set([500, 502, 503, 504]);
 
-export const UPDATING_MESSAGE = 'نُحدّث البرنامج الآن ✨ لحظاتٍ ونعود.';
+export const UPDATING_TITLE = 'المطبخ يتهيّأ…';
+export const UPDATING_DETAIL = 'نُحدّث المتجر، وتعود الصفحة وحدها بعد قليل.';
+export const UPDATING_MESSAGE = `${UPDATING_TITLE} ${UPDATING_DETAIL}`;
 /** يُطلق على window حين يعود الخادم. */
 export const SERVER_BACK_EVENT = 'alturath:server-back';
 export const HEALTH_URL = '/api/health';
@@ -58,12 +60,27 @@ export function showUpdatingNotice(probe: () => Promise<boolean> = serverAnswers
   bar.setAttribute('role', 'status');
   bar.setAttribute('aria-live', 'polite');
   bar.dir = 'rtl';
-  bar.textContent = UPDATING_MESSAGE;
+  /* بطاقةُ المتجر نفسُها (customer-offline-toast): خضراءُ النخيل في أعلى الشاشة، معينٌ
+     بلون الزعفران، وسطران: عنوانٌ قصير وجملةٌ تشرحه. */
+  const mark = document.createElement('span');
+  mark.setAttribute('aria-hidden', 'true');
+  mark.style.cssText = 'flex:none;width:10px;height:10px;border-radius:2px;background:#e7bf5e;transform:rotate(45deg)';
+  const text = document.createElement('span');
+  text.style.cssText = 'display:block;min-width:0';
+  const title = document.createElement('strong');
+  title.textContent = UPDATING_TITLE;
+  title.style.cssText = 'display:block;font-size:13px;font-weight:800;color:#fff8e6';
+  const detail = document.createElement('small');
+  detail.textContent = UPDATING_DETAIL;
+  detail.style.cssText = 'display:block;margin-top:2px;font-size:12px;font-weight:600;color:rgba(255,248,230,.74)';
+  text.append(title, document.createTextNode(' '), detail);
+  bar.append(mark, text);
   bar.style.cssText = [
-    'position:fixed', 'inset-inline:0', 'bottom:max(18px,env(safe-area-inset-bottom))', 'margin:0 auto', 'width:max-content', 'max-width:calc(100vw - 32px)',
-    'z-index:2147483000', 'padding:11px 18px', 'border-radius:14px', 'font-family:inherit', 'font-size:14px', 'font-weight:700', 'line-height:1.6',
-    'background:var(--sd-ivory,#fffaf0)', 'color:var(--sd-ink,#12301f)', 'border:1px solid var(--sd-seam,rgba(18,48,31,.16))',
-    'box-shadow:0 14px 36px rgba(24,51,38,.18)', 'text-align:center', 'pointer-events:none',
+    'position:fixed', 'top:calc(env(safe-area-inset-top,0px) + 12px)', 'inset-inline:0', 'margin:0 auto', 'width:min(92vw,420px)', 'box-sizing:border-box',
+    'z-index:2147483000', 'display:flex', 'align-items:center', 'gap:12px', 'padding:12px 16px', 'border-radius:22px',
+    'font-family:inherit', 'line-height:1.6', 'text-align:start',
+    'background:rgba(20,41,31,.95)', 'color:#fff8e6', 'border:1px solid rgba(200,148,47,.35)',
+    'box-shadow:0 18px 60px rgba(20,41,31,.24)', 'pointer-events:none',
   ].join(';');
   document.body.appendChild(bar);
   notice = bar;
