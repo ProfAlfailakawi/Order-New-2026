@@ -23,11 +23,13 @@ describe('public/updating.html', () => {
 
   it('is a standalone Arabic RTL page in the site identity', () => {
     expect(html).toMatch(/<html lang="ar" dir="rtl">/);
-    expect(html).toMatch(/<title>نُحدّث البرنامج · مطبخ التراث الكويتي<\/title>/);
-    expect(html).toContain('نُحدّث البرنامج الآن ✨');
-    expect(html).toContain('لحظاتٍ ونعود');
-    expect(html).toContain('أعد المحاولة الآن');
-    expect(html).toContain('لا اتصال بالإنترنت الآن');
+    expect(html).toMatch(/<title>المطبخ يتهيّأ · مطبخ التراث الكويتي<\/title>/);
+    expect(html).toContain('المطبخ يتهيّأ لكم');
+    expect(html).toContain('نُحدّث المتجر الآن');
+    expect(html).toContain('<button type="button" id="retry">أعد طلب الصفحة الآن</button>');
+    expect(html).toContain('انقطع الاتصال بالإنترنت');
+    expect(html).toContain('الطبخة تأخذ وقتها');
+    expect(html).toMatch(/id="note" role="status" aria-live="polite"/);
     expect(html).toContain('<meta name="updating-page" content="1">');
     expect(html).toContain('prefers-color-scheme:dark');
     expect(html).toContain('prefers-reduced-motion:reduce');
@@ -130,7 +132,7 @@ describe('public/sw.js serves the updating page', () => {
     const response = (await worker.dispatch('/menu'))!;
     expect(response.status).toBe(503);
     expect(response.headers.get('cache-control')).toBe('no-store');
-    expect(await response.text()).toContain('نُحدّث البرنامج الآن');
+    expect(await response.text()).toContain('المطبخ يتهيّأ لكم');
   });
 
   it('answers a dropped navigation while online with the updating page', async () => {
