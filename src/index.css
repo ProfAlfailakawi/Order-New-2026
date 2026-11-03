@@ -4454,3 +4454,16 @@ body:has(.al-cart-bar) .order-welcome-replay {
   .admin-content > .space-y-12 > .flex.items-center.justify-between { padding: 1rem; border-radius: 22px; }
   .admin-content > .space-y-12 > .flex.items-center.justify-between h1 { font-size: 1.75rem; }
 }
+
+
+/* iPhone Duo folded postures only. Unsupported/disabled Safari preview features
+   leave the existing site styles unchanged on every other device and posture. */
+@media (device-posture: folded) and (horizontal-viewport-segments: 2) {
+  html, body, #root { min-width: 0; max-width: 100%; }
+}
+@media (device-posture: folded) and (vertical-viewport-segments: 2) {
+  html, body, #root { min-width: 0; max-width: 100%; }
+}
+@media (device-posture: folded) and (orientation: landscape) and (max-height: 520px) {
+  html { scroll-padding-block: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-bottom)); }
+}
