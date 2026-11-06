@@ -117,3 +117,51 @@
     white-space: nowrap;
   }
 }
+
+/* ==========================================================================
+   Beauty round 2 (feat/duo-beauty). Presentation only.
+   ========================================================================== */
+
+/* Carousel "الأكثر طلباً": WebKit ignores backface-visibility on a card that has
+   backdrop-filter inside a preserve-3d parent, so the mirrored back face showed
+   through. Flatten the filter on those cards and hide the back face explicitly. */
+.best-seller-wow-card .menu-product-card {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: #fff;
+}
+.best-seller-wow-card .menu-product-shell > div > div:nth-child(2) {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Entry screen: settled state, stronger emphasis. Primary = deep green with a gold
+   rim and lift; secondary tile = white, gold hairline, readable sub-label. */
+html body .ord-bp-theatre button.bg-brand {
+  background: linear-gradient(180deg, #14502e 0%, #0d3a22 100%);
+  border: 1px solid rgba(212, 175, 55, 0.7);
+  border-bottom: 4px solid #061e11;
+  box-shadow: 0 18px 34px -14px rgba(13, 58, 34, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+html body .ord-bp-theatre button.bg-brand:active { transform: translateY(2px); border-bottom-width: 2px; }
+html body .ord-bp-theatre button.bg-brand:focus-visible,
+html body .ord-bp-theatre button.bg-\[\#faf8f5\]:focus-visible { outline: 3px solid #d4af37; outline-offset: 3px; }
+html body .ord-bp-theatre button.bg-\[\#faf8f5\] {
+  background: #fff;
+  border: 1.5px solid rgba(184, 140, 40, 0.65);
+  box-shadow: 0 12px 26px -16px rgba(13, 58, 34, 0.45);
+}
+html body .ord-bp-theatre button.bg-\[\#faf8f5\]:hover { background: #fffaf0; }
+html body .ord-bp-theatre button.bg-\[\#faf8f5\] .text-\[\#9a783d\] { color: #7a5a1d; }
+html body .ord-bp-theatre p.text-stone-600 { color: #4a4036; }
+
+/* Track page: the disabled search button was a faded 60% green (white text ~3.7:1).
+   Keep it clearly "not ready" but legible: solid deeper sage, full-opacity text. */
+.track-signature button[type="submit"]:disabled {
+  opacity: 1;
+  background: #55705f;
+  color: #fff;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.track-signature .order-id-track-input::placeholder { color: #6b6256; opacity: 1; }
