@@ -1,0 +1,138 @@
+/* ==========================================================================
+   iPhone Duo / every-width layer (presentation only).
+
+   Decisions come from the WINDOW the page really has (width, height), never from
+   the device name, screen.width, the user agent, or the Device Posture / Viewport
+   Segments APIs (those are null by default in Safari, so rules keyed on them are
+   a no-op). Widths that matter:
+     320 / 382  narrow Split View, Duo folded     470  half Split View
+     600-669    wide Split View, folded landscape, opened portrait
+     760-951    opened landscape                  1024+ desktop (already handled)
+   Heights that matter: <= 520 (folded landscape, portrait with a pinned video).
+   Loaded last. No selector, id or handler that scripts or tests use is touched.
+   ========================================================================== */
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+/* Double-tap-to-zoom is removed per control with the standards way; pinch zoom stays. */
+:where(a, button, input, select, textarea, summary, label, [role='button']) { touch-action: manipulation; }
+
+/* A price must never break across lines ("5.8 / د. / ك"). */
+html body .food-price-chip,
+html body .food-price-chip * { white-space: nowrap; }
+
+/* ---------- First-visit welcome: scrollable, never clipped ---------- */
+/* It was a fixed overflow:hidden column centred with justify-center: on a short
+   window (folded landscape 600x350, a pinned video 669x520) the logo went above the
+   top and the second button below the bottom, unreachable. Now the sheet scrolls,
+   centres when there is room, and keeps clear of the woven bands and the camera/home bar. */
+html body .ord-bp-theatre {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  justify-content: flex-start;
+  padding-block: calc(40px + env(safe-area-inset-top)) calc(40px + env(safe-area-inset-bottom));
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+}
+html body .ord-bp-theatre::before,
+html body .ord-bp-theatre::after { position: fixed; z-index: 2; }
+html body .ord-bp-theatre::before { inset-block-start: 0; }
+html body .ord-bp-theatre::after { inset-block-end: 0; }
+html body .ord-bp-theatre > .relative.z-10 {
+  height: auto;
+  min-height: 100%;
+  margin-block: auto;
+  flex: 0 0 auto;
+}
+@media (max-height: 640px) {
+  html body .ord-bp-theatre { padding-block: calc(36px + env(safe-area-inset-top)) calc(36px + env(safe-area-inset-bottom)); }
+  html body .ord-bp-theatre .mb-8 { margin-bottom: 14px; }
+  html body .ord-bp-theatre .ord-bp-logo { width: 4.25rem; height: 4.25rem; }
+  html body .ord-bp-theatre h1 { font-size: clamp(22px, 5.6vw, 30px); line-height: 1.5; }
+  html body .ord-bp-theatre .mt-3 { margin-top: 6px; }
+  html body .ord-bp-theatre .mt-4 { margin-top: 8px; }
+  html body .ord-bp-theatre button { min-block-size: 48px; }
+  html body .ord-bp-theatre .py-\[18px\] { padding-block: 13px; }
+}
+/* Short AND wide (folded landscape, Split with a pinned video): welcome in two columns
+   instead of one tall stack, so both entries are visible without scrolling. */
+@media (min-width: 560px) and (max-height: 520px) {
+  html body .ord-bp-theatre > .relative.z-10 {
+    max-width: 40rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    align-items: center;
+    column-gap: 28px;
+    padding-inline: 24px;
+  }
+  html body .ord-bp-theatre > .relative.z-10 > :nth-child(1) { grid-column: 1; grid-row: 1; margin-bottom: 6px; }
+  html body .ord-bp-theatre > .relative.z-10 > :nth-child(2) { grid-column: 1; grid-row: 2; margin-bottom: 0; }
+  html body .ord-bp-theatre > .relative.z-10 > :nth-child(3) { grid-column: 2; grid-row: 1 / span 2; }
+  html body .ord-bp-theatre .ord-bp-logo { width: 3.75rem; height: 3.75rem; }
+  html body .ord-bp-theatre h1 { font-size: clamp(20px, 3.6vw, 26px); }
+  html body .ord-bp-theatre .justify-center.gap-2.text-xs { flex-wrap: wrap; row-gap: 4px; }
+  html body .ord-bp-theatre .justify-center.gap-2.text-xs > span { white-space: nowrap; }
+}
+
+/* ---------- Menu, narrow and short windows ---------- */
+/* Folded (382x580) and narrow Split: the squad strip + header + hero used to fill the
+   whole first screen with not one dish visible. Keep the same pieces, tighter. */
+@media (max-width: 480px) {
+  html body .r3-menu-header { padding-block: 10px; }
+  html body .r3-menu-header h1 { font-size: clamp(16px, 4.9vw, 20px); line-height: 1.45; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+@media (max-width: 640px) and (max-height: 700px) {
+  html body [role='region'][aria-label='الديوانية'] { padding-block: 8px 4px; }
+  html body [role='region'][aria-label='الديوانية'] > div { padding: 8px 10px; }
+  html body .orser-context-hero { min-height: 8.5rem; }
+  html body .orser-context-hero > .relative.flex-col { padding: 16px 18px; }
+  html body .orser-context-hero h2 { font-size: 1.3rem; line-height: 1.45; }
+  html body .orser-context-hero p { font-size: 12.5px; line-height: 1.55; }
+}
+/* Short windows (folded landscape 600x350, pinned video 669x520): a sticky header would
+   keep ~40% of the glass for itself; let it scroll away, the cart bar stays reachable. */
+@media (max-height: 520px) {
+  html body .r3-menu-header { position: static; padding-block: 8px; }
+  html body .r3-menu-header::after { display: none; }
+  html body [role='region'][aria-label='الديوانية'] { padding-block: 6px 2px; }
+  html body [role='region'][aria-label='الديوانية'] > div { padding: 6px 10px; }
+  html body .orser-context-hero { min-height: 7.5rem; }
+  html body .orser-context-hero > .relative.flex-col { padding: 14px 20px; }
+  html body .orser-context-hero h2 { font-size: 1.25rem; }
+}
+
+/* ---------- Menu, from 600px: use the width instead of stretching the phone column ---------- */
+/* "Our picks": three cards. Between 600 and 899 each is ~190px, too narrow for a
+   photo beside the name and price (the price broke); stack photo above text there. */
+@media (min-width: 600px) and (max-width: 899px) {
+  html body .duo-pick-grid { gap: 12px; }
+  html body .duo-pick-card { flex-direction: column; text-align: center; justify-content: center; padding: 14px 10px; gap: 8px; }
+  html body .duo-pick-card > div { width: 100%; flex: 0 0 auto; }
+  html body .duo-pick-card .food-price-chip { margin-inline: auto; }
+}
+/* Dish lists: 3 columns as soon as there is room (was 2 until 1024). */
+@media (min-width: 760px) {
+  html body .customer-signature-shell .grid[class*='lg:grid-cols-3'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+/* Category tiles: from 880 a single row of compact tiles instead of two rows of
+   290px-wide, mostly empty rectangles. */
+@media (min-width: 880px) {
+  html body .dna-cat-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+  html body .dna-cat-grid .dna-cat-tile { padding-inline: 10px; }
+  html body .dna-cat-grid .dna-cat-name { font-size: 14px; }
+}
+/* Comfortable reading measure for the content bands once the window is wide but < 1024. */
+@media (min-width: 600px) and (max-width: 1023px) {
+  html body .customer-signature-shell { padding-inline: max(0px, env(safe-area-inset-left)) max(0px, env(safe-area-inset-right)); }
+  html body .customer-signature-shell [role='region'][aria-label='البحث والعروض'],
+  html body .customer-signature-shell [role='search'] { max-width: 1180px; margin-inline: auto; }
+}
+
+/* ---------- Edge-hugging fixed bars keep clear of the camera cut-out and the home bar ---------- */
+html body .al-cart-bar { padding-bottom: max(0px, env(safe-area-inset-bottom)); }
+
+@media (prefers-reduced-motion: reduce) {
+  html body .ord-bp-theatre,
+  html body .ord-bp-theatre * { scroll-behavior: auto; }
+}

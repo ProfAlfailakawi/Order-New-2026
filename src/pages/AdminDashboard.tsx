@@ -498,12 +498,12 @@ export default function AdminDashboard() {
     .slice(0, 5);
 
   return (
-    <div className="admin-shell flex h-screen bg-[#fafaf9] text-brand selection:bg-brand selection:text-white" dir="rtl">
+    <div className="admin-shell flex h-dvh bg-[#fafaf9] text-brand selection:bg-brand selection:text-white" dir="rtl">
       {mobileNavOpen && (
         <div className="admin-nav-backdrop lg:hidden" onClick={() => setMobileNavOpen(false)} aria-hidden="true" />
       )}
       {/* Sidebar */}
-      <aside id="admin-sidebar" className={`admin-sidebar ${mobileNavOpen ? "is-open" : ""} w-64 xl:w-80 shrink-0 glass-panel flex flex-col p-8 space-y-12 z-50 rounded-r-[40px] my-4 ml-4 sticky top-4 h-[calc(100vh-2rem)]`}>
+      <aside id="admin-sidebar" className={`admin-sidebar ${mobileNavOpen ? "is-open" : ""} w-64 xl:w-80 shrink-0 glass-panel flex flex-col p-8 space-y-12 z-50 rounded-r-[40px] my-4 ml-4 sticky top-4 h-[calc(100dvh-2rem)]`}>
         <div className="flex items-center gap-4 px-2 group">
           <div className="w-14 h-14 flex items-center justify-center p-2.5 transition-transform group-hover:scale-105 shadow-md overflow-hidden bg-white border border-stone-100 rounded-2xl shrink-0">
             <img 
