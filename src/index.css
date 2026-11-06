@@ -1035,7 +1035,7 @@ section:not([class*="max-w-"]) {
 
 /* Final Order luxury pass - visual only, no business logic changes */
 :root{--al-brand:#183326;--al-accent:#c8942f;--al-cream:#fffaf0;--al-glass:rgba(255,255,255,.82)}
-.customer-wow-menu,.customer-page,.min-h-screen{scroll-behavior:smooth}
+.customer-wow-menu,.customer-page,.min-h-dvh{scroll-behavior:smooth}
 button,a,.menu-product-card,.category-signature-card,.payment-method-card,.al-cart-bar{transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s cubic-bezier(.2,.8,.2,1),border-color .2s ease,background .2s ease!important}
 button:active,a:active,.menu-product-card:active,.category-signature-card:active{transform:scale(.985)!important}
 
@@ -4453,17 +4453,4 @@ body:has(.al-cart-bar) .order-welcome-replay {
 @media (max-width: 640px) {
   .admin-content > .space-y-12 > .flex.items-center.justify-between { padding: 1rem; border-radius: 22px; }
   .admin-content > .space-y-12 > .flex.items-center.justify-between h1 { font-size: 1.75rem; }
-}
-
-
-/* iPhone Duo folded postures only. Unsupported/disabled Safari preview features
-   leave the existing site styles unchanged on every other device and posture. */
-@media (device-posture: folded) and (horizontal-viewport-segments: 2) {
-  html, body, #root { min-width: 0; max-width: 100%; }
-}
-@media (device-posture: folded) and (vertical-viewport-segments: 2) {
-  html, body, #root { min-width: 0; max-width: 100%; }
-}
-@media (device-posture: folded) and (orientation: landscape) and (max-height: 520px) {
-  html { scroll-padding-block: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-bottom)); }
 }

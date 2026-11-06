@@ -16,7 +16,7 @@ function BrandedFallback() {
       role="status"
       aria-live="polite"
       aria-label="جاري التحميل"
-      className="min-h-screen flex flex-col items-center justify-center gap-5 bg-cream px-6"
+      className="min-h-dvh flex flex-col items-center justify-center gap-5 bg-cream px-6"
     >
       <div className="h-24 w-24 rounded-[26px] bg-white ring-1 ring-cream-edge shadow-[0_16px_44px_rgba(24,51,38,0.14)] flex items-center justify-center overflow-hidden animate-pulse skeleton-card">
         <img
@@ -39,7 +39,7 @@ function BrandedFallback() {
 
 function NotFoundFoodPage() {
   return (
-    <main dir="rtl" className="min-h-screen flex items-center justify-center bg-cream p-6">
+    <main dir="rtl" className="min-h-dvh flex items-center justify-center bg-cream p-6">
       <div className="max-w-md w-full bg-white border border-cream-edge rounded-[32px] p-8 text-center shadow-[0_24px_80px_rgba(120,53,15,0.10)]">
         <svg viewBox="0 0 120 120" className="w-28 h-28 mx-auto mb-3" aria-hidden="true">
           <circle cx="60" cy="62" r="46" fill="#fff7e8" stroke="#ead8b5" />
@@ -70,7 +70,7 @@ export default function App() {
 
   return (
     <Router>
-      <div className="min-h-screen font-sans w-full max-w-full overflow-x-clip">
+      <div className="min-h-dvh font-sans w-full max-w-full overflow-x-clip">
         <OfflineModal isOpen={!isOnline} />
         <Suspense fallback={<BrandedFallback />}>
           <Routes>

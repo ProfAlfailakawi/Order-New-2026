@@ -202,7 +202,7 @@ export function RouletteSplit({
   if (isFullyPaid) {
     return (
       <div
-        className="min-h-screen bg-stone-900 text-white font-sans flex items-center justify-center p-6 text-center"
+        className="min-h-dvh bg-stone-900 text-white font-sans flex items-center justify-center p-6 text-center"
         dir="rtl"
       >
         {paymentStatus === "success" ? (
@@ -289,7 +289,7 @@ export function RouletteSplit({
 
   return (
     <div
-      className="min-h-screen roulette-ultra-shell wahag-wow-shell text-white font-sans selection:bg-accent/30"
+      className="min-h-dvh roulette-ultra-shell wahag-wow-shell text-white font-sans selection:bg-accent/30"
       dir="rtl"
     >
       <div className="max-w-md lg:max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-32 relative">

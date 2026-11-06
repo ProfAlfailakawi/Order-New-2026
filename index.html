@@ -39,28 +39,10 @@
     <meta name="twitter:description" content="طعم الأصالة في كل طبق، نقدّم لكم أشهى الأكلات الكويتية الأصيلة. اطلب الآن واستمتع بالطعم الحقيقي." />
     <meta name="twitter:image" content="https://alturathkw.shop/og-order-v8.jpg" />
     <style>
-      html, body {
-        touch-action: pan-x pan-y; /* Prevent pinch zoom but allow scrolling */
-        overscroll-behavior: none;
-      }
+      /* Page zoom stays available (WCAG 1.4.4). Double-tap-to-zoom is removed in CSS,
+         the standards way, without touching pinch zoom or scrolling. */
+      html, body { touch-action: manipulation; overscroll-behavior: none; }
     </style>
-    <script>
-      // Prevent double tap to zoom in iOS Safari
-      document.addEventListener('dblclick', function(event) {
-        event.preventDefault();
-      }, { passive: false });
-      
-      // Prevent pinch to zoom in iOS Safari
-      document.addEventListener('gesturestart', function(event) {
-        event.preventDefault();
-      });
-      document.addEventListener('gesturechange', function(event) {
-        event.preventDefault();
-      });
-      document.addEventListener('gestureend', function(event) {
-        event.preventDefault();
-      });
-    </script>
   
     <!-- iOS launch screens (generated) -->
     <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/launch/launch-1290x2796.png" />

@@ -5200,7 +5200,7 @@ export default function CustomerSite() {
         animate={{ opacity: isLoading ? 0 : 1 }}
         transition={{ duration: 1 }}
         className={cn(
-          "pb-24 max-w-2xl lg:max-w-6xl mx-auto min-h-screen shadow-sm text-brand overflow-x-clip transition-colors duration-1000 customer-signature-shell",
+          "pb-24 max-w-2xl lg:max-w-6xl mx-auto min-h-dvh shadow-sm text-brand overflow-x-clip transition-colors duration-1000 customer-signature-shell",
           goldenHourTheme.bg,
           goldenHourTheme.extraShadow || "",
         )}
@@ -5585,13 +5585,13 @@ export default function CustomerSite() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
+                <div className="duo-pick-grid grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
                   {liveSignal.items.map((p: any) => {
                     return (
                       <button
                         key={p.id || p.name}
                         onClick={() => setSelectedProduct(p)}
-                        className="group flex items-center gap-3.5 rounded-2xl border border-stone-200/40 bg-white p-3 text-right active:scale-[.98] hover:border-amber-300 hover:shadow-md transition-all duration-300 min-h-[92px]"
+                        className="duo-pick-card group flex items-center gap-3.5 rounded-2xl border border-stone-200/40 bg-white p-3 text-right active:scale-[.98] hover:border-amber-300 hover:shadow-md transition-all duration-300 min-h-[92px]"
                       >
                         <FoodPhoto product={p} className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-2xl shrink-0 border border-cream-edge shadow-sm" />
                         <div className="min-w-0 flex-1 space-y-1">
