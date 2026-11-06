@@ -7421,6 +7421,8 @@ const ChefWhisperCard = ({
             WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
             WebkitTransform: "rotateY(180deg)",
+            // WebKit can ignore backface-visibility inside the 3D carousel and show the mirrored back.
+            visibility: isFlipped ? "visible" : "hidden",
           }}
           onClick={(e) => {
             e.stopPropagation();
