@@ -251,3 +251,10 @@ html body .checkout-footer-payment button.cursor-not-allowed {
     font-size: 16px !important;
   }
 }
+
+/* Short windows: header strip tighter too, so title + stepper + footer leave the form most of the glass. */
+@media (max-height: 700px) {
+  html body .checkout-wow-header { min-height: 64px !important; padding-block: 8px !important; }
+  html body .checkout-wow-header h2 { font-size: 1.3rem !important; }
+  html body .checkout-wow-header button { width: 44px !important; height: 44px !important; }
+}
