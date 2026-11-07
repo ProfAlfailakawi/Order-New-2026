@@ -220,3 +220,41 @@ html body .menu-product-modal {
   html body .checkout-footer-delivery,
   html body .checkout-footer-payment { max-height: 36dvh !important; }
 }
+
+/* ==========================================================================
+   Round 3: checkout footer + "not ready" primary action (real selectors).
+   The delivery CTA is NOT a disabled <button>: it stays enabled and switches to
+   `bg-stone-100 text-stone-500 cursor-not-allowed` until the form is valid.
+   ========================================================================== */
+html body .checkout-footer-delivery button.cursor-not-allowed,
+html body .checkout-footer-payment button.cursor-not-allowed {
+  background: #ece6d8;
+  color: #3f3629;
+  border: 1.5px dashed rgba(122, 90, 29, 0.6);
+  box-shadow: none;
+  font-weight: 800;
+}
+/* Short windows: footer = one tidy strip (discount + total on one band, CTA 52px) so the form is the main thing. */
+@media (max-height: 700px) {
+  html body .checkout-wow-footer.checkout-footer-delivery {
+    padding: 8px 14px calc(env(safe-area-inset-bottom, 0px) + 10px) !important;
+    max-height: 38dvh !important;
+    overflow-y: auto;
+  }
+  html body .checkout-footer-delivery.space-y-6 > * + * { margin-top: 6px !important; }
+  html body .checkout-footer-delivery .space-y-3 > * + * { margin-top: 0 !important; }
+  html body .checkout-footer-delivery .checkout-summary-summary { min-height: 40px; }
+  html body .checkout-footer-delivery .text-2xl { font-size: 1.25rem; }
+  html body .checkout-footer-delivery .flex.flex-col.gap-3 > button {
+    padding-block: 12px !important;
+    min-height: 48px !important;
+    font-size: 16px !important;
+  }
+}
+
+/* Short windows: header strip tighter too, so title + stepper + footer leave the form most of the glass. */
+@media (max-height: 700px) {
+  html body .checkout-wow-header { min-height: 64px !important; padding-block: 8px !important; }
+  html body .checkout-wow-header h2 { font-size: 1.3rem !important; }
+  html body .checkout-wow-header button { width: 44px !important; height: 44px !important; }
+}
