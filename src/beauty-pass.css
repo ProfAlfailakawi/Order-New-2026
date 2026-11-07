@@ -260,32 +260,32 @@ html body .checkout-footer-payment button.cursor-not-allowed {
 }
 
 /* ==========================================================================
-   Round 4: delivery footer becomes ONE compact strip on short windows.
+   Round 4: delivery footer becomes a compact 2x2 strip on short windows.
    Row 1: promo | breakdown (collapsed summaries). Row 2: total | CTA (>= 48px).
-   Open <details> go full width so the promo field / breakdown stay usable.
+   Open <details> span the full width so the promo field / breakdown stay usable.
    ========================================================================== */
 @media (max-height: 700px) {
   html body .checkout-wow-footer.checkout-footer-delivery {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
     align-items: center;
     gap: 4px 10px;
     max-height: 30dvh !important;
     padding: 6px 14px calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
   }
-  html body .checkout-footer-delivery > * { margin: 0 !important; }
+  html body .checkout-footer-delivery > * { margin: 0 !important; grid-column: 1 / -1; }
   html body .checkout-footer-delivery > .space-y-3.px-1 { display: contents; }
   html body .checkout-footer-delivery > .space-y-3.px-1 > * { margin: 0 !important; }
   html body .checkout-footer-delivery .checkout-promo-details,
   html body .checkout-footer-delivery .checkout-summary-details {
-    flex: 1 1 42%;
+    grid-column: auto;
     min-width: 0;
     padding: 0;
     border: 0;
   }
-  html body .checkout-footer-delivery details[open] { flex: 1 1 100%; order: 5; }
+  html body .checkout-footer-delivery details[open] { grid-column: 1 / -1; order: 5; }
   html body .checkout-footer-delivery .space-y-3.pt-2 {
-    flex: 1 1 36%;
+    grid-column: 1;
     min-width: 0;
     padding: 0;
     margin: 0 !important;
@@ -298,12 +298,11 @@ html body .checkout-footer-payment button.cursor-not-allowed {
   }
   html body .checkout-footer-delivery .space-y-3.pt-2 .text-sm { font-size: 12px; }
   html body .checkout-footer-delivery .space-y-3.pt-2 .text-2xl { font-size: 1.2rem; }
-  html body .checkout-footer-delivery > .flex.flex-col.gap-3 { flex: 1.5 1 52%; min-width: 0; }
+  html body .checkout-footer-delivery > .flex.flex-col.gap-3 { grid-column: 2; min-width: 0; }
   html body .checkout-footer-delivery > .flex.flex-col.gap-3 > button {
     min-height: 48px !important;
     padding: 8px 12px !important;
     font-size: 15px !important;
     line-height: 1.25;
   }
-  html body .checkout-footer-delivery > :not(.space-y-3):not(.flex-col):not(details) { flex: 1 1 100%; }
 }
