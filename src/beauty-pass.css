@@ -191,3 +191,20 @@ html body .ord-bp-theatre p.text-stone-600 { color: #4a4036; }
   border: 1.5px dashed rgba(122, 90, 29, 0.55);
   box-shadow: none;
 }
+
+/* ---- Round 2c ---- */
+/* Roulette / wahag: grey-on-dark captions were ~3:1; the floating back button sat on top of the card
+   between 421 and 760px wide. */
+.roulette-ultra-shell .text-stone-500,
+.roulette-ultra-shell .text-stone-400 { color: rgba(255, 255, 255, 0.78); }
+@media (min-width: 421px) and (max-width: 760px) {
+  .roulette-ultra-shell > div { padding-top: 76px; }
+}
+/* Checkout on a short window (folded landscape / 951x600 opened landscape): the summary footer used to take
+   a third of the glass and left a sliver of the form. Compact it; every control stays reachable. */
+@media (max-height: 700px) and (min-width: 560px) {
+  .checkout-wow-footer { max-height: 30dvh !important; padding-block: 10px !important; }
+  .checkout-wow-footer.p-6 { padding: 10px 20px !important; }
+  .checkout-wow-footer .space-y-6 > * + * { margin-top: 8px !important; }
+  .checkout-wow-footer button { min-height: 48px !important; }
+}
