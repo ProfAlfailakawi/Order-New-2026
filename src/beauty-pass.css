@@ -327,3 +327,20 @@ html body .checkout-footer-payment button.cursor-not-allowed {
 @media (max-height: 700px) and (min-width: 560px) {
   html body .checkout-wow-footer.checkout-footer-cart { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
 }
+
+/* Roulette hero status chips wrapped 2+1 with an empty cell (382 and 421-760px). One even row of three. */
+html body .roulette-status-strip.roulette-v14-status-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  justify-items: stretch;
+}
+html body .roulette-status-strip.roulette-v14-status-strip > span {
+  min-width: 0;
+  padding-inline: 8px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+}
