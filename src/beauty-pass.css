@@ -165,3 +165,58 @@ html body .ord-bp-theatre p.text-stone-600 { color: #4a4036; }
   cursor: not-allowed;
 }
 .track-signature .order-id-track-input::placeholder { color: #6b6256; opacity: 1; }
+
+/* ---- Round 2b: checkout (cart / address steps) ---- */
+/* Cart row: centred composition, bigger name and price, soft gold edge. */
+.ord-bp-cartitem {
+  align-items: center;
+  min-block-size: 104px;
+  padding: 16px 18px;
+  border-color: rgba(212, 175, 55, 0.28);
+  box-shadow: 0 12px 28px -18px rgba(13, 58, 34, 0.35);
+}
+.ord-bp-cartitem h4 { font-size: 15px; line-height: 1.5; }
+.ord-bp-cartitem .text-sm.font-bold.text-brand { font-size: 15px; }
+/* Totals block: label readable, not 11px grey. */
+.checkout-footer-cart .text-stone-400,
+.checkout-footer-cart .text-stone-500 { color: #5e544a; }
+/* Phone field: the spaced-out placeholder looked broken; keep digits airy, Arabic text normal. */
+.checkout-wow-body input::placeholder { letter-spacing: 0; color: #6b6256; opacity: 1; }
+/* Disabled primary action: still obviously inactive, but legible (was ~4:1 grey on grey). */
+.checkout-footer-delivery button:disabled,
+.checkout-footer-payment button:disabled {
+  opacity: 1;
+  background: #ece6d8;
+  color: #4d4337;
+  border: 1.5px dashed rgba(122, 90, 29, 0.55);
+  box-shadow: none;
+}
+
+/* ---- Round 2c ---- */
+/* Roulette / wahag: grey-on-dark captions were ~3:1; the floating back button sat on top of the card
+   between 421 and 760px wide. */
+.roulette-ultra-shell .text-stone-500,
+.roulette-ultra-shell .text-stone-400 { color: rgba(255, 255, 255, 0.78); }
+@media (min-width: 421px) and (max-width: 760px) {
+  .roulette-ultra-shell > div { padding-top: 76px; }
+}
+/* Checkout on a short window (folded landscape / 951x600 opened landscape): the summary footer used to take
+   a third of the glass and left a sliver of the form. Compact it; every control stays reachable. */
+@media (max-height: 700px) and (min-width: 560px) {
+  html body .checkout-wow-footer { max-height: 34dvh !important; padding-block: 10px !important; }
+  html body .checkout-wow-footer.p-6 { padding: 10px 20px !important; }
+  html body .checkout-wow-footer .space-y-6 > * + * { margin-top: 8px !important; }
+  html body .checkout-wow-footer button { min-height: 48px !important; }
+}
+
+/* Product sheet: it was 90% opaque with no blur of its own, so the menu text behind it bled
+   through the photo and the notes box. Solid warm paper instead. */
+html body .product-detail-layer,
+html body .menu-product-modal {
+  background: linear-gradient(160deg, #ffffff 0%, #fffaf2 100%) !important;
+}
+/* Narrow or short windows: tighter checkout footer so the form keeps room (382x580, 620x600). */
+@media (max-height: 700px) {
+  html body .checkout-footer-delivery,
+  html body .checkout-footer-payment { max-height: 36dvh !important; }
+}
