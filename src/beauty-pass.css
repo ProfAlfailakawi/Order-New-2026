@@ -258,3 +258,46 @@ html body .checkout-footer-payment button.cursor-not-allowed {
   html body .checkout-wow-header h2 { font-size: 1.3rem !important; }
   html body .checkout-wow-header button { width: 44px !important; height: 44px !important; }
 }
+
+/* ==========================================================================
+   Round 4: delivery footer as a compact strip on short windows.
+   The "total" is itself the summary of a <details> (label + amount + chevron); promo is another.
+   Narrow (382): row 1 = promo | total, row 2 = CTA full width.
+   Wide + short (951x600, 620x600): ONE row = promo | total | CTA.
+   Open <details> span the full width so the promo field / breakdown stay usable.
+   ========================================================================== */
+@media (max-height: 700px) {
+  html body .checkout-wow-footer.checkout-footer-delivery {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 4px 10px;
+    max-height: 30dvh !important;
+    padding: 6px 14px calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
+  }
+  html body .checkout-footer-delivery > * { margin: 0 !important; grid-column: 1 / -1; }
+  html body .checkout-footer-delivery > .space-y-3.px-1 { display: contents; }
+  html body .checkout-footer-delivery > .space-y-3.px-1 > * { margin: 0 !important; }
+  html body .checkout-footer-delivery .checkout-promo-details,
+  html body .checkout-footer-delivery .checkout-summary-details {
+    grid-column: auto;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+  }
+  html body .checkout-footer-delivery details[open] { grid-column: 1 / -1; order: 5; }
+  html body .checkout-footer-delivery .checkout-summary-summary { min-height: 44px; }
+  html body .checkout-footer-delivery > .flex.flex-col.gap-3 > button {
+    min-height: 48px !important;
+    padding: 8px 12px !important;
+    font-size: 15px !important;
+    line-height: 1.25;
+  }
+}
+@media (max-height: 700px) and (min-width: 560px) {
+  html body .checkout-wow-footer.checkout-footer-delivery {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1.4fr);
+  }
+  html body .checkout-footer-delivery > .flex.flex-col.gap-3 { grid-column: auto; }
+  html body .checkout-footer-delivery details[open] { grid-column: 1 / -1; }
+}
