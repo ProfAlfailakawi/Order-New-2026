@@ -203,10 +203,10 @@ html body .ord-bp-theatre p.text-stone-600 { color: #4a4036; }
 /* Checkout on a short window (folded landscape / 951x600 opened landscape): the summary footer used to take
    a third of the glass and left a sliver of the form. Compact it; every control stays reachable. */
 @media (max-height: 700px) and (min-width: 560px) {
-  .checkout-wow-footer { max-height: 30dvh !important; padding-block: 10px !important; }
-  .checkout-wow-footer.p-6 { padding: 10px 20px !important; }
-  .checkout-wow-footer .space-y-6 > * + * { margin-top: 8px !important; }
-  .checkout-wow-footer button { min-height: 48px !important; }
+  html body .checkout-wow-footer { max-height: 34dvh !important; padding-block: 10px !important; }
+  html body .checkout-wow-footer.p-6 { padding: 10px 20px !important; }
+  html body .checkout-wow-footer .space-y-6 > * + * { margin-top: 8px !important; }
+  html body .checkout-wow-footer button { min-height: 48px !important; }
 }
 
 /* Product sheet: it was 90% opaque with no blur of its own, so the menu text behind it bled
@@ -217,6 +217,6 @@ html body .menu-product-modal {
 }
 /* Narrow or short windows: tighter checkout footer so the form keeps room (382x580, 620x600). */
 @media (max-height: 700px) {
-  .checkout-footer-delivery,
-  .checkout-footer-payment { max-height: 36dvh !important; }
+  html body .checkout-footer-delivery,
+  html body .checkout-footer-payment { max-height: 36dvh !important; }
 }
