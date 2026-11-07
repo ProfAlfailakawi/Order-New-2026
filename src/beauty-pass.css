@@ -330,8 +330,8 @@ html body .checkout-footer-payment button.cursor-not-allowed {
 
 /* Roulette hero status chips wrapped 2+1 with an empty cell (382 and 421-760px). One even row of three. */
 html body .roulette-status-strip.roulette-v14-status-strip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: 8px;
   justify-items: stretch;
 }
