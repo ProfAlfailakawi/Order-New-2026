@@ -208,3 +208,15 @@ html body .ord-bp-theatre p.text-stone-600 { color: #4a4036; }
   .checkout-wow-footer .space-y-6 > * + * { margin-top: 8px !important; }
   .checkout-wow-footer button { min-height: 48px !important; }
 }
+
+/* Product sheet: it was 90% opaque with no blur of its own, so the menu text behind it bled
+   through the photo and the notes box. Solid warm paper instead. */
+html body .product-detail-layer,
+html body .menu-product-modal {
+  background: linear-gradient(160deg, #ffffff 0%, #fffaf2 100%) !important;
+}
+/* Narrow or short windows: tighter checkout footer so the form keeps room (382x580, 620x600). */
+@media (max-height: 700px) {
+  .checkout-footer-delivery,
+  .checkout-footer-payment { max-height: 36dvh !important; }
+}
