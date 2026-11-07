@@ -301,3 +301,46 @@ html body .checkout-footer-payment button.cursor-not-allowed {
   html body .checkout-footer-delivery > .flex.flex-col.gap-3 { grid-column: auto; }
   html body .checkout-footer-delivery details[open] { grid-column: 1 / -1; }
 }
+
+/* ==========================================================================
+   Round 5: cart-step footer on short windows. It repeated the total on two rows and took ~45% of
+   951x600. Tight stack on narrow; totals | CTA in one row from 560px wide.
+   ========================================================================== */
+@media (max-height: 700px) {
+  html body .checkout-wow-footer.checkout-footer-cart {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 4px 12px;
+    max-height: none !important;
+    padding: 8px 14px calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
+  }
+  html body .checkout-footer-cart > * { margin: 0 !important; }
+  html body .checkout-footer-cart > .space-y-3 { display: grid; gap: 0 !important; padding: 0; }
+  html body .checkout-footer-cart > .space-y-3 > * { margin: 0 !important; padding-block: 2px; border: 0; }
+  html body .checkout-footer-cart > button {
+    min-height: 48px !important;
+    padding: 8px 12px !important;
+    font-size: 16px !important;
+  }
+}
+@media (max-height: 700px) and (min-width: 560px) {
+  html body .checkout-wow-footer.checkout-footer-cart { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+}
+
+/* Roulette hero status chips wrapped 2+1 with an empty cell (382 and 421-760px). One even row of three. */
+html body .roulette-status-strip.roulette-v14-status-strip {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px;
+  justify-items: stretch;
+}
+html body .roulette-status-strip.roulette-v14-status-strip > span {
+  min-width: 0;
+  padding-inline: 8px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+}
