@@ -165,3 +165,29 @@ html body .ord-bp-theatre p.text-stone-600 { color: #4a4036; }
   cursor: not-allowed;
 }
 .track-signature .order-id-track-input::placeholder { color: #6b6256; opacity: 1; }
+
+/* ---- Round 2b: checkout (cart / address steps) ---- */
+/* Cart row: centred composition, bigger name and price, soft gold edge. */
+.ord-bp-cartitem {
+  align-items: center;
+  min-block-size: 104px;
+  padding: 16px 18px;
+  border-color: rgba(212, 175, 55, 0.28);
+  box-shadow: 0 12px 28px -18px rgba(13, 58, 34, 0.35);
+}
+.ord-bp-cartitem h4 { font-size: 15px; line-height: 1.5; }
+.ord-bp-cartitem .text-sm.font-bold.text-brand { font-size: 15px; }
+/* Totals block: label readable, not 11px grey. */
+.checkout-footer-cart .text-stone-400,
+.checkout-footer-cart .text-stone-500 { color: #5e544a; }
+/* Phone field: the spaced-out placeholder looked broken; keep digits airy, Arabic text normal. */
+.checkout-wow-body input::placeholder { letter-spacing: 0; color: #6b6256; opacity: 1; }
+/* Disabled primary action: still obviously inactive, but legible (was ~4:1 grey on grey). */
+.checkout-footer-delivery button:disabled,
+.checkout-footer-payment button:disabled {
+  opacity: 1;
+  background: #ece6d8;
+  color: #4d4337;
+  border: 1.5px dashed rgba(122, 90, 29, 0.55);
+  box-shadow: none;
+}
