@@ -680,16 +680,28 @@ async function sendAdminPushDirectOnce(input: {
     alertTypeText.includes("success") ||
     alertTypeText.includes("failed") ||
     alertTypeText.includes("completed");
+  // One payment = one banner on the owner's device.
+  // 1) Same tag the admin server uses for the same payment (payment-final-state-<kind>-<id>),
+  //    so the admin service worker's tag+stage dedupe drops whichever copy arrives second.
+  // 2) Data-only (no `notification` / `webpush.notification`): with those blocks the browser
+  //    draws the alert itself AND the service worker draws it again — two banners per send.
+  //    The admin server's own pushes are data-only for exactly this reason.
+  const paymentTagId = String(input.invoiceId || input.orderId || "");
+  const paymentTagKind = input.invoiceId ? "invoice" : "order";
+  const notificationTag = (alertTypeText.includes("payment") || alertTypeText.includes("invoice") || alertTypeText.includes("paid")) && paymentTagId
+    ? `payment-final-state-${paymentTagKind}-${paymentTagId}`
+    : String(input.eventId || `order-push-${Date.now()}`);
   const baseMessage = {
-    notification: {
-      title: input.title,
-      body: input.body,
-    },
     data: {
       type: "smart_alert",
       alertType: String(input.alertType || "smart_alert"),
       eventId: String(input.eventId || `order-push-${Date.now()}`),
-      notificationTag: String(input.eventId || `order-push-${Date.now()}`),
+      parentEventId: String(input.eventId || ""),
+      notificationTag,
+      icon: "/ios-icon-192-v6.png",
+      badge: "/ios-icon-192-v6.png",
+      renotify: String(Boolean(shouldRenotifyFinalState)),
+      requireInteraction: "true",
       url: String(url || "/"),
       click_action: String(url || "/"),
       title: String(input.title || "تنبيه"),
@@ -704,21 +716,6 @@ async function sendAdminPushDirectOnce(input: {
       },
       fcmOptions: {
         link: url,
-      },
-      notification: {
-        title: input.title,
-        body: input.body,
-        icon: "/ios-icon-192-v6.png",
-        badge: "/ios-icon-192-v6.png",
-        tag: input.eventId,
-        renotify: shouldRenotifyFinalState,
-        requireInteraction: true,
-        data: {
-          url,
-          eventId: input.eventId,
-          notificationTag: input.eventId,
-          alertType: input.alertType,
-        },
       },
     },
   };
