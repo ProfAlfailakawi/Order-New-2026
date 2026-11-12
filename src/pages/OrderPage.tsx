@@ -1580,7 +1580,7 @@ export default function OrderPage() {
               )}
 
               <div className="flex items-center justify-between px-4 mt-6">
-                <h3 className="font-extrabold text-brand uppercase tracking-widest text-xs flex items-center gap-2">
+                <h3 className="font-extrabold text-brand text-xs flex items-center gap-2">
                   <LayoutDashboard className="w-4 h-4 text-accent" /> سجل
                   الطلبات الأخيرة
                 </h3>
@@ -1610,7 +1610,7 @@ export default function OrderPage() {
                     <div className="flex items-start justify-between mb-4 sm:mb-6 max-sm:flex-wrap max-sm:gap-3">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 max-sm:flex-wrap">
-                          <span className="text-xs font-extrabold text-stone-500 uppercase tracking-widest">
+                          <span className="text-xs font-extrabold text-stone-500">
                             رقم الطلب
                           </span>
                           <span className="text-xs font-extrabold text-brand bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-100 whitespace-nowrap">
@@ -1645,7 +1645,7 @@ export default function OrderPage() {
                         </p>
                       </div>
                       <div
-                        className={`px-4 py-2 rounded-2xl flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest ${statusInfo.color}`}
+                        className={`px-4 py-2 rounded-2xl flex items-center gap-2 text-xs font-extrabold ${statusInfo.color}`}
                       >
                         {statusInfo.icon}
                         {statusInfo.text}
@@ -1666,12 +1666,12 @@ export default function OrderPage() {
                             <Package className="w-5 h-5" />
                           </div>
                           <div>
-                            <p className="text-xs font-extrabold text-stone-500 uppercase">
+                            <p className="text-xs font-extrabold text-stone-500">
                               المبلغ الإجمالي
                             </p>
-                            <p className="text-lg font-extrabold text-brand italic">
+                            <p className="text-lg font-extrabold text-brand">
                               {Number(getDisplayTotal(order) || 0).toFixed(3)}{" "}
-                              <span className="text-xs text-accent font-normal italic">
+                              <span className="text-xs text-accent font-normal">
                                 د.ك
                               </span>
                             </p>
@@ -1921,7 +1921,7 @@ export default function OrderPage() {
 	                        (p: any) => p.status === "paid" || (isDiwaniyaQatyaOrder(selectedOrder) && p.status === "pending")
 	                      ).length > 0 || (((selectedOrder as any).splitType === "roulette" || isDiwaniyaQatyaOrder(selectedOrder)) && ((selectedOrder as any).splitParticipants || []).length > 0)) && (
                         <div className="track-v14-social-card track-wow-social-card bg-stone-50 p-4 rounded-2xl border border-stone-100">
-                          <h4 className="text-xs font-extrabold text-stone-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                          <h4 className="text-xs font-extrabold text-stone-500 mb-3 flex items-center gap-2">
                             {(selectedOrder as any).splitType === 'roulette' ? <><Dices className="w-3 h-3" aria-hidden="true" /> المشاركون في وهق غيرك</> : <><Users className="w-3 h-3" aria-hidden="true" /> المساهمين في القطية</>}
                           </h4>
                           {(selectedOrder as any).splitType === 'roulette' && (selectedOrder as any).rouletteLoser && (
@@ -2111,7 +2111,7 @@ export default function OrderPage() {
                     {/* Items List */}
                     <div className="space-y-4">
                       
-                      <h4 className="text-xs font-extrabold text-stone-500 uppercase tracking-widest px-2 font-mono border-b border-dashed border-stone-100 pb-2">
+                      <h4 className="text-xs font-extrabold text-stone-500 px-2 border-b border-dashed border-stone-100 pb-2">
                         الأصناف المطلوبة
                       </h4>
                       <div className="space-y-3 font-mono">
@@ -2135,7 +2135,7 @@ export default function OrderPage() {
                                   {item.productName || item.name}
                                 </span>
                                 {(item.itemNotes || item.note) && (
-                                  <span className="text-xs text-stone-500 italic flex items-center gap-1 mt-1">
+                                  <span className="text-xs text-stone-500 flex items-center gap-1 mt-1">
                                     <MessageCircle className="w-3 h-3" />
                                     <TypewriterText
                                       text={item.itemNotes || item.note}
@@ -2201,7 +2201,7 @@ export default function OrderPage() {
                            </p>
                            <Link
                              to="/?showSquads=true"
-                             className="text-xs font-black text-accent bg-accent/5 px-3 py-1.5 rounded-xl border border-accent/10 hover:bg-accent/10 transition-colors inline-flex items-center gap-1.5"
+                             className="min-h-11 text-xs font-black text-accent bg-accent/5 px-4 py-2 rounded-xl border border-accent/10 hover:bg-accent/10 transition-colors inline-flex items-center justify-center gap-1.5"
                            >
                              أسس ديوانيتك أو شارك ديوانية ربعك! <Handshake className="w-4 h-4" aria-hidden="true" />
                            </Link>
@@ -2213,7 +2213,7 @@ export default function OrderPage() {
                     {(selectedOrder as any).notes ||
                     (selectedOrder as any).generalNotes ? (
                       <div className="space-y-4">
-                        <h4 className="text-xs font-extrabold text-stone-500 uppercase tracking-widest px-2">
+                        <h4 className="text-xs font-extrabold text-stone-500 px-2">
                           ملاحظات عامة
                         </h4>
                         <div className="bg-cream border border-cream-edge p-4 rounded-2xl text-brass-ink text-sm flex gap-3">
@@ -2229,7 +2229,7 @@ export default function OrderPage() {
                     {/* Address Details */}
                     {selectedOrder.address && (
                       <div className="space-y-4">
-                        <h4 className="text-xs font-extrabold text-stone-500 uppercase tracking-widest px-2">
+                        <h4 className="text-xs font-extrabold text-stone-500 px-2">
                           معلومات العميل والتوصيل
                         </h4>
                         <div className="track-v15-address-card bg-white border border-stone-100 p-6 rounded-[32px] space-y-4 font-medium text-brand text-sm shadow-sm">
@@ -2284,10 +2284,10 @@ export default function OrderPage() {
                   <div className="track-v15-total-panel track-wow-total-panel p-8 bg-stone-50/50 border-t border-stone-100 flex flex-col gap-4">
                     {selectedOrder.deliveryFee !== undefined && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-stone-500 font-bold uppercase tracking-widest">
+                        <span className="text-stone-500 font-bold">
                           رسوم التوصيل
                         </span>
-                        <span className="font-extrabold text-brand italic">
+                        <span className="font-extrabold text-brand">
                           {(selectedOrder as any).deliveryType === "free" ||
                           selectedOrder.deliveryFee === 0 ||
                           selectedOrder.isFreeDelivery ? (
@@ -2303,12 +2303,12 @@ export default function OrderPage() {
                       </div>
                     )}
                     <div className="flex items-center justify-between pt-4 border-t border-stone-100/50">
-                      <span className="text-stone-500 font-extrabold text-xs uppercase tracking-widest">
+                      <span className="text-stone-500 font-extrabold text-xs">
                         إجمالي المبلغ
                       </span>
-                      <span className="text-3xl font-extrabold text-brand italic">
+                      <span className="text-3xl font-extrabold text-brand">
                         {Number(getDisplayTotal(selectedOrder) || 0).toFixed(3)}{" "}
-                        <span className="text-xs text-accent font-normal not-italic">
+                        <span className="text-xs text-accent font-normal">
                           د.ك
                         </span>
                       </span>

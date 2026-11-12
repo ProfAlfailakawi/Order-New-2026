@@ -638,7 +638,7 @@ export default function SplitPayment() {
         <h1 className="font-extrabold text-xl tracking-tight text-center">
           قطيّة الربع
         </h1>
-        <p className="text-xs text-stone-500 font-medium tracking-wide">
+        <p className="text-xs text-stone-500 font-medium">
           طلب من {order.customerName}
         </p>
 
@@ -1116,7 +1116,7 @@ export default function SplitPayment() {
           0 && (
           <div className="qatya-honor-card qatya-v14-honor qatya-wow-honor bg-white p-5 sm:p-6 rounded-[24px] shadow-sm border border-stone-100 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-brand/5 rounded-full -mr-12 -mt-12 blur-2xl" />
-            <h3 className="font-extrabold text-stone-500 text-sm mb-4 uppercase tracking-widest flex items-center gap-2 relative z-10">
+            <h3 className="font-extrabold text-stone-500 text-sm mb-4 flex items-center gap-2 relative z-10">
               <Users className="w-4 h-4 text-brand" />
               حائط الشرف
             </h3>
