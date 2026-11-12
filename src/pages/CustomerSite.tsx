@@ -9267,11 +9267,11 @@ function CheckoutOverlay({
                 <details className="checkout-summary-details group">
                   <summary className="checkout-summary-summary list-none cursor-pointer select-none min-h-[44px] flex items-center gap-2">
                     <div className="flex-1">
-              <div className="flex items-center justify-between pt-0">
+              <div className="flex items-center justify-between gap-2 pt-0">
                 <span className="text-sm font-bold text-brand">
                   حسابك طال عمرك
                 </span>
-                <div className="text-2xl font-bold text-brand">
+                <div className="text-2xl font-bold text-brand whitespace-nowrap shrink-0">
                   {Number(total || 0).toFixed(3)}{" "}
                   <span className="text-sm text-accent font-medium">د.ك</span>
                 </div>
@@ -9404,11 +9404,11 @@ function CheckoutOverlay({
               </div>
                 </>
               )}
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center justify-between gap-2 pt-2">
                 <span className="text-sm font-bold text-brand">
                   حسابك طال عمرك
                 </span>
-                <div className="text-2xl font-bold text-brand">
+                <div className="text-2xl font-bold text-brand whitespace-nowrap shrink-0">
                   {Number(total || 0).toFixed(3)}{" "}
                   <span className="text-sm text-accent font-medium">د.ك</span>
                 </div>
