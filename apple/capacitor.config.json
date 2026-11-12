@@ -1,0 +1,33 @@
+{
+  "appId": "com.dralfailakawi.alturath",
+  "appName": "Alturath",
+  "webDir": "www",
+  "server": {
+    "url": "https://alturathkw.shop",
+    "errorPath": "offline.html",
+    "allowNavigation": [
+      "alturathkw.shop",
+      "*.firebaseapp.com",
+      "*.googleapis.com",
+      "*.upayments.com",
+      "*.myfatoorah.com",
+      "*.knet.com.kw",
+      "*.kpay.com.kw"
+    ]
+  },
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#183326",
+    "scheme": "Alturath",
+    "limitsNavigationsToAppBoundDomains": false,
+    "preferredContentMode": "mobile"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "launchAutoHide": true,
+      "backgroundColor": "#183326",
+      "showSpinner": false
+    }
+  }
+}

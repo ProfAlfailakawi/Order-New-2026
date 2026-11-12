@@ -1,0 +1,23 @@
+{
+  "repo": "Order-New-2026",
+  "appId": "com.dralfailakawi.alturath",
+  "nameAr": "التراث",
+  "nameEn": "Alturath",
+  "displayName": "التراث",
+  "url": "https://alturathkw.shop",
+  "allowNavigation": [
+    "*.firebaseapp.com",
+    "*.googleapis.com",
+    "*.upayments.com",
+    "*.myfatoorah.com",
+    "*.knet.com.kw",
+    "*.kpay.com.kw"
+  ],
+  "icon": "public/ios-icon-512-v7.png",
+  "background": "#183326",
+  "backgroundDark": "#0E1F17",
+  "accent": "#C9A45C",
+  "lsCategory": "public.app-category.food-and-drink",
+  "version": "1.0.0",
+  "build": 1
+}
