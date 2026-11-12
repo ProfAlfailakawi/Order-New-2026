@@ -136,3 +136,15 @@ html body .al-cart-bar { padding-bottom: max(0px, env(safe-area-inset-bottom)); 
   html body .ord-bp-theatre,
   html body .ord-bp-theatre * { scroll-behavior: auto; }
 }
+
+/* ---------- Wide desktop: header and diwaniya strip share the content column ---------- */
+/* From 1024 the shell spans the whole window (background), while the hero, search and
+   dish lists sit in a centred 1180px column. The logo, cart and the diwaniya strip were
+   pinned to the window edges, ~640px away from the content on a 2560 screen. Pad them in
+   to the same column; the header background and the woven band still run full width. */
+@media (min-width: 1024px) {
+  html body .customer-signature-shell > header,
+  html body .customer-signature-shell > [role='region'][aria-label='الديوانية'] {
+    padding-inline: max(2rem, calc((100% - 1180px) / 2 + 2rem));
+  }
+}
