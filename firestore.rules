@@ -1,20 +1,78 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Deliberately-open legacy subtree: the live admin dashboard
-    // (onSnapshot/setDoc), the customer split-payment page, and server.ts's
-    // client-SDK fallback (root doc + shards/* subcollection) all access
-    // appData/* directly without a Firebase Auth session. Locking it requires
-    // the Phase B/C migration in SECURITY_MIGRATION.md.
-    match /appData/{document=**} {
-      allow read, write: if true;
+    
+    // Admins and Partners with null-safeguards
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.uid == "2KVrKwyvmVaKQYc9iiw87xoztrA3" ||
+        request.auth.uid == "abi4lzKo4VfiLkrBAkYfK8NjtLS2" ||
+        (request.auth.token != null && 'email' in request.auth.token && request.auth.token.email != null && (
+          request.auth.token.email == "volcanokw@gmail.com" ||
+          request.auth.token.email == "Volcanokw@gmail.com"
+        ))
+      );
+    }
+    
+    function isPartner() {
+      return request.auth != null && (
+        request.auth.uid == "L4qKc2PsZXamk96nvGTqPLjYhI03" ||
+        request.auth.uid == "0v30UI3SYyfzuGO15i5qRqejif62" ||
+        request.auth.uid == "2qUU5RXByXPkQASR1mJR9krryPd2" ||
+        (request.auth.token != null && 'email' in request.auth.token && request.auth.token.email != null && (
+          request.auth.token.email == "dr.ahmad.alfailakawi@gmail.com" ||
+          request.auth.token.email == "dr.ahmad.alfailakawi@gmail.com" ||
+          request.auth.token.email == "alfailakawidrahmad@gmail.com" ||
+          request.auth.token.email == "mfq241188@gmail.com" ||
+          request.auth.token.email == "omaralawadhi67@gmail.com"
+        ))
+      );
+    }
+    
+    function isAuthorized() {
+      return isAdmin() || isPartner();
     }
 
-    // Everything else is server-only (Admin SDK bypasses rules).
-    // Previously the ENTIRE database was world-readable/writable via a
-    // global {document=**} allow-all wildcard.
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if isAuthorized();
     }
+
+    // ── Public, read-only catalogue (the storefront reads these directly) ──
+    match /products/{productId} {
+      allow read: if true;
+    }
+    match /app_products/{productId} {
+      allow read: if true;
+    }
+    match /regions/{regionId} {
+      allow read: if true;
+    }
+
+    // ── Per-user documents ──
+    match /appData/{userId} {
+      allow read, write: if request.auth != null && (request.auth.uid == userId || isAuthorized());
+
+      match /{allSubDocs=**} {
+        allow read, write: if request.auth != null && (request.auth.uid == userId || isAuthorized());
+      }
+    }
+
+    // ── Admin/partner only (2026-11-12 hardening) ──
+    // appData/shared_company_data (orders, invoices, customers incl. phones and
+    // addresses), squads, orders, invoices and pushTokens are reachable only by
+    // the allow-listed admin/partner accounts via the catch-all above. Every
+    // public page now goes through the servers, which use the Admin SDK and
+    // bypass these rules:
+    //   - Order /split/:id   -> GET /api/track-orders?order_id=  (one order)
+    //   - Order /track       -> GET /api/track-orders
+    //   - Admin /success...  -> POST /api/invoice/confirm (server marks paid)
+    //   - Admin /track       -> redirects to the storefront /track
+    //   - Order /admin       -> redirects to the admin app
+    // Previously anyone could read every customer's data, mark any invoice or
+    // order as paid, and read/delete every push token.
+    //
+    // This file is the single source of truth for the shared database
+    // (ai-studio-7058254a-...). Order-New-2026/firestore.rules must stay
+    // byte-identical so a deploy from either repo cannot reopen it.
   }
 }

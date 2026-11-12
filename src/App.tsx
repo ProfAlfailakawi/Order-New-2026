@@ -6,7 +6,15 @@ import { useOnlineStatus } from "./hooks/useOnlineStatus";
 import { OfflineModal } from "./components/OfflineModal";
 
 const OrderPage = lazy(() => import("./pages/OrderPage"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+// The storefront's old in-app /admin page had no sign-in and wrote company
+// settings straight to Firestore. Administration lives in the real admin app
+// (signed-in, role-checked), so /admin now just sends people there.
+function AdminRedirect() {
+  useEffect(() => {
+    window.location.replace("https://admin.alturathkw.shop/");
+  }, []);
+  return null;
+}
 const SplitPayment = lazy(() => import("./pages/SplitPayment"));
 
 function BrandedFallback() {
@@ -77,7 +85,7 @@ export default function App() {
             <Route path="/" element={<CustomerSite />} />
             <Route path="/track" element={<OrderPage />} />
             <Route path="/split/:id" element={<SplitPayment />} />
-            <Route path="/admin/*" element={<AdminDashboard />} />
+            <Route path="/admin/*" element={<AdminRedirect />} />
             <Route path="*" element={<NotFoundFoodPage />} />
           </Routes>
         </Suspense>
