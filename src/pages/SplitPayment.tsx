@@ -24,8 +24,6 @@ import {
 import { Order } from "../types";
 import { cn, normalizePhone, normalizeDigits, getSaduAvatar, formatKuwaitiDate } from "../utils";
 import confetti from "canvas-confetti";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "../lib/firebase";
 import { RouletteSplit } from "../components/RouletteSplit";
 import { DnaCountUp, DnaRing, DnaStepper, DnaTimeline, dnaSingleCurrent } from "../components/dna";
 import { MessageWithIcons } from "../components/MessageWithIcons";
@@ -246,79 +244,67 @@ export default function SplitPayment() {
   }, [paymentStatus, isFullyPaid, searchParams, setSearchParams]);
 
   useEffect(() => {
-    console.log("SplitPayment mounted with ID:", id);
     if (!id) return;
 
-    // Real-time listener via Firestore
-    const unsub = onSnapshot(
-      doc(db, "appData", "shared_company_data"),
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-          const orders = data.orders || [];
-          const invoices = data.invoices || [];
-          
-          let searchId = String(id).trim().toUpperCase();
-          if (searchId.startsWith("#")) {
-            searchId = searchId.substring(1);
-          }
-          if (searchId.includes("-S-")) {
-            searchId = searchId.split("-S-")[0];
-          }
+    // The split page used to subscribe to appData/shared_company_data directly,
+    // which meant every visitor's browser downloaded every customer's orders.
+    // It now polls the server for this one order only (Admin SDK, no PII of
+    // other customers leaves the server) and keeps the same paid/celebration UX.
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-          const foundOrder = orders.find((o: any) => String(o.id).trim().toUpperCase() === searchId) || 
-                           invoices.find((o: any) => String(o.id).trim().toUpperCase() === searchId);
-          if (foundOrder) {
-            setOrder(foundOrder);
-            setError(null);
+    let searchId = String(id).trim().toUpperCase();
+    if (searchId.startsWith("#")) searchId = searchId.substring(1);
+    if (searchId.includes("-S-")) searchId = searchId.split("-S-")[0];
 
-            // Count paid contributors
-            const paidCount = getSafeSplitPayments(foundOrder).filter(
-              (p: any) => p.status === "paid",
-            ).length;
+    const applyOrder = (foundOrder: any) => {
+      setOrder(foundOrder);
+      setError(null);
 
-            // Trigger effect if a new person paid
-            if (
-              paidCount > prevPaidCountRef.current &&
-              prevPaidCountRef.current !== 0
-            ) {
-              triggerFeedback();
-              triggerCoinsDroppingAndRing();
-            }
-            prevPaidCountRef.current = paidCount;
-
-            // Check if fully paid
-            const totalPaid = getSafeSplitPayments(foundOrder)
-              .filter((p: any) => p.status === "paid")
-              .reduce(
-                (sum: number, p: any) => sum + (Number(p.amount) || 0),
-                0,
-              );
-
-            const isFinished = foundOrder.total - totalPaid <= 0.005;
-            if (isFinished && !celebrationTriggered.current) {
-              celebrationTriggered.current = true;
-              triggerConfetti();
-            }
-          } else {
-            setError(null);
-            setTimeout(() => fetchOrder(true).finally(() => setLoading(false)), 650);
-            return;
-          }
-        } else {
-            setError(null);
-            setTimeout(() => fetchOrder(true).finally(() => setLoading(false)), 650);
-            return;
-        }
-        setLoading(false);
-      },
-      (err) => {
-        console.error('SplitPayment snapshot error:', err);
-        fetchOrder(true).finally(() => setLoading(false));
+      const paidCount = getSafeSplitPayments(foundOrder).filter(
+        (p: any) => p.status === "paid",
+      ).length;
+      if (paidCount > prevPaidCountRef.current && prevPaidCountRef.current !== 0) {
+        triggerFeedback();
+        triggerCoinsDroppingAndRing();
       }
-    );
+      prevPaidCountRef.current = paidCount;
 
-    return () => unsub();
+      const totalPaid = getSafeSplitPayments(foundOrder)
+        .filter((p: any) => p.status === "paid")
+        .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
+      const isFinished = Number(foundOrder.total) - totalPaid <= 0.005;
+      if (isFinished && !celebrationTriggered.current) {
+        celebrationTriggered.current = true;
+        triggerConfetti();
+      }
+    };
+
+    const poll = async (first: boolean) => {
+      try {
+        const res = await fetch(`/api/track-orders?order_id=${encodeURIComponent(searchId)}`, { cache: "no-store" });
+        if (!cancelled && res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) applyOrder(data[0]);
+          else if (first) setError("الطلب غير موجود");
+        } else if (!cancelled && first) {
+          setError("الطلب غير موجود");
+        }
+      } catch {
+        // network blip: keep the last known state and try again on the next tick
+      } finally {
+        if (!cancelled) {
+          if (first) setLoading(false);
+          timer = setTimeout(() => poll(false), 5000);
+        }
+      }
+    };
+    poll(true);
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [id]);
 
   const triggerFeedback = () => {
