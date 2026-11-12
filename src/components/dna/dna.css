@@ -1173,3 +1173,60 @@ button.dna-hubn:focus-visible .dna-hubt { transform: translateY(-2px); }
   [data-draw] .dna-sparkl, [data-draw] .dna-sparka, [data-draw] .dna-spark circle, [data-draw] .dna-tli::after,
   [data-draw] .dna-ringv { transition: none !important; }
 }
+
+/* ---------- order tracking: vertical journey (presentational only) ----------
+   The track sheet is a phone-width column (max 512px even on desktop), where six stations side by
+   side shrank to 22px dots with 12px wrapped labels. Here the same <ol> reads top to bottom: a 36px
+   node per station, its label beside it, and a short vertical rail between stations. Same states,
+   same data attributes, same journey reveal; only the axis changes. */
+.dna-steps.dna-trk {
+  --node: 36px;
+  --icon: 17px;
+  --trk-gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--trk-gap);
+  padding-block: 4px;
+}
+.dna-steps.dna-trk .dna-stepi {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  min-block-size: var(--node);
+  text-align: start;
+}
+.dna-steps.dna-trk .dna-node { flex: none; }
+.dna-steps.dna-trk .dna-num { font-size: 14px; }
+.dna-steps.dna-trk .dna-lbl {
+  flex: 1;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.dna-steps.dna-trk .dna-stepi[data-state='current'] .dna-lbl { font-weight: 800; }
+.dna-steps.dna-trk[data-journey] .dna-stepi[data-state='pending'] .dna-lbl { opacity: 0.6; }
+/* vertical rail between this node and the one above it */
+.dna-steps.dna-trk .dna-stepi + .dna-stepi::before,
+.dna-steps.dna-trk[data-journey] .dna-stepi + .dna-stepi::before {
+  inset-inline-start: calc(var(--node) / 2 - 1.5px);
+  inset-block-start: calc(var(--trk-gap) * -1 + 3px);
+  inline-size: 3px;
+  block-size: calc(var(--trk-gap) - 6px);
+  border-radius: 3px;
+}
+.dna-steps.dna-trk[data-journey] .dna-stepi + .dna-stepi::before {
+  background: linear-gradient(var(--journey-fill), var(--journey-fill)) 50% 0 / 100% 0% no-repeat, var(--dna-line-2);
+}
+.dna-steps.dna-trk[data-journey] .dna-stepi[data-link='done']::before { background-size: 100% 100%; }
+.dna-steps.dna-trk[data-journey] .dna-stepi[data-link='returned']::before {
+  background: repeating-linear-gradient(180deg, var(--dna-warn) 0 4px, transparent 4px 7px);
+}
+/* n/m payment badge sits on the outer corner of the node, clear of the label */
+.dna-steps.dna-trk[data-journey] .dna-bdg {
+  inset-block-start: -9px;
+  inset-inline-end: auto;
+  inset-inline-start: -12px;
+}
+@media (max-width: 640px) {
+  .dna-steps.dna-trk[data-journey][data-size='sm'] { --node: 34px; }
+  .dna-steps.dna-trk[data-journey] .dna-lbl { font-size: 15px; }
+}
