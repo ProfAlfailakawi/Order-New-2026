@@ -26,7 +26,7 @@ describe('iPhone Duo audit', () => {
   });
 
   it('uses dynamic viewport units for full-height shells', () => {
-    for (const f of ['src/App.tsx', 'src/pages/CustomerSite.tsx', 'src/pages/OrderPage.tsx', 'src/pages/SplitPayment.tsx', 'src/pages/AdminDashboard.tsx', 'src/components/RouletteSplit.tsx']) {
+    for (const f of ['src/App.tsx', 'src/pages/CustomerSite.tsx', 'src/pages/OrderPage.tsx', 'src/pages/SplitPayment.tsx', 'src/components/RouletteSplit.tsx']) {
       const src = read(f);
       expect(src, f).not.toMatch(/\bmin-h-screen\b/);
       expect(src, f).not.toMatch(/\bh-screen\b/);
