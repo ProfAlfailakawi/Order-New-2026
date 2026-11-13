@@ -2233,7 +2233,7 @@ button:active,a:active,.menu-product-card:active,.category-signature-card:active
   font-size:.78rem!important;
 }
 @media(max-width:520px){
-  .track-details-modal-wow{max-height:92vh!important;border-radius:34px 34px 0 0!important;}
+  .track-details-modal-wow{max-height:92dvh!important;border-radius:34px 34px 0 0!important;}
   .track-details-modal-wow > .p-8{padding:1.25rem 1.3rem!important;}
   .order-track-tabs{padding:.62rem .7rem!important;gap:.5rem!important;}
   .order-track-tabs button{min-height:42px!important;font-size:.78rem!important;}
@@ -2784,7 +2784,7 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
 
 @media(max-width:720px){
   .customer-sheet-backdrop{align-items:flex-end!important;padding:10px!important;}
-  .customer-motion-sheet{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important;max-height:92vh!important;}
+  .customer-motion-sheet{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important;max-height:92dvh!important;}
 }
 
 /* Customer product modal: keep addon cards readable on desktop and mobile */

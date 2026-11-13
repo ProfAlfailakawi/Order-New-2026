@@ -716,7 +716,7 @@ export function SaduPresenceRug({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", damping: 18, stiffness: 220 }}
-              className="bg-stone-950/90 backdrop-blur-3xl border border-white/10 rounded-[24px] sm:rounded-[35px] max-w-sm w-full p-4 sm:p-6 shadow-2xl shadow-black/80 relative space-y-4 max-h-[94vh] overflow-y-auto custom-scrollbar"
+              className="bg-stone-950/90 backdrop-blur-3xl border border-white/10 rounded-[24px] sm:rounded-[35px] max-w-sm w-full p-4 sm:p-6 shadow-2xl shadow-black/80 relative space-y-4 max-h-[94dvh] overflow-y-auto custom-scrollbar"
             >
               <div className="flex items-center justify-between">
                 <button
@@ -820,7 +820,7 @@ export function SaduPresenceRug({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 30 }}
               transition={{ type: "spring", damping: 18, stiffness: 220 }}
-              className="bg-stone-950/90 backdrop-blur-3xl border border-white/10 rounded-[24px] sm:rounded-[35px] max-w-sm w-full p-4 sm:p-6 shadow-2xl shadow-black/80 relative space-y-4 max-h-[94vh] overflow-y-auto custom-scrollbar"
+              className="bg-stone-950/90 backdrop-blur-3xl border border-white/10 rounded-[24px] sm:rounded-[35px] max-w-sm w-full p-4 sm:p-6 shadow-2xl shadow-black/80 relative space-y-4 max-h-[94dvh] overflow-y-auto custom-scrollbar"
             >
               <div className="flex items-center justify-between">
                 <button

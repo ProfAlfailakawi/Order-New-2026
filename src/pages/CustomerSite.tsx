@@ -6457,7 +6457,7 @@ export default function CustomerSite() {
                     "bg-stone-50 w-full max-w-md overflow-hidden flex flex-col relative",
                     isDirectDiwaniyaQrOpen
                       ? "h-[100dvh] max-h-[100dvh] rounded-none shadow-none mt-0"
-                      : "rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl max-h-[85vh] mt-auto sm:mt-0"
+                      : "rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl max-h-[85dvh] mt-auto sm:mt-0"
                   )}
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -7808,7 +7808,7 @@ function ProductModal({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0, translateY: "20px" }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="product-detail-layer bg-gradient-to-b from-[#fffaf2] via-white to-white w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] p-6 sm:p-8 max-h-[92vh] overflow-y-auto no-scrollbar shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.1)] relative mt-auto sm:mt-0"
+        className="product-detail-layer bg-gradient-to-b from-[#fffaf2] via-white to-white w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] p-6 sm:p-8 max-h-[92dvh] overflow-y-auto no-scrollbar shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.1)] relative mt-auto sm:mt-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Zari Bisht Gate Entrance */}

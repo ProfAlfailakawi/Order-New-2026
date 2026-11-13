@@ -85,7 +85,7 @@ export function NewInvoiceModal({
     >
       <motion.div
         {...heritageMotion.customerSheet}
-        className="customer-motion-sheet bg-[#fafaf9] rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+        className="customer-motion-sheet bg-[#fafaf9] rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90dvh]"
       >
         <div className="new-invoice-soft-head p-6 border-b border-stone-100 flex justify-between items-center bg-white shrink-0 relative">
           <button
