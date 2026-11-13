@@ -1,27 +1,19 @@
 /**
  * Unit tests for the price-integrity invariants of the AI order service.
- * Run: npx tsx scripts/ai-order-service.test.ts
+ * Run: npx vitest run scripts/ai-order-service.test.ts (part of `npm test`)
  *
  * These cover the security-critical rule: the model's prices/ids are NEVER
  * trusted — prices come from the catalog and unknown ids are dropped.
  */
 import assert from "node:assert";
+import { test } from "vitest";
 import { toCatalog, assembleSuggestion } from "../src/lib/aiOrderService.ts";
-
-let passed = 0;
-const test = (name: string, fn: () => void) => {
-  fn();
-  passed++;
-  console.log(`  ✓ ${name}`);
-};
 
 const catalog = toCatalog([
   { id: "P1", name: "مجبوس دجاج", category: "أطباق رئيسية", price: 3.5 },
   { id: "P2", name: "شوربة عدس", category: "شوربات", price: 1.0 },
   { id: "P3", name: "لقيمات", category: "تحلية", price: 1.25 },
 ]);
-
-console.log("AI order service — price integrity");
 
 test("recomputes prices from catalog, ignoring model-supplied prices", () => {
   const out = assembleSuggestion(
@@ -84,5 +76,3 @@ test("toCatalog filters entries without id or name", () => {
   assert.strictEqual(c.length, 1);
   assert.strictEqual(c[0].id, "B");
 });
-
-console.log(`\n${passed} tests passed ✅`);
