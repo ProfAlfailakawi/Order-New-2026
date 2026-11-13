@@ -1714,7 +1714,7 @@ export default function OrderPage() {
             />
             <motion.div
               layoutId={`order-${selectedOrder.id}`}
-              className="track-details-modal-wow relative w-full max-w-lg bg-white rounded-t-[48px] sm:rounded-[48px] shadow-xl overflow-hidden max-h-[90vh] flex flex-col"
+              className="track-details-modal-wow relative w-full max-w-lg bg-white rounded-t-[48px] sm:rounded-[48px] shadow-xl overflow-hidden max-h-[90dvh] flex flex-col"
             >
               <div className="p-5 sm:p-8 border-b border-stone-50 flex flex-col">
                 <div className="flex items-center justify-between">
@@ -2323,12 +2323,8 @@ export default function OrderPage() {
         )}
       </AnimatePresence>
 
-      {/* Footer Decoration */}
-      <footer className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white to-transparent pointer-events-none z-0">
-        <div className="max-w-2xl mx-auto flex flex-col items-center opacity-10">
-          <div className="w-32 h-1 bg-brand rounded-full mb-2" />
-        </div>
-      </footer>
+      {/* The fixed white fade + bar that used to sit here covered the second field and the
+          search button on short windows (folded landscape 594x368, iPhone landscape). Removed. */}
     </div>
   );
 }

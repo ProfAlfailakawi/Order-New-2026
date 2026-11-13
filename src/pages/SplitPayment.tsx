@@ -553,10 +553,30 @@ export default function SplitPayment() {
 
   if (error) {
     return (
-      <main className="min-h-dvh flex items-center justify-center bg-stone-50 p-6 flex-col text-center">
-        <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-        <h1 className="text-xl font-bold mb-2">المعذرة</h1>
-        <p className="text-stone-500">{error}</p>
+      // Was a bare icon + sentence with no way out: a guest opening a stale or mistyped
+      // qatya link had to edit the address bar. Same card as the 404 page, with two exits.
+      <main dir="rtl" className="split-error-screen min-h-dvh flex items-center justify-center bg-cream p-6 text-center">
+        <div className="max-w-md w-full bg-white border border-cream-edge rounded-[32px] p-8 text-center shadow-[0_24px_80px_rgba(120,53,15,0.10)]">
+          <AlertCircle className="w-14 h-14 text-red-500 mx-auto mb-4" strokeWidth={1.6} aria-hidden="true" />
+          <h1 className="text-2xl font-extrabold text-ink mb-2">المعذرة</h1>
+          <p className="text-stone-600 font-medium mb-6">{error}</p>
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/track")}
+              className="inline-flex items-center justify-center gap-2 min-h-12 rounded-2xl bg-brand text-white font-bold px-6 shadow-lg"
+            >
+              تتبع طلباتك
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="inline-flex items-center justify-center gap-2 min-h-12 rounded-2xl bg-white text-brand border border-cream-edge font-bold px-6"
+            >
+              الرجوع للمنيو
+            </button>
+          </div>
+        </div>
       </main>
     );
   }

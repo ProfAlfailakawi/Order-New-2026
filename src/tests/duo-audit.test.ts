@@ -34,6 +34,24 @@ describe('iPhone Duo audit', () => {
     }
   });
 
+  it('caps sheets and modals with dynamic viewport units (vh hides the bottom under Safari bars)', () => {
+    for (const f of ['src/pages/CustomerSite.tsx', 'src/pages/OrderPage.tsx', 'src/components/NewInvoiceModal.tsx', 'src/components/SaduPresenceRug.tsx']) {
+      expect(read(f), f).not.toMatch(/max-h-\[\d+vh\]/);
+    }
+    expect(read('src/index.css')).not.toMatch(/max-height:\s*\d+vh/);
+  });
+
+  it('gives the split-payment error screen a way out', () => {
+    const src = read('src/pages/SplitPayment.tsx');
+    const block = src.slice(src.indexOf('if (error) {'), src.indexOf('if (!order) {'));
+    expect(block).toMatch(/navigate\("\/track"\)/);
+    expect(block).toMatch(/navigate\("\/"\)/);
+  });
+
+  it('keeps the checkout sheet square when it fills the window', () => {
+    expect(read('src/duo.css')).toMatch(/@media \(max-width: 680px\)\s*\{\s*html body \.checkout-wow-panel\s*\{\s*border-radius:\s*0/);
+  });
+
   it('keeps the welcome sheet scrollable on short windows', () => {
     const css = read('src/duo.css');
     expect(css).toMatch(/\.ord-bp-theatre\s*\{[^}]*overflow-y:\s*auto/);
