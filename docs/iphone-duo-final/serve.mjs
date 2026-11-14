@@ -83,7 +83,10 @@ const server = http.createServer(async (req, res) => {
         try {
           const r = await fetch(LIVE + key, { headers: { accept: 'application/json' } });
           cache.set(key, { code: r.status, body: await r.text() });
-        } catch (e) { return json(res, 502, { error: String(e) }); }
+        } catch (e) {
+          console.error('duo preview: upstream read failed', e); // details stay in the terminal
+          return json(res, 502, { error: 'upstream unavailable' });
+        }
       }
       const c = cache.get(key);
       return json(res, c.code, c.body);
