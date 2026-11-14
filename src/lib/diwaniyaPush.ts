@@ -1,6 +1,11 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getMessaging, getToken, isSupported, onMessage } from 'firebase/messaging';
 import firebaseConfig from '../../firebase-applet-config.json';
+import {
+  isNativePushAvailable,
+  registerNativePushToken,
+  requestNativePushPermission,
+} from '../native-push';
 
 export type DiwaniyaPushState =
   | 'unsupported'
@@ -39,6 +44,8 @@ async function getFreshMessagingServiceWorkerRegistration(): Promise<ServiceWork
 
 export const isDiwaniyaPushReady = async () => {
   if (typeof window === 'undefined') return false;
+  // Inside the iOS app there is no Service Worker; the native APNs plugin is used instead.
+  if (isNativePushAvailable()) return true;
   if (!('Notification' in window) || !('serviceWorker' in navigator)) return false;
   if (!VAPID_KEY) return false;
   return isSupported().catch(() => false);
@@ -47,6 +54,34 @@ export const isDiwaniyaPushReady = async () => {
 export const enableDiwaniyaImportantPush = async ({ phone, squadId }: { phone: string; squadId?: string }) => {
   const cleanPhone = String(phone || '').replace(/\D/g, '').slice(-8);
   if (!cleanPhone) return { state: 'error' as DiwaniyaPushState, message: 'رقم العميل غير واضح' };
+
+  // iOS app: system permission + APNs device token (no Notification / Service Worker in WKWebView).
+  if (isNativePushAvailable()) {
+    const nativePermission = await requestNativePushPermission();
+    if (nativePermission !== 'granted') {
+      return { state: 'blocked' as DiwaniyaPushState, message: 'إذن التنبيهات مسكر، فعّله من إعدادات الجهاز' };
+    }
+    const nativeToken = await registerNativePushToken();
+    if (!nativeToken) return { state: 'error' as DiwaniyaPushState, message: 'ما قدرنا نجهز رمز الإشعار' };
+    const nativeResponse = await fetch('/api/diwaniya-push/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: cleanPhone,
+        token: nativeToken,
+        squadId: squadId || '',
+        prefs: { qatya: true, roulette: true },
+        userAgent: navigator.userAgent,
+        platform: 'ios-native',
+        standalone: true,
+        notificationPermission: 'granted',
+        currentUrl: window.location.href,
+      }),
+    });
+    if (!nativeResponse.ok) throw new Error('ما قدرنا نحفظ إعداد الإشعارات');
+    try { localStorage.setItem(TOKEN_STORAGE_KEY, nativeToken); } catch {}
+    return { state: 'saved' as DiwaniyaPushState, message: 'تنبيهات القطيّة ووهق غيرك تفعّلت' };
+  }
   if (!('Notification' in window) || !('serviceWorker' in navigator)) {
   return { state: 'unsupported' as DiwaniyaPushState, message: 'المتصفح ما يدعم تنبيهات الديوانية الخارجية' };
   }
@@ -105,6 +140,7 @@ export const enableDiwaniyaImportantPush = async ({ phone, squadId }: { phone: s
 };
 
 export const watchDiwaniyaForegroundPush = (onNotify: (payload: any) => void) => {
+  if (isNativePushAvailable()) return () => {}; // the system shows the banner itself
   if (!VAPID_KEY || !('Notification' in window)) return () => {};
   let unsubscribe = () => {};
   isSupported()
