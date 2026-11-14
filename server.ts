@@ -2218,10 +2218,88 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
     }
   });
 
+  // Account deletion REQUEST (Apple 5.1.1(v)). Customers have a phone-keyed
+  // profile (customers + diwaniya membership + loyalty points). This only
+  // records a pending request; nothing is deleted or changed automatically and
+  // the owner processes it within 30 days. Same reply for every phone so the
+  // endpoint cannot be used to learn who is a customer.
+  const ACCOUNT_DELETION_MESSAGE = "سجلنا طلب حذف حسابك. نحذف بياناتك خلال 30 يومًا، وقد نحتفظ بسجلات الطلبات المطلوبة للمحاسبة بدون ربطها بك.";
+  const accountDeletionRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "طلبات كثيرة. جرّب بعد 15 دقيقة." },
+  });
+  app.post("/api/account/deletion-request", accountDeletionRateLimit, async (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    const phone = cleanPhone(req.body?.phone);
+    if (phone.length !== 8) return res.status(400).json({ error: "رقم الجوال غير صحيح." });
+    try {
+      let created = false;
+      const ok = await updateAppDataAtomically((current: any) => {
+        const existing = Array.isArray(current.accountDeletionRequests) ? current.accountDeletionRequests : [];
+        if (existing.some((r: any) => r?.phone === phone && r?.status === "pending")) return null;
+        const hasProfile = (Array.isArray(current.customers) ? current.customers : []).some(
+          (c: any) => cleanPhone(c?.phone) === phone,
+        );
+        created = true;
+        return {
+          accountDeletionRequests: [
+            ...existing,
+            {
+              id: "DEL-" + Date.now().toString(36),
+              phone,
+              hasProfile,
+              status: "pending",
+              requested_at: new Date().toISOString(),
+              source: "customer_app",
+            },
+          ],
+        };
+      }, []);
+      if (!ok) throw new Error("save failed");
+      return res.json({ success: true, created, message: ACCOUNT_DELETION_MESSAGE });
+    } catch (e) {
+      console.error("[ACCOUNT_DELETION] failed:", e);
+      return res.status(500).json({ error: "تعذر تسجيل الطلب حالياً. حاول مرة أخرى." });
+    }
+  });
+
+  // Owner-only list of pending deletion requests (30-day follow-up).
+  app.get("/api/admin/account-deletion-requests", adminRateLimit, adminAuthOnly, async (_req, res) => {
+    try {
+      const d = await getAppDataRef();
+      res.json(((d.exists() ? d.data() : {}) as any).accountDeletionRequests || []);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to fetch requests" });
+    }
+  });
+
+  // App Store review coupon. Feature is OFF unless REVIEW_COUPON_CODE is set
+  // (min 8 chars, A-Z/0-9/-/_ only). It gives a 100% discount (items + delivery)
+  // so Apple's reviewer can place a full order without a real payment.
+  // The code is never stored in git; the order is flagged and labelled.
+  const getReviewCouponCode = (): string => {
+    const raw = String(process.env.REVIEW_COUPON_CODE || "").trim().toUpperCase();
+    return /^[A-Z0-9_-]{8,40}$/.test(raw) ? raw : "";
+  };
+  const isReviewCouponCode = (input: any): boolean => {
+    const configured = getReviewCouponCode();
+    return Boolean(configured) && String(input || "").trim().toUpperCase() === configured;
+  };
+
   // Validate Promo Code
   app.post("/api/validate-promo", async (req, res) => {
     const { code } = req.body;
     if (!code) return res.status(400).json({ error: "Code is required" });
+
+    if (isReviewCouponCode(code)) {
+      return res.json({
+        success: true,
+        promo: { code: String(code).trim().toUpperCase(), type: "free", value: 100, discountValue: 100 },
+      });
+    }
 
     try {
       const d = await getAppDataRef();
@@ -4143,7 +4221,10 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
     const trustedItemsTotal = calculatedTotal;
     let trustedDiscount = 0;
     const promoCode = String(req.body.promoCode || "").trim().toUpperCase();
-    if (promoCode) {
+    const isReviewOrder = isReviewCouponCode(promoCode);
+    if (isReviewOrder) {
+      trustedDiscount = trustedItemsTotal + trustedDeliveryFee;
+    } else if (promoCode) {
       const promo = (appDataRef.promocodes || []).find(
         (p: any) => String(p?.code || "").toUpperCase() === promoCode && p.isActive,
       );
@@ -4194,6 +4275,14 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
       source: "customer_website",
       generalNotes: generalNotes || "",
     };
+
+    if (isReviewOrder) {
+      // Clearly labelled test order from the App Store reviewer; no real payment.
+      newOrder.isReviewOrder = true;
+      newOrder.isTestOrder = true;
+      newOrder.customerName = `[تجربة مراجعة آبل] ${newOrder.customerName}`.substring(0, 100);
+      newOrder.generalNotes = `طلب تجريبي من مراجعة آبل - لا يُحضَّر ولا يُوصَّل. ${newOrder.generalNotes}`.trim();
+    }
 
     const normalizedQatiaType = String(qatiaType || "").toLowerCase();
     const normalizedSplitOrigin = String(splitOrigin || "").toLowerCase();
@@ -4428,8 +4517,8 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
       });
 
       console.log(`[ORDER] Order ${newOrder.id} saved successfully`);
-      scheduleAdminOrderCreatedPush(newOrder);
-      if (newOrder.paymentStatus === "paid" || String(newOrder.status || "").startsWith("تم الدفع")) {
+      if (!isReviewOrder) scheduleAdminOrderCreatedPush(newOrder);
+      if (!isReviewOrder && (newOrder.paymentStatus === "paid" || String(newOrder.status || "").startsWith("تم الدفع"))) {
         void sendAdminPushDirectOnce({
           eventId: `safe-worker-payment-paid-${newOrder.id}`,
           title: "✅ تم دفع طلب",
