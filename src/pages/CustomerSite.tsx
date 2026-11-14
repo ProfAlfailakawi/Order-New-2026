@@ -46,6 +46,7 @@ import {
   Hourglass,
   UserPlus,
   DoorOpen,
+  UserX,
   UtensilsCrossed,
   ChevronLeft,
   Heart,
@@ -1800,6 +1801,8 @@ export default function CustomerSite() {
   const [aiSearchLoading, setAiSearchLoading] = useState(false);
   const [aiMatchingIds, setAiMatchingIds] = useState<string[] | null>(null);
 
+  const [deleteAccountStep, setDeleteAccountStep] = useState<"idle" | "confirm" | "sending" | "done" | "error">("idle");
+  const [deleteAccountMsg, setDeleteAccountMsg] = useState("");
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
   const [promoError, setPromoError] = useState("");
@@ -4006,7 +4009,10 @@ export default function CustomerSite() {
 
   let discountAmount = 0;
   if (appliedPromo) {
-    if (appliedPromo.type === "percentage") {
+    if (appliedPromo.type === "free") {
+      // App Store review coupon: server-validated 100% off (items + delivery).
+      discountAmount = itemsTotal + deliveryFee;
+    } else if (appliedPromo.type === "percentage") {
       discountAmount = itemsTotal * (appliedPromo.value / 100);
     } else {
       discountAmount = appliedPromo.value;
@@ -6608,6 +6614,78 @@ export default function CustomerSite() {
                          setInitialCode={setInitialSquadCode}
                         />
                       </React.Suspense>
+
+                      {customerPhone && (
+                        <div className="mt-6 rounded-2xl border border-rose-100 bg-white p-4 text-right" dir="rtl">
+                          <h3 className="flex items-center gap-2 text-sm font-black text-stone-800">
+                            <UserX className="w-4 h-4 text-rose-500" aria-hidden="true" />
+                            حذف الحساب
+                          </h3>
+                          <p className="mt-1 text-[11px] font-bold leading-5 text-stone-500">
+                            نحذف بياناتك (الاسم والجوال والنقاط والديوانية) خلال 30 يومًا من طلبك. قد نحتفظ بسجلات الطلبات المطلوبة للمحاسبة بدون ربطها بك.
+                          </p>
+                          {deleteAccountStep === "done" ? (
+                            <p className="mt-3 text-xs font-black text-green-700" role="status">{deleteAccountMsg}</p>
+                          ) : deleteAccountStep === "confirm" || deleteAccountStep === "sending" || deleteAccountStep === "error" ? (
+                            <div className="mt-3 space-y-2">
+                              <p className="text-xs font-black text-rose-700">متأكد تبي تطلب حذف حسابك؟ بتطلع من الديوانية على هالجهاز.</p>
+                              {deleteAccountStep === "error" && (
+                                <p className="text-xs font-bold text-rose-600" role="alert">{deleteAccountMsg}</p>
+                              )}
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  disabled={deleteAccountStep === "sending"}
+                                  onClick={async () => {
+                                    setDeleteAccountStep("sending");
+                                    try {
+                                      const resp = await fetch("/api/account/deletion-request", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ phone: customerPhone }),
+                                      });
+                                      const data = await resp.json().catch(() => ({}));
+                                      if (!resp.ok || !data?.success) {
+                                        setDeleteAccountMsg(data?.error || "تعذر تسجيل الطلب حالياً.");
+                                        setDeleteAccountStep("error");
+                                        return;
+                                      }
+                                      setDeleteAccountMsg(data.message || "سجلنا طلب حذف حسابك. نحذف بياناتك خلال 30 يومًا.");
+                                      setDeleteAccountStep("done");
+                                      window.setTimeout(() => {
+                                        clearSquadSessionOnThisDevice();
+                                        setDeleteAccountStep("idle");
+                                      }, 3500);
+                                    } catch {
+                                      setDeleteAccountMsg("تعذر الاتصال بالخادم. حاول مرة أخرى.");
+                                      setDeleteAccountStep("error");
+                                    }
+                                  }}
+                                  className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-black text-white active:scale-95 disabled:opacity-60"
+                                >
+                                  {deleteAccountStep === "sending" ? "..." : "تأكيد طلب الحذف"}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={deleteAccountStep === "sending"}
+                                  onClick={() => setDeleteAccountStep("idle")}
+                                  className="rounded-xl bg-stone-100 px-4 py-2 text-xs font-black text-stone-600 active:scale-95"
+                                >
+                                  إلغاء
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setDeleteAccountStep("confirm")}
+                              className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-black text-rose-700 active:scale-95"
+                            >
+                              طلب حذف الحساب
+                            </button>
+                          )}
+                        </div>
+                      )}
                    </div>
                 </motion.div>
               </motion.div>
