@@ -198,9 +198,9 @@ html body .al-cart-bar { padding-bottom: max(0px, env(safe-area-inset-bottom)); 
    Before, on short windows the sticky bar floated over the notes (the sheet's 112px bottom
    padding broke its sticky edge) and the photo, title and add-ons all shared one cramped column.
    ========================================================================== */
-@media (min-width: 640px) and (max-width: 720px) and (min-height: 760px) and (max-height: 1000px),
-       (min-width: 860px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 700px),
-       (min-width: 520px) and (max-height: 520px) {
+@media screen and (min-width: 640px) and (max-width: 720px) and (min-height: 760px) and (max-height: 1000px),
+       screen and (min-width: 860px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 700px),
+       screen and (min-width: 520px) and (max-height: 520px) {
   html body [role='dialog'][aria-label='تفاصيل المنتج'] { align-items: center; padding: var(--duo-sheet-pad) var(--duo-gutter); }
   /* index.css pins this sheet with !important (width min(100%, 32rem), max-height 90-94dvh);
      only those properties are forced back here. */
@@ -260,7 +260,7 @@ html body .al-cart-bar { padding-bottom: max(0px, env(safe-area-inset-bottom)); 
 
   html body .product-detail-layer > .flex.flex-col.sm\:flex-row > .relative.shrink-0 { flex: 0 0 auto; }
 }
-@media (min-width: 520px) and (max-height: 520px) {
+@media screen and (min-width: 520px) and (max-height: 520px) {
   html body .product-detail-layer { max-width: 880px !important; border-radius: 28px; }
   html body .product-detail-layer > .flex.flex-col.sm\:flex-row { padding: 20px 22px; gap: 10px; }
   html body .product-detail-layer > .flex.flex-col.sm\:flex-row .food-photo { width: 88px !important; height: 88px !important; border-radius: 26px; }
@@ -278,9 +278,9 @@ html body .al-cart-bar { padding-bottom: max(0px, env(safe-area-inset-bottom)); 
    next-step button. On short windows the side sheet used to stack header + steps + a 3-row footer
    strip, leaving the basket itself ~40px of glass; now the form keeps the full height.
    ========================================================================== */
-@media (min-width: 640px) and (max-width: 720px) and (min-height: 760px) and (max-height: 1000px),
-       (min-width: 860px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 700px),
-       (min-width: 560px) and (max-height: 520px) {
+@media screen and (min-width: 640px) and (max-width: 720px) and (min-height: 760px) and (max-height: 1000px),
+       screen and (min-width: 860px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 700px),
+       screen and (min-width: 560px) and (max-height: 520px) {
   html body [role='dialog'][aria-label='السلة وإتمام الطلب'] { justify-content: stretch; }
   /* index.css forces display:flex, width min(720-920px, 92vw) and max-width with !important. */
   html body .checkout-wow-panel {
@@ -350,7 +350,7 @@ html body .al-cart-bar { padding-bottom: max(0px, env(safe-area-inset-bottom)); 
   html body .checkout-wow-panel .checkout-steps .dna-steps { max-width: 100%; }
 
 }
-@media (min-width: 560px) and (max-height: 520px) {
+@media screen and (min-width: 560px) and (max-height: 520px) {
   html body .checkout-wow-panel > .checkout-wow-footer { justify-content: center; gap: 10px; padding-block: 14px calc(14px + env(safe-area-inset-bottom)) !important; }
   html body .checkout-wow-panel > .checkout-wow-footer::before { display: none; }
   /* index.css (max-height 500px landscape) makes every footer child flex: 1 1 100% and the button 42% wide. */
@@ -364,7 +364,7 @@ html body .al-cart-bar { padding-bottom: max(0px, env(safe-area-inset-bottom)); 
    beauty-pass lays the delivery footer out as one strip (promo | total | button) but the prep-time note
    sat between the totals and the button in the DOM, so the button fell to a third row under the strip's
    30dvh cap: on 600x350 the address step showed no way forward. The note now goes after the button. */
-@media (max-height: 700px) {
+@media screen and (max-width: 1000px) and (max-height: 700px) {
   html body .checkout-footer-delivery [class*='bg-accent/[0.07]'] { order: 9; grid-column: 1 / -1; }
 }
 
@@ -391,8 +391,8 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
 /* The menu's context-page wrapper is invisible to layout outside the book. */
 .duo-context-page { display: contents; }
 
-@media (min-width: 640px) and (max-width: 720px) and (min-height: 760px) and (max-height: 1000px),
-       (min-width: 860px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 700px) {
+@media screen and (min-width: 640px) and (max-width: 720px) and (min-height: 760px) and (max-height: 1000px),
+       screen and (min-width: 860px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 700px) {
   :root { --duo-page: calc(50vw - var(--duo-spine) / 2); --duo-fold: var(--duo-spine); --duo-sheet-pad: 18px; }
 
   /* The fold: a hairline and a soft shadow either side, drawn over everything (it is in the

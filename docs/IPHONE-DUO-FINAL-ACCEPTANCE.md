@@ -242,3 +242,27 @@ NODE_PATH=/opt/node22/lib/node_modules PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
 ## 12. النشر
 
 لم يُشغَّل أي نشر. الدمج إلى `main` لا ينشر بنفسه من GitHub: سير العمل [deploy.yml](../.github/workflows/deploy.yml) («Deploy hosting») يدوي `workflow_dispatch` من `main` فقط (اختبار ثم بناء ثم Firebase Hosting، ويحتاج السر `FIREBASE_SERVICE_ACCOUNT`). المسار الآخر مُشغِّل Cloud Build `order-main-deploy` ([cloudbuild.yaml](../cloudbuild.yaml))، والجولة السابقة وجدته معطّلًا. و[deploy-watchdog.yml](../.github/workflows/deploy-watchdog.yml) يقارن كل ساعة `https://alturathkw.shop/build-id.json` مع `main`.
+
+## Duo ≠ iPad
+
+الكتاب (صفحتان) ووضع اللابتوب خاصّان بشاشة Duo الداخلية فقط. المُميِّز الوحيد المتاح لـ CSS هو حجم النافذة:
+Duo ≈ 669×867 طولي و951×585 عرضي؛ الآيباد: عرض ≥ 744 طوليًا و≥ 1024 عرضيًا، وارتفاعه لا ينزل عن ~630.
+
+| الاستعلام | المدى | يطابق آيباد؟ |
+|---|---|---|
+| كتاب طولي | `screen`، عرض 640–720، ارتفاع 760–1000 | لا (أصغر آيباد 744) |
+| كتاب عرضي | `screen`، عرض 860–1000، ارتفاع 520–700 | لا (أصغر عرض عرضي 1024) |
+| وضع اللابتوب | `screen`، عرض ≥ 520/560، ارتفاع ≤ 520 | لا (أقصر نافذة آيباد ~660) |
+| تذييل الدفع القصير | كان `(max-height: 700px)` بلا سقف عرض، فطابق 1024×690 و1133×660 | **نعم، وصُحّح** إلى `screen and (max-width: 1000px) and (max-height: 700px)` |
+
+التغيير: كل استعلامات Duo صارت مقيّدة بـ `screen` (كانت بلا نطاق وفيها A4 للطباعة)، والاستعلام القصير أعلاه أُضيف له سقف عرض 1000.
+`duo-context-page` يبقى `display: contents` خارج الكتاب، والحواريات `duo-page-dialog` كلها داخل استعلام الكتاب.
+
+قياس WebKit (matchMedia + getComputedStyle على `body::after` و`.duo-context-page`، شاشة المنيو): 23 مقاسًا للآيباد
+(744×1133، 768×1024، 810×1080، 820×1180، 834×1112، 834×1194، 1024×1366 وعرضيها، ومع شريط Safari مثل 744×1040،
+768×920، 1024×690، 1133×660، 1180×735): لا طيّ، لا حافة، `scrollWidth == clientWidth`. وعلى 669×867، 660×800، 700×900،
+720×900، 951×585، 880×585، 1000×600 يبقى الكتاب مفعّلًا؛ 669×520 يبقى في وضع اللابتوب.
+حارس الاختبار: `src/tests/duo-audit.test.ts` يفشل إن فقد استعلام `screen` أو سمح الطولي بعرض > 720 أو العرضي > 1000.
+
+قيد معروف: نافذة Split View / Slide Over على الآيباد بعرض ~640–720 لا تُميَّز عن Duo بالحجم. التمييز الحقيقي
+هو `(horizontal-viewport-segments: 2)` وهو غير مستخدم هنا (اختبار المستودع يمنعه).

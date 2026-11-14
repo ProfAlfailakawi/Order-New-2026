@@ -93,6 +93,34 @@ describe('iPhone Duo audit', () => {
       expect(css).toMatch(/\.duo-page-dialog\s*\{[^}]*padding-inline:[^}]*50%/);
     });
 
+    it('keeps every Duo posture query off iPads: screen only, width-capped (Duo is not an iPad)', () => {
+      // iPad portrait is 744px wide or more, iPad landscape 1024px or more, and an iPad window is never
+      // under ~630px tall; the Duo inner screen is ~669x867 and ~951x585. Width is the only safe signal.
+      const from = css.indexOf('@media screen and (min-width: 640px)');
+      expect(from).toBeGreaterThan(-1);
+      const queries = [...css.slice(from).matchAll(/^@media ([^{]+)\{/gm)].flatMap((m) =>
+        m[1].split(',').map((q) => q.trim()),
+      );
+      expect(queries.length).toBeGreaterThanOrEqual(8);
+      const px = (q: string, prop: string) => {
+        const m = q.match(new RegExp('\\(' + prop + ':\\s*(\\d+)px\\)'));
+        return m ? Number(m[1]) : null;
+      };
+      for (const q of queries) {
+        if (/prefers-reduced-motion/.test(q)) continue;
+        expect(q, q).toMatch(/^screen and /);
+        const minW = px(q, 'min-width');
+        const maxW = px(q, 'max-width');
+        const maxH = px(q, 'max-height');
+        // Portrait book: never wider than 720px. Landscape book: never wider than 1000px.
+        if (maxW !== null) expect(maxW, q).toBeLessThanOrEqual(minW !== null && minW < 840 ? 720 : 1000);
+        // A lower width bound at or above the iPad portrait width must be capped below iPad landscape.
+        if (minW !== null && minW >= 744) expect(maxW, q).not.toBeNull();
+        // Short-window (laptop) postures: either a real short height or a width below iPad landscape.
+        if (maxW === null) expect(maxH ?? Infinity, q).toBeLessThanOrEqual(520);
+      }
+    });
+
     it('scopes the short-window product rules to the sheet header, not the add-on cards', () => {
       const idx = read('src/index.css');
       expect(idx).not.toMatch(/\.product-detail-layer \.flex\.flex-col\.sm\\:flex-row > div:first-child > div\.flex/);
