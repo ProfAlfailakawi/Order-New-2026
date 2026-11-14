@@ -123,7 +123,7 @@ const OrderWelcome: React.FC<OrderWelcomeProps> = ({ logo, onStart, autoOpen = t
         {open && (
           <motion.div
             dir="rtl"
-            className="fixed inset-0 z-[9998] flex items-end sm:items-center justify-center"
+            className="duo-page-dialog fixed inset-0 z-[9998] flex items-end sm:items-center justify-center"
             style={{
               padding:
                 "max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom))",

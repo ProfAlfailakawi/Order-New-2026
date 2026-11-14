@@ -1,0 +1,811 @@
+{
+ "generatedAt": "2026-11-14T05:06:50.718Z",
+ "live": {
+  "track": {
+   "pass": true,
+   "steps": [
+    {
+     "vp": "951x585",
+     "ok": true,
+     "state": {
+      "phone": "99999999",
+      "orderId": "DEMO-1001",
+      "results": 2
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "669x867",
+     "ok": true,
+     "state": {
+      "phone": "99999999",
+      "orderId": "DEMO-1001",
+      "results": 2
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "470x700",
+     "ok": true,
+     "state": {
+      "phone": "99999999",
+      "orderId": "DEMO-1001",
+      "results": 2
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "382x580",
+     "ok": true,
+     "state": {
+      "phone": "99999999",
+      "orderId": "DEMO-1001",
+      "results": 2
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "594x368",
+     "ok": true,
+     "state": {
+      "phone": "99999999",
+      "orderId": "DEMO-1001",
+      "results": 2
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "951x350",
+     "ok": true,
+     "state": {
+      "phone": "99999999",
+      "orderId": "DEMO-1001",
+      "results": 1
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "951x585",
+     "ok": true,
+     "state": {
+      "phone": "99999999",
+      "orderId": "DEMO-1001",
+      "results": 1
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    }
+   ]
+  },
+  "product-sheet": {
+   "pass": true,
+   "steps": [
+    {
+     "vp": "951x585",
+     "ok": true,
+     "state": {
+      "open": true,
+      "notes": "بدون بصل لو سمحتوا",
+      "qty": "2"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "669x867",
+     "ok": true,
+     "state": {
+      "open": true,
+      "notes": "بدون بصل لو سمحتوا",
+      "qty": "2"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "470x700",
+     "ok": true,
+     "state": {
+      "open": true,
+      "notes": "بدون بصل لو سمحتوا",
+      "qty": "2"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "382x580",
+     "ok": true,
+     "state": {
+      "open": true,
+      "notes": "بدون بصل لو سمحتوا",
+      "qty": "2"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "594x368",
+     "ok": true,
+     "state": {
+      "open": true,
+      "notes": "بدون بصل لو سمحتوا",
+      "qty": "2"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "951x350",
+     "ok": true,
+     "state": {
+      "open": true,
+      "notes": "بدون بصل لو سمحتوا",
+      "qty": "2"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "951x585",
+     "ok": true,
+     "state": {
+      "open": true,
+      "notes": "بدون بصل لو سمحتوا",
+      "qty": "2"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    }
+   ]
+  },
+  "checkout-address": {
+   "pass": true,
+   "steps": [
+    {
+     "vp": "951x585",
+     "ok": true,
+     "state": {
+      "open": true,
+      "step": "العنوان",
+      "phone": "99999999"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "669x867",
+     "ok": true,
+     "state": {
+      "open": true,
+      "step": "العنوان",
+      "phone": "99999999"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "470x700",
+     "ok": true,
+     "state": {
+      "open": true,
+      "step": "العنوان",
+      "phone": "99999999"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "382x580",
+     "ok": true,
+     "state": {
+      "open": true,
+      "step": "العنوان",
+      "phone": "99999999"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "594x368",
+     "ok": true,
+     "state": {
+      "open": true,
+      "step": "العنوان",
+      "phone": "99999999"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "951x350",
+     "ok": true,
+     "state": {
+      "open": true,
+      "step": "العنوان",
+      "phone": "99999999"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "951x585",
+     "ok": true,
+     "state": {
+      "open": true,
+      "step": "العنوان",
+      "phone": "99999999"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    }
+   ]
+  },
+  "menu-scroll": {
+   "pass": true,
+   "steps": [
+    {
+     "vp": "951x585",
+     "ok": true,
+     "state": {
+      "query": "هريس"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "669x867",
+     "ok": true,
+     "state": {
+      "query": "هريس"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "470x700",
+     "ok": true,
+     "state": {
+      "query": "هريس"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "382x580",
+     "ok": true,
+     "state": {
+      "query": "هريس"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "594x368",
+     "ok": true,
+     "state": {
+      "query": "هريس"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "951x350",
+     "ok": true,
+     "state": {
+      "query": "هريس"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    },
+    {
+     "vp": "951x585",
+     "ok": true,
+     "state": {
+      "query": "هريس"
+     },
+     "overflowX": 0,
+     "spine": 0,
+     "reloads": 0
+    }
+   ]
+  }
+ },
+ "stress": {
+  "text200:menu-dishes": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "text200:product": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [
+     "زيّد الكمية"
+    ],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "text200:checkout-address": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "text200:track-results": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": [
+     "h1 \"تتبع الطلبات\""
+    ]
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "text200:split-payment": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "text200:not-found": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "dark:menu-dishes": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "dark:product": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "dark:checkout-address": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "dark:track-results": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "dark:split-payment": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "dark:not-found": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "motion:menu-dishes": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "motion:product": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "motion:checkout-address": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "motion:track-results": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "motion:split-payment": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  },
+  "motion:not-found": {
+   "669x867": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x585": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "382x580": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   },
+   "951x350": {
+    "overflowX": 0,
+    "offscreen": [],
+    "spine": []
+   }
+  }
+ },
+ "keyboard": {
+  "track": {
+   "951x585": {
+    "focused": true,
+    "top": 204,
+    "bottom": 260,
+    "visible": true
+   },
+   "669x867": {
+    "focused": true,
+    "top": 204,
+    "bottom": 260,
+    "visible": true
+   },
+   "382x580": {
+    "focused": true,
+    "top": 204,
+    "bottom": 260,
+    "visible": true
+   }
+  },
+  "checkout-address": {
+   "951x585": {
+    "focused": true,
+    "top": 199,
+    "bottom": 258,
+    "visible": true
+   },
+   "669x867": {
+    "focused": true,
+    "top": 199,
+    "bottom": 258,
+    "visible": true
+   },
+   "382x580": {
+    "focused": true,
+    "top": 186,
+    "bottom": 245,
+    "visible": true
+   }
+  },
+  "product": {
+   "951x585": {
+    "focused": true,
+    "top": 203,
+    "bottom": 285,
+    "visible": true
+   },
+   "669x867": {
+    "focused": true,
+    "top": 203,
+    "bottom": 285,
+    "visible": true
+   },
+   "382x580": {
+    "focused": true,
+    "top": 267,
+    "bottom": 349,
+    "visible": true
+   }
+  }
+ }
+}

@@ -56,4 +56,47 @@ describe('iPhone Duo audit', () => {
     const css = read('src/duo.css');
     expect(css).toMatch(/\.ord-bp-theatre\s*\{[^}]*overflow-y:\s*auto/);
   });
+  describe('opened Duo as a book (2026-11-14)', () => {
+    const css = read('src/duo.css');
+    const book = '(min-width: 640px) and (max-width: 720px) and (min-height: 760px) and (max-height: 1000px)';
+
+    it('lays the inner screen out as two pages with a fold, from the window size only', () => {
+      expect(css).toContain(book);
+      expect(css).toContain('(min-width: 860px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 700px)');
+      expect(css).toMatch(/--duo-spine:\s*32px/);
+      expect(css).toMatch(/html body::after\s*\{[^}]*pointer-events:\s*none/);
+    });
+
+    it('keeps the menu context wrapper invisible to layout outside the book', () => {
+      // Unindented = top level, not inside any @media block.
+      expect(css).toMatch(/\n\.duo-context-page\s*\{\s*display:\s*contents;\s*\}/);
+      const src = read('src/pages/CustomerSite.tsx');
+      const start = src.indexOf('<div className="duo-context-page">');
+      expect(start).toBeGreaterThan(-1);
+      const wrapped = src.slice(start, src.indexOf('<main className="p-4', start));
+      expect(wrapped).toContain('aria-label="البحث والعروض"');
+      expect(wrapped).toContain('role="search"');
+    });
+
+    it('opens centred dialogs on one page instead of across the fold', () => {
+      const files: Record<string, number> = {
+        'src/pages/CustomerSite.tsx': 7,
+        'src/pages/OrderPage.tsx': 3,
+        'src/components/OfflineModal.tsx': 1,
+        'src/components/OrderWelcome.tsx': 1,
+        'src/components/NewInvoiceModal.tsx': 1,
+        'src/components/SaduPresenceRug.tsx': 3,
+      };
+      for (const [f, n] of Object.entries(files)) {
+        expect((read(f).match(/duo-page-dialog/g) || []).length, f).toBeGreaterThanOrEqual(n);
+      }
+      expect(css).toMatch(/\.duo-page-dialog\s*\{[^}]*padding-inline:[^}]*50%/);
+    });
+
+    it('scopes the short-window product rules to the sheet header, not the add-on cards', () => {
+      const idx = read('src/index.css');
+      expect(idx).not.toMatch(/\.product-detail-layer \.flex\.flex-col\.sm\\:flex-row > div:first-child > div\.flex/);
+      expect(idx).toMatch(/\.product-detail-layer > \.flex\.flex-col\.sm\\:flex-row > div:first-child > div\.flex/);
+    });
+  });
 });

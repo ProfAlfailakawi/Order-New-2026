@@ -190,25 +190,455 @@ html body .al-cart-bar { padding-bottom: max(0px, env(safe-area-inset-bottom)); 
   html body .track-signature section.order-detail-card form input { padding-block: 14px; }
 }
 
-/* Product sheet on short windows (folded landscape 594x368, opened landscape with a pinned
-   pane 951x350, phone landscape): the 112-132px photo + title + price stacked above the notes,
-   and the sticky add-to-cart bar landed on the notes box. Photo beside the title, smaller. */
-@media (min-width: 520px) and (max-height: 520px) {
-  html body .product-detail-layer { padding-top: 16px !important; }
+/* ==========================================================================
+   Product sheet as two pages: the book (fold in the middle) and every short, wide window
+   (laptop posture 951x350 / 600x350, folded landscape 594x368, phone landscape).
+   Right page: the dish (photo, name, price). Left page: add-ons and notes scroll, and the
+   quantity + add-to-cart bar sits at its foot, in flow, so it never covers what is above it.
+   Before, on short windows the sticky bar floated over the notes (the sheet's 112px bottom
+   padding broke its sticky edge) and the photo, title and add-ons all shared one cramped column.
+   ========================================================================== */
+@media (min-width: 640px) and (max-width: 720px) and (min-height: 760px) and (max-height: 1000px),
+       (min-width: 860px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 700px),
+       (min-width: 520px) and (max-height: 520px) {
+  html body [role='dialog'][aria-label='تفاصيل المنتج'] { align-items: center; padding: var(--duo-sheet-pad) var(--duo-gutter); }
+  /* index.css pins this sheet with !important (width min(100%, 32rem), max-height 90-94dvh);
+     only those properties are forced back here. */
+  html body .product-detail-layer {
+    max-width: none !important;
+    width: 100% !important;
+    block-size: calc(100dvh - 2 * var(--duo-sheet-pad));
+    max-height: none !important;
+    margin: 0;
+    padding: 0 !important;
+    border-radius: 34px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--duo-fold) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
   html body .product-detail-layer > .flex.justify-center.mb-6 { display: none; }
-  html body .product-detail-layer .flex.flex-col.sm\:flex-row {
-    flex-direction: row;
+  html body .product-detail-layer > .flex.flex-col.sm\:flex-row {
+    grid-column: 1;
+    grid-row: 1;
+    flex-direction: column;
     align-items: center;
-    gap: 16px;
-    margin-block: 0 12px;
-    padding-inline-end: 48px;
+    justify-content: center;
+    text-align: center;
+    gap: 18px;
+    margin: 0;
+    padding: 56px 28px 28px;
+    background: linear-gradient(180deg, #fffaf2, #fff6e6);
+    block-size: 100%;
   }
-  html body .product-detail-layer .flex.flex-col.sm\:flex-row > .relative.shrink-0 [class*='w-[112px]'],
-  html body .product-detail-layer .flex.flex-col.sm\:flex-row > .relative.shrink-0 [class*='w-[108px]'] {
-    width: 76px !important;
-    height: 76px !important;
-    border-radius: 20px;
+  html body .product-detail-layer > .flex.flex-col.sm\:flex-row > .flex.flex-col { text-align: center; align-items: center; }
+  html body .product-detail-layer > .flex.flex-col.sm\:flex-row .food-photo {
+    width: clamp(132px, 22vw, 210px) !important;
+    height: clamp(132px, 22vw, 210px) !important;
+    border-radius: 36px;
   }
-  html body .product-detail-layer .flex.flex-col.sm\:flex-row > .flex.flex-col { text-align: right; }
+  html body .product-detail-layer > .space-y-8 {
+    grid-column: 3;
+    grid-row: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 40px 28px 0;
+    block-size: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  html body .product-detail-layer > .space-y-8 > .product-sheet-footer { margin-top: auto; background: linear-gradient(180deg, rgba(255,255,255,0), #fff 30%); }
+  html body .product-detail-layer > button.absolute { top: 18px; right: 18px; z-index: 20; }
+  /* A page is 300-440px: quantity on its own row above a full-width add button. */
+  html body .product-detail-layer .product-sheet-footer { flex-wrap: wrap; gap: 10px; padding-top: 16px; }
+  html body .product-detail-layer .product-sheet-footer > div:first-child { flex: 1 1 100%; justify-content: space-between; }
+  html body .product-detail-layer .product-add-cta { flex: 1 1 100%; flex-wrap: wrap; row-gap: 2px; }
+  @media (max-width: 720px) and (min-height: 760px) {
+    html body .product-detail-layer > .flex.flex-col.sm\:flex-row,
+    html body .product-detail-layer > .space-y-8 { padding-inline: 20px; }
+  }
+
+  html body .product-detail-layer > .flex.flex-col.sm\:flex-row > .relative.shrink-0 { flex: 0 0 auto; }
+}
+@media (min-width: 520px) and (max-height: 520px) {
+  html body .product-detail-layer { max-width: 880px !important; border-radius: 28px; }
+  html body .product-detail-layer > .flex.flex-col.sm\:flex-row { padding: 20px 22px; gap: 10px; }
+  html body .product-detail-layer > .flex.flex-col.sm\:flex-row .food-photo { width: 88px !important; height: 88px !important; border-radius: 26px; }
+  html body .product-detail-layer > .space-y-8 { padding: 22px 22px 0; gap: 18px; }
+  html body .product-detail-layer > .space-y-8 > * + * { margin-top: 0; }
+  html body .product-detail-layer .product-sheet-footer { padding-top: 10px; padding-bottom: 12px; background: #fffdf9; }
+  html body .product-detail-layer .product-sheet-footer > div:first-child { flex: 0 0 auto; }
+  html body .product-detail-layer .product-add-cta { flex: 1 1 160px; padding-block: 12px; }
   html body .product-detail-layer textarea { min-height: 56px; }
+}
+
+/* ==========================================================================
+   Checkout as two pages: the book, and short wide windows (laptop posture 951x350 / 600x350,
+   folded landscape 594x368). Right page: title, steps and the form. Left page: the bill and the
+   next-step button. On short windows the side sheet used to stack header + steps + a 3-row footer
+   strip, leaving the basket itself ~40px of glass; now the form keeps the full height.
+   ========================================================================== */
+@media (min-width: 640px) and (max-width: 720px) and (min-height: 760px) and (max-height: 1000px),
+       (min-width: 860px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 700px),
+       (min-width: 560px) and (max-height: 520px) {
+  html body [role='dialog'][aria-label='السلة وإتمام الطلب'] { justify-content: stretch; }
+  /* index.css forces display:flex, width min(720-920px, 92vw) and max-width with !important. */
+  html body .checkout-wow-panel {
+    display: grid !important;
+    width: 100% !important;
+    max-width: none !important;
+    border-radius: 0 !important;
+    border-inline-start-width: 0 !important;
+    grid-template-columns: minmax(0, 1fr) var(--duo-fold) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+  html body .checkout-wow-panel > * { grid-column: 1; min-width: 0; }
+  html body .checkout-wow-panel > .absolute { grid-column: 1 / -1; }
+  html body .checkout-wow-panel > .checkout-wow-body { grid-row: 3; block-size: 100%; }
+  html body .checkout-wow-panel > .checkout-wow-footer {
+    grid-column: 3;
+    grid-row: 1 / -1;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 18px;
+    border-top: 0;
+    /* beauty-pass caps this footer at 34-36dvh with tight !important padding for short windows;
+       on the book it is a whole page. */
+    max-height: none !important;
+    padding: max(28px, env(safe-area-inset-top)) max(var(--duo-gutter), env(safe-area-inset-left)) calc(24px + env(safe-area-inset-bottom)) var(--duo-gutter) !important;
+    background:
+      radial-gradient(120% 60% at 50% 0%, rgba(178, 138, 65, 0.10), transparent 60%),
+      linear-gradient(180deg, #fffaf2, #fff);
+    overflow-y: auto;
+  }
+  html body .checkout-wow-panel > .checkout-wow-footer > * { margin-top: 0; inline-size: 100%; }
+  /* The bill page carries the kitchen's mark at its head; the bill and the next step sit at the foot. */
+  html body .checkout-wow-panel > .checkout-wow-footer::before {
+    content: '';
+    flex: 0 0 auto;
+    margin: 12px auto auto;
+    inline-size: 76px;
+    block-size: 76px;
+    border-radius: 24px;
+    background: #fff url('/logo-optimized.png') center / 80% no-repeat;
+    box-shadow: 0 0 0 1px rgba(178, 138, 65, 0.22), 0 14px 34px rgba(24, 51, 38, 0.10);
+  }
+  html body .checkout-wow-panel > .checkout-wow-footer > .space-y-3 {
+    padding: 16px 18px;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 0 0 1px rgba(178, 138, 65, 0.18), 0 12px 30px rgba(120, 53, 15, 0.06);
+  }
+  html body .checkout-wow-panel > .checkout-wow-header { border-radius: 0; }
+  /* beauty-pass turns the short-window footer into a one-row strip (display:contents on the bill);
+     on the bill page it stacks again. */
+  html body .checkout-wow-panel > .checkout-wow-footer > .space-y-3.px-1 { display: block; }
+  html body .checkout-wow-panel > .checkout-wow-footer .checkout-promo-details,
+  html body .checkout-wow-panel > .checkout-wow-footer .checkout-summary-details { inline-size: 100%; }
+  /* Store closed (no footer): the left page is the kitchen's title page; the week reads in one column. */
+  html body .checkout-wow-panel:not(:has(> .checkout-wow-footer))::after {
+    content: '';
+    grid-column: 3;
+    grid-row: 1 / -1;
+    align-self: stretch;
+    background: url('/logo-optimized.png') center / 104px no-repeat, radial-gradient(closest-side, rgba(178, 138, 65, 0.12), transparent);
+  }
+  html body .checkout-wow-panel .mt-3.grid.sm\:grid-cols-2 { grid-template-columns: minmax(0, 1fr); }
+  html body .checkout-wow-panel .checkout-wow-header { padding-inline: 20px; }
+  html body .checkout-wow-panel .checkout-steps .dna-steps { max-width: 100%; }
+
+}
+@media (min-width: 560px) and (max-height: 520px) {
+  html body .checkout-wow-panel > .checkout-wow-footer { justify-content: center; gap: 10px; padding-block: 14px calc(14px + env(safe-area-inset-bottom)) !important; }
+  html body .checkout-wow-panel > .checkout-wow-footer::before { display: none; }
+  /* index.css (max-height 500px landscape) makes every footer child flex: 1 1 100% and the button 42% wide. */
+  html body .checkout-wow-panel > .checkout-wow-footer > * { flex: 0 0 auto !important; width: 100% !important; }
+  html body .checkout-wow-panel > .checkout-wow-footer > .space-y-3 { padding: 10px 14px; }
+  html body .checkout-wow-panel:not(:has(> .checkout-wow-footer))::after { background-size: 72px, auto; }
+  html body .checkout-wow-panel .checkout-wow-header { padding-block: 6px !important; min-height: 56px !important; }
+}
+
+/* ---------- Laptop posture and short windows (951x350, 600x350, 594x368): the next step stays on the bar ----------
+   beauty-pass lays the delivery footer out as one strip (promo | total | button) but the prep-time note
+   sat between the totals and the button in the DOM, so the button fell to a third row under the strip's
+   30dvh cap: on 600x350 the address step showed no way forward. The note now goes after the button. */
+@media (max-height: 700px) {
+  html body .checkout-footer-delivery [class*='bg-accent/[0.07]'] { order: 9; grid-column: 1 / -1; }
+}
+
+/* ---------- Touch targets that stayed under 44px on iPad and desktop widths ---------- */
+html body [aria-label='تتبع الطلبات'] { min-inline-size: 44px; min-block-size: 44px; }
+/* index.css pins these at 40px with !important from 900px up. */
+html body .al-cart-bar .al-cart-actions button { min-height: 44px !important; }
+html body .payment-back-floating { min-block-size: 44px; }
+html body button[aria-label^='قسمة على'] { min-inline-size: 44px; min-block-size: 44px; border-radius: 12px; }
+html body .checkout-promo-summary { min-inline-size: 44px; }
+
+/* ==========================================================================
+   Round 2026-11-14: the opened Duo as a BOOK.
+   The inner screen (669x867 portrait book, 951x585 landscape book) is two pages with a
+   fold in the middle. Safari does not report the hinge, so the spread is chosen from the
+   window alone: 640-720 wide and tall, or 860-1000 wide and 520-700 high. iPad (768+ portrait,
+   1024+ landscape), phones and short windows keep their own layouts.
+   Every screen gets a primary page (right, RTL reading starts there) and a context page
+   (left). Nothing readable or tappable sits on the fold: centre +-16px (--duo-spine / 2).
+   Pure CSS: nothing is re-mounted when the window changes, so inputs, the open sheet,
+   the scroll position and timers survive opening and closing the device.
+   ========================================================================== */
+:root { --duo-spine: 32px; --duo-gutter: 20px; --duo-fold: 0px; --duo-sheet-pad: 10px; }
+/* The menu's context-page wrapper is invisible to layout outside the book. */
+.duo-context-page { display: contents; }
+
+@media (min-width: 640px) and (max-width: 720px) and (min-height: 760px) and (max-height: 1000px),
+       (min-width: 860px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 700px) {
+  :root { --duo-page: calc(50vw - var(--duo-spine) / 2); --duo-fold: var(--duo-spine); --duo-sheet-pad: 18px; }
+
+  /* The fold: a hairline and a soft shadow either side, drawn over everything (it is in the
+     glass, not in the page), never catching a tap. */
+  html body::after {
+    content: '';
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: calc(50% - var(--duo-spine) / 2);
+    inline-size: var(--duo-spine);
+    z-index: 2147483000;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, transparent 0, rgba(24, 51, 38, 0.035) 35%, rgba(24, 51, 38, 0.09) 49.5%,
+        rgba(178, 138, 65, 0.28) 50%, rgba(24, 51, 38, 0.09) 50.5%, rgba(24, 51, 38, 0.035) 65%, transparent 100%);
+  }
+
+  /* ---------- Menu: dishes on the right page, mood banner + search + cart on the left ---------- */
+  html body .customer-signature-shell {
+    max-width: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--duo-spine) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    align-items: start;
+    padding-bottom: 0;
+  }
+  html body .customer-signature-shell > * { grid-column: 1; min-width: 0; }
+  html body .customer-signature-shell > [role='region'][aria-label='الديوانية'] { grid-row: 1; }
+  html body .customer-signature-shell > header { grid-row: 2; }
+  html body .customer-signature-shell > main { grid-row: 3; }
+  html body .customer-signature-shell > .duo-context-page {
+    grid-column: 3;
+    grid-row: 1 / -1;
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    block-size: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: max(20px, env(safe-area-inset-top)) var(--duo-gutter) calc(20px + env(safe-area-inset-bottom));
+    padding-inline-end: max(var(--duo-gutter), env(safe-area-inset-left));
+  }
+  html body .duo-context-page > [role='region'][aria-label='البحث والعروض'] {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    min-block-size: 12rem;
+  }
+  /* The banner is the cover of the context page. */
+  html body .duo-context-page .orser-context-hero { flex: 1 1 auto; min-height: 12rem; border-radius: 30px; display: flex; flex-direction: column; }
+  html body .duo-context-page .orser-context-hero > .relative.flex-col { flex: 1 1 auto; padding: 26px 24px; }
+  html body .duo-context-page > [role='search'] { padding: 0; margin: 0; flex: 0 0 auto; }
+  /* With a cart, its bar sits at the foot of the context page instead of across both pages. */
+  html body .customer-signature-shell:has(.al-cart-bar) > .duo-context-page { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+  html body .al-cart-bar {
+    left: max(var(--duo-gutter), env(safe-area-inset-left)) !important;
+    right: calc(50% + var(--duo-spine) / 2 + var(--duo-gutter)) !important;
+    width: auto !important;
+    transform: none !important;
+  }
+  html body .customer-wow-menu { padding-bottom: 32px; }
+  /* Small notes ("added to your order", "connection lost") open on the right page, never on the fold. */
+  html body .cart-moment-toast,
+  html body .customer-offline-toast {
+    left: auto !important;
+    right: var(--duo-gutter) !important;
+    transform: none !important;
+    max-width: calc(var(--duo-page) - 2 * var(--duo-gutter)) !important;
+    width: auto !important;
+  }
+  html body .r3-menu-header { padding-inline: 20px; }
+  html body .r3-menu-header h1 { font-size: 1.2rem; line-height: 1.5; }
+  html body .customer-products-zone { padding-inline: 20px; }
+  /* A page is 300-440px wide, a phone column: dishes one per row, as on a phone (two per row squeezed
+     the names into a column of single letters). */
+  html body .customer-signature-shell .grid[class*='lg:grid-cols-3'],
+  html body :is(.customer-signature-shell, .track-signature, .qatya-ultra-shell, .checkout-wow-panel) .grid[class*='sm:grid-cols-2'] { grid-template-columns: minmax(0, 1fr); }
+  html body .dna-cat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  html body .duo-pick-grid { grid-template-columns: minmax(0, 1fr); }
+  html body .duo-pick-card { flex-direction: row; text-align: start; padding: 12px 14px; }
+  html body .duo-pick-card .food-price-chip { margin-inline: 0; }
+
+  /* ---------- Order tracking: the search on the right page, the orders on the left ---------- */
+  html body .track-signature > header { justify-content: flex-start; gap: 16px; padding-inline: 20px; }
+  html body .track-signature > header > .w-11:last-child { display: none; }
+  html body .track-signature > header h1 { max-inline-size: calc(var(--duo-page) - 100px); white-space: normal; overflow-wrap: anywhere; }
+  html body .track-signature > main {
+    max-width: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--duo-spine) minmax(0, 1fr);
+    align-items: start;
+    padding: 20px;
+    column-gap: 20px;
+  }
+  html body .track-signature > main > * { grid-column: 1; min-width: 0; margin-top: 0 !important; }
+  html body .track-signature > main > section.order-detail-card { grid-row: 1; position: sticky; top: 100px; padding: 26px 22px; border-radius: 32px; }
+  html body .track-signature > main > .space-y-4 { grid-column: 3; grid-row: 1 / span 4; padding-bottom: 32px; }
+  /* Before a search the left page is a quiet title page with the kitchen's mark. */
+  html body .track-signature > main::after {
+    content: '';
+    grid-column: 3;
+    grid-row: 1;
+    align-self: stretch;
+    min-block-size: calc(100dvh - 140px);
+    border-radius: 32px;
+    background: url('/logo-optimized.png') center / 112px no-repeat, radial-gradient(closest-side, rgba(178, 138, 65, 0.10), transparent);
+    opacity: 0.55;
+  }
+  html body .track-signature > main:has(> .space-y-4)::after { display: none; }
+  html body .track-signature section.order-detail-card form input[dir='ltr'] { padding-left: 16px; padding-right: 48px; }
+  html body .track-signature section.order-detail-card form .absolute.right-6 { right: 18px; }
+
+  /* ---------- Split ("قطية"): the order's title page on the left, the split itself on the right ---------- */
+  html body .qatya-ultra-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--duo-spine) minmax(0, 1fr);
+    align-items: start;
+  }
+  html body .qatya-ultra-shell > * { grid-column: 1; grid-row: 1; min-width: 0; }
+  html body .qatya-ultra-shell > .qatya-duplicate-top {
+    display: flex !important;
+    grid-column: 3;
+    position: sticky;
+    top: 0;
+    min-block-size: 100dvh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 0;
+    box-shadow: none;
+    background: radial-gradient(70% 45% at 50% 45%, rgba(178, 138, 65, 0.12), transparent 70%);
+    padding: 72px var(--duo-gutter) 40px;
+    text-align: center;
+  }
+  html body .qatya-ultra-shell > .qatya-duplicate-top > button[aria-label='رجوع'] { display: none; }
+  html body .qatya-ultra-shell > .qatya-duplicate-top svg { width: 44px; height: 44px; }
+  html body .qatya-ultra-shell > .qatya-duplicate-top h1 { font-size: 1.75rem; line-height: 1.5; }
+  html body .qatya-ultra-shell > .qatya-duplicate-top > div { max-inline-size: 100%; white-space: normal; line-height: 1.7; }
+  html body .qatya-ultra-shell > div.mx-auto { max-width: none; margin: 0; inline-size: 100%; padding: 20px; }
+  html body .qatya-ultra-shell > .payment-back-floating { position: fixed; }
+
+  /* Roulette split ("وهق غيرك"): its marquee and title become the left title page, the names
+     and the spin stay on the right page. */
+  html body .roulette-ultra-shell > div.mx-auto {
+    max-width: none;
+    margin: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--duo-spine) minmax(0, 1fr);
+    align-items: start;
+    padding-inline: var(--duo-gutter);
+  }
+  html body .roulette-ultra-shell > div.mx-auto > * { grid-column: 1; min-width: 0; margin-top: 0 !important; margin-bottom: 22px; }
+  html body .roulette-ultra-shell > div.mx-auto > header {
+    grid-column: 3;
+    grid-row: 1 / span 12;
+    position: sticky;
+    top: 0;
+    min-block-size: calc(100dvh - 48px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 0;
+    padding-block: 24px;
+  }
+
+  /* ---------- Full-screen notes (404, loading) and centred dialogs ---------- */
+  /* 404 and a broken split link: the picture on the left page, the words and the ways back on the right. */
+  html body main.min-h-dvh.bg-cream > .max-w-md:only-child,
+  html body main.split-error-screen > .max-w-md {
+    max-width: none;
+    inline-size: 100%;
+    min-block-size: calc(100dvh - 48px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--duo-spine) minmax(0, 1fr);
+    align-content: center;
+    justify-items: center;
+    padding: 24px 28px;
+    border-radius: 36px;
+  }
+  html body main.min-h-dvh.bg-cream > .max-w-md:only-child > *,
+  html body main.split-error-screen > .max-w-md > * { grid-column: 1; margin-inline: 0; max-inline-size: 30ch; }
+  html body main.min-h-dvh.bg-cream > .max-w-md:only-child > svg:first-child,
+  html body main.split-error-screen > .max-w-md > svg:first-child {
+    grid-column: 3;
+    grid-row: 1 / span 4;
+    align-self: center;
+    inline-size: min(52%, 220px);
+    block-size: auto;
+    max-inline-size: none;
+    margin: 0;
+  }
+  html body main.split-error-screen > .max-w-md > svg:first-child { inline-size: min(34%, 120px); }
+  html body main.split-error-screen > .max-w-md > .flex-col { inline-size: 100%; }
+  /* Route loading: the mark on the right page, the shimmer on the left. */
+  html body div[role='status'][aria-label='جاري التحميل'].min-h-dvh {
+    flex-direction: row;
+    justify-content: space-around;
+    padding-inline: 24px;
+  }
+  html body div[role='status'][aria-label='جاري التحميل'].min-h-dvh > .max-w-xs { max-width: calc(var(--duo-page) - 64px); }
+
+  /* Centred dialogs open on the right page; the left page stays visible, dimmed, as context. */
+  /* (!important only because some of these overlays set their padding inline.) */
+  html body .duo-page-dialog {
+    padding-inline: var(--duo-gutter) calc(50% + var(--duo-spine) / 2 + var(--duo-gutter)) !important;
+    justify-content: center;
+  }
+
+  /* The opening-hours week: day names never squeeze into a column of single letters. */
+  html body .checkout-wow-panel .flex.min-w-0.items-center.gap-2 { flex: 0 0 auto; white-space: nowrap; }
+  html body .checkout-wow-panel .flex.min-w-0.items-center.gap-2 + span.shrink-0 { flex-shrink: 1; min-width: 0; text-align: end; }
+  /* The best-seller carousel stays on its page. */
+  html body .customer-signature-shell .best-seller-wow-carousel { overflow: hidden; }
+
+  /* Portrait book: each page is ~318px, a phone column. Tailwind's sm: layouts (chosen from the
+     640px+ window) are too wide for it, so the rows that assumed room fall back to phone stacking. */
+  @media (max-width: 720px) {
+    html body .dna-cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    html body .track-signature main .space-y-4 > div.bg-white > .flex.items-start.justify-between { flex-wrap: wrap; gap: 10px; }
+    html body .track-signature main .space-y-4 > div.bg-white .flex.items-center.gap-2 { flex-wrap: wrap; }
+    html body .track-signature .smart-return-card { grid-template-columns: auto minmax(0, 1fr); gap: 12px; padding: 14px; }
+    html body .track-signature .smart-return-action { grid-column: 1 / -1; width: 100%; }
+    html body .track-signature main .grid.grid-cols-3 > button { padding-inline: 4px; white-space: nowrap; }
+    html body .qatya-ultra-shell .dna-qatya-main { flex-direction: column; text-align: center; }
+    html body .qatya-ultra-shell .dna-qatya-facts { justify-content: center; }
+    html body .qatya-ultra-shell > .qatya-duplicate-top h1 { font-size: 1.4rem; }
+  }
+
+  /* First-visit welcome: the mark and the promise on the right page, the two ways in on the left. */
+  html body .ord-bp-theatre > .relative.z-10 {
+    max-width: none;
+    inline-size: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    align-items: center;
+    column-gap: calc(var(--duo-spine) + 2 * var(--duo-gutter) + 16px);
+    padding-inline: calc(var(--duo-gutter) + 8px);
+  }
+  html body .ord-bp-theatre > .relative.z-10 > :nth-child(1) { grid-column: 1; grid-row: 1; margin-bottom: 10px; }
+  html body .ord-bp-theatre > .relative.z-10 > :nth-child(2) { grid-column: 1; grid-row: 2; margin-bottom: 0; }
+  html body .ord-bp-theatre > .relative.z-10 > :nth-child(3) { grid-column: 2; grid-row: 1 / span 2; }
 }

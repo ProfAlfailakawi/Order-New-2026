@@ -4106,9 +4106,11 @@ body:has(.al-cart-bar) .order-welcome-replay {
 
   .product-detail-layer { padding-top: 14px !important; max-height: 94dvh !important; }
   .product-detail-layer > .flex.justify-center.mb-6 { display: none !important; }
-  .product-detail-layer .flex.flex-col.sm\:flex-row { margin-top: 0 !important; margin-inline-start: 52px !important; margin-bottom: 14px !important; gap: 14px !important; }
-  .product-detail-layer .flex.flex-col.sm\:flex-row img,
-  .product-detail-layer .flex.flex-col.sm\:flex-row > div:first-child > div.flex { width: 80px !important; height: 80px !important; max-height: 30dvh !important; }
+  /* Direct child only: the add-on cards share these utility classes, and the descendant selector gave
+     each add-on a 52px start margin (price cut at the edge) and an 80x80 checkbox. */
+  .product-detail-layer > .flex.flex-col.sm\:flex-row { margin-top: 0 !important; margin-inline-start: 52px !important; margin-bottom: 14px !important; gap: 14px !important; }
+  .product-detail-layer > .flex.flex-col.sm\:flex-row img,
+  .product-detail-layer > .flex.flex-col.sm\:flex-row > div:first-child > div.flex { width: 80px !important; height: 80px !important; max-height: 30dvh !important; }
 }
 
 /* Product sheet open on phones: lift the cart toast to the top so it never covers the add-ons list (display only). */
