@@ -4277,6 +4277,13 @@ body:has(.al-cart-bar) .order-welcome-replay {
   .payment-choice-hint { padding: 10px 14px !important; }
   .payment-choice-hint span { font-size:12px; line-height: 1.5; }
 }
+/* 320px: three equal tiles are ~60px wide, so a region name such as «السالمية» was cut in the
+   middle of the word. The region gets a full-width row and the other two tiles share the next one. */
+@media (max-width: 359px) {
+  .invoice-reveal-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .invoice-reveal-stats div:nth-child(2) { grid-column: 1 / -1; order: -1; }
+  .invoice-reveal-stats b { overflow-wrap: break-word; }
+}
 
 /* Split page, desktop: the form and the copy-link button form one centered column
    (button right under the form) instead of leaving an empty column beside the form. */

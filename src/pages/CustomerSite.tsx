@@ -6899,6 +6899,9 @@ export default function CustomerSite() {
             (showWobble ? wobbleAlertItems.length : 0) +
             (showMyPending ? 1 : 0);
           if (inboxCount === 0) return null;
+          // الجرس ثابت عند أسفل الشاشة (z-86) فوق أي شاشة مفتوحة؛ على الجوال الصغير كان يغطي زر
+          // «حطه بالسلة» وزرّي «كمل بياناتك» و«ادفع الآن». نخفيه ما دامت ورقة المنتج أو السلة مفتوحة.
+          if (isCheckout || selectedProduct) return null;
           const inboxOpen =
             (showNearby && !isNearbyRadarPanelCollapsed) ||
             (showJoin && !isOwnerJoinAlertCollapsed) ||

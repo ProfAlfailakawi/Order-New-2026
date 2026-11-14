@@ -2146,9 +2146,9 @@ export default function OrderPage() {
                                 {getActualItemAddons(item).length > 0 && (
                                   <div className="mt-2 space-y-1" dir="rtl">
                                     {getActualItemAddons(item).map((addon, addonIndex) => (
-                                      <div key={`${addon.name}-${addonIndex}`} className="flex items-center gap-2 text-xs font-extrabold text-amber-700 bg-amber-50/70 border border-amber-100 rounded-xl px-2 py-1 w-fit">
-                                        <span>+ {addon.name}{addon.qty > 1 ? ` × ${addon.qty}` : ""}</span>
-                                        <span className="text-amber-900">{addon.total.toFixed(3)} د.ك</span>
+                                      <div key={`${addon.name}-${addonIndex}`} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs font-extrabold text-amber-700 bg-amber-50/70 border border-amber-100 rounded-xl px-2 py-1 w-fit max-w-full">
+                                        <span className="min-w-0">+ {addon.name}{addon.qty > 1 ? ` × ${addon.qty}` : ""}</span>
+                                        <span className="whitespace-nowrap text-amber-900">{addon.total.toFixed(3)} د.ك</span>
                                       </div>
                                     ))}
                                   </div>

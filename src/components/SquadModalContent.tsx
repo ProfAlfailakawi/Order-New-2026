@@ -1595,16 +1595,16 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       <div className="text-xs font-bold text-stone-500">تأكيد سريع قبل القطيّة.</div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="rounded-2xl bg-white border border-stone-100 p-3">
-                      <div className="text-xs font-black text-stone-500">الديوانية</div>
-                      <div className="text-xs font-black text-brand truncate">{cleanSquadName(squadInfo?.name)}</div>
+                  <div className="grid grid-cols-3 max-[359px]:grid-cols-[minmax(0,1fr)] gap-2">
+                    <div className="min-w-0 rounded-2xl bg-white border border-stone-100 p-3 max-[359px]:flex max-[359px]:items-center max-[359px]:justify-between max-[359px]:gap-3">
+                      <div className="text-xs font-black text-stone-500 shrink-0">الديوانية</div>
+                      <div className="text-xs font-black text-brand truncate min-w-0">{cleanSquadName(squadInfo?.name)}</div>
                     </div>
-                    <div className="rounded-2xl bg-white border border-stone-100 p-3">
+                    <div className="min-w-0 rounded-2xl bg-white border border-stone-100 p-3 max-[359px]:flex max-[359px]:items-center max-[359px]:justify-between max-[359px]:gap-3">
                       <div className="text-xs font-black text-stone-500">الأسماء الجاهزة</div>
                       <div className="text-xs font-black text-brand">{formatEnglishNumber(preparedQatyaPreview.length)}</div>
                     </div>
-                    <div className="rounded-2xl bg-white border border-stone-100 p-3">
+                    <div className="min-w-0 rounded-2xl bg-white border border-stone-100 p-3 max-[359px]:flex max-[359px]:items-center max-[359px]:justify-between max-[359px]:gap-3">
                       <div className="text-xs font-black text-stone-500">الحالة</div>
                       <div className="text-xs font-black text-brand">{activeGroupOrder ? "طلب مفتوح" : openQatyaOrder ? "قطية مفتوحة" : "جاهز"}</div>
                     </div>
@@ -2550,12 +2550,12 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         <div className="space-y-3">
                           {pendingGeofenceRequests.map((req: any, idx: number) => (
                             <div key={idx} className="p-3.5 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col gap-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-black bg-cream text-brass-ink ring-1 ring-cream-edge px-2 py-0.5 rounded-full">يبعد {req.distance ? formatEnglishNumber(req.distance) : formatEnglishNumber(getSquadGeofenceDistance())}م</span>
-                                <span className="text-sm font-black text-brand">{req.name}</span>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="shrink-0 whitespace-nowrap text-xs font-black bg-cream text-brass-ink ring-1 ring-cream-edge px-2 py-0.5 rounded-full">يبعد {req.distance ? formatEnglishNumber(req.distance) : formatEnglishNumber(getSquadGeofenceDistance())}م</span>
+                                <span className="min-w-0 break-words text-sm font-black text-brand">{req.name}</span>
                               </div>
-                              <div className="flex items-center justify-between mt-1">
-                                <span className="text-xs font-bold text-stone-500 font-mono">{req.phone}</span>
+                              <div className="flex flex-wrap items-center justify-between gap-2 mt-1">
+                                <span className="whitespace-nowrap text-xs font-bold text-stone-500 font-mono">{req.phone}</span>
                                 <div className="flex gap-2">
                                   <button
                                     onClick={() => handleApproveRejectRequest(req.phone, false)}
@@ -2781,7 +2781,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                       }
                     }}
                     placeholder="كود الديوانية"
-                    className="flex-1 bg-stone-50 border-2 border-stone-100 rounded-2xl px-4 py-3 text-sm font-black text-brand focus:border-accent focus:outline-none transition-all text-center"
+                    className="flex-1 min-w-0 bg-stone-50 border-2 border-stone-100 rounded-2xl px-2 min-[360px]:px-4 py-3 text-sm font-black text-brand focus:border-accent focus:outline-none transition-all text-center"
                   />
                   <button
                     onClick={handleJoinWithTempCode}
