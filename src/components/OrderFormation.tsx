@@ -163,7 +163,7 @@ export default function OrderFormation({ order, orderReference, onDone }: OrderF
       animate={{ opacity: phase === "merge" ? 0 : 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: phase === "merge" ? 0.42 : 0.28, ease: "easeOut" }}
-      className="fixed inset-0 z-[210] flex items-center justify-center bg-brand/80 backdrop-blur-md px-5 overflow-hidden"
+      className="duo-page-dialog fixed inset-0 z-[210] flex items-center justify-center bg-brand/80 backdrop-blur-md px-5 overflow-hidden"
       dir="rtl"
       aria-live="polite"
     >

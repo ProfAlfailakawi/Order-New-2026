@@ -710,7 +710,7 @@ export function SaduPresenceRug({
       {/* MODAL / DRAWER CONTROLS TO SEND A SPEECH/SHAKE ("انطق / صب شاي وبث صوت الفنجان للربع") */}
       <AnimatePresence>
         {wobbleInputOpen && (
-          <div className="fixed inset-0 bg-stone-950/85 backdrop-blur-sm z-[9999] p-3 sm:p-4 flex items-center justify-center text-right">
+          <div className="duo-page-dialog fixed inset-0 bg-stone-950/85 backdrop-blur-sm z-[9999] p-3 sm:p-4 flex items-center justify-center text-right">
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -814,7 +814,7 @@ export function SaduPresenceRug({
       {/* SELECTED MEMBER POPUP DETAILS DISPLAY */}
       <AnimatePresence>
         {selectedCupInfo && !selectedCupInfo.isMe && (
-          <div className="fixed inset-0 bg-[#000]/75 backdrop-blur-md z-[9999] p-3 sm:p-4 flex items-center justify-center text-right">
+          <div className="duo-page-dialog fixed inset-0 bg-[#000]/75 backdrop-blur-md z-[9999] p-3 sm:p-4 flex items-center justify-center text-right">
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 40 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -943,7 +943,7 @@ export function SaduPresenceRug({
       {/* MILESTONE EXPANSION DIALOG (The Sadu Tier Road Map - Netflix Storytelling) */}
       <AnimatePresence>
         {activeMilestoneDesc && (
-          <div className="fixed inset-0 bg-[#000]/80 backdrop-blur-md z-[9999] p-4 flex items-center justify-center text-right" dir="rtl">
+          <div className="duo-page-dialog fixed inset-0 bg-[#000]/80 backdrop-blur-md z-[9999] p-4 flex items-center justify-center text-right" dir="rtl">
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}

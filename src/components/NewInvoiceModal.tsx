@@ -80,7 +80,7 @@ export function NewInvoiceModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="customer-sheet-backdrop fixed inset-0 z-[100] flex items-center justify-center bg-brand/40 backdrop-blur-sm p-4"
+      className="duo-page-dialog customer-sheet-backdrop fixed inset-0 z-[100] flex items-center justify-center bg-brand/40 backdrop-blur-sm p-4"
       dir="rtl"
     >
       <motion.div

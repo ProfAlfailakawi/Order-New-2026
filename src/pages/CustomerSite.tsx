@@ -5446,6 +5446,9 @@ export default function CustomerSite() {
           )}
         </header>
 
+        {/* Book spread (iPhone Duo opened): the mood banner and search become the context page.
+            display:contents everywhere else, so phones and desktops lay out exactly as before. */}
+        <div className="duo-context-page">
         {/* Hero Section - Context Aware Banners */}
         {!isCheckout && (
           <div role="region" aria-label="البحث والعروض" className="px-4 pb-4 pt-3 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:max-w-[1180px] lg:mx-auto mb-2">
@@ -5562,6 +5565,7 @@ export default function CustomerSite() {
             </div>
           </div>
         )}
+        </div>
 
         {/* Categories / Products */}
         <main className="p-4 sm:p-6 lg:p-8 space-y-8 customer-products-zone customer-wow-menu">
@@ -5832,7 +5836,7 @@ export default function CustomerSite() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowFlashSale(false)}
-              role="dialog" aria-modal="true" aria-label="عرض خاص" className="fixed inset-0 r3-flash-overlay bg-brand/95 backdrop-blur-md z-[200] flex flex-col items-center justify-center p-6"
+              role="dialog" aria-modal="true" aria-label="عرض خاص" className="duo-page-dialog fixed inset-0 r3-flash-overlay bg-brand/95 backdrop-blur-md z-[200] flex flex-col items-center justify-center p-6"
             >
               <button aria-label="إغلاق العرض"
                 onClick={(e) => {
@@ -5897,7 +5901,7 @@ export default function CustomerSite() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-white/95 backdrop-blur-2xl overflow-hidden"
+              className="duo-page-dialog fixed inset-0 z-[100] flex items-center justify-center p-6 bg-white/95 backdrop-blur-2xl overflow-hidden"
             >
               {/* The Brand Heartbeat Background (Effect 4) */}
               <motion.div
@@ -6294,7 +6298,7 @@ export default function CustomerSite() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              role="dialog" aria-modal="true" aria-label="التحقق قبل المتابعة" className="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-cream/98 text-ink font-sans p-6 text-center backdrop-blur-md"
+              role="dialog" aria-modal="true" aria-label="التحقق قبل المتابعة" className="duo-page-dialog fixed inset-0 z-[999] flex flex-col items-center justify-center bg-cream/98 text-ink font-sans p-6 text-center backdrop-blur-md"
             >
               <div className="flex flex-col items-center gap-6 max-w-sm w-full">
                 {/* Animated 3D Face scanner badge */}
@@ -6436,7 +6440,7 @@ export default function CustomerSite() {
                 exit={{ opacity: 0 }}
                 role="dialog" aria-modal="true" aria-label="الديوانية"
                 className={cn(
-                  "fixed inset-0 z-[100] flex justify-center overflow-x-hidden",
+                  "duo-page-dialog fixed inset-0 z-[100] flex justify-center overflow-x-hidden",
                   isDirectDiwaniyaQrOpen
                     ? "items-stretch bg-stone-50"
                     : "items-end bg-brand/40 backdrop-blur-sm sm:items-center"
@@ -6734,7 +6738,7 @@ export default function CustomerSite() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              role="dialog" aria-modal="true" aria-label="الانضمام للديوانية" className="fixed inset-0 z-[120] bg-slate-950/35 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+              role="dialog" aria-modal="true" aria-label="الانضمام للديوانية" className="duo-page-dialog fixed inset-0 z-[120] bg-slate-950/35 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
               onClick={(e) => {
                 if (e.target === e.currentTarget) setRadarJoinDraft(null);
               }}
@@ -6820,7 +6824,7 @@ export default function CustomerSite() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              role="dialog" aria-modal="true" aria-label="طريقة عمل الرادار" className="fixed inset-0 z-[140] bg-slate-950/55 backdrop-blur-md flex items-center justify-center p-4"
+              role="dialog" aria-modal="true" aria-label="طريقة عمل الرادار" className="duo-page-dialog fixed inset-0 z-[140] bg-slate-950/55 backdrop-blur-md flex items-center justify-center p-4"
               onClick={(e) => {
                 if (e.target === e.currentTarget) setShowRadarInstructionModal(false);
               }}
@@ -8226,7 +8230,7 @@ function ProductModal({
           {isImagePreviewOpen && (
             <motion.div
               key="product-image-preview"
-              className="fixed inset-0 flex items-center justify-center bg-black/90 p-4 sm:p-8 backdrop-blur-md"
+              className="duo-page-dialog fixed inset-0 flex items-center justify-center bg-black/90 p-4 sm:p-8 backdrop-blur-md"
               style={{ zIndex: 2147483647 }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

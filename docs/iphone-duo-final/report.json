@@ -1,0 +1,6298 @@
+{
+ "generatedAt": "2026-11-14T04:50:52.430Z",
+ "base": "http://127.0.0.1:5160",
+ "viewports": [
+  "382x580",
+  "385x571",
+  "320x568",
+  "594x368",
+  "669x867",
+  "951x585",
+  "951x350",
+  "600x350",
+  "669x520",
+  "600x480",
+  "768x1024",
+  "1024x768",
+  "1280x800",
+  "1440x900",
+  "360x640",
+  "390x844",
+  "844x390",
+  "320x350",
+  "320x600",
+  "320x900",
+  "470x350",
+  "470x600",
+  "470x900",
+  "620x350",
+  "620x600",
+  "620x900"
+ ],
+ "poses": {
+  "A": [
+   "382x580",
+   "385x571",
+   "320x568"
+  ],
+  "B": [
+   "594x368"
+  ],
+  "C": [
+   "669x867"
+  ],
+  "D": [
+   "951x585"
+  ],
+  "E": [
+   "951x350",
+   "600x350"
+  ],
+  "F": [
+   "669x520",
+   "600x480"
+  ],
+  "G": [
+   "768x1024",
+   "1024x768",
+   "1280x800",
+   "1440x900"
+  ],
+  "H": [
+   "360x640",
+   "390x844",
+   "844x390"
+  ],
+  "S": [
+   "320x350",
+   "320x600",
+   "320x900",
+   "470x350",
+   "470x600",
+   "470x900",
+   "620x350",
+   "620x600",
+   "620x900"
+  ]
+ },
+ "screens": {
+  "welcome": {
+   "name": "الترحيب (أول زيارة)",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "menu": {
+   "name": "المنيو (أعلى الصفحة)",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "menu-dishes": {
+   "name": "المنيو: فئة وأطباق",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "menu-search": {
+   "name": "المنيو: بحث بالمزاج",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "menu-loading": {
+   "name": "المنيو: تحميل",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "menu-error": {
+   "name": "المنيو: فشل التحميل",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "legal": {
+   "name": "بيانات السجل التجاري",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "welcome-replay": {
+   "name": "نافذة «كيف تطلب» (زر ؟)",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "diwaniya": {
+   "name": "الديوانية (نافذة)",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "smart-pick": {
+   "name": "اقتراح اليوم (نافذة تظهر بعد 9 ثوانٍ)",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "product": {
+   "name": "ورقة المنتج",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "product-photo": {
+   "name": "معاينة صورة المنتج",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "cart-bar": {
+   "name": "المنيو مع شريط السلة",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [
+      "عرض السلة"
+     ],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "checkout-cart": {
+   "name": "الدفع: السلة",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "checkout-address": {
+   "name": "الدفع: العنوان",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "checkout-closed": {
+   "name": "الدفع: المطعم مغلق وأوقات العمل",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  },
+  "track": {
+   "name": "التتبع: البحث",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    }
+   }
+  },
+  "track-results": {
+   "name": "التتبع: النتائج",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    }
+   }
+  },
+  "track-profile": {
+   "name": "التتبع: الملف (العضوية)",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    }
+   }
+  },
+  "track-addresses": {
+   "name": "التتبع: الملف (عناويني)",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    }
+   }
+  },
+  "track-empty": {
+   "name": "التتبع: لا توجد طلبات",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    }
+   }
+  },
+  "track-detail": {
+   "name": "التتبع: تفاصيل الطلب (الحالة)",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    }
+   }
+  },
+  "track-invoice": {
+   "name": "التتبع: تفاصيل الطلب (الفاتورة)",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    }
+   }
+  },
+  "track-paid": {
+   "name": "التتبع: عائد من الدفع (نجح)",
+   "results": {
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track?payment=success"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track?payment=success"
+    }
+   }
+  },
+  "track-payfail": {
+   "name": "التتبع: عائد من الدفع (فشل)",
+   "results": {
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track?payment=failed"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track?payment=failed"
+    }
+   }
+  },
+  "split-overview": {
+   "name": "القطية: نظرة عامة",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    }
+   }
+  },
+  "split-payment": {
+   "name": "القطية: قطيتك (الدفع)",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?tab=payment"
+    }
+   }
+  },
+  "split-people": {
+   "name": "القطية: المشاركون",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001"
+    }
+   }
+  },
+  "split-failed": {
+   "name": "القطية: فشل الدفع (عائد من البنك)",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-2001?payment=failed"
+    }
+   }
+  },
+  "split-roulette": {
+   "name": "القطية: الوهق (الروليت)",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-3001"
+    }
+   }
+  },
+  "split-paid": {
+   "name": "القطية: اكتملت",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/DEMO-1001"
+    }
+   }
+  },
+  "split-error": {
+   "name": "القطية: رابط خاطئ",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/split/NOPE-0"
+    }
+   }
+  },
+  "not-found": {
+   "name": "404",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/no-such-page"
+    }
+   }
+  },
+  "route-loading": {
+   "name": "تحميل الصفحة (Suspense)",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/track"
+    }
+   },
+   "shotErrors": 6
+  },
+  "offline": {
+   "name": "بلا اتصال",
+   "results": {
+    "382x580": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "385x571": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x568": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "594x368": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x867": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x585": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "951x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "669x520": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "600x480": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "768x1024": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1024x768": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1280x800": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "1440x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "360x640": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "390x844": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "844x390": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "320x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "470x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x350": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x600": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    },
+    "620x900": {
+     "overflowX": 0,
+     "offscreen": [],
+     "smallTaps": [],
+     "spine": [],
+     "url": "/"
+    }
+   }
+  }
+ },
+ "summary": {
+  "overflow": 0,
+  "offscreen": 1,
+  "spine": 0,
+  "smallTaps": 0
+ }
+}

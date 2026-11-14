@@ -974,7 +974,7 @@ export default function OrderPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[200] flex items-center justify-center bg-brand/70 backdrop-blur-md pointer-events-auto px-5"
+              className="duo-page-dialog fixed inset-0 z-[200] flex items-center justify-center bg-brand/70 backdrop-blur-md pointer-events-auto px-5"
               onClick={clearPaymentStatus}
             >
               <div className="payment-cinema-card" onClick={(e) => e.stopPropagation()}>
@@ -1000,7 +1000,7 @@ export default function OrderPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[200] flex items-center justify-center bg-stone-900/80 backdrop-blur-md pointer-events-auto"
+              className="duo-page-dialog fixed inset-0 z-[200] flex items-center justify-center bg-stone-900/80 backdrop-blur-md pointer-events-auto"
               onClick={clearPaymentStatus}
             >
               <div className="relative flex flex-col items-center justify-center max-w-sm w-full mx-auto p-6">
@@ -1704,7 +1704,7 @@ export default function OrderPage() {
       {/* Details Modal */}
       <AnimatePresence>
         {selectedOrder && (
-          <div role="dialog" aria-modal="true" aria-label="تفاصيل الطلب" className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6">
+          <div role="dialog" aria-modal="true" aria-label="تفاصيل الطلب" className="duo-page-dialog fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

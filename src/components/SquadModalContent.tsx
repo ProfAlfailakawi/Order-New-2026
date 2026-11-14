@@ -2246,7 +2246,7 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
 
                         {/* Selected Memory Detail Modal overlay inside the card frame */}
                         {selectedMemory && (
-                          <div className="diwaniya-memory-detail-overlay fixed inset-0 bg-stone-900/50 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in" onClick={() => setSelectedMemory(null)}>
+                          <div className="duo-page-dialog diwaniya-memory-detail-overlay fixed inset-0 bg-stone-900/50 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in" onClick={() => setSelectedMemory(null)}>
                             <motion.div
                               initial={{ opacity: 0, scale: 0.7, rotate: -5 }}
                               animate={{ opacity: 1, scale: 1, rotate: 0 }}

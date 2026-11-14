@@ -14,7 +14,7 @@ export function OfflineModal({ isOpen }: { isOpen: boolean }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-ink/60 backdrop-blur-sm p-4"
+      className="duo-page-dialog fixed inset-0 z-[200] flex items-center justify-center bg-ink/60 backdrop-blur-sm p-4"
     >
       <div className="bg-cream border border-cream-edge rounded-3xl p-8 max-w-xs w-full text-center shadow-2xl flex flex-col items-center">
         <div className="w-16 h-16 bg-white ring-1 ring-cream-edge rounded-full flex items-center justify-center mb-6">
