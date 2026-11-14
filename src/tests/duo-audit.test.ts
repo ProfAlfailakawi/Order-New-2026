@@ -127,4 +127,20 @@ describe('iPhone Duo audit', () => {
       expect(idx).toMatch(/\.product-detail-layer > \.flex\.flex-col\.sm\\:flex-row > div:first-child > div\.flex/);
     });
   });
+  describe('folded outer screen 320-382px (2026-11-14)', () => {
+    it('hides the floating alerts bell while the product sheet or checkout is open', () => {
+      const src = read('src/pages/CustomerSite.tsx');
+      expect(src).toMatch(/if \(isCheckout \|\| selectedProduct\) return null;/);
+    });
+
+    it('gives the invoice region tile its own row below 360px instead of breaking the word', () => {
+      const css = read('src/index.css');
+      expect(css).toMatch(/@media \(max-width: 359px\)\s*\{[^}]*\.invoice-reveal-stats \{ grid-template-columns: repeat\(2/);
+    });
+
+    it('keeps add-on pills and radar rows wrapping instead of squeezing', () => {
+      expect(read('src/pages/OrderPage.tsx')).toMatch(/flex flex-wrap items-center gap-x-2 gap-y-0\.5[^"]*w-fit max-w-full/);
+      expect(read('src/components/SquadModalContent.tsx')).toMatch(/max-\[359px\]:grid-cols-\[minmax\(0,1fr\)\]/);
+    });
+  });
 });
