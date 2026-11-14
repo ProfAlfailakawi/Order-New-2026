@@ -198,8 +198,7 @@ html body .al-cart-bar { padding-bottom: max(0px, env(safe-area-inset-bottom)); 
    Before, on short windows the sticky bar floated over the notes (the sheet's 112px bottom
    padding broke its sticky edge) and the photo, title and add-ons all shared one cramped column.
    ========================================================================== */
-@media screen and (min-width: 640px) and (max-width: 720px) and (min-height: 760px) and (max-height: 1000px),
-       screen and (min-width: 860px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 700px),
+@media screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape),
        screen and (min-width: 520px) and (max-height: 520px) {
   html body [role='dialog'][aria-label='تفاصيل المنتج'] { align-items: center; padding: var(--duo-sheet-pad) var(--duo-gutter); }
   /* index.css pins this sheet with !important (width min(100%, 32rem), max-height 90-94dvh);
@@ -253,7 +252,7 @@ html body .al-cart-bar { padding-bottom: max(0px, env(safe-area-inset-bottom)); 
   html body .product-detail-layer .product-sheet-footer { flex-wrap: wrap; gap: 10px; padding-top: 16px; }
   html body .product-detail-layer .product-sheet-footer > div:first-child { flex: 1 1 100%; justify-content: space-between; }
   html body .product-detail-layer .product-add-cta { flex: 1 1 100%; flex-wrap: wrap; row-gap: 2px; }
-  @media (max-width: 720px) and (min-height: 760px) {
+  @media (max-width: 860px) {
     html body .product-detail-layer > .flex.flex-col.sm\:flex-row,
     html body .product-detail-layer > .space-y-8 { padding-inline: 20px; }
   }
@@ -278,8 +277,7 @@ html body .al-cart-bar { padding-bottom: max(0px, env(safe-area-inset-bottom)); 
    next-step button. On short windows the side sheet used to stack header + steps + a 3-row footer
    strip, leaving the basket itself ~40px of glass; now the form keeps the full height.
    ========================================================================== */
-@media screen and (min-width: 640px) and (max-width: 720px) and (min-height: 760px) and (max-height: 1000px),
-       screen and (min-width: 860px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 700px),
+@media screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape),
        screen and (min-width: 560px) and (max-height: 520px) {
   html body [role='dialog'][aria-label='السلة وإتمام الطلب'] { justify-content: stretch; }
   /* index.css forces display:flex, width min(720-920px, 92vw) and max-width with !important. */
@@ -377,11 +375,12 @@ html body button[aria-label^='قسمة على'] { min-inline-size: 44px; min-blo
 html body .checkout-promo-summary { min-inline-size: 44px; }
 
 /* ==========================================================================
-   Round 2026-11-14: the opened Duo as a BOOK.
-   The inner screen (669x867 portrait book, 951x585 landscape book) is two pages with a
-   fold in the middle. Safari does not report the hinge, so the spread is chosen from the
-   window alone: 640-720 wide and tall, or 860-1000 wide and 520-700 high. iPad (768+ portrait,
-   1024+ landscape), phones and short windows keep their own layouts.
+   Round 2026-11-14 (revised round 2): the opened Duo, held LANDSCAPE, as a BOOK.
+   Only the landscape inner screen (about 951x585..669) is two pages with a fold in the middle.
+   Portrait (669x867) is a normal single-column layout, never split. Safari does not report the
+   hinge, so the spread is chosen from the window alone:
+   BOOK = 721-1000 wide, 520-960 high, orientation landscape. iPad (744+ portrait, 1024+ landscape),
+   phones in landscape (< 520 high) and short windows keep their own layouts.
    Every screen gets a primary page (right, RTL reading starts there) and a context page
    (left). Nothing readable or tappable sits on the fold: centre +-16px (--duo-spine / 2).
    Pure CSS: nothing is re-mounted when the window changes, so inputs, the open sheet,
@@ -391,8 +390,7 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
 /* The menu's context-page wrapper is invisible to layout outside the book. */
 .duo-context-page { display: contents; }
 
-@media screen and (min-width: 640px) and (max-width: 720px) and (min-height: 760px) and (max-height: 1000px),
-       screen and (min-width: 860px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 700px) {
+@media screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape) {
   :root { --duo-page: calc(50vw - var(--duo-spine) / 2); --duo-fold: var(--duo-spine); --duo-sheet-pad: 18px; }
 
   /* The fold: a hairline and a soft shadow either side, drawn over everything (it is in the
@@ -612,9 +610,10 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
   /* The best-seller carousel stays on its page. */
   html body .customer-signature-shell .best-seller-wow-carousel { overflow: hidden; }
 
-  /* Portrait book: each page is ~318px, a phone column. Tailwind's sm: layouts (chosen from the
-     640px+ window) are too wide for it, so the rows that assumed room fall back to phone stacking. */
-  @media (max-width: 720px) {
+  /* Narrow book (721-860 wide): each page is 345-415px, a phone column. Tailwind's sm: layouts (chosen
+     from the 640px+ window, not from the page) are too wide for it, so the rows that assumed room fall
+     back to phone stacking. */
+  @media (max-width: 860px) {
     html body .dna-cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     html body .track-signature main .space-y-4 > div.bg-white > .flex.items-start.justify-between { flex-wrap: wrap; gap: 10px; }
     html body .track-signature main .space-y-4 > div.bg-white .flex.items-center.gap-2 { flex-wrap: wrap; }
@@ -641,4 +640,57 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
   html body .ord-bp-theatre > .relative.z-10 > :nth-child(1) { grid-column: 1; grid-row: 1; margin-bottom: 10px; }
   html body .ord-bp-theatre > .relative.z-10 > :nth-child(2) { grid-column: 1; grid-row: 2; margin-bottom: 0; }
   html body .ord-bp-theatre > .relative.z-10 > :nth-child(3) { grid-column: 2; grid-row: 1 / span 2; }
+}
+
+/* ==========================================================================
+   Round 2 (2026-11-14): system widget keep-out, installed app on the opened Duo.
+   On the installed app (display-mode: standalone) a system status widget floats over the
+   PHYSICAL top-right corner of the inner screen (about 55-80px wide, 20-110px from the edge,
+   down to y ~ 110-125). We cannot read its box, so a generous 116x116 corner is reserved:
+   nothing readable or tappable sits there, while backgrounds still run full-bleed behind it.
+   Applies to the book (right page only: the widget is at the physical top-right) and to the
+   opened portrait inner screen. Ordinary phones in standalone have no such widget and are not
+   matched (the folded outer screen 367x740 cannot be told apart from an iPhone, so it is left alone).
+   Physical `right`, whatever the writing direction: the corner is the START side in Arabic.
+   ========================================================================== */
+:root { --duo-cutout-w: 0px; --duo-cutout-h: 0px; }
+@media screen and (display-mode: standalone) and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape),
+       screen and (display-mode: standalone) and (min-width: 640px) and (max-width: 720px) and (min-height: 520px) and (max-height: 960px) and (orientation: portrait) {
+  :root { --duo-cutout-w: 116px; --duo-cutout-h: 116px; }
+
+  /* Menu: the diwaniya strip and the title row (logo, name) stop short of the corner. */
+  html body .customer-signature-shell > [role='region'][aria-label='الديوانية'],
+  html body .customer-signature-shell > header,
+  html body .track-signature > header,
+  html body .checkout-wow-panel .checkout-wow-header,
+  html body .checkout-wow-panel .checkout-steps,
+  html body .qatya-ultra-shell .qatya-tabs {
+    padding-right: calc(var(--duo-cutout-w) + 8px) !important;
+  }
+  /* The woven band and the header keep their full-bleed background; only the content moves. */
+  html body .customer-signature-shell > [role='region'][aria-label='الديوانية'] { margin-right: 0; }
+  /* The diwaniya dialog's title row: its card is max 448px wide, centred (portrait) or on the right page (book). */
+  html body .duo-keepout-head { padding-right: max(1rem, calc(var(--duo-cutout-w) - (100vw - 448px) / 2 + 8px)); }
+  html body .duo-keepout-head { flex-wrap: wrap; gap: 8px; }
+  html body .roulette-ultra-shell > div.mx-auto { padding-top: var(--duo-cutout-h); }
+  @media (orientation: landscape) { html body .duo-keepout-head { padding-right: max(1rem, calc(var(--duo-cutout-w) - var(--duo-gutter) + 8px)); } }
+  /* Close buttons that sat at the very corner of a sheet or dialog. */
+  html body .product-detail-layer > button.absolute,
+  html body .duo-page-dialog [aria-label='إغلاق']:is(.absolute, .fixed) { right: calc(var(--duo-cutout-w) - 4px); }
+  /* The floating notification bell is bottom-anchored; its open panel must not grow into the corner. */
+  html body .dna-inbox { max-block-size: min(460px, calc(100dvh - var(--duo-cutout-h) - 180px)); }
+  /* Small floating notes at the top-right (added-to-cart, offline) start below the corner. */
+  html body .cart-moment-toast,
+  html body .customer-offline-toast { top: calc(var(--duo-cutout-h) + 8px) !important; }
+}
+
+/* The floating notification bell (bottom corner) in the book: it lives on the right page, and its panel
+   opens inside that page. (Below 768px Tailwind pins the bell to the left; here that would be the other page.) */
+@media screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape) {
+  html body .dna-inbox-bell { left: auto !important; right: var(--duo-gutter) !important; }
+  html body .dna-inbox {
+    left: calc(50% + var(--duo-spine) / 2 + var(--duo-gutter)) !important;
+    right: var(--duo-gutter) !important;
+    width: auto !important;
+  }
 }
