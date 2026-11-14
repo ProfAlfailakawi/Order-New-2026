@@ -58,13 +58,31 @@ describe('iPhone Duo audit', () => {
   });
   describe('opened Duo as a book (2026-11-14)', () => {
     const css = read('src/duo.css');
-    const book = '(min-width: 640px) and (max-width: 720px) and (min-height: 760px) and (max-height: 1000px)';
+    const book = 'screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape)';
 
-    it('lays the inner screen out as two pages with a fold, from the window size only', () => {
+    it('lays the inner screen out as two pages with a fold, only in landscape, from the window size only', () => {
       expect(css).toContain(book);
-      expect(css).toContain('(min-width: 860px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 700px)');
       expect(css).toMatch(/--duo-spine:\s*32px/);
       expect(css).toMatch(/html body::after\s*\{[^}]*pointer-events:\s*none/);
+      // Portrait is a normal single column: the old portrait branch (640-720 wide, 760+ tall) is gone.
+      expect(css).not.toMatch(/min-height:\s*760px\) and \(max-height:\s*1000px/);
+      for (const m of css.matchAll(/^@media ([^{]+)\{/gm)) {
+        for (const q of m[1].split(',')) {
+          if (/orientation:\s*portrait/.test(q)) expect(q, q).toMatch(/display-mode:\s*standalone/);
+        }
+      }
+    });
+
+    it('reserves the system widget corner (116px) on the installed Duo inner screen only', () => {
+      expect(css).toMatch(/:root\s*\{\s*--duo-cutout-w:\s*0px;\s*--duo-cutout-h:\s*0px;\s*\}/);
+      const at = css.indexOf('--duo-cutout-w: 116px');
+      expect(at).toBeGreaterThan(-1);
+      const head = css.slice(css.lastIndexOf('@media', at), at);
+      expect(head).toContain('screen and (display-mode: standalone) and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape)');
+      expect(head).toContain('screen and (display-mode: standalone) and (min-width: 640px) and (max-width: 720px) and (min-height: 520px) and (max-height: 960px) and (orientation: portrait)');
+      expect(css).toMatch(/padding-right:\s*calc\(var\(--duo-cutout-w\)/);
+      expect(css).toMatch(/\.dna-inbox \{ max-block-size: min\(460px, calc\(100dvh - var\(--duo-cutout-h\)/);
+      expect(read('src/pages/CustomerSite.tsx')).toContain('duo-keepout-head');
     });
 
     it('keeps the menu context wrapper invisible to layout outside the book', () => {
@@ -94,14 +112,14 @@ describe('iPhone Duo audit', () => {
     });
 
     it('keeps every Duo posture query off iPads: screen only, width-capped (Duo is not an iPad)', () => {
-      // iPad portrait is 744px wide or more, iPad landscape 1024px or more, and an iPad window is never
-      // under ~630px tall; the Duo inner screen is ~669x867 and ~951x585. Width is the only safe signal.
-      const from = css.indexOf('@media screen and (min-width: 640px)');
+      // iPad portrait is 744px wide or more, iPad landscape 1024px or more; the Duo inner screen is
+      // ~669x867 portrait and ~951x585 landscape. Width plus orientation are the only safe signals.
+      const from = css.indexOf('@media screen and (min-width: 721px)');
       expect(from).toBeGreaterThan(-1);
       const queries = [...css.slice(from).matchAll(/^@media ([^{]+)\{/gm)].flatMap((m) =>
         m[1].split(',').map((q) => q.trim()),
       );
-      expect(queries.length).toBeGreaterThanOrEqual(8);
+      expect(queries.length).toBeGreaterThanOrEqual(6);
       const px = (q: string, prop: string) => {
         const m = q.match(new RegExp('\\(' + prop + ':\\s*(\\d+)px\\)'));
         return m ? Number(m[1]) : null;
@@ -112,11 +130,10 @@ describe('iPhone Duo audit', () => {
         const minW = px(q, 'min-width');
         const maxW = px(q, 'max-width');
         const maxH = px(q, 'max-height');
-        // Portrait book: never wider than 720px. Landscape book: never wider than 1000px.
-        if (maxW !== null) expect(maxW, q).toBeLessThanOrEqual(minW !== null && minW < 840 ? 720 : 1000);
-        // A lower width bound at or above the iPad portrait width must be capped below iPad landscape.
+        if (maxW !== null) expect(maxW, q).toBeLessThanOrEqual(/orientation:\s*portrait/.test(q) ? 720 : 1000);
+        // Anything from the iPad portrait width up must be capped below iPad landscape and be landscape-only.
         if (minW !== null && minW >= 744) expect(maxW, q).not.toBeNull();
-        // Short-window (laptop) postures: either a real short height or a width below iPad landscape.
+        if (minW !== null && minW >= 721 && maxW !== null && maxW > 767) expect(q, q).toMatch(/orientation:\s*landscape/);
         if (maxW === null) expect(maxH ?? Infinity, q).toBeLessThanOrEqual(520);
       }
     });

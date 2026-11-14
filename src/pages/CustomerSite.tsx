@@ -6474,7 +6474,7 @@ export default function CustomerSite() {
                    {/* Zari Bisht Gate Entrance */}
                    <ZariBishtGate />
 
-                   <div className="p-4 sm:p-5 bg-white border-b border-stone-100 flex items-center justify-between shrink-0 relative z-10">
+                   <div className="duo-keepout-head p-4 sm:p-5 bg-white border-b border-stone-100 flex items-center justify-between shrink-0 relative z-10">
                       <div className="flex flex-col text-right">
                          <h3 className="font-black text-lg sm:text-xl text-brand flex items-center gap-2">
                             <Crown className="w-5 h-5 text-accent" />
