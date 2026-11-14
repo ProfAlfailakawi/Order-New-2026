@@ -643,19 +643,19 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
 }
 
 /* ==========================================================================
-   Round 2 (2026-11-14): system widget keep-out, installed app on the opened Duo.
-   On the installed app (display-mode: standalone) a system status widget floats over the
+   Round 2/3 (2026-11-14): system widget keep-out on the opened Duo, in a browser tab AND the installed app.
+   On the opened Duo a system status widget floats over the
    PHYSICAL top-right corner of the inner screen (about 55-80px wide, 20-110px from the edge,
    down to y ~ 110-125). We cannot read its box, so a generous 116x116 corner is reserved:
    nothing readable or tappable sits there, while backgrounds still run full-bleed behind it.
    Applies to the book (right page only: the widget is at the physical top-right) and to the
-   opened portrait inner screen. Ordinary phones in standalone have no such widget and are not
+   opened portrait inner screen. Ordinary phones have no such widget and are not
    matched (the folded outer screen 367x740 cannot be told apart from an iPhone, so it is left alone).
    Physical `right`, whatever the writing direction: the corner is the START side in Arabic.
    ========================================================================== */
 :root { --duo-cutout-w: 0px; --duo-cutout-h: 0px; }
-@media screen and (display-mode: standalone) and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape),
-       screen and (display-mode: standalone) and (min-width: 640px) and (max-width: 720px) and (min-height: 520px) and (max-height: 960px) and (orientation: portrait) {
+@media screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape),
+       screen and (min-width: 640px) and (max-width: 720px) and (min-height: 520px) and (max-height: 960px) and (orientation: portrait) {
   :root { --duo-cutout-w: 116px; --duo-cutout-h: 116px; }
 
   /* Menu: the diwaniya strip and the title row (logo, name) stop short of the corner. */
