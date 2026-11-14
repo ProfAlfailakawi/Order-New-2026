@@ -6,6 +6,8 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import nodeHttp2 from "node:http2";
+import nodeCrypto from "node:crypto";
 import LZString from "lz-string";
 import { initializeApp } from "firebase/app";
 import admin from "firebase-admin";
@@ -1441,6 +1443,82 @@ function normalizePushUrl(url: any) {
   return value.startsWith("/") ? value : `/${value}`;
 }
 
+// ═══ Direct APNs for the native iOS app ═══════════════════════════════════════
+// The device token from the native shell is an APNs token (hex), not an FCM token, so it
+// is sent over HTTP/2 with the .p8 key. Env: APNS_KEY_P8 (accepts \n), APNS_KEY_ID,
+// APNS_TEAM_ID, APNS_BUNDLE_ID (default com.dralfailakawi.alturath),
+// APNS_ENV = production | sandbox (default production = TestFlight / App Store).
+const apnsBase64Url = (input: Buffer | string) =>
+  Buffer.from(input).toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+let apnsJwtCache: { jwt: string; issuedAt: number } | null = null;
+function getApnsJwt(): string | null {
+  const key = String(process.env.APNS_KEY_P8 || "").replace(/\\n/g, "\n").trim();
+  const keyId = String(process.env.APNS_KEY_ID || "").trim();
+  const teamId = String(process.env.APNS_TEAM_ID || "").trim();
+  if (!key || !keyId || !teamId) return null;
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (apnsJwtCache && nowSec - apnsJwtCache.issuedAt < 40 * 60) return apnsJwtCache.jwt;
+  const header = apnsBase64Url(JSON.stringify({ alg: "ES256", kid: keyId }));
+  const claims = apnsBase64Url(JSON.stringify({ iss: teamId, iat: nowSec }));
+  const signature = nodeCrypto.sign("sha256", Buffer.from(`${header}.${claims}`), { key, dsaEncoding: "ieee-p1363" });
+  const jwt = `${header}.${claims}.${apnsBase64Url(signature)}`;
+  apnsJwtCache = { jwt, issuedAt: nowSec };
+  return jwt;
+}
+
+async function sendApnsToToken(
+  deviceToken: string,
+  title: string,
+  body: string,
+  data: Record<string, string> = {},
+): Promise<{ sent: boolean; dead?: boolean; reason?: string }> {
+  const jwt = getApnsJwt();
+  if (!jwt || !deviceToken) return { sent: false, reason: "APNS_NOT_CONFIGURED" };
+  const topic = process.env.APNS_BUNDLE_ID || "com.dralfailakawi.alturath";
+  const host = process.env.APNS_ENV === "sandbox" ? "https://api.sandbox.push.apple.com" : "https://api.push.apple.com";
+  const payload = JSON.stringify({
+    aps: { alert: { title, body }, sound: "default", "thread-id": String(data.type || "diwaniya") },
+    ...data,
+  });
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (r: { sent: boolean; dead?: boolean; reason?: string }) => {
+      if (settled) return;
+      settled = true;
+      try { client.close(); } catch {}
+      resolve(r);
+    };
+    const client = nodeHttp2.connect(host);
+    client.on("error", (e) => finish({ sent: false, reason: `APNS_CONN ${e.message}` }));
+    const timer = setTimeout(() => finish({ sent: false, reason: "APNS_TIMEOUT" }), 15000);
+    const req = client.request({
+      ":method": "POST",
+      ":path": `/3/device/${deviceToken}`,
+      authorization: `bearer ${jwt}`,
+      "apns-topic": topic,
+      "apns-push-type": "alert",
+      "apns-priority": "10",
+      "apns-expiration": String(Math.floor(Date.now() / 1000) + 600),
+      "content-type": "application/json",
+    });
+    let status = 0;
+    let text = "";
+    req.on("response", (h) => { status = Number(h[":status"] || 0); });
+    req.setEncoding("utf8");
+    req.on("data", (c) => (text += c));
+    req.on("end", () => {
+      clearTimeout(timer);
+      if (status === 200) return finish({ sent: true });
+      let reason = "";
+      try { reason = String(JSON.parse(text).reason || ""); } catch { reason = text.slice(0, 120); }
+      const dead = status === 410 || /BadDeviceToken|Unregistered|DeviceTokenNotForTopic/i.test(reason);
+      finish({ sent: false, dead, reason: `APNS_${status} ${reason}` });
+    });
+    req.on("error", (e) => finish({ sent: false, reason: `APNS_REQ ${e.message}` }));
+    req.end(payload);
+  });
+}
+
 async function sendDiwaniyaExternalPush(input: {
   toPhones: any[];
   title: string;
@@ -1471,8 +1549,41 @@ async function sendDiwaniyaExternalPush(input: {
         return false;
       });
 
-    const uniqueTokens = [...new Set(tokens.map((item: any) => String(item.token)).filter(Boolean))] as string[];
-    if (!uniqueTokens.length) return { success: false, skipped: true, reason: "no-active-tokens" };
+    // iOS app tokens are APNs tokens: they go straight to APNs, never through FCM.
+    const nativeTokens = [...new Set(tokens.filter((item: any) => String(item.platform) === "ios-native").map((item: any) => String(item.token)).filter(Boolean))] as string[];
+    const nativeSet = new Set(nativeTokens);
+    const uniqueTokens = [...new Set(tokens.map((item: any) => String(item.token)).filter(Boolean))].filter((t) => !nativeSet.has(String(t))) as string[];
+    if (!uniqueTokens.length && !nativeTokens.length) return { success: false, skipped: true, reason: "no-active-tokens" };
+
+    let nativeSuccess = 0;
+    let nativeFailure = 0;
+    if (nativeTokens.length) {
+      const nativeData: Record<string, string> = {
+        type: String(input.type || "diwaniya"),
+        url: normalizePushUrl(input.url),
+        orderId: String(input.orderId || ""),
+        squadId: String(input.squadId || ""),
+      };
+      const nativeResults = await Promise.all(
+        nativeTokens.map(async (deviceToken) => ({ deviceToken, result: await sendApnsToToken(deviceToken, String(input.title || ""), String(input.body || ""), nativeData) })),
+      );
+      nativeSuccess = nativeResults.filter((r) => r.result.sent).length;
+      nativeFailure = nativeResults.length - nativeSuccess;
+      const deadNative = nativeResults.filter((r) => r.result.dead).map((r) => r.deviceToken);
+      if (deadNative.length) {
+        await updateAppDataAtomically((current) => {
+          const bad = new Set(deadNative);
+          const currentTokens = Array.isArray(current.diwaniyaPushTokens) ? current.diwaniyaPushTokens : [];
+          return {
+            diwaniyaPushTokens: currentTokens.map((item: any) =>
+              bad.has(String(item.token)) ? { ...item, active: false, disabledAt: new Date().toISOString() } : item
+            )
+          };
+        });
+      }
+      if (nativeFailure) console.warn("[DIWANIYA_PUSH] APNs failures:", nativeResults.filter((r) => !r.result.sent).map((r) => r.result.reason).slice(0, 3));
+      if (!uniqueTokens.length) return { success: nativeSuccess > 0, successCount: nativeSuccess, failureCount: nativeFailure };
+    }
 
     const pushUrl = normalizePushUrl(input.url);
     const pushEventId = `diwaniya-${input.type}-${input.orderId || input.squadId || Date.now()}`;
@@ -1549,7 +1660,7 @@ async function sendDiwaniyaExternalPush(input: {
       });
     }
 
-    return { success: true, successCount: response.successCount, failureCount: response.failureCount };
+    return { success: true, successCount: response.successCount + nativeSuccess, failureCount: response.failureCount + nativeFailure };
   } catch (error: any) {
     console.warn("[DIWANIYA_PUSH] send skipped:", error?.message || String(error));
     return { success: false, error: error?.message || String(error) };
