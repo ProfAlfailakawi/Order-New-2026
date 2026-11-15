@@ -600,7 +600,8 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
   /* Centred dialogs open on the right page; the left page stays visible, dimmed, as context. */
   /* (!important only because some of these overlays set their padding inline.) */
   html body .duo-page-dialog {
-    padding-inline: var(--duo-gutter) calc(50% + var(--duo-spine) / 2 + var(--duo-gutter)) !important;
+    padding-right: max(var(--duo-gutter), var(--duo-keep)) !important;
+    padding-left: calc(50% + var(--duo-spine) / 2 + var(--duo-gutter)) !important;
     justify-content: center;
   }
 
@@ -643,45 +644,67 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
 }
 
 /* ==========================================================================
-   Round 2/3 (2026-11-14): system widget keep-out on the opened Duo, in a browser tab AND the installed app.
-   On the opened Duo a system status widget floats over the
-   PHYSICAL top-right corner of the inner screen (about 55-80px wide, 20-110px from the edge,
-   down to y ~ 110-125). We cannot read its box, so a generous 116x116 corner is reserved:
-   nothing readable or tappable sits there, while backgrounds still run full-bleed behind it.
-   Applies to the book (right page only: the widget is at the physical top-right) and to the
-   opened portrait inner screen. Ordinary phones have no such widget and are not
-   matched (the folded outer screen 367x740 cannot be told apart from an iPhone, so it is left alone).
-   Physical `right`, whatever the writing direction: the corner is the START side in Arabic.
-   ========================================================================== */
-:root { --duo-cutout-w: 0px; --duo-cutout-h: 0px; }
-@media screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape),
-       screen and (min-width: 640px) and (max-width: 720px) and (min-height: 520px) and (max-height: 960px) and (orientation: portrait) {
-  :root { --duo-cutout-w: 116px; --duo-cutout-h: 116px; }
+   System widget corner (iPhone Duo). ONE reserved rectangle, three tokens:
+     --duo-widget-w    96px   physical width from the right edge (widget far edge measured at about 75-84px, up to about 112px in another report)
+     --duo-widget-gap   8px   breathing room
+     --duo-widget-h    clamp(64px, 31vh, 270px)   about 31% of the height (3%-30% measured), capped at 270px
+   They are 0 on every other device. The corner is the PHYSICAL top-right: in Arabic that is the
+   START side, so everything here uses physical right/padding-right, never inline-end.
+   Backgrounds and glass keep running under it; only readable or tappable things move.
+   Geometry in landscape is NOT verified on a real device.
 
-  /* Menu: the diwaniya strip and the title row (logo, name) stop short of the corner. */
+   Why the earlier keep-out failed: it was gated on 640-720 portrait / 721-1000 landscape only, so the
+   folded screens and the installed app's window had nothing; it reserved a fixed 116px square
+   on a handful of selectors (menu header, diwaniya, checkout header, tabs of one page) and left the
+   track page, split pages, toasts, offline note, photo viewer and every dialog untouched; and it needed
+   !important to win. Detection is window size only (the device name is invisible to CSS) and never an exact width:
+     portrait  380-720px wide, >= 360px tall (any taller: the installed app has no browser toolbars),
+               width/height >= 0.47 (the app window is about 457x678; tall phones 390x844 and up are 0.46 and stay untouched)
+     landscape 540-1000px wide, 300-960px tall, width/height <= 1.7 (phones in landscape are >= 1.77)
+     plus the previous book query. (No viewport-segments query: the repo bans those, they are not exposed in Safari.)
+     No Safari-only signal (UA token, navigator.standalone, display-mode) is used, so the Capacitor WKWebView matches like a tab.
+   ========================================================================== */
+:root {
+  --duo-widget-w: 0px;
+  --duo-widget-gap: 0px;
+  --duo-widget-h: 0px;
+  --duo-keep: calc(var(--duo-widget-w) + var(--duo-widget-gap));
+  --duo-keep-top: calc(var(--duo-widget-h) + var(--duo-widget-gap));
+}
+@media screen and (orientation: portrait) and (min-width: 380px) and (max-width: 720px) and (min-height: 360px) and (min-aspect-ratio: 47/100),
+       screen and (orientation: landscape) and (min-width: 540px) and (max-width: 1000px) and (min-height: 300px) and (max-height: 960px) and (max-aspect-ratio: 17/10),
+       screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape) {
+  :root { --duo-widget-w: 96px; --duo-widget-gap: 8px; --duo-widget-h: clamp(64px, 31vh, 270px); }
+
+  /* Edge-to-edge bands and headers: the background stays, the content starts left of the corner. */
   html body .customer-signature-shell > [role='region'][aria-label='الديوانية'],
   html body .customer-signature-shell > header,
   html body .track-signature > header,
   html body .checkout-wow-panel .checkout-wow-header,
   html body .checkout-wow-panel .checkout-steps,
-  html body .qatya-ultra-shell .qatya-tabs {
-    padding-right: calc(var(--duo-cutout-w) + 8px) !important;
+  html body .qatya-ultra-shell .qatya-tabs,
+  html body .qatya-ultra-header {
+    padding-right: max(1rem, var(--duo-keep));
   }
-  /* The woven band and the header keep their full-bleed background; only the content moves. */
   html body .customer-signature-shell > [role='region'][aria-label='الديوانية'] { margin-right: 0; }
-  /* The diwaniya dialog's title row: its card is max 448px wide, centred (portrait) or on the right page (book). */
-  html body .duo-keepout-head { padding-right: max(1rem, calc(var(--duo-cutout-w) - (100vw - 448px) / 2 + 8px)); }
-  html body .duo-keepout-head { flex-wrap: wrap; gap: 8px; }
-  html body .roulette-ultra-shell > div.mx-auto { padding-top: var(--duo-cutout-h); }
-  @media (orientation: landscape) { html body .duo-keepout-head { padding-right: max(1rem, calc(var(--duo-cutout-w) - var(--duo-gutter) + 8px)); } }
-  /* Close buttons that sat at the very corner of a sheet or dialog. */
+  /* The first screenful of a page starts below the corner instead of squeezing every card sideways:
+     the offset is the corner height minus what the sticky header already takes (rem, so it follows the text size). */
+  html body .customer-signature-shell main { padding-top: max(1rem, calc(var(--duo-keep-top) - 11rem)); }
+  html body .track-signature main { padding-top: max(1.5rem, calc(var(--duo-keep-top) - 4.5rem)); }
+  html body .checkout-wow-panel .checkout-wow-body { padding-top: max(1rem, calc(var(--duo-keep-top) - 4.5rem)); }
+  html body .qatya-ultra-shell > div.max-w-md { padding-top: max(1rem, calc(var(--duo-keep-top) - 6rem)); }
+  /* Full-screen dialogs and sheets: the overlay keeps the card out of the corner. */
+  html body .duo-page-dialog { padding-right: max(var(--duo-keep), 1rem); }
+  /* The diwaniya dialog's title row (card max 448px wide, centred). */
+  html body .duo-keepout-head { flex-wrap: wrap; gap: 8px; padding-right: max(1rem, calc(var(--duo-keep) - (100vw - 448px) / 2)); }
+  html body .roulette-ultra-shell > div.mx-auto { padding-top: var(--duo-keep-top); }
+  /* Close buttons that sat at the very corner of a sheet, dialog or viewer. */
   html body .product-detail-layer > button.absolute,
-  html body .duo-page-dialog [aria-label='إغلاق']:is(.absolute, .fixed) { right: calc(var(--duo-cutout-w) - 4px); }
-  /* The floating notification bell is bottom-anchored; its open panel must not grow into the corner. */
-  html body .dna-inbox { max-block-size: min(460px, calc(100dvh - var(--duo-cutout-h) - 180px)); }
-  /* Small floating notes at the top-right (added-to-cart, offline) start below the corner. */
+  html body .duo-page-dialog [aria-label='إغلاق']:is(.absolute, .fixed) { right: var(--duo-keep); }
+  /* The notification panel and small notes at the top start below the corner. */
+  html body .dna-inbox { max-block-size: min(460px, calc(100dvh - var(--duo-keep-top) - 180px)); }
   html body .cart-moment-toast,
-  html body .customer-offline-toast { top: calc(var(--duo-cutout-h) + 8px) !important; }
+  html body .customer-offline-toast { top: var(--duo-keep-top); }
 }
 
 /* The floating notification bell (bottom corner) in the book: it lives on the right page, and its panel

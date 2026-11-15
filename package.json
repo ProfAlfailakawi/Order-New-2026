@@ -11,7 +11,8 @@
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "test": "vitest run",
-    "verify:pwa": "node scripts/verify-pwa.mjs"
+    "verify:pwa": "node scripts/verify-pwa.mjs",
+    "test:duo-widget": "node scripts/duo-widget-guard.cjs"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

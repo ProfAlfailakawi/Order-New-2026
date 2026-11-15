@@ -818,7 +818,7 @@ section:not([class*="max-w-"]) {
 }
 @media (min-width: 768px) {
   .checkout-wow-panel { width: min(820px, 92vw) !important; }
-  .checkout-wow-body { padding: 1.5rem 1.75rem !important; }
+  .checkout-wow-body { padding: 1.5rem 1.75rem; }
   .payment-method-wow-grid { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .9rem !important; }
   .payment-method-card { height: 154px; align-items: flex-start !important; }
   .payment-method-card > div { flex-direction: column; align-items: flex-start !important; gap: .85rem !important; }
@@ -826,8 +826,9 @@ section:not([class*="max-w-"]) {
   .checkout-wow-footer .space-y-3 { max-width: 100%; }
 }
 @media (max-width: 520px) {
-  .checkout-wow-header { padding-inline: 1rem !important; padding-bottom: .9rem !important; }
-  .checkout-wow-body { padding: 1rem !important; }
+  /* No !important on the sides: it used to beat every later rule, the widget keep-out in src/duo.css included. */
+  .checkout-wow-header { padding-inline: 1rem; padding-bottom: .9rem !important; }
+  .checkout-wow-body { padding: 1rem; }
   .checkout-wow-footer { padding: 1rem !important; }
   .payment-wow-step { padding-top: .75rem !important; }
   .payment-wow-step > div:first-child { margin-bottom: 1rem !important; padding: 1.15rem !important; }
@@ -984,9 +985,9 @@ section:not([class*="max-w-"]) {
   .checkout-footer-cart{max-height:210px!important}
 }
 @media (max-width:640px){
-  .checkout-wow-header{min-height:78px!important;border-radius:0 0 24px 24px!important;padding-inline:16px!important}
+  .checkout-wow-header{min-height:78px!important;border-radius:0 0 24px 24px!important;padding-inline:16px}
   .checkout-wow-header button{width:48px!important;height:48px!important;padding:0!important;display:flex;align-items:center;justify-content:center}
-  .checkout-wow-body{padding:14px!important;space-y:0!important}
+  .checkout-wow-body{padding:14px;space-y:0!important}
   .checkout-wow-footer{padding:14px!important;max-height:48dvh!important;border-radius:22px 22px 0 0!important}
   .checkout-footer-cart{max-height:188px!important}
   .checkout-footer-cart .space-y-3{gap:6px!important}
@@ -3579,7 +3580,7 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   }
 
   .checkout-wow-header{
-    padding-inline:14px!important;
+    padding-inline:14px;
   }
 
   .checkout-wow-header h2{
@@ -3588,7 +3589,7 @@ button,.card,[role="button"]{transition-timing-function:var(--heritage-ease-natu
   }
 
   .checkout-wow-body{
-    padding:14px!important;
+    padding:14px;
   }
 
   .checkout-wow-footer{

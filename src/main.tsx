@@ -17,6 +17,8 @@ watchForPlatformUpdating();
 // التحديث الذاتي الصامت: بصمة الإصدار، منارتها، ثم التحديث والتصعيد عند اللزوم.
 installAppUpdate();
 installReveal();
+// ?duo-debug=1: the corner frame and a numbers panel (loaded on demand only).
+if (/[?&]duo-debug=1\b/.test(window.location.search)) void import('./lib/duoDebug').then((m) => m.installDuoDebug());
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
