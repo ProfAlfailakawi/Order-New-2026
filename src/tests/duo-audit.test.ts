@@ -59,6 +59,7 @@ describe('iPhone Duo audit', () => {
   describe('opened Duo as a book (2026-11-14)', () => {
     const css = read('src/duo.css');
     const portraitInner = 'screen and (min-width: 640px) and (max-width: 720px) and (min-height: 520px) and (max-height: 960px) and (orientation: portrait)';
+    const portraitOuter = 'screen and (min-width: 360px) and (max-width: 520px) and (min-height: 360px) and (orientation: portrait) and (min-aspect-ratio: 3/5)';
     const book = 'screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape)';
 
     it('lays the inner screen out as two pages with a fold, only in landscape, from the window size only', () => {
@@ -69,7 +70,8 @@ describe('iPhone Duo audit', () => {
       expect(css).not.toMatch(/min-height:\s*760px\) and \(max-height:\s*1000px/);
       for (const m of css.matchAll(/^@media ([^{]+)\{/gm)) {
         for (const q of m[1].split(',')) {
-          if (/orientation:\s*portrait/.test(q)) expect(q, q).toContain(portraitInner);
+          if (q.includes('min-width: 640px')) expect(q, q).toContain(portraitInner);
+          if (q.includes('min-aspect-ratio: 3/5')) expect(q, q).toContain(portraitOuter);
         }
       }
     });
@@ -81,6 +83,8 @@ describe('iPhone Duo audit', () => {
       const head = css.slice(css.lastIndexOf('@media', at), at);
       expect(head).toContain('screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape)');
       expect(head).toContain('screen and (min-width: 640px) and (max-width: 720px) and (min-height: 520px) and (max-height: 960px) and (orientation: portrait)');
+      expect(head).toContain('screen and (min-width: 540px) and (max-width: 1000px) and (min-height: 300px) and (max-height: 960px) and (orientation: landscape) and (max-aspect-ratio: 17/10)');
+      expect(head).toContain(portraitOuter);
       expect(css).toMatch(/padding-right:\s*calc\(var\(--duo-cutout-w\)/);
       expect(css).toMatch(/\.dna-inbox \{ max-block-size: min\(460px, calc\(100dvh - var\(--duo-cutout-h\)/);
       expect(read('src/pages/CustomerSite.tsx')).toContain('duo-keepout-head');
@@ -91,17 +95,22 @@ describe('iPhone Duo audit', () => {
       const head = css.slice(css.lastIndexOf('@media', at), at);
       expect(head).not.toMatch(/display-mode/);
       const queries = head.replace(/^@media/, '').replace(/\{[^]*$/, '').split(',').map((q) => q.trim());
-      expect(queries).toHaveLength(2);
+      expect(queries).toHaveLength(4);
       const matches = (q: string, w: number, h: number) => {
         const orient = w > h ? 'landscape' : 'portrait';
-        return [...q.matchAll(/\((min|max)-(width|height):\s*(\d+)px\)|\(orientation:\s*(\w+)\)/g)].every((m) => {
-          if (m[4]) return m[4] === orient;
+        return [...q.matchAll(/\((min|max)-(width|height):\s*(\d+)px\)|\((min|max)-aspect-ratio:\s*(\d+)\/(\d+)\)|\(orientation:\s*(\w+)\)/g)].every((m) => {
+          if (m[7]) return m[7] === orient;
+          if (m[4]) {
+            const ratio = w / h;
+            const boundary = Number(m[5]) / Number(m[6]);
+            return m[4] === 'min' ? ratio >= boundary : ratio <= boundary;
+          }
           const v = m[2] === 'width' ? w : h;
           return m[1] === 'min' ? v >= Number(m[3]) : v <= Number(m[3]);
         });
       };
       const hit = (w: number, h: number) => queries.some((q) => matches(q, w, h));
-      for (const [w, h] of [[951, 669], [951, 585], [669, 867], [720, 900], [640, 900], [1000, 520]]) expect(hit(w, h), `${w}x${h}`).toBe(true);
+      for (const [w, h] of [[951, 669], [951, 585], [669, 867], [720, 900], [640, 900], [1000, 520], [382, 580], [470, 780], [594, 368]]) expect(hit(w, h), `${w}x${h}`).toBe(true);
       const off: [number, number][] = [[390, 844], [844, 390], [932, 430], [744, 1024], [820, 1180], [1024, 768], [1180, 820], [1280, 800], [1440, 900], [367, 740], [951, 350], [768, 1024]];
       for (const [w, h] of off) expect(hit(w, h), `${w}x${h}`).toBe(false);
     });

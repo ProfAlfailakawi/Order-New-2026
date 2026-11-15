@@ -655,7 +655,9 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
    ========================================================================== */
 :root { --duo-cutout-w: 0px; --duo-cutout-h: 0px; }
 @media screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape),
-       screen and (min-width: 640px) and (max-width: 720px) and (min-height: 520px) and (max-height: 960px) and (orientation: portrait) {
+       screen and (min-width: 640px) and (max-width: 720px) and (min-height: 520px) and (max-height: 960px) and (orientation: portrait),
+       screen and (min-width: 540px) and (max-width: 1000px) and (min-height: 300px) and (max-height: 960px) and (orientation: landscape) and (max-aspect-ratio: 17/10),
+       screen and (min-width: 360px) and (max-width: 520px) and (min-height: 360px) and (orientation: portrait) and (min-aspect-ratio: 3/5) {
   :root { --duo-cutout-w: 116px; --duo-cutout-h: 116px; }
 
   /* Menu: the diwaniya strip and the title row (logo, name) stop short of the corner. */
@@ -669,6 +671,11 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
   }
   /* The woven band and the header keep their full-bleed background; only the content moves. */
   html body .customer-signature-shell > [role='region'][aria-label='الديوانية'] { margin-right: 0; }
+  /* Folded Duo's external portrait display is unusually wide (382×580): keep
+     the welcome mark and copy clear of the physical system-widget corner. */
+  @media screen and (min-width: 360px) and (max-width: 520px) and (min-height: 360px) and (orientation: portrait) and (min-aspect-ratio: 3/5) {
+    html body .ord-bp-theatre > .relative.z-10 { padding-right: calc(24px + var(--duo-cutout-w)); }
+  }
   /* The diwaniya dialog's title row: its card is max 448px wide, centred (portrait) or on the right page (book). */
   html body .duo-keepout-head { padding-right: max(1rem, calc(var(--duo-cutout-w) - (100vw - 448px) / 2 + 8px)); }
   html body .duo-keepout-head { flex-wrap: wrap; gap: 8px; }
