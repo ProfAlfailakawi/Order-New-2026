@@ -70,6 +70,8 @@ The customer-facing ordering site for Al-Turath (مطبخ التراث): menu, c
    - `GEMINI_API_KEY` — AI search and AI endpoints.
    - `UPAYMENTS_API_KEY` (and optionally `UPAYMENTS_MODE` / `UPAYMENTS_ENV` for sandbox) — creating and verifying payments.
    - `UPAYMENTS_TOKEN` — when set, the webhook requires `Authorization: Bearer <token>`.
+   - `UPAYMENTS_API_SECRET` — UPayments HMAC secret: signs outbound calls (`X-Timestamp`/`X-Signature`) and validates webhook signatures (mandatory at UPayments after 2026-12-31; unset = legacy unsigned calls).
+   - `UPAYMENTS_HMAC_ENFORCE=true` — reject webhooks without a signature (a wrong signature is always rejected); enable after the first signed webhook is seen.
    - `PORT` — optional, defaults to 3000.
 3. `npm run dev`
 

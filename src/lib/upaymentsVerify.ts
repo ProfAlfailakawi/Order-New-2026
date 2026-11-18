@@ -1,3 +1,4 @@
+import { upaymentsHmacHeaders } from "./upaymentsHmac";
 // Server-side confirmation of a UPayments payment before an order is marked paid.
 //
 // The return URL (/api/payment-return/<order>/success) and the webhook used to be
@@ -107,7 +108,7 @@ export const defaultStatusFetcher: StatusFetcher = async (url, apiKey) => {
   try {
     const response = await fetch(url, {
       method: "GET",
-      headers: { Accept: "application/json", Authorization: `Bearer ${apiKey}` },
+      headers: { Accept: "application/json", Authorization: `Bearer ${apiKey}`, ...upaymentsHmacHeaders("GET", url) },
       signal: controller.signal,
     });
     const type = response.headers.get("content-type") || "";
