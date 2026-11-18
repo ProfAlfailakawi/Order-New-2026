@@ -37,6 +37,7 @@ import {
 } from "node:zlib";
 import { promisify } from "node:util";
 
+import { upaymentsHmacHeaders, upaymentsWebhookGate } from "./src/lib/upaymentsHmac";
 // Initialize Gemini SDK with User-Agent telemetry
 const aiClient = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -1747,7 +1748,15 @@ const adminAuthOnly = async (req, res, next) => {
   console.log(`[STARTUP] DEFAULT_APP_PORT: ${process.env.DEFAULT_APP_PORT}`);
 
   // 2mb: نسخ الواجهة القديمة المخزّنة عند العملاء ترسل صور المنتجات داخل الطلب.
-  app.use(express.json({ limit: "2mb" }));
+  app.use(express.json({
+    limit: "2mb",
+    // UPayments signs the exact webhook bytes (HMAC); keep them for the webhook paths only.
+    verify: (req: any, _res, buf) => {
+      if (/^\/api\/(webhook\/upayments|payment-webhook)/.test(String(req.originalUrl || req.url || ""))) {
+        req.rawBody = buf;
+      }
+    },
+  }));
   app.use("/api", (_req, res, next) => {
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     res.setHeader("Pragma", "no-cache");
@@ -4892,11 +4901,13 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
       let paymentResponse: any;
       try {
         console.log(`[SPLIT] Calling UPayments API: ${upaymentsApiUrl}`);
-        const response = await axios.post(upaymentsApiUrl, upaymentsPayload, {
+        const chargeBody = JSON.stringify(upaymentsPayload);
+        const response = await axios.post(upaymentsApiUrl, chargeBody, {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
             Authorization: `Bearer ${cleanApiKey}`,
+            ...upaymentsHmacHeaders("POST", upaymentsApiUrl, chargeBody),
           },
           timeout: 15000, // 15s timeout
         });
@@ -5122,11 +5133,13 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
 
       let paymentResponse: any;
       try {
-        const apiRes = await axios.post(upaymentsApiUrl, upaymentsPayload, {
+        const chargeBody = JSON.stringify(upaymentsPayload);
+        const apiRes = await axios.post(upaymentsApiUrl, chargeBody, {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
             Authorization: `Bearer ${cleanApiKey}`,
+            ...upaymentsHmacHeaders("POST", upaymentsApiUrl, chargeBody),
           },
           timeout: 15000,
         });
@@ -5326,6 +5339,7 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
   // Payment Webhook
   app.post(
     ["/api/payment-webhook/:pathOrderId/:pathSplitId", "/api/payment-webhook/:pathOrderId", "/api/payment-webhook", "/api/webhook/upayments"],
+    upaymentsWebhookGate(),
     async (req, res) => {
       // Basic sanity check / structural boundary for webhook
       // Verify payment webhook token securely if configured in environment
