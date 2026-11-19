@@ -12,6 +12,35 @@ import {installAppUpdate} from './lib/app-update';
 import {installReveal} from './lib/reveal';
 import {watchForPlatformUpdating} from './lib/updatingNotice';
 
+/* علامات iPhone Duo على <html>، للعرض وحده:
+   data-device="duo" حين تكون الشاشة شبه مربّعة (الخارجية 466×678، الداخلية 669×951؛ النسبة ≤1.48).
+   كل iPhone نسبته ≥1.7 وiPad أعرض من 700، فقواعد الدوو لا تمسّهما. يُعاد عند الفتح والإغلاق.
+   data-shell: "app" داخل التطبيق المثبّت، و"browser" في المتصفح.
+   data-widget-side: جهة عمود ساعة النظام كما يبلغها iOS عبر safe-area (صفرٌ في Safari). */
+const rootEl = document.documentElement;
+const markDevice = () => {
+  const lo = Math.min(screen.width, screen.height), hi = Math.max(screen.width, screen.height);
+  rootEl.dataset.device = lo >= 440 && lo <= 700 && hi / lo <= 1.48 ? 'duo' : 'other';
+};
+markDevice();
+window.addEventListener('resize', markDevice);
+const isApp = Boolean((window as unknown as {Capacitor?: {isNativePlatform?: () => boolean}}).Capacitor?.isNativePlatform?.())
+  || window.matchMedia('(display-mode: standalone)').matches
+  || (navigator as unknown as {standalone?: boolean}).standalone === true;
+rootEl.dataset.shell = isApp ? 'app' : 'browser';
+const sideProbe = document.createElement('div');
+sideProbe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)';
+rootEl.appendChild(sideProbe);
+const markWidgetSide = () => {
+  const cs = getComputedStyle(sideProbe), l = parseFloat(cs.paddingLeft) || 0, r = parseFloat(cs.paddingRight) || 0;
+  rootEl.dataset.widgetSide = l > 20 && l > r ? 'left' : r > 20 ? 'right' : 'none';
+};
+markWidgetSide();
+// الحدود قد تتغيّر بعد حدث resize، فيُراقَب المسبار نفسه.
+if (typeof ResizeObserver !== 'undefined') new ResizeObserver(markWidgetSide).observe(sideProbe);
+window.addEventListener('resize', () => { requestAnimationFrame(markWidgetSide); window.setTimeout(markWidgetSide, 400); });
+window.addEventListener('orientationchange', () => window.setTimeout(markWidgetSide, 400));
+
 // أثناء النشر تجيب المنصّة /api بصفحة خطأ HTML: شريطٌ هادئ بدل خطأ غامض. يراقب ولا يبدّل الجواب.
 watchForPlatformUpdating();
 // التحديث الذاتي الصامت: بصمة الإصدار، منارتها، ثم التحديث والتصعيد عند اللزوم.
