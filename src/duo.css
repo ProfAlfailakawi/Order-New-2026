@@ -701,3 +701,62 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
     width: auto !important;
   }
 }
+
+/* ==========================================================================
+   iPhone Duo pattern (2026-11-19): every rule below is scoped to html[data-device="duo"]
+   (set in main.tsx from the near-square screen), so iPhone and iPad never change.
+   The fixed 116px corner above was a guess at the clock widget. On the Duo it is replaced by
+   what iOS reports: Safari keeps the clock in its own bar (insets 0, no empty strip); the
+   installed app gets the side column (outer screen) or the top strip (inner portrait).
+   ========================================================================== */
+:root[data-device='duo'] {
+  --duo-cutout-w: max(env(safe-area-inset-right, 0px), env(safe-area-inset-left, 0px));
+  --duo-cutout-h: env(safe-area-inset-top, 0px);
+  --duo-glass: color-mix(in srgb, #fbf7ee 72%, transparent);
+  --duo-glass-line: rgba(24, 51, 38, 0.12);
+}
+/* The corner rules above pad the physical right; when iOS puts the widget column on the
+   left, mirror them so the left edge is the one kept clear. */
+html[data-device='duo'][data-widget-side='left'] body :is(
+  .customer-signature-shell > [role='region'][aria-label='الديوانية'],
+  .customer-signature-shell > header,
+  .track-signature > header,
+  .checkout-wow-panel .checkout-wow-header,
+  .checkout-wow-panel .checkout-steps,
+  .qatya-ultra-shell .qatya-tabs) {
+  padding-right: 16px !important;
+  padding-left: calc(env(safe-area-inset-left) + 8px) !important;
+}
+/* Page shells keep their backgrounds full-bleed, their content stops at the reported insets:
+   in the app the clock column/strip, in Safari its own floating button column (outer landscape:
+   Safari's back/reader/tabs sit over the left edge and report safe-area-inset-left). */
+html[data-device='duo'] body :is(.customer-signature-shell, .track-signature, .qatya-ultra-shell, .roulette-ultra-shell, .ord-bp-theatre) {
+  padding-left: max(env(safe-area-inset-left), 0px);
+  padding-right: max(env(safe-area-inset-right), 0px);
+}
+html[data-device='duo'][data-shell='app'] body :is(.customer-signature-shell > :first-child, .track-signature > header) {
+  padding-top: max(env(safe-area-inset-top), 8px);
+}
+/* Dialogs, sheets and toasts on the Duo: never under the clock column/strip or the home bar. */
+html[data-device='duo'] body :is([role='dialog'], [aria-modal='true']).fixed {
+  padding-top: max(env(safe-area-inset-top), var(--duo-sheet-pad, 10px));
+  padding-bottom: max(env(safe-area-inset-bottom), var(--duo-sheet-pad, 10px));
+  padding-left: max(env(safe-area-inset-left), 0px);
+  padding-right: max(env(safe-area-inset-right), 0px);
+}
+html[data-device='duo'] body :is(.cart-moment-toast, .customer-offline-toast) {
+  top: calc(env(safe-area-inset-top) + 10px) !important;
+}
+/* Compact one-line headings on the Duo. */
+html[data-device='duo'] body :is(.r3-menu-header h1, .track-signature > header h1) {
+  font-size: clamp(16px, 2.6vw, 20px);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Floating bars become glass on the Duo. */
+html[data-device='duo'] body .al-cart-bar > * {
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+}
