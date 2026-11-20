@@ -727,9 +727,10 @@ html[data-device='duo'][data-widget-side='left'] body :is(
   padding-right: 16px !important;
   padding-left: calc(env(safe-area-inset-left) + 8px) !important;
 }
-/* Installed app: page shells keep their backgrounds full-bleed, their content stops at the
-   reported insets (side column on the outer screen, top strip on the inner portrait). */
-html[data-device='duo'][data-shell='app'] body :is(.customer-signature-shell, .track-signature, .qatya-ultra-shell, .roulette-ultra-shell, .ord-bp-theatre) {
+/* Page shells keep their backgrounds full-bleed, their content stops at the reported insets:
+   in the app the clock column/strip, in Safari its own floating button column (outer landscape:
+   Safari's back/reader/tabs sit over the left edge and report safe-area-inset-left). */
+html[data-device='duo'] body :is(.customer-signature-shell, .track-signature, .qatya-ultra-shell, .roulette-ultra-shell, .ord-bp-theatre) {
   padding-left: max(env(safe-area-inset-left), 0px);
   padding-right: max(env(safe-area-inset-right), 0px);
 }
