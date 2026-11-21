@@ -28,6 +28,7 @@ import {
 } from "./src/lib/aiOrderService.ts";
 import { checkStoreStatus, getConfiguredStoreStatus } from "./src/lib/storeAvailability";
 import { verifyUPaymentsPayment, cleanGatewayId, type PaymentVerdict } from "./src/lib/upaymentsVerify";
+import { isUPaymentsRateLimited, UPAYMENTS_BUSY_MESSAGE } from "./src/lib/upaymentsRateLimit";
 import { packCustomerMenuProducts } from "./src/lib/customerMenuTransport.ts";
 import { calculateItemTotalWithAddons, normalizeAddons } from "./src/utils/priceCalculation";
 import {
@@ -4916,6 +4917,9 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
         const status = error.response?.status || 500;
         const errorData = error.response?.data || {};
         console.error("[SPLIT] External API Error:", status, errorData);
+        if (isUPaymentsRateLimited(status, errorData)) {
+          return res.status(503).json({ error: UPAYMENTS_BUSY_MESSAGE, retryAfterSeconds: 60 });
+        }
 
         let errMsg =
           errorData.error || errorData.message || "فشل الاتصال بمزود الدفع";
@@ -5148,6 +5152,9 @@ app.get("/api/debug/order/:id", adminRateLimit, adminAuthOnly, async (req, res) 
         const status = error.response?.status || 500;
         const errorData = error.response?.data || {};
         console.error("[PAYMENT] UPayments API Error:", status, errorData);
+        if (isUPaymentsRateLimited(status, errorData)) {
+          return res.status(503).json({ error: UPAYMENTS_BUSY_MESSAGE, retryAfterSeconds: 60 });
+        }
 
         if (status === 401) {
           return res.status(500).json({
