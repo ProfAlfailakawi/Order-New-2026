@@ -138,6 +138,8 @@ export async function verifyUPaymentsPayment(
       let verdict: PaymentVerdict = "unknown";
       try {
         let res = await fetcher(`${base}/get-payment-status/${encodeURIComponent(id)}`, input.apiKey);
+        // Rate-limited: more lookups would only prolong the block (and starve new payment links).
+        if (res.status === 429) return "unknown";
         if (res.status === 404 || res.status === 400) {
           res = await fetcher(`${base}/charge/${encodeURIComponent(id)}`, input.apiKey);
         }
