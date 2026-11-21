@@ -661,35 +661,41 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
   :root { --duo-cutout-w: 116px; --duo-cutout-h: 116px; }
 
   /* Menu: the diwaniya strip and the title row (logo, name) stop short of the corner. */
-  html body .customer-signature-shell > [role='region'][aria-label='الديوانية'],
-  html body .customer-signature-shell > header,
-  html body .track-signature > header,
-  html body .checkout-wow-panel .checkout-wow-header,
-  html body .checkout-wow-panel .checkout-steps,
-  html body .qatya-ultra-shell .qatya-tabs {
+  html:where([data-device='duo']) body .customer-signature-shell > [role='region'][aria-label='الديوانية'],
+  html:where([data-device='duo']) body .customer-signature-shell > header,
+  html:where([data-device='duo']) body .track-signature > header,
+  html:where([data-device='duo']) body .checkout-wow-panel .checkout-wow-header,
+  html:where([data-device='duo']) body .checkout-wow-panel .checkout-steps,
+  html:where([data-device='duo']) body .qatya-ultra-shell .qatya-tabs {
     padding-right: calc(var(--duo-cutout-w) + 8px) !important;
   }
   /* The woven band and the header keep their full-bleed background; only the content moves. */
-  html body .customer-signature-shell > [role='region'][aria-label='الديوانية'] { margin-right: 0; }
+  html:where([data-device='duo']) body .customer-signature-shell > [role='region'][aria-label='الديوانية'] { margin-right: 0; }
   /* Folded Duo's external portrait display is unusually wide (382×580): keep
      the welcome mark and copy clear of the physical system-widget corner. */
   @media screen and (min-width: 360px) and (max-width: 520px) and (min-height: 360px) and (orientation: portrait) and (min-aspect-ratio: 3/5) {
-    html body .ord-bp-theatre > .relative.z-10 { padding-right: calc(24px + var(--duo-cutout-w)); }
+    html:where([data-device='duo']) body .ord-bp-theatre > .relative.z-10 { padding-right: calc(24px + var(--duo-cutout-w)); }
   }
   /* The diwaniya dialog's title row: its card is max 448px wide, centred (portrait) or on the right page (book). */
-  html body .duo-keepout-head { padding-right: max(1rem, calc(var(--duo-cutout-w) - (100vw - 448px) / 2 + 8px)); }
-  html body .duo-keepout-head { flex-wrap: wrap; gap: 8px; }
-  html body .roulette-ultra-shell > div.mx-auto { padding-top: var(--duo-cutout-h); }
-  @media (orientation: landscape) { html body .duo-keepout-head { padding-right: max(1rem, calc(var(--duo-cutout-w) - var(--duo-gutter) + 8px)); } }
+  html:where([data-device='duo']) body .duo-keepout-head { padding-right: max(1rem, calc(var(--duo-cutout-w) - (100vw - 448px) / 2 + 8px)); }
+  html:where([data-device='duo']) body .duo-keepout-head { flex-wrap: wrap; gap: 8px; }
+  html:where([data-device='duo']) body .roulette-ultra-shell > div.mx-auto { padding-top: var(--duo-cutout-h); }
+  @media (orientation: landscape) { html:where([data-device='duo']) body .duo-keepout-head { padding-right: max(1rem, calc(var(--duo-cutout-w) - var(--duo-gutter) + 8px)); } }
   /* Close buttons that sat at the very corner of a sheet or dialog. */
-  html body .product-detail-layer > button.absolute,
-  html body .duo-page-dialog [aria-label='إغلاق']:is(.absolute, .fixed) { right: calc(var(--duo-cutout-w) - 4px); }
+  html:where([data-device='duo']) body .product-detail-layer > button.absolute,
+  html:where([data-device='duo']) body .duo-page-dialog [aria-label='إغلاق']:is(.absolute, .fixed) { right: calc(var(--duo-cutout-w) - 4px); }
   /* The floating notification bell is bottom-anchored; its open panel must not grow into the corner. */
-  html body .dna-inbox { max-block-size: min(460px, calc(100dvh - var(--duo-cutout-h) - 180px)); }
+  html:where([data-device='duo']) body .dna-inbox { max-block-size: min(460px, calc(100dvh - var(--duo-cutout-h) - 180px)); }
   /* Small floating notes at the top-right (added-to-cart, offline) start below the corner. */
-  html body .cart-moment-toast,
-  html body .customer-offline-toast { top: calc(var(--duo-cutout-h) + 8px) !important; }
+  html:where([data-device='duo']) body .cart-moment-toast,
+  html:where([data-device='duo']) body .customer-offline-toast { top: calc(var(--duo-cutout-h) + 8px) !important; }
 }
+
+/* The queries above go by window size alone, so they also matched a narrow desktop window (640-720 portrait, e.g. 700x900),
+   an iPhone SE in Safari (360-520 portrait at 3/5 or squarer) and narrow tablet windows, pushing the header 116px off the right
+   edge. The corner is real on the iPhone Duo only (html[data-device='duo'], set in main.tsx): the rules above are scoped to it,
+   and everywhere else the box goes back to 0 (higher specificity than :root). */
+html:not([data-device='duo']) { --duo-cutout-w: 0px; --duo-cutout-h: 0px; }
 
 /* The floating notification bell (bottom corner) in the book: it lives on the right page, and its panel
    opens inside that page. (Below 768px Tailwind pins the bell to the left; here that would be the other page.) */
