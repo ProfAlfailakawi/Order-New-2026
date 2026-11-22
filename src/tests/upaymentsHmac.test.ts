@@ -50,7 +50,7 @@ describe('UPayments HMAC', () => {
     expect(verifyUPaymentsWebhookSignature({ ...base, headers: signed(), secret: '' })).toBe('disabled');
   });
 
-  it('gate: bad signature -> 401, missing -> pass unless enforced', () => {
+  it('gate: bad or missing signature passes unless enforced (never drop a real webhook before ENFORCE)', () => {
     process.env.UPAYMENTS_API_SECRET = SECRET;
     const mk = (headers: any) => ({ headers: { host: 'shop.example', 'x-forwarded-proto': 'https', ...headers }, method: 'POST', originalUrl: '/api/webhook/upayments', rawBody: Buffer.from(body), body: {} });
     const run = (gate: any, req: any) => {
@@ -60,7 +60,11 @@ describe('UPayments HMAC', () => {
       return { res, next };
     };
     try {
-      expect(run(upaymentsWebhookGate(), mk({ 'x-timestamp': String(Math.floor(Date.now() / 1000)), 'x-signature': 'bad' })).res.status).toHaveBeenCalledWith(401);
+      const bad = { 'x-timestamp': String(Math.floor(Date.now() / 1000)), 'x-signature': 'bad' };
+      const notEnforced = run(upaymentsWebhookGate(), mk(bad));
+      expect(notEnforced.next).toHaveBeenCalled();
+      expect(notEnforced.res.status).not.toHaveBeenCalled();
+      expect(run(upaymentsWebhookGate({ enforce: true }), mk(bad)).res.status).toHaveBeenCalledWith(401);
       expect(run(upaymentsWebhookGate(), mk({})).next).toHaveBeenCalled();
       expect(run(upaymentsWebhookGate({ enforce: true }), mk({})).res.status).toHaveBeenCalledWith(401);
       const ts = String(Math.floor(Date.now() / 1000));

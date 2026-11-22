@@ -119,10 +119,11 @@ export function webhookCandidateUrls(req: {
 }
 
 /**
- * Express-style gate. Policy: a signature that is present but wrong is always rejected.
- * A missing signature is rejected only when UPAYMENTS_HMAC_ENFORCE=true (flip after the first
- * signed webhook is seen in production), otherwise it is logged and allowed through to the
- * existing server-side status confirmation.
+ * Express-style gate. Policy: nothing is rejected unless UPAYMENTS_HMAC_ENFORCE=true.
+ * Without enforcement a missing OR non-matching signature is only logged and the webhook goes
+ * through to the existing handler (which confirms the payment with UPayments server-side anyway).
+ * Rejecting "invalid" before enforcement dropped a real paid webhook on 2026-11-22 (INV-5145):
+ * flip ENFORCE only after "[UPAYMENTS_HMAC] webhook signature valid" shows up in production logs.
  */
 export function upaymentsWebhookGate(opts: { enforce?: boolean } = {}) {
   return (req: any, res: any, next: any) => {
@@ -135,11 +136,29 @@ export function upaymentsWebhookGate(opts: { enforce?: boolean } = {}) {
       rawBody,
     });
     const enforce = opts.enforce ?? String(process.env.UPAYMENTS_HMAC_ENFORCE || "").toLowerCase() === "true";
-    if (result === "invalid" || (result === "missing" && enforce)) {
-      console.warn(`[UPAYMENTS_HMAC] webhook rejected (${result}) path=${String(req.originalUrl || "").split("?")[0]}`);
+    const path = String(req.originalUrl || "").split("?")[0];
+    if (enforce && (result === "invalid" || result === "missing")) {
+      console.warn(`[UPAYMENTS_HMAC] webhook rejected (${result}) path=${path}`);
       return res.status(401).json({ error: "invalid webhook signature" });
     }
+    if (result === "valid") console.log(`[UPAYMENTS_HMAC] webhook signature valid path=${path}`);
     if (result === "missing") console.warn("[UPAYMENTS_HMAC] webhook arrived without signature headers (not enforced)");
+    if (result === "invalid") {
+      // Diagnostics only (no secret, no signature value): enough to learn how UPayments signs.
+      const ts = Number(String(req.headers?.["x-timestamp"] || "").trim());
+      const skew = Number.isFinite(ts) ? Math.floor(Date.now() / 1000) - ts : null;
+      console.warn(
+        `[UPAYMENTS_HMAC] webhook signature did not match (not enforced, allowed) path=${path} ` +
+          JSON.stringify({
+            skewSeconds: skew,
+            signatureLength: String(req.headers?.["x-signature"] || "").length,
+            hasRawBody: Buffer.isBuffer(raw) || typeof raw === "string",
+            bodyLength: rawBody.length,
+            contentType: String(req.headers?.["content-type"] || ""),
+            candidateUrls: webhookCandidateUrls(req),
+          }),
+      );
+    }
     next();
   };
 }
