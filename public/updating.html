@@ -130,6 +130,8 @@ button:focus-visible{outline:3px solid var(--saffron);outline-offset:3px}
   .ticket{padding:36px 30px 28px}
   .dallah{width:118px;height:138px}
 }
+/* iPhone Duo (شاشة شبه مربّعة): عمود الأداة لا يقع عليه نص */
+@media (min-aspect-ratio:3/5) and (max-aspect-ratio:3/2) and (min-width:440px) and (max-width:1000px){.room{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}}
 </style>
 </head>
 <body>
