@@ -766,3 +766,30 @@ html[data-device='duo'] body .al-cart-bar > * {
   -webkit-backdrop-filter: blur(18px) saturate(1.4);
   backdrop-filter: blur(18px) saturate(1.4);
 }
+
+/* ==========================================================================
+   iPhone Duo, installed app: ONE reservation for the system column.
+   The page shells above are already padded by env(safe-area-inset-*), so the rules that also added the
+   old corner width to their children (the 116px guess, now the same env value) reserved the column twice:
+   the welcome card and the menu strip/header stopped about 188px short of the edge instead of 84px.
+   Here the shell padding stays the only reservation for content, the bands that carry a background are pulled
+   back under the column (negative margin) so they run full-bleed, and their own content gets the page margin.
+   Safari reports no insets, so nothing changes there; iPhone, iPad and desktop are not matched.
+   ========================================================================== */
+html[data-device='duo'][data-shell='app'] body :is(
+  .customer-signature-shell > [role='region'][aria-label='الديوانية'],
+  .customer-signature-shell > header,
+  .customer-signature-shell > main,
+  .track-signature > header) {
+  margin-right: calc(-1 * max(env(safe-area-inset-right), 0px));
+  margin-left: calc(-1 * max(env(safe-area-inset-left), 0px));
+  padding-right: calc(16px + max(env(safe-area-inset-right), 0px)) !important;
+  padding-left: calc(16px + max(env(safe-area-inset-left), 0px)) !important;
+}
+/* Inside a dialog the dialog itself is already padded by the insets. */
+html[data-device='duo'][data-shell='app'] body :is(
+  .checkout-wow-panel .checkout-wow-header,
+  .checkout-wow-panel .checkout-steps,
+  .qatya-ultra-shell .qatya-tabs) { padding-right: 16px !important; padding-left: 16px !important; }
+html[data-device='duo'][data-shell='app'] body .ord-bp-theatre > .relative.z-10 { padding-right: 24px !important; }
+html[data-device='duo'][data-shell='app'] body .duo-keepout-head { padding-right: 1rem; }
