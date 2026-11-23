@@ -14,6 +14,9 @@ import { cn } from "../utils";
 import { robustGetCurrentPosition } from "../utils/geolocation";
 import { SaduPresenceRug } from "./SaduPresenceRug";
 import { MessageWithIcons } from "./MessageWithIcons";
+import { isNativeApp } from "../lib/nativeShell";
+import { locationWording } from "../lib/appWording";
+import { shareViaNativePlugin } from "../lib/nativeShare";
 
 interface SquadTier {
   id: string;
@@ -539,9 +542,9 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
       setShowResetLocation(true);
       const code = Number(err?.code || 0);
       if (code === 1) {
-        setGeoStatusMsg("الموقع يحتاج سماح. فعّل اللوكيشن من المتصفح أو استخدم الإدخال اليدوي لتثبيت ديوانيتك الحالية.");
+        setGeoStatusMsg(locationWording(isNativeApp()).geoDenied);
       } else if (code === 2) {
-        setGeoStatusMsg("المتصفح لم يتمكن من قراءة موقعك حالياً. جرّب مرة ثانية أو استخدم الإدخال اليدوي.");
+        setGeoStatusMsg(locationWording(isNativeApp()).geoUnavailable);
       } else if (code === 3) {
         setGeoStatusMsg("انتهت مهلة قراءة الموقع. فتح خرائط جوجل أو الإدخال اليدوي يظل متاحاً عند الحاجة.");
       } else {
@@ -597,6 +600,8 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
     };
 
     try {
+      // داخل التطبيق: ورقة المشاركة الأصلية عبر إضافة Share إن وُجدت، وإلا navigator.share أدناه.
+      if (await shareViaNativePlugin(shareData)) return;
       // افتح قائمة المشاركة الأصلية في الجوال حتى تظهر AirDrop / Copy / Share وباقي الخيارات.
       if (
         navigator.share &&
@@ -2528,10 +2533,10 @@ export const SquadModalContent: React.FC<SquadModalContentProps> = ({
                         <h4 className="font-black text-brand text-sm"><MessageWithIcons text={"موقع الديوانية 📍"} /></h4>
                       </div>
                       <p className="text-xs font-bold text-stone-500 leading-relaxed">
-                        التحكم بتثبيت أو تغيير موقع الرادار للمعزب فقط. أنت كعضو تقدر تشغّل سماح الموقع من المتصفح حتى يظهر لك الرادار والتنقل بين الدواوين القريبة.
+                        التحكم بتثبيت أو تغيير موقع الرادار للمعزب فقط. أنت كعضو تقدر تشغّل سماح الموقع {locationWording(isNativeApp()).allowFrom} حتى يظهر لك الرادار والتنقل بين الدواوين القريبة.
                       </p>
                       <div className="bg-stone-50 rounded-2xl border border-stone-100 p-4 text-xs font-bold text-stone-500 leading-relaxed">
-                        إذا ما ظهر لك إشعار القرب: فعّل صلاحية الموقع من المتصفح، قرّب من الديوانية، ثم افتح صفحة الديوانية أو اضغط تشغيل الرادار من التنبيه.
+                        إذا ما ظهر لك إشعار القرب: فعّل صلاحية الموقع {locationWording(isNativeApp()).allowFrom}، قرّب من الديوانية، ثم افتح صفحة الديوانية أو اضغط تشغيل الرادار من التنبيه.
                       </div>
                     </div>
                   )}
