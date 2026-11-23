@@ -890,3 +890,29 @@ html[data-device='duo'][data-shell='app'] body:is(:has(.qatya-ultra-shell), :has
   backdrop-filter: blur(14px);
 }
 html[data-device='duo'][data-shell='app'] body:has(.roulette-ultra-shell)::before { background: rgba(8, 26, 17, 0.94); }
+
+/* ===== الشاشة الداخلية عرضياً (وضع الكتاب) ===== */
+@media screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape) {
+  /* خطوة الدفع: طرق الدفع الثلاث كانت في ثلاثة أعمدة على صفحة عرضها ~440px فقُصّ وصفها وانقطعت الأسطر.
+     تصير بطاقات بصفّ كامل لكلٍّ منها، أيقونة ثم النص. */
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-wow-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 10px; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-card { min-height: 0 !important; flex-direction: row !important; align-items: center !important; padding: 12px 16px !important; }
+  html[data-device='duo'] body .checkout-wow-panel > .checkout-wow-footer:has(.payment-method-wow-grid)::before { display: none; }
+  /* نوافذ الحوار المتمركزة تُفتح على الصفحة اليمنى بحشوة الكتاب (!important)، فكان ركنها العلوي وعنوانها تحت الأداة: تُضاف حدود النظام. */
+  html[data-device='duo'] body .duo-page-dialog.fixed { padding-right: calc(var(--duo-gutter) + max(env(safe-area-inset-right), 0px)) !important; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-card > div { flex-direction: row !important; align-items: center !important; }
+}
+
+/* ===== الخارجية عرضياً (678×466) وكل نافذة قصيرة عريضة ===== */
+@media screen and (min-width: 560px) and (max-height: 520px) {
+  /* ورقة الترحيب أطول من الشاشة فيختفي زر «ابدأ الطلب» تحت الحافة: تُضغط (بلا سطر الشعار الصغير وصفّ الشارات) فيظهر الزر دون تمرير. */
+  html[data-device='duo'] body [role='dialog'][aria-label='حياكم في مطبخ التراث'] { padding-block: 14px 10px; }
+  html[data-device='duo'] body [role='dialog'][aria-label='حياكم في مطبخ التراث'] > .relative > :nth-child(1) { width: 56px; height: 56px; margin-bottom: 8px; }
+  html[data-device='duo'] body [role='dialog'][aria-label='حياكم في مطبخ التراث'] > .relative > :nth-child(2),
+  html[data-device='duo'] body [role='dialog'][aria-label='حياكم في مطبخ التراث'] > .relative > :nth-child(5) { display: none; }
+  html[data-device='duo'] body [role='dialog'][aria-label='حياكم في مطبخ التراث'] > .relative > :nth-child(3) { font-size: 1.3rem; margin-bottom: 4px; }
+  html[data-device='duo'] body [role='dialog'][aria-label='حياكم في مطبخ التراث'] > .relative > :nth-child(4) { margin-bottom: 10px; }
+  /* خطوة الدفع على صفحة ضيقة (~300px): شارات الفاتورة الثلاث انكسرت أحرفها ("أص/ناف"). تصير صفّاً يلتفّ بلا كسر داخل الكلمة. */
+  html[data-device='duo'] body .invoice-reveal-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  html[data-device='duo'] body .invoice-reveal-stats > div { flex: 1 1 auto; white-space: nowrap; min-width: 0; padding-inline: 10px; }
+}
