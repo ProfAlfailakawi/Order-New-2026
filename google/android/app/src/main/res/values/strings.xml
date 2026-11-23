@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">مطبخ التراث</string>
+    <string name="title_activity_main">مطبخ التراث</string>
+    <string name="package_name">kw.edu.alturath.order</string>
+    <string name="custom_url_scheme">kw.edu.alturath.order</string>
+</resources>
