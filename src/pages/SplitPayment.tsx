@@ -27,6 +27,7 @@ import confetti from "canvas-confetti";
 import { RouletteSplit } from "../components/RouletteSplit";
 import { DnaCountUp, DnaRing, DnaStepper, DnaTimeline, dnaSingleCurrent } from "../components/dna";
 import { MessageWithIcons } from "../components/MessageWithIcons";
+import { isDevToolsEnabled } from "../lib/devTools";
 
 // Brand confetti: one burst in green + brass (set the flag to false to restore the two side bursts).
 const QATYA_CONFETTI_COLORS = ["#0d3a22", "#b28a41"];
@@ -82,8 +83,8 @@ export default function SplitPayment() {
   const [contributorName, setContributorName] = useState(() => localStorage.getItem("split_name") || "");
   const [contributorPhone, setContributorPhone] = useState(() => urlPhone || localStorage.getItem("split_phone") || "");
   const [contributorAmount, setContributorAmount] = useState<string>(() => localStorage.getItem("split_amount") || "");
-  const isDev =
-    searchParams.get("dev") === "true" || searchParams.get("2dev") === "true";
+  // زر المحاكاة لبناء التطوير فقط: لا يظهر في الإنتاج ولا داخل التطبيق ولو أُضيف ?dev=true.
+  const isDev = isDevToolsEnabled(searchParams.toString(), import.meta.env.DEV);
 
   // Digital Token Dropping physical coin/finjan simulation engine
   const [tokenDrops, setTokenDrops] = useState<Array<{ id: number; x: number; delay: number; emoji: string; rot: number; size: number }>>([]);
