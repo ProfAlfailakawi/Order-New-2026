@@ -925,3 +925,46 @@ html[data-device='duo'][data-shell='app'] body:has(.roulette-ultra-shell)::befor
     grid-template-columns: minmax(0, 1.3fr) var(--duo-fold, 0px) minmax(0, 1fr);
   }
 }
+
+/* ---------- خطوة الدفع على الخارجية عرضاً (678x466): طرق الدفع كاملةً في صفحتها والفاتورة كاملةً في صفحتها ----------
+   قاعدة (max-height: 500px) في index.css تجعل تذييل السلة صفّاً ملتفّاً (flex-wrap)، وتحت اتجاه العمود يلتفّ البند الأخير إلى
+   عمودٍ ثانٍ خارج الصفحة: كانت بطاقات الدفع الثلاث تخرج من الحافة ولا يبقى إلا العنوان. هنا يُمنع الالتفاف، وتُضغط البطاقات
+   وورقة الفاتورة فتظهر كلها دون تمرير، وتأخذ صفحة الفاتورة (1.2) أكثر من صفحة الطرق (1) لأن عنوانها أطول. شكلٌ فقط. */
+@media screen and (min-width: 560px) and (max-width: 720px) and (max-height: 520px) {
+  /* حشوة صفحة الفاتورة تأخذ حدّ النظام الأيسر على جهة الفاصل أيضاً، فإذا كان عمود الأداة يساراً (والصفحة أصلاً تبدأ بعده) ضاعف ~84px
+     وضاقت البطاقات إلى ~166px؛ تصير حشوة أفقية ثابتة في كل خطوات السلة. */
+  html[data-device='duo'] body .checkout-wow-panel > .checkout-wow-footer { padding-inline: var(--duo-gutter, 20px) !important; }
+  html[data-device='duo'] body .checkout-wow-panel:has(.payment-method-wow-grid) {
+    grid-template-columns: minmax(0, 1.2fr) var(--duo-fold, 0px) minmax(0, 1fr);
+  }
+  html[data-device='duo'] body .checkout-wow-panel > .checkout-wow-footer:has(.payment-method-wow-grid) {
+    flex-wrap: nowrap !important;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch !important;
+    gap: 8px;
+    padding-block: 12px calc(12px + env(safe-area-inset-bottom)) !important;
+  }
+  /* هامش تلقائي في الطرفين: يتوسّط المحتوى إن اتّسع المجال ويبقى قابلاً للتمرير إن ضاق (justify-content: center يقصّ أعلاه). */
+  html[data-device='duo'] body .checkout-wow-panel > .checkout-wow-footer:has(.payment-method-wow-grid) > * { flex: 0 0 auto !important; margin-top: 0 !important; }
+  html[data-device='duo'] body .checkout-wow-panel > .checkout-wow-footer:has(.payment-method-wow-grid) > :first-child { margin-top: auto !important; }
+  html[data-device='duo'] body .checkout-wow-panel > .checkout-wow-footer:has(.payment-method-wow-grid) > :last-child { margin-bottom: auto; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-choice-hint { margin: 0; padding: 8px 14px; border-radius: 16px; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-choice-hint span { margin-top: 0; line-height: 1.5; }
+  html[data-device='duo'] body .checkout-wow-panel .diwaniya-checkout-strip { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 8px 14px; border-radius: 16px; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-wow-grid { gap: 8px !important; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-card { min-height: 0 !important; padding: 8px 12px !important; border-radius: 18px !important; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-card span.text-xs { font-size: 11px; line-height: 1.4; letter-spacing: 0; text-transform: none; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-card > div > .flex-col { gap: 2px !important; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-card .w-12 { width: 36px !important; height: 36px !important; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-card > div { gap: 12px !important; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-wow-step { padding-inline: 0; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-stage { padding: 10px; margin-bottom: 8px; border-radius: 24px; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-paper { padding: 12px 12px 14px; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-paper h3 { font-size: 1.2rem; margin: 4px 0 0; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-paper p { line-height: 1.5; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-stats { gap: 6px; margin-top: 10px; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-stats > div { order: 0; padding: 8px 4px; border-radius: 14px; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-stats b { font-size: 13px; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-payment-divider { display: none; }
+}
