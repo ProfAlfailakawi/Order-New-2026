@@ -1,0 +1,37 @@
+{
+  "appId": "kw.edu.alturath.order",
+  "appName": "مطبخ التراث",
+  "webDir": "www",
+  "server": {
+    "url": "https://alturathkw.shop",
+    "errorPath": "offline.html",
+    "allowNavigation": [
+      "alturathkw.shop",
+      "*.firebaseapp.com",
+      "*.googleapis.com",
+      "*.upayments.com",
+      "*.myfatoorah.com",
+      "*.knet.com.kw",
+      "*.kpay.com.kw"
+    ]
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "launchAutoHide": true,
+      "backgroundColor": "#183326",
+      "showSpinner": false
+    },
+    "PushNotifications": {
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
+    }
+  },
+  "android": {
+    "backgroundColor": "#183326",
+    "allowMixedContent": false
+  }
+}
