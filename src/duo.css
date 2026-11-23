@@ -968,3 +968,41 @@ html[data-device='duo'][data-shell='app'] body:has(.roulette-ultra-shell)::befor
   html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-stats b { font-size: 13px; }
   html[data-device='duo'] body .checkout-wow-panel .invoice-payment-divider { display: none; }
 }
+
+/* ---------- خطوة الدفع على الدوو طولاً (الخارجية 466×678 والداخلية 669×951): طرق الدفع الثلاث كاملةً ----------
+   بطاقات طرق الدفع تسكن تذييل السلة بارتفاعٍ محدود (٤٦–٥٨dvh) فكانت الخارجية تُظهر بطاقةً واحدة والباقي خلف تمريرٍ داخلي،
+   والداخلية بطاقةً ونصفاً. تُضغط الحشوات والبطاقات (شكلٌ فقط، والنقر والنصوص كما هي). */
+@media screen and (min-width: 360px) and (max-width: 720px) and (min-height: 520px) and (orientation: portrait) {
+  html[data-device='duo'] body .checkout-wow-panel .payment-choice-hint { margin: 0; padding: 4px 14px !important; border-radius: 16px; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-choice-hint span { margin-top: 0; line-height: 1.5; }
+  /* index.css يجعل شريط الديوانية عموداً على الشاشات الضيقة: يصير سطراً واحداً. */
+  html[data-device='duo'] body .checkout-wow-panel .diwaniya-checkout-strip { display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: space-between; align-items: center; gap: 2px 8px; padding: 6px 14px; border-radius: 16px; }
+  html[data-device='duo'] body .checkout-wow-panel .diwaniya-checkout-strip > * { display: inline !important; width: auto !important; margin: 0 !important; }
+  html[data-device='duo'] body .checkout-wow-panel .diwaniya-checkout-strip span { text-align: end; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-wow-grid { gap: 8px !important; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-card { min-height: 0 !important; padding: 8px 12px !important; border-radius: 18px !important; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-card span.text-xs { font-size: 11px; line-height: 1.4; letter-spacing: 0; text-transform: none; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-card > div > .flex-col { gap: 2px !important; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-card .w-12 { width: 36px !important; height: 36px !important; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-card > div { gap: 12px !important; }
+}
+
+/* الخارجية طولاً (466 ويسار الأداة ≈382): الورقة كلها سطحٌ واحد يتمرّر معاً إن ضاقت (لا تمرير داخلي في التذييل)،
+   والفاتورة تُختصر إلى عنوانها وشاراتها الثلاث لتظهر البطاقات الثلاث دون تمرير. */
+@media screen and (min-width: 360px) and (max-width: 560px) and (min-height: 520px) and (orientation: portrait) {
+  html[data-device='duo'] body .checkout-wow-panel:has(.payment-method-wow-grid) { overflow-y: auto !important; overscroll-behavior: contain; }
+  html[data-device='duo'] body .checkout-wow-panel:has(.payment-method-wow-grid) > .checkout-wow-body { flex: 0 0 auto !important; overflow: visible !important; padding-block: 8px 4px !important; }
+  html[data-device='duo'] body .checkout-wow-panel:has(.payment-method-wow-grid) > .checkout-wow-body::after,
+  html[data-device='duo'] body .checkout-wow-panel .payment-wow-step::before,
+  html[data-device='duo'] body .checkout-wow-panel .payment-wow-step::after { display: none !important; }
+  html[data-device='duo'] body .checkout-wow-panel > .checkout-wow-footer:has(.payment-method-wow-grid) { flex: 0 0 auto !important; max-height: none !important; overflow: visible !important; padding-block: 8px calc(4px + env(safe-area-inset-bottom)) !important; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-stage { padding: 8px; margin-bottom: 0; border-radius: 22px; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-paper { padding: 10px 12px 12px; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-topline,
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-paper p { display: none; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-paper h3 { font-size: 1.1rem; margin: 0; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-stats { gap: 6px; margin-top: 8px; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-stats > div { padding: 6px 4px; border-radius: 14px; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-stats b { font-size: 13px; }
+  html[data-device='duo'] body .checkout-wow-panel .invoice-payment-divider { display: none; }
+}
