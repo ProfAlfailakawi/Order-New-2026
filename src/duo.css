@@ -916,3 +916,12 @@ html[data-device='duo'][data-shell='app'] body:has(.roulette-ultra-shell)::befor
   html[data-device='duo'] body .invoice-reveal-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
   html[data-device='duo'] body .invoice-reveal-stats > div { flex: 1 1 auto; white-space: nowrap; min-width: 0; padding-inline: 10px; }
 }
+
+/* ---------- Outer screen in landscape (678x466, ~594px beside the clock column): the form page leads ----------
+   Two equal pages left the basket, the address form and the store-closed week ~296px each. The form page
+   now takes the larger share (1.3 : 1) and the bill page (total + next step) the rest; it still reads as two pages. */
+@media screen and (min-width: 560px) and (max-width: 720px) and (max-height: 520px) {
+  html[data-device='duo'] body .checkout-wow-panel {
+    grid-template-columns: minmax(0, 1.3fr) var(--duo-fold, 0px) minmax(0, 1fr);
+  }
+}

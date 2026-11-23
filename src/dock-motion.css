@@ -1,0 +1,26 @@
+/* ==========================================================================
+   ضغطة أزرار الترويسة (تتبّع الطلبات، السلة) — بصرية فقط، على الهاتف والدوو.
+   ليس في البرنامج شريط وجهاتٍ له حالة نشطة، فلا مؤشّر منزلق؛ الضغطة وحدها:
+   الزرّ ينضغط تحت الإصبع فورًا (90ms) ويعود بنابضٍ خفيف (260ms).
+   الموضع والحجم والترتيب كما هي، ولا يتغيّر iPad ولا سطح المكتب.
+   ========================================================================== */
+@media (hover: none) and (max-width: 500px) {
+  html .ord-head-actions :is(a, button) {
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .26s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease, box-shadow .2s ease;
+  }
+  /* active:scale-95 من Tailwind (خاصية scale) كانت ستتضاعف مع هذه الضغطة. */
+  html .ord-head-actions :is(a, button):active { scale: none; transform: scale(.9); transition-duration: .09s; transition-timing-function: ease-out; }
+}
+html[data-device='duo'] .ord-head-actions :is(a, button) {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .26s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease, box-shadow .2s ease;
+}
+html[data-device='duo'] .ord-head-actions :is(a, button):active { scale: none; transform: scale(.9); transition-duration: .09s; transition-timing-function: ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  html .ord-head-actions :is(a, button),
+  html[data-device='duo'] .ord-head-actions :is(a, button) { transition: none; }
+  html .ord-head-actions :is(a, button):active,
+  html[data-device='duo'] .ord-head-actions :is(a, button):active { transform: scale(.96); }
+}
