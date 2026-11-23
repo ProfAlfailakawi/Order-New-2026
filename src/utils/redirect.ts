@@ -1,6 +1,14 @@
+import { isNativeApp } from "../lib/nativeShell";
+
 export type RedirectResult = "opened_popup" | "navigating_away" | "popup_blocked";
 
 export const redirectToPayment = (paymentLink: string): RedirectResult => {
+  // داخل التطبيق لا توجد نوافذ منبثقة ولا window.opener: ننتقل في نفس النافذة،
+  // ثم تعود صفحة الدفع إلى /track بمعرّف الطلب فتكمل الصفحة التأكيد بالاستعلام الدوري.
+  if (isNativeApp()) {
+    window.location.href = paymentLink;
+    return "navigating_away";
+  }
   try {
     const isIframe = window !== window.top;
     

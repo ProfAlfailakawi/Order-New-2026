@@ -2,6 +2,7 @@
 // الصفحة تُحمَّل من الموقع داخل WKWebView، حيث لا يوجد Notification/Service Worker،
 // فنستعمل إضافة @capacitor/push-notifications المسجّلة في التطبيق الأصلي عبر الجسر.
 // خارج الغلاف الأصلي تعيد كل الدوال "unsupported" ولا تفعل شيئاً.
+import { isNativeApp } from "./lib/nativeShell";
 
 export type NativePushPermission = "granted" | "denied" | "default" | "unsupported";
 
@@ -17,8 +18,8 @@ type PushPlugin = {
 
 const getPlugin = (): PushPlugin | null => {
   try {
+    if (!isNativeApp()) return null;
     const cap = (globalThis as any).Capacitor;
-    if (!cap?.isNativePlatform?.()) return null;
     if (cap.getPlatform?.() !== "ios") return null;
     return (cap.Plugins?.PushNotifications as PushPlugin) || null;
   } catch {

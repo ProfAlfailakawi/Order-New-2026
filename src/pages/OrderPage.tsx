@@ -27,6 +27,7 @@ import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { cn, normalizePhone, normalizeDigits, formatKuwaitiDate } from "../utils";
 import { redirectToPayment } from "../utils/redirect";
+import { isNativeApp } from "../lib/nativeShell";
 import OrderFormation from "../components/OrderFormation";
 import { trackPaymentDone } from "../utils/trackStepState";
 import { DnaCountUp, DnaStatusHeader, DnaStepper, dnaSingleCurrent, useDnaPlay, type DnaStep } from "../components/dna";
@@ -165,7 +166,8 @@ export default function OrderPage() {
 
   // If this window is a popup (e.g. from AI Studio), notify parent and close
   useEffect(() => {
-    if (window.opener && window.opener !== window && urlPayment && urlOrderId) {
+    // داخل التطبيق لا يوجد opener: الدفع يتم في نفس النافذة ويكمل الاستعلام الدوري التأكيد.
+    if (!isNativeApp() && window.opener && window.opener !== window && urlPayment && urlOrderId) {
       try {
         window.opener.postMessage(
           JSON.stringify({
