@@ -744,7 +744,7 @@ html[data-device='duo'][data-shell='app'] body :is(.customer-signature-shell > :
   padding-top: max(env(safe-area-inset-top), 8px);
 }
 /* Dialogs, sheets and toasts on the Duo: never under the clock column/strip or the home bar. */
-html[data-device='duo'] body :is([role='dialog'], [aria-modal='true']).fixed {
+html[data-device='duo'] body :is([role='dialog'], [aria-modal='true'], .duo-page-dialog).fixed {
   padding-top: max(env(safe-area-inset-top), var(--duo-sheet-pad, 10px));
   padding-bottom: max(env(safe-area-inset-bottom), var(--duo-sheet-pad, 10px));
   padding-left: max(env(safe-area-inset-left), 0px);
@@ -793,3 +793,126 @@ html[data-device='duo'][data-shell='app'] body :is(
   .qatya-ultra-shell .qatya-tabs) { padding-right: 16px !important; padding-left: 16px !important; }
 html[data-device='duo'][data-shell='app'] body .ord-bp-theatre > .relative.z-10 { padding-right: 24px !important; }
 html[data-device='duo'][data-shell='app'] body .duo-keepout-head { padding-right: 1rem; }
+
+/* ==========================================================================
+   مراجعة التطبيق على الدوو (2026-11-23): كل القواعد تحت html[data-device="duo"].
+   ========================================================================== */
+/* منطقة المنتجات ورثت `max-width:100%` (قاعدة main العامة) و`width:100% !important`، فبقي صندوقها بعرض الشاشة ناقصاً عمود الأداة:
+   الهامش السالب (الخلفية تحت العمود) لا يوسّع صندوقاً محدود العرض، فيُحلّ في RTL على الجهة الخطأ وتنزاح المنطقة 84px يميناً
+   ويضيق محتواها إلى 266px بفراغ 100px على يسارها. الصندوق يأخذ الآن عرض الشاشة كله والمحتوى بين الهامشين. */
+html[data-device='duo'][data-shell='app'] body .customer-signature-shell > main {
+  width: auto !important;
+  max-width: calc(100% + max(env(safe-area-inset-right), 0px) + max(env(safe-area-inset-left), 0px));
+}
+/* طبقات تضع حشوتها الأفقية في style مباشرة (ورقة الترحيب)، فلا تبلغها قاعدة الإطارات أعلاه:
+   تنتهي بطاقتها قبل عمود الأداة بدل أن يقطعها. الجهة تتبع data-widget-side بعد التدوير. */
+html[data-device='duo'][data-widget-side='right'] body .duo-page-dialog.fixed[style*='padding'] { padding-right: calc(16px + max(env(safe-area-inset-right), 0px)) !important; }
+html[data-device='duo'][data-widget-side='left'] body .duo-page-dialog.fixed[style*='padding'] { padding-left: calc(16px + max(env(safe-area-inset-left), 0px)) !important; }
+/* ورقات الحوار المتمركزة: حشوة الإطارات حلّت محلّ هامشها الأفقي (p-4/p-6)، فلصق زرّها وبطاقتها بحافة الشاشة. تعود بهامش الصفحة (16px) فوق الإطار. */
+html[data-device='duo'] body .duo-page-dialog.fixed {
+  padding-left: calc(max(env(safe-area-inset-left), 0px) + 16px);
+  padding-right: calc(max(env(safe-area-inset-right), 0px) + 16px);
+}
+/* صفحة التتبع (≤480px): حشوة main الأفقية كُتبت padding-inline: يسار يمين، وهي في RTL (بداية ونهاية) معكوسة، فنزل عمود الأداة (84px)
+   على يسار المحتوى أيضاً فوق حشوة الغلاف على يمينه، وضاقت البطاقة وانزاحت عن وسط المساحة الآمنة. الغلاف يحجز الإطارات وحده. */
+@media screen and (max-width: 480px) {
+  html[data-device='duo'] body .track-signature > main { padding-left: 16px; padding-right: 16px; }
+}
+/* شريط السدو أسفل صفحة التتبع يقف عند حشوة الغلاف فيُقصّ قبل عمود الأداة: يمتدّ تحته إلى الحافة. */
+html[data-device='duo'] body .track-signature::after {
+  margin-left: calc(-1 * max(env(safe-area-inset-left), 0px));
+  margin-right: calc(-1 * max(env(safe-area-inset-right), 0px));
+}
+
+/* الأشرطة والتنبيهات العائمة: محورها المساحة الآمنة لا الشاشة كلها، فلا يمتدّ شريط السلة ولا تنبيه الموقع تحت عمود الأداة،
+   ولا يبدأ تنبيه الأعلى تحت الساعة. (قواعدها الأصلية !important فتُقابَل بمثلها.) */
+@media screen and (max-width: 720px) {
+  html[data-device='duo'] body .al-cart-bar {
+    left: calc(12px + max(env(safe-area-inset-left), 0px)) !important;
+    right: calc(12px + max(env(safe-area-inset-right), 0px)) !important;
+    width: auto !important;
+    max-width: none !important;
+    transform: none !important;
+  }
+  html[data-device='duo'] body .customer-mobile-stable-alert {
+    left: calc(12px + max(env(safe-area-inset-left), 0px)) !important;
+    right: calc(12px + max(env(safe-area-inset-right), 0px)) !important;
+    max-width: none !important;
+  }
+  html[data-device='duo'] body .fixed.top-4.inset-x-3 {
+    top: max(env(safe-area-inset-top), 16px);
+    left: calc(12px + max(env(safe-area-inset-left), 0px));
+    right: calc(12px + max(env(safe-area-inset-right), 0px));
+  }
+  html[data-device='duo'] body .fixed.right-4.z-40.pointer-events-auto { right: calc(16px + max(env(safe-area-inset-right), 0px)); }
+  html[data-device='duo'] body .customer-offline-toast {
+    left: calc(50% + (max(env(safe-area-inset-left), 0px) - max(env(safe-area-inset-right), 0px)) / 2);
+    width: min(420px, calc(100vw - 24px - max(env(safe-area-inset-left), 0px) - max(env(safe-area-inset-right), 0px)));
+  }
+}
+
+/* الشاشة الداخلية طولاً في التطبيق: شريط الأداة العلوي (safe-area-inset-top). ترويسة المنيو اللاصقة كانت تلتصق عند y=0 فيقع
+   شعارها وعنوانها داخل الشريط؛ تلتصق الآن تحته، ويغطّي الشريطَ لونُ الصفحة فلا يظهر خلف الساعة نص يتمرّر. */
+html[data-device='duo'][data-shell='app'] body .customer-signature-shell header.r3-menu-header { top: max(env(safe-area-inset-top), 0px); }
+html[data-device='duo'][data-shell='app'] body:has(.customer-signature-shell)::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: max(env(safe-area-inset-top), 0px);
+  background: #fbf9f4;
+  z-index: 39;
+  pointer-events: none;
+}
+/* أزرار الإغلاق في الأوراق: الورقة نفسها محشوّة بالإطارات، فحجز عرض الأداة مرة ثانية أزاحها 80px عن الحافة (وفي Safari -4px خارجها). */
+html[data-device='duo'] body .product-detail-layer > button.absolute,
+html[data-device='duo'] body .duo-page-dialog [aria-label='إغلاق']:is(.absolute, .fixed) { right: 16px; }
+html[data-device='duo'] body .r3-flash-overlay > button.absolute { top: calc(max(env(safe-area-inset-top), 0px) + 16px); }
+/* ترويسة التتبع شبه شفافة: خلفها يتمرّر نص يظهر في شريط الأداة العلوي. تصير صلبة. */
+html[data-device='duo'][data-shell='app'] body .track-signature > header { background-color: #fff; }
+
+/* صفحة القطية: زرّ «طريقة الدفع» العائم يغطّي تبويب «المشاركون» في العرض الضيق (الخارجية 466)، فيصير أيقونةً وحدها كما يفعل ما دون 420px.
+   وفي الشاشة الداخلية طولاً في التطبيق تلتصق التبويبات تحت شريط الأداة لا داخله. */
+@media screen and (max-width: 520px) {
+  html[data-device='duo'] body .payment-back-floating span { display: none !important; }
+  html[data-device='duo'] body .payment-back-floating { padding: 11px !important; }
+}
+html[data-device='duo'][data-shell='app'] body .qatya-ultra-shell .qatya-tabs { top: calc(max(env(safe-area-inset-top), 0px) + 10px); }
+/* الصفحات التي تتمرّر تحت شريط الأداة العلوي بلا ترويسة لاصقة تغطّيه (القطية، وتحدّي الربع): غطاء بلون الصفحة فلا يظهر نص خلف الساعة. */
+html[data-device='duo'][data-shell='app'] body:is(:has(.qatya-ultra-shell), :has(.roulette-ultra-shell))::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: max(env(safe-area-inset-top), 0px);
+  z-index: 15;
+  pointer-events: none;
+  background: rgba(250, 250, 249, 0.94);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+html[data-device='duo'][data-shell='app'] body:has(.roulette-ultra-shell)::before { background: rgba(8, 26, 17, 0.94); }
+
+/* ===== الشاشة الداخلية عرضياً (وضع الكتاب) ===== */
+@media screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape) {
+  /* خطوة الدفع: طرق الدفع الثلاث كانت في ثلاثة أعمدة على صفحة عرضها ~440px فقُصّ وصفها وانقطعت الأسطر.
+     تصير بطاقات بصفّ كامل لكلٍّ منها، أيقونة ثم النص. */
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-wow-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 10px; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-card { min-height: 0 !important; flex-direction: row !important; align-items: center !important; padding: 12px 16px !important; }
+  html[data-device='duo'] body .checkout-wow-panel > .checkout-wow-footer:has(.payment-method-wow-grid)::before { display: none; }
+  /* نوافذ الحوار المتمركزة تُفتح على الصفحة اليمنى بحشوة الكتاب (!important)، فكان ركنها العلوي وعنوانها تحت الأداة: تُضاف حدود النظام. */
+  html[data-device='duo'] body .duo-page-dialog.fixed { padding-right: calc(var(--duo-gutter) + max(env(safe-area-inset-right), 0px)) !important; }
+  html[data-device='duo'] body .checkout-wow-panel .payment-method-card > div { flex-direction: row !important; align-items: center !important; }
+}
+
+/* ===== الخارجية عرضياً (678×466) وكل نافذة قصيرة عريضة ===== */
+@media screen and (min-width: 560px) and (max-height: 520px) {
+  /* ورقة الترحيب أطول من الشاشة فيختفي زر «ابدأ الطلب» تحت الحافة: تُضغط (بلا سطر الشعار الصغير وصفّ الشارات) فيظهر الزر دون تمرير. */
+  html[data-device='duo'] body [role='dialog'][aria-label='حياكم في مطبخ التراث'] { padding-block: 14px 10px; }
+  html[data-device='duo'] body [role='dialog'][aria-label='حياكم في مطبخ التراث'] > .relative > :nth-child(1) { width: 56px; height: 56px; margin-bottom: 8px; }
+  html[data-device='duo'] body [role='dialog'][aria-label='حياكم في مطبخ التراث'] > .relative > :nth-child(2),
+  html[data-device='duo'] body [role='dialog'][aria-label='حياكم في مطبخ التراث'] > .relative > :nth-child(5) { display: none; }
+  html[data-device='duo'] body [role='dialog'][aria-label='حياكم في مطبخ التراث'] > .relative > :nth-child(3) { font-size: 1.3rem; margin-bottom: 4px; }
+  html[data-device='duo'] body [role='dialog'][aria-label='حياكم في مطبخ التراث'] > .relative > :nth-child(4) { margin-bottom: 10px; }
+  /* خطوة الدفع على صفحة ضيقة (~300px): شارات الفاتورة الثلاث انكسرت أحرفها ("أص/ناف"). تصير صفّاً يلتفّ بلا كسر داخل الكلمة. */
+  html[data-device='duo'] body .invoice-reveal-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  html[data-device='duo'] body .invoice-reveal-stats > div { flex: 1 1 auto; white-space: nowrap; min-width: 0; padding-inline: 10px; }
+}

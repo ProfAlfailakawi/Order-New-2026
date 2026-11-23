@@ -4463,3 +4463,17 @@ body:has(.al-cart-bar) .order-welcome-replay {
   .admin-content > .space-y-12 > .flex.items-center.justify-between { padding: 1rem; border-radius: 22px; }
   .admin-content > .space-y-12 > .flex.items-center.justify-between h1 { font-size: 1.75rem; }
 }
+
+/* بطاقة عنصر المنيو (القائمة): حين تضيق البطاقة أو يكبر الخط، كان عمود النص الثاني (بعد عمود الصورة 5rem) يضيق عن شارة السعر
+   التي لا تلتفّ، فتفيض يساراً فوق زر «+». تصير الصورة فوق النص بعمود واحد، فلا تتراكب الشارة والزر مهما ضاق العرض.
+   (وحدات rem، فيتبع الاستعلام حجم الخط.) */
+.menu-product-card:not(.menu-product-card-horizontal) { container-type: inline-size; container-name: menucard; }
+@container menucard (max-width: 16rem) {
+  .menu-product-card:not(.menu-product-card-horizontal) .orser-product-content {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "img" "title" "price" "note";
+    justify-items: center;
+    text-align: center !important;
+  }
+  .menu-product-card:not(.menu-product-card-horizontal) .product-title { text-align: center; }
+}
