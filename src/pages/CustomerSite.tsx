@@ -5415,7 +5415,7 @@ export default function CustomerSite() {
             </div>
           </div>
           {!isCheckout && (
-            <div className="flex items-center gap-2">
+            <div className="ord-head-actions flex items-center gap-2">
               <Link
                 to="/track"
                 onClick={() => {

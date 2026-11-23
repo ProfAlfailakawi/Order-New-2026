@@ -9,6 +9,7 @@ import './motion.css';
 import './polish.css';
 import './duo.css';
 import './duo-stacked.css';
+import './dock-motion.css';
 import {installAppUpdate} from './lib/app-update';
 import {installReveal} from './lib/reveal';
 import {watchForPlatformUpdating} from './lib/updatingNotice';
