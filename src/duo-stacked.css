@@ -1,9 +1,8 @@
 /* ==========================================================================
    مساحة العمل المتكاملة — iPhone Duo مفتوحاً والمفصل أفقياً (الشاشة الداخلية طولاً).
-   الشاشتان عملٌ واحد: العليا تعرض الفاتورة (المجموع وخطوة المتابعة)، والسفلى ما تُدخله
-   (أصناف السلة، رقم التلفون والعنوان، طريقة الدفع)، وما يتغيّر في السفلى يظهر فوراً في العليا.
-   عرضٌ فقط: لا منطق ولا بيانات. نفس فكرة «الكتاب» في الوضع العرضي (الفاتورة وزر المتابعة صفحة،
-   والنموذج صفحة)، لكن فوق وتحت.
+   الشاشتان عملٌ واحد: العليا تعرض ما تُدخله (أصناف السلة، رقم التلفون والعنوان، والفاتورة في خطوة الدفع)،
+   والسفلى شريط الفاتورة (المجموع وخطوة المتابعة) أو طرق الدفع، وما يتغيّر في العليا يظهر فوراً في الشريط.
+   عرضٌ فقط: لا منطق ولا بيانات.
    - Safari لا يُخبر الصفحة بموضع المفصل: يُقدَّر من نسبة الشاشة (بعد شريط Safari ≈ 42٪ من نافذة العرض)،
      وفي التطبيق 50٪ لأنه بلا شريط. حزامٌ هادئ بلون الورقة عرضه --duo-hinge-band لا يعبره شيء.
    - كل القواعد تحت html[data-device="duo"] وداخل استعلام الشاشة الداخلية طولاً: iPhone وiPad لا يتغيّران.
@@ -56,14 +55,15 @@ html[data-device='duo'] body [role='dialog'][aria-label='السلة وإتمام
   }
   html[data-device='duo'] body .checkout-wow-panel:has(> .checkout-wow-footer) > hr { display: none; }
 
-  /* الشاشة العليا: الفاتورة وخطوة المتابعة، تنتهي عند حزام المفصل */
+  /* الفاتورة وزر المتابعة شريطٌ سفلي بحجم محتواه تحت المحتوى (كانا فوقه، فيسبق زر «ادفع الآن» الحقول التي يُنهيها المستخدم،
+     وتبقى الشاشة السفلى فارغة في خطوة السلة). المحتوى يملأ ما فوقه ويتمرّر وحده. */
   html[data-device='duo'] body .checkout-wow-panel > .checkout-wow-footer {
-    order: 3;
+    order: 4;
     flex: 0 0 auto;
     box-sizing: border-box;
-    height: calc(var(--duo-hinge-y) - var(--duo-hinge-band) / 2 - var(--duo-sheet-head) - var(--duo-sheet-steps));
-    max-height: none !important;
-    margin: 0 14px var(--duo-hinge-band);
+    height: auto;
+    max-height: 56dvh !important;
+    margin: 8px 14px calc(10px + env(safe-area-inset-bottom, 0px));
     padding: 8px 14px 10px !important;
     display: flex;
     flex-direction: column;
@@ -82,12 +82,23 @@ html[data-device='duo'] body [role='dialog'][aria-label='السلة وإتمام
   html[data-device='duo'] body .checkout-wow-panel > .checkout-wow-footer button.w-full,
   html[data-device='duo'] body .checkout-wow-panel > .checkout-wow-footer > .flex.flex-col > button { min-height: 52px !important; padding-block: 12px !important; }
 
-  /* الشاشة السفلى: ما تُدخله، يتمرّر وحده تحت الحزام */
+  /* المحتوى (أصناف السلة، رقم التلفون والعنوان) يملأ ما فوق الشريط ويتمرّر وحده */
   html[data-device='duo'] body .checkout-wow-panel:has(> .checkout-wow-footer) > .checkout-wow-body {
-    order: 4;
+    order: 3;
     flex: 1 1 auto !important;
     min-height: 0 !important;
     padding-top: 6px !important;
-    padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: 12px !important;
+  }
+  /* خطوة الدفع: الفاتورة في الشاشة العليا وطرق الدفع الثلاث كاملةً في السفلى بلا تمريرٍ داخلي
+     (كانت البطاقات في تذييلٍ بارتفاعٍ ثابتٍ فوق الفاتورة فلا يظهر منها إلا واحدة ونصف). */
+  html[data-device='duo'] body .checkout-wow-panel:has(.payment-method-wow-grid) > .checkout-wow-body { flex: 0 0 auto !important; overflow: visible !important; }
+  html[data-device='duo'] body .checkout-wow-panel:has(.payment-method-wow-grid) > .checkout-wow-body::after,
+  html[data-device='duo'] body .checkout-wow-panel .payment-wow-step::after { display: none !important; }
+  html[data-device='duo'] body .checkout-wow-panel:has(.payment-method-wow-grid) > .checkout-wow-footer {
+    flex: 1 1 auto;
+    max-height: none !important;
+    justify-content: center;
+    margin-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   }
 }
