@@ -65,7 +65,10 @@ describe('iPhone Duo audit', () => {
     it('lays the inner screen out as two pages with a fold, only in landscape, from the window size only', () => {
       expect(css).toContain(book);
       expect(css).toMatch(/--duo-spine:\s*32px/);
-      expect(css).toMatch(/html body::after\s*\{[^}]*pointer-events:\s*none/);
+      // The two-page book and its fold line stay for narrow desktop windows only. On the Duo the inner landscape
+      // screen is one full-width page (owner, 2026-11-26), so no fold line is drawn in the middle.
+      expect(css).toMatch(/html:not\(\[data-device='duo'\]\) body::after\s*\{[^}]*pointer-events:\s*none/);
+      expect(css).not.toMatch(/(^|[\s,}])html body::after/);
       // Portrait is a normal single column: the old portrait branch (640-720 wide, 760+ tall) is gone.
       expect(css).not.toMatch(/min-height:\s*760px\) and \(max-height:\s*1000px/);
       for (const m of css.matchAll(/^@media ([^{]+)\{/gm)) {
