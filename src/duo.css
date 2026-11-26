@@ -395,7 +395,7 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
 
   /* The fold: a hairline and a soft shadow either side, drawn over everything (it is in the
      glass, not in the page), never catching a tap. */
-  html body::after {
+  html:not([data-device='duo']) body::after {
     content: '';
     position: fixed;
     inset-block: 0;
@@ -409,7 +409,7 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
   }
 
   /* ---------- Menu: dishes on the right page, mood banner + search + cart on the left ---------- */
-  html body .customer-signature-shell {
+  html:not([data-device='duo']) body .customer-signature-shell {
     max-width: none;
     display: grid;
     grid-template-columns: minmax(0, 1fr) var(--duo-spine) minmax(0, 1fr);
@@ -417,11 +417,11 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
     align-items: start;
     padding-bottom: 0;
   }
-  html body .customer-signature-shell > * { grid-column: 1; min-width: 0; }
-  html body .customer-signature-shell > [role='region'][aria-label='الديوانية'] { grid-row: 1; }
-  html body .customer-signature-shell > header { grid-row: 2; }
-  html body .customer-signature-shell > main { grid-row: 3; }
-  html body .customer-signature-shell > .duo-context-page {
+  html:not([data-device='duo']) body .customer-signature-shell > * { grid-column: 1; min-width: 0; }
+  html:not([data-device='duo']) body .customer-signature-shell > [role='region'][aria-label='الديوانية'] { grid-row: 1; }
+  html:not([data-device='duo']) body .customer-signature-shell > header { grid-row: 2; }
+  html:not([data-device='duo']) body .customer-signature-shell > main { grid-row: 3; }
+  html:not([data-device='duo']) body .customer-signature-shell > .duo-context-page {
     grid-column: 3;
     grid-row: 1 / -1;
     position: sticky;
@@ -435,7 +435,7 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
     padding: max(20px, env(safe-area-inset-top)) var(--duo-gutter) calc(20px + env(safe-area-inset-bottom));
     padding-inline-end: max(var(--duo-gutter), env(safe-area-inset-left));
   }
-  html body .duo-context-page > [role='region'][aria-label='البحث والعروض'] {
+  html:not([data-device='duo']) body .duo-context-page > [role='region'][aria-label='البحث والعروض'] {
     flex: 1 1 auto;
     display: flex;
     flex-direction: column;
@@ -444,44 +444,44 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
     min-block-size: 12rem;
   }
   /* The banner is the cover of the context page. */
-  html body .duo-context-page .orser-context-hero { flex: 1 1 auto; min-height: 12rem; border-radius: 30px; display: flex; flex-direction: column; }
-  html body .duo-context-page .orser-context-hero > .relative.flex-col { flex: 1 1 auto; padding: 26px 24px; }
-  html body .duo-context-page > [role='search'] { padding: 0; margin: 0; flex: 0 0 auto; }
+  html:not([data-device='duo']) body .duo-context-page .orser-context-hero { flex: 1 1 auto; min-height: 12rem; border-radius: 30px; display: flex; flex-direction: column; }
+  html:not([data-device='duo']) body .duo-context-page .orser-context-hero > .relative.flex-col { flex: 1 1 auto; padding: 26px 24px; }
+  html:not([data-device='duo']) body .duo-context-page > [role='search'] { padding: 0; margin: 0; flex: 0 0 auto; }
   /* With a cart, its bar sits at the foot of the context page instead of across both pages. */
-  html body .customer-signature-shell:has(.al-cart-bar) > .duo-context-page { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
-  html body .al-cart-bar {
+  html:not([data-device='duo']) body .customer-signature-shell:has(.al-cart-bar) > .duo-context-page { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+  html:not([data-device='duo']) body .al-cart-bar {
     left: max(var(--duo-gutter), env(safe-area-inset-left)) !important;
     right: calc(50% + var(--duo-spine) / 2 + var(--duo-gutter)) !important;
     width: auto !important;
     transform: none !important;
   }
-  html body .customer-wow-menu { padding-bottom: 32px; }
+  html:not([data-device='duo']) body .customer-wow-menu { padding-bottom: 32px; }
   /* Small notes ("added to your order", "connection lost") open on the right page, never on the fold. */
-  html body .cart-moment-toast,
-  html body .customer-offline-toast {
+  html:not([data-device='duo']) body .cart-moment-toast,
+  html:not([data-device='duo']) body .customer-offline-toast {
     left: auto !important;
     right: var(--duo-gutter) !important;
     transform: none !important;
     max-width: calc(var(--duo-page) - 2 * var(--duo-gutter)) !important;
     width: auto !important;
   }
-  html body .r3-menu-header { padding-inline: 20px; }
-  html body .r3-menu-header h1 { font-size: 1.2rem; line-height: 1.5; }
-  html body .customer-products-zone { padding-inline: 20px; }
+  html:not([data-device='duo']) body .r3-menu-header { padding-inline: 20px; }
+  html:not([data-device='duo']) body .r3-menu-header h1 { font-size: 1.2rem; line-height: 1.5; }
+  html:not([data-device='duo']) body .customer-products-zone { padding-inline: 20px; }
   /* A page is 300-440px wide, a phone column: dishes one per row, as on a phone (two per row squeezed
      the names into a column of single letters). */
-  html body .customer-signature-shell .grid[class*='lg:grid-cols-3'],
-  html body :is(.customer-signature-shell, .track-signature, .qatya-ultra-shell, .checkout-wow-panel) .grid[class*='sm:grid-cols-2'] { grid-template-columns: minmax(0, 1fr); }
-  html body .dna-cat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-  html body .duo-pick-grid { grid-template-columns: minmax(0, 1fr); }
-  html body .duo-pick-card { flex-direction: row; text-align: start; padding: 12px 14px; }
-  html body .duo-pick-card .food-price-chip { margin-inline: 0; }
+  html:not([data-device='duo']) body .customer-signature-shell .grid[class*='lg:grid-cols-3'],
+  html:not([data-device='duo']) body :is(.customer-signature-shell, .track-signature, .qatya-ultra-shell, .checkout-wow-panel) .grid[class*='sm:grid-cols-2'] { grid-template-columns: minmax(0, 1fr); }
+  html:not([data-device='duo']) body .dna-cat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  html:not([data-device='duo']) body .duo-pick-grid { grid-template-columns: minmax(0, 1fr); }
+  html:not([data-device='duo']) body .duo-pick-card { flex-direction: row; text-align: start; padding: 12px 14px; }
+  html:not([data-device='duo']) body .duo-pick-card .food-price-chip { margin-inline: 0; }
 
   /* ---------- Order tracking: the search on the right page, the orders on the left ---------- */
-  html body .track-signature > header { justify-content: flex-start; gap: 16px; padding-inline: 20px; }
-  html body .track-signature > header > .w-11:last-child { display: none; }
-  html body .track-signature > header h1 { max-inline-size: calc(var(--duo-page) - 100px); white-space: normal; overflow-wrap: anywhere; }
-  html body .track-signature > main {
+  html:not([data-device='duo']) body .track-signature > header { justify-content: flex-start; gap: 16px; padding-inline: 20px; }
+  html:not([data-device='duo']) body .track-signature > header > .w-11:last-child { display: none; }
+  html:not([data-device='duo']) body .track-signature > header h1 { max-inline-size: calc(var(--duo-page) - 100px); white-space: normal; overflow-wrap: anywhere; }
+  html:not([data-device='duo']) body .track-signature > main {
     max-width: none;
     display: grid;
     grid-template-columns: minmax(0, 1fr) var(--duo-spine) minmax(0, 1fr);
@@ -489,11 +489,11 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
     padding: 20px;
     column-gap: 20px;
   }
-  html body .track-signature > main > * { grid-column: 1; min-width: 0; margin-top: 0 !important; }
-  html body .track-signature > main > section.order-detail-card { grid-row: 1; position: sticky; top: 100px; padding: 26px 22px; border-radius: 32px; }
-  html body .track-signature > main > .space-y-4 { grid-column: 3; grid-row: 1 / span 4; padding-bottom: 32px; }
+  html:not([data-device='duo']) body .track-signature > main > * { grid-column: 1; min-width: 0; margin-top: 0 !important; }
+  html:not([data-device='duo']) body .track-signature > main > section.order-detail-card { grid-row: 1; position: sticky; top: 100px; padding: 26px 22px; border-radius: 32px; }
+  html:not([data-device='duo']) body .track-signature > main > .space-y-4 { grid-column: 3; grid-row: 1 / span 4; padding-bottom: 32px; }
   /* Before a search the left page is a quiet title page with the kitchen's mark. */
-  html body .track-signature > main::after {
+  html:not([data-device='duo']) body .track-signature > main::after {
     content: '';
     grid-column: 3;
     grid-row: 1;
@@ -503,18 +503,18 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
     background: url('/logo-optimized.png') center / 112px no-repeat, radial-gradient(closest-side, rgba(178, 138, 65, 0.10), transparent);
     opacity: 0.55;
   }
-  html body .track-signature > main:has(> .space-y-4)::after { display: none; }
-  html body .track-signature section.order-detail-card form input[dir='ltr'] { padding-left: 16px; padding-right: 48px; }
-  html body .track-signature section.order-detail-card form .absolute.right-6 { right: 18px; }
+  html:not([data-device='duo']) body .track-signature > main:has(> .space-y-4)::after { display: none; }
+  html:not([data-device='duo']) body .track-signature section.order-detail-card form input[dir='ltr'] { padding-left: 16px; padding-right: 48px; }
+  html:not([data-device='duo']) body .track-signature section.order-detail-card form .absolute.right-6 { right: 18px; }
 
   /* ---------- Split ("قطية"): the order's title page on the left, the split itself on the right ---------- */
-  html body .qatya-ultra-shell {
+  html:not([data-device='duo']) body .qatya-ultra-shell {
     display: grid;
     grid-template-columns: minmax(0, 1fr) var(--duo-spine) minmax(0, 1fr);
     align-items: start;
   }
-  html body .qatya-ultra-shell > * { grid-column: 1; grid-row: 1; min-width: 0; }
-  html body .qatya-ultra-shell > .qatya-duplicate-top {
+  html:not([data-device='duo']) body .qatya-ultra-shell > * { grid-column: 1; grid-row: 1; min-width: 0; }
+  html:not([data-device='duo']) body .qatya-ultra-shell > .qatya-duplicate-top {
     display: flex !important;
     grid-column: 3;
     position: sticky;
@@ -530,16 +530,16 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
     padding: 72px var(--duo-gutter) 40px;
     text-align: center;
   }
-  html body .qatya-ultra-shell > .qatya-duplicate-top > button[aria-label='رجوع'] { display: none; }
-  html body .qatya-ultra-shell > .qatya-duplicate-top svg { width: 44px; height: 44px; }
-  html body .qatya-ultra-shell > .qatya-duplicate-top h1 { font-size: 1.75rem; line-height: 1.5; }
-  html body .qatya-ultra-shell > .qatya-duplicate-top > div { max-inline-size: 100%; white-space: normal; line-height: 1.7; }
-  html body .qatya-ultra-shell > div.mx-auto { max-width: none; margin: 0; inline-size: 100%; padding: 20px; }
-  html body .qatya-ultra-shell > .payment-back-floating { position: fixed; }
+  html:not([data-device='duo']) body .qatya-ultra-shell > .qatya-duplicate-top > button[aria-label='رجوع'] { display: none; }
+  html:not([data-device='duo']) body .qatya-ultra-shell > .qatya-duplicate-top svg { width: 44px; height: 44px; }
+  html:not([data-device='duo']) body .qatya-ultra-shell > .qatya-duplicate-top h1 { font-size: 1.75rem; line-height: 1.5; }
+  html:not([data-device='duo']) body .qatya-ultra-shell > .qatya-duplicate-top > div { max-inline-size: 100%; white-space: normal; line-height: 1.7; }
+  html:not([data-device='duo']) body .qatya-ultra-shell > div.mx-auto { max-width: none; margin: 0; inline-size: 100%; padding: 20px; }
+  html:not([data-device='duo']) body .qatya-ultra-shell > .payment-back-floating { position: fixed; }
 
   /* Roulette split ("وهق غيرك"): its marquee and title become the left title page, the names
      and the spin stay on the right page. */
-  html body .roulette-ultra-shell > div.mx-auto {
+  html:not([data-device='duo']) body .roulette-ultra-shell > div.mx-auto {
     max-width: none;
     margin: 0;
     display: grid;
@@ -547,8 +547,8 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
     align-items: start;
     padding-inline: var(--duo-gutter);
   }
-  html body .roulette-ultra-shell > div.mx-auto > * { grid-column: 1; min-width: 0; margin-top: 0 !important; margin-bottom: 22px; }
-  html body .roulette-ultra-shell > div.mx-auto > header {
+  html:not([data-device='duo']) body .roulette-ultra-shell > div.mx-auto > * { grid-column: 1; min-width: 0; margin-top: 0 !important; margin-bottom: 22px; }
+  html:not([data-device='duo']) body .roulette-ultra-shell > div.mx-auto > header {
     grid-column: 3;
     grid-row: 1 / span 12;
     position: sticky;
@@ -563,8 +563,8 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
 
   /* ---------- Full-screen notes (404, loading) and centred dialogs ---------- */
   /* 404 and a broken split link: the picture on the left page, the words and the ways back on the right. */
-  html body main.min-h-dvh.bg-cream > .max-w-md:only-child,
-  html body main.split-error-screen > .max-w-md {
+  html:not([data-device='duo']) body main.min-h-dvh.bg-cream > .max-w-md:only-child,
+  html:not([data-device='duo']) body main.split-error-screen > .max-w-md {
     max-width: none;
     inline-size: 100%;
     min-block-size: calc(100dvh - 48px);
@@ -575,10 +575,10 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
     padding: 24px 28px;
     border-radius: 36px;
   }
-  html body main.min-h-dvh.bg-cream > .max-w-md:only-child > *,
-  html body main.split-error-screen > .max-w-md > * { grid-column: 1; margin-inline: 0; max-inline-size: 30ch; }
-  html body main.min-h-dvh.bg-cream > .max-w-md:only-child > svg:first-child,
-  html body main.split-error-screen > .max-w-md > svg:first-child {
+  html:not([data-device='duo']) body main.min-h-dvh.bg-cream > .max-w-md:only-child > *,
+  html:not([data-device='duo']) body main.split-error-screen > .max-w-md > * { grid-column: 1; margin-inline: 0; max-inline-size: 30ch; }
+  html:not([data-device='duo']) body main.min-h-dvh.bg-cream > .max-w-md:only-child > svg:first-child,
+  html:not([data-device='duo']) body main.split-error-screen > .max-w-md > svg:first-child {
     grid-column: 3;
     grid-row: 1 / span 4;
     align-self: center;
@@ -587,46 +587,46 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
     max-inline-size: none;
     margin: 0;
   }
-  html body main.split-error-screen > .max-w-md > svg:first-child { inline-size: min(34%, 120px); }
-  html body main.split-error-screen > .max-w-md > .flex-col { inline-size: 100%; }
+  html:not([data-device='duo']) body main.split-error-screen > .max-w-md > svg:first-child { inline-size: min(34%, 120px); }
+  html:not([data-device='duo']) body main.split-error-screen > .max-w-md > .flex-col { inline-size: 100%; }
   /* Route loading: the mark on the right page, the shimmer on the left. */
-  html body div[role='status'][aria-label='جاري التحميل'].min-h-dvh {
+  html:not([data-device='duo']) body div[role='status'][aria-label='جاري التحميل'].min-h-dvh {
     flex-direction: row;
     justify-content: space-around;
     padding-inline: 24px;
   }
-  html body div[role='status'][aria-label='جاري التحميل'].min-h-dvh > .max-w-xs { max-width: calc(var(--duo-page) - 64px); }
+  html:not([data-device='duo']) body div[role='status'][aria-label='جاري التحميل'].min-h-dvh > .max-w-xs { max-width: calc(var(--duo-page) - 64px); }
 
   /* Centred dialogs open on the right page; the left page stays visible, dimmed, as context. */
   /* (!important only because some of these overlays set their padding inline.) */
-  html body .duo-page-dialog {
+  html:not([data-device='duo']) body .duo-page-dialog {
     padding-inline: var(--duo-gutter) calc(50% + var(--duo-spine) / 2 + var(--duo-gutter)) !important;
     justify-content: center;
   }
 
   /* The opening-hours week: day names never squeeze into a column of single letters. */
-  html body .checkout-wow-panel .flex.min-w-0.items-center.gap-2 { flex: 0 0 auto; white-space: nowrap; }
-  html body .checkout-wow-panel .flex.min-w-0.items-center.gap-2 + span.shrink-0 { flex-shrink: 1; min-width: 0; text-align: end; }
+  html:not([data-device='duo']) body .checkout-wow-panel .flex.min-w-0.items-center.gap-2 { flex: 0 0 auto; white-space: nowrap; }
+  html:not([data-device='duo']) body .checkout-wow-panel .flex.min-w-0.items-center.gap-2 + span.shrink-0 { flex-shrink: 1; min-width: 0; text-align: end; }
   /* The best-seller carousel stays on its page. */
-  html body .customer-signature-shell .best-seller-wow-carousel { overflow: hidden; }
+  html:not([data-device='duo']) body .customer-signature-shell .best-seller-wow-carousel { overflow: hidden; }
 
   /* Narrow book (721-860 wide): each page is 345-415px, a phone column. Tailwind's sm: layouts (chosen
      from the 640px+ window, not from the page) are too wide for it, so the rows that assumed room fall
      back to phone stacking. */
   @media (max-width: 860px) {
-    html body .dna-cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    html body .track-signature main .space-y-4 > div.bg-white > .flex.items-start.justify-between { flex-wrap: wrap; gap: 10px; }
-    html body .track-signature main .space-y-4 > div.bg-white .flex.items-center.gap-2 { flex-wrap: wrap; }
-    html body .track-signature .smart-return-card { grid-template-columns: auto minmax(0, 1fr); gap: 12px; padding: 14px; }
-    html body .track-signature .smart-return-action { grid-column: 1 / -1; width: 100%; }
-    html body .track-signature main .grid.grid-cols-3 > button { padding-inline: 4px; white-space: nowrap; }
-    html body .qatya-ultra-shell .dna-qatya-main { flex-direction: column; text-align: center; }
-    html body .qatya-ultra-shell .dna-qatya-facts { justify-content: center; }
-    html body .qatya-ultra-shell > .qatya-duplicate-top h1 { font-size: 1.4rem; }
+    html:not([data-device='duo']) body .dna-cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    html:not([data-device='duo']) body .track-signature main .space-y-4 > div.bg-white > .flex.items-start.justify-between { flex-wrap: wrap; gap: 10px; }
+    html:not([data-device='duo']) body .track-signature main .space-y-4 > div.bg-white .flex.items-center.gap-2 { flex-wrap: wrap; }
+    html:not([data-device='duo']) body .track-signature .smart-return-card { grid-template-columns: auto minmax(0, 1fr); gap: 12px; padding: 14px; }
+    html:not([data-device='duo']) body .track-signature .smart-return-action { grid-column: 1 / -1; width: 100%; }
+    html:not([data-device='duo']) body .track-signature main .grid.grid-cols-3 > button { padding-inline: 4px; white-space: nowrap; }
+    html:not([data-device='duo']) body .qatya-ultra-shell .dna-qatya-main { flex-direction: column; text-align: center; }
+    html:not([data-device='duo']) body .qatya-ultra-shell .dna-qatya-facts { justify-content: center; }
+    html:not([data-device='duo']) body .qatya-ultra-shell > .qatya-duplicate-top h1 { font-size: 1.4rem; }
   }
 
   /* First-visit welcome: the mark and the promise on the right page, the two ways in on the left. */
-  html body .ord-bp-theatre > .relative.z-10 {
+  html:not([data-device='duo']) body .ord-bp-theatre > .relative.z-10 {
     max-width: none;
     inline-size: 100%;
     display: grid;
@@ -637,9 +637,9 @@ html body .checkout-promo-summary { min-inline-size: 44px; }
     column-gap: calc(var(--duo-spine) + 2 * var(--duo-gutter) + 16px);
     padding-inline: calc(var(--duo-gutter) + 8px);
   }
-  html body .ord-bp-theatre > .relative.z-10 > :nth-child(1) { grid-column: 1; grid-row: 1; margin-bottom: 10px; }
-  html body .ord-bp-theatre > .relative.z-10 > :nth-child(2) { grid-column: 1; grid-row: 2; margin-bottom: 0; }
-  html body .ord-bp-theatre > .relative.z-10 > :nth-child(3) { grid-column: 2; grid-row: 1 / span 2; }
+  html:not([data-device='duo']) body .ord-bp-theatre > .relative.z-10 > :nth-child(1) { grid-column: 1; grid-row: 1; margin-bottom: 10px; }
+  html:not([data-device='duo']) body .ord-bp-theatre > .relative.z-10 > :nth-child(2) { grid-column: 1; grid-row: 2; margin-bottom: 0; }
+  html:not([data-device='duo']) body .ord-bp-theatre > .relative.z-10 > :nth-child(3) { grid-column: 2; grid-row: 1 / span 2; }
 }
 
 /* ==========================================================================
@@ -700,8 +700,8 @@ html:not([data-device='duo']) { --duo-cutout-w: 0px; --duo-cutout-h: 0px; }
 /* The floating notification bell (bottom corner) in the book: it lives on the right page, and its panel
    opens inside that page. (Below 768px Tailwind pins the bell to the left; here that would be the other page.) */
 @media screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape) {
-  html body .dna-inbox-bell { left: auto !important; right: var(--duo-gutter) !important; }
-  html body .dna-inbox {
+  html:not([data-device='duo']) body .dna-inbox-bell { left: auto !important; right: var(--duo-gutter) !important; }
+  html:not([data-device='duo']) body .dna-inbox {
     left: calc(50% + var(--duo-spine) / 2 + var(--duo-gutter)) !important;
     right: var(--duo-gutter) !important;
     width: auto !important;
@@ -738,7 +738,7 @@ html[data-device='duo'][data-widget-side='left'] body :is(
    Safari's back/reader/tabs sit over the left edge and report safe-area-inset-left). */
 html[data-device='duo'] body :is(.customer-signature-shell, .track-signature, .qatya-ultra-shell, .roulette-ultra-shell, .ord-bp-theatre) {
   padding-left: max(env(safe-area-inset-left), 0px);
-  padding-right: max(env(safe-area-inset-right), 0px);
+  padding-right: var(--duo-ir);
 }
 html[data-device='duo'][data-shell='app'] body :is(.customer-signature-shell > :first-child, .track-signature > header) {
   padding-top: max(env(safe-area-inset-top), 8px);
@@ -748,7 +748,7 @@ html[data-device='duo'] body :is([role='dialog'], [aria-modal='true'], .duo-page
   padding-top: max(env(safe-area-inset-top), var(--duo-sheet-pad, 10px));
   padding-bottom: max(env(safe-area-inset-bottom), var(--duo-sheet-pad, 10px));
   padding-left: max(env(safe-area-inset-left), 0px);
-  padding-right: max(env(safe-area-inset-right), 0px);
+  padding-right: var(--duo-ir);
 }
 html[data-device='duo'] body :is(.cart-moment-toast, .customer-offline-toast) {
   top: calc(env(safe-area-inset-top) + 10px) !important;
@@ -781,9 +781,9 @@ html[data-device='duo'][data-shell='app'] body :is(
   .customer-signature-shell > header,
   .customer-signature-shell > main,
   .track-signature > header) {
-  margin-right: calc(-1 * max(env(safe-area-inset-right), 0px));
+  margin-right: calc(-1 * var(--duo-ir));
   margin-left: calc(-1 * max(env(safe-area-inset-left), 0px));
-  padding-right: calc(16px + max(env(safe-area-inset-right), 0px)) !important;
+  padding-right: calc(16px + var(--duo-ir)) !important;
   padding-left: calc(16px + max(env(safe-area-inset-left), 0px)) !important;
 }
 /* Inside a dialog the dialog itself is already padded by the insets. */
@@ -802,16 +802,16 @@ html[data-device='duo'][data-shell='app'] body .duo-keepout-head { padding-right
    ويضيق محتواها إلى 266px بفراغ 100px على يسارها. الصندوق يأخذ الآن عرض الشاشة كله والمحتوى بين الهامشين. */
 html[data-device='duo'][data-shell='app'] body .customer-signature-shell > main {
   width: auto !important;
-  max-width: calc(100% + max(env(safe-area-inset-right), 0px) + max(env(safe-area-inset-left), 0px));
+  max-width: calc(100% + var(--duo-ir) + max(env(safe-area-inset-left), 0px));
 }
 /* طبقات تضع حشوتها الأفقية في style مباشرة (ورقة الترحيب)، فلا تبلغها قاعدة الإطارات أعلاه:
    تنتهي بطاقتها قبل عمود الأداة بدل أن يقطعها. الجهة تتبع data-widget-side بعد التدوير. */
-html[data-device='duo'][data-widget-side='right'] body .duo-page-dialog.fixed[style*='padding'] { padding-right: calc(16px + max(env(safe-area-inset-right), 0px)) !important; }
+html[data-device='duo'][data-widget-side='right'] body .duo-page-dialog.fixed[style*='padding'] { padding-right: calc(16px + var(--duo-ir)) !important; }
 html[data-device='duo'][data-widget-side='left'] body .duo-page-dialog.fixed[style*='padding'] { padding-left: calc(16px + max(env(safe-area-inset-left), 0px)) !important; }
 /* ورقات الحوار المتمركزة: حشوة الإطارات حلّت محلّ هامشها الأفقي (p-4/p-6)، فلصق زرّها وبطاقتها بحافة الشاشة. تعود بهامش الصفحة (16px) فوق الإطار. */
 html[data-device='duo'] body .duo-page-dialog.fixed {
   padding-left: calc(max(env(safe-area-inset-left), 0px) + 16px);
-  padding-right: calc(max(env(safe-area-inset-right), 0px) + 16px);
+  padding-right: calc(var(--duo-ir) + 16px);
 }
 /* صفحة التتبع (≤480px): حشوة main الأفقية كُتبت padding-inline: يسار يمين، وهي في RTL (بداية ونهاية) معكوسة، فنزل عمود الأداة (84px)
    على يسار المحتوى أيضاً فوق حشوة الغلاف على يمينه، وضاقت البطاقة وانزاحت عن وسط المساحة الآمنة. الغلاف يحجز الإطارات وحده. */
@@ -821,7 +821,7 @@ html[data-device='duo'] body .duo-page-dialog.fixed {
 /* شريط السدو أسفل صفحة التتبع يقف عند حشوة الغلاف فيُقصّ قبل عمود الأداة: يمتدّ تحته إلى الحافة. */
 html[data-device='duo'] body .track-signature::after {
   margin-left: calc(-1 * max(env(safe-area-inset-left), 0px));
-  margin-right: calc(-1 * max(env(safe-area-inset-right), 0px));
+  margin-right: calc(-1 * var(--duo-ir));
 }
 
 /* الأشرطة والتنبيهات العائمة: محورها المساحة الآمنة لا الشاشة كلها، فلا يمتدّ شريط السلة ولا تنبيه الموقع تحت عمود الأداة،
@@ -829,25 +829,25 @@ html[data-device='duo'] body .track-signature::after {
 @media screen and (max-width: 720px) {
   html[data-device='duo'] body .al-cart-bar {
     left: calc(12px + max(env(safe-area-inset-left), 0px)) !important;
-    right: calc(12px + max(env(safe-area-inset-right), 0px)) !important;
+    right: calc(12px + var(--duo-ir)) !important;
     width: auto !important;
     max-width: none !important;
     transform: none !important;
   }
   html[data-device='duo'] body .customer-mobile-stable-alert {
     left: calc(12px + max(env(safe-area-inset-left), 0px)) !important;
-    right: calc(12px + max(env(safe-area-inset-right), 0px)) !important;
+    right: calc(12px + var(--duo-ir)) !important;
     max-width: none !important;
   }
   html[data-device='duo'] body .fixed.top-4.inset-x-3 {
     top: max(env(safe-area-inset-top), 16px);
     left: calc(12px + max(env(safe-area-inset-left), 0px));
-    right: calc(12px + max(env(safe-area-inset-right), 0px));
+    right: calc(12px + var(--duo-ir));
   }
-  html[data-device='duo'] body .fixed.right-4.z-40.pointer-events-auto { right: calc(16px + max(env(safe-area-inset-right), 0px)); }
+  html[data-device='duo'] body .fixed.right-4.z-40.pointer-events-auto { right: calc(16px + var(--duo-ir)); }
   html[data-device='duo'] body .customer-offline-toast {
-    left: calc(50% + (max(env(safe-area-inset-left), 0px) - max(env(safe-area-inset-right), 0px)) / 2);
-    width: min(420px, calc(100vw - 24px - max(env(safe-area-inset-left), 0px) - max(env(safe-area-inset-right), 0px)));
+    left: calc(50% + (max(env(safe-area-inset-left), 0px) - var(--duo-ir)) / 2);
+    width: min(420px, calc(100vw - 24px - max(env(safe-area-inset-left), 0px) - var(--duo-ir)));
   }
 }
 
@@ -899,7 +899,7 @@ html[data-device='duo'][data-shell='app'] body:has(.roulette-ultra-shell)::befor
   html[data-device='duo'] body .checkout-wow-panel .payment-method-card { min-height: 0 !important; flex-direction: row !important; align-items: center !important; padding: 12px 16px !important; }
   html[data-device='duo'] body .checkout-wow-panel > .checkout-wow-footer:has(.payment-method-wow-grid)::before { display: none; }
   /* نوافذ الحوار المتمركزة تُفتح على الصفحة اليمنى بحشوة الكتاب (!important)، فكان ركنها العلوي وعنوانها تحت الأداة: تُضاف حدود النظام. */
-  html[data-device='duo'] body .duo-page-dialog.fixed { padding-right: calc(var(--duo-gutter) + max(env(safe-area-inset-right), 0px)) !important; }
+  html[data-device='duo'] body .duo-page-dialog.fixed { padding-right: calc(var(--duo-gutter) + var(--duo-ir)) !important; }
   html[data-device='duo'] body .checkout-wow-panel .payment-method-card > div { flex-direction: row !important; align-items: center !important; }
 }
 
@@ -1005,4 +1005,87 @@ html[data-device='duo'][data-shell='app'] body:has(.roulette-ultra-shell)::befor
   html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-stats > div { padding: 6px 4px; border-radius: 14px; }
   html[data-device='duo'] body .checkout-wow-panel .invoice-reveal-stats b { font-size: 13px; }
   html[data-device='duo'] body .checkout-wow-panel .invoice-payment-divider { display: none; }
+}
+
+/* ==========================================================================
+   الشاشة الداخلية عرضاً على الدوو (2026-11-26، طلب المالك): صفحةٌ واحدة بعرض الشاشة لا صفحتا كتاب.
+   - كتاب الصفحتين أعلاه صار لنوافذ الحاسوب الضيّقة وحدها (html:not([data-device='duo']))، ومعه خطّ المفصل:
+     في الشاشة الكاملة لا خطّ ولا ظلّ في المنتصف.
+   - --duo-ir: حدّ الساعة الأيمن. قيمة iOS عادةً، وفي الداخلية عرضاً داخل التطبيق لا يقلّ عن عمود الساعة (84)،
+     لأن iOS قد يبلغ صفراً والساعة في الركن الأعلى الأيمن (main.tsx يعدّ الجهة «يمين» عندها).
+   - الأوراق ذات العمودين (المنتج، السلة) بحشوة متساوية، فالفاصل بين عموديها على المفصل تماماً.
+   ========================================================================== */
+:root { --duo-ir: env(safe-area-inset-right, 0px); }
+:root[data-device='duo'] { --duo-cutout-w: max(var(--duo-ir), env(safe-area-inset-left, 0px)); }
+html[data-device='duo'] body :is(.customer-signature-shell, .track-signature, .qatya-ultra-shell, .roulette-ultra-shell, .ord-bp-theatre) {
+  padding-right: var(--duo-ir);
+}
+html[data-device='duo'] body :is([role='dialog'], [aria-modal='true'], .duo-page-dialog).fixed { padding-right: var(--duo-ir); }
+@media screen and (orientation: landscape) and (min-width: 860px) and (max-width: 1000px) and (min-height: 500px) and (max-height: 760px) {
+  html[data-device='duo'][data-shell='app'][data-widget-side='right'] { --duo-ir: max(env(safe-area-inset-right, 0px), 84px); }
+}
+@media screen and (min-width: 721px) and (max-width: 1000px) and (min-height: 520px) and (max-height: 960px) and (orientation: landscape) {
+  /* المنيو بعرض الشاشة: الترويسة، ثم بطاقة الجوّ والبحث، ثم الأصناف بثلاثة أعمدة. */
+  html[data-device='duo'] body .customer-signature-shell { max-width: none; }
+  html[data-device='duo'] body .customer-signature-shell > header,
+  html[data-device='duo'] body .customer-signature-shell > [role='region'][aria-label='الديوانية'],
+  html[data-device='duo'] body .customer-signature-shell [role='region'][aria-label='البحث والعروض'],
+  html[data-device='duo'] body .customer-signature-shell [role='search'],
+  html[data-device='duo'] body .customer-signature-shell .customer-products-zone { padding-inline: 28px !important; }
+  html[data-device='duo'] body .customer-signature-shell [role='region'][aria-label='البحث والعروض'] { max-width: none; }
+  /* في التطبيق: خلفيات الترويسة وشريط الديوانية ومنطقة الأصناف تمتدّ تحت عمود الساعة، والمحتوى يقف قبله بهامش الصفحة. */
+  html[data-device='duo'][data-shell='app'] body .customer-signature-shell > :is(header, main.customer-products-zone, [role='region'][aria-label='الديوانية']) {
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: calc(-1 * var(--duo-ir)) !important;
+    padding-left: 28px !important;
+    padding-right: calc(28px + var(--duo-ir)) !important;
+  }
+  /* الترحيب: صفحة واحدة موسّطة. */
+  html[data-device='duo'] body .ord-bp-theatre > .relative.z-10 { margin-inline: auto; }
+  /* أوراق العمودين وحواراتها: حشوة متساوية من الجهتين. */
+  html[data-device='duo'] body :is([role='dialog'], [aria-modal='true'], .duo-page-dialog).fixed {
+    padding-left: max(var(--duo-ir), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--duo-ir), env(safe-area-inset-left, 0px));
+  }
+  html[data-device='duo'] body .duo-page-dialog.fixed { padding-left: calc(var(--duo-gutter) + var(--duo-ir)) !important; }
+  /* الجرس العائم ولوحته: في ركن الصفحة الأسفل، لا يقع على المنتصف. */
+  html[data-device='duo'] body .dna-inbox-bell { left: auto !important; right: calc(var(--duo-ir) + var(--duo-gutter)) !important; }
+}
+
+/* ==========================================================================
+   الشريط الاحترافي (2026-11-26): كبسولةٌ داكنة عمودية تحت الساعة في عمودها، بالشكل والمكان نفسيهما في كل
+   وضعيةٍ فيها عمود ساعة (التطبيق: الخارجية طولاً وعرضاً، والداخلية عرضاً). تحمل زرّي الترويسة نفسيهما
+   (تتبع الطلبات والسلة) — نقلٌ لا زيادة ولا حذف.
+   ========================================================================== */
+html[data-device='duo'] { --duo-clock-end: 176px; }
+@media screen and (orientation: landscape) and (max-width: 1000px) { html[data-device='duo'] { --duo-clock-end: 124px; } }
+@media screen and (orientation: portrait) and (max-width: 560px), screen and (orientation: landscape) and (max-width: 1000px) {
+  html[data-device='duo'][data-shell='app']:not([data-widget-side='none']) body .r3-menu-header .ord-head-actions {
+    position: fixed;
+    z-index: 60;
+    top: var(--duo-clock-end);
+    flex-direction: column;
+    gap: 4px;
+    padding: 5px;
+    border-radius: 999px;
+    background: rgb(17 33 26 / 0.88);
+    border: 1px solid rgb(255 255 255 / 0.1);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 12px 30px rgb(10 14 12 / 0.28);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    backdrop-filter: blur(18px) saturate(1.4);
+  }
+  html[data-device='duo'][data-shell='app'][data-widget-side='right'] body .r3-menu-header .ord-head-actions { right: calc((var(--duo-ir) - 56px) / 2); left: auto; }
+  html[data-device='duo'][data-shell='app'][data-widget-side='left'] body .r3-menu-header .ord-head-actions { left: calc((env(safe-area-inset-left) - 56px) / 2); right: auto; }
+  html[data-device='duo'][data-shell='app']:not([data-widget-side='none']) body .r3-menu-header .ord-head-actions :is(a, button) {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background: none !important;
+    box-shadow: none !important;
+    color: rgb(255 255 255 / 0.86) !important;
+  }
+  html[data-device='duo'][data-shell='app']:not([data-widget-side='none']) body .r3-menu-header .ord-head-actions :is(a, button) svg { color: inherit !important; }
 }
