@@ -1123,6 +1123,7 @@ import { ProductVisual, CategoryTile } from "../components/dna/ProductVisual";
 import { FoodPhoto, PriceChip } from "../components/FoodCard";
 import { DnaCount, DnaTimeline, DnaIconTile, DnaStepper, type DnaStep } from "../components/dna";
 import { DynamicEnvironment } from "../components/DynamicEnvironment";
+import { KuwaitSkyScene } from "../components/KuwaitSkyScene";
 import { redirectToPayment } from "../utils/redirect";
 import { buildWhatsAppInvoiceText, buildWhatsAppPaymentLinkText } from "../utils/invoiceShare";
 import {
@@ -5465,6 +5466,9 @@ export default function CustomerSite() {
                 themeContext.colors,
               )}
             >
+              {/* Real Kuwait sky: live weather + time scene (background only) */}
+              <KuwaitSkyScene />
+
               {/* Parallax background (simulated without heavy scroll listeners) */}
               <motion.div
                 className="orser-context-bg absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"

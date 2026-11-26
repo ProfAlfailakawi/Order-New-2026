@@ -1,0 +1,143 @@
+/* Real Kuwait sky: background layer of the menu hero (.orser-context-hero).
+   Static by default; every animation lives under prefers-reduced-motion: no-preference
+   (same convention as motion.css). Hero text keeps its own overlay above this layer. */
+
+.ks-sky {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--ks-sky);
+  --ks-ink: #2a3442;
+}
+.ks-sky > * { position: absolute; pointer-events: none; }
+
+/* ---- scene palettes (top -> horizon) ---- */
+.ks-clear {
+  --ks-sky: linear-gradient(180deg, #2c6aa0 0%, #5f98c4 48%, #b9cdd2 78%, #e6d3a6 100%);
+  --ks-ink: #34485e;
+}
+.ks-heat {
+  --ks-sky: linear-gradient(180deg, #6e90ad 0%, #b6b9ad 50%, #e8cf98 82%, #f3d48c 100%);
+  --ks-ink: #6a5a48;
+}
+.ks-dust {
+  --ks-sky: linear-gradient(180deg, #8d6a40 0%, #b98d55 45%, #d2a86f 78%, #dcb57f 100%);
+  --ks-ink: #5e4226;
+}
+.ks-rain {
+  --ks-sky: linear-gradient(180deg, #2f3842 0%, #4c5763 50%, #6c7680 100%);
+  --ks-ink: #1f262e;
+}
+.ks-sunset {
+  --ks-sky: linear-gradient(180deg, #2b1a4a 0%, #7a3159 32%, #c4505a 55%, #ee8e4a 80%, #f8c070 100%);
+  --ks-ink: #2a1426;
+}
+.ks-night {
+  --ks-sky: linear-gradient(180deg, #050920 0%, #101a42 50%, #263063 100%);
+  --ks-ink: #03050d;
+}
+
+/* ---- skyline ---- */
+.ks-fill, .ks-fill * { fill: var(--ks-ink); }
+.ks-landmarks {
+  left: 3%;
+  bottom: 0;
+  height: 94%;
+  width: auto;
+  aspect-ratio: 200 / 160;
+  max-width: 62%;
+}
+.ks-band { left: 0; right: 0; bottom: 0; width: 100%; height: 24%; }
+.ks-window { fill: #ffd98a; opacity: .75; }
+.ks-glow circle, .ks-glow rect { fill: none; stroke: rgba(130, 200, 255, .55); stroke-width: .9; }
+.ks-glow .ks-beacon { fill: #ff5a4a; stroke: none; }
+
+/* ---- celestial bodies ---- */
+.ks-sun {
+  width: 64px; height: 64px;
+  top: 14%; left: 44%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff7d6 0%, #ffe39a 45%, rgba(255, 220, 140, 0) 70%);
+}
+.ks-heat .ks-sun {
+  width: 120px; height: 120px; top: 2%; left: 38%;
+  background: radial-gradient(circle, #fffdf2 0%, #fff1c2 30%, rgba(255, 236, 180, .35) 52%, rgba(255, 236, 180, 0) 72%);
+}
+.ks-dust .ks-sun {
+  width: 46px; height: 46px; top: 16%;
+  background: radial-gradient(circle, rgba(255, 240, 210, .75) 0%, rgba(255, 230, 190, .35) 50%, rgba(255, 230, 190, 0) 72%);
+}
+.ks-sunset .ks-sun {
+  width: 110px; height: 110px; top: auto; bottom: 4%; left: 40%;
+  background: radial-gradient(circle, #ffe7a8 0%, #ffb35c 38%, rgba(255, 140, 70, .35) 56%, rgba(255, 120, 60, 0) 72%);
+}
+.ks-moon {
+  width: 26px; height: 26px; top: 14%; left: 46%;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: -7px 4px 0 0 #f3ecd2;
+  filter: drop-shadow(0 0 6px rgba(243, 236, 210, .45));
+}
+.ks-stars { inset: 0; width: 100%; height: 100%; }
+.ks-stars circle { fill: #fdf6e0; opacity: .85; }
+
+/* ---- weather layers ---- */
+.ks-cloud {
+  height: 46%; width: 70%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(120, 130, 142, .85) 0%, rgba(90, 100, 112, .45) 45%, rgba(80, 90, 100, 0) 70%);
+}
+.ks-cloud-a { top: -14%; left: -10%; }
+.ks-cloud-b { top: -6%; left: 40%; width: 80%; opacity: .8; }
+.ks-rain {
+  inset: -20% 0 0 0;
+  background-image: repeating-linear-gradient(105deg, rgba(210, 225, 240, 0) 0 9px, rgba(210, 225, 240, .32) 9px 10px, rgba(210, 225, 240, 0) 10px 22px);
+  background-size: 100% 60px;
+  opacity: .8;
+}
+.ks-dust {
+  left: -30%; width: 160%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(222, 186, 132, .55) 0%, rgba(210, 170, 115, .25) 50%, rgba(210, 170, 115, 0) 72%);
+}
+.ks-dust-a { top: 20%; height: 50%; }
+.ks-dust-b { top: 48%; height: 60%; opacity: .8; }
+.ks-shimmer {
+  left: -5%; right: -5%; bottom: 10%; height: 34%;
+  background: linear-gradient(180deg, rgba(255, 240, 200, 0) 0%, rgba(255, 236, 190, .35) 50%, rgba(255, 240, 200, 0) 100%);
+  filter: blur(3px);
+}
+.ks-shimmer-front { bottom: 0; height: 22%; opacity: .55; }
+
+/* ---- readability: darken the sky a touch (more in bright scenes); the
+   hero's own bottom gradient (themeContext.overlay) stays above all of this ---- */
+.ks-scrim { inset: 0; background: linear-gradient(0deg, rgba(14, 10, 6, .42) 0%, rgba(14, 10, 6, .14) 55%, rgba(14, 10, 6, .1) 100%); }
+.ks-clear .ks-scrim, .ks-heat .ks-scrim, .ks-dust .ks-scrim {
+  background: linear-gradient(0deg, rgba(14, 10, 6, .5) 0%, rgba(14, 10, 6, .24) 55%, rgba(14, 10, 6, .16) 100%);
+}
+
+/* ---- motion (only when the user has not asked for reduced motion) ---- */
+@media (prefers-reduced-motion: no-preference) {
+  .ks-sky { animation: ksFadeIn 1.2s ease-out both; }
+  .ks-stars circle { animation: ksTwinkle 3.6s ease-in-out infinite; }
+  .ks-rain { animation: ksRain .7s linear infinite; }
+  .ks-cloud-a { animation: ksDrift 26s ease-in-out infinite alternate; }
+  .ks-cloud-b { animation: ksDrift 34s ease-in-out infinite alternate-reverse; }
+  .ks-dust-a { animation: ksDrift 18s ease-in-out infinite alternate; }
+  .ks-dust-b { animation: ksDrift 24s ease-in-out infinite alternate-reverse; }
+  .ks-shimmer { animation: ksShimmer 2.8s ease-in-out infinite; }
+  .ks-shimmer-front { animation-duration: 2.1s; animation-direction: alternate-reverse; }
+  .ks-sun { animation: ksGlow 7s ease-in-out infinite; }
+  .ks-glow .ks-beacon { animation: ksTwinkle 2.4s steps(2, jump-none) infinite; }
+}
+@keyframes ksFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ksTwinkle { 0%, 100% { opacity: .9; } 50% { opacity: .25; } }
+@keyframes ksRain { from { background-position: 0 0; } to { background-position: -16px 60px; } }
+@keyframes ksDrift { from { transform: translateX(-6%); } to { transform: translateX(6%); } }
+@keyframes ksShimmer {
+  0%, 100% { transform: scaleY(1) skewX(0deg); opacity: .7; }
+  50% { transform: scaleY(1.18) skewX(2deg); opacity: 1; }
+}
+@keyframes ksGlow { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
