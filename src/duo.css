@@ -1058,13 +1058,19 @@ html[data-device='duo'] body :is([role='dialog'], [aria-modal='true'], .duo-page
    وضعيةٍ فيها عمود ساعة (التطبيق: الخارجية طولاً وعرضاً، والداخلية عرضاً). تحمل زرّي الترويسة نفسيهما
    (تتبع الطلبات والسلة) — نقلٌ لا زيادة ولا حذف.
    ========================================================================== */
-html[data-device='duo'] { --duo-clock-end: 176px; }
-@media screen and (orientation: landscape) and (max-width: 1000px) { html[data-device='duo'] { --duo-clock-end: 124px; } }
+/* مربع الساعة على الجهاز الحقيقي يمتدّ إلى ≈235pt على الشاشة الخارجية (لقطة المالك 2026-11-26)، أطول منه في المحاكاة:
+   فأول عنصرٍ في العمود يبدأ بعد 244pt، أو بعد ارتفاع الودجت الذي يكتبه الغلاف الأصلي إن كان أكبر. والداخلية عرضاً ركنُها أقصر. */
+html[data-device='duo'] { --duo-clock-end: max(244px, calc(var(--duo-widget-h, 0px) + 8px)); }
+@media screen and (orientation: landscape) and (max-width: 1000px) and (min-height: 521px) { html[data-device='duo'] { --duo-clock-end: 124px; } }
 @media screen and (orientation: portrait) and (max-width: 560px), screen and (orientation: landscape) and (max-width: 1000px) {
   html[data-device='duo'][data-shell='app']:not([data-widget-side='none']) body .r3-menu-header .ord-head-actions {
     position: fixed;
     z-index: 60;
     top: var(--duo-clock-end);
+    max-height: calc(100dvh - var(--duo-clock-end) - 12px - env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
     flex-direction: column;
     gap: 4px;
     padding: 5px;
@@ -1086,6 +1092,7 @@ html[data-device='duo'] { --duo-clock-end: 176px; }
     background: none !important;
     box-shadow: none !important;
     color: rgb(255 255 255 / 0.86) !important;
+    flex: none;
   }
   html[data-device='duo'][data-shell='app']:not([data-widget-side='none']) body .r3-menu-header .ord-head-actions :is(a, button) svg { color: inherit !important; }
 }
